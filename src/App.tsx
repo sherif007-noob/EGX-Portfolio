@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Position, 
   ClosedTrade, 
@@ -29,11 +29,22 @@ import { PythonSchemaSyncModal } from './components/PythonSchemaSyncModal';
 import { AddTradeModal } from './components/AddTradeModal';
 import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
+import { PortfolioBackupModal } from './components/PortfolioBackupModal';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { RealizedTrajectoryChart } from './components/RealizedTrajectoryChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { initAuth, logout, getAccessToken } from './services/firebaseAuth';
 import { appendTransactionToSheet, updateStockDirectoryInSheet } from './services/googleSheets';
+import { 
+  loadPortfolioFromFirestore, 
+  savePortfolioToFirestore, 
+  debouncedSavePortfolioToFirestore,
+  subscribeToPortfolioFromFirestore 
+} from './services/firestoreStorage';
+import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
+import { validateTradeInput } from './utils/portfolioValidation';
 import { User } from 'firebase/auth';
+import { RotateCcw } from 'lucide-react';
 import { 
   fetchTradingViewEGXPrices, 
   applyLivePricesToPortfolio, 
@@ -115,8 +126,33 @@ export default function App() {
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
   const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
+
+  // Destructive Action Safety & Undo State
+  const [confirmDeleteState, setConfirmDeleteState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    itemDetails?: any;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
+
+  const [undoState, setUndoState] = useState<{
+    previousState: {
+      positions: Position[];
+      closedTrades: ClosedTrade[];
+      transactions: TradeTransaction[];
+      cashBalance: number;
+    };
+    message: string;
+  } | null>(null);
 
   // Live Price Injection State
   const [isSyncingPrices, setIsSyncingPrices] = useState(false);
@@ -236,26 +272,70 @@ export default function App() {
     }
   }, []);
 
-  // Persistence Effects
+  // Flag ref to prevent remote Firestore updates from triggering a write-back loop
+  const isRemoteSyncingRef = useRef(false);
+
+  // Firestore Database Cloud Persistence Sync
+  useEffect(() => {
+    // Initial fetch from Firestore
+    loadPortfolioFromFirestore().then((remoteDoc) => {
+      if (remoteDoc) {
+        isRemoteSyncingRef.current = true;
+        if (remoteDoc.positions) setPositions(remoteDoc.positions);
+        if (remoteDoc.closedTrades) setClosedTrades(remoteDoc.closedTrades);
+        if (remoteDoc.transactions) setTransactions(remoteDoc.transactions);
+        if (typeof remoteDoc.cashBalance === 'number') setCashBalance(remoteDoc.cashBalance);
+        if (remoteDoc.tickers) setTickers(remoteDoc.tickers);
+        setTimeout(() => { isRemoteSyncingRef.current = false; }, 800);
+      } else {
+        // Save initial state if no remote doc exists
+        debouncedSavePortfolioToFirestore({
+          positions,
+          closedTrades,
+          transactions,
+          cashBalance,
+          tickers,
+        });
+      }
+    });
+
+    // Real-time listener for multi-device sync
+    const unsubscribe = subscribeToPortfolioFromFirestore((remoteDoc) => {
+      if (remoteDoc) {
+        isRemoteSyncingRef.current = true;
+        if (remoteDoc.positions) setPositions(remoteDoc.positions);
+        if (remoteDoc.closedTrades) setClosedTrades(remoteDoc.closedTrades);
+        if (remoteDoc.transactions) setTransactions(remoteDoc.transactions);
+        if (typeof remoteDoc.cashBalance === 'number') setCashBalance(remoteDoc.cashBalance);
+        if (remoteDoc.tickers) setTickers(remoteDoc.tickers);
+        setTimeout(() => { isRemoteSyncingRef.current = false; }, 800);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync to local storage & Firestore on state change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_POSITIONS, JSON.stringify(positions));
-  }, [positions]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_CLOSED, JSON.stringify(closedTrades));
-  }, [closedTrades]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions));
-  }, [transactions]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(cashBalance));
-  }, [cashBalance]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_TICKERS, JSON.stringify(tickers));
-  }, [tickers]);
+
+    // Skip saving back to Firestore if state update originated from remote snapshot
+    if (isRemoteSyncingRef.current) {
+      return;
+    }
+
+    debouncedSavePortfolioToFirestore({
+      positions,
+      closedTrades,
+      transactions,
+      cashBalance,
+      tickers,
+    });
+  }, [positions, closedTrades, transactions, cashBalance, tickers]);
 
   useEffect(() => {
     if (sheetsConfig) {
@@ -403,7 +483,39 @@ export default function App() {
     };
   }, [closedTrades, positions]);
 
-  // Handlers
+  // Handlers with strict Validation & Ledger Reconciliation
+  const executeUndo = () => {
+    if (!undoState) return;
+    const { previousState, message } = undoState;
+    setPositions(previousState.positions);
+    setClosedTrades(previousState.closedTrades);
+    setTransactions(previousState.transactions);
+    setCashBalance(previousState.cashBalance);
+    setUndoState(null);
+    setPriceSyncNotification({
+      message: `Restored state: ${message}`,
+      type: 'success',
+    });
+    setTimeout(() => setPriceSyncNotification(null), 4000);
+  };
+
+  const handleReconcileLedger = () => {
+    const report = reconcilePortfolioFromLedger(transactions, tickers, cashBalance);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
+
+    setPriceSyncNotification({
+      message: `Reconciliation complete! Processed ${report.transactionsProcessed} transactions. ${
+        report.discrepanciesFound.length > 0
+          ? `${report.discrepanciesFound.length} discrepancies resolved.`
+          : 'Portfolio is fully synchronized and consistent.'
+      }`,
+      type: 'success',
+    });
+    setTimeout(() => setPriceSyncNotification(null), 5000);
+  };
+
   const handleAddPosition = (
     newTradeData: {
       ticker: string;
@@ -419,6 +531,27 @@ export default function App() {
     },
     deductCash: boolean
   ) => {
+    // Validate trade input rules
+    const valResult = validateTradeInput({
+      ticker: newTradeData.ticker,
+      shares: newTradeData.shares,
+      price: newTradeData.buyPrice,
+      fees: newTradeData.brokerageFee,
+      type: 'BUY',
+      date: newTradeData.buyDate,
+      availableCash: cashBalance,
+      deductFromCash: deductCash,
+    });
+
+    if (!valResult.valid) {
+      setPriceSyncNotification({
+        message: `Trade Validation Error: ${valResult.errors.join(', ')}`,
+        type: 'error',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
+      return;
+    }
+
     const existingIndex = positions.findIndex(
       (p) => p.ticker.toUpperCase() === newTradeData.ticker.toUpperCase()
     );
@@ -525,6 +658,26 @@ export default function App() {
     const pos = positions.find((p) => p.id === positionId);
     if (!pos) return;
 
+    // Validate SELL trade rules
+    const valResult = validateTradeInput({
+      ticker: pos.ticker,
+      shares: soldShares,
+      price: sellPrice,
+      fees: sellFees,
+      type: 'SELL',
+      date: sellDate,
+      existingPosition: pos,
+    });
+
+    if (!valResult.valid) {
+      setPriceSyncNotification({
+        message: `Sell Validation Error: ${valResult.errors.join(', ')}`,
+        type: 'error',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
+      return;
+    }
+
     // Prorated portion of buy fees attributed to sold shares
     const allocatedBuyFee = pos.totalFees ? (soldShares / pos.shares) * pos.totalFees : 0;
     const remainingBuyFee = pos.totalFees ? Math.max(0, pos.totalFees - allocatedBuyFee) : 0;
@@ -620,51 +773,116 @@ export default function App() {
   };
 
   const handleDeletePosition = (id: string) => {
-    setPositions((prev) => prev.filter((p) => p.id !== id));
+    const pos = positions.find((p) => p.id === id);
+    if (!pos) return;
+
+    setConfirmDeleteState({
+      isOpen: true,
+      title: `Delete Open Position (${pos.ticker})`,
+      description: `Are you sure you want to delete this position of ${pos.shares.toLocaleString()} shares of ${pos.ticker}? This will remove the position record from your active holdings.`,
+      itemDetails: {
+        ticker: pos.ticker,
+        type: 'Active Position',
+        shares: pos.shares,
+        amount: `${(pos.shares * pos.avgBuyPrice).toLocaleString()} EGP Cost Basis`,
+        date: pos.buyDate,
+      },
+      onConfirm: () => {
+        setUndoState({
+          previousState: { positions, closedTrades, transactions, cashBalance },
+          message: `Reverted deletion of ${pos.ticker} position`,
+        });
+        setPositions((prev) => prev.filter((p) => p.id !== id));
+      },
+    });
   };
 
   const handleDeleteTrade = (id: string) => {
-    setClosedTrades((prev) => prev.filter((t) => t.id !== id));
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    const trade = closedTrades.find((t) => t.id === id);
+
+    setConfirmDeleteState({
+      isOpen: true,
+      title: `Delete Closed Trade Cycle`,
+      description: `Are you sure you want to delete this closed trade cycle? This will remove the historical realized P&L record.`,
+      itemDetails: {
+        ticker: trade?.ticker,
+        type: 'Closed Cycle',
+        shares: trade?.shares,
+        amount: trade ? `${trade.realizedPnlEgp > 0 ? '+' : ''}${trade.realizedPnlEgp.toFixed(2)} EGP Realized P&L` : undefined,
+        date: trade?.sellDate,
+      },
+      onConfirm: () => {
+        setUndoState({
+          previousState: { positions, closedTrades, transactions, cashBalance },
+          message: `Reverted deletion of closed trade`,
+        });
+        setClosedTrades((prev) => prev.filter((t) => t.id !== id));
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+      },
+    });
   };
 
   const handleDeleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    const tx = transactions.find((t) => t.id === id);
+    if (!tx) return;
+
+    setConfirmDeleteState({
+      isOpen: true,
+      title: `Delete Transaction (${tx.type} ${tx.ticker})`,
+      description: `Deleting this ${tx.type} transaction will remove the record from your chronological ledger and automatically recalculate your portfolio positions and cash balance.`,
+      itemDetails: {
+        ticker: tx.ticker,
+        type: `${tx.type} Execution`,
+        shares: tx.shares,
+        amount: `${tx.totalAmount.toLocaleString()} EGP`,
+        date: tx.date,
+      },
+      onConfirm: () => {
+        setUndoState({
+          previousState: { positions, closedTrades, transactions, cashBalance },
+          message: `Reverted deletion of ${tx.type} ${tx.ticker} transaction`,
+        });
+
+        const updatedTxs = transactions.filter((t) => t.id !== id);
+        setTransactions(updatedTxs);
+
+        // Auto-reconcile portfolio from updated ledger
+        const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance);
+        setPositions(report.reconciledPositions);
+        setClosedTrades(report.reconciledClosedTrades);
+        setCashBalance(report.reconciledCashBalance);
+      },
+    });
   };
 
   const handleEditTransaction = (updatedTx: TradeTransaction) => {
-    setTransactions((prev) =>
-      prev.map((t) => (t.id === updatedTx.id ? updatedTx : t))
-    );
+    // Validate edit
+    const valResult = validateTradeInput({
+      ticker: updatedTx.ticker,
+      shares: updatedTx.shares,
+      price: updatedTx.price,
+      fees: updatedTx.fees || 0,
+      type: updatedTx.type,
+      date: updatedTx.date,
+    });
 
-    // If it's a SELL trade, also synchronize with corresponding closed trade
-    if (updatedTx.type === 'SELL') {
-      setClosedTrades((prev) =>
-        prev.map((ct) => {
-          if (
-            (ct.cycleTag && updatedTx.cycleTag && ct.cycleTag === updatedTx.cycleTag) ||
-            (ct.ticker.toUpperCase() === updatedTx.ticker.toUpperCase() && ct.sellDate === updatedTx.date)
-          ) {
-            return {
-              ...ct,
-              ticker: updatedTx.ticker,
-              companyName: updatedTx.companyName || ct.companyName,
-              sector: updatedTx.sector || ct.sector,
-              shares: updatedTx.shares || ct.shares,
-              sellPrice: updatedTx.price || ct.sellPrice,
-              sellDate: updatedTx.date || ct.sellDate,
-              sellFees: updatedTx.fees !== undefined ? updatedTx.fees : ct.sellFees,
-              realizedPnlEgp: updatedTx.realizedPnlEgp !== undefined ? updatedTx.realizedPnlEgp : ct.realizedPnlEgp,
-              realizedPnlPercent: updatedTx.realizedPnlPercent !== undefined ? updatedTx.realizedPnlPercent : ct.realizedPnlPercent,
-              outcome: updatedTx.outcome || ct.outcome,
-              notes: updatedTx.notes || ct.notes,
-              cycleTag: updatedTx.cycleTag || ct.cycleTag,
-            };
-          }
-          return ct;
-        })
-      );
+    if (!valResult.valid) {
+      setPriceSyncNotification({
+        message: `Edit Transaction Error: ${valResult.errors.join(', ')}`,
+        type: 'error',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
+      return;
     }
+
+    const updatedTxs = transactions.map((t) => (t.id === updatedTx.id ? updatedTx : t));
+    setTransactions(updatedTxs);
+
+    // Reconcile portfolio math automatically when any ledger transaction is edited
+    const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
   };
 
   const handleImportGoogleSheets = (
@@ -728,6 +946,7 @@ export default function App() {
           setSelectedTickerForTrade(null);
           setIsAddTradeModalOpen(true);
         }}
+        onOpenBackupModal={() => setIsBackupModalOpen(true)}
         isSheetsConnected={!!sheetsConfig}
         sheetsTitle={sheetsConfig?.sheetName}
         authUser={authUser}
@@ -735,6 +954,22 @@ export default function App() {
         onSyncLivePrices={() => handleSyncLivePrices(false)}
         isSyncingPrices={isSyncingPrices}
       />
+
+      {/* Undo Toast Notification */}
+      {undoState && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl text-xs font-semibold flex items-center gap-3 text-slate-200">
+            <span>{undoState.message}</span>
+            <button
+              onClick={executeUndo}
+              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1 transition"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Undo
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Price Sync Notification Toast */}
       {priceSyncNotification && (
@@ -950,6 +1185,40 @@ export default function App() {
         onClose={() => setIsQuickCashModalOpen(false)}
         currentCash={cashBalance}
         onUpdateCash={(newCash) => setCashBalance(newCash)}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={confirmDeleteState.isOpen}
+        onClose={() => setConfirmDeleteState((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDeleteState.onConfirm}
+        title={confirmDeleteState.title}
+        description={confirmDeleteState.description}
+        itemDetails={confirmDeleteState.itemDetails}
+      />
+
+      <PortfolioBackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        portfolioData={{
+          positions,
+          closedTrades,
+          transactions,
+          cashBalance,
+          tickers,
+        }}
+        onRestorePortfolio={(restored) => {
+          setPositions(restored.positions || []);
+          setClosedTrades(restored.closedTrades || []);
+          setTransactions(restored.transactions || []);
+          if (typeof restored.cashBalance === 'number') setCashBalance(restored.cashBalance);
+          if (restored.tickers) setTickers(restored.tickers);
+          setPriceSyncNotification({
+            message: 'Portfolio successfully restored from JSON backup file!',
+            type: 'success',
+          });
+          setTimeout(() => setPriceSyncNotification(null), 5000);
+        }}
+        onTriggerReconcile={handleReconcileLedger}
       />
 
       {/* Offline PWA Indicator */}

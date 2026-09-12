@@ -13,7 +13,8 @@ import {
   Check,
   RefreshCw,
   Wallet,
-  RotateCcw
+  RotateCcw,
+  Database
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -25,6 +26,7 @@ interface HeaderProps {
   onOpenGoogleSheets: () => void;
   onOpenSchemaSync?: () => void;
   onOpenAddTrade: () => void;
+  onOpenBackupModal?: () => void;
   isSheetsConnected: boolean;
   sheetsTitle?: string;
   authUser: User | null;
@@ -39,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGoogleSheets,
   onOpenSchemaSync,
   onOpenAddTrade,
+  onOpenBackupModal,
   isSheetsConnected,
   sheetsTitle,
   authUser,
@@ -89,6 +92,19 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
                 <span className="hidden md:inline">{isSyncingPrices ? 'Syncing...' : 'Sync Prices'}</span>
+              </button>
+            )}
+
+            {/* Backup & Reconciliation Trigger */}
+            {onOpenBackupModal && (
+              <button
+                id="header-backup-btn"
+                onClick={onOpenBackupModal}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 border border-purple-500/40 transition hover:border-purple-400"
+                title="Backup portfolio, restore state, or reconcile ledger math"
+              >
+                <Database className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden md:inline">Backup &amp; Sync</span>
               </button>
             )}
 

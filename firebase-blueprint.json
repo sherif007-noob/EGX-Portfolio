@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "User portfolio state including positions, closed trades, transactions, cash balance, and tickers",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID or main portfolio identifier"
+        },
+        "cashBalance": {
+          "type": "number",
+          "description": "Current available cash balance in EGP"
+        },
+        "positions": {
+          "type": "array",
+          "description": "List of open stock positions"
+        },
+        "closedTrades": {
+          "type": "array",
+          "description": "List of closed trade cycles"
+        },
+        "transactions": {
+          "type": "array",
+          "description": "List of chronological transactions"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last portfolio sync"
+        }
+      },
+      "required": ["cashBalance", "positions", "closedTrades", "transactions", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/portfolios/{portfolioId}": {
+      "schema": "Portfolio",
+      "description": "Stores user portfolio state and transaction records"
+    }
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "/schema/ticker-directory.json",
+  "title": "EGXTickerDirectory",
+  "description": "Standard JSON Schema for Egyptian Exchange (EGX) ticker directory, market data, and quotes. Used by Python automation scripts for periodic synchronization.",
+  "type": "object",
+  "required": ["version", "lastSync", "market", "currency", "count", "tickers"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "example": "1.0.0"
+    },
+    "lastSync": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last automated data feed sync"
+    },
+    "market": {
+      "type": "string",
+      "default": "EGX",
+      "description": "Exchange identifier (The Egyptian Exchange)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "EGP",
+      "description": "Default quote currency"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of tickers in this directory"
+    },
+    "tickers": {
+      "type": "array",
+      "description": "List of active EGX stock entries and technical metrics",
+      "items": {
+        "$ref": "#/definitions/TickerEntry"
+      }
+    }
+  },
+  "definitions": {
+    "TickerEntry": {
+      "type": "object",
+      "required": ["ticker", "nameEn", "sector", "lastPrice", "changePercent"],
+      "properties": {
+        "ticker": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{3,5}(\\.CA)?$",
+          "description": "EGX Ticker code (e.g. COMI, ESRS, TMGH or with .CA suffix)",
+          "example": "COMI"
+        },
+        "nameEn": {
+          "type": "string",
+          "description": "Full English company name",
+          "example": "Commercial International Bank (Egypt)"
+        },
+        "nameAr": {
+          "type": "string",
+          "description": "Arabic company name",
+          "example": "البنك التجاري الدولي - مصر"
+        },
+        "isin": {
+          "type": "string",
+          "pattern": "^EGS[0-9A-Z]{9}$",
+          "description": "International Securities Identification Number (ISIN)",
+          "example": "EGS60121C018"
+        },
+        "sector": {
+          "type": "string",
+          "enum": [
+            "Banking",
+            "Real Estate & Construction",
+            "Basic Resources & Steel",
+            "Petrochemicals & Fertilizers",
+            "Non-Bank Financial Services & Fintech",
+            "Telecommunications & Tech",
+            "Food, Beverage & Agribusiness",
+            "Healthcare & Pharmaceuticals",
+            "Industrial Goods & Services",
+            "Energy & Petrochemicals",
+            "Utilities & Logistics",
+            "Other"
+          ],
+          "description": "EGX Sector classification"
+        },
+        "lastPrice": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Last traded closing or real-time price in Egyptian Pounds (EGP)",
+          "example": 88.50
+        },
+        "change": {
+          "type": "number",
+          "description": "Net daily price change in EGP",
+          "example": 1.25
+        },
+        "changePercent": {
+          "type": "number",
+          "description": "Percentage daily price change",
+          "example": 1.43
+        },
+        "dayLow": {
+          "type": "number",
+          "description": "Intraday low price in EGP"
+        },
+        "dayHigh": {
+          "type": "number",
+          "description": "Intraday high price in EGP"
+        },
+        "yearLow": {
+          "type": "number",
+          "description": "52-week low price in EGP"
+        },
+        "yearHigh": {
+          "type": "number",
+          "description": "52-week high price in EGP"
+        },
+        "volume": {
+          "type": "number",
+          "description": "Total traded share volume"
+        },
+        "valueEgp": {
+          "type": "number",
+          "description": "Total traded turnover value in EGP"
+        },
+        "trendStatus": {
+          "type": "string",
+          "enum": [
+            "Strong Uptrend",
+            "Bullish Pullback",
+            "Rangebound Neutral",
+            "Bearish Breakdown",
+            "Overextended"
+          ],
+          "description": "Automated technical trend status"
+        },
+        "rsi14": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "14-period Relative Strength Index"
+        },
+        "support": {
+          "type": "number",
+          "description": "Identified horizontal price support in EGP"
+        },
+        "resistance": {
+          "type": "number",
+          "description": "Identified horizontal price resistance in EGP"
+        },
+        "targetPrice": {
+          "type": "number",
+          "description": "Target projection price in EGP"
+        },
+        "stopLoss": {
+          "type": "number",
+          "description": "Risk management stop loss level in EGP"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Technical notes or fundamental catalysts"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last ticker price/metric update"
+        }
+      }
+    }
+  }
+}

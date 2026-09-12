@@ -1,0 +1,166 @@
+export type TrendStatus = 
+  | 'Strong Uptrend'
+  | 'Bullish Pullback'
+  | 'Rangebound Neutral'
+  | 'Bearish Breakdown'
+  | 'Overextended';
+
+export type Sector = 
+  | 'Banking'
+  | 'Real Estate & Construction'
+  | 'Basic Resources & Steel'
+  | 'Petrochemicals & Fertilizers'
+  | 'Non-Bank Financial Services & Fintech'
+  | 'Telecommunications & Tech'
+  | 'Food, Beverage & Agribusiness'
+  | 'Healthcare & Pharmaceuticals'
+  | 'Industrial Goods & Services'
+  | 'Energy & Petrochemicals'
+  | 'Utilities & Logistics'
+  | 'Other';
+
+export interface EGXTicker {
+  ticker: string;
+  nameEn: string;
+  nameAr: string;
+  isin: string;
+  sector: Sector;
+  lastPrice: number;
+  change: number;
+  changePercent: number;
+  dayLow: number;
+  dayHigh: number;
+  yearLow: number;
+  yearHigh: number;
+  volume: number;
+  valueEgp: number;
+  trendStatus: TrendStatus;
+  rsi14: number;
+  support: number;
+  resistance: number;
+  targetPrice: number;
+  stopLoss: number;
+  notes?: string;
+  lastUpdated: string;
+}
+
+export interface Position {
+  id: string;
+  ticker: string;
+  companyName: string;
+  sector: Sector;
+  shares: number;
+  avgBuyPrice: number;
+  currentPrice: number;
+  buyDate: string;
+  totalFees?: number;
+  targetPrice?: number;
+  stopLoss?: number;
+  notes?: string;
+}
+
+export interface ClosedTrade {
+  id: string;
+  ticker: string;
+  companyName: string;
+  sector: Sector;
+  shares: number;
+  buyPrice: number;
+  sellPrice: number;
+  buyDate: string;
+  sellDate: string;
+  holdingDays: number;
+  realizedPnlEgp: number;
+  realizedPnlPercent: number;
+  buyFees?: number;
+  sellFees?: number;
+  totalFees?: number;
+  outcome: 'WIN' | 'LOSS' | 'BREAKEVEN';
+  tradeType: 'Swing' | 'Breakout' | 'Core' | 'Momentum';
+  notes?: string;
+}
+
+export interface PortfolioMetrics {
+  totalValue: number;
+  totalCost: number;
+  unrealizedPnlEgp: number;
+  unrealizedPnlPercent: number;
+  realizedPnlEgp: number;
+  cashBalance: number;
+  dayChangeEgp: number;
+  dayChangePercent: number;
+  totalPositions: number;
+  winningPositionsCount: number;
+  losingPositionsCount: number;
+  totalFeesPaid?: number;
+}
+
+export interface PerformanceStats {
+  winRate: number;
+  profitFactor: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  avgReturnPercent: number;
+  avgHoldDays: number;
+  bestTradePercent: number;
+  worstTradePercent: number;
+  totalRealizedGainEgp: number;
+  totalRealizedLossEgp: number;
+  totalBrokerageFeesPaid: number;
+  sectorAllocation: { sector: Sector; value: number; percentage: number; count: number }[];
+}
+
+export interface GoogleSheetsConfig {
+  spreadsheetId: string;
+  sheetName: string;
+  range: string;
+  lastSyncTime?: string;
+  connectedEmail?: string;
+  autoSync: boolean;
+}
+
+export interface LivePriceQuote {
+  ticker: string;
+  price: number;
+  changePercent: number;
+  volume: number;
+}
+
+export interface SchemaValidationResult {
+  valid: boolean;
+  errors: string[];
+  itemCount: number;
+}
+
+export interface CashTransaction {
+  id: string;
+  type: 'DEPOSIT' | 'WITHDRAWAL';
+  amount: number;
+  date: string;
+  notes?: string;
+  balanceAfter: number;
+}
+
+export interface TradeTransaction {
+  id: string;
+  type: 'BUY' | 'SELL';
+  ticker: string;
+  companyName: string;
+  sector: Sector;
+  shares: number;
+  price: number;
+  date: string;
+  fees: number;
+  totalAmount: number;
+  isDCA?: boolean;
+  notes?: string;
+  targetPrice?: number;
+  stopLoss?: number;
+  // For SELL transactions:
+  realizedPnlEgp?: number;
+  realizedPnlPercent?: number;
+  outcome?: 'WIN' | 'LOSS' | 'BREAKEVEN';
+  holdingDays?: number;
+  positionId?: string;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "EGX Portfolio Tracker",
+  "description": "Progressive web app to track EGX stock portfolios and performance indicators with Google Sheets and schema sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

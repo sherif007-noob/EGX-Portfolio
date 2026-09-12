@@ -1,0 +1,295 @@
+import React, { useState, useEffect } from 'react';
+import { Position } from '../types';
+import { X, DollarSign, Calculator } from 'lucide-react';
+
+interface SellPositionModalProps {
+  position: Position | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirmSell: (
+    positionId: string,
+    soldShares: number,
+    sellPrice: number,
+    sellDate: string,
+    brokerageFee: number,
+    notes: string,
+    remainingShares: number
+  ) => void;
+}
+
+export const SellPositionModal: React.FC<SellPositionModalProps> = ({
+  position,
+  isOpen,
+  onClose,
+  onConfirmSell,
+}) => {
+  if (!isOpen || !position) return null;
+
+  const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
+  const [sellPrice, setSellPrice] = useState<number>(position.currentPrice || position.avgBuyPrice);
+  const [sellDate, setSellDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [brokerageFee, setBrokerageFee] = useState<number>(0);
+  const [isManualFee, setIsManualFee] = useState<boolean>(false);
+  const [notes, setNotes] = useState<string>('Target reached / booked profits');
+
+  // Reset values when position changes
+  useEffect(() => {
+    if (position) {
+      setSharesToSell(position.shares);
+      setSellPrice(position.currentPrice || position.avgBuyPrice);
+      setIsManualFee(false);
+    }
+  }, [position]);
+
+  // Default fee auto-calculation (0.25% standard broker commission)
+  useEffect(() => {
+    if (!isManualFee) {
+      const grossProceeds = sharesToSell * sellPrice;
+      const calculated = Math.round(grossProceeds * 0.0025 * 100) / 100;
+      setBrokerageFee(calculated);
+    }
+  }, [sharesToSell, sellPrice, isManualFee]);
+
+  // Financial calculations
+  const grossProceeds = sharesToSell * sellPrice;
+  const netProceeds = Math.max(0, grossProceeds - (brokerageFee || 0));
+
+  // Cost basis for sold shares
+  const costBasis = sharesToSell * position.avgBuyPrice;
+  // Allocated buy fees for sold shares
+  const allocatedBuyFees = position.totalFees ? (sharesToSell / position.shares) * position.totalFees : 0;
+  const totalCostIncludingBuyFees = costBasis + allocatedBuyFees;
+
+  // Realized Net P&L: Net proceeds from sale minus total cost basis (including buy fee + sell fee)
+  const realizedPnlEgp = netProceeds - totalCostIncludingBuyFees;
+  const realizedPnlPercent = totalCostIncludingBuyFees > 0 ? (realizedPnlEgp / totalCostIncludingBuyFees) * 100 : 0;
+  const isProfit = realizedPnlEgp >= 0;
+  const remainingShares = Math.max(0, position.shares - sharesToSell);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (sharesToSell <= 0 || sharesToSell > position.shares || sellPrice <= 0) return;
+
+    onConfirmSell(
+      position.id,
+      sharesToSell,
+      sellPrice,
+      sellDate,
+      Math.max(0, brokerageFee || 0),
+      notes,
+      remainingShares
+    );
+    onClose();
+  };
+
+  return (
+    <div
+      id="sell-position-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md my-6 rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Sell / Exit Position</h3>
+              <p className="text-xs text-slate-400">
+                {position.ticker} • {position.companyName}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+          {/* Summary Box */}
+          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex justify-between">
+            <div>
+              <span className="text-slate-400 block text-[10px]">Held Shares</span>
+              <span className="font-mono font-bold text-white">{position.shares.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Average Buy</span>
+              <span className="font-mono font-bold text-slate-200">{position.avgBuyPrice.toFixed(2)} EGP</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Current Quote</span>
+              <span className="font-mono font-bold text-emerald-400">
+                {(position.currentPrice || position.avgBuyPrice).toFixed(2)} EGP
+              </span>
+            </div>
+          </div>
+
+          {/* Shares to Sell */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-slate-300">Shares to Sell</label>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSharesToSell(Math.floor(position.shares / 2))}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                >
+                  50%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSharesToSell(position.shares)}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                >
+                  100% (All)
+                </button>
+              </div>
+            </div>
+            <input
+              type="number"
+              min="1"
+              max={position.shares}
+              value={sharesToSell || ''}
+              onChange={(e) => setSharesToSell(Number(e.target.value))}
+              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+              required
+            />
+          </div>
+
+          {/* Sell Price & Date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">Sell Price (EGP)</label>
+              <input
+                type="number"
+                min="0.001"
+                step="0.001"
+                value={sellPrice || ''}
+                onChange={(e) => setSellPrice(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">Sale Date</label>
+              <input
+                type="date"
+                value={sellDate}
+                onChange={(e) => setSellDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"
+              />
+            </div>
+          </div>
+
+          {/* Brokerage Fees on Sale */}
+          <div className="p-3 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+                Exit Brokerage Fees (EGP)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManualFee(false);
+                  const gross = sharesToSell * sellPrice;
+                  setBrokerageFee(Math.round(gross * 0.0025 * 100) / 100);
+                }}
+                className="text-[10px] text-amber-400 hover:text-amber-300 underline"
+              >
+                Reset to 0.25%
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={brokerageFee}
+                  onChange={(e) => {
+                    setIsManualFee(true);
+                    setBrokerageFee(Math.max(0, Number(e.target.value)));
+                  }}
+                  className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                />
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Gross Proceeds: <strong className="text-white">{grossProceeds.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* P&L Preview Ribbon */}
+          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Net Cash Inflow (After Sell Fee):</span>
+              <span className="font-mono font-bold text-white text-sm">
+                {netProceeds.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span>Total Fees Accounted (Buy + Sell):</span>
+              <span className="font-mono text-amber-300">
+                {(allocatedBuyFees + (brokerageFee || 0)).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+              <span className="font-semibold text-slate-300">Net Realized Profit / Loss:</span>
+              <div className="text-right">
+                <span
+                  className={`font-mono font-bold text-sm ${
+                    isProfit ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {isProfit ? '+' : ''}{realizedPnlEgp.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+                </span>
+                <span
+                  className={`block text-[11px] font-semibold ${
+                    isProfit ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  ({isProfit ? '+' : ''}{realizedPnlPercent.toFixed(2)}%)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1">Exit Rationale / Journal Note</label>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md shadow-amber-950/50"
+            >
+              Confirm Sale &amp; Book Net P&amp;L
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

@@ -1,4 +1,5 @@
 import { Position, ClosedTrade, Sector, TradeTransaction, EGXTicker } from '../types';
+import { EGX_STOCK_DICTIONARY } from '../data/egxTickers';
 
 export interface SheetParseResult {
   positions: Position[];
@@ -7,6 +8,39 @@ export interface SheetParseResult {
   rawRowsCount: number;
   sheetTitle: string;
   detectedColumns: string[];
+  sheetType?: 'transaction_logger' | 'ticker_directory' | 'generic';
+  tickerQuotes?: Record<string, number>;
+}
+
+export interface GoogleDriveSpreadsheet {
+  id: string;
+  name: string;
+  modifiedTime?: string;
+}
+
+/**
+ * Lists user's spreadsheets from Google Drive using Drive API v3.
+ */
+export async function fetchUserSpreadsheets(accessToken: string): Promise<GoogleDriveSpreadsheet[]> {
+  try {
+    const q = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime%20desc&pageSize=30&fields=files(id,name,modifiedTime)`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    return data.files || [];
+  } catch (err) {
+    console.warn('Could not list drive spreadsheets:', err);
+    return [];
+  }
 }
 
 /**
@@ -78,7 +112,7 @@ export async function fetchSheetValues(
 }
 
 /**
- * Normalizes numbers from raw spreadsheet strings, handling Arabic numerals, currency, commas, and percentage signs.
+ * Normalizes numbers from raw spreadsheet strings, handling Arabic numerals, currency, commas, accounting parentheses, and percentage signs.
  */
 export function parseSheetNumber(val: any, fallback = 0): number {
   if (val === undefined || val === null || val === '') return fallback;
@@ -87,6 +121,13 @@ export function parseSheetNumber(val: any, fallback = 0): number {
   let str = String(val).trim();
   for (let i = 0; i < 10; i++) {
     str = str.split(arabicNumerals[i]).join(String(i));
+  }
+
+  // Check if enclosed in accounting parentheses (e.g. (EGP 9,205.60)) -> negative
+  let isNegative = false;
+  if (/^\(.*\)$/.test(str.trim())) {
+    isNegative = true;
+    str = str.replace(/^\(/, '').replace(/\)$/, '');
   }
 
   // Remove currency, spaces, commas, percent
@@ -101,8 +142,132 @@ export function parseSheetNumber(val: any, fallback = 0): number {
     .replace(/%/g, '')
     .trim();
 
-  const num = parseFloat(clean);
-  return isNaN(num) ? fallback : num;
+  let num = parseFloat(clean);
+  if (isNaN(num)) return fallback;
+  return isNegative ? -Math.abs(num) : num;
+}
+
+/**
+ * Parses date string into standard ISO YYYY-MM-DD format.
+ * Strict priority for Egyptian / UK format: DD/MM/YYYY.
+ * Handles Excel serial dates, Eastern Arabic numerals, 2-digit years, and timestamps.
+ * e.g. "08/09/2026" or "8/9/2026" -> "2026-09-08" (8 September 2026)
+ */
+export function parseSheetDate(raw: any): string {
+  if (raw === undefined || raw === null || raw === '') {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  // 1. If it's a numeric Excel serial date (e.g. ~46273 for Sep 2026)
+  if (
+    typeof raw === 'number' ||
+    (!isNaN(Number(raw)) && !String(raw).includes('-') && !String(raw).includes('/') && !String(raw).includes('.'))
+  ) {
+    const serial = Number(raw);
+    if (serial > 30000 && serial < 70000) {
+      // Excel epoch begins Dec 30, 1899 (25569 days to Unix epoch)
+      const utcDays = Math.floor(serial - 25569);
+      const dateObj = new Date(utcDays * 86400 * 1000);
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+  }
+
+  // Convert Eastern Arabic / Persian numerals to standard digits
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  let str = String(raw).trim();
+  for (let i = 0; i < 10; i++) {
+    str = str.split(arabicNumerals[i]).join(String(i));
+  }
+
+  // Strip timestamps or trailing times (e.g. "08/09/2026 14:30:00" or "08/09/2026T00:00:00")
+  str = str.split('T')[0].split(' ')[0].trim();
+
+  // 2. Check ISO format first: YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+  const ymdMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = String(parseInt(ymdMatch[2], 10)).padStart(2, '0');
+    const day = String(parseInt(ymdMatch[3], 10)).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 3. Priority: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (Egyptian Stock Market standard)
+  const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (dmyMatch) {
+    let day = parseInt(dmyMatch[1], 10);
+    let month = parseInt(dmyMatch[2], 10);
+    let yearNum = parseInt(dmyMatch[3], 10);
+
+    if (yearNum < 100) {
+      yearNum = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
+    }
+
+    // Safety check: if month is > 12 and day <= 12, it must be MM/DD/YYYY by logical necessity
+    if (month > 12 && day <= 12) {
+      const temp = day;
+      day = month;
+      month = temp;
+    }
+
+    const yearStr = String(yearNum);
+    const monthStr = String(Math.min(12, Math.max(1, month))).padStart(2, '0');
+    const dayStr = String(Math.min(31, Math.max(1, day))).padStart(2, '0');
+    return `${yearStr}-${monthStr}-${dayStr}`;
+  }
+
+  // 4. Textual month names (e.g. "8 Sep 2026", "8 September 2026", "08-Sep-2026", "8 سبتمبر 2026")
+  const monthsMap: Record<string, number> = {
+    jan: 1, january: 1,
+    feb: 2, february: 2,
+    mar: 3, march: 3,
+    apr: 4, april: 4,
+    may: 5,
+    jun: 6, june: 6,
+    jul: 7, july: 7,
+    aug: 8, august: 8,
+    sep: 9, sept: 9, september: 9,
+    oct: 10, october: 10,
+    nov: 11, november: 11,
+    dec: 12, december: 12,
+    يناير: 1, فبراير: 2, مارس: 3, أبريل: 4, ابريل: 4,
+    مايو: 5, يونيو: 6, يوليو: 7, أغسطس: 8, اغسطس: 8,
+    سبتمبر: 9, أكتوبر: 10, اكتوبر: 10, نوفمبر: 11, ديسمبر: 12,
+  };
+
+  const dayTextMatch = str.match(/^(\d{1,2})[\s\-\/\.]([A-Za-z\u0600-\u06FF]+)[\s\-\/\.](\d{2,4})$/);
+  if (dayTextMatch) {
+    const day = parseInt(dayTextMatch[1], 10);
+    const monthKey = dayTextMatch[2].toLowerCase();
+    let yearNum = parseInt(dayTextMatch[3], 10);
+    if (yearNum < 100) yearNum = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
+    const m = monthsMap[monthKey];
+    if (m) {
+      return `${yearNum}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  const monthFirstText = str.match(/^([A-Za-z\u0600-\u06FF]+)[\s\-\/\.](\d{1,2}),?[\s\-\/\.](\d{2,4})$/);
+  if (monthFirstText) {
+    const monthKey = monthFirstText[1].toLowerCase();
+    const day = parseInt(monthFirstText[2], 10);
+    let yearNum = parseInt(monthFirstText[3], 10);
+    if (yearNum < 100) yearNum = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
+    const m = monthsMap[monthKey];
+    if (m) {
+      return `${yearNum}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  // Fallback to Date parse
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+
+  return new Date().toISOString().split('T')[0];
 }
 
 /**
@@ -112,14 +277,21 @@ export function findHeaderRowIndex(rows: string[][]): number {
   if (!rows || rows.length === 0) return 0;
 
   const headerKeywords = [
-    'ticker', 'symbol', 'code', 'stock', 'سهم', 'الرمز', 'كود', 'السهم',
+    'trade id', 'trade', 'trade #', 'رقم العملية', 'رقم الصفقة',
+    'ticker', 'symbol', 'code', 'stock', 'سهم', 'الرمز', 'كود', 'السهم', 'كود السهم', 'رمز السهم', 'اسم السهم',
+    'action', 'type', 'side', 'operation', 'نوع العملية', 'النوع', 'نوع', 'العملية',
     'shares', 'qty', 'quantity', 'volume', 'units', 'الكمية', 'عدد الأسهم', 'العدد',
-    'buy price', 'avg price', 'purchase price', 'cost', 'avg cost', 'cost/share', 'entry price', 'سعر الشراء', 'متوسط التكلفة', 'التكلفة', 'سعر',
-    'company', 'name', 'security', 'اسم الشركة', 'الشركة',
-    'price', 'current price', 'market price', 'cmp', 'سعر السوق', 'السعر الحالي',
-    'date', 'buy date', 'trade date', 'تاريخ',
-    'action', 'type', 'side', 'نوع العملية', 'النوع',
-    'realized', 'pnl', 'profit', 'الربح'
+    'price / share', 'price/share', 'price', 'buy price', 'avg price', 'purchase price', 'cost', 'avg cost', 'cost/share', 'entry price', 'سعر الشراء', 'سعر السهم', 'متوسط التكلفة', 'التكلفة', 'سعر',
+    'company name', 'company', 'name', 'security', 'اسم الشركة', 'الشركة',
+    'current price (egp)', 'current price', 'market price', 'cmp', 'سعر السوق', 'السعر الحالي',
+    'gross trade value', 'gross', 'قيمة التداول', 'إجمالي القيمة',
+    'brokerage fee', 'fee', 'fees', 'commission', 'العمولة', 'عمولة', 'مصاريف',
+    'net cash impact', 'net cash', 'صافي النقد',
+    'strategy / notes', 'strategy', 'notes', 'ملاحظات', 'استراتيجية',
+    'running shares', 'الأسهم المتبقية', 'المتبقي',
+    'trade cycle', 'cycle', 'دورة التداول', 'الدورة',
+    'cycle tag', 'tag', 'رمز الدورة',
+    'date', 'buy date', 'trade date', 'timestamp', 'تاريخ', 'تاريخ العملية'
   ];
 
   let bestIdx = 0;
@@ -136,8 +308,8 @@ export function findHeaderRowIndex(rows: string[][]): number {
     for (const cell of rowStr) {
       if (!cell) continue;
       for (const kw of headerKeywords) {
-        if (cell.includes(kw) || kw.includes(cell)) {
-          score++;
+        if (cell === kw || cell.includes(kw) || kw.includes(cell)) {
+          score += 2;
           break;
         }
       }
@@ -149,25 +321,285 @@ export function findHeaderRowIndex(rows: string[][]): number {
     }
   }
 
-  // If score is at least 1, use that row; otherwise default to row 0
-  return maxScore >= 1 ? bestIdx : 0;
+  return maxScore >= 2 ? bestIdx : 0;
+}
+
+/**
+ * Reconstructs accurate Active Positions and Closed Trades from a raw transaction ledger (e.g. from Transaction logger tab).
+ * Uses chronological lot matching to compute accurate DCA average buy costs and realized P&L.
+ * Consolidates closed cycles (15 cycles) and calculates open positions (3 active holdings).
+ */
+export function reconstructPortfolioFromTransactions(
+  transactions: TradeTransaction[],
+  livePrices: Record<string, number> = {}
+): { positions: Position[]; closedTrades: ClosedTrade[]; transactions: TradeTransaction[] } {
+  // Sort transactions chronologically (oldest to newest: Date -> TradeId -> BUY before SELL)
+  const sortedTx = [...transactions].sort((a, b) => {
+    const dateA = new Date(a.date || '').getTime() || 0;
+    const dateB = new Date(b.date || '').getTime() || 0;
+    if (dateA !== dateB) {
+      return dateA - dateB;
+    }
+    const tradeIdA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
+    const tradeIdB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
+    if (tradeIdA && tradeIdB && tradeIdA !== tradeIdB) {
+      return tradeIdA - tradeIdB;
+    }
+    // Critical lot integrity: BUY must always precede SELL when dates are identical
+    if (a.type === 'BUY' && b.type === 'SELL') return -1;
+    if (a.type === 'SELL' && b.type === 'BUY') return 1;
+    return 0;
+  });
+
+  interface OpenLot {
+    shares: number;
+    price: number;
+    date: string;
+    fees: number;
+    notes?: string;
+    targetPrice?: number;
+    stopLoss?: number;
+    tradeCycle?: number;
+    cycleTag?: string;
+  }
+
+  const openLotsByTicker: Record<string, OpenLot[]> = {};
+  
+  interface ClosedCycleAccumulator {
+    id: string;
+    ticker: string;
+    companyName: string;
+    sector: Sector;
+    shares: number;
+    totalCostBasis: number;
+    totalGrossProceeds: number;
+    buyFees: number;
+    sellFees: number;
+    firstBuyDate: string;
+    lastSellDate: string;
+    notes?: string;
+    tradeCycle?: number;
+    cycleTag?: string;
+  }
+
+  const closedCyclesMap: Record<string, ClosedCycleAccumulator> = {};
+
+  for (let idx = 0; idx < sortedTx.length; idx++) {
+    const tx = sortedTx[idx];
+    const ticker = tx.ticker.toUpperCase();
+
+    if (!openLotsByTicker[ticker]) {
+      openLotsByTicker[ticker] = [];
+    }
+
+    if (tx.type === 'BUY') {
+      const isDcaLot = openLotsByTicker[ticker].length > 0;
+      tx.isDCA = isDcaLot;
+      tx.outcome = undefined;
+
+      openLotsByTicker[ticker].push({
+        shares: tx.shares,
+        price: tx.price,
+        date: tx.date,
+        fees: tx.fees || 0,
+        notes: tx.notes,
+        targetPrice: tx.targetPrice,
+        stopLoss: tx.stopLoss,
+        tradeCycle: tx.tradeCycle,
+        cycleTag: tx.cycleTag
+      });
+    } else if (tx.type === 'SELL') {
+      let sharesToSell = tx.shares;
+      let totalCostBasis = 0;
+      let totalAllocatedBuyFees = 0;
+      let firstBuyDate = tx.date;
+      let cycleTag = tx.cycleTag;
+      let tradeCycle = tx.tradeCycle;
+
+      const lots = openLotsByTicker[ticker];
+      while (sharesToSell > 0 && lots.length > 0) {
+        const lot = lots[0];
+        if (lot.date && (!firstBuyDate || firstBuyDate === tx.date)) {
+          firstBuyDate = lot.date;
+        }
+        if (lot.cycleTag && !cycleTag) {
+          cycleTag = lot.cycleTag;
+        }
+        if (lot.tradeCycle && !tradeCycle) {
+          tradeCycle = lot.tradeCycle;
+        }
+
+        if (lot.shares <= sharesToSell) {
+          totalCostBasis += lot.shares * lot.price;
+          totalAllocatedBuyFees += lot.fees;
+          sharesToSell -= lot.shares;
+          lots.shift(); // fully consumed lot
+        } else {
+          // Partially consumed lot
+          const feePortion = (sharesToSell / lot.shares) * lot.fees;
+          totalCostBasis += sharesToSell * lot.price;
+          totalAllocatedBuyFees += feePortion;
+          lot.shares -= sharesToSell;
+          lot.fees = Math.max(0, lot.fees - feePortion);
+          sharesToSell = 0;
+        }
+      }
+
+      // If sell shares exceed recorded buy lots (e.g. historical short or missing earlier buy rows), fallback cost
+      if (sharesToSell > 0) {
+        const estimatedUnitCost = tx.price; // fallback to avoid artificial 100% gain
+        totalCostBasis += sharesToSell * estimatedUnitCost;
+      }
+
+      const grossProceeds = tx.shares * tx.price;
+      const sellFees = tx.fees || 0;
+      const netProceeds = grossProceeds - sellFees;
+      const netOutlay = totalCostBasis + totalAllocatedBuyFees;
+      const txRealizedPnlEgp = netProceeds - netOutlay;
+      const txRealizedPnlPercent = netOutlay > 0 ? (txRealizedPnlEgp / netOutlay) * 100 : 0;
+      const txOutcome: 'WIN' | 'LOSS' | 'BREAKEVEN' =
+        txRealizedPnlEgp > 0.01 ? 'WIN' : txRealizedPnlEgp < -0.01 ? 'LOSS' : 'BREAKEVEN';
+
+      const buyTime = new Date(firstBuyDate).getTime();
+      const sellTime = new Date(tx.date).getTime();
+      const diffDays = Math.round((sellTime - buyTime) / (1000 * 60 * 60 * 24));
+      const holdingDays = Math.max(1, isNaN(diffDays) ? 7 : diffDays);
+
+      // Populate transaction with calculated financial outcome
+      tx.realizedPnlEgp = Math.round(txRealizedPnlEgp * 100) / 100;
+      tx.realizedPnlPercent = Math.round(txRealizedPnlPercent * 100) / 100;
+      tx.outcome = txOutcome;
+      tx.holdingDays = holdingDays;
+      tx.totalAmount = netProceeds;
+
+      const cycleKey = cycleTag || `${ticker}-C${tradeCycle || idx}`;
+
+      if (closedCyclesMap[cycleKey]) {
+        // Aggregate into existing cycle (e.g. TAQA-C1 with multiple partial sell orders)
+        const c = closedCyclesMap[cycleKey];
+        c.shares += tx.shares;
+        c.totalCostBasis += totalCostBasis;
+        c.totalGrossProceeds += grossProceeds;
+        c.buyFees += totalAllocatedBuyFees;
+        c.sellFees += sellFees;
+        c.lastSellDate = tx.date;
+      } else {
+        closedCyclesMap[cycleKey] = {
+          id: `ct-${cycleKey}`,
+          ticker,
+          companyName: tx.companyName,
+          sector: tx.sector,
+          shares: tx.shares,
+          totalCostBasis,
+          totalGrossProceeds: grossProceeds,
+          buyFees: totalAllocatedBuyFees,
+          sellFees,
+          firstBuyDate,
+          lastSellDate: tx.date,
+          notes: tx.notes,
+          tradeCycle,
+          cycleTag: cycleKey
+        };
+      }
+    }
+  }
+
+  // Convert closedCyclesMap to closedTrades
+  const closedTrades: ClosedTrade[] = Object.values(closedCyclesMap).map((c) => {
+    const totalFees = c.buyFees + c.sellFees;
+    const avgBuyPrice = c.shares > 0 ? c.totalCostBasis / c.shares : 0;
+    const avgSellPrice = c.shares > 0 ? c.totalGrossProceeds / c.shares : 0;
+    const netProceeds = c.totalGrossProceeds - c.sellFees;
+    const netOutlay = c.totalCostBasis + c.buyFees;
+    const realizedPnlEgp = netProceeds - netOutlay;
+    const realizedPnlPercent = netOutlay > 0 ? (realizedPnlEgp / netOutlay) * 100 : 0;
+    const outcome = realizedPnlEgp > 0 ? 'WIN' : realizedPnlEgp < 0 ? 'LOSS' : 'BREAKEVEN';
+
+    const buyTime = new Date(c.firstBuyDate).getTime();
+    const sellTime = new Date(c.lastSellDate).getTime();
+    const diffDays = Math.round((sellTime - buyTime) / (1000 * 60 * 60 * 24));
+    const holdingDays = Math.max(1, isNaN(diffDays) ? 14 : diffDays);
+
+    return {
+      id: c.id,
+      ticker: c.ticker,
+      companyName: c.companyName,
+      sector: c.sector,
+      shares: c.shares,
+      buyPrice: Math.round(avgBuyPrice * 100) / 100,
+      sellPrice: Math.round(avgSellPrice * 100) / 100,
+      buyDate: c.firstBuyDate,
+      sellDate: c.lastSellDate,
+      holdingDays,
+      buyFees: Math.round(c.buyFees * 100) / 100,
+      sellFees: Math.round(c.sellFees * 100) / 100,
+      totalFees: Math.round(totalFees * 100) / 100,
+      realizedPnlEgp: Math.round(realizedPnlEgp * 100) / 100,
+      realizedPnlPercent: Math.round(realizedPnlPercent * 100) / 100,
+      outcome,
+      tradeType: 'Swing',
+      tradeCycle: c.tradeCycle,
+      cycleTag: c.cycleTag,
+      notes: c.notes
+    };
+  });
+
+  // Generate active positions from remaining open lots
+  const positions: Position[] = [];
+
+  for (const [ticker, lots] of Object.entries(openLotsByTicker)) {
+    const remainingLots = lots.filter(l => l.shares > 0);
+    if (remainingLots.length === 0) continue;
+
+    const totalShares = remainingLots.reduce((acc, l) => acc + l.shares, 0);
+    const totalCost = remainingLots.reduce((acc, l) => acc + (l.shares * l.price), 0);
+    const totalUnallocatedFees = remainingLots.reduce((acc, l) => acc + l.fees, 0);
+    const avgBuyPrice = totalShares > 0 ? totalCost / totalShares : remainingLots[0].price;
+
+    const firstLot = remainingLots[0];
+    const lastLot = remainingLots[remainingLots.length - 1];
+    const dict = EGX_STOCK_DICTIONARY[ticker];
+    const companyName = dict?.nameEn || `${ticker} Corp`;
+    const sector = dict?.sector || 'Other';
+    const currentPrice = livePrices[ticker] || avgBuyPrice;
+
+    positions.push({
+      id: `pos-${ticker}-${Date.now()}`,
+      ticker,
+      companyName,
+      sector,
+      shares: totalShares,
+      avgBuyPrice: Math.round(avgBuyPrice * 100) / 100,
+      currentPrice,
+      buyDate: firstLot.date,
+      totalFees: Math.round(totalUnallocatedFees * 100) / 100,
+      targetPrice: lastLot.targetPrice,
+      stopLoss: lastLot.stopLoss,
+      notes: remainingLots.length > 1 ? `Consolidated ${remainingLots.length} DCA tranches` : firstLot.notes
+    });
+  }
+
+  return { positions, closedTrades, transactions: sortedTx };
 }
 
 /**
  * Intelligent parser that can parse:
- * 1. Active Stock Positions sheets
- * 2. Transaction Logger sheets
- * 3. Closed Trades sheets
- * 4. Hybrid sheets with mixed Arabic/English headers
+ * 1. Transaction Logger sheets (source of truth with BUY/SELL history)
+ * 2. Ticker Directory sheets (reference with tickers & current prices)
+ * 3. Disregards redundant Portfolio overview sheets in favor of true transaction reconciliation
  */
-export function parseSheetRows(rows: string[][]): SheetParseResult {
+export function parseSheetRows(
+  rows: string[][],
+  tabNameHint?: string,
+  livePrices: Record<string, number> = {}
+): SheetParseResult {
   if (!rows || rows.length < 2) {
     return {
       positions: [],
       closedTrades: [],
       transactions: [],
       rawRowsCount: 0,
-      sheetTitle: 'Empty Sheet',
+      sheetTitle: tabNameHint || 'Empty Sheet',
       detectedColumns: []
     };
   }
@@ -178,31 +610,64 @@ export function parseSheetRows(rows: string[][]): SheetParseResult {
 
   // Find column indices with extensive synonyms
   const getCol = (possibleNames: string[]) => {
-    return headers.findIndex(h => possibleNames.some(name => h.includes(name.toLowerCase())));
+    return headers.findIndex(h => possibleNames.some(name => h === name.toLowerCase() || h.includes(name.toLowerCase())));
   };
 
+  const tradeIdIdx = getCol(['trade id', 'trade #', 'trade', 'id', 'رقم العملية', 'رقم الصفقة']);
+  const dateIdx = getCol(['date', 'buy date', 'trade date', 'timestamp', 'تاريخ', 'تاريخ العملية']);
+  const actionIdx = getCol(['action', 'type', 'side', 'operation', 'transaction type', 'نوع العملية', 'النوع', 'العملية']);
   const tickerIdx = getCol(['ticker', 'symbol', 'code', 'stock', 'سهم', 'الرمز', 'كود', 'السهم', 'كود السهم', 'رمز السهم', 'اسم السهم']);
-  const companyIdx = getCol(['company', 'name', 'security', 'description', 'اسم الشركة', 'الشركة', 'بيان']);
+  const companyIdx = getCol(['company name', 'company', 'name', 'security', 'description', 'اسم الشركة', 'الشركة', 'بيان']);
   const sectorIdx = getCol(['sector', 'industry', 'القطاع', 'قطاع']);
   const sharesIdx = getCol(['shares', 'qty', 'quantity', 'volume', 'units', 'no of shares', 'الكمية', 'عدد الأسهم', 'العدد', 'كمية']);
-  const buyPriceIdx = getCol(['buy price', 'avg price', 'purchase price', 'cost', 'avg cost', 'cost/share', 'entry price', 'سعر الشراء', 'متوسط التكلفة', 'التكلفة', 'سعر الدخول', 'الشراء']);
-  const currentPriceIdx = getCol(['current price', 'market price', 'cmp', 'last price', 'last', 'close', 'سعر السوق', 'السعر الحالي', 'سعر الإغلاق', 'سعر اليوم']);
-  const genericPriceIdx = getCol(['price', 'السعر', 'سعر']);
-  const buyDateIdx = getCol(['buy date', 'purchase date', 'trade date', 'entry date', 'تاريخ الشراء', 'تاريخ العملية', 'date', 'تاريخ']);
+  const priceIdx = getCol(['price / share', 'price/share', 'price', 'buy price', 'avg price', 'purchase price', 'cost', 'avg cost', 'cost/share', 'entry price', 'سعر السهم', 'سعر الشراء', 'متوسط التكلفة', 'التكلفة', 'السعر']);
+  const currentPriceIdx = getCol(['current price (egp)', 'current price', 'market price', 'cmp', 'last price', 'last', 'close', 'سعر السوق', 'السعر الحالي', 'سعر الإغلاق', 'سعر اليوم']);
+  const grossIdx = getCol(['gross trade value', 'gross value', 'gross', 'قيمة التداول', 'إجمالي القيمة']);
+  const feesIdx = getCol(['brokerage fee', 'fee', 'fees', 'commission', 'commissions', 'عمولة', 'مصاريف', 'العمولة']);
+  const netCashIdx = getCol(['net cash impact', 'net cash', 'net impact', 'صافي النقد']);
+  const notesIdx = getCol(['strategy / notes', 'strategy/notes', 'strategy', 'notes', 'comment', 'comments', 'remarks', 'ملاحظات', 'استراتيجية']);
+  const runningSharesIdx = getCol(['running shares', 'remaining shares', 'balance shares', 'الأسهم المتبقية', 'المتبقي']);
+  const tradeCycleIdx = getCol(['trade cycle', 'cycle', 'دورة التداول', 'الدورة']);
+  const cycleTagIdx = getCol(['cycle tag', 'tag', 'رمز الدورة']);
   const targetIdx = getCol(['target', 'tp', 'target price', 'take profit', 'هدف', 'الهدف', 'سعر الهدف']);
   const stopLossIdx = getCol(['stop', 'sl', 'stop loss', 'وقف', 'وقف الخسارة', 'وقف خسارة']);
-  const statusIdx = getCol(['status', 'state', 'حالة', 'الحالة', 'open/closed']);
-  const typeIdx = getCol(['type', 'action', 'side', 'operation', 'نوع العملية', 'النوع', 'نوع']);
-  const sellPriceIdx = getCol(['sell price', 'exit price', 'sold price', 'سعر البيع', 'البيع', 'سعر الخروج']);
-  const sellDateIdx = getCol(['sell date', 'exit date', 'close date', 'تاريخ البيع', 'تاريخ الخروج']);
-  const feesIdx = getCol(['fee', 'fees', 'commission', 'commissions', 'brokerage', 'عمولة', 'مصاريف', 'العمولة']);
-  const realizedPnlIdx = getCol(['realized', 'realized pnl', 'pnl', 'p&l', 'profit', 'gain/loss', 'الربح', 'الأرباح', 'صافي الربح']);
-  const totalAmountIdx = getCol(['total', 'amount', 'total amount', 'value', 'outlay', 'proceeds', 'إجمالي', 'القيمة', 'المبلغ']);
-  const notesIdx = getCol(['notes', 'comment', 'comments', 'strategy', 'remarks', 'ملاحظات', 'استراتيجية']);
 
-  const positions: Position[] = [];
-  const closedTrades: ClosedTrade[] = [];
-  const transactions: TradeTransaction[] = [];
+  const detectedColumns = rawHeaders.filter(h => h && h.trim().length > 0);
+
+  // 1. Check if this is the Ticker Directory sheet
+  const isExplicitTickerTab = (tabNameHint || '').toLowerCase().includes('ticker');
+  const hasOnlyDirectoryColumns = tickerIdx !== -1 && (currentPriceIdx !== -1 || priceIdx !== -1) && actionIdx === -1 && sharesIdx === -1 && tradeIdIdx === -1;
+
+  if (isExplicitTickerTab || hasOnlyDirectoryColumns) {
+    const tickerQuotes: Record<string, number> = {};
+    for (let i = headerRowIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0) continue;
+      const rawTicker = (tickerIdx !== -1 ? row[tickerIdx] : row[0]) || '';
+      const cleanTicker = String(rawTicker).replace('.CA', '').replace(/^EGX:/, '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (!cleanTicker) continue;
+
+      const pCol = currentPriceIdx !== -1 ? currentPriceIdx : priceIdx;
+      const priceVal = pCol !== -1 ? parseSheetNumber(row[pCol], 0) : 0;
+      if (priceVal > 0) {
+        tickerQuotes[cleanTicker] = priceVal;
+      }
+    }
+
+    return {
+      positions: [],
+      closedTrades: [],
+      transactions: [],
+      rawRowsCount: rows.length - (headerRowIdx + 1),
+      sheetTitle: tabNameHint || 'Ticker Directory',
+      detectedColumns,
+      sheetType: 'ticker_directory',
+      tickerQuotes
+    };
+  }
+
+  // 2. Parse as Transaction Logger ledger
+  const rawTransactions: TradeTransaction[] = [];
 
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -213,8 +678,7 @@ export function parseSheetRows(rows: string[][]): SheetParseResult {
     if (tickerIdx !== -1 && row[tickerIdx]) {
       rawTicker = String(row[tickerIdx]).trim().toUpperCase();
     } else {
-      // Fallback: look through first 4 cells for a likely stock code (2-5 uppercase chars)
-      for (let c = 0; c < Math.min(row.length, 4); c++) {
+      for (let c = 0; c < Math.min(row.length, 6); c++) {
         const val = String(row[c] || '').trim().toUpperCase();
         if (/^[A-Z]{2,6}(\.CA)?$/.test(val)) {
           rawTicker = val;
@@ -224,212 +688,153 @@ export function parseSheetRows(rows: string[][]): SheetParseResult {
     }
 
     if (!rawTicker) continue;
-    const cleanTicker = rawTicker.replace('.CA', '').replace(/[^A-Z0-9]/g, '');
+    const cleanTicker = rawTicker.replace('.CA', '').replace(/^EGX:/, '').replace(/[^A-Z0-9]/g, '').toUpperCase();
     if (!cleanTicker) continue;
 
+    const dict = EGX_STOCK_DICTIONARY[cleanTicker];
     const companyName = companyIdx !== -1 && row[companyIdx] && String(row[companyIdx]).trim()
       ? String(row[companyIdx]).trim()
-      : `${cleanTicker} Corp`;
+      : (dict?.nameEn || `${cleanTicker} Corp`);
 
-    const rawSector = sectorIdx !== -1 && row[sectorIdx] ? String(row[sectorIdx]).trim() : 'Other';
+    const rawSector = sectorIdx !== -1 && row[sectorIdx] ? String(row[sectorIdx]).trim() : (dict?.sector || 'Other');
     const sector: Sector = (rawSector as Sector) || 'Other';
 
-    const shares = sharesIdx !== -1 ? Math.abs(parseSheetNumber(row[sharesIdx], 100)) : 100;
-    
-    // Price resolution
-    let buyPrice = buyPriceIdx !== -1 ? parseSheetNumber(row[buyPriceIdx], 0) : 0;
-    if (buyPrice === 0 && genericPriceIdx !== -1) {
-      buyPrice = parseSheetNumber(row[genericPriceIdx], 0);
-    }
-    if (buyPrice === 0) buyPrice = 10; // safe fallback
+    const shares = sharesIdx !== -1 ? Math.abs(parseSheetNumber(row[sharesIdx], 0)) : 0;
+    if (shares === 0) continue;
 
-    const currentPrice = currentPriceIdx !== -1 
-      ? parseSheetNumber(row[currentPriceIdx], buyPrice) 
-      : buyPrice;
+    const price = priceIdx !== -1 ? parseSheetNumber(row[priceIdx], 0) : (currentPriceIdx !== -1 ? parseSheetNumber(row[currentPriceIdx], 0) : 0);
+    if (price === 0) continue;
 
-    const dateStr = buyDateIdx !== -1 && row[buyDateIdx] 
-      ? String(row[buyDateIdx]).trim() 
-      : new Date().toISOString().split('T')[0];
+    const dateStr = dateIdx !== -1 && row[dateIdx] ? parseSheetDate(row[dateIdx]) : new Date().toISOString().split('T')[0];
+    const fees = feesIdx !== -1 ? Math.abs(parseSheetNumber(row[feesIdx], 0)) : 0;
+    const rawAction = actionIdx !== -1 && row[actionIdx] ? String(row[actionIdx]).trim().toLowerCase() : '';
+    const isSell = rawAction.includes('sell') || rawAction.includes('بيع') || rawAction.includes('خروج') || rawAction.includes('exit');
+    const type: 'BUY' | 'SELL' = isSell ? 'SELL' : 'BUY';
 
+    const tradeId = tradeIdIdx !== -1 ? parseSheetNumber(row[tradeIdIdx], i) : i;
+    const tradeCycle = tradeCycleIdx !== -1 ? parseSheetNumber(row[tradeCycleIdx], 1) : 1;
+    const cycleTag = cycleTagIdx !== -1 && row[cycleTagIdx] && String(row[cycleTagIdx]).trim()
+      ? String(row[cycleTagIdx]).trim()
+      : `${cleanTicker}-C${tradeCycle}`;
+
+    const runningShares = runningSharesIdx !== -1 ? parseSheetNumber(row[runningSharesIdx], 0) : undefined;
+    const grossTradeValue = grossIdx !== -1 ? Math.abs(parseSheetNumber(row[grossIdx], shares * price)) : (shares * price);
+    const netCashImpact = netCashIdx !== -1 ? parseSheetNumber(row[netCashIdx], type === 'BUY' ? -(grossTradeValue + fees) : (grossTradeValue - fees)) : (type === 'BUY' ? -(grossTradeValue + fees) : (grossTradeValue - fees));
+
+    const notes = notesIdx !== -1 && row[notesIdx] ? String(row[notesIdx]).trim() : undefined;
     const targetPrice = targetIdx !== -1 ? parseSheetNumber(row[targetIdx], 0) || undefined : undefined;
     const stopLoss = stopLossIdx !== -1 ? parseSheetNumber(row[stopLossIdx], 0) || undefined : undefined;
-    const notes = notesIdx !== -1 && row[notesIdx] ? String(row[notesIdx]).trim() : undefined;
-    const fees = feesIdx !== -1 ? parseSheetNumber(row[feesIdx], 0) : 0;
-    
-    // Status & Type detection
-    const statusVal = statusIdx !== -1 && row[statusIdx] ? String(row[statusIdx]).trim().toLowerCase() : '';
-    const typeVal = typeIdx !== -1 && row[typeIdx] ? String(row[typeIdx]).trim().toLowerCase() : '';
-    const sellPrice = sellPriceIdx !== -1 ? parseSheetNumber(row[sellPriceIdx], 0) : 0;
-    const sellDate = sellDateIdx !== -1 && row[sellDateIdx] ? String(row[sellDateIdx]).trim() : '';
-    const realizedPnl = realizedPnlIdx !== -1 ? parseSheetNumber(row[realizedPnlIdx], 0) : 0;
 
-    const isSellTransaction = typeVal.includes('sell') || typeVal.includes('بيع') || typeVal.includes('exit');
-    const isClosed = statusVal.includes('closed') || statusVal.includes('sold') || statusVal.includes('مغلق') || isSellTransaction || sellPrice > 0;
-
-    if (isClosed) {
-      const actualSellPrice = sellPrice > 0 ? sellPrice : (buyPrice + (shares > 0 && realizedPnl !== 0 ? realizedPnl / shares : 0));
-      const calcRealizedPnl = realizedPnl !== 0 ? realizedPnl : (actualSellPrice - buyPrice) * shares - fees;
-      const calcPnlPercent = buyPrice > 0 ? ((actualSellPrice - buyPrice) / buyPrice) * 100 : 0;
-      const outcome = calcRealizedPnl > 0 ? 'WIN' : calcRealizedPnl < 0 ? 'LOSS' : 'BREAKEVEN';
-
-      closedTrades.push({
-        id: `imported-ct-${i}-${cleanTicker}`,
-        ticker: cleanTicker,
-        companyName,
-        sector,
-        shares,
-        buyPrice,
-        sellPrice: actualSellPrice,
-        buyDate: dateStr,
-        sellDate: sellDate || dateStr || new Date().toISOString().split('T')[0],
-        holdingDays: 30,
-        realizedPnlEgp: calcRealizedPnl,
-        realizedPnlPercent: calcPnlPercent,
-        totalFees: fees,
-        outcome,
-        tradeType: 'Swing',
-        notes
-      });
-
-      transactions.push({
-        id: `imported-tx-sell-${i}-${cleanTicker}`,
-        type: 'SELL',
-        ticker: cleanTicker,
-        companyName,
-        sector,
-        shares,
-        price: actualSellPrice,
-        date: sellDate || dateStr,
-        fees,
-        totalAmount: (shares * actualSellPrice) - fees,
-        realizedPnlEgp: calcRealizedPnl,
-        realizedPnlPercent: calcPnlPercent,
-        outcome,
-        notes
-      });
-    } else {
-      positions.push({
-        id: `imported-pos-${i}-${cleanTicker}`,
-        ticker: cleanTicker,
-        companyName,
-        sector,
-        shares,
-        avgBuyPrice: buyPrice,
-        currentPrice: currentPrice || buyPrice,
-        buyDate: dateStr,
-        totalFees: fees,
-        targetPrice,
-        stopLoss,
-        notes
-      });
-
-      transactions.push({
-        id: `imported-tx-buy-${i}-${cleanTicker}`,
-        type: 'BUY',
-        ticker: cleanTicker,
-        companyName,
-        sector,
-        shares,
-        price: buyPrice,
-        date: dateStr,
-        fees,
-        totalAmount: (shares * buyPrice) + fees,
-        targetPrice,
-        stopLoss,
-        notes
-      });
-    }
+    rawTransactions.push({
+      id: `tx-${tradeId}-${cleanTicker}-${i}`,
+      type,
+      ticker: cleanTicker,
+      companyName,
+      sector,
+      shares,
+      price,
+      date: dateStr,
+      fees,
+      totalAmount: Math.abs(netCashImpact) || (type === 'BUY' ? (shares * price) + fees : (shares * price) - fees),
+      tradeId,
+      tradeCycle,
+      cycleTag,
+      runningShares,
+      grossTradeValue,
+      netCashImpact,
+      targetPrice,
+      stopLoss,
+      notes
+    });
   }
 
+  // Reconstruct true active positions and closed trades from transaction ledger
+  const reconstructed = reconstructPortfolioFromTransactions(rawTransactions, livePrices);
+
   return {
-    positions,
-    closedTrades,
-    transactions,
-    rawRowsCount: rows.length - (headerRowIdx + 1),
-    sheetTitle: 'Parsed Sheet',
-    detectedColumns: rawHeaders
+    positions: reconstructed.positions,
+    closedTrades: reconstructed.closedTrades,
+    transactions: rawTransactions,
+    rawRowsCount: rawTransactions.length,
+    sheetTitle: tabNameHint || 'Transaction Logger',
+    detectedColumns,
+    sheetType: 'transaction_logger'
   };
 }
 
-export function generateSampleCsv(): string {
-  const headers = ['Ticker', 'Company Name', 'Sector', 'Shares', 'Buy Price', 'Current Price', 'Buy Date', 'Target Price', 'Stop Loss', 'Status', 'Sell Price', 'Notes'];
-  const sampleRows = [
-    ['COMI', 'Commercial International Bank (CIB)', 'Banking', '2500', '76.40', '88.50', '2026-06-15', '98.00', '83.50', 'Open', '', 'Core banking allocation'],
-    ['ESRS', 'Ezz Steel', 'Basic Resources & Steel', '1800', '98.50', '118.20', '2026-07-20', '135.00', '109.00', 'Open', '', 'Export revenue momentum'],
-    ['TMGH', 'Talaat Moustafa Group', 'Real Estate & Construction', '3000', '48.20', '68.50', '2026-04-10', '75.00', '58.50', 'Closed', '68.50', 'Sold near target resistance'],
-    ['SWDY', 'Elsewedy Electric', 'Industrial Goods & Services', '3200', '48.00', '54.20', '2026-08-05', '62.00', '49.50', 'Open', '', 'Regional cable orders'],
-    ['ABUK', 'Abu Qir Fertilizers', 'Petrochemicals & Fertilizers', '2000', '74.20', '72.80', '2026-08-28', '84.00', '68.00', 'Open', '', 'Bottom range support entry']
-  ];
+/**
+ * Fetches public Google Sheet data via CSV export endpoint.
+ */
+export async function fetchPublicSheetCsv(
+  sheetUrl: string,
+  tabName?: string
+): Promise<string[][]> {
+  const spreadsheetId = extractSpreadsheetId(sheetUrl);
+  if (!spreadsheetId) {
+    throw new Error('Invalid Google Sheets URL or Spreadsheet ID.');
+  }
 
-  return [headers.join(','), ...sampleRows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+  const gid = extractGid(sheetUrl);
+  
+  // Construct candidates for CSV download
+  const candidateUrls: string[] = [];
+
+  if (tabName) {
+    candidateUrls.push(
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`,
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&sheet=${encodeURIComponent(tabName)}`
+    );
+  }
+
+  if (gid) {
+    candidateUrls.push(
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`,
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&gid=${gid}`
+    );
+  }
+
+  // Common tab candidates (prioritizing "Transaction logger" as requested)
+  const commonTabs = ['Transaction logger', 'Transaction Logger', 'Transactions', 'Portfolio dashboard', 'Active Positions', 'Sheet1'];
+  for (const tab of commonTabs) {
+    candidateUrls.push(
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`
+    );
+  }
+
+  candidateUrls.push(
+    `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`,
+    `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv`
+  );
+
+  let lastError: any = null;
+
+  for (const url of candidateUrls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const text = await res.text();
+        // Verify it contains actual CSV data (not an HTML error page)
+        if (text && !text.includes('<!DOCTYPE html>') && text.includes(',')) {
+          const rows = parseCsvText(text);
+          if (rows.length >= 2) {
+            return rows;
+          }
+        }
+      }
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw new Error(
+    lastError?.message ||
+    'Could not load spreadsheet data. Make sure the Google Sheet sharing setting is set to "Anyone with the link can view".'
+  );
 }
 
 /**
- * Super-resilient public sheet fetcher that tries multiple export endpoints and falls back gracefully.
+ * Robust CSV parser handling multiline quotes and commas.
  */
-export async function fetchPublicSheetCsv(
-  spreadsheetId: string, 
-  sheetName?: string,
-  gid?: string | null
-): Promise<string[][]> {
-  const cleanId = extractSpreadsheetId(spreadsheetId);
-  const cleanGid = gid || extractGid(spreadsheetId);
-
-  const urlsToTry: string[] = [];
-
-  if (cleanGid) {
-    urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/export?format=csv&gid=${cleanGid}`);
-    urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&gid=${cleanGid}`);
-  }
-
-  if (sheetName && sheetName.trim() && sheetName !== 'Sheet1') {
-    urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName.trim())}`);
-  }
-
-  // Generic direct export (returns active/first sheet)
-  urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/export?format=csv`);
-  urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv`);
-
-  // Common sheet tab names in EGX / finance templates
-  const commonTabNames = ['Portfolio', 'Active Positions', 'Positions', 'Holdings', 'Transaction Logger', 'Transactions', 'Trade Journal', 'Stocks Directory', 'EGX Directory', 'Sheet1'];
-  for (const tab of commonTabNames) {
-    if (tab !== sheetName) {
-      urlsToTry.push(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`);
-    }
-  }
-
-  let lastError: Error | null = null;
-
-  for (const url of urlsToTry) {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-
-      const text = await res.text();
-      // Verify response isn't a google auth error html or json error payload
-      if (text.includes('google.visualization.Query.setResponse') && text.includes('"status":"error"')) {
-        continue;
-      }
-      if (text.trim().startsWith('<!DOCTYPE html>') && text.includes('accounts.google.com')) {
-        continue;
-      }
-
-      const rows = parseCsvText(text);
-      if (rows && rows.length >= 2) {
-        // Check if there is meaningful data or ticker headers
-        const parsed = parseSheetRows(rows);
-        if (parsed.positions.length > 0 || parsed.closedTrades.length > 0 || rows.length >= 2) {
-          return rows;
-        }
-      }
-    } catch (e: any) {
-      lastError = e;
-    }
-  }
-
-  throw lastError || new Error(`Could not access Google Sheet data. Please ensure the Google Sheet is shared with "Anyone with the link can view/edit", or Sign In with Google.`);
-}
-
 export function parseCsvText(csvText: string): string[][] {
   const rows: string[][] = [];
   let currentRow: string[] = [];
@@ -475,6 +880,121 @@ export function parseCsvText(csvText: string): string[][] {
   return rows;
 }
 
+/**
+ * Automatically loads all relevant tabs from the spreadsheet:
+ * 1. Finds and reads "Ticker Directory" (or similar) to get current market quotes.
+ * 2. Finds and reads "Transaction logger" (or similar) to get all trade executions.
+ * 3. Explicitly ignores "Portfolio dashboard" because open positions are dynamically calculated.
+ * 4. Reconstructs active positions and closed trade cycles.
+ */
+export async function fetchAndReconcileAllTabs(
+  spreadsheetId: string,
+  accessToken?: string | null,
+  publicSheetUrl?: string,
+  livePrices: Record<string, number> = {}
+): Promise<SheetParseResult & { tabNamesFound: string[]; ignoredTabs: string[] }> {
+  let sheets: string[] = [];
+  const cleanId = extractSpreadsheetId(spreadsheetId || publicSheetUrl || '');
+
+  if (accessToken && cleanId) {
+    try {
+      const meta = await fetchSpreadsheetMetadata(cleanId, accessToken);
+      sheets = meta.sheets || [];
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (sheets.length === 0) {
+    sheets = ['Transaction logger', 'Ticker Directory', 'Transactions', 'Sheet1'];
+  }
+
+  const ignoredTabs: string[] = [];
+  let combinedQuotes: Record<string, number> = { ...livePrices };
+  let allTransactions: TradeTransaction[] = [];
+  let detectedColumns: string[] = [];
+  let rawRowsCount = 0;
+  const tabNamesFound: string[] = [];
+
+  // 1. Fetch Ticker Directory first if present
+  const tickerTabName = sheets.find(s => {
+    const l = s.toLowerCase();
+    return l.includes('ticker') || l.includes('directory') || l.includes('quote') || l.includes('price');
+  });
+
+  if (tickerTabName) {
+    tabNamesFound.push(tickerTabName);
+    try {
+      let rows: string[][] = [];
+      if (accessToken && cleanId) {
+        rows = await fetchSheetValues(cleanId, `${tickerTabName}!A1:Z500`, accessToken);
+      } else if (publicSheetUrl) {
+        rows = await fetchPublicSheetCsv(publicSheetUrl, tickerTabName);
+      }
+
+      if (rows && rows.length >= 2) {
+        const parsedQuotes = parseSheetRows(rows, tickerTabName, combinedQuotes);
+        if (parsedQuotes.tickerQuotes) {
+          combinedQuotes = { ...combinedQuotes, ...parsedQuotes.tickerQuotes };
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not load ticker directory tab "${tickerTabName}":`, err);
+    }
+  }
+
+  // 2. Identify the transaction ledger tab
+  const txTabName = sheets.find(s => {
+    const l = s.toLowerCase();
+    return l.includes('transaction') || l.includes('trade') || l.includes('log') || l.includes('ledger') || l.includes('صفقات') || l.includes('عمليات');
+  }) || (sheets.find(s => !s.toLowerCase().includes('portfolio') && !s.toLowerCase().includes('dashboard') && s !== tickerTabName) || 'Transaction logger');
+
+  // Mark Portfolio dashboard as ignored
+  sheets.forEach(s => {
+    const l = s.toLowerCase();
+    if (l.includes('portfolio') || l.includes('dashboard') || l.includes('overview') || l.includes('ملخص')) {
+      ignoredTabs.push(s);
+    }
+  });
+
+  if (txTabName) {
+    tabNamesFound.push(txTabName);
+    try {
+      let rows: string[][] = [];
+      if (accessToken && cleanId) {
+        rows = await fetchSheetValues(cleanId, `${txTabName}!A1:Z500`, accessToken);
+      } else if (publicSheetUrl) {
+        rows = await fetchPublicSheetCsv(publicSheetUrl, txTabName);
+      }
+
+      if (rows && rows.length >= 2) {
+        const parsedTx = parseSheetRows(rows, txTabName, combinedQuotes);
+        allTransactions = parsedTx.transactions;
+        detectedColumns = parsedTx.detectedColumns;
+        rawRowsCount = parsedTx.rawRowsCount;
+      }
+    } catch (err) {
+      console.warn(`Could not load transaction logger tab "${txTabName}":`, err);
+    }
+  }
+
+  // 3. Reconstruct positions and closed cycles from transactions + combined quotes
+  const reconstructed = reconstructPortfolioFromTransactions(allTransactions, combinedQuotes);
+
+  return {
+    positions: reconstructed.positions,
+    closedTrades: reconstructed.closedTrades,
+    transactions: reconstructed.transactions || allTransactions,
+    rawRowsCount,
+    sheetTitle: txTabName || 'Transaction Logger',
+    detectedColumns,
+    sheetType: 'transaction_logger',
+    tickerQuotes: combinedQuotes,
+    tabNamesFound,
+    ignoredTabs
+  };
+}
+
 // --------------------------------------------------------------------------
 // GOOGLE SHEETS API WRITING & SYNCING FUNCTIONS (OAuth & Sheets API v4)
 // --------------------------------------------------------------------------
@@ -489,7 +1009,7 @@ export async function ensureSheetTabExists(
 ): Promise<void> {
   try {
     const meta = await fetchSpreadsheetMetadata(spreadsheetId, accessToken);
-    if (meta.sheets.includes(tabTitle)) {
+    if (meta.sheets.some(s => s.toLowerCase() === tabTitle.toLowerCase())) {
       return; // Tab already exists
     }
 
@@ -507,7 +1027,7 @@ export async function ensureSheetTabExists(
               properties: {
                 title: tabTitle,
                 gridProperties: {
-                  rowCount: 200,
+                  rowCount: 300,
                   columnCount: 20,
                   frozenRowCount: 1,
                 },
@@ -523,13 +1043,13 @@ export async function ensureSheetTabExists(
 }
 
 /**
- * Appends a transaction to the "Transaction Logger" sheet in the connected Google Sheet.
+ * Appends a transaction to the "Transaction logger" tab in the connected Google Sheet.
  */
 export async function appendTransactionToSheet(
   spreadsheetId: string,
   tx: TradeTransaction,
   accessToken: string,
-  tabName = 'Transaction Logger'
+  tabName = 'Transaction logger'
 ): Promise<{ success: boolean; message: string }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
@@ -604,17 +1124,31 @@ export async function appendTransactionToSheet(
 }
 
 /**
- * Updates or creates the "Stock Directory" tab with latest live EGX quotes and technical levels.
+ * Updates the "ticker directory" tab in the Google Sheet with latest live EGX quotes and technical levels.
  */
 export async function updateStockDirectoryInSheet(
   spreadsheetId: string,
   tickers: EGXTicker[],
   accessToken: string,
-  tabName = 'Stock Directory'
+  tabName = 'ticker directory'
 ): Promise<{ success: boolean; message: string }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
-    await ensureSheetTabExists(cleanId, tabName, accessToken);
+    
+    // Check if user has "ticker directory" or "Stock Directory"
+    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ sheets: [] }));
+    let targetTab = tabName;
+    if (meta.sheets.includes('ticker directory')) {
+      targetTab = 'ticker directory';
+    } else if (meta.sheets.includes('Ticker Directory')) {
+      targetTab = 'Ticker Directory';
+    } else if (meta.sheets.includes('Stock Directory')) {
+      targetTab = 'Stock Directory';
+    } else if (meta.sheets.includes('Stocks & Prices')) {
+      targetTab = 'Stocks & Prices';
+    } else {
+      await ensureSheetTabExists(cleanId, targetTab, accessToken);
+    }
 
     const headers = [
       'Ticker',
@@ -644,24 +1178,24 @@ export async function updateStockDirectoryInSheet(
       t.sector,
       t.lastPrice,
       `${t.changePercent >= 0 ? '+' : ''}${t.changePercent.toFixed(2)}%`,
-      t.dayHigh,
-      t.dayLow,
-      t.yearHigh,
-      t.yearLow,
-      t.volume,
-      t.trendStatus,
-      t.rsi14,
-      t.support,
-      t.resistance,
-      t.targetPrice,
-      t.stopLoss,
+      t.dayHigh || '',
+      t.dayLow || '',
+      t.yearHigh || '',
+      t.yearLow || '',
+      t.volume || 0,
+      t.trendStatus || '',
+      t.rsi14 || '',
+      t.support || '',
+      t.resistance || '',
+      t.targetPrice || '',
+      t.stopLoss || '',
       t.lastUpdated || new Date().toISOString()
     ]);
 
     const values = [headers, ...rows];
 
     const updateRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(tabName)}!A1:R${values.length}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(targetTab)}!A1:R${values.length}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
@@ -681,11 +1215,11 @@ export async function updateStockDirectoryInSheet(
 
     return { 
       success: true, 
-      message: `Successfully synchronized ${tickers.length} EGX equities to "${tabName}" in Google Sheets` 
+      message: `Successfully synchronized ${tickers.length} EGX equities to "${targetTab}" in Google Sheets` 
     };
   } catch (err: any) {
-    console.error('Failed to update Stock Directory in Google Sheet:', err);
-    return { success: false, message: err.message || 'Failed to update Stock Directory in Google Sheet' };
+    console.error('Failed to update ticker directory in Google Sheet:', err);
+    return { success: false, message: err.message || 'Failed to update ticker directory in Google Sheet' };
   }
 }
 
@@ -703,8 +1237,43 @@ export async function syncAllPortfolioToSheet(
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
-    // 1. Sync Active Positions tab
-    await ensureSheetTabExists(cleanId, 'Active Positions', accessToken);
+    // 1. Sync Transaction logger tab (Primary source of truth)
+    await ensureSheetTabExists(cleanId, 'Transaction logger', accessToken);
+    const txHeaders = ['Timestamp / Date', 'Transaction Type', 'Ticker', 'Company Name', 'Sector', 'Shares', 'Price (EGP)', 'Total Amount (EGP)', 'Fees (EGP)', 'Realized P&L (EGP)', 'Realized P&L %', 'Notes'];
+    const txRows = transactions.map(tx => [
+      tx.date,
+      tx.type,
+      tx.ticker,
+      tx.companyName,
+      tx.sector,
+      tx.shares,
+      tx.price,
+      tx.totalAmount,
+      tx.fees || 0,
+      tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp : '',
+      tx.realizedPnlPercent !== undefined ? `${tx.realizedPnlPercent.toFixed(2)}%` : '',
+      tx.notes || ''
+    ]);
+
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction logger')}!A1:L${txRows.length + 1}?valueInputOption=USER_ENTERED`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [txHeaders, ...txRows],
+        }),
+      }
+    );
+
+    // 2. Sync ticker directory tab with latest quotes
+    await updateStockDirectoryInSheet(cleanId, tickers, accessToken, 'ticker directory');
+
+    // 3. Sync Portfolio dashboard tab
+    await ensureSheetTabExists(cleanId, 'Portfolio dashboard', accessToken);
     const posHeaders = ['Ticker', 'Company Name', 'Sector', 'Shares', 'Avg Buy Price (EGP)', 'Current Price (EGP)', 'Market Value (EGP)', 'Unrealized P&L (EGP)', 'Unrealized %', 'Buy Date', 'Target Price', 'Stop Loss', 'Notes'];
     const posRows = positions.map(p => {
       const val = p.shares * p.currentPrice;
@@ -729,7 +1298,7 @@ export async function syncAllPortfolioToSheet(
     });
 
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Active Positions')}!A1:M${posRows.length + 1}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Portfolio dashboard')}!A1:M${posRows.length + 1}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
@@ -742,44 +1311,9 @@ export async function syncAllPortfolioToSheet(
       }
     );
 
-    // 2. Sync Stock Directory tab with latest prices
-    await updateStockDirectoryInSheet(cleanId, tickers, accessToken, 'Stock Directory');
-
-    // 3. Sync Transactions tab
-    await ensureSheetTabExists(cleanId, 'Transaction Logger', accessToken);
-    const txHeaders = ['Timestamp / Date', 'Transaction Type', 'Ticker', 'Company Name', 'Sector', 'Shares', 'Price (EGP)', 'Total Amount (EGP)', 'Fees (EGP)', 'Realized P&L (EGP)', 'Realized P&L %', 'Notes'];
-    const txRows = transactions.map(tx => [
-      tx.date,
-      tx.type,
-      tx.ticker,
-      tx.companyName,
-      tx.sector,
-      tx.shares,
-      tx.price,
-      tx.totalAmount,
-      tx.fees || 0,
-      tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp : '',
-      tx.realizedPnlPercent !== undefined ? `${tx.realizedPnlPercent.toFixed(2)}%` : '',
-      tx.notes || ''
-    ]);
-
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction Logger')}!A1:L${txRows.length + 1}?valueInputOption=USER_ENTERED`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          values: [txHeaders, ...txRows],
-        }),
-      }
-    );
-
     return {
       success: true,
-      message: `Complete 2-way sync: ${positions.length} Active Positions, ${transactions.length} Transactions, and ${tickers.length} Stock Directory quotes updated in Google Sheet!`
+      message: `Complete 2-way sync: ${positions.length} Active Positions, ${closedTrades.length} Closed Trades, ${transactions.length} Transactions, and ${tickers.length} Stock Directory quotes updated in Google Sheet!`
     };
   } catch (err: any) {
     console.error('Failed complete portfolio sync to Google Sheet:', err);

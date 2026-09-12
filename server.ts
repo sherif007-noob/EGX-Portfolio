@@ -26,7 +26,20 @@ async function startServer() {
         filter: [],
         options: { lang: "en" },
         symbols: { query: { types: [] }, tickers: [] },
-        columns: ["name", "close", "change", "volume"],
+        columns: [
+          "name",
+          "description",
+          "logoid",
+          "close",
+          "change",
+          "volume",
+          "high",
+          "low",
+          "high_52_week",
+          "low_52_week",
+          "sector",
+          "RSI"
+        ],
         sort: { sortBy: "name", sortOrder: "asc" },
         range: [0, 500],
       };
@@ -51,6 +64,34 @@ async function startServer() {
     } catch (err: any) {
       console.error("Error proxying to TradingView Scanner:", err);
       res.status(500).json({ error: err.message || "Failed to fetch prices from TradingView" });
+    }
+  });
+
+  // Proxy endpoint for TradingView Symbol Search to fetch logos for any ticker
+  app.get("/api/tradingview/symbol-search", async (req, res) => {
+    try {
+      const query = String(req.query.text || '').trim();
+      if (!query) {
+        return res.status(400).json({ error: "Query parameter 'text' is required" });
+      }
+
+      const searchUrl = `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
+      const tvResponse = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Accept": "application/json",
+        },
+      });
+
+      if (!tvResponse.ok) {
+        return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });
+      }
+
+      const data = await tvResponse.json();
+      res.json(data);
+    } catch (err: any) {
+      console.error("Error proxying to TradingView Symbol Search:", err);
+      res.status(500).json({ error: err.message || "Failed to search TradingView symbols" });
     }
   });
 

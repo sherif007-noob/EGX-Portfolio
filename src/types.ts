@@ -12,11 +12,20 @@ export type Sector =
   | 'Petrochemicals & Fertilizers'
   | 'Non-Bank Financial Services & Fintech'
   | 'Telecommunications & Tech'
+  | 'Telecommunications & Media'
   | 'Food, Beverage & Agribusiness'
+  | 'Food, Beverage & Tobacco'
   | 'Healthcare & Pharmaceuticals'
   | 'Industrial Goods & Services'
+  | 'Building Materials & Cement'
   | 'Energy & Petrochemicals'
+  | 'Energy & Oil Services'
   | 'Utilities & Logistics'
+  | 'Transport & Logistics'
+  | 'Consumer Goods & Automobiles'
+  | 'Tourism & Leisure'
+  | 'Textiles & Consumer Durables'
+  | 'Education & Services'
   | 'Other';
 
 export interface EGXTicker {
@@ -42,6 +51,7 @@ export interface EGXTicker {
   stopLoss: number;
   notes?: string;
   lastUpdated: string;
+  logoUrl?: string;
 }
 
 export interface Position {
@@ -77,6 +87,8 @@ export interface ClosedTrade {
   totalFees?: number;
   outcome: 'WIN' | 'LOSS' | 'BREAKEVEN';
   tradeType: 'Swing' | 'Breakout' | 'Core' | 'Momentum';
+  tradeCycle?: number;
+  cycleTag?: string;
   notes?: string;
 }
 
@@ -157,6 +169,13 @@ export interface TradeTransaction {
   notes?: string;
   targetPrice?: number;
   stopLoss?: number;
+  tradeId?: number | string;
+  trade_id?: number | string;
+  tradeCycle?: number;
+  cycleTag?: string;
+  runningShares?: number;
+  grossTradeValue?: number;
+  netCashImpact?: number;
   // For SELL transactions:
   realizedPnlEgp?: number;
   realizedPnlPercent?: number;

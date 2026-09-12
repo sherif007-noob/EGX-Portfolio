@@ -13,9 +13,11 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
 export const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+export const DRIVE_READONLY_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 
 const provider = new GoogleAuthProvider();
 provider.addScope(SHEETS_SCOPE);
+provider.addScope(DRIVE_READONLY_SCOPE);
 provider.setCustomParameters({
   prompt: 'select_account'
 });

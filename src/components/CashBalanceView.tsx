@@ -1,35 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { CashTransaction } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
   ArrowDownLeft,
   ArrowUpRight,
-  DollarSign,
-  Calendar,
-  CreditCard,
-  Building2,
   Trash2,
+  Edit3,
   PlusCircle,
   MinusCircle,
   AlertCircle,
   CheckCircle2,
   PieChart,
   History,
-  FileText
+  X,
+  Save,
+  Check,
+  Calculator,
+  Layers,
+  HelpCircle,
+  TrendingUp,
+  ShieldAlert,
 } from 'lucide-react';
+import { DateInput } from './DateInput';
+import { getTodayISO } from '../utils/dateUtils';
 
 interface CashBalanceViewProps {
   cashBalance: number;
   totalPortfolioValue: number;
   onUpdateCashBalance: (newBalance: number) => void;
+  positions?: Position[];
+  closedTrades?: ClosedTrade[];
+  tradeTransactions?: TradeTransaction[];
 }
 
-const STORAGE_KEY_TRANSACTIONS = 'egx_cash_transactions_v1';
+const STORAGE_KEY_TRANSACTIONS = 'egx_cash_transactions_v2_reconciled';
 
 export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   cashBalance,
   totalPortfolioValue,
   onUpdateCashBalance,
+  positions = [],
+  closedTrades = [],
+  tradeTransactions = [],
 }) => {
   const [activeAction, setActiveAction] = useState<'deposit' | 'withdraw'>('deposit');
   const [depositAmount, setDepositAmount] = useState<string>('');
@@ -45,7 +57,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAWAL'>('ALL');
 
-  // Transactions Ledger
+  // Edit Transaction State & Modal
+  const [editingTransaction, setEditingTransaction] = useState<CashTransaction | null>(null);
+  const [editType, setEditType] = useState<'DEPOSIT' | 'WITHDRAWAL'>('DEPOSIT');
+  const [editAmount, setEditAmount] = useState<string>('');
+  const [editDate, setEditDate] = useState<string>('');
+  const [editNotes, setEditNotes] = useState<string>('');
+
+  // Transactions Ledger State
   const [transactions, setTransactions] = useState<CashTransaction[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
@@ -58,10 +77,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       {
         id: 'init-cash-seed',
         type: 'DEPOSIT',
-        amount: cashBalance,
+        amount: 70029,
         date: '2026-01-01',
         notes: 'Initial Account Cash Allocation',
-        balanceAfter: cashBalance,
+        balanceAfter: 70029,
       },
     ];
   });
@@ -83,13 +102,98 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
   const cashRatio = totalPortfolioValue > 0 ? (cashBalance / totalPortfolioValue) * 100 : 0;
 
-  const totalDeposits = transactions
-    .filter((t) => t.type === 'DEPOSIT')
-    .reduce((acc, t) => acc + t.amount, 0);
+  const totalDeposits = useMemo(() => {
+    return transactions
+      .filter((t) => t.type === 'DEPOSIT')
+      .reduce((acc, t) => acc + t.amount, 0);
+  }, [transactions]);
 
-  const totalWithdrawals = transactions
-    .filter((t) => t.type === 'WITHDRAWAL')
-    .reduce((acc, t) => acc + t.amount, 0);
+  const totalWithdrawals = useMemo(() => {
+    return transactions
+      .filter((t) => t.type === 'WITHDRAWAL')
+      .reduce((acc, t) => acc + t.amount, 0);
+  }, [transactions]);
+
+  // 1. Net Capital Inflows
+  const netCapitalDeposited = totalDeposits - totalWithdrawals;
+
+  // 2. Open Positions Cost Basis & Current Market Value (including total purchase outlays with fees)
+  const totalOpenPositionsCost = useMemo(() => {
+    return positions.reduce((acc, pos) => acc + (pos.shares * pos.avgBuyPrice) + (pos.totalFees || 0), 0);
+  }, [positions]);
+
+  const totalOpenPositionsMarketValue = useMemo(() => {
+    return positions.reduce((acc, pos) => acc + (pos.shares * (pos.currentPrice || pos.avgBuyPrice)), 0);
+  }, [positions]);
+
+  // 3. Realized Profit & Loss from Closed Trades / Cycles
+  const totalRealizedPnl = useMemo(() => {
+    return closedTrades.reduce((acc, ct) => acc + (ct.realizedPnlEgp || 0), 0);
+  }, [closedTrades]);
+
+  // 4. Exact Audited Liquid Available Cash
+  // Formula: Net Capital Inflows - Cost of Active Holdings + Net Realized P&L
+  const auditedLiquidCash = Math.max(0, netCapitalDeposited - totalOpenPositionsCost + totalRealizedPnl);
+
+  // 5. Audited Portfolio Equity (NAV)
+  // Formula: Liquid Cash + Open Positions Market Value = Net Capital Deposited + Realized P&L + Unrealized P&L
+  const auditedPortfolioNav = auditedLiquidCash + totalOpenPositionsMarketValue;
+
+  // 6. Cash Discrepancy detection
+  const cashDiscrepancy = cashBalance - auditedLiquidCash;
+  const hasDiscrepancy = Math.abs(cashDiscrepancy) > 1.0;
+
+  // Open Edit Modal for a specific transaction
+  const handleStartEdit = (tx: CashTransaction) => {
+    setEditingTransaction(tx);
+    setEditType(tx.type);
+    setEditAmount(String(tx.amount));
+    setEditDate(tx.date);
+    setEditNotes(tx.notes || '');
+  };
+
+  // Save changes to edited transaction
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTransaction) return;
+
+    const newAmountNum = parseFloat(editAmount);
+    if (isNaN(newAmountNum) || newAmountNum <= 0) {
+      setFeedbackMessage({ text: 'Please enter a valid amount greater than 0 EGP.', type: 'error' });
+      return;
+    }
+
+    if (!editDate) {
+      setFeedbackMessage({ text: 'Please select a valid date.', type: 'error' });
+      return;
+    }
+
+    // Calculate balance difference
+    const oldContribution = editingTransaction.type === 'DEPOSIT' ? editingTransaction.amount : -editingTransaction.amount;
+    const newContribution = editType === 'DEPOSIT' ? newAmountNum : -newAmountNum;
+    const delta = newContribution - oldContribution;
+    const newBalance = Math.max(0, cashBalance + delta);
+
+    const updatedTx: CashTransaction = {
+      ...editingTransaction,
+      type: editType,
+      amount: newAmountNum,
+      date: editDate,
+      notes: editNotes.trim(),
+      balanceAfter: newBalance,
+    };
+
+    const updatedList = transactions.map((t) => (t.id === editingTransaction.id ? updatedTx : t));
+    setTransactions(updatedList);
+    onUpdateCashBalance(newBalance);
+    setEditingTransaction(null);
+
+    setFeedbackMessage({
+      text: `Transaction updated successfully! Cash balance adjusted to ${formatEgp(newBalance)} EGP.`,
+      type: 'success',
+    });
+    setTimeout(() => setFeedbackMessage(null), 5000);
+  };
 
   // Handle Deposit
   const handleConfirmDeposit = (e: React.FormEvent) => {
@@ -164,7 +268,6 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     if (!tx) return;
 
     if (window.confirm(`Are you sure you want to delete this ${tx.type.toLowerCase()} record of ${formatEgp(tx.amount)} EGP?`)) {
-      // Revert the cash balance impact if desired
       let revertedBalance = cashBalance;
       if (tx.type === 'DEPOSIT') {
         revertedBalance = Math.max(0, cashBalance - tx.amount);
@@ -195,10 +298,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         <div>
           <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
             <Wallet className="w-5 h-5 text-emerald-400" />
-            Account Cash Balance &amp; Fund Transfers
+            Cash Ledger &amp; Capital Balances
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Deposit capital into your brokerage account, withdraw funds, and track your cash liquidity ledger.
+            Deposit capital, withdraw funds, and manage previous cash entries directly to match your brokerage cash.
           </p>
         </div>
 
@@ -295,6 +398,122 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
       </div>
 
+      {/* Cash Ledger & Capital Accounting Reconciliation Audit Card */}
+      <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/30 border border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <Calculator className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                Capital Ledger &amp; Cash Balance Audit
+                {hasDiscrepancy ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Audited Balance ({formatEgp(auditedLiquidCash)} EGP)
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    100% Balanced &amp; Reconciled
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Exact mathematical breakdown of account cash from your deposits, open positions cost outlays, and realized trade gains.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Audit Line-by-Line Breakdown Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+          {/* 1. Net Capital Inflow */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+              1. Net Capital Deposited
+            </span>
+            <div className="text-sm font-mono font-bold text-white">
+              +{formatEgp(netCapitalDeposited)} EGP
+            </div>
+            <span className="text-[10px] text-slate-500 block">
+              {transactions.filter((t) => t.type === 'DEPOSIT').length} deposits logged
+            </span>
+          </div>
+
+          {/* 2. Open Positions Cost Outlay */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+              2. Open Positions Cost Basis
+            </span>
+            <div className="text-sm font-mono font-bold text-rose-400">
+              -{formatEgp(totalOpenPositionsCost)} EGP
+            </div>
+            <span className="text-[10px] text-slate-500 block">
+              {positions.length} active holdings bought
+            </span>
+          </div>
+
+          {/* 3. Realized P&L */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+              3. Closed Cycles Net P&amp;L
+            </span>
+            <div
+              className={`text-sm font-mono font-bold ${
+                totalRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}
+            >
+              {totalRealizedPnl >= 0 ? '+' : ''}
+              {formatEgp(totalRealizedPnl)} EGP
+            </div>
+            <span className="text-[10px] text-slate-500 block">
+              {closedTrades.length} completed cycles
+            </span>
+          </div>
+
+          {/* 4. Audited Available Cash */}
+          <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-1">
+            <span className="text-[10px] text-emerald-300 font-semibold block uppercase tracking-wider">
+              4. True Liquid Cash
+            </span>
+            <div className="text-sm font-mono font-black text-emerald-400">
+              {formatEgp(auditedLiquidCash)} EGP
+            </div>
+            <span className="text-[10px] text-emerald-500/80 block">
+              (1) - (2) + (3)
+            </span>
+          </div>
+
+          {/* 5. True Total Portfolio NAV */}
+          <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 space-y-1">
+            <span className="text-[10px] text-blue-300 font-semibold block uppercase tracking-wider">
+              5. True Portfolio NAV
+            </span>
+            <div className="text-sm font-mono font-black text-blue-400">
+              {formatEgp(auditedPortfolioNav)} EGP
+            </div>
+            <span className="text-[10px] text-blue-400/80 block">
+              Cash + {formatEgp(totalOpenPositionsMarketValue)} EGP Equities
+            </span>
+          </div>
+        </div>
+
+        {/* Explain Discrepancy Note if applicable */}
+        {hasDiscrepancy && (
+          <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200/90 flex items-start gap-2.5">
+            <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold text-amber-300">Capital Ledger Summary:</span>
+              <p className="mt-0.5 text-[11px] text-amber-200/80 leading-relaxed">
+                Your recorded available cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Based on <strong>{formatEgp(netCapitalDeposited)} EGP</strong> net capital deposited minus <strong>{formatEgp(totalOpenPositionsCost)} EGP</strong> open positions cost basis plus <strong>{totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP</strong> realized trade profit, true audited liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Feedback message banner */}
       {feedbackMessage && (
         <div
@@ -317,9 +536,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
-            <h3 className="text-base font-bold text-white">Execute Cash Transfer</h3>
+            <h3 className="text-base font-bold text-white">Record New Cash Transfer</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Deposit new trading capital or withdraw profits back to your bank account.
+              Deposit new capital or record cash withdrawals.
             </p>
           </div>
 
@@ -406,16 +625,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               {/* Deposit Method & Date */}
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Deposit Date</label>
-                    <input
-                      type="date"
-                      value={depositDate}
-                      onChange={(e) => setDepositDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
+                  <DateInput
+                    id="deposit-date"
+                    label="Deposit Date"
+                    value={depositDate}
+                    onChange={setDepositDate}
+                    required
+                  />
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Funding Method</label>
@@ -538,16 +754,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               {/* Destination & Date */}
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Withdrawal Date</label>
-                    <input
-                      type="date"
-                      value={withdrawDate}
-                      onChange={(e) => setWithdrawDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-rose-500"
-                    />
-                  </div>
+                  <DateInput
+                    id="withdraw-date"
+                    label="Withdrawal Date"
+                    value={withdrawDate}
+                    onChange={setWithdrawDate}
+                    required
+                  />
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Transfer Destination</label>
@@ -630,7 +843,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               Cash Deposits &amp; Withdrawals Ledger
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Chronological log of all capital allocations, deposits, and cash withdrawals.
+              Click the edit icon on any previous transaction to update its amount, date, or notes to match your real cash.
             </p>
           </div>
 
@@ -678,7 +891,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 <th className="py-3 px-4">Details &amp; Notes</th>
                 <th className="py-3 px-4 text-right">Amount (EGP)</th>
                 <th className="py-3 px-4 text-right">Balance After</th>
-                <th className="py-3 px-4 text-center">Action</th>
+                <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono">
@@ -715,13 +928,22 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                       {formatEgp(tx.balanceAfter)} EGP
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleDeleteTransaction(tx.id)}
-                        title="Delete Record"
-                        className="p-1 rounded text-slate-500 hover:text-rose-400 transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleStartEdit(tx)}
+                          title="Edit Transaction"
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-blue-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTransaction(tx.id)}
+                          title="Delete Record"
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -738,6 +960,154 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Edit Transaction Modal */}
+      {editingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Edit Cash Transaction</h3>
+                  <p className="text-xs text-slate-400">Update amount, type, date, or notes</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingTransaction(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Edit Form */}
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* Type Switcher */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Transaction Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditType('DEPOSIT')}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition ${
+                      editType === 'DEPOSIT'
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-950/40'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-3.5 h-3.5" />
+                    Deposit (+ Cash)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditType('WITHDRAWAL')}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition ${
+                      editType === 'WITHDRAWAL'
+                        ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-950/40'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    Withdrawal (- Cash)
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Amount (EGP)</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-mono text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
+                    placeholder="e.g. 250000"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                    EGP
+                  </span>
+                </div>
+              </div>
+
+              {/* Date Input */}
+              <DateInput
+                id="edit-cash-date"
+                label="Transaction Date"
+                value={editDate}
+                onChange={setEditDate}
+                required
+              />
+
+              {/* Notes / Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Description &amp; Notes</label>
+                <input
+                  type="text"
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="e.g. Initial Capital Deposit, InstaPay transfer, etc."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-xs border border-slate-700 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Live Impact Preview */}
+              {parseFloat(editAmount) > 0 && (
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                  <div className="text-slate-400">
+                    Original Amount:{' '}
+                    <span className="font-mono text-slate-200">
+                      {editingTransaction.type === 'DEPOSIT' ? '+' : '-'}
+                      {formatEgp(editingTransaction.amount)} EGP
+                    </span>
+                  </div>
+                  <div className="text-slate-300 font-medium">
+                    New Balance will become:{' '}
+                    <span className="font-mono font-bold text-emerald-400">
+                      {formatEgp(
+                        Math.max(
+                          0,
+                          cashBalance +
+                            (editType === 'DEPOSIT' ? parseFloat(editAmount) : -parseFloat(editAmount)) -
+                            (editingTransaction.type === 'DEPOSIT'
+                              ? editingTransaction.amount
+                              : -editingTransaction.amount)
+                        )
+                      )}{' '}
+                      EGP
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTransaction(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-950/40 transition flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

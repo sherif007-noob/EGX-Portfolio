@@ -1823,8 +1823,8 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                           </div>
                         )}
 
-                        {/* Pixel-Perfect Mathematical SVG Connector Lines */}
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                        {/* Pixel-Perfect Mathematical SVG Connector Lines (Anchored directly to bar top/bottom edges) */}
+                        <svg className="absolute top-8 bottom-1 left-3 right-3 pointer-events-none z-0">
                           {waterfallData.steps.slice(0, -1).map((step, i) => {
                             const x1 = ((i + 0.5) / waterfallData.steps.length) * 100;
                             const x2 = ((i + 1.5) / waterfallData.steps.length) * 100;
@@ -2181,8 +2181,8 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                             </div>
                           )}
 
-                          {/* Mathematical SVG Connector Lines Overlay */}
-                          <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                          {/* Mathematical SVG Connector Lines Overlay (Anchored directly to bar top/bottom edges) */}
+                          <svg className="absolute top-8 bottom-1 left-3 right-3 pointer-events-none z-0">
                             {closedPositionsWaterfallData.steps.slice(0, -1).map((step, i) => {
                               const x1 = ((i + 0.5) / closedPositionsWaterfallData.steps.length) * 100;
                               const x2 = ((i + 1.5) / closedPositionsWaterfallData.steps.length) * 100;

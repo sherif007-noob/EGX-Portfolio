@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { EGXTicker, Position, Sector } from '../types';
+import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle } from 'lucide-react';
+import { DateInput } from './DateInput';
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -237,16 +239,25 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                     onClick={() => applySelectedTicker(t)}
                     className="p-2.5 hover:bg-slate-700/70 cursor-pointer flex items-center justify-between transition"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white tracking-wider">{t.ticker}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-300">
-                          {t.sector}
-                        </span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <StockLogo
+                        ticker={t.ticker}
+                        companyName={t.nameEn}
+                        sector={t.sector}
+                        logoUrl={t.logoUrl}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white tracking-wider">{t.ticker}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-300">
+                            {t.sector}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate max-w-[240px]">
+                          {t.nameEn} {t.nameAr ? `• ${t.nameAr}` : ''}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-slate-400 truncate max-w-[280px]">
-                        {t.nameEn} {t.nameAr ? `• ${t.nameAr}` : ''}
-                      </p>
                     </div>
                     <div className="text-right">
                       <span className="font-mono font-bold text-emerald-400 block">
@@ -403,15 +414,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Purchase Date */}
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Trade Execution Date</label>
-            <input
-              type="date"
-              value={buyDate}
-              onChange={(e) => setBuyDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"
-            />
-          </div>
+          <DateInput
+            id="trade-execution-date"
+            label="Trade Execution Date"
+            value={buyDate}
+            onChange={setBuyDate}
+            required
+          />
 
           {/* Financial Breakdown Ribbon */}
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">

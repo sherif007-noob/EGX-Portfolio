@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { EGXTicker } from '../types';
+import { StockLogo } from './StockLogo';
 import {
   Search,
-  Filter,
   ArrowUpRight,
   TrendingUp,
   TrendingDown,
   Layers,
-  Code2,
   Download,
   RefreshCw,
+  FileSpreadsheet,
+  CheckCircle2
 } from 'lucide-react';
 
 interface TickerDirectoryViewProps {
@@ -19,6 +20,8 @@ interface TickerDirectoryViewProps {
   onSyncLivePrices?: () => void;
   isSyncingPrices?: boolean;
   lastPriceSyncTime?: string | null;
+  onPushPricesToSheet?: () => Promise<void>;
+  isSheetsConnected?: boolean;
 }
 
 export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
@@ -28,9 +31,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   onSyncLivePrices,
   isSyncingPrices = false,
   lastPriceSyncTime,
+  onPushPricesToSheet,
+  isSheetsConnected = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
+  const [isPushingSheet, setIsPushingSheet] = useState(false);
+  const [sheetSyncSuccess, setSheetSyncSuccess] = useState<string | null>(null);
 
   const sectors = Array.from(new Set(tickers.map((t) => t.sector)));
 
@@ -62,6 +69,21 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handlePushSheetClick = async () => {
+    if (!onPushPricesToSheet) return;
+    setIsPushingSheet(true);
+    setSheetSyncSuccess(null);
+    try {
+      await onPushPricesToSheet();
+      setSheetSyncSuccess(`Synchronized ${tickers.length} stock quotes to Google Sheets "ticker directory"!`);
+      setTimeout(() => setSheetSyncSuccess(null), 4000);
+    } catch {
+      // Handled in parent
+    } finally {
+      setIsPushingSheet(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header Info */}
@@ -72,11 +94,11 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             EGX Ticker Directory &amp; Market Data Feed
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Directory of active Egyptian Exchange equities with live market quotes and technical levels.
+            Directory of active Egyptian Exchange equities with live market quotes, technical levels, and Google Sheet sync.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           {onSyncLivePrices && (
             <button
               id="sync-directory-prices-btn"
@@ -89,6 +111,20 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               <span>{isSyncingPrices ? 'Syncing...' : 'Sync EGX Prices'}</span>
             </button>
           )}
+
+          {onPushPricesToSheet && (
+            <button
+              id="push-prices-to-sheet-btn"
+              onClick={handlePushSheetClick}
+              disabled={isPushingSheet}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition hover:border-emerald-400 disabled:opacity-50"
+              title="Push live quotes into ticker directory tab in Google Sheets"
+            >
+              <FileSpreadsheet className={`w-3.5 h-3.5 text-emerald-400 ${isPushingSheet ? 'animate-spin' : ''}`} />
+              <span>{isPushingSheet ? 'Pushing...' : 'Push to Google Sheet'}</span>
+            </button>
+          )}
+
           <button
             id="download-directory-json-btn"
             onClick={handleDownloadJson}
@@ -100,6 +136,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
         </div>
       </div>
 
+      {sheetSyncSuccess && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{sheetSyncSuccess}</span>
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="relative flex-1">
@@ -108,7 +151,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by ticker (COMI, ESRS), English or Arabic name..."
+            placeholder="Filter by ticker (COMI, ESRS, ABUK), English or Arabic name..."
             className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-800 text-slate-100 placeholder-slate-400 text-xs sm:text-sm border border-slate-700 focus:outline-none focus:border-teal-500"
           />
         </div>
@@ -139,20 +182,29 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               key={ticker.ticker}
               className="p-4 rounded-xl bg-slate-900 border border-slate-800/90 hover:border-slate-700 transition shadow-sm space-y-3"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-black text-white">{ticker.ticker}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-medium">
-                      {ticker.trendStatus}
-                    </span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <StockLogo
+                    ticker={ticker.ticker}
+                    companyName={ticker.nameEn}
+                    sector={ticker.sector}
+                    logoUrl={ticker.logoUrl}
+                    size="md"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-base font-black text-white">{ticker.ticker}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-medium shrink-0">
+                        {ticker.trendStatus}
+                      </span>
+                    </div>
+                    <h3 className="text-xs text-slate-300 font-medium line-clamp-1" title={ticker.nameEn}>
+                      {ticker.nameEn}
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-arabic line-clamp-1" dir="rtl">
+                      {ticker.nameAr}
+                    </p>
                   </div>
-                  <h3 className="text-xs text-slate-300 font-medium line-clamp-1" title={ticker.nameEn}>
-                    {ticker.nameEn}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 font-arabic line-clamp-1" dir="rtl">
-                    {ticker.nameAr}
-                  </p>
                 </div>
 
                 <div className="text-right">

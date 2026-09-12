@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { TradeTransaction, ClosedTrade, Position } from '../types';
+import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
+import { StockLogo } from './StockLogo';
+import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
+import { DateInput } from './DateInput';
 import {
   BookOpen,
   Clock,
   ArrowUpRight,
   ArrowDownRight,
   Trash2,
+  Edit3,
   Search,
   Layers,
   ShieldAlert,
@@ -16,6 +20,10 @@ import {
   Tag,
   CheckCircle2,
   XCircle,
+  X,
+  Save,
+  Check,
+  Calendar
 } from 'lucide-react';
 
 interface TradingJournalProps {
@@ -23,6 +31,7 @@ interface TradingJournalProps {
   closedTrades: ClosedTrade[];
   positions: Position[];
   onDeleteTransaction: (id: string) => void;
+  onEditTransaction?: (updatedTx: TradeTransaction) => void;
   onDeleteTrade?: (id: string) => void;
   onDeletePosition?: (id: string) => void;
 }
@@ -34,13 +43,32 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   closedTrades,
   positions,
   onDeleteTransaction,
+  onEditTransaction,
   onDeleteTrade,
   onDeletePosition,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<JournalFilterMode>('ALL');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | 'trade_id' | 'ticker'>('desc');
   const [deletedIdToast, setDeletedIdToast] = useState<string | null>(null);
+
+  // Edit Transaction State
+  const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
+  const [editType, setEditType] = useState<'BUY' | 'SELL'>('BUY');
+  const [editTicker, setEditTicker] = useState<string>('');
+  const [editCompanyName, setEditCompanyName] = useState<string>('');
+  const [editSector, setEditSector] = useState<Sector>('Banking');
+  const [editShares, setEditShares] = useState<string>('');
+  const [editPrice, setEditPrice] = useState<string>('');
+  const [editDate, setEditDate] = useState<string>('');
+  const [editFees, setEditFees] = useState<string>('');
+  const [editCycleTag, setEditCycleTag] = useState<string>('');
+  const [editNotes, setEditNotes] = useState<string>('');
+  const [editTargetPrice, setEditTargetPrice] = useState<string>('');
+  const [editStopLoss, setEditStopLoss] = useState<string>('');
+  const [editOutcome, setEditOutcome] = useState<'WIN' | 'LOSS' | 'BREAKEVEN'>('WIN');
+  const [editRealizedPnlEgp, setEditRealizedPnlEgp] = useState<string>('');
+  const [editFeedback, setEditFeedback] = useState<string | null>(null);
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -49,14 +77,61 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     }).format(val);
   };
 
+  // Helper to accurately resolve sell transaction outcome & realized P&L
+  const getTxSellMetrics = (tx: TradeTransaction) => {
+    if (tx.type !== 'SELL') return null;
+
+    // 1. Check explicit transaction fields
+    if (tx.outcome) {
+      const pnl = tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp : 0;
+      const pct = tx.realizedPnlPercent !== undefined ? tx.realizedPnlPercent : 0;
+      const isWin = tx.outcome === 'WIN';
+      const isLoss = tx.outcome === 'LOSS';
+      return { pnl, pct, outcome: tx.outcome, isWin, isLoss, isBreakeven: !isWin && !isLoss };
+    }
+
+    // 2. Check realizedPnlEgp if populated
+    if (tx.realizedPnlEgp !== undefined && tx.realizedPnlEgp !== null) {
+      const pnl = tx.realizedPnlEgp;
+      const pct = tx.realizedPnlPercent || 0;
+      const isWin = pnl > 0.01;
+      const isLoss = pnl < -0.01;
+      const outcome: 'WIN' | 'LOSS' | 'BREAKEVEN' = isWin ? 'WIN' : isLoss ? 'LOSS' : 'BREAKEVEN';
+      return { pnl, pct, outcome, isWin, isLoss, isBreakeven: !isWin && !isLoss };
+    }
+
+    // 3. Fallback: match with closedTrades by ticker and date/cycle
+    const matchingClosed = closedTrades.find(
+      (ct) =>
+        ct.ticker.toUpperCase() === tx.ticker.toUpperCase() &&
+        (ct.sellDate === tx.date || (tx.cycleTag && ct.cycleTag === tx.cycleTag))
+    );
+
+    if (matchingClosed) {
+      const pnl = matchingClosed.realizedPnlEgp;
+      const pct = matchingClosed.realizedPnlPercent;
+      const outcome = matchingClosed.outcome;
+      return {
+        pnl,
+        pct,
+        outcome,
+        isWin: outcome === 'WIN',
+        isLoss: outcome === 'LOSS',
+        isBreakeven: outcome === 'BREAKEVEN'
+      };
+    }
+
+    return { pnl: 0, pct: 0, outcome: 'BREAKEVEN' as const, isWin: false, isLoss: false, isBreakeven: true };
+  };
+
   // Compute counts for filter pills
   const winCount = useMemo(
-    () => transactions.filter((t) => t.type === 'SELL' && t.outcome === 'WIN').length,
-    [transactions]
+    () => transactions.filter((t) => t.type === 'SELL' && getTxSellMetrics(t)?.isWin).length,
+    [transactions, closedTrades]
   );
   const lossCount = useMemo(
-    () => transactions.filter((t) => t.type === 'SELL' && t.outcome === 'LOSS').length,
-    [transactions]
+    () => transactions.filter((t) => t.type === 'SELL' && getTxSellMetrics(t)?.isLoss).length,
+    [transactions, closedTrades]
   );
   const buyCount = useMemo(
     () => transactions.filter((t) => t.type === 'BUY').length,
@@ -84,11 +159,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   // Financial summary metrics
   const totalRealizedPnl = useMemo(
     () =>
-      transactions.reduce(
-        (acc, t) => (t.type === 'SELL' && t.realizedPnlEgp ? acc + t.realizedPnlEgp : acc),
-        0
-      ),
-    [transactions]
+      transactions.reduce((acc, t) => {
+        if (t.type !== 'SELL') return acc;
+        const metrics = getTxSellMetrics(t);
+        return acc + (metrics?.pnl || 0);
+      }, 0),
+    [transactions, closedTrades]
   );
 
   const totalFeesPaid = useMemo(
@@ -119,10 +195,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         if (!matchesSearch) return false;
 
         if (filterMode === 'WIN') {
-          return tx.type === 'SELL' && tx.outcome === 'WIN';
+          return tx.type === 'SELL' && !!getTxSellMetrics(tx)?.isWin;
         }
         if (filterMode === 'LOSS') {
-          return tx.type === 'SELL' && tx.outcome === 'LOSS';
+          return tx.type === 'SELL' && !!getTxSellMetrics(tx)?.isLoss;
         }
         if (filterMode === 'OPEN') {
           return tx.type === 'BUY' && openTickersSet.has(tx.ticker.toUpperCase());
@@ -136,16 +212,150 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         return true; // 'ALL'
       })
       .sort((a, b) => {
+        // Mode: By Ticker (A-Z)
+        if (sortOrder === 'ticker') {
+          const comp = a.ticker.localeCompare(b.ticker);
+          if (comp !== 0) return comp;
+        }
+
+        // Mode 1: Strict Trade ID Sequence (#1 -> #N)
+        if (sortOrder === 'trade_id') {
+          const idA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
+          const idB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
+          if (idA && idB && idA !== idB) return idA - idB;
+        }
+
+        // Mode 2 & 3: Chronological (asc) or Newest First (desc)
         const timeA = new Date(a.date).getTime() || 0;
         const timeB = new Date(b.date).getTime() || 0;
-        return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+
+        if (timeA !== timeB) {
+          return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+        }
+
+        // On the exact same execution date:
+        // 1. Compare tradeId if available
+        const idA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
+        const idB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
+        if (idA && idB && idA !== idB) {
+          return sortOrder === 'desc' ? idB - idA : idA - idB;
+        }
+
+        // 2. Lot execution integrity: A BUY must always precede a SELL
+        if (sortOrder === 'desc') {
+          // In reverse time, the SELL executed later in the day is at the top
+          if (a.type === 'SELL' && b.type === 'BUY') return -1;
+          if (a.type === 'BUY' && b.type === 'SELL') return 1;
+        } else {
+          // In chronological order, the BUY entry must be listed first before the SELL exit
+          if (a.type === 'BUY' && b.type === 'SELL') return -1;
+          if (a.type === 'SELL' && b.type === 'BUY') return 1;
+        }
+
+        return 0;
       });
-  }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet]);
+  }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet, closedTrades]);
 
   const handleDelete = (tx: TradeTransaction) => {
     onDeleteTransaction(tx.id);
     setDeletedIdToast(tx.ticker);
     setTimeout(() => setDeletedIdToast(null), 3000);
+  };
+
+  const handleOpenEditModal = (tx: TradeTransaction) => {
+    setEditingTx(tx);
+    setEditType(tx.type);
+    setEditTicker(tx.ticker);
+    setEditCompanyName(tx.companyName || tx.ticker);
+    setEditSector(tx.sector || 'Banking');
+    setEditShares(tx.shares ? tx.shares.toString() : '0');
+    setEditPrice(tx.price ? tx.price.toString() : '0');
+    setEditDate(tx.date || new Date().toISOString().split('T')[0]);
+    setEditFees(tx.fees !== undefined ? tx.fees.toString() : '0');
+    setEditCycleTag(tx.cycleTag || '');
+    setEditNotes(tx.notes || '');
+    setEditTargetPrice(tx.targetPrice ? tx.targetPrice.toString() : '');
+    setEditStopLoss(tx.stopLoss ? tx.stopLoss.toString() : '');
+    
+    if (tx.type === 'SELL') {
+      const metrics = getTxSellMetrics(tx);
+      setEditOutcome(metrics?.outcome || tx.outcome || 'WIN');
+      setEditRealizedPnlEgp(
+        tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp.toString() : metrics ? metrics.pnl.toString() : '0'
+      );
+    } else {
+      setEditOutcome('WIN');
+      setEditRealizedPnlEgp('');
+    }
+    setEditFeedback(null);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTx) return;
+
+    const sharesNum = parseFloat(editShares);
+    const priceNum = parseFloat(editPrice);
+    const feesNum = parseFloat(editFees) || 0;
+    const targetPriceNum = editTargetPrice ? parseFloat(editTargetPrice) : undefined;
+    const stopLossNum = editStopLoss ? parseFloat(editStopLoss) : undefined;
+
+    if (!editTicker.trim()) {
+      setEditFeedback('Please enter a valid stock ticker symbol.');
+      return;
+    }
+
+    if (isNaN(sharesNum) || sharesNum <= 0) {
+      setEditFeedback('Please enter a valid positive number of shares.');
+      return;
+    }
+
+    if (isNaN(priceNum) || priceNum <= 0) {
+      setEditFeedback('Please enter a valid positive price per share.');
+      return;
+    }
+
+    const grossVal = sharesNum * priceNum;
+    const totalAmount = editType === 'BUY' ? grossVal + feesNum : Math.max(0, grossVal - feesNum);
+
+    let realizedPnlEgp = editingTx.realizedPnlEgp;
+    let realizedPnlPercent = editingTx.realizedPnlPercent;
+    let outcome = editingTx.outcome;
+
+    if (editType === 'SELL') {
+      const parsedPnl = parseFloat(editRealizedPnlEgp);
+      if (!isNaN(parsedPnl)) {
+        realizedPnlEgp = parsedPnl;
+        const estCost = Math.max(1, grossVal - realizedPnlEgp);
+        realizedPnlPercent = (realizedPnlEgp / estCost) * 100;
+        outcome = editOutcome;
+      }
+    }
+
+    const updatedTx: TradeTransaction = {
+      ...editingTx,
+      type: editType,
+      ticker: editTicker.trim().toUpperCase(),
+      companyName: editCompanyName.trim() || editTicker.trim().toUpperCase(),
+      sector: editSector,
+      shares: sharesNum,
+      price: priceNum,
+      date: editDate,
+      fees: feesNum,
+      totalAmount,
+      cycleTag: editCycleTag.trim() || undefined,
+      notes: editNotes.trim() || undefined,
+      targetPrice: targetPriceNum,
+      stopLoss: stopLossNum,
+      realizedPnlEgp: editType === 'SELL' ? realizedPnlEgp : undefined,
+      realizedPnlPercent: editType === 'SELL' ? realizedPnlPercent : undefined,
+      outcome: editType === 'SELL' ? outcome : undefined,
+    };
+
+    if (onEditTransaction) {
+      onEditTransaction(updatedTx);
+    }
+    setEditingTx(null);
   };
 
   return (
@@ -217,7 +427,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Filter and Search Controls Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-2xl border border-slate-800 shadow-sm">
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 min-w-[240px] max-w-xl">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             id="journal-search-input"
@@ -229,7 +439,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           />
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Pills and Sort Dropdown */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             id="journal-filter-all"
@@ -306,16 +516,21 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             Sells Only ({sellCount})
           </button>
 
-          {/* Chronological Sort Toggle */}
-          <button
-            id="journal-sort-toggle"
-            onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-            title="Toggle Chronological Sort Order"
-          >
-            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
-            <span>{sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}</span>
-          </button>
+          {/* Compact Sort Dropdown Select */}
+          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
+            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <select
+              id="journal-sort-dropdown"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as any)}
+              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
+            >
+              <option value="desc" className="bg-slate-900 text-slate-200">Sort: Newest First</option>
+              <option value="asc" className="bg-slate-900 text-slate-200">Sort: Oldest First</option>
+              <option value="trade_id" className="bg-slate-900 text-slate-200">Sort: By Trade #</option>
+              <option value="ticker" className="bg-slate-900 text-slate-200">Sort: By Ticker (A-Z)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -324,8 +539,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         {filteredAndSortedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
-          const isWinningSell = isSell && (tx.realizedPnlEgp || 0) >= 0;
-          const isLosingSell = isSell && (tx.realizedPnlEgp || 0) < 0;
+          const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
+          const isWinningSell = !!sellMetrics?.isWin;
+          const isLosingSell = !!sellMetrics?.isLoss;
+          const isBreakevenSell = isSell && !isWinningSell && !isLosingSell;
+          const realizedPnlEgp = sellMetrics ? sellMetrics.pnl : 0;
+          const realizedPnlPercent = sellMetrics ? sellMetrics.pct : 0;
+
           const isOpenPosition = isBuy && openTickersSet.has(tx.ticker.toUpperCase());
           const grossAmount = tx.shares * tx.price;
           const totalOutlayOrProceeds =
@@ -342,7 +562,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     : 'border-slate-800 hover:border-slate-700'
                   : isWinningSell
                   ? 'border-emerald-500/30 hover:border-emerald-500/50'
-                  : 'border-rose-500/30 hover:border-rose-500/50'
+                  : isLosingSell
+                  ? 'border-rose-500/30 hover:border-rose-500/50'
+                  : 'border-amber-500/30 hover:border-amber-500/50'
               }`}
             >
               {/* Subtle background glow for quick recognition */}
@@ -354,30 +576,34 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       : 'bg-cyan-500'
                     : isWinningSell
                     ? 'bg-emerald-500'
-                    : 'bg-rose-500'
+                    : isLosingSell
+                    ? 'bg-rose-500'
+                    : 'bg-amber-500'
                 }`}
               />
 
               {/* Row 1: Ticker, Type Tag, Date, and P&L / Total Outlay */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
-                      isBuy
-                        ? 'bg-blue-950/80 border-blue-500/40 text-blue-300'
-                        : isWinningSell
-                        ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300'
-                        : 'bg-rose-950/80 border-rose-500/40 text-rose-300'
-                    }`}
-                  >
-                    {tx.ticker.slice(0, 4)}
-                  </div>
+                  <StockLogo
+                    ticker={tx.ticker}
+                    companyName={tx.companyName}
+                    sector={tx.sector}
+                    size="lg"
+                  />
 
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-white text-base tracking-wide">
                         {tx.ticker}
                       </span>
+
+                      {/* Trade Sequence ID */}
+                      {tx.tradeId !== undefined && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800/90 text-amber-300 border border-amber-500/30">
+                          Trade #{tx.tradeId}
+                        </span>
+                      )}
 
                       {/* Transaction Type Tag */}
                       {isBuy ? (
@@ -396,15 +622,23 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
                             isWinningSell
                               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                              : isLosingSell
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                           }`}
                         >
                           {isWinningSell ? (
                             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                          ) : (
+                          ) : isLosingSell ? (
                             <XCircle className="w-3 h-3 text-rose-400" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-amber-400" />
                           )}
-                          {isWinningSell ? 'SELL EXIT (WIN)' : 'SELL EXIT (LOSS)'}
+                          {isWinningSell
+                            ? 'SELL EXIT (WIN)'
+                            : isLosingSell
+                            ? 'SELL EXIT (LOSS)'
+                            : 'SELL EXIT (BREAKEVEN)'}
                         </span>
                       )}
 
@@ -432,25 +666,35 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       <>
                         <div
                           className={`font-mono font-bold text-base ${
-                            isWinningSell ? 'text-emerald-400' : 'text-rose-400'
+                            isWinningSell
+                              ? 'text-emerald-400'
+                              : isLosingSell
+                              ? 'text-rose-400'
+                              : 'text-amber-400'
                           }`}
                         >
-                          {isWinningSell ? '+' : ''}
-                          {formatEgp(tx.realizedPnlEgp || 0)} EGP
+                          {realizedPnlEgp > 0 ? '+' : ''}
+                          {formatEgp(realizedPnlEgp)} EGP
                         </div>
                         <div
                           className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${
-                            isWinningSell ? 'text-emerald-500' : 'text-rose-500'
+                            isWinningSell
+                              ? 'text-emerald-500'
+                              : isLosingSell
+                              ? 'text-rose-500'
+                              : 'text-amber-500'
                           }`}
                         >
                           {isWinningSell ? (
                             <ArrowUpRight className="w-3.5 h-3.5" />
-                          ) : (
+                          ) : isLosingSell ? (
                             <ArrowDownRight className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowUpDown className="w-3.5 h-3.5" />
                           )}
                           <span>
-                            {isWinningSell ? '+' : ''}
-                            {(tx.realizedPnlPercent || 0).toFixed(2)}% Realized
+                            {realizedPnlPercent > 0 ? '+' : ''}
+                            {realizedPnlPercent.toFixed(2)}% Realized
                           </span>
                         </div>
                       </>
@@ -466,14 +710,23 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     )}
                   </div>
 
-                  {/* Instant Delete Button */}
-                  <button
-                    onClick={() => handleDelete(tx)}
-                    title="Delete Transaction Record"
-                    className="p-2 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500/50 text-slate-400 hover:text-rose-300 transition active:scale-95"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {/* Edit and Delete Actions */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenEditModal(tx)}
+                      title="Edit Transaction Record"
+                      className="p-2 rounded-xl bg-slate-800/90 hover:bg-blue-950/60 border border-slate-700 hover:border-blue-500/50 text-slate-400 hover:text-blue-300 transition active:scale-95"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tx)}
+                      title="Delete Transaction Record"
+                      className="p-2 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500/50 text-slate-400 hover:text-rose-300 transition active:scale-95"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -497,9 +750,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="text-slate-400 text-[10px] block font-medium">Execution Date</span>
-                  <span className="font-mono text-slate-300 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    {tx.date}
+                  <span
+                    className="font-mono text-slate-200 flex items-center gap-1 font-semibold cursor-help"
+                    title={`Interpreted Date: ${formatDateVerbose(tx.date, true)}`}
+                  >
+                    <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
+                    <span>{formatDateVerbose(tx.date, false)}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 block font-mono">
+                    {formatDateDDMMYYYY(tx.date)}
                   </span>
                 </div>
 
@@ -565,6 +824,284 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Edit Transaction Modal */}
+      {editingTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Edit Transaction</h3>
+                  <p className="text-xs text-slate-400">
+                    Modify execution details, prices, shares, fees, or notes.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingTx(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editFeedback && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{editFeedback}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
+              {/* Type Switcher */}
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold block">Transaction Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditType('BUY')}
+                    className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition ${
+                      editType === 'BUY'
+                        ? 'bg-blue-600 text-white border-blue-500 shadow-md'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    BUY (Stock Entry / DCA)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditType('SELL')}
+                    className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition ${
+                      editType === 'SELL'
+                        ? 'bg-purple-600 text-white border-purple-500 shadow-md'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    SELL (Exit / Liquidation)
+                  </button>
+                </div>
+              </div>
+
+              {/* Ticker & Sector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Stock Ticker Symbol</label>
+                  <input
+                    type="text"
+                    required
+                    value={editTicker}
+                    onChange={(e) => setEditTicker(e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    placeholder="e.g. CANA, TAQA, ADIB"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Company Name</label>
+                  <input
+                    type="text"
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                    placeholder="e.g. Suez Canal Bank"
+                  />
+                </div>
+              </div>
+
+              {/* Shares & Price */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Executed Shares</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    required
+                    value={editShares}
+                    onChange={(e) => setEditShares(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    placeholder="100"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Price per Share (EGP)</label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    required
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    placeholder="43.21"
+                  />
+                </div>
+
+                <DateInput
+                  id="edit-tx-date"
+                  label="Execution Date"
+                  value={editDate}
+                  onChange={setEditDate}
+                  required
+                />
+              </div>
+
+              {/* Fees & Cycle Tag */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Brokerage Commission (EGP)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFees}
+                    onChange={(e) => setEditFees(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-amber-300 font-mono focus:outline-none focus:border-blue-500"
+                    placeholder="12.50"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">Cycle Tag / Trade ID</label>
+                  <input
+                    type="text"
+                    value={editCycleTag}
+                    onChange={(e) => setEditCycleTag(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-purple-300 font-mono focus:outline-none focus:border-blue-500"
+                    placeholder="e.g. CANA-C1, TAQA-C1"
+                  />
+                </div>
+              </div>
+
+              {/* If SELL: Realized P&L and Outcome */}
+              {editType === 'SELL' && (
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 space-y-3">
+                  <div className="text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
+                    <ArrowUpDown className="w-3.5 h-3.5" />
+                    Sell Exit Financial Outcome
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-slate-300 font-semibold">Realized P&amp;L (EGP)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editRealizedPnlEgp}
+                        onChange={(e) => {
+                          setEditRealizedPnlEgp(e.target.value);
+                          const val = parseFloat(e.target.value);
+                          if (!isNaN(val)) {
+                            setEditOutcome(val > 0.01 ? 'WIN' : val < -0.01 ? 'LOSS' : 'BREAKEVEN');
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-purple-500"
+                        placeholder="e.g. 1250.00"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-300 font-semibold">Outcome Status</label>
+                      <select
+                        value={editOutcome}
+                        onChange={(e) => setEditOutcome(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-purple-500 font-bold"
+                      >
+                        <option value="WIN">WIN (Profitable Exit)</option>
+                        <option value="LOSS">LOSS (Cut Loss Exit)</option>
+                        <option value="BREAKEVEN">BREAKEVEN (Flat Exit)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* If BUY: Targets */}
+              {editType === 'BUY' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-semibold">Target Price (Optional)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editTargetPrice}
+                      onChange={(e) => setEditTargetPrice(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-emerald-300 font-mono focus:outline-none focus:border-blue-500"
+                      placeholder="e.g. 52.00"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-semibold">Stop Loss (Optional)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editStopLoss}
+                      onChange={(e) => setEditStopLoss(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-rose-300 font-mono focus:outline-none focus:border-blue-500"
+                      placeholder="e.g. 39.50"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div className="space-y-1">
+                <label className="text-slate-300 font-semibold">Transaction Notes</label>
+                <textarea
+                  rows={2}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  placeholder="Order execution notes, broker phase details, strategy reasoning..."
+                />
+              </div>
+
+              {/* Calculated Preview */}
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-400">
+                  {editType === 'BUY' ? 'Total Cash Outlay (Cost + Fees):' : 'Net Sales Proceeds (Gross - Fees):'}
+                </span>
+                <span className="font-mono font-bold text-white text-sm">
+                  {formatEgp(
+                    Math.max(
+                      0,
+                      (parseFloat(editShares) || 0) * (parseFloat(editPrice) || 0) +
+                        (editType === 'BUY' ? (parseFloat(editFees) || 0) : -(parseFloat(editFees) || 0))
+                    )
+                  )}{' '}
+                  EGP
+                </span>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingTx(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

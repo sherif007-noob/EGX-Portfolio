@@ -18,7 +18,7 @@ import { EGXScheduleStatus } from '../services/marketPriceSync';
 interface PortfolioSummaryProps {
   metrics: PortfolioMetrics;
   stats: PerformanceStats;
-  onQuickAddCash: () => void;
+  onQuickAddCash?: () => void;
   onSyncLivePrices?: () => void;
   isSyncingPrices?: boolean;
   lastPriceSyncTime?: string | null;
@@ -101,14 +101,6 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span>{isSyncingPrices ? 'Syncing Prices...' : 'Sync Live Prices'}</span>
             </button>
           )}
-          <button
-            id="btn-quick-cash-overview"
-            onClick={onQuickAddCash}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-xs font-medium border border-slate-700 transition"
-          >
-            <Wallet className="w-3.5 h-3.5 text-amber-400" />
-            Cash Balance
-          </button>
         </div>
       </div>
 

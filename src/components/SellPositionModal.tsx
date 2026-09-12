@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
+import { DateInput } from './DateInput';
 
 interface SellPositionModalProps {
   position: Position | null;
@@ -174,15 +175,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 required
               />
             </div>
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Sale Date</label>
-              <input
-                type="date"
-                value={sellDate}
-                onChange={(e) => setSellDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"
-              />
-            </div>
+            <DateInput
+              id="sell-execution-date"
+              label="Sale Date"
+              value={sellDate}
+              onChange={setSellDate}
+              required
+            />
           </div>
 
           {/* Brokerage Fees on Sale */}

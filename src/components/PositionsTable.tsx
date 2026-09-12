@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Position } from '../types';
+import { StockLogo } from './StockLogo';
 import {
   TrendingUp,
   TrendingDown,
@@ -127,9 +128,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   {/* Ticker & Name */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs">
-                        {pos.ticker.slice(0, 3)}
-                      </div>
+                      <StockLogo
+                        ticker={pos.ticker}
+                        companyName={pos.companyName}
+                        sector={pos.sector}
+                        size="sm"
+                      />
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-white tracking-wide">{pos.ticker}</span>
@@ -289,9 +293,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs">
-                    {pos.ticker.slice(0, 3)}
-                  </div>
+                  <StockLogo
+                    ticker={pos.ticker}
+                    companyName={pos.companyName}
+                    sector={pos.sector}
+                    size="sm"
+                  />
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-white text-sm">{pos.ticker}</span>

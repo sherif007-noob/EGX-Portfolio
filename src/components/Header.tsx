@@ -12,11 +12,12 @@ import {
   User as UserIcon,
   Check,
   RefreshCw,
-  Wallet
+  Wallet,
+  RotateCcw
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
-export type NavigationTab = 'overview' | 'positions' | 'reports' | 'journal' | 'cash' | 'directory';
+export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
 
 interface HeaderProps {
   activeTab: NavigationTab;
@@ -179,6 +180,19 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            id="tab-closed-cycles"
+            onClick={() => setActiveTab('closed_cycles')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+              activeTab === 'closed_cycles'
+                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <RotateCcw className="w-4 h-4 text-purple-400" />
+            Closed Cycles
+          </button>
+
+          <button
             id="tab-transactions"
             onClick={() => setActiveTab('journal')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
@@ -189,6 +203,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
             Transactions
+          </button>
+
+          <button
+            id="tab-cash-ledger"
+            onClick={() => setActiveTab('cash')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+              activeTab === 'cash'
+                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <Wallet className="w-4 h-4 text-amber-400" />
+            Cash Ledger
           </button>
 
           <button

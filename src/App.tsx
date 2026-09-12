@@ -19,6 +19,7 @@ import {
 import { Header, NavigationTab } from './components/Header';
 import { PortfolioSummary } from './components/PortfolioSummary';
 import { PositionsTable } from './components/PositionsTable';
+import { ClosedCyclesView } from './components/ClosedCyclesView';
 import { PerformanceReports } from './components/PerformanceReports';
 import { TradingJournal } from './components/TradingJournal';
 import { TickerDirectoryView } from './components/TickerDirectoryView';
@@ -41,12 +42,12 @@ import {
   EGXScheduleStatus
 } from './services/marketPriceSync';
 
-const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v1';
-const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v1';
-const STORAGE_KEY_CASH = 'egx_pwa_cash_balance_v1';
-const STORAGE_KEY_TICKERS = 'egx_pwa_tickers_directory_v1';
+const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
+const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v3_reconciled';
+const STORAGE_KEY_CASH = 'egx_pwa_cash_balance_v3_reconciled';
+const STORAGE_KEY_TICKERS = 'egx_pwa_tickers_directory_v3_reconciled';
 const STORAGE_KEY_SHEETS = 'egx_pwa_sheets_config_v1';
-const STORAGE_KEY_TRANSACTIONS = 'egx_pwa_transactions_v1';
+const STORAGE_KEY_TRANSACTIONS = 'egx_pwa_transactions_v3_reconciled';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -133,20 +134,20 @@ export default function App() {
   const handleSyncLivePrices = async (isAutomatic = false) => {
     setIsSyncingPrices(true);
     try {
-      const quotes = await fetchTradingViewEGXPrices();
+      const { quotes, discoveredTickers } = await fetchTradingViewEGXPrices();
       const updatedTimeStr = formatCairoTime(new Date());
 
       // Update positions with live prices
       setPositions((prevPositions) => {
-        const { updatedPositions } = applyLivePricesToPortfolio(prevPositions, tickers, quotes);
+        const { updatedPositions } = applyLivePricesToPortfolio(prevPositions, tickers, quotes, discoveredTickers);
         return updatedPositions;
       });
 
       // Update ticker directory with latest prices, changes, and volumes
       setTickers((prevTickers) => {
-        const { updatedTickers } = applyLivePricesToPortfolio([], prevTickers, quotes);
+        const { updatedTickers } = applyLivePricesToPortfolio([], prevTickers, quotes, discoveredTickers);
         
-        // Auto-update connected Google Sheet stock directory tab if connected
+        // Auto-update connected Google Sheet ticker directory tab if connected
         if (sheetsConfig?.spreadsheetId && authUser) {
           getAccessToken().then((token) => {
             if (token) {
@@ -154,7 +155,7 @@ export default function App() {
                 sheetsConfig.spreadsheetId,
                 updatedTickers,
                 token,
-                'Stock Directory'
+                'ticker directory'
               ).catch((err) => console.warn('Background sheets price sync:', err));
             }
           });
@@ -170,7 +171,7 @@ export default function App() {
 
       const symbolCount = Object.keys(quotes).length;
       setPriceSyncNotification({
-        message: `Updated ${symbolCount} EGX prices from TradingView (${isAutomatic ? 'Auto-sync' : 'Manual'})`,
+        message: `Updated ${symbolCount} EGX prices from TradingView scanner (${isAutomatic ? 'Auto-sync' : 'Manual'})`,
         type: 'success'
       });
       setTimeout(() => setPriceSyncNotification(null), 5000);
@@ -492,7 +493,7 @@ export default function App() {
     };
     setTransactions((prev) => [newTx, ...prev]);
 
-    // Auto-sync transaction to Google Sheet Transaction Logger tab if configured
+    // Auto-sync transaction to Google Sheet Transaction logger tab if configured
     if (sheetsConfig?.spreadsheetId && authUser) {
       getAccessToken().then((token) => {
         if (token) {
@@ -500,7 +501,7 @@ export default function App() {
             sheetsConfig.spreadsheetId,
             newTx,
             token,
-            'Transaction Logger'
+            'Transaction logger'
           ).catch((err) => console.warn('Background sheets tx append error:', err));
         }
       });
@@ -588,7 +589,7 @@ export default function App() {
     };
     setTransactions((prev) => [newSellTx, ...prev]);
 
-    // Auto-sync SELL transaction to Google Sheet Transaction Logger tab if configured
+    // Auto-sync SELL transaction to Google Sheet Transaction logger tab if configured
     if (sheetsConfig?.spreadsheetId && authUser) {
       getAccessToken().then((token) => {
         if (token) {
@@ -596,7 +597,7 @@ export default function App() {
             sheetsConfig.spreadsheetId,
             newSellTx,
             token,
-            'Transaction Logger'
+            'Transaction logger'
           ).catch((err) => console.warn('Background sheets sell tx append error:', err));
         }
       });
@@ -631,18 +632,79 @@ export default function App() {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const handleEditTransaction = (updatedTx: TradeTransaction) => {
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === updatedTx.id ? updatedTx : t))
+    );
+
+    // If it's a SELL trade, also synchronize with corresponding closed trade
+    if (updatedTx.type === 'SELL') {
+      setClosedTrades((prev) =>
+        prev.map((ct) => {
+          if (
+            (ct.cycleTag && updatedTx.cycleTag && ct.cycleTag === updatedTx.cycleTag) ||
+            (ct.ticker.toUpperCase() === updatedTx.ticker.toUpperCase() && ct.sellDate === updatedTx.date)
+          ) {
+            return {
+              ...ct,
+              ticker: updatedTx.ticker,
+              companyName: updatedTx.companyName || ct.companyName,
+              sector: updatedTx.sector || ct.sector,
+              shares: updatedTx.shares || ct.shares,
+              sellPrice: updatedTx.price || ct.sellPrice,
+              sellDate: updatedTx.date || ct.sellDate,
+              sellFees: updatedTx.fees !== undefined ? updatedTx.fees : ct.sellFees,
+              realizedPnlEgp: updatedTx.realizedPnlEgp !== undefined ? updatedTx.realizedPnlEgp : ct.realizedPnlEgp,
+              realizedPnlPercent: updatedTx.realizedPnlPercent !== undefined ? updatedTx.realizedPnlPercent : ct.realizedPnlPercent,
+              outcome: updatedTx.outcome || ct.outcome,
+              notes: updatedTx.notes || ct.notes,
+              cycleTag: updatedTx.cycleTag || ct.cycleTag,
+            };
+          }
+          return ct;
+        })
+      );
+    }
+  };
+
   const handleImportGoogleSheets = (
     importedPositions: Position[],
     importedClosedTrades: ClosedTrade[],
-    config: GoogleSheetsConfig
+    config: GoogleSheetsConfig,
+    importedTransactions?: TradeTransaction[]
   ) => {
-    if (importedPositions.length > 0) {
-      setPositions(importedPositions);
-    }
-    if (importedClosedTrades.length > 0) {
-      setClosedTrades((prev) => [...importedClosedTrades, ...prev]);
+    setPositions(importedPositions);
+    setClosedTrades(importedClosedTrades);
+    if (importedTransactions && importedTransactions.length > 0) {
+      setTransactions(importedTransactions);
     }
     setSheetsConfig(config);
+    setPriceSyncNotification({
+      message: `Synchronized: ${importedPositions.length} active positions, ${importedClosedTrades.length} closed cycles, and ${importedTransactions?.length || 0} transactions!`,
+      type: 'success'
+    });
+    setTimeout(() => setPriceSyncNotification(null), 5000);
+  };
+
+  const handlePushPricesToSheetDirectly = async () => {
+    if (!sheetsConfig?.spreadsheetId) {
+      setIsSheetsModalOpen(true);
+      return;
+    }
+    const token = await getAccessToken();
+    if (!token) {
+      setIsSheetsModalOpen(true);
+      return;
+    }
+    const res = await updateStockDirectoryInSheet(
+      sheetsConfig.spreadsheetId,
+      tickers,
+      token,
+      'ticker directory'
+    );
+    if (!res.success) {
+      throw new Error(res.message);
+    }
   };
 
   const handleUpdateTickersFromPython = (newTickers: EGXTicker[]) => {
@@ -788,6 +850,14 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === 'closed_cycles' && (
+          <ClosedCyclesView
+            closedTrades={closedTrades}
+            transactions={transactions}
+            onDeleteTrade={handleDeleteTrade}
+          />
+        )}
+
         {activeTab === 'reports' && (
           <PerformanceReports
             stats={stats}
@@ -804,6 +874,7 @@ export default function App() {
             closedTrades={closedTrades}
             positions={positions}
             onDeleteTransaction={handleDeleteTransaction}
+            onEditTransaction={handleEditTransaction}
             onDeleteTrade={handleDeleteTrade}
             onDeletePosition={handleDeletePosition}
           />
@@ -814,6 +885,9 @@ export default function App() {
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
             onUpdateCashBalance={(newBal) => setCashBalance(newBal)}
+            positions={positions}
+            closedTrades={closedTrades}
+            tradeTransactions={transactions}
           />
         )}
 
@@ -825,6 +899,8 @@ export default function App() {
             onSyncLivePrices={() => handleSyncLivePrices(false)}
             isSyncingPrices={isSyncingPrices}
             lastPriceSyncTime={lastPriceSyncTime}
+            onPushPricesToSheet={handlePushPricesToSheetDirectly}
+            isSheetsConnected={!!sheetsConfig?.spreadsheetId}
           />
         )}
       </main>

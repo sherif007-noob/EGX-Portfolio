@@ -15,7 +15,9 @@ import {
   RotateCcw,
   Sparkles,
   Database,
-  AlertTriangle
+  AlertTriangle,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -29,6 +31,9 @@ interface HeaderProps {
   onOpenAddTrade: () => void;
   onOpenBackupModal?: () => void;
   onOpenScreenshotModal?: () => void;
+  onOpenPriceAlerts?: () => void;
+  unreadAlertCount?: number;
+  isAlertsActive?: boolean;
   isSheetsConnected: boolean;
   sheetsTitle?: string;
   isTokenExpired?: boolean;
@@ -46,6 +51,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddTrade,
   onOpenBackupModal,
   onOpenScreenshotModal,
+  onOpenPriceAlerts,
+  unreadAlertCount = 0,
+  isAlertsActive = true,
   isSheetsConnected,
   sheetsTitle,
   isTokenExpired = false,
@@ -86,6 +94,30 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Price Target & Push Notifications Trigger */}
+            {onOpenPriceAlerts && (
+              <button
+                id="header-price-alerts-btn"
+                onClick={onOpenPriceAlerts}
+                className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700 hover:bg-slate-800 hover:border-amber-500/50 transition group"
+                title="Price Target Web Push Notifications & Alerts"
+              >
+                {unreadAlertCount > 0 ? (
+                  <BellRing className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                ) : (
+                  <Bell className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 transition" />
+                )}
+                <span className="hidden lg:inline">Price Alerts</span>
+                {unreadAlertCount > 0 ? (
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
+                    {unreadAlertCount}
+                  </span>
+                ) : isAlertsActive ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden sm:inline-block" title="Alerts active" />
+                ) : null}
+              </button>
+            )}
+
             {/* Live Prices Sync Button */}
             {onSyncLivePrices && (
               <button

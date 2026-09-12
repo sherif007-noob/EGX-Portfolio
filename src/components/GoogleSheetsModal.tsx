@@ -45,6 +45,7 @@ interface GoogleSheetsModalProps {
   currentConfig?: GoogleSheetsConfig;
   authUser: User | null;
   onAuthSuccess: (user: User) => void;
+  onLogout?: () => void;
   positions?: Position[];
   closedTrades?: ClosedTrade[];
   transactions?: TradeTransaction[];
@@ -60,6 +61,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   currentConfig,
   authUser,
   onAuthSuccess,
+  onLogout,
   positions = [],
   closedTrades = [],
   transactions = [],
@@ -108,18 +110,58 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     }
   }, [isOpen]);
 
-  const loadDriveSpreadsheets = async () => {
+  const loadDriveSpreadsheets = async (showFeedback = false) => {
     setLoadingDrive(true);
+    if (showFeedback) {
+      setError(null);
+    }
     try {
-      const token = await getAccessToken();
+      let token = await getAccessToken();
+      if (!token) {
+        // Attempt fresh sign-in if token is missing
+        const authResult = await googleSignIn();
+        if (authResult?.accessToken) {
+          token = authResult.accessToken;
+          onAuthSuccess(authResult.user);
+        }
+      }
       if (token) {
         const files = await fetchUserSpreadsheets(token);
         setDriveSpreadsheets(files || []);
+        if (showFeedback) {
+          setSuccessMsg(`Refreshed Google Drive: found ${files.length} spreadsheet${files.length === 1 ? '' : 's'}.`);
+        }
+      } else {
+        if (showFeedback) {
+          setError('Google Drive session expired. Please sign in again.');
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Could not list drive spreadsheets:', err);
+      if (showFeedback) {
+        setError(err.message || 'Could not fetch spreadsheets from Google Drive.');
+      }
     } finally {
       setLoadingDrive(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (onLogout) {
+        await onLogout();
+      } else {
+        await logout();
+      }
+      setDriveSpreadsheets([]);
+      setSuccessMsg('Successfully signed out of Google Account.');
+    } catch (err: any) {
+      console.error('Sign out error:', err);
+      setError(err.message || 'Failed to sign out.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -461,16 +503,21 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             {authUser ? (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={loadDriveSpreadsheets}
+                  id="sheets-refresh-drive-btn"
+                  onClick={() => loadDriveSpreadsheets(true)}
                   disabled={loadingDrive}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition disabled:opacity-50"
+                  title="Refresh spreadsheets from your Google Drive"
                 >
-                  <RefreshCw className={`w-3 h-3 ${loadingDrive ? 'animate-spin' : ''}`} />
-                  Refresh
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingDrive ? 'animate-spin text-emerald-400' : 'text-slate-300'}`} />
+                  {loadingDrive ? 'Refreshing...' : 'Refresh'}
                 </button>
                 <button
-                  onClick={() => logout()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-950/60 hover:text-rose-300 text-slate-400 text-xs font-medium transition"
+                  id="sheets-signout-btn"
+                  onClick={handleSignOut}
+                  disabled={loading}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-950/60 hover:text-rose-300 text-slate-400 text-xs font-medium transition disabled:opacity-50"
+                  title="Sign out from Google Account"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   Sign Out

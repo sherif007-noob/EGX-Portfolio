@@ -143,6 +143,38 @@ export interface LivePriceQuote {
   volume: number;
 }
 
+export interface PriceAlertSettings {
+  enabled: boolean;
+  notifyOnTarget: boolean;
+  notifyOnStopLoss: boolean;
+  notifyOnProximity: boolean;
+  proximityPercent: number; // e.g. 1.5%
+  cairoHoursOnly: boolean; // Only alert during Cairo trading sessions (Sun 9:30-14:30, Mon-Thu 10:00-14:30)
+  soundEnabled: boolean;
+  vibrateEnabled: boolean;
+}
+
+export type PriceAlertTriggerType = 
+  | 'TARGET_HIT' 
+  | 'STOP_LOSS_HIT' 
+  | 'TARGET_APPROACHING' 
+  | 'STOP_LOSS_APPROACHING';
+
+export interface TriggeredPriceAlert {
+  id: string;
+  ticker: string;
+  companyName: string;
+  type: PriceAlertTriggerType;
+  currentPrice: number;
+  thresholdPrice: number;
+  distancePercent: number;
+  timestamp: string; // ISO
+  timeFormatted: string;
+  read: boolean;
+  shares?: number;
+  notes?: string;
+}
+
 export interface SchemaValidationResult {
   valid: boolean;
   errors: string[];

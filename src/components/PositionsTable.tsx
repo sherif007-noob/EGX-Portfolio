@@ -25,6 +25,7 @@ interface PositionsTableProps {
   onDeletePosition: (positionId: string) => void;
   onAddNewTrade: () => void;
   onBuyMore: (position: Position) => void;
+  onOpenPriceAlerts?: () => void;
 }
 
 export const PositionsTable: React.FC<PositionsTableProps> = ({
@@ -34,6 +35,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   onDeletePosition,
   onAddNewTrade,
   onBuyMore,
+  onOpenPriceAlerts,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
@@ -206,21 +208,55 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
                   {/* Targets & SL */}
                   <td className="py-3 px-3 text-center">
-                    <div className="flex flex-col items-center gap-0.5 text-[11px] font-mono">
-                      {pos.targetPrice && (
-                        <span className="text-emerald-400 font-medium">
-                          T: {pos.targetPrice.toFixed(2)}
-                        </span>
-                      )}
-                      {pos.stopLoss && (
-                        <span className="text-rose-400 font-medium">
-                          SL: {pos.stopLoss.toFixed(2)}
-                        </span>
-                      )}
-                      {!pos.targetPrice && !pos.stopLoss && (
-                        <span className="text-slate-500">—</span>
-                      )}
-                    </div>
+                    {(() => {
+                      const current = pos.currentPrice || 0;
+                      const target = pos.targetPrice || 0;
+                      const stop = pos.stopLoss || 0;
+                      const isTargetHit = target > 0 && current >= target;
+                      const isStopLossHit = stop > 0 && current <= stop;
+
+                      return (
+                        <div className="flex flex-col items-center gap-1 text-[11px] font-mono">
+                          {target > 0 && (
+                            <div className="flex items-center gap-1">
+                              {isTargetHit ? (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 animate-pulse text-[10px]" title={`Target hit! Market ${formatEgp(current)} >= Target ${formatEgp(target)}`}>
+                                  🎯 Hit {target.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-400 font-medium">
+                                  T: {target.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {stop > 0 && (
+                            <div className="flex items-center gap-1">
+                              {isStopLossHit ? (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 animate-pulse text-[10px]" title={`Stop-loss breached! Market ${formatEgp(current)} <= Stop ${formatEgp(stop)}`}>
+                                  🛑 SL {stop.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-rose-400 font-medium">
+                                  SL: {stop.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {!target && !stop && (
+                            <button
+                              onClick={() => onEditPosition(pos)}
+                              className="text-[10px] text-slate-500 hover:text-amber-400 font-sans transition"
+                              title="Set target price or stop-loss alert"
+                            >
+                              + Set Alerts
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Action Buttons */}
@@ -351,20 +387,37 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               </div>
 
               {/* Targets / SL */}
-              {(pos.targetPrice || pos.stopLoss) && (
-                <div className="flex items-center gap-4 text-xs">
-                  {pos.targetPrice && (
-                    <div className="flex items-center gap-1 text-emerald-400 font-mono">
+              {(pos.targetPrice || pos.stopLoss) ? (
+                <div className="flex items-center gap-3 text-xs flex-wrap">
+                  {pos.targetPrice ? (
+                    <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
+                      pos.currentPrice >= pos.targetPrice
+                        ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 animate-pulse'
+                        : 'text-emerald-400 bg-emerald-950/30'
+                    }`}>
                       <Target className="w-3.5 h-3.5" />
-                      <span>Target: {pos.targetPrice.toFixed(2)} EGP</span>
+                      <span>{pos.currentPrice >= pos.targetPrice ? '🎯 HIT:' : 'Target:'} {pos.targetPrice.toFixed(2)} EGP</span>
                     </div>
-                  )}
-                  {pos.stopLoss && (
-                    <div className="flex items-center gap-1 text-rose-400 font-mono">
+                  ) : null}
+                  {pos.stopLoss ? (
+                    <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
+                      pos.currentPrice <= pos.stopLoss
+                        ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 animate-pulse'
+                        : 'text-rose-400 bg-rose-950/30'
+                    }`}>
                       <ShieldAlert className="w-3.5 h-3.5" />
-                      <span>Stop: {pos.stopLoss.toFixed(2)} EGP</span>
+                      <span>{pos.currentPrice <= pos.stopLoss ? '🛑 BREACH:' : 'Stop:'} {pos.stopLoss.toFixed(2)} EGP</span>
                     </div>
-                  )}
+                  ) : null}
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500">
+                  <button
+                    onClick={() => onEditPosition(pos)}
+                    className="hover:text-amber-400 transition"
+                  >
+                    + Set Target &amp; Stop-Loss Alerts
+                  </button>
                 </div>
               )}
 

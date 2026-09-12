@@ -28,17 +28,153 @@ export interface FirestoreErrorInfo {
   };
 }
 
+const STORAGE_KEY_WRITE_QUEUE = 'egx_firestore_write_queue_v1';
+
+export interface QueuedWriteAction {
+  id: string;
+  type: 'full_save' | 'patch' | 'append_tx';
+  payload: any;
+  timestamp: number;
+}
+
 let quotaExceededState = false;
+const quotaListeners: Array<(isExceeded: boolean) => void> = [];
 
 export function getIsQuotaExceeded(): boolean {
   return quotaExceededState;
 }
 
+export function subscribeToQuotaStatus(listener: (isExceeded: boolean) => void): () => void {
+  quotaListeners.push(listener);
+  listener(quotaExceededState);
+  return () => {
+    const idx = quotaListeners.indexOf(listener);
+    if (idx >= 0) quotaListeners.splice(idx, 1);
+  };
+}
+
+function setQuotaExceeded(exceeded: boolean) {
+  if (quotaExceededState !== exceeded) {
+    quotaExceededState = exceeded;
+    quotaListeners.forEach((l) => l(exceeded));
+  }
+}
+
+// --------------------------------------------------------------------------
+// PERSISTENT WRITE QUEUE (localStorage backed)
+// --------------------------------------------------------------------------
+function getQueuedWrites(): QueuedWriteAction[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_WRITE_QUEUE);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveQueuedWrites(queue: QueuedWriteAction[]): void {
+  try {
+    if (queue.length === 0) {
+      localStorage.removeItem(STORAGE_KEY_WRITE_QUEUE);
+    } else {
+      localStorage.setItem(STORAGE_KEY_WRITE_QUEUE, JSON.stringify(queue.slice(-50))); // Keep at most 50
+    }
+  } catch (err) {
+    console.warn('Failed saving Firestore write queue to localStorage:', err);
+  }
+}
+
+export function enqueueWriteAction(action: Omit<QueuedWriteAction, 'id' | 'timestamp'>): void {
+  const queue = getQueuedWrites();
+  // Deduplicate full_save or coalescing
+  if (action.type === 'full_save') {
+    const filtered = queue.filter((q) => q.type !== 'full_save');
+    filtered.push({
+      ...action,
+      id: `qw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: Date.now(),
+    });
+    saveQueuedWrites(filtered);
+    return;
+  }
+
+  queue.push({
+    ...action,
+    id: `qw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    timestamp: Date.now(),
+  });
+  saveQueuedWrites(queue);
+}
+
+let isFlushingQueue = false;
+
+export async function flushPendingWriteQueue(): Promise<number> {
+  if (isFlushingQueue || quotaExceededState) return 0;
+  const queue = getQueuedWrites();
+  if (queue.length === 0) return 0;
+
+  isFlushingQueue = true;
+  let flushedCount = 0;
+  const remainingQueue: QueuedWriteAction[] = [];
+
+  try {
+    for (const item of queue) {
+      if (quotaExceededState) {
+        remainingQueue.push(item);
+        continue;
+      }
+
+      let success = false;
+      if (item.type === 'full_save') {
+        success = await directSavePortfolioToFirestore(item.payload);
+      } else if (item.type === 'patch') {
+        success = await directPatchFirestoreDoc(item.payload);
+      } else if (item.type === 'append_tx') {
+        success = await directAppendTransactionToFirestore(
+          item.payload.tx,
+          item.payload.positions,
+          item.payload.closedTrades,
+          item.payload.cashBalance
+        );
+      }
+
+      if (success) {
+        flushedCount++;
+      } else {
+        remainingQueue.push(item);
+      }
+    }
+  } catch (err) {
+    console.warn('Error during Firestore queue flush:', err);
+  } finally {
+    saveQueuedWrites(remainingQueue);
+    isFlushingQueue = false;
+  }
+
+  return flushedCount;
+}
+
+// Auto-flush queue on window online or visibility change
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    setQuotaExceeded(false);
+    flushPendingWriteQueue();
+  });
+  window.addEventListener('focus', () => {
+    flushPendingWriteQueue();
+  });
+}
+
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errMsg = error instanceof Error ? error.message : String(error);
-  if (errMsg.includes('resource-exhausted') || errMsg.includes('Quota limit exceeded')) {
-    quotaExceededState = true;
-    console.warn('Firestore daily write quota reached. Switched to Local Storage & Google Sheets fallback.');
+  if (
+    errMsg.includes('resource-exhausted') ||
+    errMsg.includes('Quota limit exceeded') ||
+    errMsg.includes('RESOURCE_EXHAUSTED') ||
+    errMsg.includes('quota')
+  ) {
+    setQuotaExceeded(true);
+    console.warn('Firestore daily write quota reached. Switched to Local Storage & write-queue fallback.');
   } else {
     const errInfo: FirestoreErrorInfo = {
       error: errMsg,
@@ -117,10 +253,7 @@ export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocumen
   }
 }
 
-export async function savePortfolioToFirestore(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>): Promise<boolean> {
-  if (quotaExceededState) {
-    return false;
-  }
+async function directSavePortfolioToFirestore(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>): Promise<boolean> {
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
     const rawPayload: PortfolioDataDocument = {
@@ -137,12 +270,31 @@ export async function savePortfolioToFirestore(data: Omit<PortfolioDataDocument,
   }
 }
 
-/**
- * Patch specific fields of the main portfolio document without replacing the entire document.
- * Minimizes Firestore write bandwidth and quota consumption.
- */
-export async function patchFirestoreDoc(partialData: Record<string, any>): Promise<boolean> {
-  if (quotaExceededState) return false;
+export async function savePortfolioToFirestore(
+  data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>,
+  allowEmpty = false
+): Promise<boolean> {
+  // Destructive wipe prevention: Guard against saving completely empty arrays by mistake
+  const posCount = (data.positions || []).length;
+  const txCount = (data.transactions || []).length;
+  if (!allowEmpty && posCount === 0 && txCount === 0) {
+    console.warn('[Firestore] Skipped writing empty portfolio payload to prevent accidental data loss.');
+    return false;
+  }
+
+  if (quotaExceededState) {
+    enqueueWriteAction({ type: 'full_save', payload: data });
+    return false;
+  }
+
+  const success = await directSavePortfolioToFirestore(data);
+  if (!success) {
+    enqueueWriteAction({ type: 'full_save', payload: data });
+  }
+  return success;
+}
+
+async function directPatchFirestoreDoc(partialData: Record<string, any>): Promise<boolean> {
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
     const sanitized = sanitizeForFirestore({
@@ -152,7 +304,6 @@ export async function patchFirestoreDoc(partialData: Record<string, any>): Promi
     try {
       await updateDoc(docRef, sanitized);
     } catch {
-      // Fallback to merge if document does not exist yet
       await setDoc(docRef, sanitized, { merge: true });
     }
     return true;
@@ -163,16 +314,27 @@ export async function patchFirestoreDoc(partialData: Record<string, any>): Promi
 }
 
 /**
- * Appends a single transaction using arrayUnion and updates related state fields (positions, closedTrades, cashBalance).
- * Uses ~1-2KB write instead of ~20KB full portfolio overwrite.
+ * Patch specific fields of the main portfolio document without replacing the entire document.
+ * Minimizes Firestore write bandwidth and quota consumption.
  */
-export async function appendTransactionToFirestore(
+export async function patchFirestoreDoc(partialData: Record<string, any>): Promise<boolean> {
+  if (quotaExceededState) {
+    enqueueWriteAction({ type: 'patch', payload: partialData });
+    return false;
+  }
+  const success = await directPatchFirestoreDoc(partialData);
+  if (!success) {
+    enqueueWriteAction({ type: 'patch', payload: partialData });
+  }
+  return success;
+}
+
+async function directAppendTransactionToFirestore(
   tx: TradeTransaction,
   positions?: Position[],
   closedTrades?: ClosedTrade[],
   cashBalance?: number
 ): Promise<boolean> {
-  if (quotaExceededState) return false;
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
     const sanitizedTx = sanitizeForFirestore(tx);
@@ -187,7 +349,6 @@ export async function appendTransactionToFirestore(
     try {
       await updateDoc(docRef, patchPayload);
     } catch {
-      // Fallback if doc does not exist yet
       await setDoc(docRef, patchPayload, { merge: true });
     }
     return true;
@@ -195,6 +356,32 @@ export async function appendTransactionToFirestore(
     handleFirestoreError(error, OperationType.WRITE, PORTFOLIO_DOC_PATH);
     return false;
   }
+}
+
+/**
+ * Appends a single transaction using arrayUnion and updates related state fields.
+ */
+export async function appendTransactionToFirestore(
+  tx: TradeTransaction,
+  positions?: Position[],
+  closedTrades?: ClosedTrade[],
+  cashBalance?: number
+): Promise<boolean> {
+  if (quotaExceededState) {
+    enqueueWriteAction({
+      type: 'append_tx',
+      payload: { tx, positions, closedTrades, cashBalance },
+    });
+    return false;
+  }
+  const success = await directAppendTransactionToFirestore(tx, positions, closedTrades, cashBalance);
+  if (!success) {
+    enqueueWriteAction({
+      type: 'append_tx',
+      payload: { tx, positions, closedTrades, cashBalance },
+    });
+  }
+  return success;
 }
 
 /**
@@ -239,19 +426,24 @@ let lastSerializedPayload = '';
 
 export function debouncedSavePortfolioToFirestore(
   data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>,
-  delayMs = 5000
+  delayMs = 5000,
+  allowEmpty = false
 ): Promise<boolean> {
   return new Promise((resolve) => {
-    if (quotaExceededState) {
+    const safePositions = data.positions || [];
+    const safeClosedTrades = data.closedTrades || [];
+    const safeTransactions = data.transactions || [];
+
+    if (!allowEmpty && safePositions.length === 0 && safeTransactions.length === 0) {
       resolve(false);
       return;
     }
 
-    // Serialization check focusing on structural transaction & position changes
-    // Pure live price ticks (currentPrice) are excluded to preserve free daily write quota
-    const safePositions = data.positions || [];
-    const safeClosedTrades = data.closedTrades || [];
-    const safeTransactions = data.transactions || [];
+    if (quotaExceededState) {
+      enqueueWriteAction({ type: 'full_save', payload: data });
+      resolve(false);
+      return;
+    }
 
     const serialized = JSON.stringify({
       positions: safePositions.map((p) => ({ id: p.id, shares: p.shares, avgBuyPrice: p.avgBuyPrice })),
@@ -272,7 +464,7 @@ export function debouncedSavePortfolioToFirestore(
 
     saveDebounceTimer = setTimeout(async () => {
       lastSerializedPayload = serialized;
-      const success = await savePortfolioToFirestore(data);
+      const success = await savePortfolioToFirestore(data, allowEmpty);
       resolve(success);
     }, delayMs);
   });
@@ -301,3 +493,4 @@ export function subscribeToPortfolioFromFirestore(
     }
   );
 }
+

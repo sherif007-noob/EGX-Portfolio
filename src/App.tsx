@@ -26,11 +26,13 @@ import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
+import { PriceAlertsModal } from './components/PriceAlertsModal';
 import { RealizedTrajectoryChart } from './components/RealizedTrajectoryChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { usePortfolioState } from './hooks/usePortfolioState';
 import { useMarketData } from './hooks/useMarketData';
 import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
+import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
 import { getIsQuotaExceeded } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
@@ -85,6 +87,19 @@ export default function App() {
     handleLogout,
   } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
 
+  // Price Target & Web Push Alerts Hook (PWA service worker push notifications & thresholds)
+  const {
+    settings: alertSettings,
+    updateSettings: updateAlertSettings,
+    alertHistory,
+    clearHistory: clearAlertHistory,
+    markAllRead: markAllAlertsRead,
+    unreadCount: unreadAlertCount,
+    permission: alertPermission,
+    requestPermission: requestAlertPermission,
+    sendTestNotification,
+  } = usePriceAlerts(positions, tickers, scheduleStatus);
+
   // Modals & UI States
   const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
@@ -92,12 +107,13 @@ export default function App() {
   const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
+  const [isPriceAlertsModalOpen, setIsPriceAlertsModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
   const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
 
   // Notification Toast & Undo State
-  const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [undoState, setUndoState] = useState<{
     previousState: {
       positions: Position[];
@@ -108,7 +124,7 @@ export default function App() {
     message: string;
   } | null>(null);
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success', duration = 5000) => {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success', duration = 5000) => {
     setToastNotification({ message, type });
     setTimeout(() => setToastNotification(null), duration);
   }, []);
@@ -453,7 +469,9 @@ export default function App() {
         }}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
-        onBackupReconcile={() => setIsBackupModalOpen(true)}
+        onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
+        unreadAlertCount={unreadAlertCount}
+        isAlertsActive={alertSettings.enabled}
         isSheetsConnected={!!sheetsConfig}
         isTokenExpired={isSheetsTokenExpired}
         sheetsTitle={sheetsConfig?.sheetName}
@@ -486,12 +504,18 @@ export default function App() {
             className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'
                 ? 'bg-slate-900/95 border-emerald-500/60 text-emerald-300'
+                : toastNotification.type === 'info'
+                ? 'bg-slate-900/95 border-blue-500/60 text-blue-300'
                 : 'bg-slate-900/95 border-rose-500/60 text-rose-300'
             }`}
           >
             <span
               className={`w-2 h-2 rounded-full ${
-                toastNotification.type === 'success' ? 'bg-emerald-400' : 'bg-rose-400'
+                toastNotification.type === 'success'
+                  ? 'bg-emerald-400'
+                  : toastNotification.type === 'info'
+                  ? 'bg-blue-400'
+                  : 'bg-rose-400'
               }`}
             />
             <span>{toastNotification.message}</span>
@@ -580,6 +604,7 @@ export default function App() {
                 }}
                 onEditPosition={(pos) => setEditingPosition(pos)}
                 onDeletePosition={handleDeletePosition}
+                onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
                 onAddNewTrade={() => {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
@@ -622,6 +647,7 @@ export default function App() {
               }}
               onEditPosition={(pos) => setEditingPosition(pos)}
               onDeletePosition={handleDeletePosition}
+              onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
               onAddNewTrade={() => {
                 setSelectedTickerForTrade(null);
                 setIsAddTradeModalOpen(true);
@@ -694,6 +720,22 @@ export default function App() {
       </main>
 
       {/* Modals & Dialogs */}
+      <PriceAlertsModal
+        isOpen={isPriceAlertsModalOpen}
+        onClose={() => setIsPriceAlertsModalOpen(false)}
+        positions={positions}
+        settings={alertSettings}
+        onUpdateSettings={updateAlertSettings}
+        alertHistory={alertHistory}
+        onClearHistory={clearAlertHistory}
+        onMarkAllRead={markAllAlertsRead}
+        permission={alertPermission}
+        onRequestPermission={requestAlertPermission}
+        onSendTestNotification={sendTestNotification}
+        scheduleStatus={scheduleStatus}
+        onEditPosition={(pos) => setEditingPosition(pos)}
+      />
+
       <GoogleSheetsModal
         isOpen={isSheetsModalOpen}
         onClose={() => setIsSheetsModalOpen(false)}
@@ -710,7 +752,13 @@ export default function App() {
         }}
         currentConfig={sheetsConfig || undefined}
         authUser={authUser}
-        onAuthSuccess={() => {}}
+        onAuthSuccess={() => {
+          showToast('Signed in with Google Account successfully!', 'success');
+        }}
+        onLogout={async () => {
+          await handleLogout();
+          showToast('Signed out of Google Account.', 'info');
+        }}
         positions={positions}
         closedTrades={closedTrades}
         transactions={transactions}

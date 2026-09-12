@@ -172,13 +172,17 @@ export async function fetchUserSpreadsheets(accessToken: string): Promise<Google
       }
     );
     if (!res.ok) {
-      return [];
+      if (res.status === 401 || res.status === 403) {
+        throw new GoogleSheetsAuthError(`Google Drive access unauthorized (HTTP ${res.status}). Please reconnect.`);
+      }
+      const errorText = await res.text().catch(() => '');
+      throw new Error(`Failed to list Google Drive files (HTTP ${res.status}): ${errorText || res.statusText}`);
     }
     const data = await res.json();
     return data.files || [];
   } catch (err) {
     console.warn('Could not list drive spreadsheets:', err);
-    return [];
+    throw err;
   }
 }
 
@@ -199,6 +203,55 @@ export function extractGid(url: string): string | null {
   return match && match[1] ? match[1] : null;
 }
 
+export class GoogleSheetsAuthError extends Error {
+  isAuthError = true;
+  constructor(message = 'Google Sheets authentication expired or invalid') {
+    super(message);
+    this.name = 'GoogleSheetsAuthError';
+  }
+}
+
+export class GoogleSheetsRateLimitError extends Error {
+  isRateLimitError = true;
+  constructor(message = 'Google Sheets API rate limit exceeded (HTTP 429)') {
+    super(message);
+    this.name = 'GoogleSheetsRateLimitError';
+  }
+}
+
+async function fetchWithSheetsRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 2
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.status === 401 || res.status === 403) {
+        throw new GoogleSheetsAuthError(`Google Sheets Auth Error (HTTP ${res.status}): Session expired`);
+      }
+      if (res.status === 429) {
+        throw new GoogleSheetsRateLimitError(`Google Sheets Rate Limit (HTTP 429)`);
+      }
+      if (res.status >= 500 && attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 800 * Math.pow(2, attempt)));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (err instanceof GoogleSheetsAuthError || err instanceof GoogleSheetsRateLimitError) {
+        throw err;
+      }
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 800 * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Fetches Google Sheet metadata (title, sheet tabs) via Sheets API v4.
  */
@@ -206,7 +259,7 @@ export async function fetchSpreadsheetMetadata(
   spreadsheetId: string,
   accessToken: string
 ): Promise<{ title: string; sheets: string[] }> {
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
+  const res = await fetchWithSheetsRetry(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -232,7 +285,7 @@ export async function fetchSheetValues(
   accessToken: string
 ): Promise<string[][]> {
   const encodedRange = encodeURIComponent(range);
-  const res = await fetch(
+  const res = await fetchWithSheetsRetry(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodedRange}`,
     {
       headers: {
@@ -249,6 +302,7 @@ export async function fetchSheetValues(
   const data = await res.json();
   return data.values || [];
 }
+
 
 /**
  * Normalizes numbers from raw spreadsheet strings, handling Arabic numerals, currency, commas, accounting parentheses, and percentage signs.
@@ -1153,7 +1207,7 @@ export async function ensureSheetTabExists(
     }
 
     // Add new sheet tab via batchUpdate
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+    await fetchWithSheetsRetry(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -1190,7 +1244,7 @@ export async function appendTransactionToSheet(
   tx: TradeTransaction,
   accessToken: string,
   tabName = 'Transaction Logger'
-): Promise<{ success: boolean; message: string; finalTradeId?: number | string }> {
+): Promise<{ success: boolean; message: string; finalTradeId?: number | string; isAuthError?: boolean }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
@@ -1342,7 +1396,7 @@ export async function appendTransactionToSheet(
     if (existingSheetRowNumber > 0) {
       // UPDATE existing row
       const updateRange = `${targetTab}!A${existingSheetRowNumber}:${colToLetter(rowData.length - 1)}${existingSheetRowNumber}`;
-      const updateRes = await fetch(
+      const updateRes = await fetchWithSheetsRetry(
         `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
         {
           method: 'PUT',
@@ -1361,7 +1415,7 @@ export async function appendTransactionToSheet(
     } else {
       // APPEND new row
       const valuesToAppend = hasHeader ? [rowData] : [stdHeaders, rowData];
-      const appendRes = await fetch(
+      const appendRes = await fetchWithSheetsRetry(
         `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(targetTab)}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
         {
           method: 'POST',
@@ -1379,8 +1433,9 @@ export async function appendTransactionToSheet(
       return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} to "${targetTab}"`, finalTradeId };
     }
   } catch (err: any) {
+    const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
     console.error('Failed to append/update transaction in Google Sheet:', err);
-    return { success: false, message: err.message || 'Failed to update Google Sheet' };
+    return { success: false, message: err.message || 'Failed to update Google Sheet', isAuthError: isAuth };
   }
 }
 
@@ -1393,7 +1448,7 @@ export async function updateStockDirectoryInSheet(
   tickers: EGXTicker[],
   accessToken: string,
   tabName = 'Ticker Directory'
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; isAuthError?: boolean }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
@@ -1484,7 +1539,7 @@ export async function updateStockDirectoryInSheet(
     const lastColLetter = colToLetter(maxCols - 1);
     const updateRange = `${targetTab}!A1:${lastColLetter}${updatedRows.length}`;
 
-    const updateRes = await fetch(
+    const updateRes = await fetchWithSheetsRetry(
       `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
@@ -1506,8 +1561,9 @@ export async function updateStockDirectoryInSheet(
       message: `Successfully updated ${tickers.length} EGX equities in "${targetTab}"`
     };
   } catch (err: any) {
+    const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
     console.error('Failed to update Ticker Directory in Google Sheet:', err);
-    return { success: false, message: err.message || 'Failed to update Ticker Directory' };
+    return { success: false, message: err.message || 'Failed to update Ticker Directory', isAuthError: isAuth };
   }
 }
 
@@ -1521,7 +1577,7 @@ export async function syncAllPortfolioToSheet(
   transactions: TradeTransaction[],
   tickers: EGXTicker[],
   accessToken: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; isAuthError?: boolean }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
@@ -1554,7 +1610,7 @@ export async function syncAllPortfolioToSheet(
       ];
     });
 
-    await fetch(
+    await fetchWithSheetsRetry(
       `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction Logger')}!A1:N${txRows.length + 1}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
@@ -1576,7 +1632,9 @@ export async function syncAllPortfolioToSheet(
       message: `Complete 2-way sync: ${transactions.length} Transactions written to "Transaction Logger" and ${tickers.length} stock quotes updated in "Ticker Directory"!`
     };
   } catch (err: any) {
+    const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
     console.error('Failed complete portfolio sync to Google Sheet:', err);
-    return { success: false, message: err.message || 'Failed complete sync' };
+    return { success: false, message: err.message || 'Failed complete sync', isAuthError: isAuth };
   }
 }
+

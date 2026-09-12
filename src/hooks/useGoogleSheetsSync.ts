@@ -111,13 +111,27 @@ export function useGoogleSheetsSync(
           message: `Portfolio successfully synced to Google Sheets (${transactions.length} trades, ${positions.length} holdings).`,
         });
       } else {
-        setSheetsSyncFeedback({
-          type: 'error',
-          message: result.message || 'Failed to sync with Google Sheets.',
-        });
+        if (result.isAuthError) {
+          clearExpiredToken();
+          setIsSheetsTokenExpired(true);
+          setSheetsSyncFeedback({
+            type: 'error',
+            message: 'Google Sheets OAuth session has expired. Please re-authenticate via Google Sheets modal.',
+          });
+        } else {
+          setSheetsSyncFeedback({
+            type: 'error',
+            message: result.message || 'Failed to sync with Google Sheets.',
+          });
+        }
       }
       return result;
     } catch (err: any) {
+      const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
+      if (isAuth) {
+        clearExpiredToken();
+        setIsSheetsTokenExpired(true);
+      }
       const errMsg = err?.message || 'Error syncing with Google Sheets';
       setSheetsSyncFeedback({ type: 'error', message: errMsg });
       return { success: false, message: errMsg };

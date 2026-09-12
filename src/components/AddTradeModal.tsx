@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { EGXTicker, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
-import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle } from 'lucide-react';
+import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles } from 'lucide-react';
 import { DateInput } from './DateInput';
 
 interface AddTradeModalProps {
@@ -26,6 +26,7 @@ interface AddTradeModalProps {
   preselectedTicker?: EGXTicker | null;
   cashBalance: number;
   existingPositions?: Position[];
+  onOpenScreenshotModal?: () => void;
 }
 
 export const AddTradeModal: React.FC<AddTradeModalProps> = ({
@@ -36,6 +37,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   preselectedTicker,
   cashBalance,
   existingPositions = [],
+  onOpenScreenshotModal,
 }) => {
   const [tickerInput, setTickerInput] = useState<string>('');
   const [selectedTickerData, setSelectedTickerData] = useState<EGXTicker | null>(null);
@@ -192,6 +194,26 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* AI Screenshot Banner Shortcut */}
+        {onOpenScreenshotModal && (
+          <div className="p-3 rounded-xl bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-blue-500/15 border border-indigo-500/30 text-xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-indigo-200">
+              <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span>Have a broker receipt or screenshot?</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenScreenshotModal();
+              }}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] shrink-0 transition shadow-sm"
+            >
+              Scan &amp; Auto-Fill
+            </button>
+          </div>
+        )}
 
         {/* Existing Position DCA Banner */}
         {activeExistingPosition && (

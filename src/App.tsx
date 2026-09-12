@@ -31,6 +31,7 @@ import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
+import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { RealizedTrajectoryChart } from './components/RealizedTrajectoryChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { initAuth, logout, getAccessToken } from './services/firebaseAuth';
@@ -127,6 +128,7 @@ export default function App() {
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
   const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
 
@@ -934,6 +936,97 @@ export default function App() {
     setIsAddTradeModalOpen(true);
   };
 
+  const handleAIScreenshotAddTransaction = (parsedTx: {
+    ticker: string;
+    companyName: string;
+    sector: Sector;
+    type: 'BUY' | 'SELL';
+    shares: number;
+    price: number;
+    date: string;
+    fees: number;
+    notes?: string;
+  }) => {
+    const newTx: TradeTransaction = {
+      id: `tx-ai-${Date.now()}-${parsedTx.ticker}`,
+      type: parsedTx.type,
+      ticker: parsedTx.ticker.toUpperCase(),
+      companyName: parsedTx.companyName || parsedTx.ticker,
+      sector: parsedTx.sector || 'Banking',
+      shares: parsedTx.shares,
+      price: parsedTx.price,
+      date: parsedTx.date,
+      fees: parsedTx.fees || 0,
+      totalAmount: parsedTx.type === 'BUY' 
+        ? (parsedTx.shares * parsedTx.price) + (parsedTx.fees || 0)
+        : Math.max(0, (parsedTx.shares * parsedTx.price) - (parsedTx.fees || 0)),
+      notes: parsedTx.notes || 'Logged via AI Screenshot Scanner',
+    };
+
+    const updatedTransactions = [newTx, ...transactions];
+    setTransactions(updatedTransactions);
+
+    // Reconcile full portfolio state from ledger
+    const reconciled = reconcilePortfolioFromLedger(updatedTransactions, tickers, cashBalance);
+    setPositions(reconciled.reconciledPositions);
+    setClosedTrades(reconciled.reconciledClosedTrades);
+    setCashBalance(reconciled.reconciledCashBalance);
+
+    setPriceSyncNotification({
+      message: `Successfully logged ${parsedTx.type} ${parsedTx.shares.toLocaleString()} ${parsedTx.ticker} via AI screenshot!`,
+      type: 'success',
+    });
+    setTimeout(() => setPriceSyncNotification(null), 5000);
+  };
+
+  const handleAIScreenshotAddBatchTransactions = (parsedTxs: Array<{
+    ticker: string;
+    companyName: string;
+    sector: Sector;
+    type: 'BUY' | 'SELL';
+    shares: number;
+    price: number;
+    date: string;
+    fees: number;
+    notes?: string;
+  }>) => {
+    if (parsedTxs.length === 0) return;
+
+    const newTxs: TradeTransaction[] = parsedTxs.map((pt, idx) => ({
+      id: `tx-ai-${Date.now()}-${idx}-${pt.ticker}`,
+      type: pt.type,
+      ticker: pt.ticker.toUpperCase(),
+      companyName: pt.companyName || pt.ticker,
+      sector: pt.sector || 'Banking',
+      shares: pt.shares,
+      price: pt.price,
+      date: pt.date,
+      fees: pt.fees || 0,
+      totalAmount: pt.type === 'BUY'
+        ? (pt.shares * pt.price) + (pt.fees || 0)
+        : Math.max(0, (pt.shares * pt.price) - (pt.fees || 0)),
+      notes: pt.notes || 'Logged via Telda AI Screenshot Scanner',
+    }));
+
+    // Sort chronologically ascending to maintain consistent ledger reconciliation order
+    const combinedTransactions = [...newTxs, ...transactions].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    setTransactions(combinedTransactions);
+
+    // Reconcile full portfolio state from ledger
+    const reconciled = reconcilePortfolioFromLedger(combinedTransactions, tickers, cashBalance);
+    setPositions(reconciled.reconciledPositions);
+    setClosedTrades(reconciled.reconciledClosedTrades);
+    setCashBalance(reconciled.reconciledCashBalance);
+
+    setPriceSyncNotification({
+      message: `Successfully imported ${newTxs.length} transactions from Telda screenshots!`,
+      type: 'success',
+    });
+    setTimeout(() => setPriceSyncNotification(null), 6000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* App Header & Navigation */}
@@ -947,6 +1040,7 @@ export default function App() {
           setIsAddTradeModalOpen(true);
         }}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         isSheetsConnected={!!sheetsConfig}
         sheetsTitle={sheetsConfig?.sheetName}
         authUser={authUser}
@@ -1112,6 +1206,7 @@ export default function App() {
             onEditTransaction={handleEditTransaction}
             onDeleteTrade={handleDeleteTrade}
             onDeletePosition={handleDeletePosition}
+            onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
           />
         )}
 
@@ -1171,6 +1266,15 @@ export default function App() {
         preselectedTicker={selectedTickerForTrade}
         cashBalance={cashBalance}
         existingPositions={positions}
+        onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
+      />
+
+      <TradeScreenshotModal
+        isOpen={isScreenshotModalOpen}
+        onClose={() => setIsScreenshotModalOpen(false)}
+        tickers={tickers}
+        onAddTransaction={handleAIScreenshotAddTransaction}
+        onAddBatchTransactions={handleAIScreenshotAddBatchTransactions}
       />
 
       <SellPositionModal

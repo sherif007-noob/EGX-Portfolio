@@ -23,7 +23,8 @@ import {
   X,
   Save,
   Check,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 
 interface TradingJournalProps {
@@ -34,6 +35,7 @@ interface TradingJournalProps {
   onEditTransaction?: (updatedTx: TradeTransaction) => void;
   onDeleteTrade?: (id: string) => void;
   onDeletePosition?: (id: string) => void;
+  onOpenScreenshotModal?: () => void;
 }
 
 export type JournalFilterMode = 'ALL' | 'OPEN' | 'WIN' | 'LOSS' | 'BUY' | 'SELL';
@@ -46,6 +48,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   onEditTransaction,
   onDeleteTrade,
   onDeletePosition,
+  onOpenScreenshotModal,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<JournalFilterMode>('ALL');
@@ -373,13 +376,26 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       {/* Top Banner with P&L, Transaction Stats and Commissions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-              <BookOpen className="w-4 h-4" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Trade Journal &amp; Transaction Ledger
+              </h2>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              Trade Journal &amp; Transaction Ledger
-            </h2>
+
+            {onOpenScreenshotModal && (
+              <button
+                type="button"
+                onClick={onOpenScreenshotModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-900/30 transition active:scale-95"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                <span>AI Scan Trade Screenshot</span>
+              </button>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
             Chronological log of all individual executions (entries, DCA purchases, and exit sales). Each buy order is tracked as a separate transaction at its exact purchase price.

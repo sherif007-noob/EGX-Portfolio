@@ -81,7 +81,8 @@ export const EGX_STOCK_DICTIONARY: Record<
   TALM: { nameEn: 'Taaleem Management Services', nameAr: 'تعليم لخدمات الإدارة', sector: 'Education & Services', isin: 'EGS738H1C013' },
   MOIL: { nameEn: 'Maridive & Oil Services', nameAr: 'الخدمات الملاحية والبترولية - ماريديف', sector: 'Energy & Oil Services', isin: 'EGS49022C015' },
   BINV: { nameEn: 'B Investments Holding', nameAr: 'بي إنفستمنتس القابضة', sector: 'Non-Bank Financial Services & Fintech', isin: 'EGS691Z1C010' },
-  VALU: { nameEn: 'valU Financial Technologies', nameAr: 'فاليو لخدمات التمويل الاستهلاكي', sector: 'Non-Bank Financial Services & Fintech', isin: 'EGS745M1C013' }
+  VALU: { nameEn: 'valU Financial Technologies', nameAr: 'فاليو لخدمات التمويل الاستهلاكي', sector: 'Non-Bank Financial Services & Fintech', isin: 'EGS745M1C013' },
+  MPCO: { nameEn: 'Mansoura Poultry', nameAr: 'المنصورة للدواجن', sector: 'Food, Beverage & Tobacco', isin: 'EGS30371C012' }
 };
 
 /**

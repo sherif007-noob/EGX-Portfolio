@@ -14,7 +14,8 @@ import {
   RefreshCw,
   Wallet,
   RotateCcw,
-  Database
+  Database,
+  Sparkles
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -27,6 +28,7 @@ interface HeaderProps {
   onOpenSchemaSync?: () => void;
   onOpenAddTrade: () => void;
   onOpenBackupModal?: () => void;
+  onOpenScreenshotModal?: () => void;
   isSheetsConnected: boolean;
   sheetsTitle?: string;
   authUser: User | null;
@@ -42,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSchemaSync,
   onOpenAddTrade,
   onOpenBackupModal,
+  onOpenScreenshotModal,
   isSheetsConnected,
   sheetsTitle,
   authUser,
@@ -128,6 +131,19 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* PWA Install Button */}
             <PWAInstallButton />
+
+            {/* AI Scan Screenshot Button */}
+            {onOpenScreenshotModal && (
+              <button
+                id="header-ai-scan-btn"
+                onClick={onOpenScreenshotModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-indigo-900/30 transition active:scale-95"
+                title="Upload trade screenshot or receipt to auto-log using AI"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                <span className="hidden lg:inline">AI Scan Receipt</span>
+              </button>
+            )}
 
             {/* Add Trade Button */}
             <button

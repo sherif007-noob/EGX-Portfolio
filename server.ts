@@ -18,9 +18,9 @@ async function startServer() {
   app.post("/api/parse-trade-screenshot", async (req, res) => {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({
-          error: "GEMINI_API_KEY environment variable is not configured on the server.",
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey.includes("MY_GEMINI")) {
+        return res.status(400).json({
+          error: "GEMINI_API_KEY is missing or invalid. Please configure a valid Gemini API key in AI Studio environment settings.",
         });
       }
 
@@ -40,31 +40,31 @@ async function startServer() {
         },
       });
 
-      const promptText = `Analyze this stock trade receipt/confirmation screenshot. It is typically from Telda, Thndr, Mubasher, EFG Hermes, CI Capital, or another broker app.
+      const promptText = `Analyze this stock trade receipt/confirmation screenshot from Telda or other Egyptian brokers.
 
-Special Telda extraction rules:
-1. Header / Ticker:
-   - Telda often displays "[TICKER] order review" (e.g., "ORHD order review", "ELSH order review", "MPCO order review"). The ticker is the symbol before "order review" (e.g. ORHD, ELSH, MPCO).
-   - Alternatively, it may display "Buy [TICKER]" or "Sell [TICKER]" with the company name directly beneath (e.g. "Buy MPCO" / "Mansoura Poultry").
-2. Action Type (BUY or SELL):
-   - If order type is "Market Buy", "Limit Buy", or header is "Buy [TICKER]", type is "BUY".
-   - If order type is "Market Sell", "Limit Sell", or header is "Sell [TICKER]", type is "SELL".
-3. Shares:
-   - May be written as "300", "575 @ T+2", "8000 @ T+0", or "8000".
-   - CRITICAL: Extract ONLY the number of shares (e.g., 575 or 8000). Discard "@ T+0", "@ T+2", or other settlement tags.
-4. Execution Price:
-   - Extract from "Average execution price", "Price", or "Order transactions" (e.g. "EGP 43.10", "EGP 13.50", "EGP 2.45"). Return as a clean number.
-5. Fees:
-   - Extract from "Total fees" or "Fees" (e.g. "EGP 11.68", "EGP 6.83", "EGP 10.8"). If none, return 0.
-6. Date:
-   - Look for "Date and time" (e.g., "10 Sep 26, 10:24 AM", "08 Sep 26, 12:40 PM", or "10 September 2026").
-   - Notice that '26' means year 2026. Format accurately as YYYY-MM-DD (e.g., "2026-09-10", "2026-09-08").
-7. Broker:
-   - If the screenshot shows Telda's layout (dark design, circular verification checkmark, "order review", "Good till cancel", "@ T+0/@ T+2", "Report issue"), set brokerName to "Telda".
-8. Common EGX tickers: ORHD, ELSH, MPCO, COMI, ESRS, TMGH, ETEL, EAST, MFPC, SWDY, FWRY, ISPH, HRHO, ABUK, AMOC, etc.`;
+Special Telda extraction rules for BOTH layouts:
+Layout 1 - Trade Receipt / Execution Detail:
+- Header: "Sell [TICKER]" or "Buy [TICKER]" (e.g., "Sell EFIC", "Buy COMI"). Ticker is EFIC, COMI, etc. Action is SELL or BUY.
+- Subtitle: Full company name (e.g., "Egyptian Financial and Industrial SAE").
+- Shares: "Shares 50 @ T+0" -> shares = 50 (pure integer; discard "@ T+0" or "@ T+2").
+- Price: "Price EGP 217.9" -> price = 217.9 (execution price per share in EGP).
+- Fees: "Fees ⓘ EGP 6.44" -> fees = 6.44.
+- Total: "Total EGP 10,888.56".
+- Date: "Date and time: 10 Sep 26, 01:15 PM" -> date = "2026-09-10" ('26' is year 2026).
+
+Layout 2 - Order Review:
+- Header: "[TICKER] order review" (e.g., "MPCO order review", "ORHD order review"). Ticker is MPCO, ORHD.
+- Order type: "Limit Sell @ EGP 2.60" or "Market Buy". Action is SELL or BUY.
+- Shares: "8000 @ T+0" -> shares = 8000.
+- Price: "Average execution price ⓘ EGP 2.60" -> price = 2.60.
+- Fees: "Total fees EGP 11.44" -> fees = 11.44.
+- Total: "Total EGP 20,788.56".
+- Date: "Date and time: 10 Sep 26, 10:39 AM" -> date = "2026-09-10".
+
+Broker: "Telda" if matching Telda UI.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
+        model: "gemini-3.6-flash",
         contents: [
           {
             inlineData: {
@@ -90,16 +90,32 @@ Special Telda extraction rules:
               notes: { type: Type.STRING, description: "Order type or execution notes" },
               confidenceScore: { type: Type.NUMBER, description: "Confidence score from 0 to 100" },
             },
-            required: ["ticker", "type", "shares", "price", "date"],
+            required: ["ticker", "type", "shares", "price"],
           },
         },
       });
 
-      const parsedJson = JSON.parse(response.text || "{}");
+      const rawText = (response.text || "{}").replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+      const parsedJson = JSON.parse(rawText || "{}");
       res.json(parsedJson);
     } catch (err: any) {
-      console.error("Error parsing trade screenshot with Gemini API:", err);
-      res.status(500).json({ error: err.message || "Failed to analyze trade screenshot" });
+      const errStr = typeof err === "string" ? err : (err?.message || JSON.stringify(err));
+      console.error("Error parsing trade screenshot with Gemini API:", errStr);
+      const isQuotaErr = errStr.includes("429") || errStr.includes("prepayment credits") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+      const isApiKeyErr = errStr.includes("API key") || errStr.includes("API_KEY_INVALID") || errStr.includes("INVALID_ARGUMENT") || errStr.includes("code\":400");
+      if (isQuotaErr) {
+        return res.status(429).json({
+          error: "Your Gemini API prepayment credits are depleted (HTTP 429: RESOURCE_EXHAUSTED).",
+          isQuotaError: true,
+        });
+      }
+      if (isApiKeyErr) {
+        return res.status(400).json({
+          error: "Gemini API key is invalid or unauthorized. Please set a valid GEMINI_API_KEY in environment settings.",
+          isApiKeyError: true,
+        });
+      }
+      res.status(500).json({ error: err?.message || "Failed to analyze trade screenshot" });
     }
   });
 
@@ -107,9 +123,9 @@ Special Telda extraction rules:
   app.post("/api/parse-trade-screenshots-batch", async (req, res) => {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({
-          error: "GEMINI_API_KEY environment variable is not configured on the server.",
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey.includes("MY_GEMINI")) {
+        return res.status(400).json({
+          error: "GEMINI_API_KEY is missing or invalid. Please configure a valid Gemini API key in AI Studio environment settings.",
         });
       }
 
@@ -127,15 +143,28 @@ Special Telda extraction rules:
         },
       });
 
-      const promptText = `Analyze this stock trade confirmation screenshot from Telda or other brokers.
-Special Telda extraction rules:
-1. Header: "[TICKER] order review" (e.g., ORHD, ELSH, MPCO) or "Buy/Sell [TICKER]".
-2. Action: "BUY" or "SELL" based on "Market Buy", "Limit Buy", "Market Sell", "Limit Sell".
-3. Shares: Pure number (ignore "@ T+0" or "@ T+2" settlement tags).
-4. Price: Execution price per share in EGP (e.g., 43.10, 13.50, 2.60, 2.45).
-5. Fees: Total fees / fees in EGP (e.g., 11.68, 6.83, 10.8).
-6. Date: "Date and time" (e.g. "10 Sep 26" -> "2026-09-10", "08 Sep 26" -> "2026-09-08").
-7. Broker: "Telda" if matching Telda's UI.`;
+      const promptText = `Analyze this stock trade receipt/confirmation screenshot from Telda or other Egyptian brokers.
+
+Special Telda extraction rules for BOTH layouts:
+Layout 1 - Trade Receipt / Execution Detail:
+- Header: "Sell [TICKER]" or "Buy [TICKER]" (e.g., "Sell EFIC", "Buy COMI"). Ticker is EFIC, COMI, etc. Action is SELL or BUY.
+- Subtitle: Full company name (e.g., "Egyptian Financial and Industrial SAE").
+- Shares: "Shares 50 @ T+0" -> shares = 50 (pure integer; discard "@ T+0" or "@ T+2").
+- Price: "Price EGP 217.9" -> price = 217.9 (execution price per share in EGP).
+- Fees: "Fees ⓘ EGP 6.44" -> fees = 6.44.
+- Total: "Total EGP 10,888.56".
+- Date: "Date and time: 10 Sep 26, 01:15 PM" -> date = "2026-09-10" ('26' is year 2026).
+
+Layout 2 - Order Review:
+- Header: "[TICKER] order review" (e.g., "MPCO order review", "ORHD order review"). Ticker is MPCO, ORHD.
+- Order type: "Limit Sell @ EGP 2.60" or "Market Buy". Action is SELL or BUY.
+- Shares: "8000 @ T+0" -> shares = 8000.
+- Price: "Average execution price ⓘ EGP 2.60" -> price = 2.60.
+- Fees: "Total fees EGP 11.44" -> fees = 11.44.
+- Total: "Total EGP 20,788.56".
+- Date: "Date and time: 10 Sep 26, 10:39 AM" -> date = "2026-09-10".
+
+Broker: "Telda" if matching Telda UI.`;
 
       // Process images concurrently with Gemini Flash
       const results = await Promise.all(
@@ -148,7 +177,7 @@ Special Telda extraction rules:
             const mimeType = imgObj.mimeType || "image/jpeg";
 
             const response = await ai.models.generateContent({
-              model: "gemini-3.8-flash",
+              model: "gemini-3.6-flash",
               contents: [
                 {
                   inlineData: {
@@ -174,16 +203,30 @@ Special Telda extraction rules:
                     notes: { type: Type.STRING },
                     confidenceScore: { type: Type.NUMBER },
                   },
-                  required: ["ticker", "type", "shares", "price", "date"],
+                  required: ["ticker", "type", "shares", "price"],
                 },
               },
             });
 
-            const parsed = JSON.parse(response.text || "{}");
+            const rawText = (response.text || "{}").replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+            const parsed = JSON.parse(rawText || "{}");
             return { index, success: true, data: parsed };
           } catch (itemErr: any) {
-            console.error(`Failed parsing screenshot at index ${index}:`, itemErr);
-            return { index, success: false, error: itemErr.message || "Failed to parse image" };
+            const errStr = typeof itemErr === "string" ? itemErr : (itemErr?.message || JSON.stringify(itemErr));
+            console.error(`Failed parsing screenshot at index ${index}:`, errStr);
+            const isQuotaErr = errStr.includes("429") || errStr.includes("prepayment credits") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+            const isApiKeyErr = errStr.includes("API key") || errStr.includes("API_KEY_INVALID") || errStr.includes("INVALID_ARGUMENT") || errStr.includes("code\":400") || errStr.includes("400");
+            return {
+              index,
+              success: false,
+              isQuotaError: isQuotaErr,
+              isApiKeyError: isApiKeyErr,
+              error: isQuotaErr
+                ? "Gemini API prepayment credits are depleted (HTTP 429: RESOURCE_EXHAUSTED)."
+                : isApiKeyErr
+                ? "Gemini API Key is invalid or unauthorized."
+                : errStr,
+            };
           }
         })
       );

@@ -12,10 +12,13 @@ import {
   Trash2,
   Plus,
   ArrowUpDown,
-  Smartphone,
-  Check
+  Check,
+  Zap,
+  Cpu
 } from 'lucide-react';
 import { DateInput } from './DateInput';
+import { recognizeTradeScreenshot, parseTradeText } from '../services/ocrParser';
+import { getTodayISO } from '../utils/dateUtils';
 
 export interface ParsedTradeItem {
   id: string;
@@ -68,6 +71,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   onAddTransaction,
   onAddBatchTransactions,
 }) => {
+  const [engineMode, setEngineMode] = useState<'ocr' | 'gemini'>('ocr');
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
   const [batchTrades, setBatchTrades] = useState<ParsedTradeItem[]>([]);
@@ -102,8 +106,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     setScanProgress({ current: 0, total: fileList.length });
 
     try {
-      // Convert all files to base64
-      const base64List: Array<{ base64: string; mime: string; name: string }> = [];
+      // 1. Convert all files to base64 for image preview attachments
+      const base64List: Array<{ base64: string; mime: string; name: string; file: File }> = [];
       for (const file of fileList) {
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -111,54 +115,194 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        base64List.push({ base64, mime: file.type || 'image/jpeg', name: file.name });
+        base64List.push({ base64, mime: file.type || 'image/jpeg', name: file.name, file });
       }
-
-      // If batch API is available, call batch endpoint
-      const response = await fetch('/api/parse-trade-screenshots-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images: base64List.map((item) => ({
-            imageBase64: item.base64,
-            mimeType: item.mime,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
-      }
-
-      const resData = await response.json();
-      const results = resData.results || [];
 
       const parsedItems: ParsedTradeItem[] = [];
 
-      results.forEach((res: any, idx: number) => {
-        if (res.success && res.data) {
-          const d = res.data;
-          const { ticker, name, sector } = resolveTickerData(d.ticker, d.companyName);
-          parsedItems.push({
-            id: `scan-${Date.now()}-${idx}`,
-            ticker,
-            companyName: name,
-            sector,
-            type: d.type === 'SELL' ? 'SELL' : 'BUY',
-            shares: Number(d.shares) || 0,
-            price: Number(d.price) || 0,
-            fees: Number(d.fees) || 0,
-            date: d.date || new Date().toISOString().split('T')[0],
-            brokerName: d.brokerName || 'Telda',
-            notes: d.notes || `Imported via ${d.brokerName || 'Telda'} receipt`,
-            confidenceScore: d.confidenceScore || 95,
-            imagePreview: base64List[idx]?.base64,
-          });
-        }
-      });
+      if (engineMode === 'ocr') {
+        // FREE CLIENT-SIDE OCR ENGINE (Tesseract.js)
+        for (let i = 0; i < base64List.length; i++) {
+          setScanProgress({ current: i + 1, total: base64List.length });
+          const item = base64List[i];
+          try {
+            const ocrText = await recognizeTradeScreenshot(item.file);
+            const parsed = parseTradeText(ocrText, tickers);
 
-      if (parsedItems.length === 0) {
-        throw new Error('Could not identify trade details from the uploaded image(s).');
+            if (parsed && (parsed.ticker || parsed.shares || parsed.price)) {
+              const { ticker, name, sector } = resolveTickerData(parsed.ticker || '', parsed.companyName);
+              parsedItems.push({
+                id: `ocr-${Date.now()}-${i}`,
+                ticker,
+                companyName: name,
+                sector,
+                type: parsed.type || 'BUY',
+                shares: parsed.shares || 0,
+                price: parsed.price || 0,
+                fees: parsed.fees || 0,
+                date: parsed.date || getTodayISO(),
+                brokerName: parsed.brokerName || 'Telda',
+                notes: parsed.notes || `${parsed.brokerName || 'Telda'} ${parsed.type === 'BUY' ? 'Buy' : 'Sell'} • OCR Scanned`,
+                confidenceScore: parsed.confidenceScore || 92,
+                imagePreview: item.base64,
+              });
+            } else {
+              // Honest unparsed item without fake templates
+              parsedItems.push({
+                id: `ocr-unparsed-${Date.now()}-${i}`,
+                ticker: '',
+                companyName: 'Unrecognized Trade',
+                sector: 'Other',
+                type: 'BUY',
+                shares: 0,
+                price: 0,
+                fees: 0,
+                date: getTodayISO(),
+                brokerName: 'Telda',
+                notes: 'Trade details could not be detected from image. Please verify.',
+                confidenceScore: 40,
+                imagePreview: item.base64,
+              });
+            }
+          } catch (ocrErr) {
+            console.error('OCR processing error on file', i, ocrErr);
+            parsedItems.push({
+              id: `ocr-err-${Date.now()}-${i}`,
+              ticker: '',
+              companyName: 'Scan Error',
+              sector: 'Other',
+              type: 'BUY',
+              shares: 0,
+              price: 0,
+              fees: 0,
+              date: getTodayISO(),
+              brokerName: 'Telda',
+              notes: 'Failed to read image. Please enter details manually.',
+              confidenceScore: 30,
+              imagePreview: item.base64,
+            });
+          }
+        }
+      } else {
+        // GEMINI AI VISION ENGINE
+        let isQuotaExhausted = false;
+        let isApiKeyIssue = false;
+        let results: any[] = [];
+
+        try {
+          const response = await fetch('/api/parse-trade-screenshots-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              images: base64List.map((item) => ({
+                imageBase64: item.base64,
+                mimeType: item.mime,
+              })),
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            if (
+              response.status === 429 ||
+              errorData.isQuotaError ||
+              (errorData.error && (errorData.error.includes('429') || errorData.error.includes('credits') || errorData.error.includes('RESOURCE_EXHAUSTED')))
+            ) {
+              isQuotaExhausted = true;
+            } else if (
+              errorData.isApiKeyError ||
+              response.status === 400 ||
+              (errorData.error && errorData.error.includes('API key'))
+            ) {
+              isApiKeyIssue = true;
+            }
+          } else {
+            const resData = await response.json();
+            results = resData.results || [];
+          }
+        } catch (fetchErr) {
+          console.warn('Screenshot parsing API call failed, will proceed to OCR fallback:', fetchErr);
+        }
+
+        results.forEach((res: any, idx: number) => {
+          if (res.success && res.data) {
+            const d = res.data;
+            const { ticker, name, sector } = resolveTickerData(d.ticker, d.companyName);
+            parsedItems.push({
+              id: `scan-${Date.now()}-${idx}`,
+              ticker,
+              companyName: name,
+              sector,
+              type: d.type === 'SELL' ? 'SELL' : 'BUY',
+              shares: Number(d.shares) || 0,
+              price: Number(d.price) || 0,
+              fees: Number(d.fees) || 0,
+              date: d.date || getTodayISO(),
+              brokerName: d.brokerName || 'Telda',
+              notes: d.notes || `Imported via ${d.brokerName || 'Telda'} receipt`,
+              confidenceScore: d.confidenceScore || 95,
+              imagePreview: base64List[idx]?.base64,
+            });
+          } else if (res) {
+            if (
+              res.isQuotaError ||
+              (res.error &&
+                (res.error.includes('429') ||
+                  res.error.includes('prepayment') ||
+                  res.error.includes('RESOURCE_EXHAUSTED') ||
+                  res.error.includes('credits')))
+            ) {
+              isQuotaExhausted = true;
+            }
+            if (res.isApiKeyError || (res.error && res.error.includes('API key'))) {
+              isApiKeyIssue = true;
+            }
+          }
+        });
+
+        // If Gemini failed due to quota/key, fall back to Free Client OCR seamlessly
+        if (parsedItems.length === 0) {
+          for (let i = 0; i < base64List.length; i++) {
+            const item = base64List[i];
+            try {
+              const ocrText = await recognizeTradeScreenshot(item.file);
+              const parsed = parseTradeText(ocrText, tickers);
+              if (parsed && (parsed.ticker || parsed.shares || parsed.price)) {
+                const { ticker, name, sector } = resolveTickerData(parsed.ticker || '', parsed.companyName);
+                parsedItems.push({
+                  id: `ocr-fb-${Date.now()}-${i}`,
+                  ticker,
+                  companyName: name,
+                  sector,
+                  type: parsed.type || 'BUY',
+                  shares: parsed.shares || 0,
+                  price: parsed.price || 0,
+                  fees: parsed.fees || 0,
+                  date: parsed.date || getTodayISO(),
+                  brokerName: parsed.brokerName,
+                  notes: parsed.notes || `OCR Scanned`,
+                  confidenceScore: 90,
+                  imagePreview: item.base64,
+                });
+              } else {
+                throw new Error(`Screenshot #${i + 1} did not contain readable trade text. Please ensure the trade order is visible.`);
+              }
+            } catch (ocrErr: any) {
+              console.warn('OCR processing error on screenshot:', ocrErr);
+              throw ocrErr;
+            }
+          }
+
+          if (isQuotaExhausted) {
+            setErrorMsg(
+              'Gemini API credits depleted. Switched to Free Client OCR engine.'
+            );
+          } else if (isApiKeyIssue) {
+            setErrorMsg(
+              'Gemini API key unconfigured. Switched to Free Client OCR engine.'
+            );
+          }
+        }
       }
 
       setBatchTrades((prev) => [...prev, ...parsedItems]);
@@ -174,86 +318,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
       setIsScanning(false);
       setScanProgress(null);
     }
-  };
-
-  const handleLoadTeldaSampleTrades = () => {
-    // Exact 5 transactions from user's uploaded Telda screenshots
-    const sampleItems: ParsedTradeItem[] = [
-      {
-        id: `telda-sample-1`,
-        ticker: 'ORHD',
-        companyName: 'Orascom Development Egypt',
-        sector: 'Tourism & Leisure',
-        type: 'BUY',
-        shares: 300,
-        price: 43.10,
-        fees: 11.68,
-        date: '2026-09-10',
-        brokerName: 'Telda',
-        notes: 'Telda Market Buy • Fulfilled (Good till cancel)',
-        confidenceScore: 99,
-      },
-      {
-        id: `telda-sample-2`,
-        ticker: 'ELSH',
-        companyName: 'El Shams Housing & Urbanization',
-        sector: 'Real Estate & Construction',
-        type: 'BUY',
-        shares: 575,
-        price: 13.88,
-        fees: 6.99,
-        date: '2026-09-08',
-        brokerName: 'Telda',
-        notes: 'Telda Market Buy • Fulfilled (Good till cancel)',
-        confidenceScore: 98,
-      },
-      {
-        id: `telda-sample-3`,
-        ticker: 'ELSH',
-        companyName: 'El Shams Housing & Urbanization',
-        sector: 'Real Estate & Construction',
-        type: 'SELL',
-        shares: 575,
-        price: 13.50,
-        fees: 6.83,
-        date: '2026-09-10',
-        brokerName: 'Telda',
-        notes: 'Telda Limit Sell @ 13.50 EGP • Fulfilled (T+2)',
-        confidenceScore: 99,
-      },
-      {
-        id: `telda-sample-4`,
-        ticker: 'MPCO',
-        companyName: 'Mansoura Poultry',
-        sector: 'Food, Beverage & Tobacco',
-        type: 'BUY',
-        shares: 8000,
-        price: 2.45,
-        fees: 10.80,
-        date: '2026-09-10',
-        brokerName: 'Telda',
-        notes: 'Telda Buy Receipt • Total EGP 19,610.80',
-        confidenceScore: 98,
-      },
-      {
-        id: `telda-sample-5`,
-        ticker: 'MPCO',
-        companyName: 'Mansoura Poultry',
-        sector: 'Food, Beverage & Tobacco',
-        type: 'SELL',
-        shares: 8000,
-        price: 2.60,
-        fees: 11.44,
-        date: '2026-09-10',
-        brokerName: 'Telda',
-        notes: 'Telda Limit Sell @ 2.60 EGP • Fulfilled (T+0 Day Trade)',
-        confidenceScore: 99,
-      },
-    ];
-
-    setBatchTrades(sampleItems);
-    setActiveSingleIndex(null);
-    setErrorMsg(null);
   };
 
   const updateTradeItem = (index: number, updates: Partial<ParsedTradeItem>) => {
@@ -349,17 +413,25 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  AI Trade Screenshot Scanner
+                  Trade Screenshot Scanner
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold">
                   Telda &amp; EGX
                 </span>
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-medium">
-                  Gemini 3.8 Flash
-                </span>
+                {engineMode === 'ocr' ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-semibold">
+                    <Zap className="w-3 h-3 text-emerald-400" />
+                    Free OCR (No API Key)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-500/40 text-indigo-300 text-[10px] font-semibold">
+                    <Sparkles className="w-3 h-3 text-indigo-400" />
+                    Gemini 3.6 Flash
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400">
-                Auto-extracts Order Reviews &amp; Receipts from Telda, Thndr, Mubasher &amp; Egyptian brokers
+                Extracts Order Reviews &amp; Receipts from Telda, Thndr, Mubasher &amp; Egyptian brokers
               </p>
             </div>
           </div>
@@ -377,41 +449,62 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
         {/* Modal Scrollable Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{errorMsg}</span>
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{errorMsg}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                className="p-1 rounded-lg text-rose-400 hover:text-rose-200 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
-          {/* Telda Helper Callout & Quick Sample Button */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                <Smartphone className="w-5 h-5" />
-              </div>
+          {/* Engine Selection Bar */}
+          {batchTrades.length === 0 && !isScanning && (
+            <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-white">Telda App Compatibility</h4>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                    Active
-                  </span>
+                  <Cpu className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold text-white">Detection Engine</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Understands Telda order reviews, fulfilled limit/market orders, T+0/T+2 settlement tags, and transaction receipts.
+                  Choose between 100% free client-side OCR or Google Cloud Gemini Vision
                 </p>
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleLoadTeldaSampleTrades}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 shrink-0"
-              title="Populate the 5 transactions from your Telda screenshots (ORHD, ELSH, MPCO)"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Load 5 Telda Screenshots Data</span>
-            </button>
-          </div>
+              <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-800 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('ocr')}
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                    engineMode === 'ocr'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Free OCR (Unlimited)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('gemini')}
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                    engineMode === 'gemini'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Gemini AI Vision</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Dropzone for 1 or multiple screenshots */}
           {batchTrades.length === 0 && !isScanning && (
@@ -424,7 +517,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   handleFilesSelect(e.dataTransfer.files);
                 }
               }}
-              className="border-2 border-dashed border-slate-700 hover:border-indigo-500/60 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40 hover:bg-slate-800/20 transition group"
+              className="border-2 border-dashed border-slate-700 hover:border-emerald-500/60 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40 hover:bg-slate-800/20 transition group"
             >
               <input
                 ref={fileInputRef}
@@ -438,21 +531,23 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   }
                 }}
               />
-              <div className="w-14 h-14 rounded-2xl bg-slate-800/80 group-hover:bg-indigo-500/20 border border-slate-700 group-hover:border-indigo-500/40 text-slate-400 group-hover:text-indigo-400 flex items-center justify-center mx-auto mb-4 transition">
+              <div className="w-14 h-14 rounded-2xl bg-slate-800/80 group-hover:bg-emerald-500/20 border border-slate-700 group-hover:border-emerald-500/40 text-slate-400 group-hover:text-emerald-400 flex items-center justify-center mx-auto mb-4 transition">
                 <UploadCloud className="w-7 h-7" />
               </div>
               <h4 className="text-sm font-semibold text-white mb-1">
                 Click to upload or drag &amp; drop Telda screenshots
               </h4>
               <p className="text-xs text-slate-400 max-w-md mx-auto mb-3">
-                Select 1 or multiple screenshots at once. AI will parse each receipt, extract the ticker, buy/sell action, shares, price, fees, and execution dates.
+                {engineMode === 'ocr'
+                  ? 'Processed 100% locally with client-side OCR. No API keys, no quotas, and completely free.'
+                  : 'Processed with Gemini 3.6 Flash Multimodal Vision.'}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
                 <span>Multiple Images Supported</span>
                 <span>•</span>
-                <span>Handles Order Reviews &amp; Receipts</span>
+                <span>Order Reviews &amp; Receipts</span>
                 <span>•</span>
-                <span>Strips @ T+0 / T+2 cleanly</span>
+                <span>Extracts Ticker, Action, Qty &amp; Price</span>
               </div>
             </div>
           )}
@@ -460,17 +555,26 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           {/* Scanning Animation */}
           {isScanning && (
             <div className="flex flex-col items-center justify-center py-12 space-y-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <RefreshCw className="w-8 h-8 animate-spin" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2 justify-center">
-                  <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-                  Analyzing Telda Trade Screenshots with Gemini...
+                  {engineMode === 'ocr' ? (
+                    <>
+                      <Zap className="w-4 h-4 text-emerald-400" />
+                      Running Client-Side OCR Character Recognition...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                      Analyzing Trade Screenshots with Gemini Vision...
+                    </>
+                  )}
                 </h4>
                 {scanProgress && (
                   <p className="text-xs text-slate-400 mt-1">
-                    Processing {scanProgress.total} image{scanProgress.total > 1 ? 's' : ''} in parallel.
+                    Processing image {scanProgress.current} of {scanProgress.total}...
                   </p>
                 )}
               </div>
@@ -691,7 +795,11 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-95"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Log All {batchTrades.length} Trades to Portfolio</span>
+                <span>
+                  {batchTrades.length > 1
+                    ? `Log All ${batchTrades.length} Trades to Portfolio`
+                    : 'Log Trade to Portfolio'}
+                </span>
               </button>
             </div>
           </div>

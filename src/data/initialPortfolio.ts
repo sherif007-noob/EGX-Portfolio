@@ -8,7 +8,7 @@ export const INITIAL_POSITIONS: Position[] = [
     sector: 'Real Estate & Construction',
     shares: 5524,
     avgBuyPrice: 1.81,
-    currentPrice: 1.81,
+    currentPrice: 1.75,
     buyDate: '2026-09-07',
     totalFees: 8.50,
     targetPrice: 2.20,
@@ -22,7 +22,7 @@ export const INITIAL_POSITIONS: Position[] = [
     sector: 'Tourism & Leisure',
     shares: 300,
     avgBuyPrice: 43.10,
-    currentPrice: 43.10,
+    currentPrice: 43.20,
     buyDate: '2026-09-10',
     totalFees: 11.68,
     targetPrice: 50.00,
@@ -36,7 +36,7 @@ export const INITIAL_POSITIONS: Position[] = [
     sector: 'Telecommunications & Media',
     shares: 90,
     avgBuyPrice: 128.95,
-    currentPrice: 128.95,
+    currentPrice: 125.25,
     buyDate: '2026-09-10',
     totalFees: 9.70,
     targetPrice: 145.00,
@@ -348,6 +348,7 @@ export const INITIAL_CLOSED_TRADES: ClosedTrade[] = [
   },
 ];
 
+export const INITIAL_CAPITAL_DEPOSITS = 70029.00; // Total starting deposited capital (EGP)
 export const INITIAL_CASH_BALANCE = 39989.43; // EGP (Deposits 70,029.00 - Net Buy Cash Outlays + Realized Profit)
 
 export const INITIAL_TRANSACTIONS: TradeTransaction[] = [

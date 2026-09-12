@@ -255,12 +255,27 @@ export function applyLivePricesToPortfolio(
 
   // Update Positions with live prices
   const updatedPositions = positions.map(p => {
-    const symbol = resolveTickerSymbol(p.ticker);
-    const quote = quotes[symbol] || quotes[p.ticker.toUpperCase()];
-    if (quote) {
+    const cleanSym = p.ticker.trim().toUpperCase();
+    const symbol = resolveTickerSymbol(cleanSym);
+    const quote = quotes[symbol] || quotes[cleanSym] || quotes[p.ticker];
+    if (quote && quote.price > 0) {
       return {
         ...p,
         currentPrice: quote.price
+      };
+    }
+    const discovered = discoveredTickers.find(dt => dt.ticker.trim().toUpperCase() === cleanSym || dt.ticker.trim().toUpperCase() === symbol);
+    if (discovered && discovered.lastPrice > 0) {
+      return {
+        ...p,
+        currentPrice: discovered.lastPrice
+      };
+    }
+    const matchedTicker = tickerMap.get(cleanSym) || tickerMap.get(symbol);
+    if (matchedTicker && matchedTicker.lastPrice > 0) {
+      return {
+        ...p,
+        currentPrice: matchedTicker.lastPrice
       };
     }
     return p;
@@ -273,10 +288,11 @@ export function applyLivePricesToPortfolio(
  * Evaluates whether Cairo EGX market session is currently active
  * and calculates precise milliseconds until the next scheduled update tick.
  * 
- * Rules:
- * - Active days: Sunday (0) to Thursday (4)
- * - Session window: 09:47 to 16:30 Cairo time
- * - 15-minute cycles with 2-minute offset: :02, :17, :32, :47 past the hour
+ * Schedule Rules:
+ * - Sunday: 09:30 AM – 02:30 PM Cairo time
+ * - Monday–Thursday: 10:00 AM – 02:30 PM Cairo time
+ * - Friday & Saturday: Market closed, no syncing (isSessionActive: false)
+ * - Additional sync windows: 03:30 PM (15:30) and 04:40 PM (16:40) on trading days only (Sunday–Thursday)
  */
 export function getEGXSessionStatus(): EGXScheduleStatus {
   try {
@@ -303,30 +319,91 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
     const minute = getVal('minute');
     const second = getVal('second');
 
-    // Cairo local date object
+    // Cairo local date object for day-of-week calculation (UTC matching local Y/M/D/H/M/S)
     const cairoLocalTime = new Date(Date.UTC(year, month, day, hour, minute, second));
     const dayOfWeek = cairoLocalTime.getUTCDay(); // 0 = Sun, 1 = Mon, ..., 4 = Thu, 5 = Fri, 6 = Sat
 
+    // Trading days: Sunday (0) to Thursday (4)
     const isTradingDay = dayOfWeek >= 0 && dayOfWeek <= 4;
     const currentTotalMinutes = hour * 60 + minute;
-    const startMinutes = 9 * 60 + 47; // 09:47
-    const endMinutes = 16 * 60 + 30;  // 16:30
 
-    const inSession = isTradingDay && currentTotalMinutes >= startMinutes && currentTotalMinutes <= endMinutes;
+    let inSession = false;
 
-    // Find the next scheduled tick minute (:02, :17, :32, :47)
-    const tickMinutes = [2, 17, 32, 47];
-    let nextTickMinute = tickMinutes.find(m => m > minute);
-    let nextTickHour = hour;
+    if (isTradingDay) {
+      if (dayOfWeek === 0) {
+        // Sunday session: 9:30 AM (570) to 2:30 PM (870)
+        if (currentTotalMinutes >= 570 && currentTotalMinutes <= 870) {
+          inSession = true;
+        }
+      } else {
+        // Monday–Thursday session: 10:00 AM (600) to 2:30 PM (870)
+        if (currentTotalMinutes >= 600 && currentTotalMinutes <= 870) {
+          inSession = true;
+        }
+      }
 
-    if (nextTickMinute === undefined) {
-      nextTickMinute = tickMinutes[0]; // :02 of next hour
-      nextTickHour = (hour + 1) % 24;
+      // Additional post-close sync windows on trading days:
+      // 3:30 PM (930 to 945 mins) and 4:40 PM (1000 to 1015 mins)
+      if ((currentTotalMinutes >= 930 && currentTotalMinutes <= 945) ||
+          (currentTotalMinutes >= 1000 && currentTotalMinutes <= 1015)) {
+        inSession = true;
+      }
     }
 
-    const secRemainingInMinute = 60 - second;
-    const minRemaining = (nextTickMinute >= minute ? nextTickMinute - minute : (nextTickMinute + 60) - minute) - 1;
-    const millisUntilNextTick = Math.max(1000, (minRemaining * 60 + secRemainingInMinute) * 1000);
+    // Determine next tick time or next schedule window
+    let nextTickHour = hour;
+    let nextTickMinute = minute;
+    let millisUntilNextTick = 60000;
+
+    if (inSession) {
+      // 15-minute cycles during active session window (:00, :15, :30, :45)
+      const tickMinutes = [0, 15, 30, 45];
+      let nextM = tickMinutes.find(m => m > minute);
+      if (nextM === undefined) {
+        nextM = 0;
+        nextTickHour = (hour + 1) % 24;
+      }
+      nextTickMinute = nextM;
+      const secRemaining = 60 - second;
+      const minRemaining = (nextTickMinute >= minute ? nextTickMinute - minute : (nextTickMinute + 60) - minute) - 1;
+      millisUntilNextTick = Math.max(1000, (minRemaining * 60 + secRemaining) * 1000);
+    } else {
+      // Outside active session windows: calculate target time for next window
+      const targetsToday: number[] = [];
+      if (isTradingDay) {
+        const openMin = dayOfWeek === 0 ? 570 : 600; // 9:30 or 10:00
+        if (openMin > currentTotalMinutes) targetsToday.push(openMin);
+        if (930 > currentTotalMinutes) targetsToday.push(930);  // 3:30 PM
+        if (1000 > currentTotalMinutes) targetsToday.push(1000); // 4:40 PM
+      }
+
+      if (targetsToday.length > 0) {
+        const nextTargetMin = targetsToday[0];
+        nextTickHour = Math.floor(nextTargetMin / 60);
+        nextTickMinute = nextTargetMin % 60;
+        const diffMins = nextTargetMin - currentTotalMinutes;
+        const secRemaining = 60 - second;
+        millisUntilNextTick = Math.max(1000, ((diffMins - 1) * 60 + secRemaining) * 1000);
+      } else {
+        // Find next trading day morning (Sun = 0)
+        let daysToAdd = 1;
+        let nextDay = (dayOfWeek + 1) % 7;
+        while (nextDay === 5 || nextDay === 6) { // Skip Fri, Sat
+          daysToAdd++;
+          nextDay = (nextDay + 1) % 7;
+        }
+        const openHour = nextDay === 0 ? 9 : 10;
+        const openMin = nextDay === 0 ? 30 : 0;
+        nextTickHour = openHour;
+        nextTickMinute = openMin;
+
+        const minutesUntilMidnight = (24 * 60) - currentTotalMinutes;
+        const minutesOnNextDay = openHour * 60 + openMin;
+        const totalWaitMins = minutesUntilMidnight + (daysToAdd - 1) * 24 * 60 + minutesOnNextDay;
+        const secRemaining = 60 - second;
+        millisUntilNextTick = Math.max(1000, ((totalWaitMins - 1) * 60 + secRemaining) * 1000);
+      }
+    }
 
     const pad = (n: number) => n.toString().padStart(2, '0');
     const nextTickLabel = `${pad(nextTickHour)}:${pad(nextTickMinute)}`;

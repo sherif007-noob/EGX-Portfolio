@@ -94,11 +94,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               id="btn-sync-live-prices-overview"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-cyan-950/40 transition active:scale-95 disabled:opacity-50"
-              title="Fetch live quotes for ~300 EGX stocks directly from TradingView Egypt Scanner"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-cyan-300 border border-slate-700/80 hover:border-cyan-500/40 rounded-lg text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+              title="Sync live quotes for ~300 EGX stocks"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPrices ? 'animate-spin text-white' : ''}`} />
-              <span>{isSyncingPrices ? 'Syncing Prices...' : 'Sync Live Prices'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPrices ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
+              <span className="hidden sm:inline">{isSyncingPrices ? 'Syncing...' : 'Sync Prices'}</span>
             </button>
           )}
         </div>

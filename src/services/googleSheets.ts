@@ -1190,7 +1190,7 @@ export async function appendTransactionToSheet(
   tx: TradeTransaction,
   accessToken: string,
   tabName = 'Transaction Logger'
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; finalTradeId?: number | string }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
@@ -1232,23 +1232,78 @@ export async function appendTransactionToSheet(
       });
     }
 
-    // Determine target Trade ID string
-    const targetTradeIdStr = String(
-      tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id)
-    ).trim();
-
-    // Scan for duplicate row by Trade ID
+    // Scan existing rows for duplicate row match and highest existing Trade ID in sheet
+    let maxSheetTradeId = 0;
     let existingSheetRowNumber = -1; // 1-based row number in Google Sheets
-    if (hasHeader && targetTradeIdStr) {
+
+    const rawTxTradeId = tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id);
+    const targetTradeIdStr = String(rawTxTradeId !== undefined ? rawTxTradeId : '').trim();
+
+    if (existingRows.length > 0) {
       const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
-      if (tradeIdCol >= 0) {
-        for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
-          const rowCell = String(existingRows[r][tradeIdCol] || '').trim();
-          if (rowCell && rowCell === targetTradeIdStr) {
+      const dateCol = colMap['Date'] >= 0 ? colMap['Date'] : findColIndexBySynonyms(headers, 'Date');
+      const actionCol = colMap['Action'] >= 0 ? colMap['Action'] : findColIndexBySynonyms(headers, 'Action');
+      const tickerCol = colMap['Ticker'] >= 0 ? colMap['Ticker'] : findColIndexBySynonyms(headers, 'Ticker');
+      const sharesCol = colMap['Shares'] >= 0 ? colMap['Shares'] : findColIndexBySynonyms(headers, 'Shares');
+      const priceCol = colMap['Price / Share'] >= 0 ? colMap['Price / Share'] : findColIndexBySynonyms(headers, 'Price / Share');
+
+      for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
+        const row = existingRows[r];
+        if (!row || row.length === 0) continue;
+
+        const rowTradeIdStr = tradeIdCol >= 0 ? String(row[tradeIdCol] || '').trim() : '';
+        const parsedId = parseInt(rowTradeIdStr, 10);
+        if (!isNaN(parsedId) && parsedId > maxSheetTradeId) {
+          maxSheetTradeId = parsedId;
+        }
+
+        // Match 1: By exact Trade ID
+        if (targetTradeIdStr && rowTradeIdStr && rowTradeIdStr === targetTradeIdStr) {
+          existingSheetRowNumber = r + 1;
+          break;
+        }
+
+        // Match 2: By identical transaction content (Date, Action, Ticker, Shares, Price) to prevent duplicate appends
+        if (
+          existingSheetRowNumber < 0 &&
+          dateCol >= 0 && actionCol >= 0 && tickerCol >= 0 && sharesCol >= 0 && priceCol >= 0
+        ) {
+          const rowDate = parseSheetDate(row[dateCol]);
+          const txDate = parseSheetDate(tx.date);
+          const rowAction = String(row[actionCol] || '').trim().toUpperCase();
+          const txAction = String(tx.type || '').trim().toUpperCase();
+          const rowTicker = String(row[tickerCol] || '').trim().toUpperCase();
+          const txTicker = String(tx.ticker || '').trim().toUpperCase();
+          const rowShares = parseSheetNumber(row[sharesCol]);
+          const rowPrice = parseSheetNumber(row[priceCol]);
+
+          if (
+            rowDate === txDate &&
+            rowAction === txAction &&
+            rowTicker === txTicker &&
+            Math.abs(rowShares - tx.shares) < 0.001 &&
+            Math.abs(rowPrice - tx.price) < 0.001
+          ) {
             existingSheetRowNumber = r + 1;
-            break;
           }
         }
+      }
+    }
+
+    // Determine final Trade ID to write
+    let finalTradeId: number | string;
+    const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
+    if (existingSheetRowNumber > 0 && tradeIdCol >= 0 && existingRows[existingSheetRowNumber - 1]) {
+      const existingRow = existingRows[existingSheetRowNumber - 1];
+      const existingIdStr = String(existingRow[tradeIdCol] || '').trim();
+      finalTradeId = existingIdStr || targetTradeIdStr || (maxSheetTradeId > 0 ? maxSheetTradeId : 1);
+    } else {
+      // Sequential ID relative to the highest existing trade ID in the sheet
+      if (maxSheetTradeId > 0) {
+        finalTradeId = maxSheetTradeId + 1;
+      } else {
+        const numParsed = parseInt(targetTradeIdStr, 10);
+        finalTradeId = !isNaN(numParsed) && numParsed > 0 ? numParsed : Math.max(1, existingRows.length - headerRowIdx);
       }
     }
 
@@ -1268,8 +1323,6 @@ export async function appendTransactionToSheet(
     const netCash = tx.netCashImpact !== undefined
       ? tx.netCashImpact
       : (tx.type === 'BUY' ? -(gross + fee) : (gross - fee));
-
-    const finalTradeId = targetTradeIdStr || (existingRows.length - headerRowIdx);
 
     setVal('Trade ID', finalTradeId);
     setVal('Date', tx.date || new Date().toISOString().split('T')[0]);
@@ -1304,7 +1357,7 @@ export async function appendTransactionToSheet(
         const err = await updateRes.json().catch(() => ({}));
         throw new Error(err.error?.message || `HTTP ${updateRes.status}`);
       }
-      return { success: true, message: `Updated Trade ID ${finalTradeId} in "${targetTab}"` };
+      return { success: true, message: `Updated Trade ID ${finalTradeId} in "${targetTab}"`, finalTradeId };
     } else {
       // APPEND new row
       const valuesToAppend = hasHeader ? [rowData] : [stdHeaders, rowData];
@@ -1323,7 +1376,7 @@ export async function appendTransactionToSheet(
         const err = await appendRes.json().catch(() => ({}));
         throw new Error(err.error?.message || `HTTP ${appendRes.status}`);
       }
-      return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} to "${targetTab}"` };
+      return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} to "${targetTab}"`, finalTradeId };
     }
   } catch (err: any) {
     console.error('Failed to append/update transaction in Google Sheet:', err);

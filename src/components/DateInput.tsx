@@ -76,7 +76,8 @@ export const DateInput: React.FC<DateInputProps> = ({
     }
   };
 
-  const isoValue = dmyToIso(value || displayText);
+  const rawIso = dmyToIso(value || displayText);
+  const isoValue = /^\d{4}-\d{2}-\d{2}$/.test(rawIso) ? rawIso : '';
 
   return (
     <div className={`space-y-1 ${className}`}>

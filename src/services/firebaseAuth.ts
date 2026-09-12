@@ -27,15 +27,15 @@ export const initAuth = (
   onAuthFailure?: () => void
 ) => {
   return onAuthStateChanged(auth, async (user: User | null) => {
+    const storedToken = localStorage.getItem('google_sheets_access_token');
+    if (storedToken) {
+      cachedAccessToken = storedToken;
+    }
     if (user) {
-      const storedToken = localStorage.getItem('google_sheets_access_token');
-      if (storedToken) {
-        cachedAccessToken = storedToken;
-      }
       if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || '');
     } else {
-      cachedAccessToken = null;
-      localStorage.removeItem('google_sheets_access_token');
+      // Do not clear the Google Sheets token on initial unauthenticated state,
+      // only clear when explicit logout is called.
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -52,6 +52,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 
     cachedAccessToken = credential.accessToken;
     localStorage.setItem('google_sheets_access_token', credential.accessToken);
+    localStorage.setItem('google_sheets_token_timestamp', Date.now().toString());
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
@@ -61,7 +62,26 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
   }
 };
 
+export const clearExpiredToken = () => {
+  cachedAccessToken = null;
+  localStorage.removeItem('google_sheets_access_token');
+  localStorage.removeItem('google_sheets_token_timestamp');
+};
+
+export const isTokenExpired = (): boolean => {
+  const timestampStr = localStorage.getItem('google_sheets_token_timestamp');
+  if (!timestampStr) return false;
+  const timestamp = parseInt(timestampStr, 10);
+  if (isNaN(timestamp)) return false;
+  // Consider expired if older than 55 minutes (3300 seconds)
+  return Date.now() - timestamp > 55 * 60 * 1000;
+};
+
 export const getAccessToken = async (): Promise<string | null> => {
+  if (isTokenExpired()) {
+    clearExpiredToken();
+    return null;
+  }
   if (cachedAccessToken) return cachedAccessToken;
   const storedToken = localStorage.getItem('google_sheets_access_token');
   if (storedToken) {
@@ -73,6 +93,5 @@ export const getAccessToken = async (): Promise<string | null> => {
 
 export const logout = async () => {
   await signOut(auth);
-  cachedAccessToken = null;
-  localStorage.removeItem('google_sheets_access_token');
+  clearExpiredToken();
 };

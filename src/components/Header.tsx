@@ -1,5 +1,4 @@
 import React from 'react';
-import { PWAInstallButton } from './PWAInstallButton';
 import { 
   FileSpreadsheet, 
   PlusCircle, 
@@ -14,8 +13,9 @@ import {
   RefreshCw,
   Wallet,
   RotateCcw,
+  Sparkles,
   Database,
-  Sparkles
+  AlertTriangle
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -31,6 +31,7 @@ interface HeaderProps {
   onOpenScreenshotModal?: () => void;
   isSheetsConnected: boolean;
   sheetsTitle?: string;
+  isTokenExpired?: boolean;
   authUser: User | null;
   onLogout: () => void;
   onSyncLivePrices?: () => void;
@@ -47,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenScreenshotModal,
   isSheetsConnected,
   sheetsTitle,
+  isTokenExpired = false,
   authUser,
   onLogout,
   onSyncLivePrices,
@@ -98,39 +100,42 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Backup & Reconciliation Trigger */}
-            {onOpenBackupModal && (
-              <button
-                id="header-backup-btn"
-                onClick={onOpenBackupModal}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 border border-purple-500/40 transition hover:border-purple-400"
-                title="Backup portfolio, restore state, or reconcile ledger math"
-              >
-                <Database className="w-3.5 h-3.5 text-purple-400" />
-                <span className="hidden md:inline">Backup &amp; Sync</span>
-              </button>
-            )}
-
             {/* Google Sheets Trigger */}
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                isSheetsConnected
+                isTokenExpired
+                  ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50 animate-pulse'
+                  : isSheetsConnected
                   ? 'bg-emerald-950/40 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/40'
                   : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
               }`}
-              title="Connect or sync Google Sheets"
+              title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              {isTokenExpired ? (
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              ) : (
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              )}
               <span className="hidden md:inline">
-                {isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
+                {isTokenExpired ? 'Reconnect Sheets' : isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
               </span>
-              {isSheetsConnected && <Check className="w-3 h-3 text-emerald-400 ml-0.5" />}
+              {isSheetsConnected && !isTokenExpired && <Check className="w-3 h-3 text-emerald-400 ml-0.5" />}
             </button>
 
-            {/* PWA Install Button */}
-            <PWAInstallButton />
+            {/* Offline Backup & Ledger Reconcile Modal Trigger */}
+            {onOpenBackupModal && (
+              <button
+                id="header-backup-reconcile-btn"
+                onClick={onOpenBackupModal}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition"
+                title="Backup JSON, restore database, or reconcile portfolio ledger"
+              >
+                <Database className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden lg:inline">Backup &amp; Reconcile</span>
+              </button>
+            )}
 
             {/* AI Scan Screenshot Button */}
             {onOpenScreenshotModal && (

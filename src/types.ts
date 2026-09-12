@@ -121,6 +121,10 @@ export interface PerformanceStats {
   totalRealizedLossEgp: number;
   totalBrokerageFeesPaid: number;
   sectorAllocation: { sector: Sector; value: number; percentage: number; count: number }[];
+  maxDrawdownPercent?: number;
+  maxDrawdownEgp?: number;
+  payoffRatio?: number;
+  expectancyEgp?: number;
 }
 
 export interface GoogleSheetsConfig {

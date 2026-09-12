@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, onSnapshot, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 import { auth } from './firebaseAuth';
@@ -28,19 +28,31 @@ export interface FirestoreErrorInfo {
   };
 }
 
+let quotaExceededState = false;
+
+export function getIsQuotaExceeded(): boolean {
+  return quotaExceededState;
+}
+
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-    },
-    operationType,
-    path,
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  const errMsg = error instanceof Error ? error.message : String(error);
+  if (errMsg.includes('resource-exhausted') || errMsg.includes('Quota limit exceeded')) {
+    quotaExceededState = true;
+    console.warn('Firestore daily write quota reached. Switched to Local Storage & Google Sheets fallback.');
+  } else {
+    const errInfo: FirestoreErrorInfo = {
+      error: errMsg,
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous,
+      },
+      operationType,
+      path,
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+  }
 }
 
 /**
@@ -106,6 +118,9 @@ export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocumen
 }
 
 export async function savePortfolioToFirestore(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>): Promise<boolean> {
+  if (quotaExceededState) {
+    return false;
+  }
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
     const rawPayload: PortfolioDataDocument = {
@@ -122,19 +137,127 @@ export async function savePortfolioToFirestore(data: Omit<PortfolioDataDocument,
   }
 }
 
+/**
+ * Patch specific fields of the main portfolio document without replacing the entire document.
+ * Minimizes Firestore write bandwidth and quota consumption.
+ */
+export async function patchFirestoreDoc(partialData: Record<string, any>): Promise<boolean> {
+  if (quotaExceededState) return false;
+  try {
+    const docRef = doc(db, 'portfolios', 'main_portfolio');
+    const sanitized = sanitizeForFirestore({
+      ...partialData,
+      updatedAt: new Date().toISOString(),
+    });
+    try {
+      await updateDoc(docRef, sanitized);
+    } catch {
+      // Fallback to merge if document does not exist yet
+      await setDoc(docRef, sanitized, { merge: true });
+    }
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, PORTFOLIO_DOC_PATH);
+    return false;
+  }
+}
+
+/**
+ * Appends a single transaction using arrayUnion and updates related state fields (positions, closedTrades, cashBalance).
+ * Uses ~1-2KB write instead of ~20KB full portfolio overwrite.
+ */
+export async function appendTransactionToFirestore(
+  tx: TradeTransaction,
+  positions?: Position[],
+  closedTrades?: ClosedTrade[],
+  cashBalance?: number
+): Promise<boolean> {
+  if (quotaExceededState) return false;
+  try {
+    const docRef = doc(db, 'portfolios', 'main_portfolio');
+    const sanitizedTx = sanitizeForFirestore(tx);
+    const patchPayload: Record<string, any> = {
+      transactions: arrayUnion(sanitizedTx),
+      updatedAt: new Date().toISOString(),
+    };
+    if (positions) patchPayload.positions = sanitizeForFirestore(positions);
+    if (closedTrades) patchPayload.closedTrades = sanitizeForFirestore(closedTrades);
+    if (cashBalance !== undefined) patchPayload.cashBalance = cashBalance;
+
+    try {
+      await updateDoc(docRef, patchPayload);
+    } catch {
+      // Fallback if doc does not exist yet
+      await setDoc(docRef, patchPayload, { merge: true });
+    }
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, PORTFOLIO_DOC_PATH);
+    return false;
+  }
+}
+
+/**
+ * Updates only the positions array in Firestore.
+ */
+export async function updateFirestorePositions(positions: Position[]): Promise<boolean> {
+  return patchFirestoreDoc({ positions });
+}
+
+/**
+ * Updates only the tickers directory array in Firestore.
+ */
+export async function updateFirestoreTickers(tickers: EGXTicker[]): Promise<boolean> {
+  return patchFirestoreDoc({ tickers });
+}
+
+/**
+ * Updates only the cash balance field in Firestore.
+ */
+export async function updateFirestoreCashBalance(cashBalance: number): Promise<boolean> {
+  return patchFirestoreDoc({ cashBalance });
+}
+
+/**
+ * Updates transactions, positions, closedTrades, and cashBalance when transactions are edited, deleted, or bulk imported.
+ */
+export async function updateFirestoreTransactions(
+  transactions: TradeTransaction[],
+  positions?: Position[],
+  closedTrades?: ClosedTrade[],
+  cashBalance?: number
+): Promise<boolean> {
+  const payload: Record<string, any> = { transactions };
+  if (positions) payload.positions = positions;
+  if (closedTrades) payload.closedTrades = closedTrades;
+  if (cashBalance !== undefined) payload.cashBalance = cashBalance;
+  return patchFirestoreDoc(payload);
+}
+
 let saveDebounceTimer: NodeJS.Timeout | null = null;
 let lastSerializedPayload = '';
 
 export function debouncedSavePortfolioToFirestore(
   data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>,
-  delayMs = 2000
+  delayMs = 5000
 ): Promise<boolean> {
   return new Promise((resolve) => {
-    // Serialization check to avoid redundant identical writes
+    if (quotaExceededState) {
+      resolve(false);
+      return;
+    }
+
+    // Serialization check focusing on structural transaction & position changes
+    // Pure live price ticks (currentPrice) are excluded to preserve free daily write quota
+    const safePositions = data.positions || [];
+    const safeClosedTrades = data.closedTrades || [];
+    const safeTransactions = data.transactions || [];
+
     const serialized = JSON.stringify({
-      positions: data.positions.map((p) => ({ id: p.id, shares: p.shares, currentPrice: p.currentPrice })),
-      closedTradesCount: data.closedTrades.length,
-      transactionsCount: data.transactions.length,
+      positions: safePositions.map((p) => ({ id: p.id, shares: p.shares, avgBuyPrice: p.avgBuyPrice })),
+      closedTradesCount: safeClosedTrades.length,
+      transactionsCount: safeTransactions.length,
+      latestTxId: safeTransactions[0]?.id || '',
       cashBalance: data.cashBalance,
     });
 

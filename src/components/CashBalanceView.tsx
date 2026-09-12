@@ -267,22 +267,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     const tx = transactions.find((t) => t.id === id);
     if (!tx) return;
 
-    if (window.confirm(`Are you sure you want to delete this ${tx.type.toLowerCase()} record of ${formatEgp(tx.amount)} EGP?`)) {
-      let revertedBalance = cashBalance;
-      if (tx.type === 'DEPOSIT') {
-        revertedBalance = Math.max(0, cashBalance - tx.amount);
-      } else if (tx.type === 'WITHDRAWAL') {
-        revertedBalance = cashBalance + tx.amount;
-      }
-
-      setTransactions(transactions.filter((t) => t.id !== id));
-      onUpdateCashBalance(revertedBalance);
-      setFeedbackMessage({
-        text: `Transaction deleted and cash balance adjusted to ${formatEgp(revertedBalance)} EGP.`,
-        type: 'success',
-      });
-      setTimeout(() => setFeedbackMessage(null), 4000);
+    let revertedBalance = cashBalance;
+    if (tx.type === 'DEPOSIT') {
+      revertedBalance = Math.max(0, cashBalance - tx.amount);
+    } else if (tx.type === 'WITHDRAWAL') {
+      revertedBalance = cashBalance + tx.amount;
     }
+
+    setTransactions(transactions.filter((t) => t.id !== id));
+    onUpdateCashBalance(revertedBalance);
+    setFeedbackMessage({
+      text: `${tx.type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} record of ${formatEgp(tx.amount)} EGP removed. Cash balance adjusted to ${formatEgp(revertedBalance)} EGP.`,
+      type: 'success',
+    });
+    setTimeout(() => setFeedbackMessage(null), 4000);
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -502,14 +500,32 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
         {/* Explain Discrepancy Note if applicable */}
         {hasDiscrepancy && (
-          <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200/90 flex items-start gap-2.5">
-            <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold text-amber-300">Capital Ledger Summary:</span>
-              <p className="mt-0.5 text-[11px] text-amber-200/80 leading-relaxed">
-                Your recorded available cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Based on <strong>{formatEgp(netCapitalDeposited)} EGP</strong> net capital deposited minus <strong>{formatEgp(totalOpenPositionsCost)} EGP</strong> open positions cost basis plus <strong>{totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP</strong> realized trade profit, true audited liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
-              </p>
+          <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-300">
+                  Cash Balance Variance: {formatEgp(Math.abs(cashDiscrepancy))} EGP
+                </span>
+                <p className="mt-0.5 text-[11px] text-amber-200/80 leading-relaxed">
+                  Recorded cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Net capital deposited ({formatEgp(netCapitalDeposited)} EGP) minus active holdings cost ({formatEgp(totalOpenPositionsCost)} EGP) plus realized gains ({totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP) indicates true liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                onUpdateCashBalance(auditedLiquidCash);
+                setFeedbackMessage({
+                  text: `Cash balance adjusted to audited liquid amount of ${formatEgp(auditedLiquidCash)} EGP.`,
+                  type: 'success',
+                });
+                setTimeout(() => setFeedbackMessage(null), 4000);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 shadow-md shadow-amber-950/40 transition active:scale-95 flex items-center gap-1.5 self-start sm:self-auto"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Apply Audited Balance ({formatEgp(auditedLiquidCash)} EGP)</span>
+            </button>
           </div>
         )}
       </div>

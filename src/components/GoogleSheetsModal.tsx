@@ -7,6 +7,7 @@ import {
   updateStockDirectoryInSheet,
   syncAllPortfolioToSheet,
   fetchUserSpreadsheets,
+  fetchAndReconcileAllTabs,
   GoogleDriveSpreadsheet
 } from '../services/googleSheets';
 import { Position, ClosedTrade, GoogleSheetsConfig, TradeTransaction, EGXTicker } from '../types';
@@ -22,17 +23,19 @@ import {
   TrendingUp,
   Receipt,
   FolderOpen,
-  Database,
   LogOut,
   UploadCloud,
+  DownloadCloud,
   ShieldCheck,
   Layers,
-  ArrowRight
+  Wrench,
+  Zap
 } from 'lucide-react';
 
 interface GoogleSheetsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSaveConfig: (config: GoogleSheetsConfig) => void;
   onImportData: (
     positions: Position[],
     closedTrades: ClosedTrade[],
@@ -46,11 +49,13 @@ interface GoogleSheetsModalProps {
   closedTrades?: ClosedTrade[];
   transactions?: TradeTransaction[];
   tickers?: EGXTicker[];
+  onReconcileFromLedger?: () => void;
 }
 
 export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   isOpen,
   onClose,
+  onSaveConfig,
   onImportData,
   currentConfig,
   authUser,
@@ -59,13 +64,15 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   closedTrades = [],
   transactions = [],
   tickers = [],
+  onReconcileFromLedger,
 }) => {
   const [sheetUrl, setSheetUrl] = useState(
     currentConfig?.spreadsheetId ? `https://docs.google.com/spreadsheets/d/${currentConfig.spreadsheetId}` : ''
   );
   const [sheetName, setSheetName] = useState(currentConfig?.sheetName || 'Transaction Logger');
-  const [availableSheets, setAvailableSheets] = useState<string[]>([]);
-  const [sheetTitle, setSheetTitle] = useState<string>('');
+  const [autoSync, setAutoSync] = useState<boolean>(
+    currentConfig?.autoSync !== undefined ? currentConfig.autoSync : true
+  );
   
   // Google Drive Spreadsheets List
   const [driveSpreadsheets, setDriveSpreadsheets] = useState<GoogleDriveSpreadsheet[]>([]);
@@ -73,8 +80,16 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Sync autoSync state if currentConfig changes
+  useEffect(() => {
+    if (currentConfig?.autoSync !== undefined) {
+      setAutoSync(currentConfig.autoSync);
+    }
+  }, [currentConfig]);
 
   // Load user spreadsheets when modal opens or user logs in
   useEffect(() => {
@@ -99,7 +114,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       const token = await getAccessToken();
       if (token) {
         const files = await fetchUserSpreadsheets(token);
-        setDriveSpreadsheets(files);
+        setDriveSpreadsheets(files || []);
       }
     } catch (err) {
       console.warn('Could not list drive spreadsheets:', err);
@@ -122,13 +137,11 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       onAuthSuccess(user);
       setSuccessMsg(`Signed in as ${user.displayName || user.email}. Token stored for continuous sync!`);
 
-      // Load user drive sheets
       if (accessToken) {
         const files = await fetchUserSpreadsheets(accessToken);
-        setDriveSpreadsheets(files);
+        setDriveSpreadsheets(files || []);
       }
 
-      // Auto-detect available tabs if spreadsheet ID is already provided
       const spreadsheetId = extractSpreadsheetId(sheetUrl);
       if (spreadsheetId && accessToken) {
         await handleFetchTabs(spreadsheetId, accessToken);
@@ -142,7 +155,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
 
   const handleSelectDriveSpreadsheet = async (sp: GoogleDriveSpreadsheet) => {
     setSheetUrl(`https://docs.google.com/spreadsheets/d/${sp.id}`);
-    setSheetTitle(sp.name);
     setError(null);
     setSuccessMsg(`Selected sheet: "${sp.name}"`);
     await handleFetchTabs(sp.id);
@@ -160,20 +172,15 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     try {
       const token = explicitToken || (await getAccessToken());
       if (!token) {
-        throw new Error('Please sign in with Google first to list spreadsheet tabs.');
+        throw new Error('Please sign in with Google first to inspect spreadsheet tabs.');
       }
 
       const meta = await fetchSpreadsheetMetadata(spreadsheetId, token);
-      setAvailableSheets(meta.sheets);
-      setSheetTitle(meta.title);
-
-      const txTab = meta.sheets.find(s => s.toLowerCase().includes('transaction'));
+      const txTab = (meta.sheets || []).find(s => s.toLowerCase().includes('transaction'));
       if (txTab) {
         setSheetName(txTab);
-      } else if (meta.sheets.length > 0) {
-        setSheetName(meta.sheets[0]);
       }
-      setSuccessMsg(`Spreadsheet "${meta.title}" loaded with ${meta.sheets.length} tabs.`);
+      setSuccessMsg(`Spreadsheet "${meta.title}" detected with ${(meta.sheets || []).length} tabs.`);
     } catch (err: any) {
       setError(err.message || 'Could not retrieve spreadsheet metadata.');
     } finally {
@@ -182,8 +189,86 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   };
 
   /**
+   * Save Connection ONLY: Does NOT touch or clear portfolio data.
+   */
+  const handleSaveConnection = () => {
+    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    if (!spreadsheetId) {
+      setError('Please select or enter a Google Sheet link / ID first.');
+      return;
+    }
+
+    const config: GoogleSheetsConfig = {
+      spreadsheetId,
+      sheetName: sheetName || 'Transaction Logger',
+      range: 'A1:Z500',
+      lastSyncTime: new Date().toISOString(),
+      connectedEmail: authUser?.email || undefined,
+      autoSync,
+    };
+
+    onSaveConfig(config);
+    setSuccessMsg(`Google Sheet connection saved! Auto Background Sync is ${autoSync ? 'ON' : 'OFF'}. Portfolio data remains intact.`);
+    setTimeout(() => onClose(), 1200);
+  };
+
+  /**
+   * Import Data: Reads sheet ledger ("Transaction Logger") and reconstructs app state.
+   */
+  const handleImportDataFromSheet = async () => {
+    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    if (!spreadsheetId) {
+      setError('Please select or enter a Google Sheet link / ID first.');
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setError('Please sign in with Google first to import data from your sheet.');
+        return;
+      }
+
+      // Read spreadsheet tabs & parse transaction ledger
+      const result = await fetchAndReconcileAllTabs(spreadsheetId, token);
+      const importedTxs = result.transactions || [];
+
+      if (importedTxs.length === 0) {
+        setError('No transaction rows found in "Transaction Logger" tab of the connected Google Sheet.');
+        return;
+      }
+
+      const config: GoogleSheetsConfig = {
+        spreadsheetId,
+        sheetName: result.sheetTitle || 'Transaction Logger',
+        range: 'A1:Z500',
+        lastSyncTime: new Date().toISOString(),
+        connectedEmail: authUser?.email || undefined,
+        autoSync,
+      };
+
+      onImportData(
+        result.positions || [],
+        result.closedTrades || [],
+        config,
+        importedTxs
+      );
+
+      setSuccessMsg(
+        `Successfully imported ${importedTxs.length} transactions from "${result.sheetTitle}". Portfolio positions & metrics reconstructed!`
+      );
+    } catch (err: any) {
+      setError(err.message || 'Failed to import data from Google Sheet.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  /**
    * One-Way Export: App -> Google Sheets
-   * Pushes all transactions and stock directory prices to Google Sheet.
    */
   const handlePushAllToSheet = async () => {
     const spreadsheetId = extractSpreadsheetId(sheetUrl);
@@ -210,17 +295,17 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
         tickers,
         token
       );
+
       if (res.success) {
         setSuccessMsg(`One-Way Sync Successful! ${res.message}`);
-        // Save config in app state
-        onImportData([], [], {
+        onSaveConfig({
           spreadsheetId,
           sheetName: sheetName || 'Transaction Logger',
           range: 'A1:Z500',
           lastSyncTime: new Date().toISOString(),
           connectedEmail: authUser?.email || undefined,
-          autoSync: true,
-        }, []);
+          autoSync,
+        });
       } else {
         setError(res.message);
       }
@@ -292,26 +377,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     }
   };
 
-  const handleSaveConnection = () => {
-    const spreadsheetId = extractSpreadsheetId(sheetUrl);
-    if (!spreadsheetId) {
-      setError('Please select or enter a Google Sheet link / ID first.');
-      return;
-    }
-
-    onImportData([], [], {
-      spreadsheetId,
-      sheetName: sheetName || 'Transaction Logger',
-      range: 'A1:Z500',
-      lastSyncTime: new Date().toISOString(),
-      connectedEmail: authUser?.email || undefined,
-      autoSync: true,
-    }, []);
-
-    setSuccessMsg('Google Sheet connection saved! Automatic background sync is active.');
-    setTimeout(() => onClose(), 1200);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl my-6">
@@ -324,12 +389,16 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 Google Sheets Sync
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-                  One-Way: App → Sheets
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
+                  autoSync 
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}>
+                  Auto Sync: {autoSync ? 'ON (Default)' : 'OFF'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                The app is your primary source of truth. Data flows one-way from the app into your Google Sheet.
+                Connect your Google Sheet ledger. The app is your primary source of truth.
               </p>
             </div>
           </div>
@@ -377,13 +446,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   </p>
                   {authUser && (
                     <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">
-                      Persistent Token Active
+                      Connected
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {authUser
-                    ? `Connected: ${authUser.email} (Stay signed in across sessions)`
+                    ? `Connected: ${authUser.email} (Persistent token saved)`
                     : 'Sign in with your Google Account to connect your Google Sheets ledger.'}
                 </p>
               </div>
@@ -397,7 +466,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
                 >
                   <RefreshCw className={`w-3 h-3 ${loadingDrive ? 'animate-spin' : ''}`} />
-                  Refresh Drive
+                  Refresh
                 </button>
                 <button
                   onClick={() => logout()}
@@ -429,13 +498,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   Select Spreadsheet from Google Drive
                 </label>
                 <span className="text-[11px] text-slate-400">
-                  {driveSpreadsheets.length > 0 ? `${driveSpreadsheets.length} spreadsheets found` : loadingDrive ? 'Scanning...' : ''}
+                  {(driveSpreadsheets || []).length > 0 ? `${(driveSpreadsheets || []).length} spreadsheets found` : loadingDrive ? 'Scanning...' : ''}
                 </span>
               </div>
 
-              {driveSpreadsheets.length > 0 ? (
+              {(driveSpreadsheets || []).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1">
-                  {driveSpreadsheets.map((sp) => {
+                  {(driveSpreadsheets || []).map((sp) => {
                     const isSelected = extractSpreadsheetId(sheetUrl) === sp.id;
                     return (
                       <button
@@ -490,10 +559,44 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                     className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                    Load Tabs
+                    Inspect Tabs
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Auto Background Sync Toggle Switch */}
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="space-y-0.5 pr-4">
+                <div className="flex items-center gap-2">
+                  <Zap className={`w-4 h-4 ${autoSync ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  <span className="text-xs font-bold text-white">Auto Background Sync</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                    autoSync ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {autoSync ? 'ON (Default)' : 'OFF'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Automatically append new transactions and update stock prices in your Google Sheet whenever trades or live prices update.
+                </p>
+              </div>
+
+              {/* Toggle switch button */}
+              <button
+                type="button"
+                id="auto-sync-toggle"
+                onClick={() => setAutoSync(!autoSync)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  autoSync ? 'bg-emerald-500' : 'bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    autoSync ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Target Tabs Info */}
@@ -532,73 +635,119 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
           </div>
 
-          {/* Primary One-Way Export Button */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/60 to-slate-950 border border-emerald-500/40 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
+          {/* Primary Action Buttons Section */}
+          <div className="space-y-3">
+            {/* 1. Save Connection Button (Preserves App State) */}
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <UploadCloud className="w-4 h-4 text-emerald-400" />
-                  One-Way Sync (App → Google Sheets)
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Export your current app portfolio state directly into your Google Sheet.
+                <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Save Connection Settings
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  Saves your Google Sheet link &amp; auto sync settings. <strong className="text-slate-300">Does not wipe or touch portfolio data.</strong>
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-                {transactions.length} Trades • {tickers.length} Prices
-              </span>
-            </div>
-
-            {/* Main Sync Button */}
-            <button
-              id="push-all-one-way-btn"
-              onClick={handlePushAllToSheet}
-              disabled={isExporting || !sheetUrl}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition transform active:scale-[0.99] disabled:opacity-50"
-            >
-              <UploadCloud className={`w-4 h-4 ${isExporting ? 'animate-spin' : ''}`} />
-              <span>{isExporting ? 'Syncing to Google Sheets...' : '⚡ Sync App to Google Sheets Now (One-Way Export)'}</span>
-            </button>
-
-            {/* Sub-Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
               <button
-                id="push-tx-only-btn"
-                onClick={handlePushTransactionsToSheet}
-                disabled={isExporting || !sheetUrl}
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
+                id="save-connection-btn"
+                onClick={handleSaveConnection}
+                disabled={!sheetUrl}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition whitespace-nowrap disabled:opacity-50"
               >
-                <Receipt className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Push Transactions (`Transaction Logger`)</span>
-              </button>
-
-              <button
-                id="push-prices-only-btn"
-                onClick={handlePushPricesToSheet}
-                disabled={isExporting || !sheetUrl}
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
-              >
-                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                <span>Push Prices (`Ticker Directory`)</span>
+                Save Connection
               </button>
             </div>
-          </div>
 
-          {/* Automatic Background Sync Notice & Save Connection */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <p className="text-xs text-slate-300">
-                <strong className="text-white">Auto Background Sync:</strong> Trades logged in the app or scanned via AI receipts will automatically append to your connected sheet.
-              </p>
+            {/* 2. Import Data from Google Sheet Button */}
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                  <DownloadCloud className="w-4 h-4 text-indigo-400" />
+                  Import Data from Google Sheet
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  Reads <code className="text-indigo-300">Transaction Logger</code> from your sheet and reconstructs active positions, closed trades, and metrics.
+                </p>
+              </div>
+              <button
+                id="import-sheet-data-btn"
+                onClick={handleImportDataFromSheet}
+                disabled={isImporting || !sheetUrl}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition whitespace-nowrap disabled:opacity-50"
+              >
+                <DownloadCloud className={`w-4 h-4 ${isImporting ? 'animate-spin' : ''}`} />
+                <span>{isImporting ? 'Importing Ledger...' : 'Import Data from Sheet'}</span>
+              </button>
             </div>
-            <button
-              onClick={handleSaveConnection}
-              disabled={!sheetUrl}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition whitespace-nowrap disabled:opacity-50"
-            >
-              Save Connection
-            </button>
+
+            {/* 3. Export to Google Sheet Section */}
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                    <UploadCloud className="w-4 h-4 text-emerald-400" />
+                    Export App to Google Sheet (One-Way)
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Pushes current app transactions to <code className="text-emerald-300">Transaction Logger</code> and live prices to <code className="text-amber-300">Ticker Directory</code>.
+                  </p>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">
+                  {(transactions || []).length} Txs • {(tickers || []).length} Prices
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  id="push-all-one-way-btn"
+                  onClick={handlePushAllToSheet}
+                  disabled={isExporting || !sheetUrl}
+                  className="py-2.5 px-3 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <UploadCloud className={`w-3.5 h-3.5 ${isExporting ? 'animate-spin' : ''}`} />
+                  Export All
+                </button>
+
+                <button
+                  id="push-tx-only-btn"
+                  onClick={handlePushTransactionsToSheet}
+                  disabled={isExporting || !sheetUrl}
+                  className="py-2.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <Receipt className="w-3.5 h-3.5 text-emerald-400" />
+                  Push Txs Only
+                </button>
+
+                <button
+                  id="push-prices-only-btn"
+                  onClick={handlePushPricesToSheet}
+                  disabled={isExporting || !sheetUrl}
+                  className="py-2.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                  Push Prices Only
+                </button>
+              </div>
+            </div>
+
+            {/* 4. Utility: Rebuild Portfolio from Local App Ledger */}
+            {onReconcileFromLedger && (transactions || []).length > 0 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Wrench className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>
+                    Have missing open positions? <strong className="text-slate-300">Rebuild state</strong> from your local {(transactions || []).length} trade records.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onReconcileFromLedger}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold transition whitespace-nowrap"
+                >
+                  Rebuild Portfolio
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

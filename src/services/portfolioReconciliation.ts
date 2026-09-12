@@ -1,4 +1,5 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector } from '../types';
+import { INITIAL_CAPITAL_DEPOSITS } from '../data/initialPortfolio';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];
@@ -11,7 +12,8 @@ export interface ReconciliationReport {
 export function reconcilePortfolioFromLedger(
   transactions: TradeTransaction[],
   tickers: EGXTicker[],
-  initialCash: number = 39989.43
+  totalCapitalDeposited: number = INITIAL_CAPITAL_DEPOSITS,
+  existingPositions: Position[] = []
 ): ReconciliationReport {
   const discrepancies: string[] = [];
 
@@ -39,7 +41,11 @@ export function reconcilePortfolioFromLedger(
 
   const openLotsByTicker: Record<string, BuyLot[]> = {};
   const closedTrades: ClosedTrade[] = [];
-  let runningCash = initialCash;
+  // Ensure running cash starts from total capital deposits rather than current remaining cash
+  const startingCapital = (totalCapitalDeposited && totalCapitalDeposited >= 50000)
+    ? totalCapitalDeposited
+    : INITIAL_CAPITAL_DEPOSITS;
+  let runningCash = startingCapital;
 
   chronologicalTxs.forEach((tx) => {
     const tickerKey = tx.ticker.toUpperCase();
@@ -150,8 +156,12 @@ export function reconcilePortfolioFromLedger(
       const totalCost = lots.reduce((acc, l) => acc + (l.shares * l.price), 0);
       const totalFees = lots.reduce((acc, l) => acc + l.fees, 0);
       const avgBuyPrice = totalCost / totalRemainingShares;
-      const quoteMatch = tickers.find((t) => t.ticker.toUpperCase() === ticker);
-      const currentPrice = quoteMatch?.lastPrice || avgBuyPrice;
+      const cleanSym = ticker.trim().toUpperCase();
+      const quoteMatch = tickers.find((t) => t.ticker.trim().toUpperCase() === cleanSym);
+      const existingPos = existingPositions.find((p) => p.ticker.trim().toUpperCase() === cleanSym);
+      const currentPrice = (quoteMatch && quoteMatch.lastPrice > 0)
+        ? quoteMatch.lastPrice
+        : (existingPos && existingPos.currentPrice > 0 ? existingPos.currentPrice : Number(avgBuyPrice.toFixed(4)));
       const sampleLot = lots[0];
 
       reconciledPositions.push({

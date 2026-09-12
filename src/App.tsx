@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   Position, 
   ClosedTrade, 
@@ -14,11 +14,13 @@ import {
   INITIAL_POSITIONS, 
   INITIAL_CLOSED_TRADES, 
   INITIAL_CASH_BALANCE,
-  INITIAL_TRANSACTIONS
+  INITIAL_TRANSACTIONS,
+  INITIAL_CAPITAL_DEPOSITS
 } from './data/initialPortfolio';
 import { Header, NavigationTab } from './components/Header';
 import { PortfolioSummary } from './components/PortfolioSummary';
 import { PositionsTable } from './components/PositionsTable';
+import { EditPositionModal } from './components/EditPositionModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
 import { PerformanceReports } from './components/PerformanceReports';
 import { TradingJournal } from './components/TradingJournal';
@@ -34,13 +36,18 @@ import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { RealizedTrajectoryChart } from './components/RealizedTrajectoryChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { initAuth, logout, getAccessToken } from './services/firebaseAuth';
-import { appendTransactionToSheet, updateStockDirectoryInSheet } from './services/googleSheets';
+import { initAuth, logout, getAccessToken, isTokenExpired, clearExpiredToken } from './services/firebaseAuth';
+import { appendTransactionToSheet, updateStockDirectoryInSheet, syncAllPortfolioToSheet } from './services/googleSheets';
 import { 
   loadPortfolioFromFirestore, 
   savePortfolioToFirestore, 
-  debouncedSavePortfolioToFirestore,
-  subscribeToPortfolioFromFirestore 
+  subscribeToPortfolioFromFirestore,
+  appendTransactionToFirestore,
+  updateFirestorePositions,
+  updateFirestoreTickers,
+  updateFirestoreCashBalance,
+  updateFirestoreTransactions,
+  getIsQuotaExceeded
 } from './services/firestoreStorage';
 import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
 import { validateTradeInput } from './utils/portfolioValidation';
@@ -130,7 +137,66 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
+  const [isSheetsTokenExpired, setIsSheetsTokenExpired] = useState<boolean>(() => isTokenExpired());
+
+  // Periodically check if Google Sheets OAuth token is expired
+  useEffect(() => {
+    const checkExpiry = () => {
+      setIsSheetsTokenExpired(isTokenExpired());
+    };
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 60000);
+    window.addEventListener('focus', checkExpiry);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', checkExpiry);
+    };
+  }, []);
+
+  // Helper to rehydrate positions with live or cached ticker quotes & targets
+  const rehydratePositionsWithTickers = useCallback((posList: Position[], tickerList: EGXTicker[]): Position[] => {
+    if (!tickerList || tickerList.length === 0 || !posList || posList.length === 0) return posList;
+    const tickerMap = new Map(tickerList.map((t) => [t.ticker.toUpperCase(), t]));
+    let hasChanges = false;
+
+    const rehydrated = posList.map((p) => {
+      const t = tickerMap.get(p.ticker.toUpperCase());
+      if (!t || !t.lastPrice || t.lastPrice <= 0) return p;
+
+      const currentPrice = t.lastPrice;
+      const marketValue = p.shares * currentPrice;
+      const unrealizedPnlEgp = marketValue - (p.shares * p.avgBuyPrice);
+      const unrealizedPnlPercent = p.avgBuyPrice > 0 ? (unrealizedPnlEgp / (p.shares * p.avgBuyPrice)) * 100 : 0;
+      const targetPrice = p.targetPrice ?? t.targetPrice;
+      const stopLoss = p.stopLoss ?? t.stopLoss;
+
+      if (
+        Math.abs((p.currentPrice || 0) - currentPrice) > 0.0001 ||
+        p.targetPrice !== targetPrice ||
+        p.stopLoss !== stopLoss
+      ) {
+        hasChanges = true;
+        return {
+          ...p,
+          currentPrice,
+          targetPrice,
+          stopLoss,
+          companyName: p.companyName || t.nameEn || p.ticker,
+          sector: p.sector || t.sector || 'Other',
+        };
+      }
+      return p;
+    });
+
+    return hasChanges ? rehydrated : posList;
+  }, []);
+
+  // Auto-rehydrate positions whenever ticker directory is updated or loaded
+  useEffect(() => {
+    setPositions((prev) => rehydratePositionsWithTickers(prev, tickers));
+  }, [tickers, rehydratePositionsWithTickers]);
 
   // Destructive Action Safety & Undo State
   const [confirmDeleteState, setConfirmDeleteState] = useState<{
@@ -166,6 +232,7 @@ export default function App() {
     }
   });
   const [priceSyncNotification, setPriceSyncNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isSyncingLedgerToSheets, setIsSyncingLedgerToSheets] = useState(false);
   const [scheduleStatus, setScheduleStatus] = useState<EGXScheduleStatus>(() => getEGXSessionStatus());
 
   // Handler to fetch and inject live prices into portfolio and directory
@@ -176,17 +243,21 @@ export default function App() {
       const updatedTimeStr = formatCairoTime(new Date());
 
       // Update positions with live prices
+      let nextPositions: Position[] = positions;
       setPositions((prevPositions) => {
         const { updatedPositions } = applyLivePricesToPortfolio(prevPositions, tickers, quotes, discoveredTickers);
+        nextPositions = updatedPositions;
         return updatedPositions;
       });
 
       // Update ticker directory with latest prices, changes, and volumes
+      let nextTickers: EGXTicker[] = tickers;
       setTickers((prevTickers) => {
         const { updatedTickers } = applyLivePricesToPortfolio([], prevTickers, quotes, discoveredTickers);
+        nextTickers = updatedTickers;
         
-        // Auto-update connected Google Sheet ticker directory tab if connected
-        if (sheetsConfig?.spreadsheetId && authUser) {
+        // Auto-update connected Google Sheet ticker directory tab if connected & autoSync !== false
+        if (sheetsConfig?.spreadsheetId && sheetsConfig.autoSync !== false) {
           getAccessToken().then((token) => {
             if (token) {
               updateStockDirectoryInSheet(
@@ -202,9 +273,14 @@ export default function App() {
         return updatedTickers;
       });
 
+      // Incremental Firestore write: only update positions and tickers
+      updateFirestorePositions(nextPositions);
+      updateFirestoreTickers(nextTickers);
+
       setLastPriceSyncTime(updatedTimeStr);
       try {
         localStorage.setItem('egx_last_price_sync', updatedTimeStr);
+        localStorage.setItem('egx_last_price_sync_timestamp', String(Date.now()));
       } catch {}
 
       const symbolCount = Object.keys(quotes).length;
@@ -260,18 +336,22 @@ export default function App() {
     };
   }, [positions, tickers]);
 
-  // Initial sync on startup if session is active and no prices synced today
+  // Automatic live/closing price pull on startup / page reload:
+  // Always fetches the latest available prices from TradingView on boot (even outside trading hours / weekends)
+  // so open positions and market values reflect the most recent closing or live prices without requiring manual sync.
   useEffect(() => {
-    const status = getEGXSessionStatus();
-    if (status.isSessionActive) {
-      const saved = localStorage.getItem('egx_last_price_sync');
-      if (!saved) {
-        const timer = setTimeout(() => {
-          handleSyncLivePrices(true);
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
+    const lastSyncTime = localStorage.getItem('egx_last_price_sync_timestamp');
+    const now = Date.now();
+    // Throttle to once every 20 seconds on rapid hot reloads, otherwise always fetch latest prices on boot
+    if (lastSyncTime && now - Number(lastSyncTime) < 20000) {
+      return;
     }
+
+    const timer = setTimeout(() => {
+      handleSyncLivePrices(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Flag ref to prevent remote Firestore updates from triggering a write-back loop
@@ -288,10 +368,14 @@ export default function App() {
         if (remoteDoc.transactions) setTransactions(remoteDoc.transactions);
         if (typeof remoteDoc.cashBalance === 'number') setCashBalance(remoteDoc.cashBalance);
         if (remoteDoc.tickers) setTickers(remoteDoc.tickers);
-        setTimeout(() => { isRemoteSyncingRef.current = false; }, 800);
+        setTimeout(() => { 
+          isRemoteSyncingRef.current = false;
+          // Refresh prices against TradingView scanner to guarantee latest valuations
+          handleSyncLivePrices(true);
+        }, 800);
       } else {
-        // Save initial state if no remote doc exists
-        debouncedSavePortfolioToFirestore({
+        // Save initial state if no remote doc exists yet
+        savePortfolioToFirestore({
           positions,
           closedTrades,
           transactions,
@@ -317,26 +401,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Sync to local storage & Firestore on state change
+  // Persist state changes locally to browser storage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_POSITIONS, JSON.stringify(positions));
     localStorage.setItem(STORAGE_KEY_CLOSED, JSON.stringify(closedTrades));
     localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions));
     localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(cashBalance));
     localStorage.setItem(STORAGE_KEY_TICKERS, JSON.stringify(tickers));
-
-    // Skip saving back to Firestore if state update originated from remote snapshot
-    if (isRemoteSyncingRef.current) {
-      return;
-    }
-
-    debouncedSavePortfolioToFirestore({
-      positions,
-      closedTrades,
-      transactions,
-      cashBalance,
-      tickers,
-    });
   }, [positions, closedTrades, transactions, cashBalance, tickers]);
 
   useEffect(() => {
@@ -344,6 +415,25 @@ export default function App() {
       localStorage.setItem(STORAGE_KEY_SHEETS, JSON.stringify(sheetsConfig));
     }
   }, [sheetsConfig]);
+
+  // Auto-restore / reconstruct open positions & closed trades from transaction ledger if missing or lost
+  useEffect(() => {
+    if (transactions && transactions.length > 0) {
+      const hasSellTxs = transactions.some((t) => t.type === 'SELL');
+      const needsPositionRestore = !positions || positions.length === 0;
+      const needsClosedTradesRestore = hasSellTxs && (!closedTrades || closedTrades.length === 0);
+
+      if (needsPositionRestore || needsClosedTradesRestore) {
+        const reconciliation = reconcilePortfolioFromLedger(transactions, tickers, INITIAL_CAPITAL_DEPOSITS, positions);
+        if (needsPositionRestore && reconciliation.reconciledPositions.length > 0) {
+          setPositions(reconciliation.reconciledPositions);
+        }
+        if (needsClosedTradesRestore && reconciliation.reconciledClosedTrades.length > 0) {
+          setClosedTrades(reconciliation.reconciledClosedTrades);
+        }
+      }
+    }
+  }, [transactions, tickers]);
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -359,8 +449,9 @@ export default function App() {
     setPositions((prevPositions) => {
       let changed = false;
       const updated = prevPositions.map((pos) => {
-        const liveTicker = tickers.find((t) => t.ticker === pos.ticker);
-        if (liveTicker && liveTicker.lastPrice !== pos.currentPrice) {
+        const cleanTicker = pos.ticker.trim().toUpperCase();
+        const liveTicker = tickers.find((t) => t.ticker.trim().toUpperCase() === cleanTicker);
+        if (liveTicker && liveTicker.lastPrice > 0 && liveTicker.lastPrice !== pos.currentPrice) {
           changed = true;
           return {
             ...pos,
@@ -452,6 +543,37 @@ export default function App() {
 
     const totalBrokerageFeesPaid = closedTrades.reduce((acc, t) => acc + (t.totalFees || 0), 0);
 
+    const avgWinEgp = winningTrades > 0 ? totalRealizedGainEgp / winningTrades : 0;
+    const avgLossEgp = losingTrades > 0 ? totalRealizedLossEgp / losingTrades : 0;
+    const payoffRatio = avgLossEgp > 0 ? avgWinEgp / avgLossEgp : avgWinEgp > 0 ? 99.99 : 0;
+    const expectancyEgp = totalTrades > 0 ? (totalRealizedGainEgp - totalRealizedLossEgp) / totalTrades : 0;
+
+    // Accurate Max Drawdown calculation from chronological closed trades
+    const sortedTradesChronological = [...closedTrades].sort((a, b) => {
+      const dateA = a.sellDate || a.buyDate || '2026-01-01';
+      const dateB = b.sellDate || b.buyDate || '2026-01-01';
+      return dateA.localeCompare(dateB);
+    });
+
+    let runningEquity = 0;
+    let peakEquity = 0;
+    let maxDrawdownEgp = 0;
+
+    sortedTradesChronological.forEach((t) => {
+      runningEquity += t.realizedPnlEgp;
+      if (runningEquity > peakEquity) {
+        peakEquity = runningEquity;
+      }
+      const dd = peakEquity - runningEquity;
+      if (dd > maxDrawdownEgp) {
+        maxDrawdownEgp = dd;
+      }
+    });
+
+    const openCost = positions.reduce((acc, p) => acc + p.shares * p.avgBuyPrice, 0);
+    const baselineCapital = Math.max(1000, cashBalance + openCost);
+    const maxDrawdownPercent = (maxDrawdownEgp / (baselineCapital + Math.max(0, peakEquity))) * 100;
+
     // Sector allocation based on open positions
     const sectorTotals: Record<Sector, number> = {} as any;
     let totalEquitiesVal = 0;
@@ -482,6 +604,10 @@ export default function App() {
       avgHoldDays,
       totalBrokerageFeesPaid,
       sectorAllocation,
+      maxDrawdownPercent,
+      maxDrawdownEgp,
+      payoffRatio,
+      expectancyEgp,
     };
   }, [closedTrades, positions]);
 
@@ -502,7 +628,7 @@ export default function App() {
   };
 
   const handleReconcileLedger = () => {
-    const report = reconcilePortfolioFromLedger(transactions, tickers, cashBalance);
+    const report = reconcilePortfolioFromLedger(transactions, tickers, cashBalance, positions);
     setPositions(report.reconciledPositions);
     setClosedTrades(report.reconciledClosedTrades);
     setCashBalance(report.reconciledCashBalance);
@@ -583,11 +709,9 @@ export default function App() {
           : existing.notes,
       };
 
-      setPositions((prev) => {
-        const copy = [...prev];
-        copy[existingIndex] = updatedPosition;
-        return copy;
-      });
+      const nextPositions = positions.map((p, idx) => (idx === existingIndex ? updatedPosition : p));
+      setPositions(nextPositions);
+      var currentPosList = nextPositions;
     } else {
       // New stock position
       const newPos: Position = {
@@ -605,7 +729,9 @@ export default function App() {
         notes: newTradeData.notes,
       };
 
-      setPositions((prev) => [newPos, ...prev]);
+      const nextPositions = [newPos, ...positions];
+      setPositions(nextPositions);
+      var currentPosList = nextPositions;
     }
 
     const nextTradeId = (() => {
@@ -643,23 +769,19 @@ export default function App() {
     setTransactions((prev) => [newTx, ...prev]);
 
     // Auto-sync transaction to Google Sheet Transaction Logger tab if configured
-    if (sheetsConfig?.spreadsheetId && authUser) {
-      getAccessToken().then((token) => {
-        if (token) {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            newTx,
-            token,
-            'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets tx append error:', err));
-        }
-      });
+    if (sheetsConfig?.spreadsheetId) {
+      syncTransactionToSheet(newTx);
     }
 
+    let updatedCash = cashBalance;
     if (deductCash) {
       const totalOutlay = (newTradeData.shares * newTradeData.buyPrice) + (newTradeData.brokerageFee || 0);
-      setCashBalance((prev) => Math.max(0, prev - totalOutlay));
+      updatedCash = Math.max(0, cashBalance - totalOutlay);
+      setCashBalance(updatedCash);
     }
+
+    // Incremental Firestore write: append new tx and update positions/cash
+    appendTransactionToFirestore(newTx, currentPosList, undefined, updatedCash);
   };
 
   const handleConfirmSell = (
@@ -735,7 +857,8 @@ export default function App() {
       notes,
     };
 
-    setClosedTrades((prev) => [newClosedTrade, ...prev]);
+    const nextClosed = [newClosedTrade, ...closedTrades];
+    setClosedTrades(nextClosed);
 
     const nextTradeId = (() => {
       let maxId = 0;
@@ -773,33 +896,28 @@ export default function App() {
     setTransactions((prev) => [newSellTx, ...prev]);
 
     // Auto-sync SELL transaction to Google Sheet Transaction Logger tab if configured
-    if (sheetsConfig?.spreadsheetId && authUser) {
-      getAccessToken().then((token) => {
-        if (token) {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            newSellTx,
-            token,
-            'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sell tx append error:', err));
-        }
-      });
+    if (sheetsConfig?.spreadsheetId) {
+      syncTransactionToSheet(newSellTx);
     }
 
     // Add net proceeds from sale to cash balance
-    setCashBalance((prev) => prev + netProceeds);
+    const updatedCash = cashBalance + netProceeds;
+    setCashBalance(updatedCash);
 
+    let updatedPositions: Position[] = [];
     if (remainingShares > 0) {
-      setPositions((prev) =>
-        prev.map((p) =>
-          p.id === positionId
-            ? { ...p, shares: remainingShares, totalFees: remainingBuyFee }
-            : p
-        )
+      updatedPositions = positions.map((p) =>
+        p.id === positionId
+          ? { ...p, shares: remainingShares, totalFees: remainingBuyFee }
+          : p
       );
     } else {
-      setPositions((prev) => prev.filter((p) => p.id !== positionId));
+      updatedPositions = positions.filter((p) => p.id !== positionId);
     }
+    setPositions(updatedPositions);
+
+    // Incremental Firestore write
+    appendTransactionToFirestore(newSellTx, updatedPositions, nextClosed, updatedCash);
   };
 
   const handleDeletePosition = (id: string) => {
@@ -822,9 +940,57 @@ export default function App() {
           previousState: { positions, closedTrades, transactions, cashBalance },
           message: `Reverted deletion of ${pos.ticker} position`,
         });
-        setPositions((prev) => prev.filter((p) => p.id !== id));
+        const updatedPositions = positions.filter((p) => p.id !== id);
+        // Remove open buys for this ticker that are not part of closed cycles
+        const updatedTxs = transactions.filter(
+          (t) => !(t.type === 'BUY' && t.ticker.toUpperCase() === pos.ticker.toUpperCase() && !t.tradeCycle)
+        );
+        setPositions(updatedPositions);
+        setTransactions(updatedTxs);
+        updateFirestorePositions(updatedPositions);
+        updateFirestoreTransactions(updatedTxs, updatedPositions, closedTrades, cashBalance);
       },
     });
+  };
+
+  const handleSavePositionEdit = (updated: {
+    id: string;
+    targetPrice?: number;
+    stopLoss?: number;
+    notes?: string;
+  }) => {
+    const updatedPositions = positions.map((p) => {
+      if (p.id !== updated.id) return p;
+      return {
+        ...p,
+        targetPrice: updated.targetPrice,
+        stopLoss: updated.stopLoss,
+        notes: updated.notes,
+      };
+    });
+    setPositions(updatedPositions);
+    updateFirestorePositions(updatedPositions);
+
+    // Also update targetPrice and stopLoss in tickers directory if set
+    const pos = positions.find((p) => p.id === updated.id);
+    if (pos) {
+      setTickers((prevTickers) =>
+        prevTickers.map((t) => {
+          if (t.ticker.toUpperCase() !== pos.ticker.toUpperCase()) return t;
+          return {
+            ...t,
+            targetPrice: updated.targetPrice !== undefined ? updated.targetPrice : t.targetPrice,
+            stopLoss: updated.stopLoss !== undefined ? updated.stopLoss : t.stopLoss,
+          };
+        })
+      );
+    }
+
+    setPriceSyncNotification({
+      message: `Updated targets & notes for ${pos?.ticker || 'position'}!`,
+      type: 'success',
+    });
+    setTimeout(() => setPriceSyncNotification(null), 4000);
   };
 
   const handleDeleteTrade = (id: string) => {
@@ -846,8 +1012,11 @@ export default function App() {
           previousState: { positions, closedTrades, transactions, cashBalance },
           message: `Reverted deletion of closed trade`,
         });
-        setClosedTrades((prev) => prev.filter((t) => t.id !== id));
-        setTransactions((prev) => prev.filter((t) => t.id !== id));
+        const updatedClosed = closedTrades.filter((t) => t.id !== id);
+        const updatedTxs = transactions.filter((t) => t.id !== id);
+        setClosedTrades(updatedClosed);
+        setTransactions(updatedTxs);
+        updateFirestoreTransactions(updatedTxs, positions, updatedClosed, cashBalance);
       },
     });
   };
@@ -877,10 +1046,12 @@ export default function App() {
         setTransactions(updatedTxs);
 
         // Auto-reconcile portfolio from updated ledger
-        const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance);
+        const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance, positions);
         setPositions(report.reconciledPositions);
         setClosedTrades(report.reconciledClosedTrades);
         setCashBalance(report.reconciledCashBalance);
+
+        updateFirestoreTransactions(updatedTxs, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance);
       },
     });
   };
@@ -909,10 +1080,26 @@ export default function App() {
     setTransactions(updatedTxs);
 
     // Reconcile portfolio math automatically when any ledger transaction is edited
-    const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance);
+    const report = reconcilePortfolioFromLedger(updatedTxs, tickers, cashBalance, positions);
     setPositions(report.reconciledPositions);
     setClosedTrades(report.reconciledClosedTrades);
     setCashBalance(report.reconciledCashBalance);
+
+    updateFirestoreTransactions(updatedTxs, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance);
+
+    // Auto-sync EDITED transaction to Google Sheet in-place if connected
+    if (sheetsConfig?.spreadsheetId) {
+      syncTransactionToSheet(updatedTx);
+    }
+  };
+
+  const handleSaveSheetsConfig = (config: GoogleSheetsConfig) => {
+    setSheetsConfig(config);
+    setPriceSyncNotification({
+      message: `Google Sheets connection saved (${config.autoSync !== false ? 'Auto Sync ON' : 'Auto Sync OFF'})! Portfolio data preserved.`,
+      type: 'success'
+    });
+    setTimeout(() => setPriceSyncNotification(null), 5000);
   };
 
   const handleImportGoogleSheets = (
@@ -921,14 +1108,48 @@ export default function App() {
     config: GoogleSheetsConfig,
     importedTransactions?: TradeTransaction[]
   ) => {
-    setPositions(importedPositions);
-    setClosedTrades(importedClosedTrades);
+    // Only update app data if valid non-empty arrays are explicitly supplied
+    let importedCount = 0;
+    let nextPos = (importedPositions && importedPositions.length > 0) ? importedPositions : positions;
+    const nextClosed = (importedClosedTrades && importedClosedTrades.length > 0) ? importedClosedTrades : closedTrades;
+
+    // Rehydrate imported positions with latest cached prices
+    nextPos = rehydratePositionsWithTickers(nextPos, tickers);
+
+    if (importedPositions && importedPositions.length > 0) {
+      setPositions(nextPos);
+      updateFirestorePositions(nextPos);
+      importedCount += importedPositions.length;
+    }
+
+    if (importedClosedTrades && importedClosedTrades.length > 0) {
+      setClosedTrades(nextClosed);
+      importedCount += importedClosedTrades.length;
+    }
+
     if (importedTransactions && importedTransactions.length > 0) {
       setTransactions(importedTransactions);
+      importedCount = importedTransactions.length;
+      updateFirestoreTransactions(importedTransactions, nextPos, nextClosed, cashBalance);
     }
+
     setSheetsConfig(config);
+    setIsSheetsTokenExpired(false);
     setPriceSyncNotification({
-      message: `Synchronized: ${importedPositions.length} active positions, ${importedClosedTrades.length} closed cycles, and ${importedTransactions?.length || 0} transactions!`,
+      message: `Successfully imported ${importedCount} records from Google Sheet "${config.sheetName || 'Transaction Logger'}"!`,
+      type: 'success'
+    });
+    setTimeout(() => setPriceSyncNotification(null), 5000);
+  };
+
+  const handleReconcileFromLedger = () => {
+    if (!transactions || transactions.length === 0) return;
+    const report = reconcilePortfolioFromLedger(transactions, tickers, INITIAL_CAPITAL_DEPOSITS, positions);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
+    setPriceSyncNotification({
+      message: `Rebuilt portfolio state from ${transactions.length} transactions in the ledger! Audited cash: ${report.reconciledCashBalance.toFixed(2)} EGP.`,
       type: 'success'
     });
     setTimeout(() => setPriceSyncNotification(null), 5000);
@@ -957,6 +1178,147 @@ export default function App() {
 
   const handleUpdateTickersFromPython = (newTickers: EGXTicker[]) => {
     setTickers(newTickers);
+  };
+
+  const syncTransactionToSheet = async (tx: TradeTransaction): Promise<boolean> => {
+    if (!sheetsConfig?.spreadsheetId) return false;
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setPriceSyncNotification({
+          message: `Trade saved in app, but Google Sheet sync failed: Please open Google Sheets in header to sign in.`,
+          type: 'error',
+        });
+        setTimeout(() => setPriceSyncNotification(null), 7000);
+        return false;
+      }
+      const targetTab = sheetsConfig.sheetName || 'Transaction Logger';
+      const res = await appendTransactionToSheet(
+        sheetsConfig.spreadsheetId,
+        tx,
+        token,
+        targetTab
+      );
+      if (res && res.success) {
+        if (res.finalTradeId) {
+          const numId = Number(res.finalTradeId);
+          const assigned = !isNaN(numId) ? numId : res.finalTradeId;
+          setTransactions((prev) =>
+            prev.map((t) => (t.id === tx.id ? { ...t, tradeId: assigned } : t))
+          );
+        }
+        setPriceSyncNotification({
+          message: `Logged ${tx.type} ${tx.ticker} in app & synced to Google Sheet "${targetTab}"${res.finalTradeId ? ` (ID #${res.finalTradeId})` : ''}!`,
+          type: 'success',
+        });
+        setTimeout(() => setPriceSyncNotification(null), 5000);
+        return true;
+      } else {
+        setPriceSyncNotification({
+          message: `Trade saved in app, but Google Sheet sync issue: ${res?.message || 'Check permissions'}`,
+          type: 'error',
+        });
+        setTimeout(() => setPriceSyncNotification(null), 7000);
+        return false;
+      }
+    } catch (err: any) {
+      console.warn('Google Sheets tx append error:', err);
+      setPriceSyncNotification({
+        message: `Trade saved in app, but Google Sheet sync error: ${err.message || 'Network error'}`,
+        type: 'error',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 7000);
+      return false;
+    }
+  };
+
+  const syncBatchTransactionsToSheet = async (txs: TradeTransaction[]): Promise<boolean> => {
+    if (!sheetsConfig?.spreadsheetId || txs.length === 0) return false;
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setPriceSyncNotification({
+          message: `${txs.length} trades saved in app, but Google Sheet sync failed: Please sign in via Google Sheets.`,
+          type: 'error',
+        });
+        setTimeout(() => setPriceSyncNotification(null), 7000);
+        return false;
+      }
+      const targetTab = sheetsConfig.sheetName || 'Transaction Logger';
+      let successCount = 0;
+      for (const tx of txs) {
+        const res = await appendTransactionToSheet(
+          sheetsConfig.spreadsheetId,
+          tx,
+          token,
+          targetTab
+        );
+        if (res && res.success) {
+          successCount++;
+          if (res.finalTradeId) {
+            const numId = Number(res.finalTradeId);
+            const assigned = !isNaN(numId) ? numId : res.finalTradeId;
+            setTransactions((prev) =>
+              prev.map((t) => (t.id === tx.id ? { ...t, tradeId: assigned } : t))
+            );
+          }
+        }
+      }
+      setPriceSyncNotification({
+        message: `Successfully synced ${successCount} of ${txs.length} transactions to Google Sheet "${targetTab}"!`,
+        type: 'success',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
+      return true;
+    } catch (err: any) {
+      console.warn('Batch sheets sync error:', err);
+      return false;
+    }
+  };
+
+  const handleSyncLedgerToSheet = async () => {
+    if (!sheetsConfig?.spreadsheetId) {
+      setIsSheetsModalOpen(true);
+      return;
+    }
+    const token = await getAccessToken();
+    if (!token) {
+      setIsSheetsModalOpen(true);
+      return;
+    }
+    setIsSyncingLedgerToSheets(true);
+    try {
+      const res = await syncAllPortfolioToSheet(
+        sheetsConfig.spreadsheetId,
+        positions,
+        closedTrades,
+        transactions,
+        tickers,
+        token
+      );
+      if (res.success) {
+        setIsSheetsTokenExpired(false);
+        setPriceSyncNotification({
+          message: `Successfully synchronized entire portfolio & ledger to Google Sheet!`,
+          type: 'success',
+        });
+        setTimeout(() => setPriceSyncNotification(null), 5000);
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err: any) {
+      if (err.message?.includes('401') || err.message?.includes('token') || isTokenExpired()) {
+        clearExpiredToken();
+        setIsSheetsTokenExpired(true);
+      }
+      setPriceSyncNotification({
+        message: `Failed to sync transactions to Google Sheet: ${err.message || 'Check permissions'}`,
+        type: 'error',
+      });
+      setTimeout(() => setPriceSyncNotification(null), 7000);
+    } finally {
+      setIsSyncingLedgerToSheets(false);
+    }
   };
 
   const handleSelectTickerForTrade = (ticker: EGXTicker) => {
@@ -1007,24 +1369,23 @@ export default function App() {
     setTransactions(updatedTransactions);
 
     // Auto-sync screenshot trade to Google Sheet Transaction Logger tab if configured
-    if (sheetsConfig?.spreadsheetId && authUser) {
-      getAccessToken().then((token) => {
-        if (token) {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            newTx,
-            token,
-            'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets screenshot tx append error:', err));
-        }
+    if (sheetsConfig?.spreadsheetId) {
+      syncTransactionToSheet(newTx);
+    } else {
+      setPriceSyncNotification({
+        message: `Successfully logged ${parsedTx.type} ${parsedTx.shares.toLocaleString()} ${parsedTx.ticker} via screenshot scanner!`,
+        type: 'success',
       });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
     }
 
     // Reconcile full portfolio state from ledger
-    const reconciled = reconcilePortfolioFromLedger(updatedTransactions, tickers, cashBalance);
+    const reconciled = reconcilePortfolioFromLedger(updatedTransactions, tickers, cashBalance, positions);
     setPositions(reconciled.reconciledPositions);
     setClosedTrades(reconciled.reconciledClosedTrades);
     setCashBalance(reconciled.reconciledCashBalance);
+
+    appendTransactionToFirestore(newTx, reconciled.reconciledPositions, reconciled.reconciledClosedTrades, reconciled.reconciledCashBalance);
 
     setPriceSyncNotification({
       message: `Successfully logged ${parsedTx.type} ${parsedTx.shares.toLocaleString()} ${parsedTx.ticker} via AI screenshot!`,
@@ -1074,7 +1435,7 @@ export default function App() {
         totalAmount: pt.type === 'BUY'
           ? (pt.shares * pt.price) + (pt.fees || 0)
           : Math.max(0, (pt.shares * pt.price) - (pt.fees || 0)),
-        notes: pt.notes || 'Logged via Telda AI Screenshot Scanner',
+        notes: pt.notes || 'Logged via Trade Screenshot Scanner',
       };
     });
 
@@ -1085,26 +1446,23 @@ export default function App() {
     setTransactions(combinedTransactions);
 
     // Auto-sync batch screenshot trades to Google Sheet Transaction Logger tab if configured
-    if (sheetsConfig?.spreadsheetId && authUser) {
-      getAccessToken().then((token) => {
-        if (token) {
-          newTxs.forEach(t => {
-            appendTransactionToSheet(
-              sheetsConfig.spreadsheetId,
-              t,
-              token,
-              'Transaction Logger'
-            ).catch((err) => console.warn('Background batch screenshot tx append error:', err));
-          });
-        }
+    if (sheetsConfig?.spreadsheetId) {
+      syncBatchTransactionsToSheet(newTxs);
+    } else {
+      setPriceSyncNotification({
+        message: `Successfully imported ${newTxs.length} transactions from screenshots!`,
+        type: 'success',
       });
+      setTimeout(() => setPriceSyncNotification(null), 5000);
     }
 
     // Reconcile full portfolio state from ledger
-    const reconciled = reconcilePortfolioFromLedger(combinedTransactions, tickers, cashBalance);
+    const reconciled = reconcilePortfolioFromLedger(combinedTransactions, tickers, cashBalance, positions);
     setPositions(reconciled.reconciledPositions);
     setClosedTrades(reconciled.reconciledClosedTrades);
     setCashBalance(reconciled.reconciledCashBalance);
+
+    updateFirestoreTransactions(combinedTransactions, reconciled.reconciledPositions, reconciled.reconciledClosedTrades, reconciled.reconciledCashBalance);
 
     setPriceSyncNotification({
       message: `Successfully imported ${newTxs.length} transactions from Telda screenshots!`,
@@ -1127,7 +1485,9 @@ export default function App() {
         }}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
+        onBackupReconcile={() => setIsBackupModalOpen(true)}
         isSheetsConnected={!!sheetsConfig}
+        isTokenExpired={isSheetsTokenExpired}
         sheetsTitle={sheetsConfig?.sheetName}
         authUser={authUser}
         onLogout={() => logout()}
@@ -1173,6 +1533,25 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {getIsQuotaExceeded() && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+              <span>
+                <strong>Firebase Daily Write Quota Reached:</strong> Cloud database sync is paused until daily quota resets tomorrow. Your app continues working 100% offline via Local Storage & Google Sheets sync.
+              </span>
+            </div>
+            <a
+              href="https://firebase.google.com/pricing#cloud-firestore"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] underline text-amber-200 hover:text-white shrink-0 font-semibold"
+            >
+              Quota Info
+            </a>
+          </div>
+        )}
+
         {/* Top Summary Banner */}
         <PortfolioSummary
           metrics={metrics}
@@ -1207,10 +1586,7 @@ export default function App() {
                   setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
                   setIsAddTradeModalOpen(true);
                 }}
-                onEditPosition={(pos) => {
-                  setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
-                  setIsAddTradeModalOpen(true);
-                }}
+                onEditPosition={(pos) => setEditingPosition(pos)}
                 onDeletePosition={handleDeletePosition}
                 onAddNewTrade={() => {
                   setSelectedTickerForTrade(null);
@@ -1252,10 +1628,7 @@ export default function App() {
                 setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
                 setIsAddTradeModalOpen(true);
               }}
-              onEditPosition={(pos) => {
-                setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
-                setIsAddTradeModalOpen(true);
-              }}
+              onEditPosition={(pos) => setEditingPosition(pos)}
               onDeletePosition={handleDeletePosition}
               onAddNewTrade={() => {
                 setSelectedTickerForTrade(null);
@@ -1293,6 +1666,8 @@ export default function App() {
             onDeleteTrade={handleDeleteTrade}
             onDeletePosition={handleDeletePosition}
             onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
+            onSyncToSheets={handleSyncLedgerToSheet}
+            isSyncingToSheets={isSyncingLedgerToSheets}
           />
         )}
 
@@ -1300,7 +1675,10 @@ export default function App() {
           <CashBalanceView
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
-            onUpdateCashBalance={(newBal) => setCashBalance(newBal)}
+            onUpdateCashBalance={(newBal) => {
+              setCashBalance(newBal);
+              updateFirestoreCashBalance(newBal);
+            }}
             positions={positions}
             closedTrades={closedTrades}
             tradeTransactions={transactions}
@@ -1325,6 +1703,7 @@ export default function App() {
       <GoogleSheetsModal
         isOpen={isSheetsModalOpen}
         onClose={() => setIsSheetsModalOpen(false)}
+        onSaveConfig={handleSaveSheetsConfig}
         onImportData={handleImportGoogleSheets}
         currentConfig={sheetsConfig || undefined}
         authUser={authUser}
@@ -1333,6 +1712,7 @@ export default function App() {
         closedTrades={closedTrades}
         transactions={transactions}
         tickers={tickers}
+        onReconcileFromLedger={handleReconcileFromLedger}
       />
 
       <PythonSchemaSyncModal
@@ -1361,6 +1741,13 @@ export default function App() {
         tickers={tickers}
         onAddTransaction={handleAIScreenshotAddTransaction}
         onAddBatchTransactions={handleAIScreenshotAddBatchTransactions}
+      />
+
+      <EditPositionModal
+        position={editingPosition}
+        isOpen={!!editingPosition}
+        onClose={() => setEditingPosition(null)}
+        onSave={handleSavePositionEdit}
       />
 
       <SellPositionModal

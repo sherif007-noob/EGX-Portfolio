@@ -1,0 +1,568 @@
+import React, { useState, useMemo } from 'react';
+import {
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  ShieldCheck,
+  Download,
+  Printer,
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Briefcase,
+  Layers,
+  Sparkles,
+} from 'lucide-react';
+import { ClosedTrade, Position } from '../../types';
+
+interface MonthlyPerformanceReportProps {
+  closedTrades: ClosedTrade[];
+  positions: Position[];
+}
+
+type StatusFilter = 'ALL' | 'LIQUIDATED' | 'HOLDINGS';
+
+const formatEgp = (val: number) =>
+  val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+interface MonthEndHolding {
+  id: string;
+  ticker: string;
+  companyName: string;
+  sector: string;
+  shares: number;
+  buyPrice: number;
+  buyDate: string;
+  marketPrice: number;
+  pnlEgp: number;
+  pnlPercent: number;
+  fees: number;
+  type: 'CURRENT_OPEN' | 'HELD_AT_MONTH_END_LATER_CLOSED';
+  exitDate?: string;
+  notes?: string;
+}
+
+export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> = ({
+  closedTrades,
+  positions,
+}) => {
+  const [selectedMonth, setSelectedMonth] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Collect all months with activity
+  const allMonthsData = useMemo(() => {
+    const monthKeys = new Set<string>();
+
+    closedTrades.forEach((t) => {
+      if (t.sellDate) monthKeys.add(t.sellDate.slice(0, 7));
+      if (t.buyDate) monthKeys.add(t.buyDate.slice(0, 7));
+    });
+
+    positions.forEach((p) => {
+      if (p.buyDate) monthKeys.add(p.buyDate.slice(0, 7));
+    });
+
+    const currentMonthStr = new Date().toISOString().slice(0, 7);
+    monthKeys.add(currentMonthStr);
+
+    const sortedMonthKeys = Array.from(monthKeys).sort().reverse();
+
+    return sortedMonthKeys.map((monthKey) => {
+      const [yearStr, monthStr] = monthKey.split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10);
+
+      // Accurate last day of this calendar month
+      const lastDayDate = new Date(year, month, 0);
+      const lastDayOfMonth = `${monthKey}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+
+      // Month Name representation (e.g. September 2026)
+      const monthDateObj = new Date(year, month - 1, 1);
+      const monthLabel = monthDateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      // 1. Trades liquidated/closed in this month
+      const liquidatedTrades = closedTrades.filter(
+        (t) => t.sellDate && t.sellDate.startsWith(monthKey)
+      );
+
+      const wins = liquidatedTrades.filter((t) => t.outcome === 'WIN');
+      const losses = liquidatedTrades.filter((t) => t.outcome === 'LOSS');
+      const grossGain = wins.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
+      const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.realizedPnlEgp, 0));
+      const netRealized = grossGain - grossLoss;
+      const fees = liquidatedTrades.reduce((acc, t) => acc + (t.totalFees || 0), 0);
+      const winRate = liquidatedTrades.length > 0 ? (wins.length / liquidatedTrades.length) * 100 : null;
+
+      // 2. Accurate Month-End Holdings:
+      // a) Positions currently active where buyDate <= lastDayOfMonth
+      const currentActiveHoldings: MonthEndHolding[] = positions
+        .filter((p) => p.buyDate <= lastDayOfMonth)
+        .map((p) => {
+          const costBasis = p.shares * p.avgBuyPrice;
+          const currentVal = p.shares * p.currentPrice;
+          const pnlEgp = currentVal - costBasis;
+          const pnlPercent = costBasis > 0 ? (pnlEgp / costBasis) * 100 : 0;
+          return {
+            id: p.id,
+            ticker: p.ticker,
+            companyName: p.companyName,
+            sector: p.sector,
+            shares: p.shares,
+            buyPrice: p.avgBuyPrice,
+            buyDate: p.buyDate,
+            marketPrice: p.currentPrice,
+            pnlEgp,
+            pnlPercent,
+            fees: p.totalFees || 0,
+            type: 'CURRENT_OPEN',
+            notes: p.notes,
+          };
+        });
+
+      // b) Closed trades that were active at month end: bought <= lastDayOfMonth AND sold > lastDayOfMonth
+      const closedLaterHoldings: MonthEndHolding[] = closedTrades
+        .filter((t) => t.buyDate <= lastDayOfMonth && t.sellDate && t.sellDate > lastDayOfMonth)
+        .map((t) => {
+          return {
+            id: `held-${t.id}`,
+            ticker: t.ticker,
+            companyName: t.companyName,
+            sector: t.sector,
+            shares: t.shares,
+            buyPrice: t.buyPrice,
+            buyDate: t.buyDate,
+            marketPrice: t.sellPrice,
+            pnlEgp: t.realizedPnlEgp,
+            pnlPercent: t.realizedPnlPercent,
+            fees: t.totalFees || 0,
+            type: 'HELD_AT_MONTH_END_LATER_CLOSED',
+            exitDate: t.sellDate,
+            notes: t.notes,
+          };
+        });
+
+      const monthEndHoldings = [...currentActiveHoldings, ...closedLaterHoldings];
+
+      return {
+        monthKey,
+        monthLabel,
+        liquidatedTrades,
+        monthEndHoldings,
+        winsCount: wins.length,
+        lossesCount: losses.length,
+        grossGain,
+        grossLoss,
+        netRealized,
+        fees,
+        winRate,
+        totalActivityCount: liquidatedTrades.length + monthEndHoldings.length,
+      };
+    });
+  }, [closedTrades, positions]);
+
+  // Months available for tab selector
+  const availableMonths = useMemo(() => {
+    return allMonthsData.filter((m) => m.totalActivityCount > 0);
+  }, [allMonthsData]);
+
+  // Filtered months to display
+  const displayedMonths = useMemo(() => {
+    let months = allMonthsData;
+    if (selectedMonth !== 'ALL') {
+      months = months.filter((m) => m.monthKey === selectedMonth);
+    }
+    return months;
+  }, [allMonthsData, selectedMonth]);
+
+  // Export Monthly Audit to CSV
+  const handleExportCSV = (targetMonthKey?: string) => {
+    const targetMonths = targetMonthKey && targetMonthKey !== 'ALL'
+      ? allMonthsData.filter((m) => m.monthKey === targetMonthKey)
+      : allMonthsData.filter((m) => m.totalActivityCount > 0);
+
+    const rows: string[][] = [
+      ['Monthly Performance & End-of-Month Positions Audit Report'],
+      [`Export Date: ${new Date().toISOString().slice(0, 10)}`],
+      [],
+      ['Month', 'Holding Status', 'Ticker', 'Company Name', 'Sector', 'Shares', 'Buy Date', 'Buy Price (EGP)', 'Exit/Market Price (EGP)', 'P&L (EGP)', 'P&L (%)', 'Brokerage Fees (EGP)', 'Notes'],
+    ];
+
+    targetMonths.forEach((m) => {
+      // Liquidated
+      m.liquidatedTrades.forEach((t) => {
+        rows.push([
+          m.monthLabel,
+          `Liquidated (${t.outcome}) on ${t.sellDate}`,
+          t.ticker,
+          t.companyName,
+          t.sector,
+          t.shares.toString(),
+          t.buyDate,
+          t.buyPrice.toFixed(2),
+          t.sellPrice.toFixed(2),
+          t.realizedPnlEgp.toFixed(2),
+          `${t.realizedPnlPercent.toFixed(2)}%`,
+          (t.totalFees || 0).toFixed(2),
+          t.notes || '',
+        ]);
+      });
+
+      // Month-end holdings
+      m.monthEndHoldings.forEach((h) => {
+        rows.push([
+          m.monthLabel,
+          h.type === 'CURRENT_OPEN' ? 'Active Portfolio Holding' : `Held at Month-End (Closed ${h.exitDate})`,
+          h.ticker,
+          h.companyName,
+          h.sector,
+          h.shares.toString(),
+          h.buyDate,
+          h.buyPrice.toFixed(2),
+          h.marketPrice.toFixed(2),
+          h.pnlEgp.toFixed(2),
+          `${h.pnlPercent.toFixed(2)}%`,
+          h.fees.toFixed(2),
+          h.notes || '',
+        ]);
+      });
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.map((val) => `"${val}"`).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Monthly_Audit_Report_${selectedMonth !== 'ALL' ? selectedMonth : 'All_Months'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div id="report-monthly-performance" className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6 shadow-sm">
+      {/* Header & Controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
+              REPORT 2 &bull; MONTHLY AUDIT
+            </span>
+            <span className="text-xs text-slate-400">Institutional Reconciliation</span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 font-display">
+            <Calendar className="w-5 h-5 text-purple-400 shrink-0" />
+            Monthly Performance &amp; End-of-Month Positions Review
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Official monthly reconciliation audit detailing liquidated trade outcomes, month-end holdings, and brokerage costs.
+          </p>
+        </div>
+
+        {/* Global Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExportCSV(selectedMonth)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            title="Download CSV audit"
+          >
+            <Download className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">Export Audit CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            title="Print Monthly Report"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Print Audit</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Interactive Controls Bar: Month Tabs & Sub-filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+        {/* Month Selector Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setSelectedMonth('ALL')}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+              selectedMonth === 'ALL'
+                ? 'bg-purple-600 text-white font-semibold shadow-sm'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+            }`}
+          >
+            All Recorded Months
+          </button>
+          {availableMonths.map((m) => (
+            <button
+              key={m.monthKey}
+              type="button"
+              onClick={() => setSelectedMonth(m.monthKey)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+                selectedMonth === m.monthKey
+                  ? 'bg-purple-600 text-white font-semibold shadow-sm'
+                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              <span>{m.monthLabel}</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono">
+                {m.liquidatedTrades.length} trades
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search & Status Filter */}
+        <div className="flex items-center gap-2">
+          {/* Status filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            className="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-purple-500"
+          >
+            <option value="ALL">All Records</option>
+            <option value="LIQUIDATED">Liquidated Trades Only</option>
+            <option value="HOLDINGS">Month-End Holdings Only</option>
+          </select>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ticker..."
+              className="pl-8 pr-3 py-1 text-xs rounded-xl bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 w-32 sm:w-40"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly Audit Statements */}
+      <div className="space-y-6">
+        {displayedMonths.map((m) => {
+          // Filter items by search query and status
+          const filteredLiquidated = m.liquidatedTrades.filter((t) => {
+            if (statusFilter === 'HOLDINGS') return false;
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return t.ticker.toLowerCase().includes(q) || t.companyName.toLowerCase().includes(q);
+          });
+
+          const filteredHoldings = m.monthEndHoldings.filter((h) => {
+            if (statusFilter === 'LIQUIDATED') return false;
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return h.ticker.toLowerCase().includes(q) || h.companyName.toLowerCase().includes(q);
+          });
+
+          const hasActivity = filteredLiquidated.length > 0 || filteredHoldings.length > 0;
+          const isProfitable = m.netRealized > 0;
+          const isDrawdown = m.netRealized < 0;
+          const isNoExits = m.liquidatedTrades.length === 0;
+
+          return (
+            <div
+              key={m.monthKey}
+              className="rounded-xl border border-slate-800 bg-slate-950/70 overflow-hidden shadow-sm"
+            >
+              {/* Monthly Banner Ribbon */}
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 font-display">
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                      {m.monthLabel}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono ${
+                        isNoExits
+                          ? 'bg-slate-800 text-slate-300 border border-slate-700'
+                          : isProfitable
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                      }`}
+                    >
+                      {isNoExits ? (
+                        'Accrual / Holdings'
+                      ) : isProfitable ? (
+                        `Profitable (+${formatEgp(m.netRealized)} EGP)`
+                      ) : (
+                        `Drawdown (${formatEgp(m.netRealized)} EGP)`
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {m.liquidatedTrades.length} liquidated roundtrips &bull; {m.monthEndHoldings.length} month-end portfolio positions
+                  </p>
+                </div>
+
+                {/* Quick Monthly Metrics */}
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                  {/* Monthly Net Realized */}
+                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Realized P&amp;L</span>
+                    <span
+                      className={`font-mono font-bold text-sm ${
+                        isNoExits
+                          ? 'text-slate-400'
+                          : isProfitable
+                          ? 'text-emerald-400'
+                          : 'text-rose-400'
+                      }`}
+                    >
+                      {isNoExits ? '0.00 EGP' : `${isProfitable ? '+' : ''}${formatEgp(m.netRealized)} EGP`}
+                    </span>
+                  </div>
+
+                  {/* Win Rate */}
+                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Win Rate</span>
+                    <span className="font-mono font-bold text-sm text-slate-200">
+                      {m.winRate !== null ? (
+                        `${m.winRate.toFixed(1)}% (${m.winsCount}W / ${m.lossesCount}L)`
+                      ) : (
+                        <span className="text-slate-500 text-xs font-normal">&mdash; (0 Exits)</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Brokerage Fees */}
+                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Commissions</span>
+                    <span className="font-mono font-bold text-sm text-amber-400">
+                      {formatEgp(m.fees)} EGP
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly Records Table */}
+              {!hasActivity ? (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  No records matching the filter criteria for {m.monthLabel}.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800/80 bg-slate-900/50 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                        <th className="py-2.5 px-4">Instrument</th>
+                        <th className="py-2.5 px-4">Audit Status</th>
+                        <th className="py-2.5 px-4 text-right">Shares</th>
+                        <th className="py-2.5 px-4 text-right">Buy Price / Date</th>
+                        <th className="py-2.5 px-4 text-right">Exit / Market Price</th>
+                        <th className="py-2.5 px-4 text-right">Performance (Gain / Loss)</th>
+                        <th className="py-2.5 px-4 text-right">Commissions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40">
+                      {/* 1. Liquidated Trades in Month */}
+                      {filteredLiquidated.map((trade) => {
+                        const isWin = trade.outcome === 'WIN';
+                        return (
+                          <tr key={`closed-${trade.id}`} className="hover:bg-slate-900/40 transition">
+                            <td className="py-3 px-4">
+                              <div className="font-bold text-white">{trade.ticker}</div>
+                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{trade.companyName}</div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  isWin
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                                }`}
+                              >
+                                {isWin ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                Closed {trade.outcome} ({trade.sellDate})
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right text-slate-200 font-mono">
+                              {trade.shares.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4 text-right text-slate-300 font-mono">
+                              {formatEgp(trade.buyPrice)}{' '}
+                              <span className="text-[10px] text-slate-500 font-sans">({trade.buyDate})</span>
+                            </td>
+                            <td className="py-3 px-4 text-right font-bold text-white font-mono">
+                              {formatEgp(trade.sellPrice)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono">
+                              <div className={`font-bold text-sm ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {isWin ? '+' : ''}{formatEgp(trade.realizedPnlEgp)} EGP
+                              </div>
+                              <div className={`text-[10px] font-semibold ${isWin ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {isWin ? '+' : ''}{trade.realizedPnlPercent.toFixed(2)}%
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right text-amber-400 font-mono">
+                              {trade.totalFees ? `${formatEgp(trade.totalFees)}` : '0.00'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* 2. Month-End Active Holdings */}
+                      {filteredHoldings.map((h) => {
+                        const isGain = h.pnlEgp >= 0;
+                        return (
+                          <tr key={h.id} className="hover:bg-slate-900/40 transition bg-slate-950/40">
+                            <td className="py-3 px-4">
+                              <div className="font-bold text-cyan-300">{h.ticker}</div>
+                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{h.companyName}</div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  h.type === 'CURRENT_OPEN'
+                                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30'
+                                }`}
+                              >
+                                <Clock className="w-3 h-3" />
+                                {h.type === 'CURRENT_OPEN'
+                                  ? 'Active Holding'
+                                  : `Held at Month-End (Exited ${h.exitDate})`}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right text-slate-200 font-mono">
+                              {h.shares.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4 text-right text-slate-300 font-mono">
+                              {formatEgp(h.buyPrice)}{' '}
+                              <span className="text-[10px] text-slate-500 font-sans">({h.buyDate})</span>
+                            </td>
+                            <td className="py-3 px-4 text-right font-bold text-slate-200 font-mono">
+                              {formatEgp(h.marketPrice)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono">
+                              <div className={`font-bold text-sm ${isGain ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {isGain ? '+' : ''}{formatEgp(h.pnlEgp)} EGP
+                              </div>
+                              <div className={`text-[10px] font-semibold ${isGain ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {isGain ? '+' : ''}{h.pnlPercent.toFixed(2)}%
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right text-amber-400 font-mono">
+                              {h.fees > 0 ? `${formatEgp(h.fees)}` : '0.00'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

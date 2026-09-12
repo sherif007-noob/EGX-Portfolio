@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../types';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
+import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
+import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -88,14 +90,13 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   cashBalance = 0,
 }) => {
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
-  const [allocationTab, setAllocationTab] = useState<'sector' | 'stock' | 'trajectory'>('sector');
+  const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCashInStockPie, setIncludeCashInStockPie] = useState<boolean>(true);
   const [waterfallMode, setWaterfallMode] = useState<'capital' | 'closed_positions'>('capital');
   const [capitalScaleMode, setCapitalScaleMode] = useState<'full' | 'zoom'>('full');
   const [closedScaleMode, setClosedScaleMode] = useState<'full' | 'zoom'>('zoom');
   const [hoveredCapitalStep, setHoveredCapitalStep] = useState<number | null>(null);
   const [hoveredClosedStep, setHoveredClosedStep] = useState<number | null>(null);
-  const [selectedMonthlyTab, setSelectedMonthlyTab] = useState<string>('ALL');
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -532,116 +533,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
   const sortedMonths = Object.keys(monthlyPnl).sort();
 
-  // 7. Trading Performance Key Indicators Scorecard
-  const performanceIndicators = useMemo(() => {
-    const totalClosed = closedTrades.length;
-    const wins = closedTrades.filter((t) => t.outcome === 'WIN');
-    const losses = closedTrades.filter((t) => t.outcome === 'LOSS');
-    const winCount = wins.length;
-    const lossCount = losses.length;
-    const winRate = totalClosed > 0 ? (winCount / totalClosed) * 100 : 0;
-
-    const grossProfit = wins.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
-    const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.realizedPnlEgp, 0));
-    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 99.99 : 0;
-
-    const winLossRatio = lossCount > 0 ? winCount / lossCount : winCount > 0 ? winCount : 0;
-    const winSplitPercent = totalClosed > 0 ? (winCount / totalClosed) * 100 : 0;
-    const lossSplitPercent = totalClosed > 0 ? (lossCount / totalClosed) * 100 : 0;
-
-    const netRealized = grossProfit - grossLoss;
-    const avgTradePnl = totalClosed > 0 ? netRealized / totalClosed : 0;
-    const avgWin = winCount > 0 ? grossProfit / winCount : 0;
-    const avgLoss = lossCount > 0 ? grossLoss / lossCount : 0;
-
-    const sortedWins = [...wins].sort((a, b) => b.realizedPnlEgp - a.realizedPnlEgp);
-    const sortedLosses = [...losses].sort((a, b) => a.realizedPnlEgp - b.realizedPnlEgp);
-
-    const largestWinTrade = sortedWins[0] || null;
-    const largestLossTrade = sortedLosses[0] || null;
-
-    const largestWin = largestWinTrade ? largestWinTrade.realizedPnlEgp : 0;
-    const largestLoss = largestLossTrade ? Math.abs(largestLossTrade.realizedPnlEgp) : 0;
-    const maxDrawdown = stats.maxDrawdownPercent || 0;
-
-    return {
-      winRate,
-      profitFactor,
-      totalClosed,
-      winCount,
-      lossCount,
-      winLossRatio,
-      winSplitPercent,
-      lossSplitPercent,
-      avgTradePnl,
-      avgWin,
-      avgLoss,
-      largestWin,
-      largestWinTrade,
-      largestLoss,
-      largestLossTrade,
-      grossProfit,
-      grossLoss,
-      maxDrawdown,
-    };
-  }, [closedTrades, stats]);
-
-  // 8. Detailed Monthly Performance & End of Month Positions
-  const monthlyDetailedPerformance = useMemo(() => {
-    const monthKeys = new Set<string>();
-    closedTrades.forEach((t) => {
-      if (t.sellDate) monthKeys.add(t.sellDate.slice(0, 7));
-      if (t.buyDate) monthKeys.add(t.buyDate.slice(0, 7));
-    });
-    positions.forEach((p) => {
-      if (p.buyDate) monthKeys.add(p.buyDate.slice(0, 7));
-    });
-
-    const currentMonthStr = new Date().toISOString().slice(0, 7);
-    monthKeys.add(currentMonthStr);
-
-    const sortedMonthsList = Array.from(monthKeys).sort().reverse();
-
-    return sortedMonthsList.map((monthKey) => {
-      // Find trades closed in this month
-      const monthClosed = closedTrades.filter((t) => t.sellDate && t.sellDate.startsWith(monthKey));
-      const monthWins = monthClosed.filter((t) => t.outcome === 'WIN');
-      const monthLosses = monthClosed.filter((t) => t.outcome === 'LOSS');
-      const monthGrossGain = monthWins.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
-      const monthGrossLoss = Math.abs(monthLosses.reduce((acc, t) => acc + t.realizedPnlEgp, 0));
-      const monthNetRealized = monthGrossGain - monthGrossLoss;
-      const monthFees = monthClosed.reduce((acc, t) => acc + (t.totalFees || 0), 0);
-
-      // Month boundaries
-      const lastDayOfMonth = `${monthKey}-31`;
-      
-      // Active open positions purchased on or before this month end
-      const activePositionsHeld = positions.filter((p) => p.buyDate <= lastDayOfMonth);
-
-      // Trades closed during this month (gain/loss highlighted)
-      const positionsClosedDuringMonth = monthClosed;
-
-      // Format Month Name (e.g. '2026-07' -> 'July 2026')
-      const [year, monthNum] = monthKey.split('-');
-      const monthDate = new Date(parseInt(year, 10), parseInt(monthNum, 10) - 1, 1);
-      const monthFormatted = monthDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-
-      return {
-        monthKey,
-        monthFormatted,
-        closedTrades: positionsClosedDuringMonth,
-        activePositions: activePositionsHeld,
-        winCount: monthWins.length,
-        lossCount: monthLosses.length,
-        grossGain: monthGrossGain,
-        grossLoss: monthGrossLoss,
-        netPnl: monthNetRealized,
-        fees: monthFees,
-        winRate: monthClosed.length > 0 ? (monthWins.length / monthClosed.length) * 100 : 0,
-      };
-    });
-  }, [closedTrades, positions]);
-
   return (
     <div className="space-y-6">
       {/* Top Report Header */}
@@ -667,12 +558,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
       {/* SECTION A: NET PROFIT AND NET LOSS BREAKDOWN */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Gross Net Profit (Winners) */}
+        {/* Gross Realized Gains (Winners) */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
               <ArrowUpRight className="w-4 h-4" />
-              Gross Net Profit
+              Gross Realized Gains
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
               {stats.winningTrades} Winning Trades
@@ -702,12 +593,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           </div>
         </div>
 
-        {/* Gross Net Loss (Losses) */}
+        {/* Gross Realized Losses (Losses) */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-rose-400 flex items-center gap-1.5">
               <ArrowDownRight className="w-4 h-4" />
-              Gross Net Loss
+              Gross Realized Losses
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold">
               {stats.losingTrades} Losing Trades
@@ -791,372 +682,13 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         </div>
       </div>
 
-      {/* SECTION B: TRADING PERFORMANCE INDICATORS & BENCHMARK SCORECARD */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Award className="w-4 h-4 text-purple-400" />
-              Trading Performance Indicators &amp; Institutional Benchmarks
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Comprehensive statistical evaluation of trading efficiency, risk-adjusted metrics, and execution splits.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
-              Win Rate: {performanceIndicators.winRate.toFixed(1)}%
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-semibold border border-amber-500/20">
-              Profit Factor: {performanceIndicators.profitFactor.toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        {/* Table of Indicators */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
-                <th className="py-3 px-4">Performance Indicator</th>
-                <th className="py-3 px-4 text-right">Measured Result</th>
-                <th className="py-3 px-4">Benchmark / Target / Scope</th>
-                <th className="py-3 px-4">Assessment &amp; Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {/* 1. Win Rate % */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <Percent className="w-4 h-4 text-emerald-400" />
-                  Win Rate %
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-base text-emerald-400">
-                  {performanceIndicators.winRate.toFixed(1)}%
-                </td>
-                <td className="py-3 px-4 font-mono text-slate-300">
-                  <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-200 font-semibold">
-                    Target: &gt; 50.0%
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                      performanceIndicators.winRate >= 50
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                    }`}
-                  >
-                    {performanceIndicators.winRate >= 50 ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3" /> Target Met (&gt;50%)
-                      </>
-                    ) : (
-                      <>
-                        <ShieldAlert className="w-3 h-3" /> Below Target
-                      </>
-                    )}
-                  </span>
-                </td>
-              </tr>
-
-              {/* 2. Profit Factor */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-amber-400" />
-                  Profit Factor
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-base text-amber-400">
-                  {performanceIndicators.profitFactor.toFixed(2)}
-                </td>
-                <td className="py-3 px-4 font-mono text-slate-300">
-                  <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-200 font-semibold">
-                    Benchmark: &gt; 1.50
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                      performanceIndicators.profitFactor >= 1.5
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : performanceIndicators.profitFactor >= 1.0
-                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    }`}
-                  >
-                    {performanceIndicators.profitFactor >= 1.5
-                      ? 'Outperforming Benchmark (>1.50)'
-                      : performanceIndicators.profitFactor >= 1.0
-                      ? 'Moderate Profitability'
-                      : 'Unprofitable Factor'}
-                  </span>
-                </td>
-              </tr>
-
-              {/* 3. Total Closed Trades */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-blue-400" />
-                  Total Closed Trades
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-slate-100">
-                  {performanceIndicators.totalClosed}
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Closed Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  {performanceIndicators.totalClosed} Total Position Exits Evaluated
-                </td>
-              </tr>
-
-              {/* 4. Total Winning Trades */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-                  Total Winning Trades
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
-                  {performanceIndicators.winCount}
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-medium">
-                    Winning Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  {performanceIndicators.winSplitPercent.toFixed(1)}% of all closed executions
-                </td>
-              </tr>
-
-              {/* 5. Total Losing Trades */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ArrowDownRight className="w-4 h-4 text-rose-400" />
-                  Total Losing Trades
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-rose-400">
-                  {performanceIndicators.lossCount}
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-rose-950/40 border border-rose-500/30 text-rose-300 font-medium">
-                    Losing Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  {performanceIndicators.lossSplitPercent.toFixed(1)}% of all closed executions
-                </td>
-              </tr>
-
-              {/* 6. Win / Loss Ratio */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-400" />
-                  Win / Loss Ratio
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-purple-300">
-                  {performanceIndicators.winLossRatio.toFixed(2)} : 1
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Win:Loss Split
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300 font-mono">
-                  {performanceIndicators.winSplitPercent.toFixed(1)}% Win Split / {performanceIndicators.lossSplitPercent.toFixed(1)}% Loss Split
-                </td>
-              </tr>
-
-              {/* 7. Average Trade P&L */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-teal-400" />
-                  Average Trade P&amp;L
-                </td>
-                <td
-                  className={`py-3 px-4 text-right font-mono font-bold ${
-                    performanceIndicators.avgTradePnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {performanceIndicators.avgTradePnl >= 0 ? '+' : ''}
-                  {formatEgp(performanceIndicators.avgTradePnl)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Per Closed Trade
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  Average net realized return per liquidated position
-                </td>
-              </tr>
-
-              {/* 8. Average Win */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-                  Average Win
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
-                  +{formatEgp(performanceIndicators.avgWin)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-medium">
-                    Winning Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  Mean gain across {performanceIndicators.winCount} winning trades
-                </td>
-              </tr>
-
-              {/* 9. Average Loss */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ArrowDownRight className="w-4 h-4 text-rose-400" />
-                  Average Loss
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-rose-400">
-                  -{formatEgp(performanceIndicators.avgLoss)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-rose-950/40 border border-rose-500/30 text-rose-300 font-medium">
-                    Losing Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  Mean loss across {performanceIndicators.lossCount} losing trades
-                </td>
-              </tr>
-
-              {/* 10. Largest Win */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  Largest Win
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
-                  +{formatEgp(performanceIndicators.largestWin)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300 font-medium">
-                    Best Trade
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300 font-medium">
-                  {performanceIndicators.largestWinTrade ? (
-                    <span>
-                      {performanceIndicators.largestWinTrade.ticker} ({performanceIndicators.largestWinTrade.companyName}) +
-                      {performanceIndicators.largestWinTrade.realizedPnlPercent.toFixed(1)}%
-                    </span>
-                  ) : (
-                    'N/A'
-                  )}
-                </td>
-              </tr>
-
-              {/* 11. Largest Loss */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-rose-400" />
-                  Largest Loss
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-rose-400">
-                  -{formatEgp(performanceIndicators.largestLoss)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-rose-950/40 border border-rose-500/30 text-rose-300 font-medium">
-                    Losing Positions
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300 font-medium">
-                  {performanceIndicators.largestLossTrade ? (
-                    <span>
-                      {performanceIndicators.largestLossTrade.ticker} ({performanceIndicators.largestLossTrade.companyName}){' '}
-                      {performanceIndicators.largestLossTrade.realizedPnlPercent.toFixed(1)}%
-                    </span>
-                  ) : (
-                    'N/A'
-                  )}
-                </td>
-              </tr>
-
-              {/* 12. Gross Profit */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  Gross Profit
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
-                  +{formatEgp(performanceIndicators.grossProfit)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Gross Profit
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  Cumulative positive return booked across all winning trades
-                </td>
-              </tr>
-
-              {/* 13. Gross Loss */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-rose-400" />
-                  Gross Loss
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-rose-400">
-                  -{formatEgp(performanceIndicators.grossLoss)} EGP
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Gross Loss
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-slate-300">
-                  Cumulative negative return incurred across all losing trades
-                </td>
-              </tr>
-
-              {/* 14. Max Drawdown */}
-              <tr className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-amber-400" />
-                  Max Drawdown
-                </td>
-                <td className="py-3 px-4 text-right font-mono font-bold text-amber-400">
-                  -{performanceIndicators.maxDrawdown.toFixed(2)}%
-                </td>
-                <td className="py-3 px-4 text-slate-400">
-                  <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300 font-medium">
-                    Max Drawdown
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                      performanceIndicators.maxDrawdown <= 5
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : performanceIndicators.maxDrawdown <= 15
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    }`}
-                  >
-                    {performanceIndicators.maxDrawdown <= 5
-                      ? 'Controlled Retracement (≤5%)'
-                      : performanceIndicators.maxDrawdown <= 15
-                      ? 'Moderate Drawdown'
-                      : 'Elevated Risk Drawdown'}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* SECTION B: TRADING PERFORMANCE INDICATORS & BENCHMARK SCORECARD (REPORT 1) */}
+      <TradingPerformanceReport
+        stats={stats}
+        closedTrades={closedTrades}
+        positions={positions}
+        cashBalance={cashBalance || 0}
+      />
 
       {/* SECTION C: REALIZED P&L GAIN/LOSS TRAJECTORY GRAPH */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
@@ -1445,16 +977,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               >
                 Active Stock Holdings
               </button>
-              <button
-                onClick={() => setAllocationTab('trajectory')}
-                className={`px-3 py-1 rounded-md font-medium transition ${
-                  allocationTab === 'trajectory'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Realized Trajectory
-              </button>
             </div>
 
             {allocationTab === 'stock' && (
@@ -1471,19 +993,8 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           </div>
         </div>
 
-        {/* Display Area: Either Realized Trajectory or Allocation Pie Charts */}
-        {allocationTab === 'trajectory' ? (
-          <div className="pt-2">
-            <RealizedTrajectoryChart
-              closedTrades={closedTrades}
-              stats={stats}
-              title="Realized Gain / Loss Trajectory & Equity Growth"
-              subtitle="Chronological cumulative realized capital curve across all closed trades"
-              className="bg-transparent border-0 p-0 shadow-none"
-            />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center pt-2">
+        {/* Display Area: Allocation Pie Charts & Ranked Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center pt-2">
           {/* Pie Chart Canvas */}
           <div className="lg:col-span-6 h-72 w-full flex items-center justify-center">
             {allocationTab === 'sector' ? (
@@ -1654,7 +1165,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             )}
           </div>
         </div>
-        )}
       </div>
 
       {/* SECTION D: WATERFALL STYLE GRAPH - PORTFOLIO EQUITY CAPITAL FORMATION & CLOSED POSITIONS STEPPED P&L */}
@@ -2487,261 +1997,11 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         </div>
       </div>
 
-      {/* SECTION F: MONTHLY PERFORMANCE & END-OF-MONTH POSITIONS AUDIT */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-400" />
-              Monthly Performance &amp; End-of-Month Positions Review
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Portfolio standing at the close of each calendar month highlighting realized and active positions in terms of gain and loss.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => setSelectedMonthlyTab('ALL')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                selectedMonthlyTab === 'ALL'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
-              }`}
-            >
-              All Months ({monthlyDetailedPerformance.length})
-            </button>
-            {monthlyDetailedPerformance.map((m) => (
-              <button
-                key={m.monthKey}
-                onClick={() => setSelectedMonthlyTab(m.monthKey)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                  selectedMonthlyTab === m.monthKey
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                {m.monthFormatted}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Render Monthly Sections */}
-        <div className="space-y-6">
-          {monthlyDetailedPerformance
-            .filter((m) => selectedMonthlyTab === 'ALL' || selectedMonthlyTab === m.monthKey)
-            .map((monthData) => {
-              const isProfitMonth = monthData.netPnl >= 0;
-              const hasClosed = monthData.closedTrades.length > 0;
-              const hasActive = monthData.activePositions.length > 0;
-
-              return (
-                <div
-                  key={monthData.monthKey}
-                  className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-4 shadow-sm"
-                >
-                  {/* Month Header Banner */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 p-3.5 rounded-xl border border-slate-800/80">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs">
-                        <Calendar className="w-4 h-4 text-blue-400" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-bold text-white">{monthData.monthFormatted}</h4>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isProfitMonth
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                            }`}
-                          >
-                            {isProfitMonth ? 'PROFITABLE MONTH' : 'DRAWDOWN MONTH'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-400">
-                          {monthData.closedTrades.length} liquidated positions &bull; {monthData.activePositions.length} active holdings
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs flex-wrap">
-                      <div className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">
-                        <span className="text-slate-400 block text-[10px]">Monthly Net P&amp;L</span>
-                        <span
-                          className={`font-mono font-bold text-sm ${
-                            isProfitMonth ? 'text-emerald-400' : 'text-rose-400'
-                          }`}
-                        >
-                          {isProfitMonth ? '+' : ''}{formatEgp(monthData.netPnl)} EGP
-                        </span>
-                      </div>
-
-                      <div className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">
-                        <span className="text-slate-400 block text-[10px]">Win Rate</span>
-                        <span className="font-mono font-bold text-slate-200">
-                          {monthData.winRate.toFixed(1)}% ({monthData.winCount}W / {monthData.lossCount}L)
-                        </span>
-                      </div>
-
-                      <div className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">
-                        <span className="text-slate-400 block text-[10px]">Brokerage Fees</span>
-                        <span className="font-mono font-bold text-amber-400">
-                          {formatEgp(monthData.fees)} EGP
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Positions Active or Closed in this Month */}
-                  <div className="space-y-3">
-                    <h5 className="text-xs font-bold text-slate-300 tracking-wider uppercase flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-slate-400" />
-                      Positions at End of {monthData.monthFormatted}
-                    </h5>
-
-                    {/* Table of positions */}
-                    <div className="overflow-x-auto rounded-xl border border-slate-800">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-900 text-slate-400 border-b border-slate-800 font-semibold">
-                            <th className="py-2.5 px-3.5">Ticker / Company</th>
-                            <th className="py-2.5 px-3.5">Holding Status</th>
-                            <th className="py-2.5 px-3.5 text-right">Shares</th>
-                            <th className="py-2.5 px-3.5 text-right">Buy Price / Date</th>
-                            <th className="py-2.5 px-3.5 text-right">Exit / Market Price</th>
-                            <th className="py-2.5 px-3.5 text-right">Performance (Gain / Loss)</th>
-                            <th className="py-2.5 px-3.5 text-right">Fees</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/60 font-mono">
-                          {/* Liquidated/Closed trades in this month */}
-                          {monthData.closedTrades.map((trade) => {
-                            const isWin = trade.realizedPnlEgp >= 0;
-                            return (
-                              <tr key={`closed-${trade.id}`} className="hover:bg-slate-900/60 transition">
-                                <td className="py-3 px-3.5">
-                                  <div className="font-bold text-white font-sans">{trade.ticker}</div>
-                                  <div className="text-[11px] text-slate-400 font-sans truncate max-w-xs">{trade.companyName}</div>
-                                </td>
-                                <td className="py-3 px-3.5 font-sans">
-                                  <span
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                      isWin
-                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                                    }`}
-                                  >
-                                    {isWin ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                                    Closed {trade.outcome} ({trade.sellDate})
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-slate-200">
-                                  {trade.shares.toLocaleString()}
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-slate-300">
-                                  {formatEgp(trade.buyPrice)} <span className="text-[10px] text-slate-500 font-sans">({trade.buyDate})</span>
-                                </td>
-                                <td className="py-3 px-3.5 text-right font-bold text-white">
-                                  {formatEgp(trade.sellPrice)}
-                                </td>
-                                <td className="py-3 px-3.5 text-right">
-                                  <div
-                                    className={`font-bold text-sm ${
-                                      isWin ? 'text-emerald-400' : 'text-rose-400'
-                                    }`}
-                                  >
-                                    {isWin ? '+' : ''}{formatEgp(trade.realizedPnlEgp)} EGP
-                                  </div>
-                                  <div
-                                    className={`text-[10px] font-semibold ${
-                                      isWin ? 'text-emerald-500' : 'text-rose-500'
-                                    }`}
-                                  >
-                                    {isWin ? '+' : ''}{trade.realizedPnlPercent.toFixed(2)}%
-                                  </div>
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-amber-400">
-                                  {trade.totalFees ? `${formatEgp(trade.totalFees)}` : '0.00'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-
-                          {/* Active Positions held at end of month */}
-                          {monthData.activePositions.map((pos) => {
-                            const costBasis = pos.shares * pos.avgBuyPrice;
-                            const currentVal = pos.shares * pos.currentPrice;
-                            const unrealizedPnl = currentVal - costBasis;
-                            const unrealizedPercent = costBasis > 0 ? (unrealizedPnl / costBasis) * 100 : 0;
-                            const isProfit = unrealizedPnl >= 0;
-
-                            return (
-                              <tr key={`active-${pos.id}`} className="hover:bg-slate-900/60 transition bg-blue-950/10">
-                                <td className="py-3 px-3.5">
-                                  <div className="font-bold text-white font-sans flex items-center gap-1.5">
-                                    {pos.ticker}
-                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                                      HOLDING
-                                    </span>
-                                  </div>
-                                  <div className="text-[11px] text-slate-400 font-sans truncate max-w-xs">{pos.companyName}</div>
-                                </td>
-                                <td className="py-3 px-3.5 font-sans">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                                    <Layers className="w-3 h-3" />
-                                    Active Month-End
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-slate-200">
-                                  {pos.shares.toLocaleString()}
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-slate-300">
-                                  {formatEgp(pos.avgBuyPrice)} <span className="text-[10px] text-slate-500 font-sans">({pos.buyDate})</span>
-                                </td>
-                                <td className="py-3 px-3.5 text-right font-bold text-white">
-                                  {formatEgp(pos.currentPrice)}
-                                </td>
-                                <td className="py-3 px-3.5 text-right">
-                                  <div
-                                    className={`font-bold text-sm ${
-                                      isProfit ? 'text-emerald-400' : 'text-rose-400'
-                                    }`}
-                                  >
-                                    {isProfit ? '+' : ''}{formatEgp(unrealizedPnl)} EGP
-                                  </div>
-                                  <div
-                                    className={`text-[10px] font-semibold ${
-                                      isProfit ? 'text-emerald-500' : 'text-rose-500'
-                                    }`}
-                                  >
-                                    {isProfit ? '+' : ''}{unrealizedPercent.toFixed(2)}%
-                                  </div>
-                                </td>
-                                <td className="py-3 px-3.5 text-right text-amber-400">
-                                  {pos.totalFees ? `${formatEgp(pos.totalFees)}` : '0.00'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-
-                          {!hasClosed && !hasActive && (
-                            <tr>
-                              <td colSpan={7} className="py-6 text-center text-slate-500 font-sans">
-                                No positions or trades recorded for {monthData.monthFormatted}.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
+      {/* SECTION F: MONTHLY PERFORMANCE & END-OF-MONTH POSITIONS AUDIT (REPORT 2) */}
+      <MonthlyPerformanceReport
+        closedTrades={closedTrades}
+        positions={positions}
+      />
     </div>
   );
 };

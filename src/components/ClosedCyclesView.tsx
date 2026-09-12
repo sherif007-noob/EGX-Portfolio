@@ -100,13 +100,17 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       const tickerUpper = ct.ticker.toUpperCase();
 
       // Find matching buy transactions
+      const buyTime = new Date(ct.buyDate).getTime();
+      const sellTime = new Date(ct.sellDate).getTime();
+
       const matchingBuys = transactions.filter((t) => {
         if (t.type !== 'BUY') return false;
         if (t.ticker.toUpperCase() !== tickerUpper) return false;
         if (ct.cycleTag && t.cycleTag && ct.cycleTag === t.cycleTag) return true;
         if (ct.tradeCycle && t.tradeCycle && ct.tradeCycle === t.tradeCycle) return true;
-        // Date heuristic fallback
-        return new Date(t.date).getTime() <= new Date(ct.sellDate).getTime();
+        // Bounded date fallback: lot purchased between cycle buyDate and sellDate
+        const tTime = new Date(t.date).getTime();
+        return tTime >= buyTime - 86400000 && tTime <= sellTime;
       });
 
       // Find matching sell transactions
@@ -115,8 +119,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         if (t.ticker.toUpperCase() !== tickerUpper) return false;
         if (ct.cycleTag && t.cycleTag && ct.cycleTag === t.cycleTag) return true;
         if (ct.tradeCycle && t.tradeCycle && ct.tradeCycle === t.tradeCycle) return true;
-        // Date heuristic fallback
-        return t.date === ct.sellDate || Math.abs(new Date(t.date).getTime() - new Date(ct.sellDate).getTime()) < 86400000 * 3;
+        // Bounded date fallback: within 1 day of sell date
+        return Math.abs(new Date(t.date).getTime() - sellTime) <= 86400000;
       });
 
       // Build buy phases
@@ -261,13 +265,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
   const handleDelete = (cycle: EnrichedClosedCycle) => {
     if (!onDeleteTrade) return;
-    if (
-      window.confirm(
-        `Are you sure you want to delete closed cycle ${cycle.cycleTag || cycle.ticker} (${cycle.outcome} of ${formatEgp(cycle.realizedPnlEgp)} EGP)?`
-      )
-    ) {
-      onDeleteTrade(cycle.id);
-    }
+    onDeleteTrade(cycle.id);
   };
 
   return (
@@ -787,12 +785,27 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         })}
 
         {filteredCycles.length === 0 && (
-          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-1">
-            <RotateCcw className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-            <p className="font-semibold text-slate-300">No closed cycles match your filters.</p>
-            <p className="text-slate-500">
-              Clear your search or adjust the outcome filter to see closed trade cycles.
-            </p>
+          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-3">
+            <RotateCcw className="w-8 h-8 text-slate-600 mx-auto mb-1" />
+            <div>
+              <p className="font-semibold text-slate-300">No closed cycles match your filters.</p>
+              <p className="text-slate-500 mt-0.5">
+                Clear your search or adjust the outcome filter to see closed trade cycles.
+              </p>
+            </div>
+            {(searchQuery || outcomeFilter !== 'ALL') && (
+              <div>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setOutcomeFilter('ALL');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition active:scale-95 shadow-md shadow-purple-900/30"
+                >
+                  Clear All Filters &amp; Show All ({enrichedCycles.length})
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

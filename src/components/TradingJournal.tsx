@@ -24,7 +24,8 @@ import {
   Save,
   Check,
   Calendar,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 
 interface TradingJournalProps {
@@ -36,6 +37,8 @@ interface TradingJournalProps {
   onDeleteTrade?: (id: string) => void;
   onDeletePosition?: (id: string) => void;
   onOpenScreenshotModal?: () => void;
+  onSyncToSheets?: () => void;
+  isSyncingToSheets?: boolean;
 }
 
 export type JournalFilterMode = 'ALL' | 'OPEN' | 'WIN' | 'LOSS' | 'BUY' | 'SELL';
@@ -49,6 +52,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   onDeleteTrade,
   onDeletePosition,
   onOpenScreenshotModal,
+  onSyncToSheets,
+  isSyncingToSheets,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<JournalFilterMode>('ALL');
@@ -223,8 +228,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         // Mode 1: Strict Trade ID Sequence (#1 -> #N)
         if (sortOrder === 'trade_id') {
-          const idA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
-          const idB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
+          const rawA = a.tradeId ?? (a as any).trade_id;
+          const rawB = b.tradeId ?? (b as any).trade_id;
+          const idA = typeof rawA === 'number' ? rawA : parseFloat(String(rawA || '')) || 0;
+          const idB = typeof rawB === 'number' ? rawB : parseFloat(String(rawB || '')) || 0;
           if (idA && idB && idA !== idB) return idA - idB;
         }
 
@@ -238,8 +245,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         // On the exact same execution date:
         // 1. Compare tradeId if available
-        const idA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
-        const idB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
+        const rawA = a.tradeId ?? (a as any).trade_id;
+        const rawB = b.tradeId ?? (b as any).trade_id;
+        const idA = typeof rawA === 'number' ? rawA : parseFloat(String(rawA || '')) || 0;
+        const idB = typeof rawB === 'number' ? rawB : parseFloat(String(rawB || '')) || 0;
         if (idA && idB && idA !== idB) {
           return sortOrder === 'desc' ? idB - idA : idA - idB;
         }
@@ -386,16 +395,31 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </h2>
             </div>
 
-            {onOpenScreenshotModal && (
-              <button
-                type="button"
-                onClick={onOpenScreenshotModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-900/30 transition active:scale-95"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
-                <span>AI Scan Trade Screenshot</span>
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {onSyncToSheets && (
+                <button
+                  type="button"
+                  onClick={onSyncToSheets}
+                  disabled={isSyncingToSheets}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-500/40 text-xs font-bold shadow-sm transition active:scale-95 disabled:opacity-50"
+                  title="Sync local transaction ledger to Google Sheet"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingToSheets ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingToSheets ? 'Syncing...' : 'Sync to Google Sheet'}</span>
+                </button>
+              )}
+
+              {onOpenScreenshotModal && (
+                <button
+                  type="button"
+                  onClick={onOpenScreenshotModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-900/30 transition active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                  <span>AI Scan Trade Screenshot</span>
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
             Chronological log of all individual executions (entries, DCA purchases, and exit sales). Each buy order is tracked as a separate transaction at its exact purchase price.
@@ -615,9 +639,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       </span>
 
                       {/* Trade Sequence ID */}
-                      {tx.tradeId !== undefined && (
+                      {(tx.tradeId !== undefined || (tx as any).trade_id !== undefined) && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800/90 text-amber-300 border border-amber-500/30">
-                          Trade #{tx.tradeId}
+                          Trade #{tx.tradeId ?? (tx as any).trade_id}
                         </span>
                       )}
 
@@ -831,12 +855,27 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         })}
 
         {filteredAndSortedTransactions.length === 0 && (
-          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-1">
-            <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-            <p className="font-semibold text-slate-300">No transactions match your criteria.</p>
-            <p className="text-slate-500">
-              Clear your search query or switch filters to view transactions.
-            </p>
+          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-3">
+            <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-1" />
+            <div>
+              <p className="font-semibold text-slate-300">No transactions match your criteria.</p>
+              <p className="text-slate-500 mt-0.5">
+                Clear your search query or switch filters to view transactions.
+              </p>
+            </div>
+            {(searchQuery || filterMode !== 'ALL') && (
+              <div>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setFilterMode('ALL');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition active:scale-95 shadow-md shadow-blue-900/30"
+                >
+                  Reset All Filters &amp; Show All ({transactions.length})
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -68,7 +68,8 @@ export function formatDateDDMMYYYY(dateStr?: string | null): string {
  */
 export function dmyToIso(dmyStr?: string | null): string {
   if (!dmyStr) return getTodayISO();
-  const clean = String(dmyStr).trim().split('T')[0].split(' ')[0];
+  const raw = String(dmyStr).trim();
+  const clean = raw.split('T')[0];
 
   const dmyMatch = clean.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
   if (dmyMatch) {
@@ -87,7 +88,29 @@ export function dmyToIso(dmyStr?: string | null): string {
     return `${year}-${month}-${day}`;
   }
 
-  return clean;
+  // Handle textual dates like "10 Sep 2026", "10 Sep 26", "10 September 2026"
+  const textDateMatch = raw.match(/(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{2,4})/);
+  if (textDateMatch) {
+    const day = String(parseInt(textDateMatch[1], 10)).padStart(2, '0');
+    const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const mIndex = monthNames.indexOf(textDateMatch[2].slice(0, 3).toLowerCase());
+    const month = mIndex >= 0 ? String(mIndex + 1).padStart(2, '0') : '01';
+    let year = parseInt(textDateMatch[3], 10);
+    if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+    return `${year}-${month}-${day}`;
+  }
+
+  // Fallback to standard JS Date parser
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    let year = parsed.getFullYear();
+    if (year < 1970 && year > 1900) year += 100; // Correct 2-digit century rollover
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  return getTodayISO();
 }
 
 /**

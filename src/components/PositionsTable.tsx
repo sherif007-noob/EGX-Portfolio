@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import {
   TrendingUp,
   TrendingDown,
@@ -36,6 +37,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
+  const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
 
   const filteredPositions = positions.filter((pos) => {
     const matchesSearch =
@@ -253,7 +255,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       </button>
 
                       <button
-                        onClick={() => onDeletePosition(pos.id)}
+                        onClick={() => setPositionToDelete(pos)}
                         title="Delete Position Record"
                         className="p-1 rounded bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
                       >
@@ -391,7 +393,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => onDeletePosition(pos.id)}
+                    onClick={() => setPositionToDelete(pos)}
                     className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -408,6 +410,31 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           </div>
         )}
       </div>
+
+      {/* Confirm Delete Position Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!positionToDelete}
+        onClose={() => setPositionToDelete(null)}
+        onConfirm={() => {
+          if (positionToDelete) {
+            onDeletePosition(positionToDelete.id);
+            setPositionToDelete(null);
+          }
+        }}
+        title="Delete Open Position"
+        description="Are you sure you want to delete this open position? This will remove the position holding from your portfolio dashboard."
+        itemDetails={
+          positionToDelete
+            ? {
+                ticker: positionToDelete.ticker,
+                type: 'OPEN POSITION',
+                shares: positionToDelete.shares,
+                amount: `${(positionToDelete.shares * positionToDelete.avgBuyPrice).toFixed(2)} EGP Cost Basis`,
+                date: positionToDelete.buyDate,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };

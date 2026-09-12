@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
 import { DateInput } from './DateInput';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import {
   BookOpen,
   Clock,
@@ -25,7 +26,11 @@ import {
   Check,
   Calendar,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 
 interface TradingJournalProps {
@@ -59,6 +64,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const [filterMode, setFilterMode] = useState<JournalFilterMode>('ALL');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | 'trade_id' | 'ticker'>('desc');
   const [deletedIdToast, setDeletedIdToast] = useState<string | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(25);
+
+  // Delete Confirmation Modal State
+  const [txToDelete, setTxToDelete] = useState<TradeTransaction | null>(null);
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterMode, sortOrder, pageSize]);
 
   // Edit Transaction State
   const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
@@ -268,10 +285,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       });
   }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet, closedTrades]);
 
+  const totalFilteredCount = filteredAndSortedTransactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedTransactions = useMemo(() => {
+    const startIdx = (safeCurrentPage - 1) * pageSize;
+    return filteredAndSortedTransactions.slice(startIdx, startIdx + pageSize);
+  }, [filteredAndSortedTransactions, safeCurrentPage, pageSize]);
+
   const handleDelete = (tx: TradeTransaction) => {
-    onDeleteTransaction(tx.id);
-    setDeletedIdToast(tx.ticker);
-    setTimeout(() => setDeletedIdToast(null), 3000);
+    setTxToDelete(tx);
   };
 
   const handleOpenEditModal = (tx: TradeTransaction) => {
@@ -571,12 +595,74 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <option value="ticker" className="bg-slate-900 text-slate-200">Sort: By Ticker (A-Z)</option>
             </select>
           </div>
+
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
+            <span className="text-[11px] font-medium text-slate-400">Show:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
+            >
+              <option value={15} className="bg-slate-900 text-slate-200">15 / page</option>
+              <option value={25} className="bg-slate-900 text-slate-200">25 / page</option>
+              <option value={50} className="bg-slate-900 text-slate-200">50 / page</option>
+              <option value={100} className="bg-slate-900 text-slate-200">100 / page</option>
+              <option value={1000} className="bg-slate-900 text-slate-200">All</option>
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* Pagination Status & Controls (Top) */}
+      {totalFilteredCount > pageSize && (
+        <div className="flex items-center justify-between px-3 py-2 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-400">
+          <span>
+            Showing <strong className="text-white">{(safeCurrentPage - 1) * pageSize + 1}</strong> - <strong className="text-white">{Math.min(safeCurrentPage * pageSize, totalFilteredCount)}</strong> of <strong className="text-white">{totalFilteredCount}</strong> trades
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={safeCurrentPage === 1}
+              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              title="First Page"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-2 py-0.5 rounded bg-slate-800 font-mono text-white font-semibold">
+              {safeCurrentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safeCurrentPage === totalPages}
+              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              title="Last Page"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Transactions Feed */}
       <div className="space-y-3">
-        {filteredAndSortedTransactions.map((tx) => {
+        {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
           const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
@@ -879,6 +965,79 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Pagination Controls (Bottom) */}
+      {totalFilteredCount > pageSize && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-xs text-slate-400 shadow-sm">
+          <span>
+            Page <strong className="text-white">{safeCurrentPage}</strong> of <strong className="text-white">{totalPages}</strong> ({totalFilteredCount} total transactions)
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={safeCurrentPage === 1}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+            >
+              <ChevronsLeft className="w-3.5 h-3.5" />
+              First
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Prev
+            </button>
+            <span className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-white font-bold">
+              {safeCurrentPage}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+            >
+              Next
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safeCurrentPage === totalPages}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+            >
+              Last
+              <ChevronsRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Transaction Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!txToDelete}
+        onClose={() => setTxToDelete(null)}
+        onConfirm={() => {
+          if (txToDelete) {
+            onDeleteTransaction(txToDelete.id);
+            setDeletedIdToast(txToDelete.ticker);
+            setTimeout(() => setDeletedIdToast(null), 3000);
+            setTxToDelete(null);
+          }
+        }}
+        title="Delete Transaction Record"
+        description="Are you sure you want to permanently delete this trade record from your journal? This will update your position calculations and cash history."
+        itemDetails={
+          txToDelete
+            ? {
+                ticker: txToDelete.ticker,
+                type: txToDelete.type,
+                shares: txToDelete.shares,
+                amount: `${(txToDelete.totalAmount || txToDelete.shares * txToDelete.price).toFixed(2)} EGP`,
+                date: txToDelete.date,
+              }
+            : undefined
+        }
+      />
 
       {/* Edit Transaction Modal */}
       {editingTx && (

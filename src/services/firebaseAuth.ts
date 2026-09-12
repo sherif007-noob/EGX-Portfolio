@@ -18,9 +18,6 @@ export const DRIVE_READONLY_SCOPE = 'https://www.googleapis.com/auth/drive.reado
 const provider = new GoogleAuthProvider();
 provider.addScope(SHEETS_SCOPE);
 provider.addScope(DRIVE_READONLY_SCOPE);
-provider.setCustomParameters({
-  prompt: 'select_account'
-});
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
@@ -31,13 +28,14 @@ export const initAuth = (
 ) => {
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        if (onAuthFailure) onAuthFailure();
+      const storedToken = localStorage.getItem('google_sheets_access_token');
+      if (storedToken) {
+        cachedAccessToken = storedToken;
       }
+      if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || '');
     } else {
       cachedAccessToken = null;
+      localStorage.removeItem('google_sheets_access_token');
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -53,6 +51,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     }
 
     cachedAccessToken = credential.accessToken;
+    localStorage.setItem('google_sheets_access_token', credential.accessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
@@ -63,10 +62,17 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  return cachedAccessToken;
+  if (cachedAccessToken) return cachedAccessToken;
+  const storedToken = localStorage.getItem('google_sheets_access_token');
+  if (storedToken) {
+    cachedAccessToken = storedToken;
+    return storedToken;
+  }
+  return null;
 };
 
 export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  localStorage.removeItem('google_sheets_access_token');
 };

@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
+import { auth } from './firebaseAuth';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -19,15 +20,53 @@ export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
+  authInfo?: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  };
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
     operationType,
-    path
+    path,
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+}
+
+/**
+ * Recursively strips out `undefined` values from objects and arrays
+ * so that Firestore `setDoc` / `updateDoc` does not throw an
+ * "Unsupported field value: undefined" error.
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as unknown as T;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === 'object' && !(data instanceof Date)) {
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data as Record<string, any>)) {
+      if (value !== undefined) {
+        sanitized[key] = sanitizeForFirestore(value);
+      }
+    }
+    return sanitized as unknown as T;
+  }
+  return data;
 }
 
 export interface PortfolioDataDocument {
@@ -69,12 +108,13 @@ export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocumen
 export async function savePortfolioToFirestore(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion'>): Promise<boolean> {
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
-    const payload: PortfolioDataDocument = {
+    const rawPayload: PortfolioDataDocument = {
       ...data,
       updatedAt: new Date().toISOString(),
       schemaVersion: 3,
     };
-    await setDoc(docRef, payload, { merge: true });
+    const sanitizedPayload = sanitizeForFirestore(rawPayload);
+    await setDoc(docRef, sanitizedPayload, { merge: true });
     return true;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, PORTFOLIO_DOC_PATH);

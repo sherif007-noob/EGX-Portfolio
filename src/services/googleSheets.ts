@@ -1,6 +1,145 @@
 import { Position, ClosedTrade, Sector, TradeTransaction, EGXTicker } from '../types';
 import { EGX_STOCK_DICTIONARY } from '../data/egxTickers';
 
+export const TRANSACTION_LOGGER_HEADERS = [
+  'Trade ID',
+  'Date',
+  'Action',
+  'Ticker',
+  'Company Name',
+  'Shares',
+  'Price / Share',
+  'Gross Trade Value',
+  'Brokerage Fee',
+  'Net Cash Impact',
+  'Strategy / Notes',
+  'Running Shares',
+  'Trade Cycle',
+  'Cycle Tag'
+];
+
+export const TICKER_DIRECTORY_HEADERS = [
+  'Ticker',
+  'Company Name',
+  'Sector',
+  'Current Price (EGP)'
+];
+
+/**
+ * Converts zero-based column index to A1 notation column letter (e.g. 0 -> 'A', 13 -> 'N', 25 -> 'Z').
+ */
+export function colToLetter(colIndex: number): string {
+  let temp = colIndex + 1;
+  let letter = '';
+  while (temp > 0) {
+    const mod = (temp - 1) % 26;
+    letter = String.fromCharCode(65 + mod) + letter;
+    temp = Math.floor((temp - mod) / 26);
+  }
+  return letter || 'A';
+}
+
+/**
+ * Finds column index matching standard header name or synonyms.
+ */
+export function findColIndexBySynonyms(headers: string[], standardHeaderName: string): number {
+  const normHeaders = headers.map(h => (h || '').toString().toLowerCase().trim());
+
+  const synonymsMap: Record<string, string[]> = {
+    'Trade ID': ['trade id', 'trade #', 'trade_id', 'id', 'tradeid', 'رقم العملية', 'رقم الصفقة'],
+    'Date': ['date', 'buy date', 'trade date', 'timestamp', 'تاريخ', 'تاريخ العملية'],
+    'Action': ['action', 'type', 'side', 'operation', 'transaction type', 'نوع العملية', 'النوع', 'العملية'],
+    'Ticker': ['ticker', 'symbol', 'code', 'stock', 'سهم', 'الرمز', 'كود', 'السهم', 'كود السهم', 'رمز السهم', 'اسم السهم'],
+    'Company Name': ['company name', 'company', 'name', 'english name', 'security', 'description', 'اسم الشركة', 'الشركة', 'بيان'],
+    'Shares': ['shares', 'qty', 'quantity', 'volume', 'units', 'no of shares', 'الكمية', 'عدد الأسهم', 'العدد', 'كمية'],
+    'Price / Share': ['price / share', 'price/share', 'price', 'buy price', 'avg price', 'purchase price', 'cost', 'avg cost', 'cost/share', 'entry price', 'سعر السهم', 'سعر الشراء', 'متوسط التكلفة', 'التكلفة', 'السعر'],
+    'Gross Trade Value': ['gross trade value', 'gross value', 'gross', 'gross amount', 'قيمة التداول', 'إجمالي القيمة'],
+    'Brokerage Fee': ['brokerage fee', 'fee', 'fees', 'commission', 'commissions', 'عمولة', 'مصاريف', 'العمولة', 'مصاريف البورصة'],
+    'Net Cash Impact': ['net cash impact', 'net cash', 'net impact', 'cash impact', 'صافي النقد', 'الصافي'],
+    'Strategy / Notes': ['strategy / notes', 'strategy/notes', 'strategy', 'notes', 'comment', 'comments', 'remarks', 'ملاحظات', 'استراتيجية'],
+    'Running Shares': ['running shares', 'remaining shares', 'balance shares', 'الأسهم المتبقية', 'المتبقي', 'رصيد الأسهم'],
+    'Trade Cycle': ['trade cycle', 'cycle', 'دورة التداول', 'الدورة', 'cycle #'],
+    'Cycle Tag': ['cycle tag', 'tag', 'رمز الدورة', 'cycle_tag'],
+    'Sector': ['sector', 'industry', 'القطاع', 'قطاع'],
+    'Current Price (EGP)': ['current price (egp)', 'current price', 'last price (egp)', 'last price', 'market price', 'cmp', 'close', 'سعر السوق', 'السعر الحالي']
+  };
+
+  const synonyms = synonymsMap[standardHeaderName] || [standardHeaderName.toLowerCase()];
+
+  // 1. Exact match
+  for (let i = 0; i < normHeaders.length; i++) {
+    const h = normHeaders[i];
+    if (synonyms.some(s => h === s)) return i;
+  }
+
+  // 2. Contains match
+  for (let i = 0; i < normHeaders.length; i++) {
+    const h = normHeaders[i];
+    if (!h) continue;
+    if (synonyms.some(s => h.includes(s) || s.includes(h))) return i;
+  }
+
+  return -1;
+}
+
+/**
+ * Enriches transactions with calculated running shares, trade cycles, gross trade value, and net cash impact.
+ */
+export function enrichTransactionsForLedger(transactions: TradeTransaction[]): TradeTransaction[] {
+  // Sort chronologically ascending (oldest first: Date -> TradeId -> BUY before SELL)
+  const sorted = [...transactions].sort((a, b) => {
+    const dA = new Date(a.date || 0).getTime();
+    const dB = new Date(b.date || 0).getTime();
+    if (dA !== dB) return dA - dB;
+    const tA = Number(a.tradeId) || 0;
+    const tB = Number(b.tradeId) || 0;
+    if (tA && tB && tA !== tB) return tA - tB;
+    if (a.type === 'BUY' && b.type === 'SELL') return -1;
+    if (a.type === 'SELL' && b.type === 'BUY') return 1;
+    return 0;
+  });
+
+  const runningSharesMap: Record<string, number> = {};
+  const activeCycleMap: Record<string, number> = {};
+
+  return sorted.map((tx, idx) => {
+    const ticker = tx.ticker.toUpperCase();
+    const tradeId = tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : (idx + 1));
+    const gross = Math.round(tx.shares * tx.price * 100) / 100;
+    const fees = Math.round((tx.fees || 0) * 100) / 100;
+    // Net Cash Impact: negative for BUY, positive for SELL
+    const netCash = tx.type === 'BUY' ? -(gross + fees) : (gross - fees);
+
+    const prevShares = runningSharesMap[ticker] || 0;
+    let newShares = prevShares;
+    let cycle = activeCycleMap[ticker] || 1;
+
+    if (tx.type === 'BUY') {
+      if (prevShares === 0) {
+        cycle = (activeCycleMap[ticker] || 0) + 1;
+        activeCycleMap[ticker] = cycle;
+      }
+      newShares = prevShares + tx.shares;
+    } else if (tx.type === 'SELL') {
+      newShares = Math.max(0, prevShares - tx.shares);
+    }
+
+    runningSharesMap[ticker] = newShares;
+
+    const cycleTag = tx.cycleTag || `${ticker}-C${cycle}`;
+
+    return {
+      ...tx,
+      tradeId,
+      grossTradeValue: gross,
+      netCashImpact: Math.round(netCash * 100) / 100,
+      runningShares: newShares,
+      tradeCycle: tx.tradeCycle || cycle,
+      cycleTag
+    };
+  });
+}
+
 export interface SheetParseResult {
   positions: Position[];
   closedTrades: ClosedTrade[];
@@ -1043,168 +1182,264 @@ export async function ensureSheetTabExists(
 }
 
 /**
- * Appends a transaction to the "Transaction logger" tab in the connected Google Sheet.
+ * Appends or updates a transaction in the "Transaction Logger" tab in the connected Google Sheet.
+ * Prevents duplicates by checking existing Trade ID column.
  */
 export async function appendTransactionToSheet(
   spreadsheetId: string,
   tx: TradeTransaction,
   accessToken: string,
-  tabName = 'Transaction logger'
+  tabName = 'Transaction Logger'
 ): Promise<{ success: boolean; message: string }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
-    await ensureSheetTabExists(cleanId, tabName, accessToken);
 
-    // Check if sheet already has header row
-    const existingValues = await fetchSheetValues(cleanId, `${tabName}!A1:O1`, accessToken).catch(() => []);
-    const hasHeader = existingValues && existingValues.length > 0 && existingValues[0].length > 0;
+    // 1. Resolve exact tab name in Google Sheet case-insensitively
+    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ sheets: [] }));
+    const targetTab = meta.sheets.find(s => s.toLowerCase() === 'transaction logger')
+      || meta.sheets.find(s => s.toLowerCase().includes('transaction') || s.toLowerCase().includes('log'))
+      || tabName;
 
-    const headers = [
-      'Timestamp / Date',
-      'Transaction Type',
-      'Ticker',
-      'Company Name',
-      'Sector',
-      'Shares / Qty',
-      'Price (EGP)',
-      'Total Amount (EGP)',
-      'Brokerage Fees (EGP)',
-      'Realized P&L (EGP)',
-      'Realized P&L %',
-      'Holding Days',
-      'Target Price (EGP)',
-      'Stop Loss (EGP)',
-      'Notes & Strategy'
-    ];
+    await ensureSheetTabExists(cleanId, targetTab, accessToken);
 
-    const rowData = [
-      tx.date || new Date().toISOString().split('T')[0],
-      tx.type,
-      tx.ticker,
-      tx.companyName,
-      tx.sector,
-      tx.shares,
-      tx.price,
-      tx.totalAmount,
-      tx.fees || 0,
-      tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp : '',
-      tx.realizedPnlPercent !== undefined ? `${tx.realizedPnlPercent.toFixed(2)}%` : '',
-      tx.holdingDays !== undefined ? tx.holdingDays : '',
-      tx.targetPrice !== undefined ? tx.targetPrice : '',
-      tx.stopLoss !== undefined ? tx.stopLoss : '',
-      tx.notes || (tx.isDCA ? 'DCA Addition' : '')
-    ];
+    // 2. Fetch existing rows from target tab
+    const existingRows = await fetchSheetValues(cleanId, `${targetTab}!A1:Z500`, accessToken).catch(() => []);
 
-    const valuesToAppend = hasHeader ? [rowData] : [headers, rowData];
+    const stdHeaders = TRANSACTION_LOGGER_HEADERS;
 
-    const appendRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(tabName)}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          values: valuesToAppend,
-        }),
-      }
-    );
-
-    if (!appendRes.ok) {
-      const err = await appendRes.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${appendRes.status}`);
+    let headerRowIdx = 0;
+    let rawHeaders: string[] = [];
+    if (existingRows.length > 0) {
+      headerRowIdx = findHeaderRowIndex(existingRows);
+      rawHeaders = existingRows[headerRowIdx] || [];
     }
 
-    return { success: true, message: `Appended ${tx.type} for ${tx.ticker} to ${tabName}` };
+    const headers = rawHeaders.map(h => (h || '').toString().trim());
+    const hasHeader = headers.length > 0 && headers.some(h => {
+      const l = h.toLowerCase();
+      return l.includes('trade') || l.includes('ticker') || l.includes('date') || l.includes('action');
+    });
+
+    // Build column index map for standard 14 headers
+    const colMap: Record<string, number> = {};
+    if (hasHeader) {
+      stdHeaders.forEach(stdH => {
+        colMap[stdH] = findColIndexBySynonyms(headers, stdH);
+      });
+    } else {
+      stdHeaders.forEach((stdH, i) => {
+        colMap[stdH] = i;
+      });
+    }
+
+    // Determine target Trade ID string
+    const targetTradeIdStr = String(
+      tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id)
+    ).trim();
+
+    // Scan for duplicate row by Trade ID
+    let existingSheetRowNumber = -1; // 1-based row number in Google Sheets
+    if (hasHeader && targetTradeIdStr) {
+      const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
+      if (tradeIdCol >= 0) {
+        for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
+          const rowCell = String(existingRows[r][tradeIdCol] || '').trim();
+          if (rowCell && rowCell === targetTradeIdStr) {
+            existingSheetRowNumber = r + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    // Prepare row array
+    const maxCol = Math.max(...Object.values(colMap).filter(v => v >= 0), 13);
+    const rowData = new Array(maxCol + 1).fill('');
+
+    const setVal = (headerName: string, value: any) => {
+      const colIdx = colMap[headerName];
+      if (colIdx !== undefined && colIdx >= 0) {
+        rowData[colIdx] = value !== undefined && value !== null ? value : '';
+      }
+    };
+
+    const gross = tx.grossTradeValue !== undefined ? tx.grossTradeValue : Math.round(tx.shares * tx.price * 100) / 100;
+    const fee = tx.fees || 0;
+    const netCash = tx.netCashImpact !== undefined
+      ? tx.netCashImpact
+      : (tx.type === 'BUY' ? -(gross + fee) : (gross - fee));
+
+    const finalTradeId = targetTradeIdStr || (existingRows.length - headerRowIdx);
+
+    setVal('Trade ID', finalTradeId);
+    setVal('Date', tx.date || new Date().toISOString().split('T')[0]);
+    setVal('Action', tx.type);
+    setVal('Ticker', tx.ticker.toUpperCase());
+    setVal('Company Name', tx.companyName);
+    setVal('Shares', tx.shares);
+    setVal('Price / Share', tx.price);
+    setVal('Gross Trade Value', Math.round(gross * 100) / 100);
+    setVal('Brokerage Fee', Math.round(fee * 100) / 100);
+    setVal('Net Cash Impact', Math.round(netCash * 100) / 100);
+    setVal('Strategy / Notes', tx.notes || '');
+    setVal('Running Shares', tx.runningShares !== undefined ? tx.runningShares : '');
+    setVal('Trade Cycle', tx.tradeCycle || 1);
+    setVal('Cycle Tag', tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`);
+
+    if (existingSheetRowNumber > 0) {
+      // UPDATE existing row
+      const updateRange = `${targetTab}!A${existingSheetRowNumber}:${colToLetter(rowData.length - 1)}${existingSheetRowNumber}`;
+      const updateRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ values: [rowData] }),
+        }
+      );
+      if (!updateRes.ok) {
+        const err = await updateRes.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${updateRes.status}`);
+      }
+      return { success: true, message: `Updated Trade ID ${finalTradeId} in "${targetTab}"` };
+    } else {
+      // APPEND new row
+      const valuesToAppend = hasHeader ? [rowData] : [stdHeaders, rowData];
+      const appendRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(targetTab)}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ values: valuesToAppend }),
+        }
+      );
+      if (!appendRes.ok) {
+        const err = await appendRes.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${appendRes.status}`);
+      }
+      return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} to "${targetTab}"` };
+    }
   } catch (err: any) {
-    console.error('Failed to append transaction to sheet:', err);
+    console.error('Failed to append/update transaction in Google Sheet:', err);
     return { success: false, message: err.message || 'Failed to update Google Sheet' };
   }
 }
 
 /**
- * Updates the "ticker directory" tab in the Google Sheet with latest live EGX quotes and technical levels.
+ * Updates the "Ticker Directory" tab in the Google Sheet with latest prices.
+ * Targets ONLY the Ticker Directory tab and does not touch transaction rows.
  */
 export async function updateStockDirectoryInSheet(
   spreadsheetId: string,
   tickers: EGXTicker[],
   accessToken: string,
-  tabName = 'ticker directory'
+  tabName = 'Ticker Directory'
 ): Promise<{ success: boolean; message: string }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
-    
-    // Check if user has "ticker directory" or "Stock Directory"
+
+    // 1. Resolve tab name case-insensitively
     const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ sheets: [] }));
-    let targetTab = tabName;
-    if (meta.sheets.includes('ticker directory')) {
-      targetTab = 'ticker directory';
-    } else if (meta.sheets.includes('Ticker Directory')) {
-      targetTab = 'Ticker Directory';
-    } else if (meta.sheets.includes('Stock Directory')) {
-      targetTab = 'Stock Directory';
-    } else if (meta.sheets.includes('Stocks & Prices')) {
-      targetTab = 'Stocks & Prices';
-    } else {
-      await ensureSheetTabExists(cleanId, targetTab, accessToken);
+    const targetTab = meta.sheets.find(s => s.toLowerCase() === 'ticker directory')
+      || meta.sheets.find(s => s.toLowerCase().includes('ticker') || s.toLowerCase().includes('directory'))
+      || tabName;
+
+    await ensureSheetTabExists(cleanId, targetTab, accessToken);
+
+    // 2. Fetch existing rows
+    const existingRows = await fetchSheetValues(cleanId, `${targetTab}!A1:Z500`, accessToken).catch(() => []);
+
+    const stdHeaders = TICKER_DIRECTORY_HEADERS; // ['Ticker', 'Company Name', 'Sector', 'Current Price (EGP)']
+
+    let headerRowIdx = 0;
+    let rawHeaders: string[] = [];
+    if (existingRows.length > 0) {
+      headerRowIdx = findHeaderRowIndex(existingRows);
+      rawHeaders = existingRows[headerRowIdx] || [];
     }
 
-    const headers = [
-      'Ticker',
-      'English Name',
-      'Arabic Name',
-      'Sector',
-      'Last Price (EGP)',
-      'Day Change (%)',
-      'Day High (EGP)',
-      'Day Low (EGP)',
-      '52W High (EGP)',
-      '52W Low (EGP)',
-      'Volume',
-      'Trend Status',
-      'RSI (14)',
-      'Support Level',
-      'Resistance Level',
-      'Target Price',
-      'Stop Loss',
-      'Last Updated'
-    ];
+    const headers = rawHeaders.map(h => (h || '').toString().trim());
+    const hasHeader = headers.length > 0 && headers.some(h => {
+      const l = h.toLowerCase();
+      return l.includes('ticker') || l.includes('price') || l.includes('company');
+    });
 
-    const rows = tickers.map(t => [
-      t.ticker,
-      t.nameEn,
-      t.nameAr,
-      t.sector,
-      t.lastPrice,
-      `${t.changePercent >= 0 ? '+' : ''}${t.changePercent.toFixed(2)}%`,
-      t.dayHigh || '',
-      t.dayLow || '',
-      t.yearHigh || '',
-      t.yearLow || '',
-      t.volume || 0,
-      t.trendStatus || '',
-      t.rsi14 || '',
-      t.support || '',
-      t.resistance || '',
-      t.targetPrice || '',
-      t.stopLoss || '',
-      t.lastUpdated || new Date().toISOString()
-    ]);
+    let tickerCol = hasHeader ? findColIndexBySynonyms(headers, 'Ticker') : 0;
+    let nameCol = hasHeader ? findColIndexBySynonyms(headers, 'Company Name') : 1;
+    let sectorCol = hasHeader ? findColIndexBySynonyms(headers, 'Sector') : 2;
+    let priceCol = hasHeader ? findColIndexBySynonyms(headers, 'Current Price (EGP)') : 3;
 
-    const values = [headers, ...rows];
+    if (tickerCol === -1) tickerCol = 0;
+    if (nameCol === -1) nameCol = 1;
+    if (sectorCol === -1) sectorCol = 2;
+    if (priceCol === -1) priceCol = 3;
+
+    // Map existing ticker symbols to row index
+    const existingTickerRowMap: Record<string, number> = {};
+    if (hasHeader) {
+      for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
+        const rawT = String(existingRows[r][tickerCol] || '').trim().toUpperCase();
+        const cleanT = rawT.replace('.CA', '').replace(/^EGX:/, '').replace(/[^A-Z0-9]/g, '');
+        if (cleanT) {
+          existingTickerRowMap[cleanT] = r;
+        }
+      }
+    }
+
+    let updatedRows = hasHeader ? existingRows.map(r => [...r]) : [[...stdHeaders]];
+
+    if (!hasHeader) {
+      headerRowIdx = 0;
+      updatedRows = [[...stdHeaders]];
+    }
+
+    tickers.forEach(t => {
+      const cleanT = t.ticker.toUpperCase();
+      const rowIdx = existingTickerRowMap[cleanT];
+
+      if (rowIdx !== undefined && rowIdx < updatedRows.length) {
+        // Update price (and company/sector if missing)
+        const row = [...updatedRows[rowIdx]];
+        while (row.length <= Math.max(tickerCol, nameCol, sectorCol, priceCol)) {
+          row.push('');
+        }
+        row[tickerCol] = t.ticker;
+        if (!row[nameCol]) row[nameCol] = t.nameEn;
+        if (!row[sectorCol]) row[sectorCol] = t.sector;
+        row[priceCol] = t.lastPrice;
+        updatedRows[rowIdx] = row;
+      } else {
+        // Append new ticker row
+        const maxC = Math.max(tickerCol, nameCol, sectorCol, priceCol);
+        const newRow = new Array(maxC + 1).fill('');
+        newRow[tickerCol] = t.ticker;
+        newRow[nameCol] = t.nameEn;
+        newRow[sectorCol] = t.sector;
+        newRow[priceCol] = t.lastPrice;
+        updatedRows.push(newRow);
+      }
+    });
+
+    // Write full Ticker Directory sheet back
+    const maxCols = Math.max(...updatedRows.map(r => r.length), 4);
+    const lastColLetter = colToLetter(maxCols - 1);
+    const updateRange = `${targetTab}!A1:${lastColLetter}${updatedRows.length}`;
 
     const updateRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(targetTab)}!A1:R${values.length}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          values,
-        }),
+        body: JSON.stringify({ values: updatedRows }),
       }
     );
 
@@ -1213,18 +1448,18 @@ export async function updateStockDirectoryInSheet(
       throw new Error(err.error?.message || `HTTP ${updateRes.status}`);
     }
 
-    return { 
-      success: true, 
-      message: `Successfully synchronized ${tickers.length} EGX equities to "${targetTab}" in Google Sheets` 
+    return {
+      success: true,
+      message: `Successfully updated ${tickers.length} EGX equities in "${targetTab}"`
     };
   } catch (err: any) {
-    console.error('Failed to update ticker directory in Google Sheet:', err);
-    return { success: false, message: err.message || 'Failed to update ticker directory in Google Sheet' };
+    console.error('Failed to update Ticker Directory in Google Sheet:', err);
+    return { success: false, message: err.message || 'Failed to update Ticker Directory' };
   }
 }
 
 /**
- * Pushes entire active portfolio, transactions, and stock directory to Google Sheet.
+ * Pushes full transactions and stock directory to Google Sheet using exact column schemas.
  */
 export async function syncAllPortfolioToSheet(
   spreadsheetId: string,
@@ -1237,68 +1472,37 @@ export async function syncAllPortfolioToSheet(
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
-    // 1. Sync Transaction logger tab (Primary source of truth)
-    await ensureSheetTabExists(cleanId, 'Transaction logger', accessToken);
-    const txHeaders = ['Timestamp / Date', 'Transaction Type', 'Ticker', 'Company Name', 'Sector', 'Shares', 'Price (EGP)', 'Total Amount (EGP)', 'Fees (EGP)', 'Realized P&L (EGP)', 'Realized P&L %', 'Notes'];
-    const txRows = transactions.map(tx => [
-      tx.date,
-      tx.type,
-      tx.ticker,
-      tx.companyName,
-      tx.sector,
-      tx.shares,
-      tx.price,
-      tx.totalAmount,
-      tx.fees || 0,
-      tx.realizedPnlEgp !== undefined ? tx.realizedPnlEgp : '',
-      tx.realizedPnlPercent !== undefined ? `${tx.realizedPnlPercent.toFixed(2)}%` : '',
-      tx.notes || ''
-    ]);
+    // 1. Sync "Transaction Logger" tab (Exact 14 headers)
+    await ensureSheetTabExists(cleanId, 'Transaction Logger', accessToken);
+    const enrichedTxs = enrichTransactionsForLedger(transactions);
 
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction logger')}!A1:L${txRows.length + 1}?valueInputOption=USER_ENTERED`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          values: [txHeaders, ...txRows],
-        }),
-      }
-    );
+    const txRows = enrichedTxs.map(tx => {
+      const gross = tx.grossTradeValue !== undefined ? tx.grossTradeValue : Math.round(tx.shares * tx.price * 100) / 100;
+      const fee = tx.fees || 0;
+      const netCash = tx.netCashImpact !== undefined
+        ? tx.netCashImpact
+        : (tx.type === 'BUY' ? -(gross + fee) : (gross - fee));
 
-    // 2. Sync ticker directory tab with latest quotes
-    await updateStockDirectoryInSheet(cleanId, tickers, accessToken, 'ticker directory');
-
-    // 3. Sync Portfolio dashboard tab
-    await ensureSheetTabExists(cleanId, 'Portfolio dashboard', accessToken);
-    const posHeaders = ['Ticker', 'Company Name', 'Sector', 'Shares', 'Avg Buy Price (EGP)', 'Current Price (EGP)', 'Market Value (EGP)', 'Unrealized P&L (EGP)', 'Unrealized %', 'Buy Date', 'Target Price', 'Stop Loss', 'Notes'];
-    const posRows = positions.map(p => {
-      const val = p.shares * p.currentPrice;
-      const cost = p.shares * p.avgBuyPrice;
-      const pnl = val - cost;
-      const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
       return [
-        p.ticker,
-        p.companyName,
-        p.sector,
-        p.shares,
-        p.avgBuyPrice,
-        p.currentPrice,
-        val,
-        pnl,
-        `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`,
-        p.buyDate,
-        p.targetPrice || '',
-        p.stopLoss || '',
-        p.notes || ''
+        tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id),
+        tx.date,
+        tx.type,
+        tx.ticker.toUpperCase(),
+        tx.companyName,
+        tx.shares,
+        tx.price,
+        Math.round(gross * 100) / 100,
+        Math.round(fee * 100) / 100,
+        Math.round(netCash * 100) / 100,
+        tx.notes || '',
+        tx.runningShares !== undefined ? tx.runningShares : '',
+        tx.tradeCycle || 1,
+        tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`
       ];
     });
 
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Portfolio dashboard')}!A1:M${posRows.length + 1}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction Logger')}!A1:N${txRows.length + 1}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
@@ -1306,14 +1510,17 @@ export async function syncAllPortfolioToSheet(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          values: [posHeaders, ...posRows],
+          values: [TRANSACTION_LOGGER_HEADERS, ...txRows],
         }),
       }
     );
 
+    // 2. Sync "Ticker Directory" tab (Exact 4 headers)
+    await updateStockDirectoryInSheet(cleanId, tickers, accessToken, 'Ticker Directory');
+
     return {
       success: true,
-      message: `Complete 2-way sync: ${positions.length} Active Positions, ${closedTrades.length} Closed Trades, ${transactions.length} Transactions, and ${tickers.length} Stock Directory quotes updated in Google Sheet!`
+      message: `Complete 2-way sync: ${transactions.length} Transactions written to "Transaction Logger" and ${tickers.length} stock quotes updated in "Ticker Directory"!`
     };
   } catch (err: any) {
     console.error('Failed complete portfolio sync to Google Sheet:', err);

@@ -608,9 +608,23 @@ export default function App() {
       setPositions((prev) => [newPos, ...prev]);
     }
 
+    const nextTradeId = (() => {
+      let maxId = 0;
+      transactions.forEach((t) => {
+        const raw = t.tradeId !== undefined ? t.tradeId : t.trade_id;
+        if (typeof raw === 'number' && raw > maxId) maxId = raw;
+        else if (typeof raw === 'string') {
+          const parsed = parseInt(raw, 10);
+          if (!isNaN(parsed) && parsed > maxId) maxId = parsed;
+        }
+      });
+      return maxId > 0 ? maxId + 1 : transactions.length + 1;
+    })();
+
     // Always log as a separate chronological transaction in the trade ledger
     const newTx: TradeTransaction = {
       id: `tx-buy-${Date.now()}-${newTradeData.ticker}`,
+      tradeId: nextTradeId,
       type: 'BUY',
       isDCA: existingIndex >= 0,
       ticker: newTradeData.ticker,
@@ -628,7 +642,7 @@ export default function App() {
     };
     setTransactions((prev) => [newTx, ...prev]);
 
-    // Auto-sync transaction to Google Sheet Transaction logger tab if configured
+    // Auto-sync transaction to Google Sheet Transaction Logger tab if configured
     if (sheetsConfig?.spreadsheetId && authUser) {
       getAccessToken().then((token) => {
         if (token) {
@@ -636,7 +650,7 @@ export default function App() {
             sheetsConfig.spreadsheetId,
             newTx,
             token,
-            'Transaction logger'
+            'Transaction Logger'
           ).catch((err) => console.warn('Background sheets tx append error:', err));
         }
       });
@@ -723,9 +737,23 @@ export default function App() {
 
     setClosedTrades((prev) => [newClosedTrade, ...prev]);
 
+    const nextTradeId = (() => {
+      let maxId = 0;
+      transactions.forEach((t) => {
+        const raw = t.tradeId !== undefined ? t.tradeId : t.trade_id;
+        if (typeof raw === 'number' && raw > maxId) maxId = raw;
+        else if (typeof raw === 'string') {
+          const parsed = parseInt(raw, 10);
+          if (!isNaN(parsed) && parsed > maxId) maxId = parsed;
+        }
+      });
+      return maxId > 0 ? maxId + 1 : transactions.length + 1;
+    })();
+
     // Also log SELL transaction in chronological ledger
     const newSellTx: TradeTransaction = {
       id: `tx-sell-${Date.now()}-${pos.ticker}`,
+      tradeId: nextTradeId,
       type: 'SELL',
       ticker: pos.ticker,
       companyName: pos.companyName,
@@ -744,7 +772,7 @@ export default function App() {
     };
     setTransactions((prev) => [newSellTx, ...prev]);
 
-    // Auto-sync SELL transaction to Google Sheet Transaction logger tab if configured
+    // Auto-sync SELL transaction to Google Sheet Transaction Logger tab if configured
     if (sheetsConfig?.spreadsheetId && authUser) {
       getAccessToken().then((token) => {
         if (token) {
@@ -752,7 +780,7 @@ export default function App() {
             sheetsConfig.spreadsheetId,
             newSellTx,
             token,
-            'Transaction logger'
+            'Transaction Logger'
           ).catch((err) => console.warn('Background sheets sell tx append error:', err));
         }
       });
@@ -947,8 +975,20 @@ export default function App() {
     fees: number;
     notes?: string;
   }) => {
+    let maxId = 0;
+    transactions.forEach((t) => {
+      const raw = t.tradeId !== undefined ? t.tradeId : t.trade_id;
+      if (typeof raw === 'number' && raw > maxId) maxId = raw;
+      else if (typeof raw === 'string') {
+        const parsed = parseInt(raw, 10);
+        if (!isNaN(parsed) && parsed > maxId) maxId = parsed;
+      }
+    });
+    const nextTradeId = maxId > 0 ? maxId + 1 : transactions.length + 1;
+
     const newTx: TradeTransaction = {
       id: `tx-ai-${Date.now()}-${parsedTx.ticker}`,
+      tradeId: nextTradeId,
       type: parsedTx.type,
       ticker: parsedTx.ticker.toUpperCase(),
       companyName: parsedTx.companyName || parsedTx.ticker,
@@ -965,6 +1005,20 @@ export default function App() {
 
     const updatedTransactions = [newTx, ...transactions];
     setTransactions(updatedTransactions);
+
+    // Auto-sync screenshot trade to Google Sheet Transaction Logger tab if configured
+    if (sheetsConfig?.spreadsheetId && authUser) {
+      getAccessToken().then((token) => {
+        if (token) {
+          appendTransactionToSheet(
+            sheetsConfig.spreadsheetId,
+            newTx,
+            token,
+            'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets screenshot tx append error:', err));
+        }
+      });
+    }
 
     // Reconcile full portfolio state from ledger
     const reconciled = reconcilePortfolioFromLedger(updatedTransactions, tickers, cashBalance);
@@ -992,27 +1046,59 @@ export default function App() {
   }>) => {
     if (parsedTxs.length === 0) return;
 
-    const newTxs: TradeTransaction[] = parsedTxs.map((pt, idx) => ({
-      id: `tx-ai-${Date.now()}-${idx}-${pt.ticker}`,
-      type: pt.type,
-      ticker: pt.ticker.toUpperCase(),
-      companyName: pt.companyName || pt.ticker,
-      sector: pt.sector || 'Banking',
-      shares: pt.shares,
-      price: pt.price,
-      date: pt.date,
-      fees: pt.fees || 0,
-      totalAmount: pt.type === 'BUY'
-        ? (pt.shares * pt.price) + (pt.fees || 0)
-        : Math.max(0, (pt.shares * pt.price) - (pt.fees || 0)),
-      notes: pt.notes || 'Logged via Telda AI Screenshot Scanner',
-    }));
+    let maxId = 0;
+    transactions.forEach((t) => {
+      const raw = t.tradeId !== undefined ? t.tradeId : t.trade_id;
+      if (typeof raw === 'number' && raw > maxId) maxId = raw;
+      else if (typeof raw === 'string') {
+        const parsed = parseInt(raw, 10);
+        if (!isNaN(parsed) && parsed > maxId) maxId = parsed;
+      }
+    });
+
+    let currentTradeId = maxId > 0 ? maxId + 1 : transactions.length + 1;
+
+    const newTxs: TradeTransaction[] = parsedTxs.map((pt, idx) => {
+      const txId = currentTradeId + idx;
+      return {
+        id: `tx-ai-${Date.now()}-${idx}-${pt.ticker}`,
+        tradeId: txId,
+        type: pt.type,
+        ticker: pt.ticker.toUpperCase(),
+        companyName: pt.companyName || pt.ticker,
+        sector: pt.sector || 'Banking',
+        shares: pt.shares,
+        price: pt.price,
+        date: pt.date,
+        fees: pt.fees || 0,
+        totalAmount: pt.type === 'BUY'
+          ? (pt.shares * pt.price) + (pt.fees || 0)
+          : Math.max(0, (pt.shares * pt.price) - (pt.fees || 0)),
+        notes: pt.notes || 'Logged via Telda AI Screenshot Scanner',
+      };
+    });
 
     // Sort chronologically ascending to maintain consistent ledger reconciliation order
     const combinedTransactions = [...newTxs, ...transactions].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     setTransactions(combinedTransactions);
+
+    // Auto-sync batch screenshot trades to Google Sheet Transaction Logger tab if configured
+    if (sheetsConfig?.spreadsheetId && authUser) {
+      getAccessToken().then((token) => {
+        if (token) {
+          newTxs.forEach(t => {
+            appendTransactionToSheet(
+              sheetsConfig.spreadsheetId,
+              t,
+              token,
+              'Transaction Logger'
+            ).catch((err) => console.warn('Background batch screenshot tx append error:', err));
+          });
+        }
+      });
+    }
 
     // Reconcile full portfolio state from ledger
     const reconciled = reconcilePortfolioFromLedger(combinedTransactions, tickers, cashBalance);

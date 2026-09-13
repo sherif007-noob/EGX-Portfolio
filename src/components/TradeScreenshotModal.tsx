@@ -2,19 +2,14 @@ import React, { useState, useRef } from 'react';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { 
-  Sparkles, 
   UploadCloud, 
   CheckCircle2, 
   AlertCircle, 
   X, 
-  ShieldCheck,
   RefreshCw,
   Trash2,
   Plus,
-  ArrowUpDown,
-  Check,
-  Zap,
-  Cpu
+  Zap
 } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { recognizeTradeScreenshot, parseTradeText } from '../services/ocrParser';
@@ -71,7 +66,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   onAddTransaction,
   onAddBatchTransactions,
 }) => {
-  const [engineMode, setEngineMode] = useState<'ocr' | 'gemini'>('ocr');
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
   const [batchTrades, setBatchTrades] = useState<ParsedTradeItem[]>([]);
@@ -120,56 +114,37 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
 
       const parsedItems: ParsedTradeItem[] = [];
 
-      if (engineMode === 'ocr') {
-        // FREE CLIENT-SIDE OCR ENGINE (Tesseract.js)
-        for (let i = 0; i < base64List.length; i++) {
-          setScanProgress({ current: i + 1, total: base64List.length });
-          const item = base64List[i];
-          try {
-            const ocrText = await recognizeTradeScreenshot(item.file);
-            const parsed = parseTradeText(ocrText, tickers);
+      // FREE CLIENT-SIDE OCR ENGINE (Tesseract.js)
+      for (let i = 0; i < base64List.length; i++) {
+        setScanProgress({ current: i + 1, total: base64List.length });
+        const item = base64List[i];
+        try {
+          const ocrText = await recognizeTradeScreenshot(item.file);
+          const parsed = parseTradeText(ocrText, tickers);
 
-            if (parsed && (parsed.ticker || parsed.shares || parsed.price)) {
-              const { ticker, name, sector } = resolveTickerData(parsed.ticker || '', parsed.companyName);
-              parsedItems.push({
-                id: `ocr-${Date.now()}-${i}`,
-                ticker,
-                companyName: name,
-                sector,
-                type: parsed.type || 'BUY',
-                shares: parsed.shares || 0,
-                price: parsed.price || 0,
-                fees: parsed.fees || 0,
-                date: parsed.date || getTodayISO(),
-                brokerName: parsed.brokerName || 'Telda',
-                notes: parsed.notes || `${parsed.brokerName || 'Telda'} ${parsed.type === 'BUY' ? 'Buy' : 'Sell'} • OCR Scanned`,
-                confidenceScore: parsed.confidenceScore || 92,
-                imagePreview: item.base64,
-              });
-            } else {
-              // Honest unparsed item without fake templates
-              parsedItems.push({
-                id: `ocr-unparsed-${Date.now()}-${i}`,
-                ticker: '',
-                companyName: 'Unrecognized Trade',
-                sector: 'Other',
-                type: 'BUY',
-                shares: 0,
-                price: 0,
-                fees: 0,
-                date: getTodayISO(),
-                brokerName: 'Telda',
-                notes: 'Trade details could not be detected from image. Please verify.',
-                confidenceScore: 40,
-                imagePreview: item.base64,
-              });
-            }
-          } catch (ocrErr) {
-            console.error('OCR processing error on file', i, ocrErr);
+          if (parsed && (parsed.ticker || parsed.shares || parsed.price)) {
+            const { ticker, name, sector } = resolveTickerData(parsed.ticker || '', parsed.companyName);
             parsedItems.push({
-              id: `ocr-err-${Date.now()}-${i}`,
+              id: `ocr-${Date.now()}-${i}`,
+              ticker,
+              companyName: name,
+              sector,
+              type: parsed.type || 'BUY',
+              shares: parsed.shares || 0,
+              price: parsed.price || 0,
+              fees: parsed.fees || 0,
+              date: parsed.date || getTodayISO(),
+              brokerName: parsed.brokerName || 'Telda',
+              notes: parsed.notes || `${parsed.brokerName || 'Telda'} ${parsed.type === 'BUY' ? 'Buy' : 'Sell'} • OCR Scanned`,
+              confidenceScore: parsed.confidenceScore || 92,
+              imagePreview: item.base64,
+            });
+          } else {
+            // Unparsed item without fake templates
+            parsedItems.push({
+              id: `ocr-unparsed-${Date.now()}-${i}`,
               ticker: '',
-              companyName: 'Scan Error',
+              companyName: 'Unrecognized Trade',
               sector: 'Other',
               type: 'BUY',
               shares: 0,
@@ -177,131 +152,28 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               fees: 0,
               date: getTodayISO(),
               brokerName: 'Telda',
-              notes: 'Failed to read image. Please enter details manually.',
-              confidenceScore: 30,
+              notes: 'Trade details could not be detected from image. Please verify.',
+              confidenceScore: 40,
               imagePreview: item.base64,
             });
           }
-        }
-      } else {
-        // GEMINI AI VISION ENGINE
-        let isQuotaExhausted = false;
-        let isApiKeyIssue = false;
-        let results: any[] = [];
-
-        try {
-          const response = await fetch('/api/parse-trade-screenshots-batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              images: base64List.map((item) => ({
-                imageBase64: item.base64,
-                mimeType: item.mime,
-              })),
-            }),
+        } catch (ocrErr) {
+          console.error('OCR processing error on file', i, ocrErr);
+          parsedItems.push({
+            id: `ocr-err-${Date.now()}-${i}`,
+            ticker: '',
+            companyName: 'Scan Error',
+            sector: 'Other',
+            type: 'BUY',
+            shares: 0,
+            price: 0,
+            fees: 0,
+            date: getTodayISO(),
+            brokerName: 'Telda',
+            notes: 'Failed to read image. Please enter details manually.',
+            confidenceScore: 30,
+            imagePreview: item.base64,
           });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            if (
-              response.status === 429 ||
-              errorData.isQuotaError ||
-              (errorData.error && (errorData.error.includes('429') || errorData.error.includes('credits') || errorData.error.includes('RESOURCE_EXHAUSTED')))
-            ) {
-              isQuotaExhausted = true;
-            } else if (
-              errorData.isApiKeyError ||
-              response.status === 400 ||
-              (errorData.error && errorData.error.includes('API key'))
-            ) {
-              isApiKeyIssue = true;
-            }
-          } else {
-            const resData = await response.json();
-            results = resData.results || [];
-          }
-        } catch (fetchErr) {
-          console.warn('Screenshot parsing API call failed, will proceed to OCR fallback:', fetchErr);
-        }
-
-        results.forEach((res: any, idx: number) => {
-          if (res.success && res.data) {
-            const d = res.data;
-            const { ticker, name, sector } = resolveTickerData(d.ticker, d.companyName);
-            parsedItems.push({
-              id: `scan-${Date.now()}-${idx}`,
-              ticker,
-              companyName: name,
-              sector,
-              type: d.type === 'SELL' ? 'SELL' : 'BUY',
-              shares: Number(d.shares) || 0,
-              price: Number(d.price) || 0,
-              fees: Number(d.fees) || 0,
-              date: d.date || getTodayISO(),
-              brokerName: d.brokerName || 'Telda',
-              notes: d.notes || `Imported via ${d.brokerName || 'Telda'} receipt`,
-              confidenceScore: d.confidenceScore || 95,
-              imagePreview: base64List[idx]?.base64,
-            });
-          } else if (res) {
-            if (
-              res.isQuotaError ||
-              (res.error &&
-                (res.error.includes('429') ||
-                  res.error.includes('prepayment') ||
-                  res.error.includes('RESOURCE_EXHAUSTED') ||
-                  res.error.includes('credits')))
-            ) {
-              isQuotaExhausted = true;
-            }
-            if (res.isApiKeyError || (res.error && res.error.includes('API key'))) {
-              isApiKeyIssue = true;
-            }
-          }
-        });
-
-        // If Gemini failed due to quota/key, fall back to Free Client OCR seamlessly
-        if (parsedItems.length === 0) {
-          for (let i = 0; i < base64List.length; i++) {
-            const item = base64List[i];
-            try {
-              const ocrText = await recognizeTradeScreenshot(item.file);
-              const parsed = parseTradeText(ocrText, tickers);
-              if (parsed && (parsed.ticker || parsed.shares || parsed.price)) {
-                const { ticker, name, sector } = resolveTickerData(parsed.ticker || '', parsed.companyName);
-                parsedItems.push({
-                  id: `ocr-fb-${Date.now()}-${i}`,
-                  ticker,
-                  companyName: name,
-                  sector,
-                  type: parsed.type || 'BUY',
-                  shares: parsed.shares || 0,
-                  price: parsed.price || 0,
-                  fees: parsed.fees || 0,
-                  date: parsed.date || getTodayISO(),
-                  brokerName: parsed.brokerName,
-                  notes: parsed.notes || `OCR Scanned`,
-                  confidenceScore: 90,
-                  imagePreview: item.base64,
-                });
-              } else {
-                throw new Error(`Screenshot #${i + 1} did not contain readable trade text. Please ensure the trade order is visible.`);
-              }
-            } catch (ocrErr: any) {
-              console.warn('OCR processing error on screenshot:', ocrErr);
-              throw ocrErr;
-            }
-          }
-
-          if (isQuotaExhausted) {
-            setErrorMsg(
-              'Gemini API credits depleted. Switched to Free Client OCR engine.'
-            );
-          } else if (isApiKeyIssue) {
-            setErrorMsg(
-              'Gemini API key unconfigured. Switched to Free Client OCR engine.'
-            );
-          }
         }
       }
 
@@ -407,8 +279,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border border-indigo-500/30">
-              <Sparkles className="w-5 h-5" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30">
+              <Zap className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -418,17 +290,10 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold">
                   Telda &amp; EGX
                 </span>
-                {engineMode === 'ocr' ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-semibold">
-                    <Zap className="w-3 h-3 text-emerald-400" />
-                    Free OCR (No API Key)
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-500/40 text-indigo-300 text-[10px] font-semibold">
-                    <Sparkles className="w-3 h-3 text-indigo-400" />
-                    Gemini 3.6 Flash
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-semibold">
+                  <Zap className="w-3 h-3 text-emerald-400" />
+                  Free Client OCR (Offline)
+                </span>
               </div>
               <p className="text-xs text-slate-400">
                 Extracts Order Reviews &amp; Receipts from Telda, Thndr, Mubasher &amp; Egyptian brokers
@@ -464,48 +329,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
             </div>
           )}
 
-          {/* Engine Selection Bar */}
-          {batchTrades.length === 0 && !isScanning && (
-            <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Detection Engine</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Choose between 100% free client-side OCR or Google Cloud Gemini Vision
-                </p>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-800 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('ocr')}
-                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
-                    engineMode === 'ocr'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Free OCR (Unlimited)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('gemini')}
-                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
-                    engineMode === 'gemini'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Gemini AI Vision</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Dropzone for 1 or multiple screenshots */}
           {batchTrades.length === 0 && !isScanning && (
             <div
@@ -538,9 +361,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                 Click to upload or drag &amp; drop Telda screenshots
               </h4>
               <p className="text-xs text-slate-400 max-w-md mx-auto mb-3">
-                {engineMode === 'ocr'
-                  ? 'Processed 100% locally with client-side OCR. No API keys, no quotas, and completely free.'
-                  : 'Processed with Gemini 3.6 Flash Multimodal Vision.'}
+                Processed 100% locally with fast client-side OCR. Instant recognition with zero server dependencies or timeouts.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
                 <span>Multiple Images Supported</span>
@@ -560,17 +381,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2 justify-center">
-                  {engineMode === 'ocr' ? (
-                    <>
-                      <Zap className="w-4 h-4 text-emerald-400" />
-                      Running Client-Side OCR Character Recognition...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
-                      Analyzing Trade Screenshots with Gemini Vision...
-                    </>
-                  )}
+                  <Zap className="w-4 h-4 text-emerald-400" />
+                  Running Client-Side OCR Character Recognition...
                 </h4>
                 {scanProgress && (
                   <p className="text-xs text-slate-400 mt-1">

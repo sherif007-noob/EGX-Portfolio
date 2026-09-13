@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../types';
+import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
+import { getMonthKey, getMonthLabel } from '../utils/dateUtils';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -53,7 +54,9 @@ interface PerformanceReportsProps {
   positions: Position[];
   metrics?: PortfolioMetrics;
   cashBalance?: number;
+  transactions?: TradeTransaction[];
 }
+
 
 // Harmonious, distinct color palettes for pie slices
 const SECTOR_COLORS = [
@@ -368,7 +371,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
       buyDate: string;
       holdingDays: number;
       shares: number;
-      outcome: 'WIN' | 'LOSS';
+      outcome: 'WIN' | 'LOSS' | 'BREAKEVEN';
       category: StepCategory;
       start: number;
       delta: number;
@@ -519,19 +522,73 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
     };
   }, [closedTrades, stats, waterfallData, positions, grossNetProfit, grossNetLoss]);
 
-  // 6. Monthly Realized P&L (preserves existing monthly breakdown)
-  const monthlyPnl: Record<string, { gain: number; count: number; fees: number }> = {};
-  closedTrades.forEach((trade) => {
-    const month = trade.sellDate ? trade.sellDate.slice(0, 7) : '2026-07';
-    if (!monthlyPnl[month]) {
-      monthlyPnl[month] = { gain: 0, count: 0, fees: 0 };
-    }
-    monthlyPnl[month].gain += trade.realizedPnlEgp;
-    monthlyPnl[month].fees += trade.totalFees || 0;
-    monthlyPnl[month].count += 1;
-  });
+  // 6. Monthly Realized P&L & Histogram (normalized per calendar month)
+  const monthlyHistogramData = useMemo(() => {
+    const monthMap: Record<
+      string,
+      {
+        monthKey: string;
+        monthLabel: string;
+        gain: number;
+        grossProfit: number;
+        grossLoss: number;
+        tradeCount: number;
+        winCount: number;
+        lossCount: number;
+        breakevenCount: number;
+        totalFees: number;
+        winRate: number;
+      }
+    > = {};
 
-  const sortedMonths = Object.keys(monthlyPnl).sort();
+    closedTrades.forEach((trade) => {
+      const dateStr = trade.sellDate || trade.buyDate;
+      const mKey = getMonthKey(dateStr);
+      if (!mKey) return;
+
+      if (!monthMap[mKey]) {
+        monthMap[mKey] = {
+          monthKey: mKey,
+          monthLabel: getMonthLabel(mKey, 'short'),
+          gain: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          tradeCount: 0,
+          winCount: 0,
+          lossCount: 0,
+          breakevenCount: 0,
+          totalFees: 0,
+          winRate: 0,
+        };
+      }
+
+      const pnl = Number(trade.realizedPnlEgp || 0);
+      const fees = typeof trade.totalFees === 'number' && trade.totalFees > 0
+        ? trade.totalFees
+        : ((trade.buyFees || 0) + (trade.sellFees || 0));
+
+      monthMap[mKey].gain += pnl;
+      monthMap[mKey].totalFees += fees;
+      monthMap[mKey].tradeCount += 1;
+
+      if (pnl > 0.01) {
+        monthMap[mKey].grossProfit += pnl;
+        monthMap[mKey].winCount += 1;
+      } else if (pnl < -0.01) {
+        monthMap[mKey].grossLoss += Math.abs(pnl);
+        monthMap[mKey].lossCount += 1;
+      } else {
+        monthMap[mKey].breakevenCount += 1;
+      }
+    });
+
+    const sortedKeys = Object.keys(monthMap).sort();
+    return sortedKeys.map((k) => {
+      const item = monthMap[k];
+      item.winRate = item.tradeCount > 0 ? (item.winCount / item.tradeCount) * 100 : 0;
+      return item;
+    });
+  }, [closedTrades]);
 
   return (
     <div className="space-y-6">
@@ -1321,42 +1378,20 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                     <>
                       {/* Fixed-height Plot Canvas (Bars, Badges, Connectors, Zero Baseline) */}
                       <div className="relative h-64 sm:h-72 w-full pt-8 pb-1 px-3">
-                        {/* Zero Reference Baseline */}
-                        {yMin <= 0 && (
-                          <div
-                            className="absolute left-0 right-0 border-t border-dashed border-slate-700/70 pointer-events-none z-0 flex items-center justify-end pr-2"
-                            style={{ bottom: `${valToPercent(0)}%` }}
-                          >
-                            <span className="text-[10px] font-mono text-slate-500 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800">
-                              0 EGP
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Pixel-Perfect Mathematical SVG Connector Lines (Anchored directly to bar top/bottom edges) */}
-                        <svg className="absolute top-8 bottom-1 left-3 right-3 pointer-events-none z-0">
-                          {waterfallData.steps.slice(0, -1).map((step, i) => {
-                            const x1 = ((i + 0.5) / waterfallData.steps.length) * 100;
-                            const x2 = ((i + 1.5) / waterfallData.steps.length) * 100;
-                            const y = 100 - valToPercent(step.end);
-                            return (
-                              <line
-                                key={`capital-conn-${i}`}
-                                x1={`${x1}%`}
-                                y1={`${y}%`}
-                                x2={`${x2}%`}
-                                y2={`${y}%`}
-                                stroke="#64748b"
-                                strokeWidth="1.5"
-                                strokeDasharray="4,4"
-                                opacity="0.85"
-                              />
-                            );
-                          })}
-                        </svg>
-
                         {/* Stepped Columns */}
                         <div className="w-full h-full flex items-stretch justify-between relative z-10 gap-2 sm:gap-3">
+                          {/* Zero Reference Baseline */}
+                          {yMin <= 0 && (
+                            <div
+                              className="absolute left-[-0.75rem] right-[-0.75rem] border-b border-dashed border-slate-700/70 pointer-events-none z-0 flex items-center justify-end pr-3 translate-y-1/2"
+                              style={{ bottom: `${valToPercent(0)}%` }}
+                            >
+                              <span className="text-[10px] font-mono text-slate-500 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800">
+                                0 EGP
+                              </span>
+                            </div>
+                          )}
+
                           {waterfallData.steps.map((step, idx) => {
                             const isPositiveDelta = step.delta >= 0;
                             const isHovered = hoveredCapitalStep === idx;
@@ -1401,6 +1436,17 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                                 onMouseLeave={() => setHoveredCapitalStep(null)}
                                 className="flex-1 flex flex-col justify-end items-center relative h-full group cursor-pointer"
                               >
+                                {/* Connector Line to Next Step */}
+                                {idx < waterfallData.steps.length - 1 && (
+                                  <div
+                                    className="absolute z-0 pointer-events-none border-b-[1.5px] border-dashed border-slate-500/80 w-[calc(100%+0.5rem)] sm:w-[calc(100%+0.75rem)] translate-y-1/2"
+                                    style={{
+                                      bottom: `${valToPercent(step.end)}%`,
+                                      left: '50%'
+                                    }}
+                                  />
+                                )}
+
                                 {/* Tooltip Overlay */}
                                 <div
                                   className={`absolute top-0 z-30 hidden group-hover:flex flex-col bg-slate-950/95 border border-slate-700 p-2.5 rounded-xl shadow-2xl backdrop-blur-md text-[11px] w-48 sm:w-56 pointer-events-none transition-all duration-150
@@ -1679,42 +1725,20 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                       <>
                         {/* Fixed-height Plot Canvas */}
                         <div className="relative h-64 sm:h-72 w-full pt-8 pb-1 px-3">
-                          {/* Zero Reference Baseline */}
-                          {yMin <= 0 && (
-                            <div
-                              className="absolute left-0 right-0 border-t border-dashed border-slate-600/70 pointer-events-none z-0 flex items-center justify-end pr-2"
-                              style={{ bottom: `${valToPercent(0)}%` }}
-                            >
-                              <span className="text-[10px] font-mono text-slate-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800">
-                                0.00 EGP Baseline
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Mathematical SVG Connector Lines Overlay (Anchored directly to bar top/bottom edges) */}
-                          <svg className="absolute top-8 bottom-1 left-3 right-3 pointer-events-none z-0">
-                            {closedPositionsWaterfallData.steps.slice(0, -1).map((step, i) => {
-                              const x1 = ((i + 0.5) / closedPositionsWaterfallData.steps.length) * 100;
-                              const x2 = ((i + 1.5) / closedPositionsWaterfallData.steps.length) * 100;
-                              const y = 100 - valToPercent(step.end);
-                              return (
-                                <line
-                                  key={`closed-conn-${i}`}
-                                  x1={`${x1}%`}
-                                  y1={`${y}%`}
-                                  x2={`${x2}%`}
-                                  y2={`${y}%`}
-                                  stroke="#64748b"
-                                  strokeWidth="1.5"
-                                  strokeDasharray="4,4"
-                                  opacity="0.85"
-                                />
-                              );
-                            })}
-                          </svg>
-
                           {/* Stepped Position Columns */}
                           <div className="w-full h-full flex items-stretch justify-between relative z-10 gap-1.5">
+                            {/* Zero Reference Baseline */}
+                            {yMin <= 0 && (
+                              <div
+                                className="absolute left-[-0.375rem] right-[-0.375rem] border-b border-dashed border-slate-600/70 pointer-events-none z-0 flex items-center justify-end pr-2 translate-y-1/2"
+                                style={{ bottom: `${valToPercent(0)}%` }}
+                              >
+                                <span className="text-[10px] font-mono text-slate-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800">
+                                  0.00 EGP Baseline
+                                </span>
+                              </div>
+                            )}
+
                             {closedPositionsWaterfallData.steps.map((step, idx) => {
                               const isPositiveDelta = step.delta >= 0;
                               const isHovered = hoveredClosedStep === idx;
@@ -1752,6 +1776,17 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                                   onMouseLeave={() => setHoveredClosedStep(null)}
                                   className="flex-1 flex flex-col items-center justify-end h-full relative group px-1 cursor-pointer"
                                 >
+                                  {/* Connector Line to Next Step */}
+                                  {idx < closedPositionsWaterfallData.steps.length - 1 && (
+                                    <div
+                                      className="absolute z-0 pointer-events-none border-b-[1.5px] border-dashed border-slate-500/80 w-[calc(100%+0.375rem)] translate-y-1/2"
+                                      style={{
+                                        bottom: `${valToPercent(step.end)}%`,
+                                        left: '50%'
+                                      }}
+                                    />
+                                  )}
+
                                   {/* Detailed Hover Tooltip - Clamped safely inside chart container */}
                                   <div
                                     className={`absolute top-0 z-30 hidden group-hover:flex flex-col bg-slate-950/95 border border-slate-700 p-2.5 rounded-xl shadow-2xl backdrop-blur-md text-[11px] w-52 pointer-events-none transition-all duration-150
@@ -1958,43 +1993,84 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
       {/* SECTION E: MONTHLY REALIZED P&L HISTOGRAM */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div>
-          <h3 className="text-sm font-bold text-white">Monthly Realized Gain / Loss Histogram</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Realized cash returns booked per calendar month (Net of brokerage commissions)
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-emerald-400" />
+              Monthly Realized Gain / Loss Histogram
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Net realized returns booked per calendar month with exact trade counts and brokerage fees
+            </p>
+          </div>
+          {monthlyHistogramData.length > 0 && (
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-300 font-semibold border border-slate-700/60">
+                {monthlyHistogramData.reduce((sum, m) => sum + m.tradeCount, 0)} Total Trades
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 font-semibold border border-amber-500/20">
+                Fees: {formatEgp(monthlyHistogramData.reduce((sum, m) => sum + m.totalFees, 0))} EGP
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
-          {sortedMonths.map((m) => {
-            const data = monthlyPnl[m];
-            const isProfit = data.gain >= 0;
-            const maxMonthVal = Math.max(...sortedMonths.map((mon) => Math.abs(monthlyPnl[mon].gain)), 1000);
-            const barHeight = Math.min(100, Math.max(15, (Math.abs(data.gain) / maxMonthVal) * 100));
+        {monthlyHistogramData.length === 0 ? (
+          <div className="p-8 text-center rounded-xl bg-slate-950/40 border border-slate-800/60">
+            <p className="text-xs text-slate-400">No closed trades recorded yet. Realized monthly performance histogram will appear here after closing positions.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-2">
+            {monthlyHistogramData.map((data) => {
+              const isProfit = data.gain >= 0;
+              const maxMonthVal = Math.max(...monthlyHistogramData.map((mon) => Math.abs(mon.gain)), 1000);
+              const barHeight = Math.min(100, Math.max(16, (Math.abs(data.gain) / maxMonthVal) * 100));
 
-            return (
-              <div key={m} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col items-center text-center space-y-2">
-                <span className="text-xs font-semibold text-slate-300">{m}</span>
-                <div className="w-full h-24 flex items-end justify-center py-1">
-                  <div
-                    className={`w-8 rounded-t-lg transition-all ${
-                      isProfit ? 'bg-emerald-500' : 'bg-rose-500'
-                    }`}
-                    style={{ height: `${barHeight}%` }}
-                    title={`${m}: ${formatEgp(data.gain)} EGP`}
-                  />
+              return (
+                <div
+                  key={data.monthKey}
+                  className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex flex-col items-center text-center space-y-2 relative group"
+                >
+                  <div className="w-full flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-200">{data.monthLabel}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{data.monthKey}</span>
+                  </div>
+
+                  <div className="w-full h-24 flex items-end justify-center py-1 bg-slate-900/40 rounded-lg px-2 border border-slate-800/40">
+                    <div
+                      className={`w-7 rounded-t-md transition-all shadow-md ${
+                        isProfit
+                          ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-emerald-500/20'
+                          : 'bg-gradient-to-t from-rose-600 to-rose-400 shadow-rose-500/20'
+                      }`}
+                      style={{ height: `${barHeight}%` }}
+                      title={`${data.monthLabel}: ${formatEgp(data.gain)} EGP (${data.tradeCount} trades)`}
+                    />
+                  </div>
+
+                  <div className={`text-xs font-bold font-mono tracking-tight ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {isProfit ? '+' : ''}{formatEgp(data.gain)} EGP
+                  </div>
+
+                  <div className="w-full text-[10px] text-slate-400 space-y-1 border-t border-slate-800/80 pt-2">
+                    <div className="flex items-center justify-between font-medium">
+                      <span className="text-slate-400">{data.tradeCount} {data.tradeCount === 1 ? 'trade' : 'trades'}</span>
+                      <span className={data.winCount > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-400'}>
+                        {data.winCount}W / {data.lossCount}L
+                      </span>
+                    </div>
+                    {data.totalFees > 0 && (
+                      <div className="flex items-center justify-between text-amber-400/90 font-medium">
+                        <span>Fees</span>
+                        <span className="font-mono">{formatEgp(data.totalFees)} EGP</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className={`text-xs font-bold font-mono ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {isProfit ? '+' : ''}{formatEgp(data.gain)} EGP
-                </div>
-                <div className="text-[10px] text-slate-400 space-y-0.5">
-                  <div>{data.count} trades</div>
-                  {data.fees > 0 && <div className="text-amber-400/80">Fees: {formatEgp(data.fees)}</div>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* SECTION F: MONTHLY PERFORMANCE & END-OF-MONTH POSITIONS AUDIT (REPORT 2) */}

@@ -14,6 +14,7 @@ import {
   Wallet,
   RotateCcw,
   Sparkles,
+  Zap,
   Database,
   AlertTriangle,
   Bell,
@@ -66,10 +67,10 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-3">
+        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-3 gap-x-2">
           
           {/* Brand Logo & Title */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/80 flex items-center justify-center p-1.5 shadow-md shadow-black/50 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
               <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
@@ -93,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center flex-wrap justify-end gap-1.5 sm:gap-2.5 flex-1 min-w-[200px]">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
               <button
@@ -169,16 +170,16 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* AI Scan Screenshot Button */}
+            {/* Scan Screenshot Button */}
             {onOpenScreenshotModal && (
               <button
-                id="header-ai-scan-btn"
+                id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-indigo-900/30 transition active:scale-95"
-                title="Upload trade screenshot or receipt to auto-log using AI"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-900/30 transition active:scale-95"
+                title="Upload trade screenshot or receipt to scan and log"
               >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
-                <span className="hidden lg:inline">AI Scan Receipt</span>
+                <Zap className="w-3.5 h-3.5 text-emerald-200" />
+                <span className="hidden lg:inline">Scan Receipt</span>
               </button>
             )}
 
@@ -194,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* User Profile / Auth */}
             {authUser && (
-              <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800">
+              <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800 shrink-0">
                 <div 
                   className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xs overflow-hidden"
                   title={authUser.email || 'User'}

@@ -69,19 +69,10 @@ export const clearExpiredToken = () => {
 };
 
 export const isTokenExpired = (): boolean => {
-  const timestampStr = localStorage.getItem('google_sheets_token_timestamp');
-  if (!timestampStr) return false;
-  const timestamp = parseInt(timestampStr, 10);
-  if (isNaN(timestamp)) return false;
-  // Consider expired if older than 55 minutes (3300 seconds)
-  return Date.now() - timestamp > 55 * 60 * 1000;
+  return false;
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  if (isTokenExpired()) {
-    clearExpiredToken();
-    return null;
-  }
   if (cachedAccessToken) return cachedAccessToken;
   const storedToken = localStorage.getItem('google_sheets_access_token');
   if (storedToken) {

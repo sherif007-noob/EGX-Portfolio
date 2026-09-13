@@ -61,6 +61,7 @@ export function calculatePortfolioMetrics(
 
   return {
     totalValue: Number(totalValue.toFixed(2)),
+    totalMarketValue: Number(totalEquitiesValue.toFixed(2)),
     totalCost: Number(totalCost.toFixed(2)),
     unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)),
     unrealizedPnlPercent: Number(unrealizedPnlPercent.toFixed(2)),

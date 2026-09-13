@@ -37,7 +37,7 @@ import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/po
 import { getIsQuotaExceeded } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
 import { getAccessToken } from './services/firebaseAuth';
-import { appendTransactionToSheet, updateStockDirectoryInSheet } from './services/googleSheets';
+import { appendTransactionToSheet, updateStockDirectoryInSheet, syncTransactionsLedgerToSheet } from './services/googleSheets';
 import { RotateCcw } from 'lucide-react';
 
 export default function App() {
@@ -198,16 +198,23 @@ export default function App() {
 
     // Auto-sync transaction to Google Sheets if connected
     if (sheetsConfig?.spreadsheetId) {
-      getAccessToken().then((token) => {
-        if (token) {
+      getAccessToken()
+        .then((token) => {
           appendTransactionToSheet(
             sheetsConfig.spreadsheetId,
             newTx,
-            token,
+            token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
           ).catch((err) => console.warn('Background sheets sync:', err));
-        }
-      });
+        })
+        .catch(() => {
+          appendTransactionToSheet(
+            sheetsConfig.spreadsheetId,
+            newTx,
+            undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets sync fallback:', err));
+        });
     }
 
     showToast(`Logged BUY order for ${newTradeData.shares} shares of ${newTradeData.ticker.toUpperCase()}`, 'success');
@@ -253,16 +260,23 @@ export default function App() {
 
     // Auto-sync SELL transaction to Google Sheets if connected
     if (sheetsConfig?.spreadsheetId && result.transaction) {
-      getAccessToken().then((token) => {
-        if (token) {
+      getAccessToken()
+        .then((token) => {
           appendTransactionToSheet(
             sheetsConfig.spreadsheetId,
             result.transaction,
-            token,
+            token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
           ).catch((err) => console.warn('Background sheets sync:', err));
-        }
-      });
+        })
+        .catch(() => {
+          appendTransactionToSheet(
+            sheetsConfig.spreadsheetId,
+            result.transaction,
+            undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets sync fallback:', err));
+        });
     }
 
     showToast(
@@ -302,8 +316,29 @@ export default function App() {
       message: `Deleted ${pos.ticker} position`,
     });
 
-    executeDeletePosition(id);
+    const updatedTxs = executeDeletePosition(id);
     showToast(`Deleted position ${pos.ticker}`, 'success');
+
+    // Auto-sync updated transactions to Google Sheets to clear deleted rows
+    if (sheetsConfig?.spreadsheetId && updatedTxs) {
+      getAccessToken()
+        .then((token) => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            token || undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets delete sync:', err));
+        })
+        .catch(() => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets delete sync fallback:', err));
+        });
+    }
   };
 
   // Delete Transaction
@@ -316,8 +351,29 @@ export default function App() {
       message: `Deleted ${tx.type} ${tx.ticker} transaction`,
     });
 
-    executeDeleteTransaction(id);
+    const updatedTxs = executeDeleteTransaction(id);
     showToast(`Deleted ${tx.type} ${tx.ticker} transaction and updated portfolio balances`, 'success');
+
+    // Auto-sync updated transactions to Google Sheets to clear deleted rows
+    if (sheetsConfig?.spreadsheetId && updatedTxs) {
+      getAccessToken()
+        .then((token) => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            token || undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets delete sync:', err));
+        })
+        .catch(() => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets delete sync fallback:', err));
+        });
+    }
   };
 
   // Edit Transaction
@@ -336,8 +392,29 @@ export default function App() {
       return;
     }
 
-    executeEditTransaction(updatedTx);
+    const updatedTxs = executeEditTransaction(updatedTx);
     showToast(`Updated ${updatedTx.type} ${updatedTx.ticker} transaction record`, 'success');
+
+    // Auto-sync updated transactions to Google Sheets
+    if (sheetsConfig?.spreadsheetId && updatedTxs) {
+      getAccessToken()
+        .then((token) => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            token || undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets edit sync:', err));
+        })
+        .catch(() => {
+          syncTransactionsLedgerToSheet(
+            sheetsConfig.spreadsheetId,
+            updatedTxs,
+            undefined,
+            sheetsConfig.sheetName || 'Transaction Logger'
+          ).catch((err) => console.warn('Background sheets edit sync fallback:', err));
+        });
+    }
   };
 
   // Delete Closed Trade Cycle
@@ -671,6 +748,7 @@ export default function App() {
             positions={positions}
             metrics={metrics}
             cashBalance={cashBalance}
+            transactions={transactions}
           />
         )}
 
@@ -821,18 +899,16 @@ export default function App() {
       <PortfolioBackupModal
         isOpen={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
-        portfolioData={{
-          positions,
-          closedTrades,
-          transactions,
-          cashBalance,
-          tickers,
-        }}
-        onRestorePortfolio={(restored) => {
+        positions={positions}
+        closedTrades={closedTrades}
+        transactions={transactions}
+        cashBalance={cashBalance}
+        tickers={tickers}
+        onRestoreBackup={(restored) => {
           importBackup(restored);
           showToast('Portfolio successfully restored from JSON backup file!', 'success');
         }}
-        onTriggerReconcile={() => {
+        onReconcileLedger={() => {
           reconcileLedger();
           showToast('Portfolio reconciled against trade transactions ledger', 'success');
         }}

@@ -17,7 +17,11 @@ import {
   updateFirestoreTickers,
   updateFirestoreTransactions,
 } from '../services/firestoreStorage';
-import { reconcilePortfolioFromLedger, ReconciliationReport } from '../services/portfolioReconciliation';
+import {
+  reconcilePortfolioFromLedger,
+  getOpenBuyTransactionIdsForTicker,
+  ReconciliationReport,
+} from '../services/portfolioReconciliation';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 
 const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
@@ -151,19 +155,6 @@ export function usePortfolioState() {
     }
   }, [positions, closedTrades, transactions, cashBalance, tickers, capitalDeposits]);
 
-  // Debounced cloud persistence to Firestore
-  useEffect(() => {
-    if (!isInitialized || isRemoteSyncingRef.current) return;
-
-    debouncedSavePortfolioToFirestore({
-      positions,
-      closedTrades,
-      transactions,
-      cashBalance,
-      tickers,
-    });
-  }, [positions, closedTrades, transactions, cashBalance, tickers, isInitialized]);
-
   // Initial Firestore Load and Snapshot Subscription with Auto-Reconciliation
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -287,12 +278,15 @@ export function usePortfolioState() {
     return report;
   }, [transactions, tickers, capitalDeposits, positions]);
 
-  // Fallback check: if transactions exist but positions and closed trades are empty after initial load, reconcile
+  const hasReconciledRef = useRef(false);
+
+  // Force reconciliation once on load to heal any fragmented historical data
   useEffect(() => {
-    if (isInitialized && transactions.length > 0 && positions.length === 0 && closedTrades.length === 0) {
+    if (isInitialized && transactions.length > 0 && !hasReconciledRef.current) {
+      hasReconciledRef.current = true;
       reconcileLedger();
     }
-  }, [isInitialized, transactions.length, positions.length, closedTrades.length, reconcileLedger]);
+  }, [isInitialized, transactions.length, reconcileLedger]);
 
   // Rehydrate open positions with ticker live quotes and company metadata
   const rehydratePositionsWithTickers = useCallback((posList: Position[], tickerList: EGXTicker[]): Position[] => {
@@ -355,6 +349,12 @@ export function usePortfolioState() {
     const grossCost = cleanShares * cleanPrice;
     const totalOutlay = grossCost + cleanFees;
 
+    const maxExistingTradeId = transactions.reduce((max, t) => {
+      const tid = Number(t.tradeId);
+      return !isNaN(tid) && tid > max ? tid : max;
+    }, 0);
+    const nextTradeId = maxExistingTradeId > 0 ? maxExistingTradeId + 1 : (transactions.length + 1);
+
     // Create normalized transaction
     const newTx: TradeTransaction = {
       id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -371,7 +371,7 @@ export function usePortfolioState() {
       stopLoss: tradeInput.stopLoss,
       notes: tradeInput.notes || '',
       cycleTag: tradeInput.cycleTag,
-      tradeId: transactions.length + 1,
+      tradeId: nextTradeId,
     };
 
     const updatedTransactions = [newTx, ...transactions];
@@ -472,28 +472,6 @@ export function usePortfolioState() {
     const exitTime = new Date(sellDate).getTime();
     const holdingDays = Math.max(1, Math.round((exitTime - entryTime) / (1000 * 60 * 60 * 24)) || 1);
 
-    // Create ClosedTrade record
-    const newClosedTrade: ClosedTrade = {
-      id: `closed-${Date.now()}-${tickerKey}`,
-      ticker: tickerKey,
-      companyName: position.companyName,
-      sector: position.sector,
-      shares: cleanShares,
-      buyPrice: position.avgBuyPrice,
-      sellPrice: cleanSellPrice,
-      buyDate: position.buyDate,
-      sellDate,
-      holdingDays,
-      buyFees: Number(proratedBuyFees.toFixed(2)),
-      sellFees: cleanFees,
-      totalFees: totalTradeFees,
-      realizedPnlEgp,
-      realizedPnlPercent,
-      outcome,
-      tradeType: 'Swing',
-      notes: notes || position.notes,
-    };
-
     // Create SELL transaction record
     const newTx: TradeTransaction = {
       id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -515,40 +493,23 @@ export function usePortfolioState() {
     };
 
     const updatedTransactions = [newTx, ...transactions];
-    const updatedClosedTrades = [newClosedTrade, ...closedTrades];
 
-    // Update or remove position
-    let updatedPositions: Position[];
-    const remainingShares = position.shares - cleanShares;
-
-    if (remainingShares > 0.001) {
-      const remainingFees = Math.max(0, (position.totalFees || 0) - proratedBuyFees);
-      updatedPositions = positions.map((p) =>
-        p.id === position.id
-          ? {
-              ...p,
-              shares: remainingShares,
-              totalFees: Number(remainingFees.toFixed(2)),
-            }
-          : p
-      );
-    } else {
-      updatedPositions = positions.filter((p) => p.id !== position.id);
-    }
-
-    const newCash = addToCash !== false
-      ? Number((cashBalance + netProceeds).toFixed(2))
-      : cashBalance;
+    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
 
     setTransactions(updatedTransactions);
-    setClosedTrades(updatedClosedTrades);
-    setPositions(updatedPositions);
-    setCashBalance(newCash);
+    setClosedTrades(report.reconciledClosedTrades);
+    setPositions(report.reconciledPositions);
+    setCashBalance(report.reconciledCashBalance);
 
-    appendTransactionToFirestore(newTx, updatedPositions, updatedClosedTrades, newCash);
+    updateFirestoreTransactions(
+      updatedTransactions,
+      report.reconciledPositions,
+      report.reconciledClosedTrades,
+      report.reconciledCashBalance
+    );
 
-    return { transaction: newTx, closedTrade: newClosedTrade };
-  }, [positions, transactions, closedTrades, cashBalance]);
+    return { transaction: newTx, closedTrade: report.reconciledClosedTrades.find(t => t.ticker === tickerKey) };
+  }, [positions, transactions, closedTrades, cashBalance, tickers, capitalDeposits]);
 
   // Edit Position targets, company name, sector, notes
   const editPosition = useCallback((updatedPosition: Position) => {
@@ -557,27 +518,79 @@ export function usePortfolioState() {
     updateFirestorePositions(updated);
   }, [positions]);
 
-  // Delete Position
+  // Delete Position and its associated open BUY transactions, auto-reconciling cash and ledger
   const deletePosition = useCallback((positionId: string) => {
-    const updated = positions.filter((p) => p.id !== positionId);
-    setPositions(updated);
-    updateFirestorePositions(updated);
-  }, [positions]);
+    const targetPos = positions.find((p) => p.id === positionId);
+    if (!targetPos) {
+      const updated = positions.filter((p) => p.id !== positionId);
+      setPositions(updated);
+      updateFirestorePositions(updated);
+      return transactions;
+    }
 
-  // Edit Transaction Record and optionally re-reconcile
+    const openBuyTxIds = getOpenBuyTransactionIdsForTicker(transactions, targetPos.ticker);
+    const updatedTransactions = transactions.filter((t) => !openBuyTxIds.includes(t.id));
+    
+    // Auto-reconcile portfolio from remaining ledger
+    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
+
+    setTransactions(updatedTransactions);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
+
+    updateFirestoreTransactions(
+      updatedTransactions,
+      report.reconciledPositions,
+      report.reconciledClosedTrades,
+      report.reconciledCashBalance
+    );
+
+    return updatedTransactions;
+  }, [positions, transactions, tickers, capitalDeposits]);
+
+  // Edit Transaction Record and auto-reconcile entire portfolio and cash balance
   const editTransaction = useCallback((updatedTx: TradeTransaction) => {
     const normalized = normalizeTransaction(updatedTx);
     const updatedTransactions = transactions.map((t) => (t.id === normalized.id ? normalized : t));
-    setTransactions(updatedTransactions);
-    updateFirestoreTransactions(updatedTransactions, positions, closedTrades, cashBalance);
-  }, [transactions, positions, closedTrades, cashBalance]);
+    
+    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
 
-  // Delete Transaction Record and auto-reconcile
+    setTransactions(updatedTransactions);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
+
+    updateFirestoreTransactions(
+      updatedTransactions,
+      report.reconciledPositions,
+      report.reconciledClosedTrades,
+      report.reconciledCashBalance
+    );
+
+    return updatedTransactions;
+  }, [transactions, tickers, capitalDeposits]);
+
+  // Delete Transaction Record and auto-reconcile entire portfolio and cash balance
   const deleteTransaction = useCallback((txId: string) => {
     const updatedTransactions = transactions.filter((t) => t.id !== txId);
+    
+    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
+
     setTransactions(updatedTransactions);
-    updateFirestoreTransactions(updatedTransactions, positions, closedTrades, cashBalance);
-  }, [transactions, positions, closedTrades, cashBalance]);
+    setPositions(report.reconciledPositions);
+    setClosedTrades(report.reconciledClosedTrades);
+    setCashBalance(report.reconciledCashBalance);
+
+    updateFirestoreTransactions(
+      updatedTransactions,
+      report.reconciledPositions,
+      report.reconciledClosedTrades,
+      report.reconciledCashBalance
+    );
+
+    return updatedTransactions;
+  }, [transactions, tickers, capitalDeposits]);
 
   // Quick Cash Deposit / Withdrawal / Dividend
   const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => {
@@ -670,10 +683,9 @@ export function usePortfolioState() {
     }, 200);
   }, []);
 
-  // Update Tickers Directory
+  // Update Tickers Directory in local state & localStorage (prevents quota depletion from price ticks)
   const updateTickers = useCallback((newTickers: EGXTicker[]) => {
     setTickers(newTickers);
-    updateFirestoreTickers(newTickers);
   }, []);
 
   return {

@@ -77,8 +77,12 @@ export function useMarketData(
     }
   }, [onUpdatePositions, onUpdateTickers]);
 
+  const hasInitialSyncedRef = useRef(false);
+
   // Initial price sync on mount if session is active or on start
   useEffect(() => {
+    if (hasInitialSyncedRef.current) return;
+    hasInitialSyncedRef.current = true;
     const initialSyncTimer = setTimeout(() => {
       syncLivePrices(false);
     }, 1500);

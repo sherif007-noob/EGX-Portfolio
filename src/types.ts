@@ -26,6 +26,7 @@ export type Sector =
   | 'Tourism & Leisure'
   | 'Textiles & Consumer Durables'
   | 'Education & Services'
+  | 'Liquid Buying Power'
   | 'Other';
 
 export interface EGXTicker {
@@ -94,6 +95,7 @@ export interface ClosedTrade {
 
 export interface PortfolioMetrics {
   totalValue: number;
+  totalMarketValue?: number;
   totalCost: number;
   unrealizedPnlEgp: number;
   unrealizedPnlPercent: number;

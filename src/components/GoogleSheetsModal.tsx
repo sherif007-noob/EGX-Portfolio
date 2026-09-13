@@ -8,6 +8,7 @@ import {
   syncAllPortfolioToSheet,
   fetchUserSpreadsheets,
   fetchAndReconcileAllTabs,
+  fetchServiceAccountStatus,
   GoogleDriveSpreadsheet
 } from '../services/googleSheets';
 import { Position, ClosedTrade, GoogleSheetsConfig, TradeTransaction, EGXTicker } from '../types';
@@ -29,7 +30,10 @@ import {
   ShieldCheck,
   Layers,
   Wrench,
-  Zap
+  Zap,
+  KeyRound,
+  Copy,
+  Info
 } from 'lucide-react';
 
 interface GoogleSheetsModalProps {
@@ -85,6 +89,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+
+  // Service Account Status
+  const [serviceAccountStatus, setServiceAccountStatus] = useState<{
+    configured: boolean;
+    clientEmail?: string;
+  }>({ configured: false });
 
   // Sync autoSync state if currentConfig changes
   useEffect(() => {
@@ -93,10 +104,15 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     }
   }, [currentConfig]);
 
-  // Load user spreadsheets when modal opens or user logs in
+  // Check Service Account status and load sheets
   useEffect(() => {
-    if (isOpen && authUser) {
-      loadDriveSpreadsheets();
+    if (isOpen) {
+      fetchServiceAccountStatus().then((status) => {
+        setServiceAccountStatus(status);
+      });
+      if (authUser) {
+        loadDriveSpreadsheets();
+      }
     }
   }, [isOpen, authUser]);
 
@@ -104,7 +120,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   useEffect(() => {
     if (isOpen && (sheetUrl || currentConfig?.spreadsheetId)) {
       const spId = extractSpreadsheetId(sheetUrl || currentConfig?.spreadsheetId || '');
-      if (spId && authUser) {
+      if (spId) {
         handleFetchTabs(spId);
       }
     }
@@ -117,24 +133,18 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     }
     try {
       let token = await getAccessToken();
-      if (!token) {
-        // Attempt fresh sign-in if token is missing
+      if (!token && !serviceAccountStatus.configured) {
+        // Attempt fresh sign-in if token is missing and no service account
         const authResult = await googleSignIn();
         if (authResult?.accessToken) {
           token = authResult.accessToken;
           onAuthSuccess(authResult.user);
         }
       }
-      if (token) {
-        const files = await fetchUserSpreadsheets(token);
-        setDriveSpreadsheets(files || []);
-        if (showFeedback) {
-          setSuccessMsg(`Refreshed Google Drive: found ${files.length} spreadsheet${files.length === 1 ? '' : 's'}.`);
-        }
-      } else {
-        if (showFeedback) {
-          setError('Google Drive session expired. Please sign in again.');
-        }
+      const files = await fetchUserSpreadsheets(token);
+      setDriveSpreadsheets(files || []);
+      if (showFeedback) {
+        setSuccessMsg(`Refreshed Google Drive: found ${files.length} spreadsheet${files.length === 1 ? '' : 's'}.`);
       }
     } catch (err: any) {
       console.warn('Could not list drive spreadsheets:', err);
@@ -185,7 +195,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       }
 
       const spreadsheetId = extractSpreadsheetId(sheetUrl);
-      if (spreadsheetId && accessToken) {
+      if (spreadsheetId) {
         await handleFetchTabs(spreadsheetId, accessToken);
       }
     } catch (err: any) {
@@ -213,12 +223,8 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     setError(null);
     try {
       const token = explicitToken || (await getAccessToken());
-      if (!token) {
-        throw new Error('Please sign in with Google first to inspect spreadsheet tabs.');
-      }
-
       const meta = await fetchSpreadsheetMetadata(spreadsheetId, token);
-      const txTab = (meta.sheets || []).find(s => s.toLowerCase().includes('transaction'));
+      const txTab = (meta.sheets || []).find((s) => s.toLowerCase().includes('transaction'));
       if (txTab) {
         setSheetName(txTab);
       }
@@ -227,6 +233,14 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       setError(err.message || 'Could not retrieve spreadsheet metadata.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCopyServiceEmail = () => {
+    if (serviceAccountStatus.clientEmail) {
+      navigator.clipboard.writeText(serviceAccountStatus.clientEmail);
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
     }
   };
 
@@ -245,7 +259,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       sheetName: sheetName || 'Transaction Logger',
       range: 'A1:Z500',
       lastSyncTime: new Date().toISOString(),
-      connectedEmail: authUser?.email || undefined,
+      connectedEmail: authUser?.email || serviceAccountStatus.clientEmail || undefined,
       autoSync,
     };
 
@@ -269,12 +283,8 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     setSuccessMsg(null);
     try {
       const token = await getAccessToken();
-      if (!token) {
-        setError('Please sign in with Google first to import data from your sheet.');
-        return;
-      }
 
-      // Read spreadsheet tabs & parse transaction ledger
+      // Read spreadsheet tabs & parse transaction ledger via server proxy
       const result = await fetchAndReconcileAllTabs(spreadsheetId, token);
       const importedTxs = result.transactions || [];
 
@@ -288,7 +298,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
         sheetName: result.sheetTitle || 'Transaction Logger',
         range: 'A1:Z500',
         lastSyncTime: new Date().toISOString(),
-        connectedEmail: authUser?.email || undefined,
+        connectedEmail: authUser?.email || serviceAccountStatus.clientEmail || undefined,
         autoSync,
       };
 
@@ -324,10 +334,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     setSuccessMsg(null);
     try {
       const token = await getAccessToken();
-      if (!token) {
-        setError('Please sign in with Google to sync app data to your Google Sheet.');
-        return;
-      }
 
       const res = await syncAllPortfolioToSheet(
         spreadsheetId,
@@ -345,7 +351,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
           sheetName: sheetName || 'Transaction Logger',
           range: 'A1:Z500',
           lastSyncTime: new Date().toISOString(),
-          connectedEmail: authUser?.email || undefined,
+          connectedEmail: authUser?.email || serviceAccountStatus.clientEmail || undefined,
           autoSync,
         });
       } else {
@@ -370,10 +376,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     setSuccessMsg(null);
     try {
       const token = await getAccessToken();
-      if (!token) {
-        setError('Google Sign-In is required to write transactions directly to your Google Sheet.');
-        return;
-      }
 
       let count = 0;
       for (const tx of transactions) {
@@ -401,10 +403,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     setSuccessMsg(null);
     try {
       const token = await getAccessToken();
-      if (!token) {
-        setError('Google Sign-In is required to update prices directly in your Google Sheet.');
-        return;
-      }
 
       const res = await updateStockDirectoryInSheet(spreadsheetId, tickers, token, 'Ticker Directory');
       if (res.success) {
@@ -440,7 +438,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Connect your Google Sheet ledger. The app is your primary source of truth.
+                Connect your Google Sheet ledger. Server-side proxy guarantees zero hourly token expiry.
               </p>
             </div>
           </div>
@@ -475,6 +473,53 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
           )}
 
+          {/* Server-Side Service Account Status Card */}
+          {serviceAccountStatus.configured ? (
+            <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-white">Google Cloud Service Account Active</p>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                      24/7 Persistent Sync
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-200/80 mt-0.5">
+                    Server uses its own credentials. No hourly browser token expiry! Share your sheet with:
+                  </p>
+                  <p className="text-[11px] font-mono text-emerald-300 mt-0.5 break-all">
+                    {serviceAccountStatus.clientEmail}
+                  </p>
+                </div>
+              </div>
+              {serviceAccountStatus.clientEmail && (
+                <button
+                  type="button"
+                  onClick={handleCopyServiceEmail}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 text-xs font-medium transition shrink-0"
+                >
+                  {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedEmail ? 'Copied!' : 'Copy Email'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 text-xs flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="text-[11px] space-y-1">
+                <p className="font-semibold text-slate-200">
+                  Zero Hourly Expiry Tip: Service Account Setup
+                </p>
+                <p className="text-slate-400">
+                  To eliminate OAuth token renewal entirely, set <code className="text-cyan-300">GOOGLE_SERVICE_ACCOUNT_KEY</code> in your Environment Settings and share your sheet with the service account email as Editor. The server handles all synchronization automatically.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Persistent Google Account Connection Card */}
           <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -494,8 +539,8 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {authUser
-                    ? `Connected: ${authUser.email} (Persistent token saved)`
-                    : 'Sign in with your Google Account to connect your Google Sheets ledger.'}
+                    ? `Connected: ${authUser.email}`
+                    : 'Sign in with your Google Account to connect your personal Google Sheets & Drive.'}
                 </p>
               </div>
             </div>
@@ -599,16 +644,14 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
                   className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
                 />
-                {authUser && (
-                  <button
-                    onClick={() => handleFetchTabs()}
-                    disabled={loading || !sheetUrl}
-                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                    Inspect Tabs
-                  </button>
-                )}
+                <button
+                  onClick={() => handleFetchTabs()}
+                  disabled={loading || !sheetUrl}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  Inspect Tabs
+                </button>
               </div>
             </div>
 

@@ -26,6 +26,7 @@ import {
   Check,
   Calendar,
   Sparkles,
+  Zap,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
@@ -437,10 +438,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 <button
                   type="button"
                   onClick={onOpenScreenshotModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-900/30 transition active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-500/40 text-xs font-bold shadow-sm transition active:scale-95"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
-                  <span>AI Scan Trade Screenshot</span>
+                  <Zap className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Scan Trade Screenshot</span>
                 </button>
               )}
             </div>

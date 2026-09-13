@@ -104,7 +104,7 @@ export function enrichTransactionsForLedger(transactions: TradeTransaction[]): T
 
   return sorted.map((tx, idx) => {
     const ticker = tx.ticker.toUpperCase();
-    const tradeId = tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : (idx + 1));
+    const sequentialTradeId = idx + 1;
     const gross = Math.round(tx.shares * tx.price * 100) / 100;
     const fees = Math.round((tx.fees || 0) * 100) / 100;
     // Net Cash Impact: negative for BUY, positive for SELL
@@ -130,7 +130,7 @@ export function enrichTransactionsForLedger(transactions: TradeTransaction[]): T
 
     return {
       ...tx,
-      tradeId,
+      tradeId: sequentialTradeId,
       grossTradeValue: gross,
       netCashImpact: Math.round(netCash * 100) / 100,
       runningShares: newShares,
@@ -157,26 +157,37 @@ export interface GoogleDriveSpreadsheet {
   modifiedTime?: string;
 }
 
+export interface ServiceAccountStatus {
+  configured: boolean;
+  serviceAccountEmail: string | null;
+  instruction: string;
+}
+
 /**
- * Lists user's spreadsheets from Google Drive using Drive API v3.
+ * Checks whether Google Service Account is configured on the server for 24/7 continuous sync.
  */
-export async function fetchUserSpreadsheets(accessToken: string): Promise<GoogleDriveSpreadsheet[]> {
+export async function fetchServiceAccountStatus(): Promise<ServiceAccountStatus> {
   try {
-    const q = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime%20desc&pageSize=30&fields=files(id,name,modifiedTime)`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const res = await fetch('/api/sheets/service-account-status');
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        throw new GoogleSheetsAuthError(`Google Drive access unauthorized (HTTP ${res.status}). Please reconnect.`);
-      }
+      return { configured: false, serviceAccountEmail: null, instruction: '' };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('Could not fetch service account status:', err);
+    return { configured: false, serviceAccountEmail: null, instruction: '' };
+  }
+}
+
+/**
+ * Lists user's spreadsheets using server proxy (Service Account or OAuth token).
+ */
+export async function fetchUserSpreadsheets(accessToken?: string | null): Promise<GoogleDriveSpreadsheet[]> {
+  try {
+    const res = await fetchWithSheetsProxy('/api/sheets/drive-files', {}, accessToken);
+    if (!res.ok) {
       const errorText = await res.text().catch(() => '');
-      throw new Error(`Failed to list Google Drive files (HTTP ${res.status}): ${errorText || res.statusText}`);
+      throw new Error(`Failed to list Google Drive files (HTTP ${res.status}): ${errorText}`);
     }
     const data = await res.json();
     return data.files || [];
@@ -219,17 +230,30 @@ export class GoogleSheetsRateLimitError extends Error {
   }
 }
 
-async function fetchWithSheetsRetry(
+async function fetchWithSheetsProxy(
   url: string,
-  options: RequestInit,
+  options: RequestInit = {},
+  accessToken?: string | null,
   maxRetries = 2
 ): Promise<Response> {
+  const headers = new Headers(options.headers || {});
+  if (accessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+
   let lastError: unknown;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(url, {
+        ...options,
+        headers,
+      });
+
       if (res.status === 401 || res.status === 403) {
-        throw new GoogleSheetsAuthError(`Google Sheets Auth Error (HTTP ${res.status}): Session expired`);
+        const errorJson = await res.json().catch(() => ({}));
+        throw new GoogleSheetsAuthError(
+          errorJson.error || `Google Sheets Auth Error (HTTP ${res.status}): Session expired or access denied`
+        );
       }
       if (res.status === 429) {
         throw new GoogleSheetsRateLimitError(`Google Sheets Rate Limit (HTTP 429)`);
@@ -253,50 +277,49 @@ async function fetchWithSheetsRetry(
 }
 
 /**
- * Fetches Google Sheet metadata (title, sheet tabs) via Sheets API v4.
+ * Fetches Google Sheet metadata (title, sheet tabs) via server proxy.
  */
 export async function fetchSpreadsheetMetadata(
   spreadsheetId: string,
-  accessToken: string
-): Promise<{ title: string; sheets: string[] }> {
-  const res = await fetchWithSheetsRetry(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Failed to fetch sheet metadata (HTTP ${res.status})`);
-  }
-
-  const data = await res.json();
-  const title = data.properties?.title || 'EGX Portfolio Spreadsheet';
-  const sheets = (data.sheets || []).map((s: any) => s.properties?.title || 'Sheet1');
-  return { title, sheets };
-}
-
-/**
- * Fetches values from a specific range via Sheets API v4.
- */
-export async function fetchSheetValues(
-  spreadsheetId: string,
-  range: string,
-  accessToken: string
-): Promise<string[][]> {
-  const encodedRange = encodeURIComponent(range);
-  const res = await fetchWithSheetsRetry(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodedRange}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
+  accessToken?: string | null
+): Promise<{ title: string; sheets: string[]; sheetsInfo?: { title: string; sheetId: number }[] }> {
+  const cleanId = extractSpreadsheetId(spreadsheetId);
+  const res = await fetchWithSheetsProxy(
+    `/api/sheets/metadata?spreadsheetId=${encodeURIComponent(cleanId)}`,
+    {},
+    accessToken
   );
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Failed to fetch sheet values (HTTP ${res.status})`);
+    throw new Error(errorData.error || `Failed to fetch sheet metadata (HTTP ${res.status})`);
+  }
+
+  const data = await res.json();
+  const title = data.title || 'EGX Portfolio Spreadsheet';
+  const sheets = Array.isArray(data.sheets) ? data.sheets : ['Sheet1'];
+  const sheetsInfo = Array.isArray(data.sheetsInfo) ? data.sheetsInfo : [];
+  return { title, sheets, sheetsInfo };
+}
+
+/**
+ * Fetches values from a specific range via server proxy.
+ */
+export async function fetchSheetValues(
+  spreadsheetId: string,
+  range: string,
+  accessToken?: string | null
+): Promise<string[][]> {
+  const cleanId = extractSpreadsheetId(spreadsheetId);
+  const res = await fetchWithSheetsProxy(
+    `/api/sheets/values?spreadsheetId=${encodeURIComponent(cleanId)}&range=${encodeURIComponent(range)}`,
+    {},
+    accessToken
+  );
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to fetch sheet values (HTTP ${res.status})`);
   }
 
   const data = await res.json();
@@ -904,7 +927,8 @@ export function parseSheetRows(
     const isSell = rawAction.includes('sell') || rawAction.includes('بيع') || rawAction.includes('خروج') || rawAction.includes('exit');
     const type: 'BUY' | 'SELL' = isSell ? 'SELL' : 'BUY';
 
-    const tradeId = tradeIdIdx !== -1 ? parseSheetNumber(row[tradeIdIdx], i) : i;
+    const parsedTradeId = tradeIdIdx !== -1 ? parseSheetNumber(row[tradeIdIdx], 0) : 0;
+    const tradeId = parsedTradeId > 0 ? parsedTradeId : (rawTransactions.length + 1);
     const tradeCycle = tradeCycleIdx !== -1 ? parseSheetNumber(row[tradeCycleIdx], 1) : 1;
     const cycleTag = cycleTagIdx !== -1 && row[cycleTagIdx] && String(row[cycleTagIdx]).trim()
       ? String(row[cycleTagIdx]).trim()
@@ -1198,38 +1222,43 @@ export async function fetchAndReconcileAllTabs(
 export async function ensureSheetTabExists(
   spreadsheetId: string,
   tabTitle: string,
-  accessToken: string
+  accessToken?: string | null
 ): Promise<void> {
   try {
-    const meta = await fetchSpreadsheetMetadata(spreadsheetId, accessToken);
-    if (meta.sheets.some(s => s.toLowerCase() === tabTitle.toLowerCase())) {
+    const cleanId = extractSpreadsheetId(spreadsheetId);
+    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken);
+    if (meta.sheets.some((s) => s.toLowerCase() === tabTitle.toLowerCase())) {
       return; // Tab already exists
     }
 
-    // Add new sheet tab via batchUpdate
-    await fetchWithSheetsRetry(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        requests: [
-          {
-            addSheet: {
-              properties: {
-                title: tabTitle,
-                gridProperties: {
-                  rowCount: 300,
-                  columnCount: 20,
-                  frozenRowCount: 1,
+    // Add new sheet tab via server proxy batchUpdate
+    await fetchWithSheetsProxy(
+      '/api/sheets/batchUpdate',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          spreadsheetId: cleanId,
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: tabTitle,
+                  gridProperties: {
+                    rowCount: 300,
+                    columnCount: 20,
+                    frozenRowCount: 1,
+                  },
                 },
               },
             },
-          },
-        ],
-      }),
-    });
+          ],
+        }),
+      },
+      accessToken
+    );
   } catch (err) {
     console.warn(`Could not verify/create tab "${tabTitle}":`, err);
   }
@@ -1242,17 +1271,18 @@ export async function ensureSheetTabExists(
 export async function appendTransactionToSheet(
   spreadsheetId: string,
   tx: TradeTransaction,
-  accessToken: string,
+  accessToken?: string | null,
   tabName = 'Transaction Logger'
 ): Promise<{ success: boolean; message: string; finalTradeId?: number | string; isAuthError?: boolean }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
     // 1. Resolve exact tab name in Google Sheet case-insensitively
-    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ sheets: [] }));
-    const targetTab = meta.sheets.find(s => s.toLowerCase() === 'transaction logger')
-      || meta.sheets.find(s => s.toLowerCase().includes('transaction') || s.toLowerCase().includes('log'))
-      || tabName;
+    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ title: '', sheets: [], sheetsInfo: [] }));
+    const targetTab =
+      meta.sheets.find((s) => s.toLowerCase() === 'transaction logger') ||
+      meta.sheets.find((s) => s.toLowerCase().includes('transaction') || s.toLowerCase().includes('log')) ||
+      tabName;
 
     await ensureSheetTabExists(cleanId, targetTab, accessToken);
 
@@ -1268,16 +1298,18 @@ export async function appendTransactionToSheet(
       rawHeaders = existingRows[headerRowIdx] || [];
     }
 
-    const headers = rawHeaders.map(h => (h || '').toString().trim());
-    const hasHeader = headers.length > 0 && headers.some(h => {
-      const l = h.toLowerCase();
-      return l.includes('trade') || l.includes('ticker') || l.includes('date') || l.includes('action');
-    });
+    const headers = rawHeaders.map((h) => (h || '').toString().trim());
+    const hasHeader =
+      headers.length > 0 &&
+      headers.some((h) => {
+        const l = h.toLowerCase();
+        return l.includes('trade') || l.includes('ticker') || l.includes('date') || l.includes('action');
+      });
 
     // Build column index map for standard 14 headers
     const colMap: Record<string, number> = {};
     if (hasHeader) {
-      stdHeaders.forEach(stdH => {
+      stdHeaders.forEach((stdH) => {
         colMap[stdH] = findColIndexBySynonyms(headers, stdH);
       });
     } else {
@@ -1290,79 +1322,82 @@ export async function appendTransactionToSheet(
     let maxSheetTradeId = 0;
     let existingSheetRowNumber = -1; // 1-based row number in Google Sheets
 
-    const rawTxTradeId = tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id);
+    const rawTxTradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : tx.id;
     const targetTradeIdStr = String(rawTxTradeId !== undefined ? rawTxTradeId : '').trim();
 
     if (existingRows.length > 0) {
       const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
-      const dateCol = colMap['Date'] >= 0 ? colMap['Date'] : findColIndexBySynonyms(headers, 'Date');
-      const actionCol = colMap['Action'] >= 0 ? colMap['Action'] : findColIndexBySynonyms(headers, 'Action');
       const tickerCol = colMap['Ticker'] >= 0 ? colMap['Ticker'] : findColIndexBySynonyms(headers, 'Ticker');
-      const sharesCol = colMap['Shares'] >= 0 ? colMap['Shares'] : findColIndexBySynonyms(headers, 'Shares');
-      const priceCol = colMap['Price / Share'] >= 0 ? colMap['Price / Share'] : findColIndexBySynonyms(headers, 'Price / Share');
+      const actionCol = colMap['Action'] >= 0 ? colMap['Action'] : findColIndexBySynonyms(headers, 'Action');
 
       for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
         const row = existingRows[r];
         if (!row || row.length === 0) continue;
 
+        // Stop scanning if Total or Summary row is encountered
+        const isTotalRow = row.some((c) => {
+          const s = String(c || '').trim().toLowerCase();
+          return (
+            s === 'total' ||
+            s === 'totals' ||
+            s === 'grand total' ||
+            s === 'portfolio total' ||
+            s === 'summary' ||
+            s === 'مجموع' ||
+            s === 'المجموع' ||
+            s === 'إجمالي' ||
+            s === 'الإجمالي'
+          );
+        });
+        if (isTotalRow) break;
+
         const rowTradeIdStr = tradeIdCol >= 0 ? String(row[tradeIdCol] || '').trim() : '';
+        const rowTickerStr = tickerCol >= 0 ? String(row[tickerCol] || '').trim() : '';
+        const rowActionStr = actionCol >= 0 ? String(row[actionCol] || '').trim() : '';
+        
+        // Only consider valid trade rows (must have a ticker or action) for maxSheetTradeId
+        const isDataRow = rowTickerStr.length > 0 || rowActionStr.length > 0;
         const parsedId = parseInt(rowTradeIdStr, 10);
-        if (!isNaN(parsedId) && parsedId > maxSheetTradeId) {
+        if (isDataRow && !isNaN(parsedId) && parsedId > 0 && parsedId < 10000 && parsedId > maxSheetTradeId) {
           maxSheetTradeId = parsedId;
         }
 
-        // Match 1: By exact Trade ID
-        if (targetTradeIdStr && rowTradeIdStr && rowTradeIdStr === targetTradeIdStr) {
+        // Match by exact numeric Trade ID ONLY if an explicit update to an existing Trade ID is intended
+        // (Do not match auto-generated client IDs like tx-...)
+        if (
+          targetTradeIdStr &&
+          rowTradeIdStr &&
+          rowTradeIdStr === targetTradeIdStr &&
+          !targetTradeIdStr.startsWith('tx-') &&
+          !isNaN(Number(targetTradeIdStr)) &&
+          Number(targetTradeIdStr) <= maxSheetTradeId
+        ) {
           existingSheetRowNumber = r + 1;
           break;
-        }
-
-        // Match 2: By identical transaction content (Date, Action, Ticker, Shares, Price) to prevent duplicate appends
-        if (
-          existingSheetRowNumber < 0 &&
-          dateCol >= 0 && actionCol >= 0 && tickerCol >= 0 && sharesCol >= 0 && priceCol >= 0
-        ) {
-          const rowDate = parseSheetDate(row[dateCol]);
-          const txDate = parseSheetDate(tx.date);
-          const rowAction = String(row[actionCol] || '').trim().toUpperCase();
-          const txAction = String(tx.type || '').trim().toUpperCase();
-          const rowTicker = String(row[tickerCol] || '').trim().toUpperCase();
-          const txTicker = String(tx.ticker || '').trim().toUpperCase();
-          const rowShares = parseSheetNumber(row[sharesCol]);
-          const rowPrice = parseSheetNumber(row[priceCol]);
-
-          if (
-            rowDate === txDate &&
-            rowAction === txAction &&
-            rowTicker === txTicker &&
-            Math.abs(rowShares - tx.shares) < 0.001 &&
-            Math.abs(rowPrice - tx.price) < 0.001
-          ) {
-            existingSheetRowNumber = r + 1;
-          }
         }
       }
     }
 
-    // Determine final Trade ID to write
+    // Determine final Trade ID to write:
+    // When appending a new trade, it is ALWAYS the next sequential ID after maxSheetTradeId in the sheet!
     let finalTradeId: number | string;
-    const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
-    if (existingSheetRowNumber > 0 && tradeIdCol >= 0 && existingRows[existingSheetRowNumber - 1]) {
-      const existingRow = existingRows[existingSheetRowNumber - 1];
-      const existingIdStr = String(existingRow[tradeIdCol] || '').trim();
-      finalTradeId = existingIdStr || targetTradeIdStr || (maxSheetTradeId > 0 ? maxSheetTradeId : 1);
+    const numParsedTx = typeof tx.tradeId === 'number' ? tx.tradeId : parseInt(targetTradeIdStr, 10);
+
+    if (existingSheetRowNumber > 0) {
+      finalTradeId = targetTradeIdStr || (!isNaN(numParsedTx) && numParsedTx > 0 ? numParsedTx : (maxSheetTradeId > 0 ? maxSheetTradeId : 1));
     } else {
-      // Sequential ID relative to the highest existing trade ID in the sheet
+      // New row append: prioritize sheet sequential ordering (maxSheetTradeId + 1)
       if (maxSheetTradeId > 0) {
         finalTradeId = maxSheetTradeId + 1;
+      } else if (!isNaN(numParsedTx) && numParsedTx > 0) {
+        finalTradeId = numParsedTx;
       } else {
-        const numParsed = parseInt(targetTradeIdStr, 10);
-        finalTradeId = !isNaN(numParsed) && numParsed > 0 ? numParsed : Math.max(1, existingRows.length - headerRowIdx);
+        finalTradeId = Math.max(1, existingRows.length - headerRowIdx);
       }
     }
 
     // Prepare row array
-    const maxCol = Math.max(...Object.values(colMap).filter(v => v >= 0), 13);
+    const maxCol = Math.max(...Object.values(colMap).filter((v) => v >= 0), 13);
     const rowData = new Array(maxCol + 1).fill('');
 
     const setVal = (headerName: string, value: any) => {
@@ -1374,9 +1409,12 @@ export async function appendTransactionToSheet(
 
     const gross = tx.grossTradeValue !== undefined ? tx.grossTradeValue : Math.round(tx.shares * tx.price * 100) / 100;
     const fee = tx.fees || 0;
-    const netCash = tx.netCashImpact !== undefined
-      ? tx.netCashImpact
-      : (tx.type === 'BUY' ? -(gross + fee) : (gross - fee));
+    const netCash =
+      tx.netCashImpact !== undefined
+        ? tx.netCashImpact
+        : tx.type === 'BUY'
+        ? -(gross + fee)
+        : gross - fee;
 
     setVal('Trade ID', finalTradeId);
     setVal('Date', tx.date || new Date().toISOString().split('T')[0]);
@@ -1394,43 +1432,163 @@ export async function appendTransactionToSheet(
     setVal('Cycle Tag', tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`);
 
     if (existingSheetRowNumber > 0) {
-      // UPDATE existing row
+      // UPDATE existing row via server proxy
       const updateRange = `${targetTab}!A${existingSheetRowNumber}:${colToLetter(rowData.length - 1)}${existingSheetRowNumber}`;
-      const updateRes = await fetchWithSheetsRetry(
-        `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
+      const updateRes = await fetchWithSheetsProxy(
+        '/api/sheets/values',
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ values: [rowData] }),
-        }
+          body: JSON.stringify({
+            spreadsheetId: cleanId,
+            range: updateRange,
+            values: [rowData],
+          }),
+        },
+        accessToken
       );
       if (!updateRes.ok) {
         const err = await updateRes.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${updateRes.status}`);
+        throw new Error(err.error || `HTTP ${updateRes.status}`);
       }
       return { success: true, message: `Updated Trade ID ${finalTradeId} in "${targetTab}"`, finalTradeId };
     } else {
-      // APPEND new row
-      const valuesToAppend = hasHeader ? [rowData] : [stdHeaders, rowData];
-      const appendRes = await fetchWithSheetsRetry(
-        `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(targetTab)}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ values: valuesToAppend }),
+      // Locate the exact bottom of the transaction ledger (ignoring any trailing Total/Summary row or empty padding)
+      let lastTradeRowIdx = headerRowIdx;
+      const tickerCol = colMap['Ticker'] >= 0 ? colMap['Ticker'] : findColIndexBySynonyms(headers, 'Ticker');
+      const actionCol = colMap['Action'] >= 0 ? colMap['Action'] : findColIndexBySynonyms(headers, 'Action');
+      const tradeIdCol = colMap['Trade ID'] >= 0 ? colMap['Trade ID'] : findColIndexBySynonyms(headers, 'Trade ID');
+
+      for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
+        const row = existingRows[r];
+        if (!row || row.length === 0) continue;
+
+        // Stop scanning if Total or Summary row is reached
+        const isTotalRow = row.some((c) => {
+          const s = String(c || '').trim().toLowerCase();
+          return (
+            s === 'total' ||
+            s === 'totals' ||
+            s === 'grand total' ||
+            s === 'portfolio total' ||
+            s === 'summary' ||
+            s === 'مجموع' ||
+            s === 'المجموع' ||
+            s === 'إجمالي' ||
+            s === 'الإجمالي'
+          );
+        });
+        if (isTotalRow) {
+          break;
         }
-      );
-      if (!appendRes.ok) {
-        const err = await appendRes.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${appendRes.status}`);
+
+        const rowTickerStr = tickerCol >= 0 ? String(row[tickerCol] || '').trim() : '';
+        const rowActionStr = actionCol >= 0 ? String(row[actionCol] || '').trim() : '';
+        const rowTradeIdStr = tradeIdCol >= 0 ? String(row[tradeIdCol] || '').trim() : '';
+
+        const isTrade =
+          rowTickerStr.length > 0 ||
+          rowActionStr.length > 0 ||
+          (!isNaN(parseInt(rowTradeIdStr, 10)) && parseInt(rowTradeIdStr, 10) > 0);
+
+        if (isTrade) {
+          lastTradeRowIdx = r;
+        }
       }
-      return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} to "${targetTab}"`, finalTradeId };
+
+      if (hasHeader) {
+        const nextAppendRowNumber = lastTradeRowIdx + 2; // 1-indexed row number in Google Sheets
+        const targetRowIdx0 = nextAppendRowNumber - 1; // 0-based row index in sheet
+
+        // If the row where we intend to write already has content (like a Totals row or formula),
+        // insert a new blank row via batchUpdate so the Totals row is pushed down and its formulas expand!
+        const isTargetRowOccupied =
+          targetRowIdx0 < existingRows.length &&
+          existingRows[targetRowIdx0] &&
+          existingRows[targetRowIdx0].some((c) => String(c || '').trim().length > 0);
+
+        if (isTargetRowOccupied) {
+          const targetSheetInfo = meta.sheetsInfo?.find((s) => s.title.toLowerCase() === targetTab.toLowerCase());
+          const targetSheetId = targetSheetInfo?.sheetId ?? 0;
+
+          await fetchWithSheetsProxy(
+            '/api/sheets/batchUpdate',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                spreadsheetId: cleanId,
+                requests: [
+                  {
+                    insertDimension: {
+                      range: {
+                        sheetId: targetSheetId,
+                        dimension: 'ROWS',
+                        startIndex: targetRowIdx0,
+                        endIndex: targetRowIdx0 + 1,
+                      },
+                      inheritFromBefore: true,
+                    },
+                  },
+                ],
+              }),
+            },
+            accessToken
+          ).catch((err) => {
+            console.warn('Could not insert row before Totals row via batchUpdate:', err);
+          });
+        }
+
+        const appendRange = `${targetTab}!A${nextAppendRowNumber}:${colToLetter(rowData.length - 1)}${nextAppendRowNumber}`;
+        const appendRes = await fetchWithSheetsProxy(
+          '/api/sheets/values',
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spreadsheetId: cleanId,
+              range: appendRange,
+              values: [rowData],
+            }),
+          },
+          accessToken
+        );
+        if (!appendRes.ok) {
+          const err = await appendRes.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${appendRes.status}`);
+        }
+        return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} as Trade #${finalTradeId} at row ${nextAppendRowNumber} in "${targetTab}"`, finalTradeId };
+      } else {
+        // No header detected yet, initialize header at row 1 and trade at row 2
+        const valuesToAppend = [stdHeaders, rowData];
+        const appendRange = `${targetTab}!A1:${colToLetter(stdHeaders.length - 1)}2`;
+        const appendRes = await fetchWithSheetsProxy(
+          '/api/sheets/values',
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spreadsheetId: cleanId,
+              range: appendRange,
+              values: valuesToAppend,
+            }),
+          },
+          accessToken
+        );
+        if (!appendRes.ok) {
+          const err = await appendRes.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${appendRes.status}`);
+        }
+        return { success: true, message: `Appended trade ${tx.type} for ${tx.ticker} as Trade #${finalTradeId} to "${targetTab}"`, finalTradeId };
+      }
     }
   } catch (err: any) {
     const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
@@ -1446,7 +1604,7 @@ export async function appendTransactionToSheet(
 export async function updateStockDirectoryInSheet(
   spreadsheetId: string,
   tickers: EGXTicker[],
-  accessToken: string,
+  accessToken?: string | null,
   tabName = 'Ticker Directory'
 ): Promise<{ success: boolean; message: string; isAuthError?: boolean }> {
   try {
@@ -1454,9 +1612,10 @@ export async function updateStockDirectoryInSheet(
 
     // 1. Resolve tab name case-insensitively
     const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ sheets: [] }));
-    const targetTab = meta.sheets.find(s => s.toLowerCase() === 'ticker directory')
-      || meta.sheets.find(s => s.toLowerCase().includes('ticker') || s.toLowerCase().includes('directory'))
-      || tabName;
+    const targetTab =
+      meta.sheets.find((s) => s.toLowerCase() === 'ticker directory') ||
+      meta.sheets.find((s) => s.toLowerCase().includes('ticker') || s.toLowerCase().includes('directory')) ||
+      tabName;
 
     await ensureSheetTabExists(cleanId, targetTab, accessToken);
 
@@ -1472,11 +1631,13 @@ export async function updateStockDirectoryInSheet(
       rawHeaders = existingRows[headerRowIdx] || [];
     }
 
-    const headers = rawHeaders.map(h => (h || '').toString().trim());
-    const hasHeader = headers.length > 0 && headers.some(h => {
-      const l = h.toLowerCase();
-      return l.includes('ticker') || l.includes('price') || l.includes('company');
-    });
+    const headers = rawHeaders.map((h) => (h || '').toString().trim());
+    const hasHeader =
+      headers.length > 0 &&
+      headers.some((h) => {
+        const l = h.toLowerCase();
+        return l.includes('ticker') || l.includes('price') || l.includes('company');
+      });
 
     let tickerCol = hasHeader ? findColIndexBySynonyms(headers, 'Ticker') : 0;
     let nameCol = hasHeader ? findColIndexBySynonyms(headers, 'Company Name') : 1;
@@ -1500,14 +1661,14 @@ export async function updateStockDirectoryInSheet(
       }
     }
 
-    let updatedRows = hasHeader ? existingRows.map(r => [...r]) : [[...stdHeaders]];
+    let updatedRows = hasHeader ? existingRows.map((r) => [...r]) : [[...stdHeaders]];
 
     if (!hasHeader) {
       headerRowIdx = 0;
       updatedRows = [[...stdHeaders]];
     }
 
-    tickers.forEach(t => {
+    tickers.forEach((t) => {
       const cleanT = t.ticker.toUpperCase();
       const rowIdx = existingTickerRowMap[cleanT];
 
@@ -1534,31 +1695,35 @@ export async function updateStockDirectoryInSheet(
       }
     });
 
-    // Write full Ticker Directory sheet back
-    const maxCols = Math.max(...updatedRows.map(r => r.length), 4);
+    // Write full Ticker Directory sheet back via server proxy
+    const maxCols = Math.max(...updatedRows.map((r) => r.length), 4);
     const lastColLetter = colToLetter(maxCols - 1);
     const updateRange = `${targetTab}!A1:${lastColLetter}${updatedRows.length}`;
 
-    const updateRes = await fetchWithSheetsRetry(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED`,
+    const updateRes = await fetchWithSheetsProxy(
+      '/api/sheets/values',
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ values: updatedRows }),
-      }
+        body: JSON.stringify({
+          spreadsheetId: cleanId,
+          range: updateRange,
+          values: updatedRows,
+        }),
+      },
+      accessToken
     );
 
     if (!updateRes.ok) {
       const err = await updateRes.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${updateRes.status}`);
+      throw new Error(err.error || `HTTP ${updateRes.status}`);
     }
 
     return {
       success: true,
-      message: `Successfully updated ${tickers.length} EGX equities in "${targetTab}"`
+      message: `Successfully updated ${tickers.length} EGX equities in "${targetTab}"`,
     };
   } catch (err: any) {
     const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
@@ -1568,32 +1733,55 @@ export async function updateStockDirectoryInSheet(
 }
 
 /**
- * Pushes full transactions and stock directory to Google Sheet using exact column schemas.
+ * Pushes full transactions ledger to Google Sheet "Transaction Logger" tab.
+ * Automatically clears any old/deleted trailing rows so the Google Sheet ledger
+ * remains 100% in parity with the application.
  */
-export async function syncAllPortfolioToSheet(
+export async function syncTransactionsLedgerToSheet(
   spreadsheetId: string,
-  positions: Position[],
-  closedTrades: ClosedTrade[],
   transactions: TradeTransaction[],
-  tickers: EGXTicker[],
-  accessToken: string
+  accessToken?: string | null,
+  tabName = 'Transaction Logger'
 ): Promise<{ success: boolean; message: string; isAuthError?: boolean }> {
   try {
     const cleanId = extractSpreadsheetId(spreadsheetId);
 
-    // 1. Sync "Transaction Logger" tab (Exact 14 headers)
-    await ensureSheetTabExists(cleanId, 'Transaction Logger', accessToken);
+    // 1. Resolve exact tab name case-insensitively
+    const meta = await fetchSpreadsheetMetadata(cleanId, accessToken).catch(() => ({ title: '', sheets: [], sheetsInfo: [] }));
+    const targetTab =
+      meta.sheets.find((s) => s.toLowerCase() === 'transaction logger') ||
+      meta.sheets.find((s) => s.toLowerCase().includes('transaction') || s.toLowerCase().includes('log')) ||
+      tabName;
+
+    await ensureSheetTabExists(cleanId, targetTab, accessToken);
+
+    const existingRows = await fetchSheetValues(cleanId, `${targetTab}!A1:N500`, accessToken).catch(() => []);
+    
+    let headerRowIdx = 0;
+    if (existingRows.length > 0) {
+      headerRowIdx = findHeaderRowIndex(existingRows);
+    }
+    const startRow = headerRowIdx + 1; // 1-indexed row number (e.g. 6)
+
+    const rawHeaders =
+      existingRows[headerRowIdx] && existingRows[headerRowIdx].some((c) => String(c || '').trim().length > 0)
+        ? existingRows[headerRowIdx]
+        : TRANSACTION_LOGGER_HEADERS;
+
     const enrichedTxs = enrichTransactionsForLedger(transactions);
 
-    const txRows = enrichedTxs.map(tx => {
+    const txRows = enrichedTxs.map((tx) => {
       const gross = tx.grossTradeValue !== undefined ? tx.grossTradeValue : Math.round(tx.shares * tx.price * 100) / 100;
       const fee = tx.fees || 0;
-      const netCash = tx.netCashImpact !== undefined
-        ? tx.netCashImpact
-        : (tx.type === 'BUY' ? -(gross + fee) : (gross - fee));
+      const netCash =
+        tx.netCashImpact !== undefined
+          ? tx.netCashImpact
+          : tx.type === 'BUY'
+          ? -(gross + fee)
+          : gross - fee;
 
       return [
-        tx.tradeId !== undefined ? tx.tradeId : (tx.trade_id !== undefined ? tx.trade_id : tx.id),
+        tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : tx.id,
         tx.date,
         tx.type,
         tx.ticker.toUpperCase(),
@@ -1606,30 +1794,170 @@ export async function syncAllPortfolioToSheet(
         tx.notes || '',
         tx.runningShares !== undefined ? tx.runningShares : '',
         tx.tradeCycle || 1,
-        tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`
+        tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`,
       ];
     });
 
-    await fetchWithSheetsRetry(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cleanId}/values/${encodeURIComponent('Transaction Logger')}!A1:N${txRows.length + 1}?valueInputOption=USER_ENTERED`,
+    // Count previous trade rows in sheet and find any Total/Summary row
+    let totalRowIdx = -1;
+    let previousTradeRowsCount = 0;
+    for (let r = headerRowIdx + 1; r < existingRows.length; r++) {
+      const row = existingRows[r];
+      if (!row || row.length === 0) continue;
+
+      const isTotal = row.some((c) => {
+        const s = String(c || '').trim().toLowerCase();
+        return (
+          s === 'total' ||
+          s === 'totals' ||
+          s === 'grand total' ||
+          s === 'portfolio total' ||
+          s === 'summary' ||
+          s === 'مجموع' ||
+          s === 'المجموع' ||
+          s === 'إجمالي' ||
+          s === 'الإجمالي'
+        );
+      });
+      if (isTotal) {
+        totalRowIdx = r;
+        break;
+      }
+
+      const hasContent = row.some((c) => String(c || '').trim().length > 0);
+      if (hasContent) {
+        previousTradeRowsCount++;
+      }
+    }
+
+    const targetSheetInfo = meta.sheetsInfo?.find((s) => s.title.toLowerCase() === targetTab.toLowerCase());
+    const targetSheetId = targetSheetInfo?.sheetId ?? 0;
+
+    // If there is an existing Total row below the trades, dynamically insert or delete rows so the Total row shifts seamlessly
+    if (totalRowIdx >= 0) {
+      if (txRows.length > previousTradeRowsCount) {
+        const insertCount = txRows.length - previousTradeRowsCount;
+        await fetchWithSheetsProxy(
+          '/api/sheets/batchUpdate',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spreadsheetId: cleanId,
+              requests: [
+                {
+                  insertDimension: {
+                    range: {
+                      sheetId: targetSheetId,
+                      dimension: 'ROWS',
+                      startIndex: totalRowIdx,
+                      endIndex: totalRowIdx + insertCount,
+                    },
+                    inheritFromBefore: true,
+                  },
+                },
+              ],
+            }),
+          },
+          accessToken
+        ).catch((err) => console.warn('Could not insert rows for sync:', err));
+      } else if (txRows.length < previousTradeRowsCount) {
+        const deleteCount = previousTradeRowsCount - txRows.length;
+        await fetchWithSheetsProxy(
+          '/api/sheets/batchUpdate',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spreadsheetId: cleanId,
+              requests: [
+                {
+                  deleteDimension: {
+                    range: {
+                      sheetId: targetSheetId,
+                      dimension: 'ROWS',
+                      startIndex: headerRowIdx + 1 + txRows.length,
+                      endIndex: headerRowIdx + 1 + previousTradeRowsCount,
+                    },
+                  },
+                },
+              ],
+            }),
+          },
+          accessToken
+        ).catch((err) => console.warn('Could not delete rows for sync:', err));
+      }
+    }
+
+    const tableRows: any[][] = [rawHeaders, ...txRows];
+    // If no Total row was present, pad any remaining deleted trade rows with empty strings
+    if (totalRowIdx < 0) {
+      const targetRowCount = Math.max(txRows.length, previousTradeRowsCount);
+      while (tableRows.length <= targetRowCount) {
+        tableRows.push(new Array(14).fill(''));
+      }
+    }
+
+    const endRow = startRow + tableRows.length - 1;
+    const putRes = await fetchWithSheetsProxy(
+      '/api/sheets/values',
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          values: [TRANSACTION_LOGGER_HEADERS, ...txRows],
+          spreadsheetId: cleanId,
+          range: `${targetTab}!A${startRow}:N${endRow}`,
+          values: tableRows,
         }),
-      }
+      },
+      accessToken
     );
+
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${putRes.status}`);
+    }
+
+    return {
+      success: true,
+      message: `Synchronized ${transactions.length} transactions in "${targetTab}"`,
+    };
+  } catch (err: any) {
+    const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
+    console.error('Failed syncing transactions ledger to Google Sheet:', err);
+    return { success: false, message: err.message || 'Failed sync', isAuthError: isAuth };
+  }
+}
+
+/**
+ * Pushes full transactions and stock directory to Google Sheet using exact column schemas.
+ */
+export async function syncAllPortfolioToSheet(
+  spreadsheetId: string,
+  positions: Position[],
+  closedTrades: ClosedTrade[],
+  transactions: TradeTransaction[],
+  tickers: EGXTicker[],
+  accessToken?: string | null
+): Promise<{ success: boolean; message: string; isAuthError?: boolean }> {
+  try {
+    const cleanId = extractSpreadsheetId(spreadsheetId);
+
+    // 1. Sync "Transaction Logger" tab (Exact 14 headers + clear old rows)
+    await syncTransactionsLedgerToSheet(cleanId, transactions, accessToken, 'Transaction Logger');
 
     // 2. Sync "Ticker Directory" tab (Exact 4 headers)
     await updateStockDirectoryInSheet(cleanId, tickers, accessToken, 'Ticker Directory');
 
     return {
       success: true,
-      message: `Complete 2-way sync: ${transactions.length} Transactions written to "Transaction Logger" and ${tickers.length} stock quotes updated in "Ticker Directory"!`
+      message: `Complete 2-way sync: ${transactions.length} Transactions written to "Transaction Logger" and ${tickers.length} stock quotes updated in "Ticker Directory"!`,
     };
   } catch (err: any) {
     const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));

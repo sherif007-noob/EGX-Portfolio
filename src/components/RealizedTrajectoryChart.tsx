@@ -59,7 +59,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
         tradePercent: 0,
         cumulativePnl: 0,
         fees: 0,
-        outcome: 'START' as const,
+        outcome: 'START' as 'START' | 'WIN' | 'LOSS' | 'BREAKEVEN',
       },
     ];
 

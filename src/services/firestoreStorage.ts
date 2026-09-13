@@ -154,15 +154,37 @@ export async function flushPendingWriteQueue(): Promise<number> {
   return flushedCount;
 }
 
-// Auto-flush queue on window online or visibility change
+// Auto-flush queue on window online or visibility change, and probe for quota recovery
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     setQuotaExceeded(false);
     flushPendingWriteQueue();
   });
   window.addEventListener('focus', () => {
-    flushPendingWriteQueue();
+    if (quotaExceededState) {
+      // Probe if Firestore has recovered
+      testFirestoreConnection().then((isOk) => {
+        if (isOk) {
+          setQuotaExceeded(false);
+          flushPendingWriteQueue();
+        }
+      });
+    } else {
+      flushPendingWriteQueue();
+    }
   });
+
+  // Periodic recovery check every 3 minutes if quota exceeded was flagged
+  setInterval(() => {
+    if (quotaExceededState) {
+      testFirestoreConnection().then((isOk) => {
+        if (isOk) {
+          setQuotaExceeded(false);
+          flushPendingWriteQueue();
+        }
+      });
+    }
+  }, 180000);
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -239,12 +261,32 @@ export async function testFirestoreConnection(): Promise<boolean> {
   }
 }
 
+export function updateLastSavedSnapshot(data: {
+  positions?: Position[];
+  closedTrades?: ClosedTrade[];
+  transactions?: TradeTransaction[];
+  cashBalance?: number;
+}) {
+  const safePositions = data.positions || [];
+  const safeClosedTrades = data.closedTrades || [];
+  const safeTransactions = data.transactions || [];
+  lastSerializedPayload = JSON.stringify({
+    positions: safePositions.map((p) => ({ id: p.id, shares: p.shares, avgBuyPrice: p.avgBuyPrice })),
+    closedTradesCount: safeClosedTrades.length,
+    transactionsCount: safeTransactions.length,
+    latestTxId: safeTransactions[0]?.id || '',
+    cashBalance: data.cashBalance,
+  });
+}
+
 export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocument | null> {
   try {
     const docRef = doc(db, 'portfolios', 'main_portfolio');
     const snapshot = await getDoc(docRef);
     if (snapshot.exists()) {
-      return snapshot.data() as PortfolioDataDocument;
+      const data = snapshot.data() as PortfolioDataDocument;
+      updateLastSavedSnapshot(data);
+      return data;
     }
     return null;
   } catch (error) {
@@ -484,7 +526,9 @@ export function subscribeToPortfolioFromFirestore(
         return;
       }
       if (snapshot.exists()) {
-        onData(snapshot.data() as PortfolioDataDocument);
+        const data = snapshot.data() as PortfolioDataDocument;
+        updateLastSavedSnapshot(data);
+        onData(data);
       }
     },
     (error) => {

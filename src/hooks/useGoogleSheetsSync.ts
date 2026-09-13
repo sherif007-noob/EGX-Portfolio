@@ -4,11 +4,10 @@ import {
   initAuth,
   logout,
   getAccessToken,
-  isTokenExpired,
   clearExpiredToken,
   googleSignIn,
 } from '../services/firebaseAuth';
-import { syncAllPortfolioToSheet } from '../services/googleSheets';
+import { syncAllPortfolioToSheet, fetchServiceAccountStatus } from '../services/googleSheets';
 import { User } from 'firebase/auth';
 
 const STORAGE_KEY_SHEETS = 'egx_pwa_sheets_config_v1';
@@ -35,7 +34,8 @@ export function useGoogleSheetsSync(
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
-  const [isSheetsTokenExpired, setIsSheetsTokenExpired] = useState<boolean>(() => isTokenExpired());
+  const [isSheetsTokenExpired, setIsSheetsTokenExpired] = useState<boolean>(false);
+  const [isServiceAccountActive, setIsServiceAccountActive] = useState<boolean>(false);
 
   // Save sheets config to localStorage
   useEffect(() => {
@@ -46,42 +46,26 @@ export function useGoogleSheetsSync(
     }
   }, [sheetsConfig]);
 
+  // Check Service Account status on load
+  useEffect(() => {
+    fetchServiceAccountStatus().then((status) => {
+      setIsServiceAccountActive(status.configured);
+    });
+  }, []);
+
   // Initialize Firebase Auth listener
   useEffect(() => {
     const unsubscribe = initAuth((user) => {
       setAuthUser(user);
-      setIsSheetsTokenExpired(isTokenExpired());
     });
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  // Check token expiry periodically
-  useEffect(() => {
-    const checkExpiry = () => {
-      setIsSheetsTokenExpired(isTokenExpired());
-    };
-    checkExpiry();
-    const interval = setInterval(checkExpiry, 60000);
-    window.addEventListener('focus', checkExpiry);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', checkExpiry);
-    };
-  }, []);
-
   // Perform full two-way sync or export to Google Sheets
   const syncToSheets = useCallback(async () => {
     const token = await getAccessToken();
-    if (!token || isTokenExpired()) {
-      setIsSheetsTokenExpired(true);
-      setSheetsSyncFeedback({
-        type: 'error',
-        message: 'Google Sheets OAuth session has expired. Please re-authenticate via Google Sheets modal.',
-      });
-      return { success: false, message: 'Token expired' };
-    }
 
     if (!sheetsConfig?.spreadsheetId) {
       setSheetsSyncFeedback({
@@ -116,7 +100,7 @@ export function useGoogleSheetsSync(
           setIsSheetsTokenExpired(true);
           setSheetsSyncFeedback({
             type: 'error',
-            message: 'Google Sheets OAuth session has expired. Please re-authenticate via Google Sheets modal.',
+            message: 'Google Sheets session requires authentication or Service Account setup. Please check settings.',
           });
         } else {
           setSheetsSyncFeedback({
@@ -164,7 +148,6 @@ export function useGoogleSheetsSync(
     await logout();
     clearExpiredToken();
     setAuthUser(null);
-    setIsSheetsTokenExpired(true);
   }, []);
 
   return {
@@ -173,6 +156,7 @@ export function useGoogleSheetsSync(
     isSyncingToSheets,
     sheetsSyncFeedback,
     isSheetsTokenExpired,
+    isServiceAccountActive,
     syncToSheets,
     updateSheetsConfig,
     handleLogin,

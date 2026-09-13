@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ClosedTrade, Position } from '../../types';
+import { getMonthKey, getMonthLabel, getLastDayOfMonth, dmyToIso, formatDateDDMMYYYY } from '../../utils/dateUtils';
 
 interface MonthlyPerformanceReportProps {
   closedTrades: ClosedTrade[];
@@ -56,49 +57,51 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
     const monthKeys = new Set<string>();
 
     closedTrades.forEach((t) => {
-      if (t.sellDate) monthKeys.add(t.sellDate.slice(0, 7));
-      if (t.buyDate) monthKeys.add(t.buyDate.slice(0, 7));
+      const sellKey = getMonthKey(t.sellDate);
+      if (sellKey) monthKeys.add(sellKey);
+      const buyKey = getMonthKey(t.buyDate);
+      if (buyKey) monthKeys.add(buyKey);
     });
 
     positions.forEach((p) => {
-      if (p.buyDate) monthKeys.add(p.buyDate.slice(0, 7));
+      const buyKey = getMonthKey(p.buyDate);
+      if (buyKey) monthKeys.add(buyKey);
     });
 
-    const currentMonthStr = new Date().toISOString().slice(0, 7);
-    monthKeys.add(currentMonthStr);
+    const currentMonthKey = getMonthKey(new Date().toISOString());
+    if (currentMonthKey) monthKeys.add(currentMonthKey);
 
-    const sortedMonthKeys = Array.from(monthKeys).sort().reverse();
+    const sortedMonthKeys = Array.from(monthKeys).filter(Boolean).sort().reverse();
 
     return sortedMonthKeys.map((monthKey) => {
-      const [yearStr, monthStr] = monthKey.split('-');
-      const year = parseInt(yearStr, 10);
-      const month = parseInt(monthStr, 10);
-
-      // Accurate last day of this calendar month
-      const lastDayDate = new Date(year, month, 0);
-      const lastDayOfMonth = `${monthKey}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
-
-      // Month Name representation (e.g. September 2026)
-      const monthDateObj = new Date(year, month - 1, 1);
-      const monthLabel = monthDateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const lastDayOfMonth = getLastDayOfMonth(monthKey);
+      const monthLabel = getMonthLabel(monthKey, 'long');
 
       // 1. Trades liquidated/closed in this month
       const liquidatedTrades = closedTrades.filter(
-        (t) => t.sellDate && t.sellDate.startsWith(monthKey)
+        (t) => getMonthKey(t.sellDate) === monthKey
       );
 
       const wins = liquidatedTrades.filter((t) => t.outcome === 'WIN');
       const losses = liquidatedTrades.filter((t) => t.outcome === 'LOSS');
-      const grossGain = wins.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
-      const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.realizedPnlEgp, 0));
-      const netRealized = grossGain - grossLoss;
-      const fees = liquidatedTrades.reduce((acc, t) => acc + (t.totalFees || 0), 0);
+      const grossGain = wins.reduce((acc, t) => acc + (t.realizedPnlEgp > 0 ? t.realizedPnlEgp : 0), 0);
+      const grossLoss = Math.abs(losses.reduce((acc, t) => acc + (t.realizedPnlEgp < 0 ? t.realizedPnlEgp : 0), 0));
+      const netRealized = liquidatedTrades.reduce((acc, t) => acc + (t.realizedPnlEgp || 0), 0);
+      const fees = liquidatedTrades.reduce((acc, t) => {
+        const tradeFees = typeof t.totalFees === 'number' && t.totalFees > 0 
+          ? t.totalFees 
+          : ((t.buyFees || 0) + (t.sellFees || 0));
+        return acc + tradeFees;
+      }, 0);
       const winRate = liquidatedTrades.length > 0 ? (wins.length / liquidatedTrades.length) * 100 : null;
 
       // 2. Accurate Month-End Holdings:
       // a) Positions currently active where buyDate <= lastDayOfMonth
       const currentActiveHoldings: MonthEndHolding[] = positions
-        .filter((p) => p.buyDate <= lastDayOfMonth)
+        .filter((p) => {
+          const buyIso = dmyToIso(p.buyDate);
+          return buyIso <= lastDayOfMonth;
+        })
         .map((p) => {
           const costBasis = p.shares * p.avgBuyPrice;
           const currentVal = p.shares * p.currentPrice;
@@ -123,8 +126,15 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
 
       // b) Closed trades that were active at month end: bought <= lastDayOfMonth AND sold > lastDayOfMonth
       const closedLaterHoldings: MonthEndHolding[] = closedTrades
-        .filter((t) => t.buyDate <= lastDayOfMonth && t.sellDate && t.sellDate > lastDayOfMonth)
+        .filter((t) => {
+          const buyIso = dmyToIso(t.buyDate);
+          const sellIso = t.sellDate ? dmyToIso(t.sellDate) : '';
+          return buyIso <= lastDayOfMonth && (!sellIso || sellIso > lastDayOfMonth);
+        })
         .map((t) => {
+          const tradeFees = typeof t.totalFees === 'number' && t.totalFees > 0 
+            ? t.totalFees 
+            : ((t.buyFees || 0) + (t.sellFees || 0));
           return {
             id: `held-${t.id}`,
             ticker: t.ticker,
@@ -136,7 +146,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
             marketPrice: t.sellPrice,
             pnlEgp: t.realizedPnlEgp,
             pnlPercent: t.realizedPnlPercent,
-            fees: t.totalFees || 0,
+            fees: tradeFees,
             type: 'HELD_AT_MONTH_END_LATER_CLOSED',
             exitDate: t.sellDate,
             notes: t.notes,
@@ -161,6 +171,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       };
     });
   }, [closedTrades, positions]);
+
 
   // Months available for tab selector
   const availableMonths = useMemo(() => {

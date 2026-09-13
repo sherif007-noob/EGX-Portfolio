@@ -61,8 +61,64 @@ export function reconcilePortfolioFromLedger(
     notes?: string;
   }
 
+  interface ActiveCycle {
+    id: string;
+    ticker: string;
+    companyName: string;
+    sector: Sector;
+    shares: number;
+    totalCostBasis: number;
+    totalGrossProceeds: number;
+    buyDate: string;
+    sellDate: string;
+    buyFees: number;
+    sellFees: number;
+    totalFees: number;
+    realizedPnlEgp: number;
+    notes: string[];
+    cycleTags: string[];
+  }
+
+  const activeCyclesByTicker: Record<string, ActiveCycle> = {};
   const openLotsByTicker: Record<string, BuyLot[]> = {};
   const closedTrades: ClosedTrade[] = [];
+
+  const finalizeCycle = (cycle: ActiveCycle) => {
+    const costBasisWithFees = cycle.totalCostBasis + cycle.buyFees;
+    const netProceeds = cycle.totalGrossProceeds - cycle.sellFees;
+    // We only use calculated PNL if the cycle's accumulated realizedPnlEgp is exactly 0 and there were actual proceeds
+    // Actually, just sum the realizedPnlEgp from transactions. 
+    // If the transactions had tx.realizedPnlEgp, it's summed. If not, the calculated one was summed.
+    const pnl = cycle.realizedPnlEgp;
+    const pnlPercent = costBasisWithFees > 0 ? (pnl / costBasisWithFees) * 100 : 0;
+    const outcome = pnl > 0.01 ? 'WIN' : pnl < -0.01 ? 'LOSS' : 'BREAKEVEN';
+    
+    const entryTime = new Date(cycle.buyDate).getTime();
+    const exitTime = new Date(cycle.sellDate).getTime();
+    const holdingDays = Math.max(1, Math.round((exitTime - entryTime) / (1000 * 60 * 60 * 24)) || 1);
+
+    closedTrades.push({
+      id: cycle.id,
+      ticker: cycle.ticker,
+      companyName: cycle.companyName,
+      sector: cycle.sector,
+      shares: cycle.shares,
+      buyPrice: cycle.shares > 0 ? Number((cycle.totalCostBasis / cycle.shares).toFixed(4)) : 0,
+      sellPrice: cycle.shares > 0 ? Number((cycle.totalGrossProceeds / cycle.shares).toFixed(4)) : 0,
+      buyDate: cycle.buyDate,
+      sellDate: cycle.sellDate,
+      holdingDays,
+      buyFees: Number(cycle.buyFees.toFixed(2)),
+      sellFees: Number(cycle.sellFees.toFixed(2)),
+      totalFees: Number(cycle.totalFees.toFixed(2)),
+      realizedPnlEgp: Number(pnl.toFixed(2)),
+      realizedPnlPercent: Number(pnlPercent.toFixed(2)),
+      outcome,
+      tradeType: 'Swing',
+      notes: cycle.notes.filter(Boolean).join(' | ') || undefined,
+      cycleTag: cycle.cycleTags.filter(Boolean)[0] || undefined,
+    });
+  };
 
   // Ensure running cash starts from total capital deposits
   const startingCapital = (totalCapitalDeposited && totalCapitalDeposited >= 1000)
@@ -93,6 +149,15 @@ export function reconcilePortfolioFromLedger(
     if (tx.type === 'BUY') {
       const grossCost = tx.shares * tx.price;
       const totalOutlay = grossCost + (tx.fees || 0);
+
+      // If open lots is empty but we have an active cycle, it means the old cycle is complete.
+      // (This handles the case where they bought again after selling everything)
+      const currentLots = openLotsByTicker[tickerKey] || [];
+      const remainingShares = currentLots.reduce((acc, l) => acc + l.shares, 0);
+      if (remainingShares <= EPSILON && activeCyclesByTicker[tickerKey]) {
+        finalizeCycle(activeCyclesByTicker[tickerKey]);
+        delete activeCyclesByTicker[tickerKey];
+      }
 
       // Add to buy lots
       if (!openLotsByTicker[tickerKey]) {
@@ -159,35 +224,61 @@ export function reconcilePortfolioFromLedger(
       const realizedPnlEgp = tx.realizedPnlEgp !== undefined && tx.realizedPnlEgp !== null
         ? tx.realizedPnlEgp
         : calculatedPnl;
-      const realizedPnlPercent = costBasisWithFees > 0 ? (realizedPnlEgp / costBasisWithFees) * 100 : 0;
-      const outcome = tx.outcome || (realizedPnlEgp > 0.01 ? 'WIN' : realizedPnlEgp < -0.01 ? 'LOSS' : 'BREAKEVEN');
 
-      const entryTime = new Date(earliestBuyDate).getTime();
-      const exitTime = new Date(tx.date).getTime();
-      const holdingDays = Math.max(1, Math.round((exitTime - entryTime) / (1000 * 60 * 60 * 24)) || 1);
+      // Accumulate into active cycle
+      let cycle = activeCyclesByTicker[tickerKey];
+      if (!cycle) {
+        cycle = {
+          id: `reconciled-ct-${tx.id}`,
+          ticker: tx.ticker,
+          companyName,
+          sector,
+          shares: 0,
+          totalCostBasis: 0,
+          totalGrossProceeds: 0,
+          buyDate: earliestBuyDate,
+          sellDate: tx.date,
+          buyFees: 0,
+          sellFees: 0,
+          totalFees: 0,
+          realizedPnlEgp: 0,
+          notes: [],
+          cycleTags: []
+        };
+        activeCyclesByTicker[tickerKey] = cycle;
+      }
 
-      closedTrades.push({
-        id: `reconciled-ct-${tx.id}`,
-        ticker: tx.ticker,
-        companyName,
-        sector,
-        shares: tx.shares,
-        buyPrice: tx.shares > 0 ? Number((totalCostBasis / tx.shares).toFixed(4)) : 0,
-        sellPrice: Number(sellPrice.toFixed(4)),
-        buyDate: earliestBuyDate,
-        sellDate: tx.date,
-        holdingDays,
-        buyFees: Number(totalAllocatedBuyFees.toFixed(2)),
-        sellFees: Number(sellFees.toFixed(2)),
-        totalFees: Number(totalFeesForTrade.toFixed(2)),
-        realizedPnlEgp: Number(realizedPnlEgp.toFixed(2)),
-        realizedPnlPercent: Number(realizedPnlPercent.toFixed(2)),
-        outcome,
-        tradeType: 'Swing',
-        notes: tx.notes,
-        cycleTag: tx.cycleTag,
-      });
+      cycle.shares += tx.shares;
+      cycle.totalCostBasis += totalCostBasis;
+      cycle.totalGrossProceeds += grossProceeds;
+      cycle.sellDate = tx.date;
+      
+      const currentBuyTime = new Date(cycle.buyDate).getTime();
+      const newBuyTime = new Date(earliestBuyDate).getTime();
+      if (newBuyTime < currentBuyTime) {
+        cycle.buyDate = earliestBuyDate;
+      }
+
+      cycle.buyFees += totalAllocatedBuyFees;
+      cycle.sellFees += sellFees;
+      cycle.totalFees += totalFeesForTrade;
+      cycle.realizedPnlEgp += realizedPnlEgp;
+      
+      if (tx.notes) cycle.notes.push(tx.notes);
+      if (tx.cycleTag) cycle.cycleTags.push(tx.cycleTag);
+
+      // Finalize immediately if position is now empty
+      const remainingLotsShares = lots.reduce((acc, l) => acc + l.shares, 0);
+      if (remainingLotsShares <= EPSILON) {
+        finalizeCycle(cycle);
+        delete activeCyclesByTicker[tickerKey];
+      }
     }
+  });
+
+  // Finalize any partially closed cycles that never reached 0 position
+  Object.values(activeCyclesByTicker).forEach((cycle) => {
+    finalizeCycle(cycle);
   });
 
   // Reconstruct open positions from remaining lots
@@ -237,3 +328,57 @@ export function reconcilePortfolioFromLedger(
     discrepanciesFound: discrepancies,
   };
 }
+
+/**
+ * Returns the transaction IDs of all unclosed BUY transactions (open lots) for a specific ticker.
+ */
+export function getOpenBuyTransactionIdsForTicker(
+  transactions: TradeTransaction[],
+  ticker: string
+): string[] {
+  const targetSym = ticker.trim().toUpperCase();
+  if (!Array.isArray(transactions) || transactions.length === 0) return [];
+
+  const chronologicalTxs = transactions
+    .map(normalizeTransaction)
+    .sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      if (a.tradeId !== undefined && b.tradeId !== undefined && a.tradeId !== b.tradeId) {
+        return Number(a.tradeId) - Number(b.tradeId);
+      }
+      if (a.type === 'BUY' && b.type === 'SELL') return -1;
+      if (a.type === 'SELL' && b.type === 'BUY') return 1;
+      return 0;
+    });
+
+  interface LotRef {
+    id: string;
+    shares: number;
+  }
+
+  const openLots: LotRef[] = [];
+
+  chronologicalTxs.forEach((tx) => {
+    if (tx.ticker.trim().toUpperCase() !== targetSym) return;
+
+    if (tx.type === 'BUY') {
+      openLots.push({ id: tx.id, shares: tx.shares });
+    } else if (tx.type === 'SELL') {
+      let sharesToSell = tx.shares;
+      while (sharesToSell > EPSILON && openLots.length > 0) {
+        const lot = openLots[0];
+        const sold = Math.min(sharesToSell, lot.shares);
+        lot.shares -= sold;
+        sharesToSell -= sold;
+        if (lot.shares <= EPSILON) {
+          openLots.shift();
+        }
+      }
+    }
+  });
+
+  return openLots.map((l) => l.id);
+}
+

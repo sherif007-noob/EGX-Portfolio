@@ -52,6 +52,7 @@ export interface EGXTicker {
   stopLoss: number;
   notes?: string;
   lastUpdated: string;
+  priceUpdatedAt?: string;
   logoUrl?: string;
 }
 
@@ -63,11 +64,14 @@ export interface Position {
   shares: number;
   avgBuyPrice: number;
   currentPrice: number;
+  dayChange?: number; // Absolute daily price change in EGP per share
+  dayChangePercent?: number; // Daily percentage change
   buyDate: string;
   totalFees?: number;
   targetPrice?: number;
   stopLoss?: number;
   notes?: string;
+  priceUpdatedAt?: string;
 }
 
 export interface ClosedTrade {
@@ -97,8 +101,11 @@ export interface PortfolioMetrics {
   totalValue: number;
   totalMarketValue?: number;
   totalCost: number;
+  totalCostWithFees?: number;
   unrealizedPnlEgp: number;
   unrealizedPnlPercent: number;
+  grossUnrealizedPnlEgp?: number;
+  grossUnrealizedPnlPercent?: number;
   realizedPnlEgp: number;
   cashBalance: number;
   dayChangeEgp: number;
@@ -107,6 +114,8 @@ export interface PortfolioMetrics {
   winningPositionsCount: number;
   losingPositionsCount: number;
   totalFeesPaid?: number;
+  openFeesPaid?: number;
+  closedFeesPaid?: number;
 }
 
 export interface PerformanceStats {
@@ -141,8 +150,11 @@ export interface GoogleSheetsConfig {
 export interface LivePriceQuote {
   ticker: string;
   price: number;
-  changePercent: number;
+  change?: number; // Absolute daily change in EGP (from change_abs)
+  changePercent: number; // Daily percentage change
   volume: number;
+  dayHigh?: number;
+  dayLow?: number;
 }
 
 export interface PriceAlertSettings {

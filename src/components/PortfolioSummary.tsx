@@ -174,10 +174,13 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
           </div>
         </div>
 
-        {/* Unrealized P&L */}
+        {/* Unrealized Gain */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="text-xs text-slate-400 font-medium">Unrealized P&amp;L</div>
+            <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+              <span>Unrealized P&amp;L</span>
+              <span className="text-[10px] text-slate-500 font-normal">Net of Buy Fees</span>
+            </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span
                 className={`text-xl sm:text-2xl font-bold tracking-tight ${
@@ -189,7 +192,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span className="text-[11px] text-slate-400">EGP</span>
             </div>
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex items-center justify-between">
             <span
               className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                 isPositiveUnrealized
@@ -199,6 +202,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
             >
               {isPositiveUnrealized ? '+' : ''}{metrics.unrealizedPnlPercent.toFixed(2)}%
             </span>
+            {metrics.grossUnrealizedPnlEgp !== undefined && (
+              <span className="text-[10px] text-slate-400 font-mono" title="Gross gain before deducting buy commissions">
+                Gross: {metrics.grossUnrealizedPnlEgp >= 0 ? '+' : ''}{formatEgp(metrics.grossUnrealizedPnlEgp)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -261,8 +269,9 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span className="text-[11px] text-slate-400">EGP</span>
             </div>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Total commissions paid
+          <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-800/80 pt-1.5">
+            <span>Open: <span className="text-slate-300 font-mono">{formatEgp(metrics.openFeesPaid || 0)}</span></span>
+            <span>Closed: <span className="text-slate-300 font-mono">{formatEgp(metrics.closedFeesPaid || 0)}</span></span>
           </div>
         </div>
       </div>

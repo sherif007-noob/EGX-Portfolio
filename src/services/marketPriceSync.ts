@@ -46,6 +46,7 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       'logoid',
       'close',
       'change',
+      'change_abs',
       'volume',
       'high',
       'low',
@@ -101,12 +102,13 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       const rawSymbol = String(item.d[0] || '').trim().toUpperCase();
       const cleanTicker = rawSymbol.replace(/^EGX:/, '').replace(/\.CA$/, '');
       
-      // Parse columns according to payload format
-      // columns: ['name', 'description', 'logoid', 'close', 'change', 'volume', 'high', 'low', 'high_52_week', 'low_52_week', 'sector', 'RSI']
+      // Parse columns according to payload format:
+      // columns: ['name', 'description', 'logoid', 'close', 'change', 'change_abs', 'volume', 'high', 'low', 'high_52_week', 'low_52_week', 'sector', 'RSI']
       let description = '';
       let logoId = '';
       let close = 0;
-      let change = 0;
+      let changePercent = 0;
+      let changeAbs = 0;
       let volume = 0;
       let high: number | undefined;
       let low: number | undefined;
@@ -120,49 +122,67 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
         if (typeof item.d[2] === 'string' && isNaN(Number(item.d[2]))) {
           logoId = String(item.d[2] || '');
           close = Number(item.d[3] || 0);
-          change = Number(item.d[4] || 0);
+          changePercent = Number(item.d[4] || 0);
+          changeAbs = item.d[5] !== null && item.d[5] !== undefined ? Number(item.d[5]) : 0;
+          volume = Number(item.d[6] || 0);
+          high = item.d[7] !== null && item.d[7] !== undefined ? Number(item.d[7]) : undefined;
+          low = item.d[8] !== null && item.d[8] !== undefined ? Number(item.d[8]) : undefined;
+          yearHigh = item.d[9] !== null && item.d[9] !== undefined ? Number(item.d[9]) : undefined;
+          yearLow = item.d[10] !== null && item.d[10] !== undefined ? Number(item.d[10]) : undefined;
+          rsi = item.d[12] !== null && item.d[12] !== undefined ? Number(item.d[12]) : undefined;
+        } else {
+          close = Number(item.d[2] || 0);
+          changePercent = Number(item.d[3] || 0);
+          changeAbs = item.d[4] !== null && item.d[4] !== undefined ? Number(item.d[4]) : 0;
           volume = Number(item.d[5] || 0);
           high = item.d[6] !== null && item.d[6] !== undefined ? Number(item.d[6]) : undefined;
           low = item.d[7] !== null && item.d[7] !== undefined ? Number(item.d[7]) : undefined;
           yearHigh = item.d[8] !== null && item.d[8] !== undefined ? Number(item.d[8]) : undefined;
           yearLow = item.d[9] !== null && item.d[9] !== undefined ? Number(item.d[9]) : undefined;
           rsi = item.d[11] !== null && item.d[11] !== undefined ? Number(item.d[11]) : undefined;
-        } else {
-          close = Number(item.d[2] || 0);
-          change = Number(item.d[3] || 0);
-          volume = Number(item.d[4] || 0);
-          high = item.d[5] !== null && item.d[5] !== undefined ? Number(item.d[5]) : undefined;
-          low = item.d[6] !== null && item.d[6] !== undefined ? Number(item.d[6]) : undefined;
-          yearHigh = item.d[7] !== null && item.d[7] !== undefined ? Number(item.d[7]) : undefined;
-          yearLow = item.d[8] !== null && item.d[8] !== undefined ? Number(item.d[8]) : undefined;
-          rsi = item.d[10] !== null && item.d[10] !== undefined ? Number(item.d[10]) : undefined;
         }
       } else {
         // Standard payload
         close = Number(item.d[1] || 0);
-        change = Number(item.d[2] || 0);
-        volume = Number(item.d[3] || 0);
+        changePercent = Number(item.d[2] || 0);
+        changeAbs = item.d[3] !== null && item.d[3] !== undefined ? Number(item.d[3]) : 0;
+        volume = Number(item.d[4] || 0);
       }
 
       if (close > 0) {
         const roundedPrice = Math.round(close * 100) / 100;
-        const roundedChange = Math.round(change * 100) / 100;
+        const roundedChangePercent = Math.round(changePercent * 100) / 100;
+        
+        // Exact change in EGP from TradingView or exact difference from previous close
+        let calculatedChangeAbs = changeAbs;
+        if ((calculatedChangeAbs === 0 || isNaN(calculatedChangeAbs)) && roundedChangePercent !== 0) {
+          const prevClose = roundedPrice / (1 + roundedChangePercent / 100);
+          calculatedChangeAbs = roundedPrice - prevClose;
+        }
+        const roundedChangeAbs = Math.round(calculatedChangeAbs * 100) / 100;
 
         const quote: LivePriceQuote = {
           ticker: cleanTicker,
           price: roundedPrice,
-          changePercent: roundedChange,
-          volume: volume || 0
+          change: roundedChangeAbs,
+          changePercent: roundedChangePercent,
+          volume: volume || 0,
+          dayHigh: high,
+          dayLow: low
         };
 
         quotes[cleanTicker] = quote;
         quotes[rawSymbol] = quote;
+        const alias = resolveTickerSymbol(cleanTicker);
+        if (alias && alias !== cleanTicker) {
+          quotes[alias] = quote;
+        }
 
         // Build rich ticker object with TradingView logo
         const tickerObj = createEGXTickerRecord(
           cleanTicker,
           roundedPrice,
-          roundedChange,
+          roundedChangePercent,
           volume,
           high,
           low,
@@ -170,7 +190,8 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
           yearLow,
           rsi,
           description,
-          logoId
+          logoId,
+          roundedChangeAbs
         );
         discoveredTickers.push(tickerObj);
       }
@@ -196,8 +217,9 @@ export function applyLivePricesToPortfolio(
   tickers: EGXTicker[],
   quotes: Record<string, LivePriceQuote>,
   discoveredTickers: EGXTicker[] = []
-): { updatedPositions: Position[]; updatedTickers: EGXTicker[]; matchCount: number } {
+): { updatedPositions: Position[]; updatedTickers: EGXTicker[]; matchCount: number; hasChanges: boolean } {
   let matchCount = 0;
+  let hasChanges = false;
   const nowIso = new Date().toISOString();
 
   // Create a map of existing tickers by symbol for quick lookup
@@ -208,23 +230,35 @@ export function applyLivePricesToPortfolio(
   discoveredTickers.forEach(dt => {
     const existing = tickerMap.get(dt.ticker.toUpperCase());
     if (existing) {
-      // Update with live values
-      tickerMap.set(dt.ticker.toUpperCase(), {
-        ...existing,
-        lastPrice: dt.lastPrice,
-        change: dt.change,
-        changePercent: dt.changePercent,
-        volume: dt.volume || existing.volume,
-        dayHigh: dt.dayHigh || existing.dayHigh,
-        dayLow: dt.dayLow || existing.dayLow,
-        yearHigh: dt.yearHigh || existing.yearHigh,
-        yearLow: dt.yearLow || existing.yearLow,
-        rsi14: dt.rsi14 || existing.rsi14,
-        trendStatus: dt.trendStatus || existing.trendStatus,
-        lastUpdated: nowIso
-      });
+      if (
+        existing.lastPrice !== dt.lastPrice ||
+        existing.change !== dt.change ||
+        existing.volume !== dt.volume ||
+        existing.dayHigh !== dt.dayHigh ||
+        existing.dayLow !== dt.dayLow
+      ) {
+        hasChanges = true;
+        tickerMap.set(dt.ticker.toUpperCase(), {
+          ...existing,
+          lastPrice: dt.lastPrice,
+          change: dt.change,
+          changePercent: dt.changePercent,
+          volume: dt.volume || existing.volume,
+          dayHigh: dt.dayHigh || existing.dayHigh,
+          dayLow: dt.dayLow || existing.dayLow,
+          yearHigh: dt.yearHigh || existing.yearHigh,
+          yearLow: dt.yearLow || existing.yearLow,
+          rsi14: dt.rsi14 || existing.rsi14,
+          trendStatus: dt.trendStatus || existing.trendStatus,
+          lastUpdated: nowIso,
+          priceUpdatedAt: nowIso
+        });
+      }
     } else {
       // Add newly discovered EGX equity
+      hasChanges = true;
+      dt.lastUpdated = nowIso;
+      dt.priceUpdatedAt = nowIso;
       tickerMap.set(dt.ticker.toUpperCase(), dt);
     }
   });
@@ -235,53 +269,93 @@ export function applyLivePricesToPortfolio(
     const quote = quotes[symbol] || quotes[t.ticker.toUpperCase()];
     if (quote) {
       matchCount++;
-      const changeEgp = Math.round((quote.price * (quote.changePercent / 100)) * 100) / 100;
-      return {
-        ...t,
-        lastPrice: quote.price,
-        change: changeEgp,
-        changePercent: quote.changePercent,
-        volume: quote.volume || t.volume,
-        dayHigh: Math.max(t.dayHigh || quote.price, quote.price),
-        dayLow: Math.min(t.dayLow || quote.price, quote.price),
-        lastUpdated: nowIso
-      };
+      const changeEgp = quote.change !== undefined && !isNaN(quote.change)
+        ? quote.change
+        : (quote.changePercent !== 0 && quote.price > 0
+            ? Math.round((quote.price - (quote.price / (1 + quote.changePercent / 100))) * 100) / 100
+            : 0);
+      const newDayHigh = Math.max(t.dayHigh || quote.price, quote.price);
+      const newDayLow = Math.min(t.dayLow || quote.price, quote.price);
+      
+      if (
+        t.lastPrice !== quote.price ||
+        t.change !== changeEgp ||
+        t.changePercent !== quote.changePercent ||
+        t.volume !== (quote.volume || t.volume) ||
+        t.dayHigh !== newDayHigh ||
+        t.dayLow !== newDayLow
+      ) {
+        hasChanges = true;
+        return {
+          ...t,
+          lastPrice: quote.price,
+          change: changeEgp,
+          changePercent: quote.changePercent,
+          volume: quote.volume || t.volume,
+          dayHigh: newDayHigh,
+          dayLow: newDayLow,
+          lastUpdated: nowIso,
+          priceUpdatedAt: nowIso
+        };
+      }
     }
     return t;
   });
 
-  // Sort tickers alphabetically by symbol
-  updatedTickers.sort((a, b) => a.ticker.localeCompare(b.ticker));
+  if (hasChanges) {
+    updatedTickers.sort((a, b) => a.ticker.localeCompare(b.ticker));
+  }
 
-  // Update Positions with live prices
+  // Update Positions with live prices and day changes
+  let positionsChanged = false;
   const updatedPositions = positions.map(p => {
     const cleanSym = p.ticker.trim().toUpperCase();
     const symbol = resolveTickerSymbol(cleanSym);
+    
+    let newPrice = p.currentPrice;
+    let newDayChange = p.dayChange;
+    let newDayChangePercent = p.dayChangePercent;
+    
     const quote = quotes[symbol] || quotes[cleanSym] || quotes[p.ticker];
     if (quote && quote.price > 0) {
-      return {
-        ...p,
-        currentPrice: quote.price
-      };
+      newPrice = quote.price;
+      newDayChange = quote.change !== undefined ? quote.change : newDayChange;
+      newDayChangePercent = quote.changePercent !== undefined ? quote.changePercent : newDayChangePercent;
+    } else {
+      const discovered = discoveredTickers.find(dt => dt.ticker.trim().toUpperCase() === cleanSym || dt.ticker.trim().toUpperCase() === symbol);
+      if (discovered && discovered.lastPrice > 0) {
+        newPrice = discovered.lastPrice;
+        newDayChange = discovered.change !== undefined ? discovered.change : newDayChange;
+        newDayChangePercent = discovered.changePercent !== undefined ? discovered.changePercent : newDayChangePercent;
+      } else {
+        const matchedTicker = tickerMap.get(cleanSym) || tickerMap.get(symbol);
+        if (matchedTicker && matchedTicker.lastPrice > 0) {
+          newPrice = matchedTicker.lastPrice;
+          newDayChange = matchedTicker.change !== undefined ? matchedTicker.change : newDayChange;
+          newDayChangePercent = matchedTicker.changePercent !== undefined ? matchedTicker.changePercent : newDayChangePercent;
+        }
+      }
     }
-    const discovered = discoveredTickers.find(dt => dt.ticker.trim().toUpperCase() === cleanSym || dt.ticker.trim().toUpperCase() === symbol);
-    if (discovered && discovered.lastPrice > 0) {
+    
+    if (newPrice !== p.currentPrice || newDayChange !== p.dayChange || newDayChangePercent !== p.dayChangePercent) {
+      positionsChanged = true;
       return {
         ...p,
-        currentPrice: discovered.lastPrice
-      };
-    }
-    const matchedTicker = tickerMap.get(cleanSym) || tickerMap.get(symbol);
-    if (matchedTicker && matchedTicker.lastPrice > 0) {
-      return {
-        ...p,
-        currentPrice: matchedTicker.lastPrice
+        currentPrice: newPrice,
+        dayChange: newDayChange,
+        dayChangePercent: newDayChangePercent,
+        priceUpdatedAt: nowIso
       };
     }
     return p;
   });
 
-  return { updatedPositions, updatedTickers, matchCount };
+  return { 
+    updatedPositions: positionsChanged ? updatedPositions : positions, 
+    updatedTickers: hasChanges ? updatedTickers : tickers, 
+    matchCount, 
+    hasChanges: hasChanges || positionsChanged 
+  };
 }
 
 /**
@@ -292,7 +366,7 @@ export function applyLivePricesToPortfolio(
  * - Sunday: 09:30 AM – 02:30 PM Cairo time
  * - Monday–Thursday: 10:00 AM – 02:30 PM Cairo time
  * - Friday & Saturday: Market closed, no syncing (isSessionActive: false)
- * - Additional sync windows: 03:30 PM (15:30) and 04:40 PM (16:40) on trading days only (Sunday–Thursday)
+ * - Closing session final price update: 03:15 PM (15:15 Cairo time) on trading days (Sunday–Thursday)
  */
 export function getEGXSessionStatus(): EGXScheduleStatus {
   try {
@@ -342,10 +416,8 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
         }
       }
 
-      // Additional post-close sync windows on trading days:
-      // 3:30 PM (930 to 945 mins) and 4:40 PM (1000 to 1015 mins)
-      if ((currentTotalMinutes >= 930 && currentTotalMinutes <= 945) ||
-          (currentTotalMinutes >= 1000 && currentTotalMinutes <= 1015)) {
+      // Closing price update window at 3:15 PM (915 to 925 mins) on trading days
+      if (currentTotalMinutes >= 915 && currentTotalMinutes <= 925) {
         inSession = true;
       }
     }
@@ -373,8 +445,7 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
       if (isTradingDay) {
         const openMin = dayOfWeek === 0 ? 570 : 600; // 9:30 or 10:00
         if (openMin > currentTotalMinutes) targetsToday.push(openMin);
-        if (930 > currentTotalMinutes) targetsToday.push(930);  // 3:30 PM
-        if (1000 > currentTotalMinutes) targetsToday.push(1000); // 4:40 PM
+        if (915 > currentTotalMinutes) targetsToday.push(915); // Final closing price update at 3:15 PM
       }
 
       if (targetsToday.length > 0) {

@@ -5,6 +5,8 @@ import {
   fetchSpreadsheetMetadata, 
   appendTransactionToSheet,
   updateStockDirectoryInSheet,
+  syncActivePositionsToSheet,
+  syncStockPricesToSheet,
   syncAllPortfolioToSheet,
   fetchUserSpreadsheets,
   fetchAndReconcileAllTabs,
@@ -404,9 +406,9 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     try {
       const token = await getAccessToken();
 
-      const res = await updateStockDirectoryInSheet(spreadsheetId, tickers, token, 'Ticker Directory');
+      const res = await syncStockPricesToSheet(spreadsheetId, tickers, positions, token);
       if (res.success) {
-        setSuccessMsg(res.message);
+        setSuccessMsg(`Successfully synced live market prices! ${res.message}`);
       } else {
         setError(res.message);
       }

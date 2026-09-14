@@ -7,64 +7,112 @@ export function calculatePortfolioMetrics(
   positions: Position[],
   cashBalance: number,
   closedTrades: ClosedTrade[] = [],
-  tickers: EGXTicker[] = []
+  tickers: EGXTicker[] = [],
+  transactions: TradeTransaction[] = []
 ): PortfolioMetrics {
   let totalCost = 0;
   let totalEquitiesValue = 0;
   let dayChangeEgp = 0;
   let winningPositionsCount = 0;
   let losingPositionsCount = 0;
-  let totalFeesPaid = 0;
+  let openFeesPaid = 0;
 
   // Build ticker map for quick quote lookup
   const tickerMap = new Map<string, EGXTicker>();
-  tickers.forEach((t) => tickerMap.set(t.ticker.trim().toUpperCase(), t));
+  tickers.forEach((t) => {
+    const sym = t.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+    tickerMap.set(sym, t);
+    tickerMap.set(t.ticker.trim().toUpperCase(), t);
+  });
 
   positions.forEach((pos) => {
     const cost = pos.shares * pos.avgBuyPrice;
-    const currentPrice = pos.currentPrice > 0 ? pos.currentPrice : pos.avgBuyPrice;
+    
+    // Fallback to avgBuyPrice if currentPrice is missing or 0 (cost-basis valuation)
+    // to prevent artificial -100% loss from wiping out portfolio equity before quotes load
+    const currentPrice = (pos.currentPrice && pos.currentPrice > 0)
+      ? pos.currentPrice
+      : (pos.avgBuyPrice > 0 ? pos.avgBuyPrice : 0);
     const mktVal = pos.shares * currentPrice;
-    const pnl = mktVal - cost;
+    const entryFee = pos.totalFees || 0;
+    openFeesPaid += entryFee;
+
+    // Brokerage app Unrealized P&L accounts for entry fees:
+    const netCost = cost + entryFee;
+    const netPnl = currentPrice > 0 ? mktVal - netCost : 0;
 
     totalCost += cost;
     totalEquitiesValue += mktVal;
 
-    if (pos.totalFees) {
-      totalFeesPaid += pos.totalFees;
+    if (pos.currentPrice && pos.currentPrice > 0) {
+      if (netPnl > 0.01) {
+        winningPositionsCount++;
+      } else if (netPnl < -0.01) {
+        losingPositionsCount++;
+      }
     }
 
-    if (pnl > 0.01) {
-      winningPositionsCount++;
-    } else if (pnl < -0.01) {
-      losingPositionsCount++;
+    // Calculate day change for position based on ticker day change in EGP
+    const cleanSym = pos.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+    const quote = tickerMap.get(cleanSym) || tickerMap.get(pos.ticker.trim().toUpperCase());
+    
+    let posDayChangePerShare = 0;
+    if (quote) {
+      if (quote.change !== undefined && !isNaN(quote.change)) {
+        posDayChangePerShare = quote.change;
+      } else if (quote.changePercent !== undefined && quote.lastPrice > 0) {
+        const prevClose = quote.lastPrice / (1 + quote.changePercent / 100);
+        posDayChangePerShare = quote.lastPrice - prevClose;
+      }
+    } else if (pos.dayChange !== undefined && !isNaN(pos.dayChange)) {
+      posDayChangePerShare = pos.dayChange;
+    } else if (pos.dayChangePercent !== undefined && currentPrice > 0) {
+      const prevClose = currentPrice / (1 + pos.dayChangePercent / 100);
+      posDayChangePerShare = currentPrice - prevClose;
     }
 
-    // Calculate day change for position based on ticker day change percentage
-    const quote = tickerMap.get(pos.ticker.trim().toUpperCase());
-    if (quote && quote.changePercent !== undefined) {
-      const posDayChange = (mktVal * quote.changePercent) / 100;
-      dayChangeEgp += posDayChange;
-    } else if (quote && quote.change !== undefined) {
-      dayChangeEgp += pos.shares * quote.change;
-    }
+    dayChangeEgp += pos.shares * posDayChangePerShare;
   });
 
-  const unrealizedPnlEgp = totalEquitiesValue - totalCost;
-  const unrealizedPnlPercent = totalCost > 0 ? (unrealizedPnlEgp / totalCost) * 100 : 0;
+  const totalCostWithFees = totalCost + openFeesPaid;
+  // Net unrealized P&L matches the brokerage app (market value minus cost basis with entry fees)
+  const unrealizedPnlEgp = totalEquitiesValue - totalCostWithFees;
+  const unrealizedPnlPercent = totalCostWithFees > 0 ? (unrealizedPnlEgp / totalCostWithFees) * 100 : 0;
+
+  // Gross price-only appreciation (excluding fees)
+  const grossUnrealizedPnlEgp = totalEquitiesValue - totalCost;
+  const grossUnrealizedPnlPercent = totalCost > 0 ? (grossUnrealizedPnlEgp / totalCost) * 100 : 0;
+
+  const closedFeesPaid = closedTrades.reduce(
+    (acc, ct) => acc + (ct.totalFees || (ct.buyFees || 0) + (ct.sellFees || 0)),
+    0
+  );
+
+  // Total fees paid across all trades (open + closed / transactions)
+  const totalFeesPaid = transactions && transactions.length > 0
+    ? transactions.reduce((acc, tx) => acc + (tx.fees || 0), 0)
+    : openFeesPaid + closedFeesPaid;
 
   const totalRealizedPnl = closedTrades.reduce((acc, ct) => acc + (ct.realizedPnlEgp || 0), 0);
   const totalValue = totalEquitiesValue + cashBalance;
 
-  // Previous equity day baseline to compute portfolio day change percentage
+  // Baseline to compute day change percentage matching brokerage app:
+  // Return % on equities: dayChangeEgp / (totalEquitiesValue - dayChangeEgp)
+  const prevEquitiesValue = totalEquitiesValue - dayChangeEgp;
   const prevPortfolioValue = totalValue - dayChangeEgp;
-  const dayChangePercent = prevPortfolioValue > 0 ? (dayChangeEgp / prevPortfolioValue) * 100 : 0;
+  const dayChangePercent = prevEquitiesValue > 0
+    ? (dayChangeEgp / prevEquitiesValue) * 100
+    : (prevPortfolioValue > 0 ? (dayChangeEgp / prevPortfolioValue) * 100 : 0);
 
   return {
     totalValue: Number(totalValue.toFixed(2)),
     totalMarketValue: Number(totalEquitiesValue.toFixed(2)),
     totalCost: Number(totalCost.toFixed(2)),
+    totalCostWithFees: Number(totalCostWithFees.toFixed(2)),
     unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)),
     unrealizedPnlPercent: Number(unrealizedPnlPercent.toFixed(2)),
+    grossUnrealizedPnlEgp: Number(grossUnrealizedPnlEgp.toFixed(2)),
+    grossUnrealizedPnlPercent: Number(grossUnrealizedPnlPercent.toFixed(2)),
     realizedPnlEgp: Number(totalRealizedPnl.toFixed(2)),
     cashBalance: Number(cashBalance.toFixed(2)),
     dayChangeEgp: Number(dayChangeEgp.toFixed(2)),
@@ -73,6 +121,8 @@ export function calculatePortfolioMetrics(
     winningPositionsCount,
     losingPositionsCount,
     totalFeesPaid: Number(totalFeesPaid.toFixed(2)),
+    openFeesPaid: Number(openFeesPaid.toFixed(2)),
+    closedFeesPaid: Number(closedFeesPaid.toFixed(2)),
   };
 }
 
@@ -90,7 +140,8 @@ export function calculatePerformanceStats(
     let totalPositionValue = 0;
 
     positions.forEach((pos) => {
-      const val = pos.shares * (pos.currentPrice || pos.avgBuyPrice);
+      const currentPrice = pos.currentPrice || 0;
+      const val = currentPrice > 0 ? pos.shares * currentPrice : 0;
       totalPositionValue += val;
       const sec = pos.sector || 'Other';
       if (!sectorMap[sec]) sectorMap[sec] = { value: 0, count: 0 };
@@ -136,11 +187,6 @@ export function calculatePerformanceStats(
   let worstTradePercent = Infinity;
   let totalBrokerageFeesPaid = 0;
 
-  // Track equity curve to calculate maximum drawdown
-  let runningCumulativePnl = 0;
-  let peakCumulativePnl = 0;
-  let maxDrawdownEgp = 0;
-
   closedTrades.forEach((ct) => {
     const pnl = ct.realizedPnlEgp || 0;
     const pct = ct.realizedPnlPercent || 0;
@@ -161,8 +207,21 @@ export function calculatePerformanceStats(
       losingTrades++;
       totalRealizedLossEgp += Math.abs(pnl);
     }
+  });
 
-    // Cumulative drawdown calculation
+  // Track equity curve chronologically (oldest to newest) to calculate maximum drawdown accurately
+  let runningCumulativePnl = 0;
+  let peakCumulativePnl = 0;
+  let maxDrawdownEgp = 0;
+
+  const chronologicalTrades = [...closedTrades].sort((a, b) => {
+    const dateA = a.sellDate || a.buyDate || '';
+    const dateB = b.sellDate || b.buyDate || '';
+    return dateA.localeCompare(dateB);
+  });
+
+  chronologicalTrades.forEach((ct) => {
+    const pnl = ct.realizedPnlEgp || 0;
     runningCumulativePnl += pnl;
     if (runningCumulativePnl > peakCumulativePnl) {
       peakCumulativePnl = runningCumulativePnl;
@@ -185,8 +244,8 @@ export function calculatePerformanceStats(
   const avgLossEgp = losingTrades > 0 ? totalRealizedLossEgp / losingTrades : 0;
   const payoffRatio = avgLossEgp > 0 ? avgWinEgp / avgLossEgp : avgWinEgp > 0 ? avgWinEgp : 0;
 
-  const winProb = winRate / 100;
-  const lossProb = 1 - winProb;
+  const winProb = totalTrades > 0 ? winningTrades / totalTrades : 0;
+  const lossProb = totalTrades > 0 ? losingTrades / totalTrades : 0;
   const expectancyEgp = (winProb * avgWinEgp) - (lossProb * avgLossEgp);
 
   // Sector allocation calculation combining open and closed exposure
@@ -194,7 +253,10 @@ export function calculatePerformanceStats(
   let totalPositionValue = 0;
 
   positions.forEach((pos) => {
-    const val = pos.shares * (pos.currentPrice || pos.avgBuyPrice);
+    const currentPrice = (pos.currentPrice && pos.currentPrice > 0)
+      ? pos.currentPrice
+      : (pos.avgBuyPrice > 0 ? pos.avgBuyPrice : 0);
+    const val = currentPrice > 0 ? pos.shares * currentPrice : 0;
     totalPositionValue += val;
     const sec = pos.sector || 'Other';
     if (!sectorMap[sec]) sectorMap[sec] = { value: 0, count: 0 };
@@ -208,6 +270,11 @@ export function calculatePerformanceStats(
     percentage: totalPositionValue > 0 ? Number(((data.value / totalPositionValue) * 100).toFixed(1)) : 0,
     count: data.count,
   })).sort((a, b) => b.value - a.value);
+
+  const baselineEquity = totalPositionValue;
+  const maxDrawdownPercent = (baselineEquity + peakCumulativePnl) > 0
+    ? (maxDrawdownEgp / (baselineEquity + peakCumulativePnl)) * 100
+    : 0;
 
   return {
     winRate: Number(winRate.toFixed(1)),
@@ -224,6 +291,7 @@ export function calculatePerformanceStats(
     totalBrokerageFeesPaid: Number(totalBrokerageFeesPaid.toFixed(2)),
     sectorAllocation,
     maxDrawdownEgp: Number(maxDrawdownEgp.toFixed(2)),
+    maxDrawdownPercent: Number(maxDrawdownPercent.toFixed(2)),
     payoffRatio: Number(payoffRatio.toFixed(2)),
     expectancyEgp: Number(expectancyEgp.toFixed(2)),
   };

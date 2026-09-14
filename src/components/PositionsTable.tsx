@@ -122,9 +122,14 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           <tbody className="divide-y divide-slate-800/60 text-slate-200">
             {filteredPositions.map((pos) => {
               const totalCost = pos.shares * pos.avgBuyPrice;
-              const currentValue = pos.shares * pos.currentPrice;
-              const pnlEgp = currentValue - totalCost;
-              const pnlPercent = totalCost > 0 ? (pnlEgp / totalCost) * 100 : 0;
+              const effectivePrice = (pos.currentPrice && pos.currentPrice > 0)
+                ? pos.currentPrice
+                : (pos.avgBuyPrice > 0 ? pos.avgBuyPrice : 0);
+              const currentValue = pos.shares * effectivePrice;
+              const entryFees = pos.totalFees || 0;
+              const totalCostWithFees = totalCost + entryFees;
+              const pnlEgp = effectivePrice > 0 ? currentValue - totalCostWithFees : 0;
+              const pnlPercent = totalCostWithFees > 0 ? (pnlEgp / totalCostWithFees) * 100 : 0;
               const isProfit = pnlEgp >= 0;
 
               return (

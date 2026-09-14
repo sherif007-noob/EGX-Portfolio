@@ -20,6 +20,7 @@ import {
   HelpCircle,
   TrendingUp,
   ShieldAlert,
+  RotateCcw,
 } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { getTodayISO } from '../utils/dateUtils';
@@ -31,6 +32,9 @@ interface CashBalanceViewProps {
   positions?: Position[];
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
+  capitalDeposits?: number;
+  onAddCashTransaction?: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => void;
+  onReconcileLedger?: () => void;
 }
 
 const STORAGE_KEY_TRANSACTIONS = 'egx_cash_transactions_v2_reconciled';
@@ -42,6 +46,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   positions = [],
   closedTrades = [],
   tradeTransactions = [],
+  capitalDeposits,
+  onAddCashTransaction,
+  onReconcileLedger,
 }) => {
   const [activeAction, setActiveAction] = useState<'deposit' | 'withdraw'>('deposit');
   const [depositAmount, setDepositAmount] = useState<string>('');
@@ -68,19 +75,25 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [transactions, setTransactions] = useState<CashTransaction[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {
       // ignore
     }
-    // Seed default initial balance transaction
+    // Seed initial balance transaction matching account capital or current cash
+    const initialSeed = (capitalDeposits && capitalDeposits > 0)
+      ? capitalDeposits
+      : (cashBalance > 0 ? cashBalance : 0);
     return [
       {
         id: 'init-cash-seed',
         type: 'DEPOSIT',
-        amount: 70029,
+        amount: initialSeed,
         date: '2026-01-01',
-        notes: 'Initial Account Cash Allocation',
-        balanceAfter: 70029,
+        notes: 'Initial Account Capital Allocation',
+        balanceAfter: initialSeed,
       },
     ];
   });
@@ -114,8 +127,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       .reduce((acc, t) => acc + t.amount, 0);
   }, [transactions]);
 
-  // 1. Net Capital Inflows
-  const netCapitalDeposited = totalDeposits - totalWithdrawals;
+  // 1. Net Capital Inflows: Uses authoritative capitalDeposits if available, or derives from ledger
+  const netCapitalDeposited = useMemo(() => {
+    if (typeof capitalDeposits === 'number' && capitalDeposits > 0) {
+      return capitalDeposits;
+    }
+    return totalDeposits - totalWithdrawals;
+  }, [capitalDeposits, totalDeposits, totalWithdrawals]);
 
   // 2. Open Positions Cost Basis & Current Market Value (including total purchase outlays with fees)
   const totalOpenPositionsCost = useMemo(() => {
@@ -204,18 +222,23 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       return;
     }
 
-    const newBalance = cashBalance + amountNum;
+    const newBalance = Number((cashBalance + amountNum).toFixed(2));
+    const noteText = `${depositMethod}${depositNotes ? ` - ${depositNotes}` : ''}`;
     const newTx: CashTransaction = {
       id: `dep-${Date.now()}`,
       type: 'DEPOSIT',
       amount: amountNum,
       date: depositDate || new Date().toISOString().slice(0, 10),
-      notes: `${depositMethod}${depositNotes ? ` - ${depositNotes}` : ''}`,
+      notes: noteText,
       balanceAfter: newBalance,
     };
 
     setTransactions([newTx, ...transactions]);
-    onUpdateCashBalance(newBalance);
+    if (onAddCashTransaction) {
+      onAddCashTransaction(amountNum, 'DEPOSIT', noteText);
+    } else {
+      onUpdateCashBalance(newBalance);
+    }
     setDepositAmount('');
     setDepositNotes('');
     setFeedbackMessage({
@@ -242,18 +265,23 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       return;
     }
 
-    const newBalance = cashBalance - amountNum;
+    const newBalance = Number((cashBalance - amountNum).toFixed(2));
+    const noteText = `${withdrawDestination}${withdrawNotes ? ` - ${withdrawNotes}` : ''}`;
     const newTx: CashTransaction = {
       id: `wdr-${Date.now()}`,
       type: 'WITHDRAWAL',
       amount: amountNum,
       date: withdrawDate || new Date().toISOString().slice(0, 10),
-      notes: `${withdrawDestination}${withdrawNotes ? ` - ${withdrawNotes}` : ''}`,
+      notes: noteText,
       balanceAfter: newBalance,
     };
 
     setTransactions([newTx, ...transactions]);
-    onUpdateCashBalance(newBalance);
+    if (onAddCashTransaction) {
+      onAddCashTransaction(amountNum, 'WITHDRAW', noteText);
+    } else {
+      onUpdateCashBalance(newBalance);
+    }
     setWithdrawAmount('');
     setWithdrawNotes('');
     setFeedbackMessage({
@@ -512,20 +540,32 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                onUpdateCashBalance(auditedLiquidCash);
-                setFeedbackMessage({
-                  text: `Cash balance adjusted to audited liquid amount of ${formatEgp(auditedLiquidCash)} EGP.`,
-                  type: 'success',
-                });
-                setTimeout(() => setFeedbackMessage(null), 4000);
-              }}
-              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 shadow-md shadow-amber-950/40 transition active:scale-95 flex items-center gap-1.5 self-start sm:self-auto"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Apply Audited Balance ({formatEgp(auditedLiquidCash)} EGP)</span>
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+              {onReconcileLedger && (
+                <button
+                  onClick={onReconcileLedger}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 hover:border-emerald-500/40 font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5"
+                  title="Reconstruct ledger from all transactions and update cash and positions"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reconcile Ledger</span>
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  onUpdateCashBalance(auditedLiquidCash);
+                  setFeedbackMessage({
+                    text: `Cash balance adjusted to audited liquid amount of ${formatEgp(auditedLiquidCash)} EGP.`,
+                    type: 'success',
+                  });
+                  setTimeout(() => setFeedbackMessage(null), 4000);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-950/40 transition active:scale-95 flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Apply Audited Balance ({formatEgp(auditedLiquidCash)} EGP)</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

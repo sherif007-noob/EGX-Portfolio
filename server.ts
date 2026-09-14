@@ -51,6 +51,7 @@ async function startServer() {
           "logoid",
           "close",
           "change",
+          "change_abs",
           "volume",
           "high",
           "low",

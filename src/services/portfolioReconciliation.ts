@@ -121,9 +121,9 @@ export function reconcilePortfolioFromLedger(
   };
 
   // Ensure running cash starts from total capital deposits
-  const startingCapital = (totalCapitalDeposited && totalCapitalDeposited >= 1000)
+  const startingCapital = (typeof totalCapitalDeposited === 'number' && totalCapitalDeposited > 0)
     ? totalCapitalDeposited
-    : INITIAL_CAPITAL_DEPOSITS;
+    : (INITIAL_CAPITAL_DEPOSITS || 0);
   let runningCash = startingCapital;
 
   chronologicalTxs.forEach((tx) => {
@@ -136,7 +136,7 @@ export function reconcilePortfolioFromLedger(
       return;
     }
 
-    if (tx.type === ('WITHDRAW' as any)) {
+    if (tx.type === ('WITHDRAW' as any) || tx.type === ('WITHDRAWAL' as any)) {
       const amount = tx.totalAmount || (tx.shares * tx.price);
       runningCash -= amount;
       return;
@@ -193,22 +193,37 @@ export function reconcilePortfolioFromLedger(
 
       if (lots.length > 0) {
         earliestBuyDate = lots[0].date;
-      }
-
-      while (remainingSharesToSell > EPSILON && lots.length > 0) {
-        const currentLot = lots[0];
-        const sharesFromLot = Math.min(remainingSharesToSell, currentLot.shares);
-
-        const lotProratedBuyFee = currentLot.shares > 0 ? (sharesFromLot / currentLot.shares) * currentLot.fees : 0;
-        totalCostBasis += sharesFromLot * currentLot.price;
-        totalAllocatedBuyFees += lotProratedBuyFee;
-
-        currentLot.shares -= sharesFromLot;
-        currentLot.fees = Math.max(0, currentLot.fees - lotProratedBuyFee);
-        remainingSharesToSell -= sharesFromLot;
-
-        if (currentLot.shares <= EPSILON) {
-          lots.shift();
+        
+        let totalOpenShares = 0;
+        let totalOpenCost = 0;
+        let totalOpenFees = 0;
+        
+        for (const lot of lots) {
+          totalOpenShares += lot.shares;
+          totalOpenCost += lot.shares * lot.price;
+          totalOpenFees += lot.fees;
+        }
+        
+        const avgBuyPrice = totalOpenShares > 0 ? totalOpenCost / totalOpenShares : 0;
+        const avgFeesPerShare = totalOpenShares > 0 ? totalOpenFees / totalOpenShares : 0;
+        
+        const sharesToAllocate = Math.min(remainingSharesToSell, totalOpenShares);
+        
+        totalCostBasis = sharesToAllocate * avgBuyPrice;
+        totalAllocatedBuyFees = sharesToAllocate * avgFeesPerShare;
+        
+        const ratio = totalOpenShares > 0 ? (totalOpenShares - sharesToAllocate) / totalOpenShares : 0;
+        for (const lot of lots) {
+          lot.shares = lot.shares * ratio;
+          lot.fees = lot.fees * ratio;
+        }
+        
+        remainingSharesToSell -= sharesToAllocate;
+        
+        for (let i = lots.length - 1; i >= 0; i--) {
+          if (lots[i].shares <= EPSILON) {
+            lots.splice(i, 1);
+          }
         }
       }
 

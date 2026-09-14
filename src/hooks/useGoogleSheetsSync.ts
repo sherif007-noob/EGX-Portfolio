@@ -7,7 +7,11 @@ import {
   clearExpiredToken,
   googleSignIn,
 } from '../services/firebaseAuth';
-import { syncAllPortfolioToSheet, fetchServiceAccountStatus } from '../services/googleSheets';
+import {
+  syncAllPortfolioToSheet,
+  syncStockPricesToSheet,
+  fetchServiceAccountStatus,
+} from '../services/googleSheets';
 import { User } from 'firebase/auth';
 
 const STORAGE_KEY_SHEETS = 'egx_pwa_sheets_config_v1';
@@ -124,6 +128,41 @@ export function useGoogleSheetsSync(
     }
   }, [sheetsConfig, positions, closedTrades, transactions, tickers]);
 
+  // Push live prices only to Google Sheets (Ticker Directory & Active Positions)
+  const syncPricesOnlyToSheets = useCallback(
+    async (overrideTickers?: EGXTicker[], overridePositions?: Position[]) => {
+      const activeTickers = overrideTickers || tickers;
+      const activePositions = overridePositions || positions;
+      const token = await getAccessToken();
+
+      if (!sheetsConfig?.spreadsheetId) {
+        return { success: false, message: 'No spreadsheet linked', updatedTabs: [] as string[] };
+      }
+
+      try {
+        const result = await syncStockPricesToSheet(
+          sheetsConfig.spreadsheetId,
+          activeTickers,
+          activePositions,
+          token
+        );
+        if (result.isAuthError) {
+          clearExpiredToken();
+          setIsSheetsTokenExpired(true);
+        }
+        return result;
+      } catch (err: any) {
+        const isAuth = Boolean(err?.isAuthError || err?.message?.includes('Auth') || err?.message?.includes('401'));
+        if (isAuth) {
+          clearExpiredToken();
+          setIsSheetsTokenExpired(true);
+        }
+        return { success: false, message: err?.message || 'Failed syncing prices', updatedTabs: [] as string[] };
+      }
+    },
+    [sheetsConfig, tickers, positions]
+  );
+
   // Update sheets config
   const updateSheetsConfig = useCallback((newConfig: GoogleSheetsConfig | null) => {
     setSheetsConfig(newConfig);
@@ -158,6 +197,7 @@ export function useGoogleSheetsSync(
     isSheetsTokenExpired,
     isServiceAccountActive,
     syncToSheets,
+    syncPricesOnlyToSheets,
     updateSheetsConfig,
     handleLogin,
     handleLogout,

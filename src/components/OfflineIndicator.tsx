@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { WifiOff, Database, RefreshCw } from 'lucide-react';
-import { subscribeToQuotaStatus, flushPendingWriteQueue } from '../services/firestoreStorage';
+import { subscribeToQuotaStatus, forceRetrySync } from '../services/firestoreStorage';
 
 export const OfflineIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
@@ -17,7 +17,7 @@ export const OfflineIndicator: React.FC = () => {
   const handleManualFlush = async () => {
     setIsFlushing(true);
     try {
-      await flushPendingWriteQueue();
+      await forceRetrySync();
     } finally {
       setIsFlushing(false);
     }

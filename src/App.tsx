@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   Position,
   ClosedTrade,
@@ -37,7 +37,12 @@ import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/po
 import { getIsQuotaExceeded } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
 import { getAccessToken } from './services/firebaseAuth';
-import { appendTransactionToSheet, updateStockDirectoryInSheet, syncTransactionsLedgerToSheet } from './services/googleSheets';
+import {
+  appendTransactionToSheet,
+  updateStockDirectoryInSheet,
+  syncTransactionsLedgerToSheet,
+  syncStockPricesToSheet,
+} from './services/googleSheets';
 import { RotateCcw } from 'lucide-react';
 
 export default function App() {
@@ -53,6 +58,7 @@ export default function App() {
     setTransactions,
     cashBalance,
     setCashBalance,
+    updateCashBalance,
     tickers,
     setTickers,
     capitalDeposits,
@@ -63,10 +69,60 @@ export default function App() {
     deletePosition: executeDeletePosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
+    addCashTransaction,
     reconcileLedger,
     importBackup,
     updateTickers,
+    forceSync,
   } = usePortfolioState();
+
+  // Google Sheets Sync Hook (Encapsulates OAuth, full sync, price sync, and token expiration)
+  const {
+    sheetsConfig,
+    authUser,
+    isSyncingToSheets,
+    isSheetsTokenExpired,
+    syncToSheets,
+    syncPricesOnlyToSheets,
+    updateSheetsConfig,
+    handleLogin,
+    handleLogout,
+  } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
+
+  const sheetsConfigRef = useRef(sheetsConfig);
+  sheetsConfigRef.current = sheetsConfig;
+  const lastSheetAutoPushRef = useRef<number>(0);
+
+  // Auto-sync or push live market quotes to Google Sheet
+  const handleLivePricesSynced = useCallback(
+    async (updatedPositions: Position[], updatedTickers: EGXTicker[], manual: boolean) => {
+      const config = sheetsConfigRef.current;
+      if (!config?.spreadsheetId) return;
+
+      const now = Date.now();
+      // Manual sync pushes immediately; auto-sync throttles to once every 45s
+      const shouldPush = manual || (config.autoSync !== false && now - lastSheetAutoPushRef.current > 45000);
+
+      if (shouldPush) {
+        lastSheetAutoPushRef.current = now;
+        try {
+          const res = await syncPricesOnlyToSheets(updatedTickers, updatedPositions);
+          if (res.success && res.updatedTabs && res.updatedTabs.length > 0) {
+            if (manual) {
+              setToastNotification({
+                message: `Live prices updated & synced to Excel / Google Sheet (${res.updatedTabs.join(' & ')})!`,
+                type: 'success',
+              });
+              setTimeout(() => setToastNotification(null), 4500);
+            }
+          }
+        } catch (err) {
+          console.warn('Auto-sync prices to Google Sheet failed:', err);
+        }
+      }
+    },
+    [syncPricesOnlyToSheets]
+  );
 
   // Market Price Sync Hook (Encapsulates TradingView scanner & Cairo session scheduling)
   const {
@@ -74,18 +130,7 @@ export default function App() {
     lastPriceSyncTime,
     scheduleStatus,
     syncLivePrices,
-  } = useMarketData(positions, tickers, setPositions, updateTickers);
-
-  // Google Sheets Sync Hook (Encapsulates OAuth, full sync, and token expiration)
-  const {
-    sheetsConfig,
-    authUser,
-    isSyncingToSheets,
-    isSheetsTokenExpired,
-    syncToSheets,
-    updateSheetsConfig,
-    handleLogout,
-  } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
+  } = useMarketData(positions, tickers, setPositions, updateTickers, handleLivePricesSynced);
 
   // Price Target & Web Push Alerts Hook (PWA service worker push notifications & thresholds)
   const {
@@ -471,9 +516,15 @@ export default function App() {
           Math.max(0, pos.shares - parsedTx.shares)
         );
       } else {
+        const maxExistingTradeId = transactions.reduce((max, t) => {
+          const tid = Number(t.tradeId);
+          return !isNaN(tid) && tid > max ? tid : max;
+        }, 0);
+        const nextTradeId = maxExistingTradeId > 0 ? maxExistingTradeId + 1 : (transactions.length + 1);
+
         const newTx: TradeTransaction = {
           id: `tx-sell-${Date.now()}-${parsedTx.ticker}`,
-          tradeId: transactions.length + 1,
+          tradeId: nextTradeId,
           type: 'SELL',
           ticker: parsedTx.ticker.toUpperCase(),
           companyName: parsedTx.companyName,
@@ -509,6 +560,18 @@ export default function App() {
     showToast(`Successfully processed ${parsedTxs.length} transactions from screenshots!`, 'success');
   };
 
+  // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)
+  const handleSyncPrices = async () => {
+    const result = await syncLivePrices(true);
+    if (result && result.success) {
+      if (!sheetsConfig?.spreadsheetId) {
+        showToast(`Live quotes updated for ${result.count || ''} EGX equities.`, 'success', 3500);
+      }
+    } else {
+      showToast(result?.error || 'Failed updating market prices', 'error', 4000);
+    }
+  };
+
   // Push prices to connected Google Sheet
   const handlePushPricesToSheetDirectly = async () => {
     if (!sheetsConfig?.spreadsheetId) {
@@ -520,16 +583,11 @@ export default function App() {
       setIsSheetsModalOpen(true);
       return;
     }
-    const res = await updateStockDirectoryInSheet(
-      sheetsConfig.spreadsheetId,
-      tickers,
-      token,
-      'ticker directory'
-    );
+    const res = await syncPricesOnlyToSheets();
     if (!res.success) {
       throw new Error(res.message);
     }
-    showToast('Updated Stock Directory tab in Google Sheets with live quotes', 'success');
+    showToast(`Updated market quotes in Google Sheets (${res.updatedTabs?.join(' & ') || 'Directory & Positions'})`, 'success');
   };
 
   return (
@@ -553,9 +611,11 @@ export default function App() {
         isTokenExpired={isSheetsTokenExpired}
         sheetsTitle={sheetsConfig?.sheetName}
         authUser={authUser}
+        onLogin={handleLogin}
         onLogout={handleLogout}
-        onSyncLivePrices={() => syncLivePrices(true)}
+        onSyncLivePrices={handleSyncPrices}
         isSyncingPrices={isSyncingPrices}
+        forceSyncToFirestore={forceSync}
       />
 
       {/* Undo Toast Notification */}
@@ -626,7 +686,7 @@ export default function App() {
           metrics={metrics}
           stats={stats}
           onQuickAddCash={() => setIsQuickCashModalOpen(true)}
-          onSyncLivePrices={() => syncLivePrices(true)}
+          onSyncLivePrices={handleSyncPrices}
           onReconcileLedger={() => {
             const report = reconcileLedger();
             showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
@@ -772,11 +832,21 @@ export default function App() {
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
             onUpdateCashBalance={(newBal) => {
-              setCashBalance(newBal);
+              updateCashBalance(newBal);
+              showToast(`Cash balance updated to ${newBal.toLocaleString()} EGP and synced.`, 'success');
             }}
             positions={positions}
             closedTrades={closedTrades}
             tradeTransactions={transactions}
+            capitalDeposits={capitalDeposits}
+            onAddCashTransaction={(amount, type, notes) => {
+              addCashTransaction(amount, type, notes);
+              showToast(`${type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} of ${amount.toLocaleString()} EGP recorded and synced.`, 'success');
+            }}
+            onReconcileLedger={() => {
+              const report = reconcileLedger();
+              showToast(`Reconciled ${report.transactionsProcessed} transactions: Cash adjusted to ${report.reconciledCashBalance.toLocaleString()} EGP.`, 'success');
+            }}
           />
         )}
 
@@ -788,7 +858,7 @@ export default function App() {
               setIsAddTradeModalOpen(true);
             }}
             onOpenSchemaSync={() => setIsSchemaModalOpen(true)}
-            onSyncLivePrices={() => syncLivePrices(true)}
+            onSyncLivePrices={handleSyncPrices}
             isSyncingPrices={isSyncingPrices}
             lastPriceSyncTime={lastPriceSyncTime}
             onPushPricesToSheet={handlePushPricesToSheetDirectly}
@@ -893,7 +963,10 @@ export default function App() {
         isOpen={isQuickCashModalOpen}
         onClose={() => setIsQuickCashModalOpen(false)}
         currentCash={cashBalance}
-        onUpdateCash={(newCash) => setCashBalance(newCash)}
+        onUpdateCash={(newCash) => {
+          updateCashBalance(newCash);
+          showToast(`Cash balance adjusted to ${newCash.toLocaleString()} EGP and saved.`, 'success');
+        }}
       />
 
       <PortfolioBackupModal
@@ -903,10 +976,11 @@ export default function App() {
         closedTrades={closedTrades}
         transactions={transactions}
         cashBalance={cashBalance}
+        capitalDeposits={capitalDeposits}
         tickers={tickers}
-        onRestoreBackup={(restored) => {
-          importBackup(restored);
-          showToast('Portfolio successfully restored from JSON backup file!', 'success');
+        onRestoreBackup={async (restored) => {
+          await importBackup(restored);
+          showToast('Portfolio successfully restored from backup file & synced to cloud!', 'success');
         }}
         onReconcileLedger={() => {
           reconcileLedger();

@@ -109,7 +109,8 @@ export function createEGXTickerRecord(
   yearLow?: number,
   rsi?: number,
   description?: string,
-  logoIdOrUrl?: string
+  logoIdOrUrl?: string,
+  changeAbs?: number
 ): EGXTicker {
   const upper = ticker.trim().toUpperCase().replace('.CA', '').replace('EGX:', '');
   const dict = EGX_STOCK_DICTIONARY[upper];
@@ -120,7 +121,16 @@ export function createEGXTickerRecord(
   const isin = dict?.isin;
   const logoUrl = getTradingViewLogoUrl(upper, logoIdOrUrl);
 
-  const change = Math.round((price * (changePercent / 100)) * 100) / 100;
+  // Use exact change_abs from TradingView/Exchange if available;
+  // otherwise calculate exact previous close difference: (price - prevClose)
+  let change = 0;
+  if (changeAbs !== undefined && !isNaN(changeAbs)) {
+    change = Math.round(changeAbs * 100) / 100;
+  } else if (changePercent !== 0 && price > 0) {
+    const prevClose = price / (1 + changePercent / 100);
+    change = Math.round((price - prevClose) * 100) / 100;
+  }
+
   const high = dayHigh || Math.round(price * 1.02 * 100) / 100;
   const low = dayLow || Math.round(price * 0.98 * 100) / 100;
   const yHigh = yearHigh || Math.round(price * 1.35 * 100) / 100;
@@ -166,61 +176,5 @@ export function createEGXTickerRecord(
 }
 
 export const INITIAL_EGX_TICKERS: EGXTicker[] = Object.keys(EGX_STOCK_DICTIONARY).map((sym) => {
-  const samplePrices: Record<string, { price: number; change: number; vol: number }> = {
-    COMI: { price: 138.17, change: -0.74, vol: 5299069 },
-    ESRS: { price: 118.20, change: 2.96, vol: 2150000 },
-    TMGH: { price: 99.05, change: 0.05, vol: 2074851 },
-    ABUK: { price: 93.50, change: -1.06, vol: 994669 },
-    MFPC: { price: 47.75, change: -0.02, vol: 1450237 },
-    SWDY: { price: 127.50, change: -2.60, vol: 974004 },
-    FWRY: { price: 19.20, change: 0.00, vol: 2649405 },
-    ETEL: { price: 125.25, change: -0.59, vol: 3747741 },
-    EKHO: { price: 42.10, change: 1.20, vol: 980000 },
-    AMOC: { price: 13.60, change: -5.49, vol: 19695350 },
-    ISPH: { price: 12.98, change: 0.23, vol: 2624627 },
-    HRHO: { price: 25.99, change: 0.54, vol: 1204016 },
-    ORAS: { price: 858.00, change: -0.12, vol: 154394 },
-    EAST: { price: 34.80, change: -1.69, vol: 1477393 },
-    JUFO: { price: 27.35, change: 0.07, vol: 355658 },
-    ORHD: { price: 43.20, change: 3.47, vol: 5987926 },
-    UEGC: { price: 1.75, change: 1.16, vol: 5767745 },
-    MASR: { price: 8.30, change: 0.97, vol: 6640824 },
-    MNHD: { price: 8.30, change: 0.97, vol: 6640824 },
-    HELI: { price: 8.00, change: 0.00, vol: 11249897 },
-    PHDC: { price: 14.45, change: -0.89, vol: 7541615 },
-    OCDI: { price: 32.69, change: -1.57, vol: 1131777 },
-    EFIH: { price: 23.99, change: 0.04, vol: 1392391 },
-    ADIB: { price: 52.49, change: 1.08, vol: 1075488 },
-    CIEB: { price: 25.48, change: 0.55, vol: 178988 },
-    HDBK: { price: 109.50, change: -2.58, vol: 592426 },
-    QNBF: { price: 38.50, change: 0.52, vol: 850000 },
-    QNBA: { price: 38.50, change: 0.52, vol: 850000 },
-    EGAL: { price: 377.99, change: 2.02, vol: 137677 },
-    SKPC: { price: 18.50, change: -0.16, vol: 4264833 },
-    GBCO: { price: 30.20, change: 0.33, vol: 922882 },
-    ALCN: { price: 32.47, change: -0.09, vol: 284744 },
-    CCAP: { price: 6.21, change: 1.80, vol: 138428597 },
-    OIH: { price: 2.16, change: 1.41, vol: 40300946 },
-    BTFH: { price: 2.97, change: 0.00, vol: 14219289 },
-    TAQA: { price: 15.85, change: -2.46, vol: 3396293 },
-    UBEE: { price: 16.21, change: 0.19, vol: 438723 },
-    UBEG: { price: 16.21, change: 0.19, vol: 438723 },
-    DOMT: { price: 21.00, change: 0.48, vol: 720000 },
-    ORWE: { price: 26.80, change: 1.52, vol: 1150000 },
-    CIRA: { price: 16.40, change: 0.00, vol: 340000 },
-    SCEM: { price: 100.29, change: 0.29, vol: 454347 },
-    KORA: { price: 6.82, change: -1.16, vol: 158794540 },
-    CANA: { price: 42.99, change: -0.92, vol: 237820 },
-    ZMID: { price: 9.80, change: 2.08, vol: 12115198 },
-    LUTS: { price: 1.01, change: 8.60, vol: 360020900 },
-    AFMC: { price: 162.61, change: -1.46, vol: 141930 },
-    MCRO: { price: 1.68, change: -1.75, vol: 54495672 },
-    BONY: { price: 4.53, change: -1.09, vol: 6547975 },
-    MPCO: { price: 2.60, change: 13.54, vol: 238639807 },
-    ELSH: { price: 13.56, change: 0.37, vol: 1907574 },
-    EFIC: { price: 215.26, change: 1.97, vol: 1368807 },
-  };
-
-  const sample = samplePrices[sym] || { price: 25.00, change: 1.00, vol: 1000000 };
-  return createEGXTickerRecord(sym, sample.price, sample.change, sample.vol);
+  return createEGXTickerRecord(sym, 0, 0, 0);
 });

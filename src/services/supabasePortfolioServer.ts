@@ -215,32 +215,36 @@ export async function loadSupabasePortfolio(uid: string) {
 export async function saveSupabasePortfolio(uid: string, payload: any) {
   const { supabase, portfolio } = await requirePortfolio(uid);
   if (!portfolio) throw new Error('No migrated Supabase portfolio exists for this Firebase user. Run the one-time migration first.');
-  const portfolioId = portfolio.id;
-  const now = new Date().toISOString();
-  const portfolioUpdate: Record<string, unknown> = { schema_version: 3, updated_at: now };
-  if (typeof payload.cashBalance === 'number') portfolioUpdate.cash_balance = payload.cashBalance;
-  if (typeof payload.capitalDeposits === 'number') portfolioUpdate.capital_deposits = payload.capitalDeposits;
-  const { error: pError } = await supabase.from('portfolios').update(portfolioUpdate).eq('id', portfolioId).eq('owner_key', uid);
-  if (pError) throw new Error(`Supabase portfolio write failed: ${pError.message}`);
 
-  const txs = Array.isArray(payload.transactions) ? payload.transactions.map((r: any) => mapTransaction(r, portfolioId)) : null;
-  const positions = Array.isArray(payload.positions) ? payload.positions.map((r: any) => mapPosition(r, portfolioId)) : null;
-  const closed = Array.isArray(payload.closedTrades) ? payload.closedTrades.map((r: any) => mapClosedTrade(r, portfolioId)) : null;
-
-  // A partial compatibility call must not erase tables that were not included in the payload.
-  // Full portfolio saves include all three arrays; narrow callers only update the tables they provide.
-  for (const [table, rows] of [
-    ['transactions', txs], ['positions', positions], ['closed_trades', closed],
-  ] as const) {
-    if (rows === null) continue;
-    const { error: deleteError } = await supabase.from(table).delete().eq('portfolio_id', portfolioId);
-    if (deleteError) throw new Error(`Supabase ${table} cleanup failed: ${deleteError.message}`);
-    if (rows.length) {
-      const { error: insertError } = await supabase.from(table).insert(rows);
-      if (insertError) throw new Error(`Supabase ${table} write failed: ${insertError.message}`);
-    }
+  if (!Array.isArray(payload.transactions) || !Array.isArray(payload.positions) || !Array.isArray(payload.closedTrades)) {
+    throw new Error('Supabase portfolio save requires a complete accounting snapshot: transactions, positions, and closedTrades.');
+  }
+  if (typeof payload.cashBalance !== 'number' || !Number.isFinite(payload.cashBalance)) {
+    throw new Error('Supabase portfolio save requires a finite cashBalance derived from the ledger.');
+  }
+  if (typeof payload.capitalDeposits !== 'number' || !Number.isFinite(payload.capitalDeposits) || payload.capitalDeposits < 0) {
+    throw new Error('Supabase portfolio save requires non-negative capitalDeposits.');
   }
 
+  const portfolioId = portfolio.id;
+  const txs = payload.transactions.map((r: any) => mapTransaction(r, portfolioId));
+  const positions = payload.positions.map((r: any) => mapPosition(r, portfolioId));
+  const closed = payload.closedTrades.map((r: any) => mapClosedTrade(r, portfolioId));
+
+  const { data: accountingResult, error: accountingError } = await supabase.rpc('replace_portfolio_accounting_snapshot', {
+    p_portfolio_id: portfolioId,
+    p_owner_key: uid,
+    p_cash_balance: payload.cashBalance,
+    p_capital_deposits: payload.capitalDeposits,
+    p_transactions: txs,
+    p_positions: positions,
+    p_closed_trades: closed,
+  });
+  if (accountingError) throw new Error(`Supabase atomic portfolio write failed: ${accountingError.message}`);
+
+  // Ticker metadata is intentionally kept outside the accounting transaction.
+  // Market-price persistence has its own 15-minute throttling path and must
+  // remain independent from ledger mutations.
   if (Array.isArray(payload.tickers)) {
     const tickerRows = payload.tickers.map(mapTicker);
     if (tickerRows.length) {
@@ -248,7 +252,8 @@ export async function saveSupabasePortfolio(uid: string, payload: any) {
       if (error) throw new Error(`Supabase ticker write failed: ${error.message}`);
     }
   }
-  return { success: true, updatedAt: now };
+
+  return accountingResult ?? { success: true, updatedAt: new Date().toISOString() };
 }
 
 export async function saveSupabasePriceTick(uid: string, positions: any[], tickers: any[], force = false) {

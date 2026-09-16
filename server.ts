@@ -3,20 +3,14 @@ import path from "path";
 import http from "http";
 import { createServer as createViteServer } from "vite";
 import {
-  handleGetServiceAccountStatus,
-  handleGetSpreadsheetMetadata,
-  handleGetSheetValues,
-  handlePutSheetValues,
-  handleAppendSheetValues,
-  handleBatchUpdate,
-  handleListDriveSpreadsheets,
+  handleGetServiceAccountStatus, handleGetSpreadsheetMetadata, handleGetSheetValues,
+  handlePutSheetValues, handleAppendSheetValues, handleBatchUpdate, handleListDriveSpreadsheets,
 } from "./src/services/googleSheetsServer";
 import { runFirestoreSupabaseMigration } from "./src/services/firestoreSupabaseMigrationServer";
+import { verifyFirebaseBearerToken, loadSupabasePortfolio, saveSupabasePortfolio, saveSupabasePriceTick, loadHistoricalPrices } from "./src/services/supabasePortfolioServer";
 
 async function startServer() {
   const app = express();
-  // Respect a hosting environment's assigned port (including AI Studio), while
-  // retaining 3000 for local development.
   const PORT = Number(process.env.PORT) || 3000;
   let migrationRunning = false;
   let migrationCompleted = false;
@@ -24,7 +18,6 @@ async function startServer() {
   app.use(express.json({ limit: "10mb" }));
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
-
   app.get("/api/sheets/service-account-status", handleGetServiceAccountStatus);
   app.get("/api/sheets/metadata", handleGetSpreadsheetMetadata);
   app.get("/api/sheets/values", handleGetSheetValues);
@@ -33,83 +26,50 @@ async function startServer() {
   app.post("/api/sheets/batchUpdate", handleBatchUpdate);
   app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
 
-  // ONE-TIME FIRESTORE -> SUPABASE MIGRATION.
-  // Disabled unless explicitly enabled. All privileged credentials remain server-side.
-  // Firebase is read-only; Supabase is the only destination written by this endpoint.
+  const withFirebaseUser = async (req: express.Request, res: express.Response, handler: (uid: string) => Promise<unknown>) => {
+    try {
+      const uid = await verifyFirebaseBearerToken(req.headers.authorization);
+      res.json(await handler(uid));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = /token|authorization|unauthenticated|invalid/i.test(message) ? 401 : 500;
+      console.error("[Supabase API]", message);
+      res.status(status).json({ error: message });
+    }
+  };
+
+  // Firebase authenticates the browser. The server verifies that Firebase ID token,
+  // scopes by Firebase UID, and uses the Supabase secret key server-side only.
+  app.get("/api/supabase/portfolio", (req, res) => withFirebaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
+  app.put("/api/supabase/portfolio", (req, res) => withFirebaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
+  app.post("/api/supabase/price-tick", (req, res) => withFirebaseUser(req, res, async (uid) => ({ saved: await saveSupabasePriceTick(uid, req.body?.positions || [], req.body?.tickers || [], req.body?.force === true) })));
+  app.get("/api/supabase/price-history", (req, res) => withFirebaseUser(req, res, async (uid) => {
+    const tickers = String(req.query.tickers || '').split(',').map((t) => t.trim()).filter(Boolean);
+    if (!tickers.length) throw new Error("At least one ticker is required.");
+    return { data: await loadHistoricalPrices(uid, tickers, String(req.query.startDate || '') || undefined, String(req.query.endDate || '') || undefined) };
+  }));
+
   app.post("/api/migration/firestore-to-supabase", async (req, res) => {
-    if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") {
-      return res.status(404).json({ error: "Migration endpoint is disabled." });
-    }
-    if (migrationCompleted) {
-      return res.status(409).json({ error: "This server instance has already completed the migration." });
-    }
-    if (migrationRunning) {
-      return res.status(409).json({ error: "A migration is already running." });
-    }
-    if (req.body?.confirm !== true) {
-      return res.status(400).json({ error: "Explicit migration confirmation is required." });
-    }
-
-    // Require the complete server-side credential set. In particular, do not silently
-    // fall back to the legacy Supabase service_role key or Firebase client credentials.
-    const required = [
-      "FIREBASE_ADMIN_PROJECT_ID",
-      "FIREBASE_ADMIN_CLIENT_EMAIL",
-      "FIREBASE_ADMIN_PRIVATE_KEY",
-      "FIREBASE_ADMIN_OWNER_UID",
-      "SUPABASE_URL",
-      "SUPABASE_SECRET_KEY",
-    ];
+    if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") return res.status(404).json({ error: "Migration endpoint is disabled." });
+    if (migrationCompleted) return res.status(409).json({ error: "This server instance has already completed the migration." });
+    if (migrationRunning) return res.status(409).json({ error: "A migration is already running." });
+    if (req.body?.confirm !== true) return res.status(400).json({ error: "Explicit migration confirmation is required." });
+    const required = ["FIREBASE_ADMIN_PROJECT_ID", "FIREBASE_ADMIN_CLIENT_EMAIL", "FIREBASE_ADMIN_PRIVATE_KEY", "FIREBASE_ADMIN_OWNER_UID", "SUPABASE_URL", "SUPABASE_SECRET_KEY"];
     const missing = required.filter((name) => !process.env[name]);
-    if (missing.length) {
-      return res.status(500).json({
-        error: `Server-side migration credentials are not configured: ${missing.join(", ")}`,
-      });
-    }
-
-    const supabaseSecret = process.env.SUPABASE_SECRET_KEY!;
-    if (!supabaseSecret.startsWith("sb_secret_")) {
-      return res.status(500).json({
-        error: "SUPABASE_SECRET_KEY is not a current Supabase secret key (expected sb_secret_...).",
-      });
-    }
-
-    if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY!.includes("BEGIN PRIVATE KEY")) {
-      return res.status(500).json({
-        error: "FIREBASE_ADMIN_PRIVATE_KEY does not look like a valid service-account private key.",
-      });
-    }
-
+    if (missing.length) return res.status(500).json({ error: `Server-side migration credentials are not configured: ${missing.join(", ")}` });
+    if (!process.env.SUPABASE_SECRET_KEY!.startsWith("sb_secret_")) return res.status(500).json({ error: "SUPABASE_SECRET_KEY is not a current Supabase secret key (expected sb_secret_...)." });
+    if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY!.includes("BEGIN PRIVATE KEY")) return res.status(500).json({ error: "FIREBASE_ADMIN_PRIVATE_KEY does not look like a valid service-account private key." });
     migrationRunning = true;
     const events: Array<{ phase: string; message: string; counts?: Record<string, number> }> = [];
-
     try {
-      const result = await runFirestoreSupabaseMigration({
-        confirm: true,
-        onProgress: (event) => events.push(event),
-      });
-
-      if (!result.reconciliation.passed) {
-        return res.status(422).json({
-          ok: false,
-          events,
-          error: "Migration data was written, but field-level reconciliation FAILED. Do not switch the application to Supabase.",
-          result,
-        });
-      }
-
+      const result = await runFirestoreSupabaseMigration({ confirm: true, onProgress: (event) => events.push(event) });
+      if (!result.reconciliation.passed) return res.status(422).json({ ok: false, events, error: "Migration data was written, but field-level reconciliation FAILED. Do not switch the application to Supabase.", result });
       migrationCompleted = true;
       return res.json({ ok: true, events, result });
     } catch (error) {
       console.error("Firestore -> Supabase migration failed:", error);
-      return res.status(500).json({
-        ok: false,
-        events,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    } finally {
-      migrationRunning = false;
-    }
+      return res.status(500).json({ ok: false, events, error: error instanceof Error ? error.message : String(error) });
+    } finally { migrationRunning = false; }
   });
 
   app.post("/api/egx/scan", async (_req, res) => {
@@ -121,7 +81,6 @@ async function startServer() {
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Scanner:", err); res.status(500).json({ error: err.message || "Failed to fetch prices from TradingView" }); }
   });
-
   app.get("/api/tradingview/symbol-search", async (req, res) => {
     try {
       const query = String(req.query.text || "").trim();
@@ -133,14 +92,8 @@ async function startServer() {
     } catch (err: any) { console.error("Error proxying to TradingView Symbol Search:", err); res.status(500).json({ error: err.message || "Failed to search TradingView symbols" }); }
   });
 
-  // Serve the isolated migration page explicitly. This avoids relying on Vite's
-  // public-directory middleware or build-time copying, and keeps the page reachable
-  // at the same origin as the server-side migration API.
   const migrationPage = path.join(process.cwd(), "public", "supabase-migration.html");
-  app.get("/supabase-migration.html", (_req, res) => {
-    res.sendFile(migrationPage);
-  });
-
+  app.get("/supabase-migration.html", (_req, res) => res.sendFile(migrationPage));
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({ server: { middlewareMode: true, hmr: { server } }, appType: "spa" });
     app.use(vite.middlewares);
@@ -151,5 +104,4 @@ async function startServer() {
   }
   server.listen(PORT, "0.0.0.0", () => console.log(`EGX Portfolio Server running on http://0.0.0.0:${PORT}`));
 }
-
 startServer();

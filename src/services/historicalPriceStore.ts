@@ -1,5 +1,4 @@
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from './firestoreStorage';
+import { loadHistoricalPricesFromSupabase } from './supabasePersistence';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -21,15 +20,27 @@ function normalizeTicker(ticker: string): string {
 export async function getHistoricalPrices(tickers: string[], startDate?: string, endDate?: string): Promise<HistoricalPriceSeries> {
   const unique = [...new Set(tickers.map(normalizeTicker).filter(Boolean))];
   const result: HistoricalPriceSeries = {};
-  await Promise.all(unique.map(async (ticker) => {
-    const ref = collection(db, 'historicalPrices', ticker, 'daily');
-    const snapshot = await getDocs(query(ref, orderBy('date', 'asc')));
-    const points = snapshot.docs.map((doc) => doc.data() as HistoricalPricePoint).filter((point) => {
-      const date = String(point.date || '').slice(0, 10);
-      return !!date && (!startDate || date >= startDate) && (!endDate || date <= endDate) && Number.isFinite(Number(point.close)) && Number(point.close) > 0;
-    }).map((point) => ({ ...point, date: String(point.date).slice(0, 10), close: Number(point.close) }));
-    result[ticker] = points;
-  }));
+  if (!unique.length) return result;
+
+  const rows = await loadHistoricalPricesFromSupabase(unique, startDate, endDate);
+  for (const ticker of unique) result[ticker] = [];
+  for (const row of rows) {
+    const ticker = normalizeTicker(String(row.ticker || ''));
+    const date = String(row.trading_date || '').slice(0, 10);
+    const close = Number(row.close);
+    if (!ticker || !date || !Number.isFinite(close) || close <= 0 || !result[ticker]) continue;
+    result[ticker].push({
+      date,
+      open: row.open == null ? undefined : Number(row.open),
+      high: row.high == null ? undefined : Number(row.high),
+      low: row.low == null ? undefined : Number(row.low),
+      close,
+      volume: row.volume == null ? undefined : Number(row.volume),
+      source: row.source === 'tradingview' || row.source === 'yahoo' || row.source === 'other' ? row.source : undefined,
+      retrievedAt: row.retrieved_at ?? undefined,
+    });
+  }
+  for (const ticker of unique) result[ticker].sort((a, b) => a.date.localeCompare(b.date));
   return result;
 }
 

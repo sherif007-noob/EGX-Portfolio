@@ -95,7 +95,6 @@ export interface ClosedTrade {
   tradeCycle?: number;
   cycleTag?: string;
   notes?: string;
-  /** Exact ledger legs used to build this closed cycle. Optional for legacy data. */
   buyTransactionIds?: string[];
   sellTransactionIds?: string[];
 }
@@ -207,6 +206,8 @@ export interface CashTransaction {
   balanceAfter: number;
 }
 
+export type CashFlowType = 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE';
+
 export interface TradeTransaction {
   id: string;
   type: 'BUY' | 'SELL';
@@ -219,6 +220,8 @@ export interface TradeTransaction {
   executedAt?: string;
   fees: number;
   totalAmount: number;
+  cashFlowType?: CashFlowType;
+  cashFlowAmount?: number;
   isDCA?: boolean;
   notes?: string;
   targetPrice?: number;

@@ -114,18 +114,21 @@ export function reconcilePortfolioFromLedger(
   chronologicalTxs.forEach((tx) => {
     const tickerKey = tx.ticker.trim().toUpperCase();
 
-    // Cash/dividend entries are legacy cash ledger records represented as
-    // TradeTransaction BUY rows with ticker CASH. Keep this compatibility
-    // path explicit; typed DEPOSIT/WITHDRAW branches are intentionally not
-    // supported here because cash contributions/withdrawals are stored in
-    // capitalDeposits rather than the trade ledger.
+    // Legacy cash-flow rows are normalized to ticker CASH. BUY means an
+    // inflow (deposit/dividend); SELL means an outflow (withdrawal).
     if (tickerKey === 'CASH') {
       const amount = tx.totalAmount;
       if (!Number.isFinite(amount) || amount < 0) {
         discrepancies.push(`CASH ${tx.id} has an invalid non-negative amount.`);
         return;
       }
-      runningCash += amount;
+      if (tx.type === 'BUY') {
+        runningCash += amount;
+      } else if (tx.type === 'SELL') {
+        runningCash -= amount;
+      } else {
+        discrepancies.push(`CASH ${tx.id} has unsupported transaction type ${tx.type}.`);
+      }
       return;
     }
 

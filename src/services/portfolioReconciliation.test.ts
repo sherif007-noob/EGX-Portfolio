@@ -4,16 +4,8 @@ import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 
 const tx = (overrides: Partial<TradeTransaction>): TradeTransaction => ({
   id: overrides.id || `tx-${Math.random()}`,
-  type: 'BUY',
-  ticker: 'TEST',
-  companyName: 'Test',
-  sector: 'Other',
-  shares: 10,
-  price: 10,
-  date: '2026-01-01T10:00:00Z',
-  fees: 0,
-  totalAmount: 100,
-  ...overrides,
+  type: 'BUY', ticker: 'TEST', companyName: 'Test', sector: 'Other', shares: 10, price: 10,
+  date: '2026-01-01T10:00:00Z', fees: 0, totalAmount: 100, ...overrides,
 });
 
 describe('portfolio reconciliation', () => {
@@ -30,6 +22,8 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledClosedTrades).toHaveLength(1);
     expect(report.reconciledClosedTrades[0].realizedPnlEgp).toBe(8);
     expect(report.reconciledClosedTrades[0].holdingDays).toBe(2);
+    expect(report.reconciledClosedTrades[0].buyTransactionIds).toEqual(['buy-1']);
+    expect(report.reconciledClosedTrades[0].sellTransactionIds).toEqual(['sell-1']);
     expect(report.reconciledPositions[0].shares).toBe(5);
     expect(report.reconciledCashBalance).toBe(957);
   });
@@ -61,6 +55,8 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledClosedTrades).toHaveLength(1);
     expect(report.reconciledClosedTrades[0].buyDate).toBe('2026-01-01T10:00:00Z');
     expect(report.reconciledClosedTrades[0].holdingDays).toBe(11);
+    expect(report.reconciledClosedTrades[0].buyTransactionIds).toEqual(['buy-old', 'buy-new']);
+    expect(report.reconciledClosedTrades[0].sellTransactionIds).toEqual(['sell-partial', 'sell-final']);
   });
 
   it('uses exact execution timestamps when both transactions provide them', () => {
@@ -78,12 +74,12 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledPositions[0].shares).toBe(10.125);
   });
 
-  it('applies normalized deposits and withdrawals with the correct cash sign', () => {
+  it('does not double-count explicit deposit and withdrawal ledger flows against capitalDeposits', () => {
     const report = reconcilePortfolioFromLedger([
-      tx({ id: 'deposit', type: 'DEPOSIT' as TradeTransaction['type'], ticker: 'CASH', shares: 500, price: 1, totalAmount: 500 }),
-      tx({ id: 'withdraw', type: 'WITHDRAWAL' as TradeTransaction['type'], ticker: 'CASH', shares: 200, price: 1, totalAmount: 200 }),
-    ], [], 1000);
-    expect(report.reconciledCashBalance).toBe(1300);
+      tx({ id: 'deposit', type: 'DEPOSIT' as TradeTransaction['type'], ticker: 'CASH', shares: 500, price: 1, totalAmount: 500, cashFlowType: 'DEPOSIT' }),
+      tx({ id: 'withdraw', type: 'WITHDRAWAL' as TradeTransaction['type'], ticker: 'CASH', shares: 200, price: 1, totalAmount: 200, cashFlowType: 'WITHDRAWAL' }),
+    ], [], 1500);
+    expect(report.reconciledCashBalance).toBe(300);
     expect(report.discrepanciesFound).toHaveLength(0);
   });
 

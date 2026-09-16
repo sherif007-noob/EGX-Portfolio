@@ -25,11 +25,11 @@ export function useMarketData(
   const positionsRef = useRef(positions);
   const tickersRef = useRef(tickers);
   const onLivePricesSyncedRef = useRef(onLivePricesSynced);
+  const isSyncingRef = useRef(false);
   positionsRef.current = positions;
   tickersRef.current = tickers;
   onLivePricesSyncedRef.current = onLivePricesSynced;
 
-  // This is a UI countdown only. It does not trigger market-data requests or Firestore writes.
   useEffect(() => {
     const updateSchedule = () => setScheduleStatus(getEGXSessionStatus());
     updateSchedule();
@@ -37,9 +37,10 @@ export function useMarketData(
     return () => clearInterval(timer);
   }, []);
 
-  const syncLivePrices = useCallback(async (manual = false, forceSave = false) => {
-    if (isSyncingPrices) return { success: false, error: 'Price sync already in progress.' };
+  const syncLivePrices = useCallback(async (manual = false) => {
+    if (isSyncingRef.current) return { success: false, error: 'Price sync already in progress.' };
 
+    isSyncingRef.current = true;
     setIsSyncingPrices(true);
     setSyncError(null);
 
@@ -65,19 +66,17 @@ export function useMarketData(
       }
 
       // TradingView is delayed market data and is supporting data for the ledger/performance app.
-      // Persist it at most once per 15 minutes, except for an explicit manual/closing save.
+      // Automatic persistence is throttled to 15 minutes by firestoreStorage. Manual refreshes
+      // may persist immediately when explicitly requested by the user.
       await savePriceTickToFirestore(
         hasChanges ? updatedPositions : positionsRef.current,
         hasChanges ? updatedTickers : tickersRef.current,
-        manual || forceSave
+        manual
       );
 
-      if (onLivePricesSyncedRef.current) {
-        onLivePricesSyncedRef.current(updatedPositions, updatedTickers, manual);
-      }
+      onLivePricesSyncedRef.current?.(updatedPositions, updatedTickers, manual);
 
-      const now = new Date();
-      setLastPriceSyncTime(now.toLocaleTimeString('en-US', {
+      setLastPriceSyncTime(new Date().toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
@@ -90,22 +89,22 @@ export function useMarketData(
       setSyncError(errMsg);
       return { success: false, error: errMsg };
     } finally {
+      isSyncingRef.current = false;
       setIsSyncingPrices(false);
     }
-  }, [isSyncingPrices, onUpdatePositions, onUpdateTickers]);
+  }, [onUpdatePositions, onUpdateTickers]);
 
   const hasInitialSyncedRef = useRef(false);
-  const lastClosingSyncKeyRef = useRef<string>('');
 
   // One initial valuation refresh when the app opens. This is intentionally not a live poll.
   useEffect(() => {
     if (hasInitialSyncedRef.current) return;
     hasInitialSyncedRef.current = true;
-    void syncLivePrices(false, false);
+    void syncLivePrices(false);
   }, [syncLivePrices]);
 
   // TradingView is delayed data. Keep the app on a strict 15-minute cadence rather than polling
-  // every few seconds. The timeout is aligned to the next quarter-hour boundary.
+  // every few seconds. The timer is aligned to quarter-hour boundaries.
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -123,33 +122,10 @@ export function useMarketData(
         const status = getEGXSessionStatus();
         setScheduleStatus(status);
 
-        const cairoFormatter = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Africa/Cairo',
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
-          hour12: false,
-        });
-        const parts = cairoFormatter.formatToParts(new Date());
-        const getVal = (type: string) => parseInt(parts.find((p) => p.type === type)?.value || '0', 10);
-        const year = getVal('year');
-        const month = getVal('month');
-        const day = getVal('day');
-        const hour = getVal('hour');
-        const minute = getVal('minute');
-        const cairoDayMinutes = hour * 60 + minute;
-        const todayClosingKey = `${year}-${month}-${day}-1515`;
-
-        // One closing valuation after 3:15 PM Cairo time on a trading day.
-        const isClosingWindow = cairoDayMinutes >= 915 && cairoDayMinutes <= 930;
-        if (isClosingWindow && lastClosingSyncKeyRef.current !== todayClosingKey) {
-          lastClosingSyncKeyRef.current = todayClosingKey;
-          console.log('[MarketData] 3:15 PM Cairo closing valuation refresh.');
-          await syncLivePrices(false, true);
-        } else if (status.isSessionActive) {
-          await syncLivePrices(false, false);
+        // The quarter-hour timer is also sufficient for the post-close valuation. There is no
+        // separate high-frequency closing poll and no forced duplicate write.
+        if (status.isSessionActive || (status.millisUntilNextTick <= 0 && status.millisUntilSessionStart > 0)) {
+          await syncLivePrices(false);
         }
 
         scheduleNextSync();
@@ -168,6 +144,6 @@ export function useMarketData(
     lastPriceSyncTime,
     syncError,
     scheduleStatus,
-    syncLivePrices: (manual = true) => syncLivePrices(manual, manual),
+    syncLivePrices: (manual = true) => syncLivePrices(manual),
   };
 }

@@ -11,11 +11,14 @@ import {
   handleBatchUpdate,
   handleListDriveSpreadsheets,
 } from "./src/services/googleSheetsServer";
+import { runFirestoreSupabaseMigration } from "./src/services/firestoreSupabaseMigrationServer";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
-  
+  let migrationRunning = false;
+  let migrationCompleted = false;
+
   // Create HTTP server instance explicitly to attach Vite's WebSocket server
   const server = http.createServer(app);
 
@@ -36,6 +39,57 @@ async function startServer() {
   app.post("/api/sheets/append", handleAppendSheetValues);
   app.post("/api/sheets/batchUpdate", handleBatchUpdate);
   app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
+
+  // --------------------------------------------------------------------------
+  // ONE-TIME FIRESTORE -> SUPABASE MIGRATION
+  // Disabled unless explicitly enabled on the server.
+  // Credentials are read only from server-side environment variables.
+  // --------------------------------------------------------------------------
+  app.post("/api/migration/firestore-to-supabase", async (req, res) => {
+    if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") {
+      return res.status(404).json({ error: "Migration endpoint is disabled." });
+    }
+    if (migrationCompleted) {
+      return res.status(409).json({ error: "This server instance has already completed the migration." });
+    }
+    if (migrationRunning) {
+      return res.status(409).json({ error: "A migration is already running." });
+    }
+    if (req.body?.confirm !== true) {
+      return res.status(400).json({ error: "Explicit migration confirmation is required." });
+    }
+
+    const firebaseEmail = process.env.EGX_FIREBASE_EMAIL;
+    const firebasePassword = process.env.EGX_FIREBASE_PASSWORD;
+    if (!firebaseEmail || !firebasePassword) {
+      return res.status(500).json({ error: "Server-side Firebase migration credentials are not configured." });
+    }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return res.status(500).json({ error: "Server-side Supabase service-role key is not configured." });
+    }
+
+    migrationRunning = true;
+    const events: Array<{ phase: string; message: string }> = [];
+    try {
+      const result = await runFirestoreSupabaseMigration({
+        firebaseEmail,
+        firebasePassword,
+        confirm: true,
+        onProgress: (event) => events.push({ phase: event.phase, message: event.message }),
+      });
+      migrationCompleted = true;
+      return res.json({ ok: true, events, result });
+    } catch (error) {
+      console.error("Firestore -> Supabase migration failed:", error);
+      return res.status(500).json({
+        ok: false,
+        events,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      migrationRunning = false;
+    }
+  });
 
   // Proxy endpoint for TradingView EGX Market Scanner
   app.post("/api/egx/scan", async (_req, res) => {
@@ -118,9 +172,9 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { 
+      server: {
         middlewareMode: true,
-        hmr: { server } // Attach WebSocket server to avoid reconnection loops
+        hmr: { server }
       },
       appType: "spa",
     });
@@ -139,4 +193,3 @@ async function startServer() {
 }
 
 startServer();
-

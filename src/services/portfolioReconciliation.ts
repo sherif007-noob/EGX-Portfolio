@@ -51,11 +51,15 @@ export function reconcilePortfolioFromLedger(
   existingPositions: Position[] = []
 ): ReconciliationReport {
   const discrepancies: string[] = [];
+  const startingCash = Number.isFinite(totalCapitalDeposited) && totalCapitalDeposited >= 0
+    ? totalCapitalDeposited
+    : 0;
+
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return {
       reconciledPositions: [],
       reconciledClosedTrades: [],
-      reconciledCashBalance: totalCapitalDeposited || INITIAL_CAPITAL_DEPOSITS,
+      reconciledCashBalance: startingCash,
       transactionsProcessed: 0,
       discrepanciesFound: [],
     };
@@ -76,9 +80,7 @@ export function reconcilePortfolioFromLedger(
   const activeCyclesByTicker: Record<string, ActiveCycle> = {};
   const openLotsByTicker: Record<string, BuyLot[]> = {};
   const closedTrades: ClosedTrade[] = [];
-  let runningCash = typeof totalCapitalDeposited === 'number' && totalCapitalDeposited > 0
-    ? totalCapitalDeposited
-    : INITIAL_CAPITAL_DEPOSITS || 0;
+  let runningCash = startingCash;
 
   const finalizeCycle = (cycle: ActiveCycle) => {
     const costBasisWithFees = cycle.totalCostBasis + cycle.buyFees;
@@ -112,7 +114,6 @@ export function reconcilePortfolioFromLedger(
   chronologicalTxs.forEach((tx) => {
     const tickerKey = tx.ticker.trim().toUpperCase();
 
-    // Cash-only adjustments are intentionally kept separate from BUY/SELL accounting.
     if (tickerKey === 'CASH' || (tx as any).type === 'DIVIDEND' || (tx as any).type === 'DEPOSIT') {
       const amount = tx.totalAmount || tx.shares * tx.price;
       runningCash += amount;
@@ -186,8 +187,11 @@ export function reconcilePortfolioFromLedger(
       return;
     }
 
-    // The ledger result is authoritative. Stored realizedPnl fields are historical snapshots only.
     runningCash += accounting.netProceeds;
+
+    const cycleBuyDate = lots
+      .map(lot => lot.date)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0] || tx.date;
 
     const ratioRemaining = 1 - tx.shares / totalOpenShares;
     for (const lot of lots) {
@@ -197,12 +201,6 @@ export function reconcilePortfolioFromLedger(
     for (let i = lots.length - 1; i >= 0; i--) {
       if (lots[i].shares <= EPSILON) lots.splice(i, 1);
     }
-
-    const earliestBuyDate = chronologicalTxs
-      .filter(t => t.type === 'BUY' && t.ticker.trim().toUpperCase() === tickerKey)
-      .map(t => t.date)
-      .filter(date => new Date(date).getTime() <= new Date(tx.date).getTime())
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0] || tx.date;
 
     let cycle = activeCyclesByTicker[tickerKey];
     if (!cycle) {
@@ -214,7 +212,7 @@ export function reconcilePortfolioFromLedger(
         shares: 0,
         totalCostBasis: 0,
         totalGrossProceeds: 0,
-        buyDate: earliestBuyDate,
+        buyDate: cycleBuyDate,
         sellDate: tx.date,
         buyFees: 0,
         sellFees: 0,
@@ -224,13 +222,14 @@ export function reconcilePortfolioFromLedger(
         cycleTags: [],
       };
       activeCyclesByTicker[tickerKey] = cycle;
+    } else if (new Date(cycleBuyDate).getTime() < new Date(cycle.buyDate).getTime()) {
+      cycle.buyDate = cycleBuyDate;
     }
 
     cycle.shares += tx.shares;
     cycle.totalCostBasis += accounting.allocatedGrossCost;
     cycle.totalGrossProceeds += accounting.grossProceeds;
     cycle.sellDate = tx.date;
-    cycle.buyDate = new Date(earliestBuyDate).getTime() < new Date(cycle.buyDate).getTime() ? earliestBuyDate : cycle.buyDate;
     cycle.buyFees += accounting.allocatedBuyFees;
     cycle.sellFees += tx.fees || 0;
     cycle.totalFees += accounting.allocatedBuyFees + (tx.fees || 0);

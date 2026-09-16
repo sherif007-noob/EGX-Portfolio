@@ -15,9 +15,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
       - name: Sync TradingView historical prices
         env:
           EGX_FIREBASE_EMAIL: ${{ secrets.EGX_FIREBASE_EMAIL }}

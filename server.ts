@@ -32,23 +32,21 @@ async function startServer() {
   app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
 
   // ONE-TIME FIRESTORE -> SUPABASE MIGRATION. Disabled unless explicitly enabled.
+  // Uses Firebase Admin SDK server-side; it does not use the user's Google password or auth provider.
   app.post("/api/migration/firestore-to-supabase", async (req, res) => {
     if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") return res.status(404).json({ error: "Migration endpoint is disabled." });
     if (migrationCompleted) return res.status(409).json({ error: "This server instance has already completed the migration." });
     if (migrationRunning) return res.status(409).json({ error: "A migration is already running." });
     if (req.body?.confirm !== true) return res.status(400).json({ error: "Explicit migration confirmation is required." });
 
-    const firebaseEmail = process.env.EGX_FIREBASE_EMAIL;
-    const firebasePassword = process.env.EGX_FIREBASE_PASSWORD;
-    if (!firebaseEmail || !firebasePassword) return res.status(500).json({ error: "Server-side Firebase migration credentials are not configured." });
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(500).json({ error: "Server-side Supabase service-role key is not configured." });
+    const required = ["FIREBASE_ADMIN_PROJECT_ID", "FIREBASE_ADMIN_CLIENT_EMAIL", "FIREBASE_ADMIN_PRIVATE_KEY", "SUPABASE_SECRET_KEY"];
+    const missing = required.filter((name) => !process.env[name]);
+    if (missing.length) return res.status(500).json({ error: `Server-side migration credentials are not configured: ${missing.join(", ")}` });
 
     migrationRunning = true;
     const events: Array<{ phase: string; message: string; counts?: Record<string, number> }> = [];
     try {
       const result = await runFirestoreSupabaseMigration({
-        firebaseEmail,
-        firebasePassword,
         confirm: true,
         onProgress: (event) => events.push(event),
       });

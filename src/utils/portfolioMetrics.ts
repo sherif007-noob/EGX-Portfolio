@@ -73,11 +73,13 @@ export function calculatePortfolioMetrics(
     dayChangeEgp += position.shares * perShareChange;
   });
 
-  const previousEquity = totalMarketValue - dayChangeEgp;
-  const previousPortfolio = totalValue - dayChangeEgp;
-  const dayChangePercent = previousEquity > 0
-    ? (dayChangeEgp / previousEquity) * 100
-    : previousPortfolio > 0 ? (dayChangeEgp / previousPortfolio) * 100 : 0;
+  // Day change is an equity/NAV change, so the prior-value denominator must
+  // include cash as well as securities. This also remains correct when the
+  // portfolio is mostly or entirely cash.
+  const previousPortfolioValue = totalValue - dayChangeEgp;
+  const dayChangePercent = previousPortfolioValue > 0
+    ? (dayChangeEgp / previousPortfolioValue) * 100
+    : 0;
 
   return {
     totalValue: Number(totalValue.toFixed(2)),
@@ -163,7 +165,7 @@ export function calculatePerformanceStats(
   };
 }
 
-/** Normalize legacy snake_case transaction fields into the canonical shape. */
+/** Normalize legacy snake_case trade fields into the canonical trade shape. */
 export function normalizeTransaction(tx: any): TradeTransaction {
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
   const price = typeof tx.price === 'number' ? tx.price : parseFloat(tx.price) || 0;

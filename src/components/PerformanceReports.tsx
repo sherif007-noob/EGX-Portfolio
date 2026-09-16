@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
+import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
-import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
@@ -14,21 +13,10 @@ interface PerformanceReportsProps {
   positions: Position[];
   metrics?: PortfolioMetrics;
   cashBalance?: number;
-  transactions?: TradeTransaction[];
+  capitalDeposits?: number;
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
-const CAPITAL_STORAGE_KEY = 'egx_pwa_capital_deposits_v1';
-
-function readNetCapitalContributed(): number {
-  if (typeof window === 'undefined') return 0;
-  try {
-    const value = Number(localStorage.getItem(CAPITAL_STORAGE_KEY));
-    return Number.isFinite(value) && value >= 0 ? value : 0;
-  } catch {
-    return 0;
-  }
-}
 
 export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   stats,
@@ -36,6 +24,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   positions,
   metrics,
   cashBalance = 0,
+  capitalDeposits = 0,
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
@@ -51,15 +40,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   const closedFees = stats.totalBrokerageFeesPaid || 0;
   const openFees = positions.reduce((sum, p) => sum + (p.totalFees || 0), 0);
 
-  const performanceBridge = useMemo(() => {
-    const netCapitalContributed = readNetCapitalContributed();
-    return calculateEquityBridge(
-      netCapitalContributed,
-      closedTrades,
-      positions,
-      cashBalance,
-    );
-  }, [closedTrades, positions, cashBalance]);
+  const performanceBridge = useMemo(() => calculateEquityBridge(
+    Number.isFinite(capitalDeposits) && capitalDeposits >= 0 ? capitalDeposits : 0,
+    closedTrades,
+    positions,
+    cashBalance,
+  ), [capitalDeposits, closedTrades, positions, cashBalance]);
 
   const sectorData = useMemo(() => {
     const map: Record<string, number> = {};

@@ -66,6 +66,11 @@ export function reconcilePortfolioFromLedger(
   }
 
   const chronologicalTxs = transactions.map(normalizeTransaction).sort((a, b) => {
+    const executedA = a.executedAt ? new Date(a.executedAt).getTime() : NaN;
+    const executedB = b.executedAt ? new Date(b.executedAt).getTime() : NaN;
+    if (Number.isFinite(executedA) && Number.isFinite(executedB) && executedA !== executedB) {
+      return executedA - executedB;
+    }
     const timeA = new Date(a.date).getTime();
     const timeB = new Date(b.date).getTime();
     if (timeA !== timeB) return timeA - timeB;
@@ -114,8 +119,6 @@ export function reconcilePortfolioFromLedger(
   chronologicalTxs.forEach((tx) => {
     const tickerKey = tx.ticker.trim().toUpperCase();
 
-    // Legacy cash-flow rows are normalized to ticker CASH. BUY means an
-    // inflow (deposit/dividend); SELL means an outflow (withdrawal).
     if (tickerKey === 'CASH') {
       const amount = tx.totalAmount;
       if (!Number.isFinite(amount) || amount < 0) {
@@ -307,6 +310,11 @@ export function getOpenBuyTransactionIdsForTicker(transactions: TradeTransaction
   if (!Array.isArray(transactions) || transactions.length === 0) return [];
 
   const chronologicalTxs = transactions.map(normalizeTransaction).sort((a, b) => {
+    const executedA = a.executedAt ? new Date(a.executedAt).getTime() : NaN;
+    const executedB = b.executedAt ? new Date(b.executedAt).getTime() : NaN;
+    if (Number.isFinite(executedA) && Number.isFinite(executedB) && executedA !== executedB) {
+      return executedA - executedB;
+    }
     const timeA = new Date(a.date).getTime();
     const timeB = new Date(b.date).getTime();
     if (timeA !== timeB) return timeA - timeB;

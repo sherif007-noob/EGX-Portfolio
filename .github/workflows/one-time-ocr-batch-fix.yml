@@ -1,0 +1,19 @@
+name: One-time OCR Batch Fix
+
+on:
+  push:
+    paths:
+      - 'scripts/one_time_ocr_batch_fix.py'
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply OCR batch fix
+        run: python scripts/one_time_ocr_batch_fix.py

@@ -1,5 +1,6 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 import { loadPortfolioFromSupabase, savePortfolioToSupabase, savePriceTickToSupabase } from './supabasePersistence';
+import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 
 export interface PortfolioDataDocument {
   positions: Position[];
@@ -33,21 +34,35 @@ export function updateLastSavedSnapshot(data: Partial<PortfolioDataDocument>) {
 }
 
 export function getLastSavedFingerprint() { return lastSerializedPayload; }
-
-export function markLocalMutation(durationMs = 5000) {
-  localMutationLockUntil = Math.max(localMutationLockUntil, Date.now() + durationMs);
-}
-
+export function markLocalMutation(durationMs = 5000) { localMutationLockUntil = Math.max(localMutationLockUntil, Date.now() + durationMs); }
 export function isLocalMutationActive() { return Date.now() < localMutationLockUntil; }
 export function getIsQuotaExceeded() { return false; }
 export function subscribeToQuotaStatus(listener: (isExceeded: boolean) => void) { listener(false); return () => undefined; }
 export async function forceRetrySync() { return { success: true, flushedCount: 0 }; }
 export async function flushPendingWriteQueue() { return 0; }
 
+function deriveLedgerState(data: PortfolioDataDocument): PortfolioDataDocument {
+  if (!Array.isArray(data.transactions) || data.transactions.length === 0) return data;
+  const report = reconcilePortfolioFromLedger(
+    data.transactions,
+    Array.isArray(data.tickers) ? data.tickers : [],
+    typeof data.capitalDeposits === 'number' && data.capitalDeposits >= 0 ? data.capitalDeposits : 0,
+    Array.isArray(data.positions) ? data.positions : [],
+  );
+  return {
+    ...data,
+    positions: report.reconciledPositions,
+    closedTrades: report.reconciledClosedTrades,
+    cashBalance: report.reconciledCashBalance,
+  };
+}
+
 export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocument | null> {
   const data = await loadPortfolioFromSupabase();
-  if (data) updateLastSavedSnapshot(data);
-  return data;
+  if (!data) return null;
+  const reconciled = deriveLedgerState(data);
+  updateLastSavedSnapshot(reconciled);
+  return reconciled;
 }
 
 function enqueueSave(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>): Promise<boolean> {
@@ -59,7 +74,6 @@ function enqueueSave(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVers
     if (ok) updateLastSavedSnapshot({ ...data, updatedAt: new Date().toISOString(), schemaVersion: 3 });
     return ok;
   };
-
   const next = saveQueue.then(run, run);
   saveQueue = next.catch(() => false);
   return next;
@@ -148,12 +162,13 @@ export function subscribeToPortfolioFromFirestore(onData: (data: PortfolioDataDo
       if (cancelled || isLocalMutationActive()) return;
       const data = await loadPortfolioFromSupabase();
       if (!data || cancelled || isLocalMutationActive()) return;
-      const incoming = new Date(data.updatedAt || 0).getTime();
+      const reconciled = deriveLedgerState(data);
+      const incoming = new Date(reconciled.updatedAt || 0).getTime();
       const known = lastKnownRemoteTimestamp ? new Date(lastKnownRemoteTimestamp).getTime() : 0;
       if (incoming && known && incoming <= known) return;
-      if (generateFingerprint(data) === lastSerializedPayload) return;
-      updateLastSavedSnapshot(data);
-      onData(data);
+      if (generateFingerprint(reconciled) === lastSerializedPayload) return;
+      updateLastSavedSnapshot(reconciled);
+      onData(reconciled);
     } catch (error) {
       onError?.(error);
     }

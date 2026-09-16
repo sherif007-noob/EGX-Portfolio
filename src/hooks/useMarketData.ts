@@ -30,6 +30,7 @@ export function useMarketData(
   tickersRef.current = tickers;
   onLivePricesSyncedRef.current = onLivePricesSynced;
 
+  // UI countdown only. It does not trigger market-data requests or Firestore writes.
   useEffect(() => {
     const updateSchedule = () => setScheduleStatus(getEGXSessionStatus());
     updateSchedule();
@@ -46,10 +47,7 @@ export function useMarketData(
 
     try {
       const { quotes, discoveredTickers } = await fetchTradingViewEGXPrices();
-
-      if (Object.keys(quotes).length === 0) {
-        throw new Error('No price quotes returned from TradingView.');
-      }
+      if (Object.keys(quotes).length === 0) throw new Error('No price quotes returned from TradingView.');
 
       const { updatedPositions, updatedTickers, hasChanges } = applyLivePricesToPortfolio(
         positionsRef.current,
@@ -60,9 +58,7 @@ export function useMarketData(
 
       if (hasChanges) {
         onUpdatePositions(updatedPositions);
-        if (onUpdateTickers && updatedTickers.length > 0) {
-          onUpdateTickers(updatedTickers);
-        }
+        if (onUpdateTickers && updatedTickers.length > 0) onUpdateTickers(updatedTickers);
       }
 
       // TradingView is delayed market data and is supporting data for the ledger/performance app.
@@ -75,12 +71,8 @@ export function useMarketData(
       );
 
       onLivePricesSyncedRef.current?.(updatedPositions, updatedTickers, manual);
-
       setLastPriceSyncTime(new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
       }));
       return { success: true, count: Object.keys(quotes).length };
     } catch (err: any) {
@@ -103,31 +95,23 @@ export function useMarketData(
     void syncLivePrices(false);
   }, [syncLivePrices]);
 
-  // TradingView is delayed data. Keep the app on a strict 15-minute cadence rather than polling
-  // every few seconds. The timer is aligned to quarter-hour boundaries.
+  // TradingView is delayed data. Keep automatic syncing on a strict 15-minute cadence.
+  // The timer is aligned to quarter-hour boundaries; there is no 20-second market poll.
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const scheduleNextSync = () => {
       if (cancelled) return;
-
       const now = Date.now();
       const nextBoundary = Math.ceil((now + 1000) / MARKET_SYNC_INTERVAL_MS) * MARKET_SYNC_INTERVAL_MS;
       const delay = Math.max(1000, nextBoundary - now);
 
       timer = setTimeout(async () => {
         if (cancelled) return;
-
         const status = getEGXSessionStatus();
         setScheduleStatus(status);
-
-        // The quarter-hour timer is also sufficient for the post-close valuation. There is no
-        // separate high-frequency closing poll and no forced duplicate write.
-        if (status.isSessionActive || (status.millisUntilNextTick <= 0 && status.millisUntilSessionStart > 0)) {
-          await syncLivePrices(false);
-        }
-
+        if (status.isSessionActive) await syncLivePrices(false);
         scheduleNextSync();
       }, delay);
     };

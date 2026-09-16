@@ -15,7 +15,9 @@ import { runFirestoreSupabaseMigration } from "./src/services/firestoreSupabaseM
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Respect a hosting environment's assigned port (including AI Studio), while
+  // retaining 3000 for local development.
+  const PORT = Number(process.env.PORT) || 3000;
   let migrationRunning = false;
   let migrationCompleted = false;
   const server = http.createServer(app);
@@ -129,6 +131,14 @@ async function startServer() {
       if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Symbol Search:", err); res.status(500).json({ error: err.message || "Failed to search TradingView symbols" }); }
+  });
+
+  // Serve the isolated migration page explicitly. This avoids relying on Vite's
+  // public-directory middleware or build-time copying, and keeps the page reachable
+  // at the same origin as the server-side migration API.
+  const migrationPage = path.join(process.cwd(), "public", "supabase-migration.html");
+  app.get("/supabase-migration.html", (_req, res) => {
+    res.sendFile(migrationPage);
   });
 
   if (process.env.NODE_ENV !== "production") {

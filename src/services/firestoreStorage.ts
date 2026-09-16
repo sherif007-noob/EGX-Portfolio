@@ -8,178 +8,85 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
+  CREATE = 'create', UPDATE = 'update', DELETE = 'delete', LIST = 'list', GET = 'get', WRITE = 'write',
 }
 
 export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
-  authInfo?: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-  };
+  authInfo?: { userId?: string | null; email?: string | null; emailVerified?: boolean | null; isAnonymous?: boolean | null };
 }
 
 const STORAGE_KEY_WRITE_QUEUE = 'egx_firestore_write_queue_v1';
-
-export interface QueuedWriteAction {
-  id: string;
-  type: 'full_save' | 'patch';
-  payload: any;
-  timestamp: number;
-}
+export interface QueuedWriteAction { id: string; type: 'full_save' | 'patch'; payload: any; timestamp: number; }
 
 let quotaExceededState = false;
 const quotaListeners: Array<(isExceeded: boolean) => void> = [];
-
-export function getIsQuotaExceeded(): boolean {
-  return quotaExceededState;
-}
-
-export function subscribeToQuotaStatus(listener: (isExceeded: boolean) => void): () => void {
-  quotaListeners.push(listener);
-  listener(quotaExceededState);
-  return () => {
-    const idx = quotaListeners.indexOf(listener);
-    if (idx >= 0) quotaListeners.splice(idx, 1);
-  };
-}
-
-export function setQuotaExceeded(exceeded: boolean) {
-  if (quotaExceededState !== exceeded) {
-    quotaExceededState = exceeded;
-    quotaListeners.forEach((l) => l(exceeded));
-  }
-}
-
-// Local mutation fencing: suppresses echo snapshots when local write occurs
 let localMutationLockUntil = 0;
 let lastKnownRemoteTimestamp: string | null = null;
 let lastSerializedPayload = '';
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let isFlushingQueue = false;
 
-export function markLocalMutation(durationMs = 2500) {
-  localMutationLockUntil = Date.now() + durationMs;
+export function getIsQuotaExceeded(): boolean { return quotaExceededState; }
+export function subscribeToQuotaStatus(listener: (isExceeded: boolean) => void): () => void {
+  quotaListeners.push(listener); listener(quotaExceededState);
+  return () => { const i = quotaListeners.indexOf(listener); if (i >= 0) quotaListeners.splice(i, 1); };
 }
-
-export function isLocalMutationActive(): boolean {
-  return Date.now() < localMutationLockUntil;
+export function setQuotaExceeded(exceeded: boolean) {
+  if (quotaExceededState === exceeded) return;
+  quotaExceededState = exceeded;
+  quotaListeners.forEach((listener) => listener(exceeded));
 }
+export function markLocalMutation(durationMs = 3000) { localMutationLockUntil = Date.now() + durationMs; }
+export function isLocalMutationActive() { return Date.now() < localMutationLockUntil; }
 
 function getQueuedWrites(): QueuedWriteAction[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_WRITE_QUEUE);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  try { const raw = localStorage.getItem(STORAGE_KEY_WRITE_QUEUE); return raw ? JSON.parse(raw) : []; } catch { return []; }
 }
-
-function saveQueuedWrites(queue: QueuedWriteAction[]): void {
+function saveQueuedWrites(queue: QueuedWriteAction[]) {
   try {
-    if (queue.length === 0) {
-      localStorage.removeItem(STORAGE_KEY_WRITE_QUEUE);
-    } else {
-      localStorage.setItem(STORAGE_KEY_WRITE_QUEUE, JSON.stringify(queue.slice(-50)));
-    }
-  } catch (err) {
-    console.warn('Failed saving Firestore write queue to localStorage:', err);
-  }
+    if (queue.length === 0) localStorage.removeItem(STORAGE_KEY_WRITE_QUEUE);
+    else localStorage.setItem(STORAGE_KEY_WRITE_QUEUE, JSON.stringify(queue.slice(-50)));
+  } catch (err) { console.warn('Failed saving Firestore write queue:', err); }
 }
-
-export function enqueueWriteAction(action: Omit<QueuedWriteAction, 'id' | 'timestamp'>): void {
+export function enqueueWriteAction(action: Omit<QueuedWriteAction, 'id' | 'timestamp'>) {
   const queue = getQueuedWrites();
-  if (action.type === 'full_save') {
-    const filtered = queue.filter((q) => q.type !== 'full_save');
-    filtered.push({
-      ...action,
-      id: `qw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: Date.now(),
-    });
-    saveQueuedWrites(filtered);
-    return;
-  }
-
-  queue.push({
-    ...action,
-    id: `qw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    timestamp: Date.now(),
-  });
-  saveQueuedWrites(queue);
+  const next = { ...action, id: `qw-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, timestamp: Date.now() };
+  saveQueuedWrites(action.type === 'full_save' ? [...queue.filter((q) => q.type !== 'full_save'), next] : [...queue, next]);
 }
-
-let isFlushingQueue = false;
 
 export async function flushPendingWriteQueue(): Promise<number> {
   if (isFlushingQueue) return 0;
   const user = await ensureAuthUser();
   if (!user?.uid) return 0;
   const queue = getQueuedWrites();
-  if (queue.length === 0) return 0;
-
+  if (!queue.length) return 0;
   isFlushingQueue = true;
-  let flushedCount = 0;
-  const remainingQueue: QueuedWriteAction[] = [];
-
+  let flushed = 0;
+  const remaining: QueuedWriteAction[] = [];
   try {
     for (const item of queue) {
-      let success = false;
-      if (item.type === 'full_save') {
-        success = await directSavePortfolioToFirestore(item.payload, false, 'queue-flush-full-save');
-      } else if (item.type === 'patch') {
-        success = await directPatchFirestoreDoc(item.payload, 'queue-flush-patch');
-      }
-      if (success) {
-        flushedCount++;
-      } else {
-        remainingQueue.push(item);
-      }
+      const ok = item.type === 'full_save'
+        ? await directSavePortfolioToFirestore(item.payload, true, 'queue-flush-full-save')
+        : await directPatchFirestoreDoc(item.payload, 'queue-flush-patch');
+      if (ok) flushed++; else remaining.push(item);
     }
-    saveQueuedWrites(remainingQueue);
-  } catch (err) {
-    console.warn('Failed flushing write queue:', err);
-  } finally {
-    isFlushingQueue = false;
-  }
-  return flushedCount;
+    saveQueuedWrites(remaining);
+  } finally { isFlushingQueue = false; }
+  return flushed;
 }
-
-export async function forceRetrySync(): Promise<{ success: boolean; flushedCount: number }> {
-  setQuotaExceeded(false);
-  const flushed = await flushPendingWriteQueue();
-  return { success: true, flushedCount: flushed };
-}
+export async function forceRetrySync() { setQuotaExceeded(false); return { success: true, flushedCount: await flushPendingWriteQueue() }; }
 
 export function handleFirestoreError(error: any, operationType: OperationType, path: string | null) {
-  const isQuota =
-    error?.code === 'resource-exhausted' ||
-    (typeof error?.message === 'string' && error.message.toLowerCase().includes('quota exceeded'));
-
-  if (isQuota) {
-    setQuotaExceeded(true);
-    console.warn(`[Firestore QUOTA EXCEEDED] on ${operationType} ${path}. Enqueuing future writes.`);
-    return;
-  }
-
-  const errInfo: FirestoreErrorInfo = {
-    error: error?.message || String(error),
-    operationType,
-    path,
-    authInfo: {
-      userId: auth.currentUser?.uid || null,
-      email: auth.currentUser?.email || null,
-      emailVerified: auth.currentUser?.emailVerified || null,
-      isAnonymous: auth.currentUser?.isAnonymous || null,
-    },
-  };
-  console.error('[Firestore Error Caught]:', JSON.stringify(errInfo));
+  const message = error?.message || String(error);
+  const isQuota = error?.code === 'resource-exhausted' || String(message).toLowerCase().includes('quota exceeded');
+  if (isQuota) { setQuotaExceeded(true); console.warn(`[Firestore QUOTA EXCEEDED] ${operationType} ${path}`); return; }
+  console.error('[Firestore Error Caught]:', JSON.stringify({ error: message, operationType, path, authInfo: {
+    userId: auth.currentUser?.uid || null, email: auth.currentUser?.email || null,
+    emailVerified: auth.currentUser?.emailVerified || null, isAnonymous: auth.currentUser?.isAnonymous || null,
+  }} as FirestoreErrorInfo));
 }
 
 export interface PortfolioDataDocument {
@@ -195,472 +102,192 @@ export interface PortfolioDataDocument {
 }
 
 function sanitizeForFirestore<T>(data: T): T {
-  if (data === undefined) return null as any;
-  if (data === null) return null as any;
-  if (Array.isArray(data)) {
-    return data.map((item) => sanitizeForFirestore(item)) as any;
-  }
+  if (data === undefined || data === null) return data as any;
+  if (Array.isArray(data)) return data.map(sanitizeForFirestore) as any;
   if (typeof data === 'object') {
     const clean: any = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        clean[key] = sanitizeForFirestore(value);
-      }
-    }
+    Object.entries(data as any).forEach(([key, value]) => { if (value !== undefined) clean[key] = sanitizeForFirestore(value); });
     return clean;
   }
   return data;
 }
 
 export function generateFingerprint(data: Partial<PortfolioDataDocument>): string {
-  const pCount = (data.positions || []).length;
-  const cCount = (data.closedTrades || []).length;
-  const tCount = (data.transactions || []).length;
-  const cash = Number(data.cashBalance ?? 0).toFixed(2);
-  const cap = Number(data.capitalDeposits ?? 0).toFixed(2);
-
-  const txIds = (data.transactions || [])
-    .slice(0, 5)
-    .map((t) => t.id)
-    .join(',');
-  const posKeys = (data.positions || [])
-    .map((p) => `${p.ticker}:${p.shares}:${p.avgBuyPrice}`)
-    .sort()
-    .join('|');
-
-  return `${pCount}_${cCount}_${tCount}_${cash}_${cap}_${txIds}_${posKeys}`;
+  const txIds = (data.transactions || []).map((t) => t.id).sort().join(',');
+  const positions = (data.positions || []).map((p) => `${p.ticker}:${p.shares}:${p.avgBuyPrice}:${p.totalFees || 0}`).sort().join('|');
+  const closed = (data.closedTrades || []).map((t) => `${t.id}:${t.realizedPnlEgp}:${t.shares}`).sort().join('|');
+  return `${txIds}||${positions}||${closed}||${Number(data.cashBalance ?? 0).toFixed(6)}||${Number(data.capitalDeposits ?? 0).toFixed(6)}`;
 }
-
 export function updateLastSavedSnapshot(data: Partial<PortfolioDataDocument>) {
   lastSerializedPayload = generateFingerprint(data);
-  if (data.updatedAt) {
-    lastKnownRemoteTimestamp = data.updatedAt;
-  }
+  if (data.updatedAt) lastKnownRemoteTimestamp = data.updatedAt;
 }
+export function getLastSavedFingerprint() { return lastSerializedPayload; }
 
-export function getLastSavedFingerprint() {
-  return lastSerializedPayload;
-}
-
-/**
- * Loads the user portfolio from Firestore.
- * Evaluates both the authenticated user document and the shared main_portfolio document,
- * returning the newest, most complete document.
- */
 export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocument | null> {
   const user = await ensureAuthUser();
   const uid = user?.uid;
   if (!uid) return null;
-
   try {
-    let userDoc: PortfolioDataDocument | null = null;
+    const userSnap = await getDoc(doc(db, 'portfolios', uid));
+    const userDoc = userSnap.exists() ? userSnap.data() as PortfolioDataDocument : null;
     let mainDoc: PortfolioDataDocument | null = null;
-
-    // 1. Fetch user document
-    try {
-      const snap = await getDoc(doc(db, 'portfolios', uid));
-      if (snap.exists()) {
-        userDoc = snap.data() as PortfolioDataDocument;
-      }
-    } catch (e) {
-      console.warn('[Firestore] Failed reading user doc:', e);
-    }
-
-    // 2. Fetch main_portfolio document (shared sync across preview and devices)
     if (uid !== 'main_portfolio') {
-      try {
-        const snap = await getDoc(doc(db, 'portfolios', 'main_portfolio'));
-        if (snap.exists()) {
-          mainDoc = snap.data() as PortfolioDataDocument;
-        }
-      } catch (e) {
-        console.warn('[Firestore] Failed reading main_portfolio doc:', e);
-      }
+      const mainSnap = await getDoc(doc(db, 'portfolios', 'main_portfolio'));
+      mainDoc = mainSnap.exists() ? mainSnap.data() as PortfolioDataDocument : null;
     }
-
-    // 3. Resolve which document is newer / more authoritative
-    let chosen: PortfolioDataDocument | null = null;
+    let chosen: PortfolioDataDocument | null = userDoc || mainDoc;
     if (userDoc && mainDoc) {
-      const userTime = userDoc.updatedAt ? new Date(userDoc.updatedAt).getTime() : 0;
-      const mainTime = mainDoc.updatedAt ? new Date(mainDoc.updatedAt).getTime() : 0;
-
-      if (Math.abs(userTime - mainTime) > 1000) {
-        chosen = userTime >= mainTime ? userDoc : mainDoc;
-      } else {
-        const userCount = (userDoc.transactions?.length || 0) + (userDoc.positions?.length || 0);
-        const mainCount = (mainDoc.transactions?.length || 0) + (mainDoc.positions?.length || 0);
-        chosen = userCount >= mainCount ? userDoc : mainDoc;
-      }
-    } else {
-      chosen = userDoc || mainDoc;
+      const ut = new Date(userDoc.updatedAt || 0).getTime();
+      const mt = new Date(mainDoc.updatedAt || 0).getTime();
+      chosen = ut >= mt ? userDoc : mainDoc;
     }
-
-    if (chosen) {
-      updateLastSavedSnapshot(chosen);
-      return chosen;
-    }
-
-    return null;
+    if (chosen) updateLastSavedSnapshot(chosen);
+    return chosen;
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, `portfolios/${uid}`);
-    return null;
+    handleFirestoreError(error, OperationType.GET, `portfolios/${uid}`); return null;
   }
 }
 
-/**
- * Direct write of full portfolio state to Firestore.
- * Immediately sets mutation lock and updates snapshot fingerprint to prevent echo reverts.
- */
 async function directSavePortfolioToFirestore(
   data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
-  allowEmpty = false,
+  allowEmpty = true,
   reason = 'full-save'
 ): Promise<boolean> {
   const user = await ensureAuthUser();
   const uid = user?.uid;
   if (!uid) return false;
-
   const nowIso = new Date().toISOString();
-  const rawPayload: PortfolioDataDocument = {
-    ...data,
-    updatedAt: nowIso,
-    schemaVersion: 3,
-  };
-  const sanitizedPayload = sanitizeForFirestore(rawPayload);
-
-  // Lock out snapshot echoes immediately and update tracked state
-  markLocalMutation(3000);
-  lastKnownRemoteTimestamp = nowIso;
-  updateLastSavedSnapshot(rawPayload);
-
+  const payload = sanitizeForFirestore({ ...data, updatedAt: nowIso, schemaVersion: 3 }) as PortfolioDataDocument;
+  markLocalMutation(3500);
+  updateLastSavedSnapshot(payload);
   try {
-    console.log(`[Firestore Write] ${reason} on portfolios/${uid}`);
-    const docRef = doc(db, 'portfolios', uid);
-    await setDoc(docRef, sanitizedPayload, { merge: true });
-
-    // Mirror to main_portfolio so preview, mobile, and desktop stay synchronized
-    if (uid !== 'main_portfolio') {
-      try {
-        await setDoc(doc(db, 'portfolios', 'main_portfolio'), sanitizedPayload, { merge: true });
-      } catch (mirrorErr) {
-        console.warn('Mirror to main_portfolio warning:', mirrorErr);
-      }
-    }
-
+    await setDoc(doc(db, 'portfolios', uid), payload, { merge: true });
+    if (uid !== 'main_portfolio') await setDoc(doc(db, 'portfolios', 'main_portfolio'), payload, { merge: true });
     setQuotaExceeded(false);
     return true;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `portfolios/${uid}`);
+    if (allowEmpty) enqueueWriteAction({ type: 'full_save', payload: data });
     return false;
   }
 }
 
-/**
- * Force an immediate, authoritative full save to Firestore.
- * Bypasses debouncing and clears offline queue upon success.
- */
-export async function forceFullSyncToFirestore(
-  data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>
-): Promise<boolean> {
+export async function forceFullSyncToFirestore(data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>) {
   setQuotaExceeded(false);
-  const success = await directSavePortfolioToFirestore(data, true, 'manual-force-full-sync');
-  if (success) {
-    localStorage.removeItem(STORAGE_KEY_WRITE_QUEUE);
-  }
-  return success;
+  const ok = await directSavePortfolioToFirestore(data, true, 'manual-force-full-sync');
+  if (ok) localStorage.removeItem(STORAGE_KEY_WRITE_QUEUE);
+  return ok;
 }
 
-/**
- * Saves portfolio to Firestore with fingerprint comparison to prevent duplicate writes.
- */
 export async function savePortfolioToFirestore(
   data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
   allowEmpty = false,
   reason = 'full-save'
-): Promise<boolean> {
-  const posCount = (data.positions || []).length;
-  const txCount = (data.transactions || []).length;
-  if (!allowEmpty && posCount === 0 && txCount === 0) {
-    console.warn('[Firestore] Skipped writing empty portfolio payload to prevent accidental data loss.');
-    return false;
-  }
-
-  const fingerprint = generateFingerprint(data);
-  const isForce = reason === 'full-save-restore' || reason === 'manual-force-full-sync';
-  if (!isForce && fingerprint === lastSerializedPayload) {
-    return true; // Skip redundant identical write
-  }
-
-  if (quotaExceededState) {
-    enqueueWriteAction({ type: 'full_save', payload: data });
-    return false;
-  }
-
-  const success = await directSavePortfolioToFirestore(data, allowEmpty, reason);
-  if (!success) {
-    enqueueWriteAction({ type: 'full_save', payload: data });
-  }
-  return success;
+) {
+  if (!allowEmpty && !(data.positions?.length || data.transactions?.length)) return false;
+  if (generateFingerprint(data) === lastSerializedPayload && reason !== 'full-save-restore') return true;
+  if (quotaExceededState) { enqueueWriteAction({ type: 'full_save', payload: data }); return false; }
+  return directSavePortfolioToFirestore(data, allowEmpty, reason);
 }
 
-/**
- * Directly patches specific portfolio properties in Firestore.
- */
 async function directPatchFirestoreDoc(partialData: Record<string, any>, reason: string): Promise<boolean> {
   const user = await ensureAuthUser();
   const uid = user?.uid;
   if (!uid) return false;
-
   const nowIso = new Date().toISOString();
-  const sanitized = sanitizeForFirestore({
-    ...partialData,
-    updatedAt: nowIso,
-  });
-
-  markLocalMutation(2500);
-  lastKnownRemoteTimestamp = nowIso;
-
+  const sanitized = sanitizeForFirestore({ ...partialData, updatedAt: nowIso });
+  markLocalMutation(3000);
   try {
-    console.log(`[Firestore Write] ${reason} on portfolios/${uid}`);
-    const docRef = doc(db, 'portfolios', uid);
-    try {
-      await updateDoc(docRef, sanitized);
-    } catch {
-      await setDoc(docRef, sanitized, { merge: true });
-    }
-
-    if (uid !== 'main_portfolio') {
-      try {
-        const mainRef = doc(db, 'portfolios', 'main_portfolio');
-        try {
-          await updateDoc(mainRef, sanitized);
-        } catch {
-          await setDoc(mainRef, sanitized, { merge: true });
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    setQuotaExceeded(false);
-    return true;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `portfolios/${uid}`);
-    return false;
+    await updateDoc(doc(db, 'portfolios', uid), sanitized);
+  } catch {
+    await setDoc(doc(db, 'portfolios', uid), sanitized, { merge: true });
   }
-}
-
-export async function patchFirestoreDoc(partialData: Record<string, any>, reason = 'patch'): Promise<boolean> {
-  if (quotaExceededState) {
-    enqueueWriteAction({ type: 'patch', payload: partialData });
-    return false;
+  if (uid !== 'main_portfolio') {
+    try { await updateDoc(doc(db, 'portfolios', 'main_portfolio'), sanitized); }
+    catch { try { await setDoc(doc(db, 'portfolios', 'main_portfolio'), sanitized, { merge: true }); } catch { /* ignore mirror failure */ } }
   }
-  const success = await directPatchFirestoreDoc(partialData, reason);
-  if (!success) {
-    enqueueWriteAction({ type: 'patch', payload: partialData });
-  }
-  return success;
+  return true;
+}
+export async function patchFirestoreDoc(partialData: Record<string, any>, reason = 'patch') {
+  if (quotaExceededState) { enqueueWriteAction({ type: 'patch', payload: partialData }); return false; }
+  try { return await directPatchFirestoreDoc(partialData, reason); }
+  catch (error) { handleFirestoreError(error, OperationType.WRITE, 'portfolio'); enqueueWriteAction({ type: 'patch', payload: partialData }); return false; }
 }
 
-export function updateFirestorePositions(positions: Position[]) {
-  return patchFirestoreDoc({ positions }, 'positions-update');
-}
-
-export function updateFirestoreClosedTrades(closedTrades: ClosedTrade[]) {
-  return patchFirestoreDoc({ closedTrades }, 'closed-trades-update');
-}
-
+export function updateFirestorePositions(positions: Position[]) { return patchFirestoreDoc({ positions }, 'positions-update'); }
+export function updateFirestoreClosedTrades(closedTrades: ClosedTrade[]) { return patchFirestoreDoc({ closedTrades }, 'closed-trades-update'); }
 export function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?: number) {
-  const payload: Record<string, any> = { cashBalance };
-  if (capitalDeposits !== undefined) payload.capitalDeposits = capitalDeposits;
-  return patchFirestoreDoc(payload, 'cash-balance-update');
+  return patchFirestoreDoc({ cashBalance, ...(capitalDeposits !== undefined ? { capitalDeposits } : {}) }, 'cash-balance-update');
 }
+export function updateFirestoreTickers(tickers: EGXTicker[]) { return patchFirestoreDoc({ tickers }, 'tickers-update'); }
 
-export function updateFirestoreTickers(tickers: EGXTicker[]) {
-  return patchFirestoreDoc({ tickers }, 'tickers-update');
-}
-
+/** Transaction mutations are authoritative full-document saves. This is deliberate: an empty ledger is valid and deletions must persist. */
 export function updateFirestoreTransactions(
-  transactions: TradeTransaction[],
-  positions?: Position[],
-  closedTrades?: ClosedTrade[],
-  cashBalance?: number,
-  capitalDeposits?: number
+  transactions: TradeTransaction[], positions?: Position[], closedTrades?: ClosedTrade[], cashBalance?: number, capitalDeposits?: number
 ) {
-  const payload: Partial<PortfolioDataDocument> = { transactions };
-  if (positions) payload.positions = positions;
-  if (closedTrades) payload.closedTrades = closedTrades;
-  if (typeof cashBalance === 'number') payload.cashBalance = cashBalance;
-  if (typeof capitalDeposits === 'number') payload.capitalDeposits = capitalDeposits;
-  return patchFirestoreDoc(payload, 'transactions-update');
+  return forceFullSyncToFirestore({
+    transactions,
+    positions: positions || [],
+    closedTrades: closedTrades || [],
+    cashBalance: typeof cashBalance === 'number' ? cashBalance : 0,
+    capitalDeposits: typeof capitalDeposits === 'number' ? capitalDeposits : 0,
+  });
 }
 
-export async function appendTransactionToFirestore(
-  tx: TradeTransaction,
-  positions?: Position[],
-  closedTrades?: ClosedTrade[],
-  cashBalance?: number,
-  capitalDeposits?: number
-): Promise<boolean> {
-  // Save consistent document with transactions and state
-  const payload: Record<string, any> = {};
-  if (positions) payload.positions = positions;
-  if (closedTrades) payload.closedTrades = closedTrades;
-  if (typeof cashBalance === 'number') payload.cashBalance = cashBalance;
-  if (typeof capitalDeposits === 'number') payload.capitalDeposits = capitalDeposits;
-
-  return patchFirestoreDoc(payload, 'trade-added');
+export function appendTransactionToFirestore(
+  tx: TradeTransaction, positions?: Position[], closedTrades?: ClosedTrade[], cashBalance?: number, capitalDeposits?: number
+) {
+  return updateFirestoreTransactions([tx], positions, closedTrades, cashBalance, capitalDeposits);
 }
 
-let saveTimeout: NodeJS.Timeout | null = null;
 export function debouncedSavePortfolioToFirestore(
-  data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
-  delayMs = 1500
+  data: Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>, delayMs = 1500
 ) {
   if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    savePortfolioToFirestore(data, false, 'debounced-save');
-  }, delayMs);
+  saveTimeout = setTimeout(() => { void savePortfolioToFirestore(data, true, 'debounced-save'); }, delayMs);
 }
 
-// Throttled price tick write: only writes at most once every 15 minutes
 let lastPriceWriteTimestamp = 0;
 const PRICE_WRITE_THROTTLE_MS = 15 * 60 * 1000;
-
-export async function savePriceTickToFirestore(
-  positions: Position[],
-  tickers: EGXTicker[],
-  force = false
-): Promise<boolean> {
+export async function savePriceTickToFirestore(positions: Position[], tickers: EGXTicker[], force = false) {
   const user = await ensureAuthUser();
   const uid = user?.uid;
   if (!uid || quotaExceededState) return false;
-
   const now = Date.now();
-  if (!force && now - lastPriceWriteTimestamp < PRICE_WRITE_THROTTLE_MS) {
-    return false; // Skip excessive write
-  }
-
+  if (!force && now - lastPriceWriteTimestamp < PRICE_WRITE_THROTTLE_MS) return false;
+  lastPriceWriteTimestamp = now;
+  const patch = { positions: sanitizeForFirestore(positions), tickers: sanitizeForFirestore(tickers), lastPriceWriteAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
   try {
-    lastPriceWriteTimestamp = now;
     markLocalMutation(3000);
-    const nowIso = new Date().toISOString();
-    const patch = {
-      positions: sanitizeForFirestore(positions),
-      tickers: sanitizeForFirestore(tickers),
-      lastPriceWriteAt: nowIso,
-      updatedAt: nowIso,
-    };
-
-    console.log(`[Firestore Write] ${force ? 'Forced/Scheduled' : 'Throttled'} price-tick on portfolios/${uid}`);
-    const docRef = doc(db, 'portfolios', uid);
-    try {
-      await updateDoc(docRef, patch);
-    } catch {
-      await setDoc(docRef, patch, { merge: true });
-    }
-
-    if (uid !== 'main_portfolio') {
-      try {
-        const mainRef = doc(db, 'portfolios', 'main_portfolio');
-        try {
-          await updateDoc(mainRef, patch);
-        } catch {
-          await setDoc(mainRef, patch, { merge: true });
-        }
-      } catch {
-        // ignore
-      }
-    }
-
+    await setDoc(doc(db, 'portfolios', uid), patch, { merge: true });
+    if (uid !== 'main_portfolio') await setDoc(doc(db, 'portfolios', 'main_portfolio'), patch, { merge: true });
     return true;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, `portfolios/${uid}`);
-    return false;
-  }
+  } catch (error) { handleFirestoreError(error, OperationType.WRITE, `portfolios/${uid}`); return false; }
 }
 
-/**
- * Real-time listener for remote portfolio changes.
- * Defends against local write echoes, pending writes, and stale updates.
- */
-export function subscribeToPortfolioFromFirestore(
-  onData: (data: PortfolioDataDocument) => void,
-  onError?: (err: any) => void
-) {
+export function subscribeToPortfolioFromFirestore(onData: (data: PortfolioDataDocument) => void, onError?: (err: any) => void) {
   let unsubUid: (() => void) | null = null;
   let unsubMain: (() => void) | null = null;
-  let isCancelled = false;
-
+  let cancelled = false;
   ensureAuthUser().then((user) => {
-    if (isCancelled || !user?.uid) return;
+    if (cancelled || !user?.uid) return;
     const uid = user.uid;
-
-    const handleSnap = (snapshot: any, sourceName: string) => {
-      // 1. Ignore if local write is still pending in the Firestore client SDK
-      if (snapshot.metadata?.hasPendingWrites) {
-        return;
-      }
-
-      // 2. Ignore if local mutation occurred within the lock duration (fences off echo snapshots)
-      if (isLocalMutationActive()) {
-        return;
-      }
-
-      if (snapshot.exists()) {
-        const data = snapshot.data() as PortfolioDataDocument;
-        if (!data) return;
-
-        // 3. Reject if incoming remote data is strictly older than what we have already recorded
-        const incomingTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
-        const currentKnownTime = lastKnownRemoteTimestamp ? new Date(lastKnownRemoteTimestamp).getTime() : 0;
-
-        if (incomingTime > 0 && currentKnownTime > 0 && incomingTime < currentKnownTime) {
-          return;
-        }
-
-        // 4. Reject if content is identical to our last known payload
-        const fingerprint = generateFingerprint(data);
-        if (fingerprint === lastSerializedPayload) {
-          return;
-        }
-
-        // 5. Authoritative external update from another device/tab
-        updateLastSavedSnapshot(data);
-        console.log(`[Firestore Real-time] Received verified external update from ${sourceName}`);
-        onData(data);
-      }
+    const handleSnap = (snapshot: any, source: string) => {
+      if (snapshot.metadata?.hasPendingWrites || isLocalMutationActive()) return;
+      if (!snapshot.exists()) return;
+      const data = snapshot.data() as PortfolioDataDocument;
+      const incomingTime = new Date(data.updatedAt || 0).getTime();
+      const knownTime = lastKnownRemoteTimestamp ? new Date(lastKnownRemoteTimestamp).getTime() : 0;
+      if (incomingTime && knownTime && incomingTime < knownTime) return;
+      const fingerprint = generateFingerprint(data);
+      if (fingerprint === lastSerializedPayload) return;
+      updateLastSavedSnapshot(data);
+      console.log(`[Firestore Real-time] Applied external update from ${source}`);
+      onData(data);
     };
-
-    // Listen to user document
-    const docRef = doc(db, 'portfolios', uid);
-    unsubUid = onSnapshot(
-      docRef,
-      { includeMetadataChanges: true },
-      (snap) => handleSnap(snap, `uid:${uid}`),
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, `portfolios/${uid}`);
-        if (onError) onError(error);
-      }
-    );
-
-    // If signed in, also listen to main_portfolio for multi-device sync
-    if (uid !== 'main_portfolio') {
-      const mainRef = doc(db, 'portfolios', 'main_portfolio');
-      unsubMain = onSnapshot(
-        mainRef,
-        { includeMetadataChanges: true },
-        (snap) => handleSnap(snap, 'main_portfolio'),
-        () => {
-          // silent error on main_portfolio
-        }
-      );
-    }
-  });
-
-  return () => {
-    isCancelled = true;
-    if (unsubUid) unsubUid();
-    if (unsubMain) unsubMain();
-  };
+    unsubUid = onSnapshot(doc(db, 'portfolios', uid), { includeMetadataChanges: true }, (snap) => handleSnap(snap, `uid:${uid}`), onError);
+    if (uid !== 'main_portfolio') unsubMain = onSnapshot(doc(db, 'portfolios', 'main_portfolio'), { includeMetadataChanges: true }, (snap) => handleSnap(snap, 'main_portfolio'));
+  }).catch((err) => onError?.(err));
+  return () => { cancelled = true; unsubUid?.(); unsubMain?.(); };
 }

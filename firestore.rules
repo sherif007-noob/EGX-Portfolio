@@ -4,5 +4,9 @@ service cloud.firestore {
     match /portfolios/{portfolioId} {
       allow read, write: if request.auth != null;
     }
+
+    match /historicalPrices/{ticker}/daily/{date} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

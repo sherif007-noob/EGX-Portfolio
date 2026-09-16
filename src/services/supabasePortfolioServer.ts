@@ -118,16 +118,72 @@ function mapClosedTrade(row: any, portfolioId: string) {
   };
 }
 
+/**
+ * Map a complete ticker snapshot. Required database fields are normalized to
+ * their schema-safe defaults so an incomplete legacy ticker cannot send an
+ * explicit null into a NOT NULL column during a full portfolio save.
+ */
 function mapTicker(row: any) {
   return {
-    ticker: String(row.ticker).toUpperCase(), name_en: row.nameEn ?? null, name_ar: row.nameAr ?? null, isin: row.isin ?? null, sector: row.sector ?? null,
+    ticker: String(row.ticker).toUpperCase(), name_en: row.nameEn ?? '', name_ar: row.nameAr ?? '', isin: row.isin ?? '', sector: row.sector ?? 'Other',
     last_price: Number(row.lastPrice ?? 0), change: Number(row.change ?? 0), change_percent: Number(row.changePercent ?? 0),
-    day_low: row.dayLow ?? null, day_high: row.dayHigh ?? null, year_low: row.yearLow ?? null, year_high: row.yearHigh ?? null,
-    volume: row.volume ?? null, value_egp: row.valueEGP ?? row.valueEgp ?? null, trend_status: row.trendStatus ?? null, rsi14: row.rsi14 ?? null,
-    support: row.support ?? null, resistance: row.resistance ?? null, target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null,
+    day_low: Number(row.dayLow ?? 0), day_high: Number(row.dayHigh ?? 0), year_low: Number(row.yearLow ?? 0), year_high: Number(row.yearHigh ?? 0),
+    volume: Number(row.volume ?? 0), value_egp: Number(row.valueEGP ?? row.valueEgp ?? 0), trend_status: row.trendStatus ?? 'Rangebound Neutral', rsi14: Number(row.rsi14 ?? 0),
+    support: Number(row.support ?? 0), resistance: Number(row.resistance ?? 0), target_price: Number(row.targetPrice ?? 0), stop_loss: Number(row.stopLoss ?? 0),
     notes: row.notes ?? null, last_updated: toDate(row.lastUpdated), price_updated_at: toDate(row.priceUpdatedAt), logo_url: row.logoUrl ?? null,
     updated_at: new Date().toISOString(),
   };
+}
+
+/**
+ * Price ticks must not destroy ticker metadata. The market-data layer can
+ * legitimately provide only price fields for an existing ticker, so merge
+ * the incoming snapshot with the existing database row before upserting.
+ * This also guarantees required metadata such as ISIN survives price-only
+ * updates and that a newly introduced ticker receives schema-safe defaults.
+ */
+async function mapPriceTickers(supabase: ReturnType<typeof getSupabaseAdmin>, tickers: any[]) {
+  if (!tickers.length) return [];
+  const symbols = [...new Set(tickers.map((t) => String(t.ticker ?? '').trim().toUpperCase()).filter(Boolean))];
+  if (!symbols.length) return [];
+
+  const { data: existing, error } = await supabase.from('tickers').select('*').in('ticker', symbols);
+  if (error) throw new Error(`Supabase ticker lookup failed: ${error.message}`);
+
+  const existingByTicker = new Map((existing ?? []).map((row: any) => [String(row.ticker).toUpperCase(), row]));
+  return tickers.map((ticker) => {
+    const symbol = String(ticker.ticker ?? '').trim().toUpperCase();
+    const previous = existingByTicker.get(symbol) ?? {};
+    const merged = {
+      ...previous,
+      ...ticker,
+      ticker: symbol,
+      nameEn: ticker.nameEn ?? previous.name_en ?? '',
+      nameAr: ticker.nameAr ?? previous.name_ar ?? '',
+      isin: ticker.isin ?? previous.isin ?? '',
+      sector: ticker.sector ?? previous.sector ?? 'Other',
+      lastPrice: ticker.lastPrice ?? previous.last_price ?? 0,
+      change: ticker.change ?? previous.change ?? 0,
+      changePercent: ticker.changePercent ?? previous.change_percent ?? 0,
+      dayLow: ticker.dayLow ?? previous.day_low ?? 0,
+      dayHigh: ticker.dayHigh ?? previous.day_high ?? 0,
+      yearLow: ticker.yearLow ?? previous.year_low ?? 0,
+      yearHigh: ticker.yearHigh ?? previous.year_high ?? 0,
+      volume: ticker.volume ?? previous.volume ?? 0,
+      valueEGP: ticker.valueEGP ?? ticker.valueEgp ?? previous.value_egp ?? 0,
+      trendStatus: ticker.trendStatus ?? previous.trend_status ?? 'Rangebound Neutral',
+      rsi14: ticker.rsi14 ?? previous.rsi14 ?? 0,
+      support: ticker.support ?? previous.support ?? 0,
+      resistance: ticker.resistance ?? previous.resistance ?? 0,
+      targetPrice: ticker.targetPrice ?? previous.target_price ?? 0,
+      stopLoss: ticker.stopLoss ?? previous.stop_loss ?? 0,
+      notes: ticker.notes ?? previous.notes ?? null,
+      lastUpdated: ticker.lastUpdated ?? previous.last_updated,
+      priceUpdatedAt: ticker.priceUpdatedAt ?? previous.price_updated_at,
+      logoUrl: ticker.logoUrl ?? previous.logo_url ?? null,
+    };
+    return mapTicker(merged);
+  });
 }
 
 export async function loadSupabasePortfolio(uid: string) {
@@ -196,7 +252,7 @@ export async function saveSupabasePriceTick(uid: string, positions: any[], ticke
     const { error } = await supabase.from('positions').upsert(positionRows, { onConflict: 'id' });
     if (error) throw new Error(`Supabase price position write failed: ${error.message}`);
   }
-  const tickerRows = tickers.map((t) => mapTicker(t));
+  const tickerRows = await mapPriceTickers(supabase, tickers);
   if (tickerRows.length) {
     const { error } = await supabase.from('tickers').upsert(tickerRows, { onConflict: 'ticker' });
     if (error) throw new Error(`Supabase price ticker write failed: ${error.message}`);

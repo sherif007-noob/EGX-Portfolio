@@ -13,7 +13,18 @@ export interface SellAccounting {
   outcome: 'WIN' | 'LOSS' | 'BREAKEVEN';
 }
 
+function assertFiniteNonNegative(value: number, label: string): void {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${label} must be a finite non-negative number.`);
+  }
+}
+
 export function calculateBuyImpact(shares: number, price: number, fees = 0) {
+  assertFiniteNonNegative(shares, 'Shares');
+  if (shares <= ACCOUNTING_EPSILON) throw new Error('Buy shares must be greater than zero.');
+  if (!Number.isFinite(price) || price < 0) throw new Error('Buy price must be a finite non-negative number.');
+  assertFiniteNonNegative(fees, 'Buy fees');
+
   const grossCost = shares * price;
   return {
     grossCost,
@@ -30,14 +41,24 @@ export function calculateSellAccounting(
   openGrossCost: number,
   openBuyFees: number,
 ): SellAccounting {
-  if (sharesToSell <= 0) throw new Error('Sell shares must be greater than zero.');
-  if (openShares <= 0) throw new Error('Cannot sell from an empty position.');
+  assertFiniteNonNegative(sharesToSell, 'Sell shares');
+  if (sharesToSell <= ACCOUNTING_EPSILON) throw new Error('Sell shares must be greater than zero.');
+  if (!Number.isFinite(sellPrice) || sellPrice < 0) throw new Error('Sell price must be a finite non-negative number.');
+  assertFiniteNonNegative(sellFees, 'Sell fees');
+  assertFiniteNonNegative(openShares, 'Open shares');
+  assertFiniteNonNegative(openGrossCost, 'Open gross cost');
+  assertFiniteNonNegative(openBuyFees, 'Open buy fees');
+  if (openShares <= ACCOUNTING_EPSILON) throw new Error('Cannot sell from an empty position.');
   if (sharesToSell > openShares + ACCOUNTING_EPSILON) {
     throw new Error(`Cannot sell ${sharesToSell} shares; only ${openShares} are open.`);
   }
 
-  const ratio = sharesToSell / openShares;
   const grossProceeds = sharesToSell * sellPrice;
+  if (sellFees > grossProceeds + ACCOUNTING_EPSILON) {
+    throw new Error('Sell fees cannot exceed gross proceeds.');
+  }
+
+  const ratio = Math.min(1, sharesToSell / openShares);
   const netProceeds = grossProceeds - sellFees;
   const allocatedGrossCost = openGrossCost * ratio;
   const allocatedBuyFees = openBuyFees * ratio;
@@ -61,7 +82,8 @@ export function calculateSellAccounting(
 }
 
 export function calculatePositionMarketValue(position: Position): number {
-  return position.shares * Math.max(0, position.currentPrice || 0);
+  if (!Number.isFinite(position.shares) || !Number.isFinite(position.currentPrice)) return 0;
+  return position.shares * position.currentPrice;
 }
 
 export function calculatePositionUnrealizedPnl(position: Position): number {
@@ -121,22 +143,30 @@ export function calculatePerformanceStats(closedTrades: ClosedTrade[]) {
   };
 }
 
+export function calculateFeeBreakdown(transactions: TradeTransaction[]) {
+  const buyFees = transactions.filter(t => t.type === 'BUY').reduce((sum, t) => sum + (t.fees || 0), 0);
+  const sellFees = transactions.filter(t => t.type === 'SELL').reduce((sum, t) => sum + (t.fees || 0), 0);
+  return { buyFees, sellFees, totalFees: buyFees + sellFees };
+}
+
 export function validateAccountingInvariants(
   transactions: TradeTransaction[],
   positions: Position[],
   closedTrades: ClosedTrade[],
   cashBalance: number,
 ) {
-  const boughtShares = transactions.filter(t => t.type === 'BUY' && t.ticker !== 'CASH').reduce((s, t) => s + t.shares, 0);
+  const boughtShares = transactions.filter(t => t.type === 'BUY').reduce((s, t) => s + t.shares, 0);
   const soldShares = transactions.filter(t => t.type === 'SELL').reduce((s, t) => s + t.shares, 0);
   const openShares = positions.reduce((s, p) => s + p.shares, 0);
   const realized = closedTrades.reduce((s, t) => s + t.realizedPnlEgp, 0);
   const unrealized = positions.reduce((s, p) => s + calculatePositionUnrealizedPnl(p), 0);
   const portfolioValue = calculatePortfolioValue(cashBalance, positions);
+  const fees = calculateFeeBreakdown(transactions);
 
   return {
     sharesBalanced: Math.abs(boughtShares - soldShares - openShares) < 0.01,
     tradingPnlFinite: Number.isFinite(realized + unrealized),
     portfolioValueFinite: Number.isFinite(portfolioValue),
+    feesFinite: Number.isFinite(fees.totalFees),
   };
 }

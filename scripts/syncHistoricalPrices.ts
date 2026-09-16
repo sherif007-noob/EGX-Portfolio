@@ -8,20 +8,11 @@ import firebaseConfig from '../firebase-applet-config.json';
 type HistoryBar = [number, number, number, number, number, number?];
 
 const TICKER_ALIASES: Record<string, string> = {
-  QNBA: 'QNBF',
-  MNHD: 'MASR',
-  AUTO: 'GBCO',
-  OTMT: 'OIH',
-  UBEG: 'UBEE',
+  QNBA: 'QNBF', MNHD: 'MASR', AUTO: 'GBCO', OTMT: 'OIH', UBEG: 'UBEE',
 };
 
 function normalizeTicker(ticker: string): string {
   return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
-}
-
-function tradingViewSymbol(ticker: string): string {
-  const normalized = normalizeTicker(ticker);
-  return `EGX:${TICKER_ALIASES[normalized] || normalized}`;
 }
 
 function toDate(timestamp: number): string {
@@ -32,16 +23,8 @@ async function writeBars(db: ReturnType<typeof getFirestore>, ticker: string, ba
   const retrievedAt = new Date().toISOString();
   const filtered = bars
     .filter((bar) => Array.isArray(bar) && bar.length >= 5 && Number.isFinite(bar[0]))
-    .map((bar) => ({
-      date: toDate(Number(bar[0])),
-      open: Number(bar[1]),
-      high: Number(bar[2]),
-      low: Number(bar[3]),
-      close: Number(bar[4]),
-      volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : undefined,
-    }))
+    .map((bar) => ({ date: toDate(Number(bar[0])), open: Number(bar[1]), high: Number(bar[2]), low: Number(bar[3]), close: Number(bar[4]), volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : undefined }))
     .filter((bar) => bar.date >= startDate && bar.date <= endDate && Number.isFinite(bar.close) && bar.close > 0);
-
   const unique = new Map(filtered.map((bar) => [bar.date, bar]));
   const rows = [...unique.values()].sort((a, b) => a.date.localeCompare(b.date));
   for (let offset = 0; offset < rows.length; offset += 400) {
@@ -76,23 +59,32 @@ async function main() {
   const startDate = startOverride || firstTransactionDate || endDate;
   if (!tickers.length) { console.log('No security tickers found in the portfolio ledger. Nothing to sync.'); return; }
 
+  const startTimestamp = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
+  const endTimestamp = Math.floor(new Date(`${endDate}T23:59:59Z`).getTime() / 1000);
+  if (!Number.isFinite(startTimestamp) || !Number.isFinite(endTimestamp) || startTimestamp > endTimestamp) throw new Error(`Invalid historical range: ${startDate} → ${endDate}`);
+
   const session = await createSession();
+  let failures = 0;
   try {
     const chart = await createChart(session);
     let totalRows = 0;
     for (const ticker of tickers) {
       try {
-        const resolved = await chart.resolve(normalizeTicker(TICKER_ALIASES[ticker] || ticker), 'EGX');
-        const series = await createSeries(session, chart, resolved, '1D', 5000);
+        const symbol = TICKER_ALIASES[ticker] || ticker;
+        const resolved = await chart.resolve(symbol, 'EGX');
+        const series = await createSeries(session, chart, resolved, '1D', 0, [startTimestamp, endTimestamp]);
         const history = (series.history || []) as HistoryBar[];
         const rows = await writeBars(db, ticker, history, startDate, endDate);
         totalRows += rows;
         console.log(`${ticker}: ${rows} daily observations saved.`);
+        await series.close();
       } catch (error) {
+        failures += 1;
         console.error(`${ticker}: historical sync failed`, error);
       }
     }
-    console.log(`Historical sync complete: ${tickers.length} tickers, ${totalRows} observations.`);
+    console.log(`Historical sync complete: ${tickers.length} tickers, ${totalRows} observations, ${failures} failures.`);
+    if (failures > 0) process.exitCode = 1;
   } finally {
     await session.close();
   }

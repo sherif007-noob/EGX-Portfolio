@@ -9,6 +9,9 @@ import {
 import { savePriceTickToFirestore } from '../services/firestoreStorage';
 
 const MARKET_SYNC_INTERVAL_MS = 15 * 60 * 1000;
+const CLOSING_HOUR_CAIRO = 15;
+const CLOSING_MINUTE_CAIRO = 15;
+const CLOSING_WINDOW_MINUTES = 15;
 
 export function useMarketData(
   positions: Position[],
@@ -26,6 +29,7 @@ export function useMarketData(
   const tickersRef = useRef(tickers);
   const onLivePricesSyncedRef = useRef(onLivePricesSynced);
   const isSyncingRef = useRef(false);
+  const lastClosingSyncKeyRef = useRef<string | null>(null);
   positionsRef.current = positions;
   tickersRef.current = tickers;
   onLivePricesSyncedRef.current = onLivePricesSynced;
@@ -38,7 +42,7 @@ export function useMarketData(
     return () => clearInterval(timer);
   }, []);
 
-  const syncLivePrices = useCallback(async (manual = false) => {
+  const syncLivePrices = useCallback(async (manual = false, forcePersist = false) => {
     if (isSyncingRef.current) return { success: false, error: 'Price sync already in progress.' };
 
     isSyncingRef.current = true;
@@ -61,13 +65,13 @@ export function useMarketData(
         if (onUpdateTickers && updatedTickers.length > 0) onUpdateTickers(updatedTickers);
       }
 
-      // TradingView is delayed market data and is supporting data for the ledger/performance app.
-      // Automatic persistence is throttled to 15 minutes by firestoreStorage. Manual refreshes
-      // may persist immediately when explicitly requested by the user.
+      // Normal automatic persistence is throttled to 15 minutes. The dedicated 3:15 PM
+      // Cairo closing event intentionally bypasses that throttle so the day's closing
+      // valuation is persisted even when the preceding 15-minute sync was recent.
       await savePriceTickToFirestore(
         hasChanges ? updatedPositions : positionsRef.current,
         hasChanges ? updatedTickers : tickersRef.current,
-        manual
+        manual || forcePersist
       );
 
       onLivePricesSyncedRef.current?.(updatedPositions, updatedTickers, manual);
@@ -92,11 +96,12 @@ export function useMarketData(
   useEffect(() => {
     if (hasInitialSyncedRef.current) return;
     hasInitialSyncedRef.current = true;
-    void syncLivePrices(false);
+    void syncLivePrices(false, false);
   }, [syncLivePrices]);
 
-  // TradingView is delayed data. Keep automatic syncing on a strict 15-minute cadence.
-  // The timer is aligned to quarter-hour boundaries; there is no 20-second market poll.
+  // TradingView is delayed data. Keep automatic syncing on a strict 15-minute cadence,
+  // aligned to quarter-hour boundaries. The 3:15 PM closing write is a separate deliberate
+  // accounting event and is allowed even though the regular market session has ended.
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -109,9 +114,37 @@ export function useMarketData(
 
       timer = setTimeout(async () => {
         if (cancelled) return;
+
         const status = getEGXSessionStatus();
         setScheduleStatus(status);
-        if (status.isSessionActive) await syncLivePrices(false);
+
+        // Dedicated end-of-day closing valuation write. This intentionally uses forcePersist
+        // so it cannot be suppressed by the normal 15-minute price-write throttle.
+        const cairoParts = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Africa/Cairo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).formatToParts(new Date());
+        const getPart = (type: string) => cairoParts.find((p) => p.type === type)?.value || '';
+        const cairoHour = Number(getPart('hour'));
+        const cairoMinute = Number(getPart('minute'));
+        const cairoDateKey = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+        const cairoDayMinutes = cairoHour * 60 + cairoMinute;
+        const closingStart = CLOSING_HOUR_CAIRO * 60 + CLOSING_MINUTE_CAIRO;
+        const isClosingWindow = cairoDayMinutes >= closingStart && cairoDayMinutes < closingStart + CLOSING_WINDOW_MINUTES;
+
+        if (isClosingWindow && lastClosingSyncKeyRef.current !== cairoDateKey) {
+          lastClosingSyncKeyRef.current = cairoDateKey;
+          console.log('[MarketData] 3:15 PM Cairo closing valuation write.');
+          await syncLivePrices(false, true);
+        } else if (status.isSessionActive) {
+          await syncLivePrices(false, false);
+        }
+
         scheduleNextSync();
       }, delay);
     };
@@ -128,6 +161,6 @@ export function useMarketData(
     lastPriceSyncTime,
     syncError,
     scheduleStatus,
-    syncLivePrices: (manual = true) => syncLivePrices(manual),
+    syncLivePrices: (manual = true) => syncLivePrices(manual, false),
   };
 }

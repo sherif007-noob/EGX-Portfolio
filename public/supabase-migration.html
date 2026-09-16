@@ -6,11 +6,12 @@
   <title>EGX Portfolio — One-Time Supabase Migration</title>
   <style>
     body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1020;color:#e8ecf5;margin:0;padding:32px}
-    main{max-width:820px;margin:auto;background:#121a2b;border:1px solid #2b3854;border-radius:16px;padding:28px;box-shadow:0 12px 40px #0005}
+    main{max-width:900px;margin:auto;background:#121a2b;border:1px solid #2b3854;border-radius:16px;padding:28px;box-shadow:0 12px 40px #0005}
     h1{margin-top:0}.warning{background:#3a2510;border:1px solid #9b6a20;padding:14px;border-radius:10px;margin:18px 0;line-height:1.5}
     button{margin-top:20px;padding:12px 18px;border:0;border-radius:9px;background:#4f7cff;color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
     #log{margin-top:20px;background:#080d18;border:1px solid #27334c;border-radius:10px;padding:14px;min-height:120px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,monospace;font-size:13px;line-height:1.5}
     .ok{color:#79e2a5}.err{color:#ff8c8c}.muted{color:#9ba8bf}.check{display:flex;gap:8px;align-items:flex-start;margin-top:18px}.check input{width:auto;margin-top:4px}
+    .fail{margin-top:18px;padding:14px;border:1px solid #b94a48;background:#3a1518;border-radius:10px}.pass{margin-top:18px;padding:14px;border:1px solid #31865a;background:#12301f;border-radius:10px}
   </style>
 </head>
 <body>
@@ -20,38 +21,50 @@
   <div class="warning"><strong>STOP before running.</strong><br>
     This operation reads Firebase and writes Supabase. It does <strong>not</strong> delete or modify Firebase data.<br>
     Firebase credentials and the Supabase service-role key are supplied only through server-side environment variables; this page never receives them.<br>
-    Do not run this until you are ready to create the Supabase copy of the current portfolio.
+    The migration does NOT switch the application from Firestore to Supabase.
   </div>
 
   <label class="check"><input id="confirm" type="checkbox" />
     <span>I understand this is a one-time migration, Firebase remains untouched, and the application will NOT be switched to Supabase by this operation.</span>
   </label>
 
-  <button id="run" disabled>Run Migration</button>
+  <button id="run" disabled>Run Migration + Reconciliation</button>
   <div id="log" class="muted">Waiting for explicit confirmation…</div>
+  <div id="result"></div>
 </main>
 <script>
   const confirmBox = document.getElementById('confirm');
   const run = document.getElementById('run');
   const log = document.getElementById('log');
+  const result = document.getElementById('result');
   const lines = [];
   function write(message, cls='') { lines.push(message); log.className = cls || 'muted'; log.textContent = lines.join('\n'); }
   confirmBox.addEventListener('change', () => { run.disabled = !confirmBox.checked; });
   run.addEventListener('click', async () => {
-    run.disabled = true; confirmBox.disabled = true; lines.length = 0; write('Starting server-side migration…');
+    run.disabled = true; confirmBox.disabled = true; lines.length = 0; result.innerHTML = ''; write('Starting server-side migration…');
     try {
       const response = await fetch('/api/migration/firestore-to-supabase', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({confirm: true}) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || `Server returned ${response.status}`);
       if (Array.isArray(data.events)) data.events.forEach(e => write(`${e.phase}: ${e.message}`));
-      write('MIGRATION COMPLETED.', 'ok');
+      if (!response.ok) {
+        if (data.result?.reconciliation) {
+          const r = data.result.reconciliation;
+          result.innerHTML = `<div class="fail"><strong>RECONCILIATION FAILED</strong><br>Checked ${r.checked} fields. Mismatches: ${r.mismatches.length}<pre>${escapeHtml(JSON.stringify(r.mismatches, null, 2))}</pre><br><strong>Do NOT switch the application to Supabase.</strong></div>`;
+        }
+        throw new Error(data.error || `Server returned ${response.status}`);
+      }
+      const r = data.result?.reconciliation;
+      if (!r?.passed) throw new Error('Server did not return a passing reconciliation result.');
+      result.innerHTML = `<div class="pass"><strong>RECONCILIATION PASSED</strong><br>Checked ${r.checked} fields with zero mismatches.</div>`;
+      write('MIGRATION COMPLETED — FIELD-LEVEL RECONCILIATION PASSED.', 'ok');
       write(JSON.stringify(data.result, null, 2), 'ok');
       write('Firebase was read only. The normal application was not switched to Supabase.', 'ok');
     } catch (error) {
-      write(`MIGRATION FAILED: ${error.message || error}`, 'err');
+      write(`MIGRATION/RECONCILIATION FAILED: ${error.message || error}`, 'err');
       run.disabled = false; confirmBox.disabled = false;
     }
   });
+  function escapeHtml(value) { return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 </script>
 </body>
 </html>

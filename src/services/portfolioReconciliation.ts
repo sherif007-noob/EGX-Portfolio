@@ -1,7 +1,7 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector } from '../types';
 import { INITIAL_CAPITAL_DEPOSITS } from '../data/initialPortfolio';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
-import { calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
+import { calculateBuyImpact, calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];
@@ -114,14 +114,18 @@ export function reconcilePortfolioFromLedger(
   chronologicalTxs.forEach((tx) => {
     const tickerKey = tx.ticker.trim().toUpperCase();
 
-    if (tickerKey === 'CASH' || (tx as any).type === 'DIVIDEND' || (tx as any).type === 'DEPOSIT') {
-      const amount = tx.totalAmount || tx.shares * tx.price;
+    // Cash/dividend entries are legacy cash ledger records represented as
+    // TradeTransaction BUY rows with ticker CASH. Keep this compatibility
+    // path explicit; typed DEPOSIT/WITHDRAW branches are intentionally not
+    // supported here because cash contributions/withdrawals are stored in
+    // capitalDeposits rather than the trade ledger.
+    if (tickerKey === 'CASH') {
+      const amount = tx.totalAmount;
+      if (!Number.isFinite(amount) || amount < 0) {
+        discrepancies.push(`CASH ${tx.id} has an invalid non-negative amount.`);
+        return;
+      }
       runningCash += amount;
-      return;
-    }
-    if ((tx as any).type === 'WITHDRAW' || (tx as any).type === 'WITHDRAWAL') {
-      const amount = tx.totalAmount || tx.shares * tx.price;
-      runningCash -= amount;
       return;
     }
 
@@ -130,9 +134,15 @@ export function reconcilePortfolioFromLedger(
     const companyName = tx.companyName || tickerQuote?.nameEn || tx.ticker;
 
     if (tx.type === 'BUY') {
-      const grossCost = tx.shares * tx.price;
-      const fees = tx.fees || 0;
-      runningCash -= grossCost + fees;
+      let accounting;
+      try {
+        accounting = calculateBuyImpact(tx.shares, tx.price, tx.fees);
+      } catch (error) {
+        discrepancies.push(`BUY ${tx.id} for ${tx.ticker} rejected: ${error instanceof Error ? error.message : 'invalid accounting data'}`);
+        return;
+      }
+
+      runningCash -= accounting.cashOutflow;
 
       const currentLots = openLotsByTicker[tickerKey] || [];
       if (currentLots.length === 0 && activeCyclesByTicker[tickerKey]) {
@@ -146,7 +156,7 @@ export function reconcilePortfolioFromLedger(
         shares: tx.shares,
         price: tx.price,
         date: tx.date,
-        fees,
+        fees: accounting.fees,
         companyName,
         sector,
         targetPrice: tx.targetPrice,
@@ -177,7 +187,7 @@ export function reconcilePortfolioFromLedger(
       accounting = calculateSellAccounting(
         tx.shares,
         tx.price,
-        tx.fees || 0,
+        tx.fees,
         totalOpenShares,
         totalOpenGrossCost,
         totalOpenBuyFees,
@@ -231,8 +241,8 @@ export function reconcilePortfolioFromLedger(
     cycle.totalGrossProceeds += accounting.grossProceeds;
     cycle.sellDate = tx.date;
     cycle.buyFees += accounting.allocatedBuyFees;
-    cycle.sellFees += tx.fees || 0;
-    cycle.totalFees += accounting.allocatedBuyFees + (tx.fees || 0);
+    cycle.sellFees += tx.fees;
+    cycle.totalFees += accounting.allocatedBuyFees + tx.fees;
     cycle.realizedPnlEgp += accounting.realizedPnlEgp;
     if (tx.notes) cycle.notes.push(tx.notes);
     if (tx.cycleTag) cycle.cycleTags.push(tx.cycleTag);

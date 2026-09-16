@@ -69,11 +69,24 @@ export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocumen
 function enqueueSave(data: PortfolioWrite): Promise<boolean> {
   const run = async () => {
     const canonical = deriveLedgerState(data);
-    const fingerprint = generateFingerprint(canonical);
+    let complete = canonical;
+
+    // Some legacy callers omit capitalDeposits. Never replace it with zero;
+    // recover the current remote value before issuing a complete snapshot save.
+    if (typeof complete.capitalDeposits !== 'number' || !Number.isFinite(complete.capitalDeposits)) {
+      const current = await loadPortfolioFromSupabase();
+      if (!current || typeof current.capitalDeposits !== 'number' || !Number.isFinite(current.capitalDeposits)) {
+        console.error('[Supabase] Refusing to save an incomplete portfolio snapshot: capitalDeposits is unavailable.');
+        return false;
+      }
+      complete = { ...complete, capitalDeposits: current.capitalDeposits };
+    }
+
+    const fingerprint = generateFingerprint(complete);
     if (fingerprint === lastSerializedPayload) return true;
     markLocalMutation(5000);
-    const ok = await savePortfolioToSupabase(canonical);
-    if (ok) updateLastSavedSnapshot({ ...canonical, updatedAt: new Date().toISOString(), schemaVersion: 3 });
+    const ok = await savePortfolioToSupabase(complete);
+    if (ok) updateLastSavedSnapshot({ ...complete, updatedAt: new Date().toISOString(), schemaVersion: 3 });
     return ok;
   };
   const next = saveQueue.then(run, run);
@@ -124,14 +137,18 @@ export function updateFirestoreTickers(tickers: EGXTicker[]) { return mergeAndSa
 
 export async function updateFirestoreTransactions(transactions: TradeTransaction[], _positions?: Position[], _closedTrades?: ClosedTrade[], _cashBalance?: number, capitalDeposits?: number) {
   const current = await loadPortfolioFromSupabase();
-  const canonicalCurrent = current ? deriveLedgerState(current) : null;
+  if (!current) {
+    console.error('[Supabase] Refusing transaction save because the remote portfolio could not be loaded.');
+    return false;
+  }
+  const canonicalCurrent = deriveLedgerState(current);
   return forceFullSyncToFirestore({
-    positions: canonicalCurrent?.positions ?? [],
-    closedTrades: canonicalCurrent?.closedTrades ?? [],
+    positions: canonicalCurrent.positions,
+    closedTrades: canonicalCurrent.closedTrades,
     transactions,
-    cashBalance: canonicalCurrent?.cashBalance ?? 0,
-    capitalDeposits: capitalDeposits ?? canonicalCurrent?.capitalDeposits,
-    tickers: canonicalCurrent?.tickers ?? [],
+    cashBalance: canonicalCurrent.cashBalance,
+    capitalDeposits: capitalDeposits ?? canonicalCurrent.capitalDeposits,
+    tickers: canonicalCurrent.tickers,
   });
 }
 

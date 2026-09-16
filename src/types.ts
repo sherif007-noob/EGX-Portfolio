@@ -206,7 +206,7 @@ export interface CashTransaction {
   balanceAfter: number;
 }
 
-export type CashFlowType = 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE';
+export type CashFlowType = 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE' | 'CASH_ADJUSTMENT';
 
 export interface TradeTransaction {
   id: string;

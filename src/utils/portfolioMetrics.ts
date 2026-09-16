@@ -73,9 +73,6 @@ export function calculatePortfolioMetrics(
     dayChangeEgp += position.shares * perShareChange;
   });
 
-  // Day change is an equity/NAV change, so the prior-value denominator must
-  // include cash as well as securities. This also remains correct when the
-  // portfolio is mostly or entirely cash.
   const previousPortfolioValue = totalValue - dayChangeEgp;
   const dayChangePercent = previousPortfolioValue > 0
     ? (dayChangeEgp / previousPortfolioValue) * 100
@@ -155,9 +152,6 @@ export function calculatePerformanceStats(
     totalRealizedLossEgp: Number(accounting.grossLoss.toFixed(2)),
     totalBrokerageFeesPaid: Number(totalBrokerageFeesPaid.toFixed(2)),
     sectorAllocation,
-    // Historical mark-to-market drawdown requires historical valuation points.
-    // The current ledger only guarantees realized trade history, so don't label
-    // realized-P&L drawdown as portfolio equity drawdown.
     maxDrawdownEgp: 0,
     maxDrawdownPercent: 0,
     payoffRatio: accounting.payoffRatio === null ? 0 : Number(accounting.payoffRatio.toFixed(2)),
@@ -183,11 +177,8 @@ export function normalizeTransaction(tx: any): TradeTransaction {
   const fees = typeof tx.fees === 'number' ? tx.fees : parseFloat(tx.fees) || 0;
   const explicitAmount = typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount);
   const grossAmount = shares * price;
-
-  // Legacy cash-flow rows are represented as CASH pseudo-transactions so the
-  // reconciliation layer can apply the signed cash movement before trade logic.
   const cashFlow = isDeposit || isWithdrawal || isDividend;
-  const normalizedType = isWithdrawal ? 'SELL' : 'BUY';
+  const normalizedType = isWithdrawal ? 'SELL' : isTrade ? rawType : 'BUY';
   const normalizedTicker = cashFlow
     ? 'CASH'
     : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
@@ -201,7 +192,7 @@ export function normalizeTransaction(tx: any): TradeTransaction {
 
   return {
     id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    type: normalizedType,
+    type: normalizedType as 'BUY' | 'SELL',
     ticker: normalizedTicker,
     companyName: cashFlow ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''),
     sector: cashFlow ? 'Liquid Buying Power' : (tx.sector || 'Other'),

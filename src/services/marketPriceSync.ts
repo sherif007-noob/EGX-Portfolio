@@ -61,7 +61,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
 
   let json: any = null;
 
-  // 1. Primary: Use the server API proxy (running on the app server, bypasses CORS restrictions)
   try {
     const proxyRes = await fetch('/api/egx/scan', {
       method: 'POST',
@@ -76,7 +75,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
     console.warn('Proxy request failed, trying direct TradingView endpoint...', err);
   }
 
-  // 2. Fallback: Direct call if proxy unavailable
   if (!json || !json.data) {
     const directRes = await fetch('https://scanner.tradingview.com/egypt/scan', {
       method: 'POST',
@@ -102,8 +100,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       const rawSymbol = String(item.d[0] || '').trim().toUpperCase();
       const cleanTicker = rawSymbol.replace(/^EGX:/, '').replace(/\.CA$/, '');
       
-      // Parse columns according to payload format:
-      // columns: ['name', 'description', 'logoid', 'close', 'change', 'change_abs', 'volume', 'high', 'low', 'high_52_week', 'low_52_week', 'sector', 'RSI']
       let description = '';
       let logoId = '';
       let close = 0;
@@ -117,7 +113,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       let rsi: number | undefined;
 
       if (typeof item.d[1] === 'string' && isNaN(Number(item.d[1]))) {
-        // Extended payload with logoid
         description = String(item.d[1] || '');
         if (typeof item.d[2] === 'string' && isNaN(Number(item.d[2]))) {
           logoId = String(item.d[2] || '');
@@ -142,7 +137,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
           rsi = item.d[11] !== null && item.d[11] !== undefined ? Number(item.d[11]) : undefined;
         }
       } else {
-        // Standard payload
         close = Number(item.d[1] || 0);
         changePercent = Number(item.d[2] || 0);
         changeAbs = item.d[3] !== null && item.d[3] !== undefined ? Number(item.d[3]) : 0;
@@ -152,8 +146,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       if (close > 0) {
         const roundedPrice = Math.round(close * 100) / 100;
         const roundedChangePercent = Math.round(changePercent * 100) / 100;
-        
-        // Exact change in EGP from TradingView or exact difference from previous close
         let calculatedChangeAbs = changeAbs;
         if ((calculatedChangeAbs === 0 || isNaN(calculatedChangeAbs)) && roundedChangePercent !== 0) {
           const prevClose = roundedPrice / (1 + roundedChangePercent / 100);
@@ -178,7 +170,6 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
           quotes[alias] = quote;
         }
 
-        // Build rich ticker object with TradingView logo
         const tickerObj = createEGXTickerRecord(
           cleanTicker,
           roundedPrice,
@@ -201,17 +192,11 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
   return { quotes, discoveredTickers };
 }
 
-/**
- * Resolves a ticker symbol using known aliases.
- */
 export function resolveTickerSymbol(ticker: string): string {
   const upper = ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   return TICKER_ALIASES[upper] || upper;
 }
 
-/**
- * Applies fetched quotes and discovered stocks to open positions and the ticker directory.
- */
 export function applyLivePricesToPortfolio(
   positions: Position[],
   tickers: EGXTicker[],
@@ -222,11 +207,9 @@ export function applyLivePricesToPortfolio(
   let hasChanges = false;
   const nowIso = new Date().toISOString();
 
-  // Create a map of existing tickers by symbol for quick lookup
   const tickerMap = new Map<string, EGXTicker>();
   tickers.forEach(t => tickerMap.set(t.ticker.toUpperCase(), t));
 
-  // Merge discovered tickers from TradingView into the directory
   discoveredTickers.forEach(dt => {
     const existing = tickerMap.get(dt.ticker.toUpperCase());
     if (existing) {
@@ -255,7 +238,6 @@ export function applyLivePricesToPortfolio(
         });
       }
     } else {
-      // Add newly discovered EGX equity
       hasChanges = true;
       dt.lastUpdated = nowIso;
       dt.priceUpdatedAt = nowIso;
@@ -263,7 +245,6 @@ export function applyLivePricesToPortfolio(
     }
   });
 
-  // Also apply direct quotes to any remaining tickers
   const updatedTickers = Array.from(tickerMap.values()).map(t => {
     const symbol = resolveTickerSymbol(t.ticker);
     const quote = quotes[symbol] || quotes[t.ticker.toUpperCase()];
@@ -306,7 +287,6 @@ export function applyLivePricesToPortfolio(
     updatedTickers.sort((a, b) => a.ticker.localeCompare(b.ticker));
   }
 
-  // Update Positions with live prices and day changes
   let positionsChanged = false;
   const updatedPositions = positions.map(p => {
     const cleanSym = p.ticker.trim().toUpperCase();
@@ -371,7 +351,6 @@ export function applyLivePricesToPortfolio(
 export function getEGXSessionStatus(): EGXScheduleStatus {
   try {
     const now = new Date();
-    // Get Cairo date components
     const cairoDateFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo',
       year: 'numeric',
@@ -392,53 +371,113 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
     const hour = getVal('hour');
     const minute = getVal('minute');
     const second = getVal('second');
-    const date = new Date(year, month, day);
-    const dayOfWeek = date.getDay();
-    const totalMinutes = hour * 60 + minute;
+
+    const cairoLocalTime = new Date(Date.UTC(year, month, day, hour, minute, second));
+    const dayOfWeek = cairoLocalTime.getUTCDay();
 
     const isTradingDay = dayOfWeek >= 0 && dayOfWeek <= 4;
-    const sessionStartMinutes = dayOfWeek === 0 ? 9 * 60 + 30 : 10 * 60;
-    const sessionEndMinutes = 14 * 60 + 30;
-    const isSessionActive = isTradingDay && totalMinutes >= sessionStartMinutes && totalMinutes <= sessionEndMinutes;
+    const currentTotalMinutes = hour * 60 + minute;
 
-    let millisUntilNextTick = 0;
-    let nextTickLabel = '';
+    let inSession = false;
 
-    if (isSessionActive) {
-      const nextQuarter = Math.ceil((totalMinutes * 60 + second + 1) / 900) * 900;
-      const currentSeconds = totalMinutes * 60 + second;
-      millisUntilNextTick = Math.max(1000, (nextQuarter - currentSeconds) * 1000);
-      nextTickLabel = 'Next 15-minute market refresh';
-    } else if (isTradingDay && totalMinutes < sessionStartMinutes) {
-      const currentSeconds = totalMinutes * 60 + second;
-      const startSeconds = sessionStartMinutes * 60;
-      millisUntilNextTick = Math.max(1000, (startSeconds - currentSeconds) * 1000);
-      nextTickLabel = 'Market opens';
-    } else if (isTradingDay && totalMinutes < CLOSING_HOUR_CAIRO * 60 + CLOSING_MINUTE_CAIRO + CLOSING_WINDOW_MINUTES) {
-      const currentSeconds = totalMinutes * 60 + second;
-      const closingSeconds = (CLOSING_HOUR_CAIRO * 60 + CLOSING_MINUTE_CAIRO) * 60;
-      millisUntilNextTick = Math.max(1000, (closingSeconds - currentSeconds) * 1000);
-      nextTickLabel = '3:15 PM closing valuation write';
-    } else {
-      nextTickLabel = 'Market closed';
-      millisUntilNextTick = 0;
+    if (isTradingDay) {
+      if (dayOfWeek === 0) {
+        if (currentTotalMinutes >= 570 && currentTotalMinutes <= 870) {
+          inSession = true;
+        }
+      } else {
+        if (currentTotalMinutes >= 600 && currentTotalMinutes <= 870) {
+          inSession = true;
+        }
+      }
+
+      if (currentTotalMinutes >= 915 && currentTotalMinutes <= 925) {
+        inSession = true;
+      }
     }
 
+    let nextTickHour = hour;
+    let nextTickMinute = minute;
+    let millisUntilNextTick = 60000;
+
+    if (inSession) {
+      const tickMinutes = [0, 15, 30, 45];
+      let nextM = tickMinutes.find(m => m > minute);
+      if (nextM === undefined) {
+        nextM = 0;
+        nextTickHour = (hour + 1) % 24;
+      }
+      nextTickMinute = nextM;
+      const secRemaining = 60 - second;
+      const minRemaining = (nextTickMinute >= minute ? nextTickMinute - minute : (nextTickMinute + 60) - minute) - 1;
+      millisUntilNextTick = Math.max(1000, (minRemaining * 60 + secRemaining) * 1000);
+    } else {
+      const targetsToday: number[] = [];
+      if (isTradingDay) {
+        const openMin = dayOfWeek === 0 ? 570 : 600;
+        if (openMin > currentTotalMinutes) targetsToday.push(openMin);
+        if (915 > currentTotalMinutes) targetsToday.push(915);
+      }
+
+      if (targetsToday.length > 0) {
+        const nextTargetMin = targetsToday[0];
+        nextTickHour = Math.floor(nextTargetMin / 60);
+        nextTickMinute = nextTargetMin % 60;
+        const diffMins = nextTargetMin - currentTotalMinutes;
+        const secRemaining = 60 - second;
+        millisUntilNextTick = Math.max(1000, ((diffMins - 1) * 60 + secRemaining) * 1000);
+      } else {
+        let daysToAdd = 1;
+        let nextDay = (dayOfWeek + 1) % 7;
+        while (nextDay === 5 || nextDay === 6) {
+          daysToAdd++;
+          nextDay = (nextDay + 1) % 7;
+        }
+        const openHour = nextDay === 0 ? 9 : 10;
+        const openMin = nextDay === 0 ? 30 : 0;
+        nextTickHour = openHour;
+        nextTickMinute = openMin;
+
+        const minutesUntilMidnight = (24 * 60) - currentTotalMinutes;
+        const minutesOnNextDay = openHour * 60 + openMin;
+        const totalWaitMins = minutesUntilMidnight + (daysToAdd - 1) * 24 * 60 + minutesOnNextDay;
+        const secRemaining = 60 - second;
+        millisUntilNextTick = Math.max(1000, ((totalWaitMins - 1) * 60 + secRemaining) * 1000);
+      }
+    }
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const nextTickLabel = `${pad(nextTickHour)}:${pad(nextTickMinute)}`;
+    const cairoTimeString = `${pad(hour)}:${pad(minute)}:${pad(second)}`;
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const cairoDateString = `${dayNames[dayOfWeek]} ${pad(day)}/${pad(month + 1)}`;
+
     return {
-      isSessionActive,
-      cairoTimeString: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`,
-      cairoDateString: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      isSessionActive: inSession,
+      cairoTimeString,
+      cairoDateString,
       millisUntilNextTick,
-      nextTickLabel,
+      nextTickLabel
     };
-  } catch (error) {
-    console.error('Failed to calculate EGX schedule status:', error);
+  } catch {
     return {
       isSessionActive: false,
-      cairoTimeString: '',
-      cairoDateString: '',
-      millisUntilNextTick: 0,
-      nextTickLabel: 'Schedule unavailable',
+      cairoTimeString: '--:--',
+      cairoDateString: 'EGX',
+      millisUntilNextTick: 60000,
+      nextTickLabel: '--:--'
     };
   }
+}
+
+export function formatCairoTime(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Cairo',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    day: 'numeric',
+    month: 'short'
+  }).format(date);
 }

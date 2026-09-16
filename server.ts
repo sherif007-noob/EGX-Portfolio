@@ -31,33 +31,80 @@ async function startServer() {
   app.post("/api/sheets/batchUpdate", handleBatchUpdate);
   app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
 
-  // ONE-TIME FIRESTORE -> SUPABASE MIGRATION. Disabled unless explicitly enabled.
-  // Uses Firebase Admin SDK server-side; it does not use the user's Google password or auth provider.
+  // ONE-TIME FIRESTORE -> SUPABASE MIGRATION.
+  // Disabled unless explicitly enabled. All privileged credentials remain server-side.
+  // Firebase is read-only; Supabase is the only destination written by this endpoint.
   app.post("/api/migration/firestore-to-supabase", async (req, res) => {
-    if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") return res.status(404).json({ error: "Migration endpoint is disabled." });
-    if (migrationCompleted) return res.status(409).json({ error: "This server instance has already completed the migration." });
-    if (migrationRunning) return res.status(409).json({ error: "A migration is already running." });
-    if (req.body?.confirm !== true) return res.status(400).json({ error: "Explicit migration confirmation is required." });
+    if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") {
+      return res.status(404).json({ error: "Migration endpoint is disabled." });
+    }
+    if (migrationCompleted) {
+      return res.status(409).json({ error: "This server instance has already completed the migration." });
+    }
+    if (migrationRunning) {
+      return res.status(409).json({ error: "A migration is already running." });
+    }
+    if (req.body?.confirm !== true) {
+      return res.status(400).json({ error: "Explicit migration confirmation is required." });
+    }
 
-    const required = ["FIREBASE_ADMIN_PROJECT_ID", "FIREBASE_ADMIN_CLIENT_EMAIL", "FIREBASE_ADMIN_PRIVATE_KEY", "SUPABASE_SECRET_KEY"];
+    // Require the complete server-side credential set. In particular, do not silently
+    // fall back to the legacy Supabase service_role key or Firebase client credentials.
+    const required = [
+      "FIREBASE_ADMIN_PROJECT_ID",
+      "FIREBASE_ADMIN_CLIENT_EMAIL",
+      "FIREBASE_ADMIN_PRIVATE_KEY",
+      "FIREBASE_ADMIN_OWNER_UID",
+      "SUPABASE_URL",
+      "SUPABASE_SECRET_KEY",
+    ];
     const missing = required.filter((name) => !process.env[name]);
-    if (missing.length) return res.status(500).json({ error: `Server-side migration credentials are not configured: ${missing.join(", ")}` });
+    if (missing.length) {
+      return res.status(500).json({
+        error: `Server-side migration credentials are not configured: ${missing.join(", ")}`,
+      });
+    }
+
+    const supabaseSecret = process.env.SUPABASE_SECRET_KEY!;
+    if (!supabaseSecret.startsWith("sb_secret_")) {
+      return res.status(500).json({
+        error: "SUPABASE_SECRET_KEY is not a current Supabase secret key (expected sb_secret_...).",
+      });
+    }
+
+    if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY!.includes("BEGIN PRIVATE KEY")) {
+      return res.status(500).json({
+        error: "FIREBASE_ADMIN_PRIVATE_KEY does not look like a valid service-account private key.",
+      });
+    }
 
     migrationRunning = true;
     const events: Array<{ phase: string; message: string; counts?: Record<string, number> }> = [];
+
     try {
       const result = await runFirestoreSupabaseMigration({
         confirm: true,
         onProgress: (event) => events.push(event),
       });
+
       if (!result.reconciliation.passed) {
-        return res.status(422).json({ ok: false, events, error: "Migration data was written, but field-level reconciliation FAILED. Do not switch the application to Supabase.", result });
+        return res.status(422).json({
+          ok: false,
+          events,
+          error: "Migration data was written, but field-level reconciliation FAILED. Do not switch the application to Supabase.",
+          result,
+        });
       }
+
       migrationCompleted = true;
       return res.json({ ok: true, events, result });
     } catch (error) {
       console.error("Firestore -> Supabase migration failed:", error);
-      return res.status(500).json({ ok: false, events, error: error instanceof Error ? error.message : String(error) });
+      return res.status(500).json({
+        ok: false,
+        events,
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       migrationRunning = false;
     }

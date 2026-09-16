@@ -2,6 +2,43 @@ import { cert, getApps as getAdminApps, initializeApp as initializeAdminApp } fr
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { createClient } from '@supabase/supabase-js';
 
+const SUPABASE_JWT_RETRY_DELAYS_MS = [300, 900, 1800];
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Supabase's new sb_secret_* keys are opaque API keys. The Supabase gateway
+ * exchanges them for an internal short-lived JWT before PostgREST sees the
+ * request. During a known hosted-platform clock/cache skew condition,
+ * PostgREST can briefly reject that internal JWT with PGRST303 / "JWT issued
+ * at future" even though the client supplied no JWT and the key is valid.
+ *
+ * Retry only that specific transient authentication error. Do not retry other
+ * 401s or arbitrary failures, because those indicate real authorization or
+ * application problems. The retry is intentionally bounded and jittered.
+ */
+async function supabaseFetchWithJwtRetry(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const delays = [...SUPABASE_JWT_RETRY_DELAYS_MS];
+
+  for (let attempt = 0; ; attempt += 1) {
+    const requestInput = input instanceof Request ? input.clone() : input;
+    const response = await fetch(requestInput, init);
+
+    if (response.status !== 401 || attempt >= delays.length) return response;
+
+    const body = await response.clone().text();
+    const isJwtIssuedAtFuture = /PGRST303|JWT issued at future/i.test(body);
+    if (!isJwtIssuedAtFuture) return response;
+
+    const jitterMs = Math.floor(Math.random() * 150);
+    const delayMs = delays[attempt] + jitterMs;
+    console.warn(`[Supabase] Transient PGRST303 (JWT issued at future); retrying in ${delayMs}ms (attempt ${attempt + 1}/${delays.length}).`);
+    await sleep(delayMs);
+  }
+}
+
 function getFirebaseAdminAuth() {
   if (!getAdminApps().length) {
     const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
@@ -17,7 +54,10 @@ function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key || !key.startsWith('sb_secret_')) throw new Error('Supabase server credentials are not configured correctly.');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: supabaseFetchWithJwtRetry },
+  });
 }
 
 export async function verifyFirebaseBearerToken(authorization?: string): Promise<string> {

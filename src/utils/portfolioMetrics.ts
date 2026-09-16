@@ -165,25 +165,48 @@ export function calculatePerformanceStats(
   };
 }
 
-/** Normalize legacy snake_case trade fields into the canonical trade shape. */
+/** Normalize legacy transaction records without silently turning cash flows into BUY trades. */
 export function normalizeTransaction(tx: any): TradeTransaction {
+  const rawType = String(tx?.type || '').trim().toUpperCase();
+  const isDeposit = rawType === 'DEPOSIT' || (rawType === 'CASH' && String(tx?.direction || '').toUpperCase() === 'IN');
+  const isWithdrawal = rawType === 'WITHDRAWAL' || rawType === 'WITHDRAW' || (rawType === 'CASH' && String(tx?.direction || '').toUpperCase() === 'OUT');
+  const isDividend = rawType === 'DIVIDEND';
+  const isTrade = rawType === 'BUY' || rawType === 'SELL';
+
+  if (!isTrade && !isDeposit && !isWithdrawal && !isDividend) {
+    throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
+  }
+
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
   const price = typeof tx.price === 'number' ? tx.price : parseFloat(tx.price) || 0;
   const shares = typeof tx.shares === 'number' ? tx.shares : parseFloat(tx.shares) || 0;
   const fees = typeof tx.fees === 'number' ? tx.fees : parseFloat(tx.fees) || 0;
+  const explicitAmount = typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount);
   const grossAmount = shares * price;
-  const totalAmount = typeof tx.totalAmount === 'number'
-    ? tx.totalAmount
-    : tx.type === 'BUY' ? grossAmount + fees : grossAmount - fees;
+
+  // Legacy cash-flow rows are represented as CASH pseudo-transactions so the
+  // reconciliation layer can apply the signed cash movement before trade logic.
+  const cashFlow = isDeposit || isWithdrawal || isDividend;
+  const normalizedType = isWithdrawal ? 'SELL' : 'BUY';
+  const normalizedTicker = cashFlow
+    ? 'CASH'
+    : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  const normalizedShares = cashFlow && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
+  const normalizedPrice = cashFlow ? 1 : price;
+  const totalAmount = cashFlow
+    ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? grossAmount))
+    : typeof tx.totalAmount === 'number'
+      ? tx.totalAmount
+      : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
 
   return {
     id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    type: tx.type === 'SELL' ? 'SELL' : 'BUY',
-    ticker: String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''),
-    companyName: tx.companyName || tx.company_name || tx.ticker || '',
-    sector: tx.sector || 'Other',
-    shares,
-    price,
+    type: normalizedType,
+    ticker: normalizedTicker,
+    companyName: cashFlow ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''),
+    sector: cashFlow ? 'Liquid Buying Power' : (tx.sector || 'Other'),
+    shares: normalizedShares,
+    price: normalizedPrice,
     date: tx.date || new Date().toISOString().split('T')[0],
     fees,
     totalAmount,

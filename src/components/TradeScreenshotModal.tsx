@@ -217,42 +217,41 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   const handleConfirmAll = () => {
     if (batchTrades.length === 0) return;
 
-    // Validate all
-    const invalid = batchTrades.find((t) => !t.ticker || t.shares <= 0 || t.price <= 0);
-    if (invalid) {
-      setErrorMsg(`Please ensure valid Ticker, Shares, and Price for ${invalid.ticker || 'all items'}.`);
+    // A single failed OCR image must not block valid screenshots in the same batch.
+    // Keep failed/unparsed items visible for manual correction and submit only the
+    // valid transactions.
+    const validTrades = batchTrades.filter(
+      (t) => Boolean(t.ticker.trim()) && Number.isFinite(Number(t.shares)) && Number(t.shares) > 0 && Number.isFinite(Number(t.price)) && Number(t.price) > 0
+    );
+    const invalidTrades = batchTrades.filter((t) => !validTrades.includes(t));
+
+    if (validTrades.length === 0) {
+      setErrorMsg('None of the screenshots contain a valid trade yet. Please correct the failed OCR items first.');
       return;
     }
 
-    if (onAddBatchTransactions && batchTrades.length > 1) {
-      onAddBatchTransactions(
-        batchTrades.map((t) => ({
-          ticker: t.ticker.toUpperCase().trim(),
-          companyName: t.companyName || t.ticker,
-          sector: t.sector,
-          type: t.type,
-          shares: Number(t.shares),
-          price: Number(t.price),
-          date: t.date,
-          fees: Number(t.fees) || 0,
-          notes: t.notes || `Imported via ${t.brokerName || 'Telda'}`,
-        }))
-      );
+    const payload = validTrades.map((t) => ({
+      ticker: t.ticker.toUpperCase().trim(),
+      companyName: t.companyName || t.ticker,
+      sector: t.sector,
+      type: t.type,
+      shares: Number(t.shares),
+      price: Number(t.price),
+      date: t.date,
+      fees: Number(t.fees) || 0,
+      notes: t.notes || `Imported via ${t.brokerName || 'Telda'}`,
+    }));
+
+    if (onAddBatchTransactions && validTrades.length > 1) {
+      onAddBatchTransactions(payload);
     } else {
-      // Single transaction add
-      batchTrades.forEach((t) => {
-        onAddTransaction({
-          ticker: t.ticker.toUpperCase().trim(),
-          companyName: t.companyName || t.ticker,
-          sector: t.sector,
-          type: t.type,
-          shares: Number(t.shares),
-          price: Number(t.price),
-          date: t.date,
-          fees: Number(t.fees) || 0,
-          notes: t.notes || `Imported via ${t.brokerName || 'Telda'}`,
-        });
-      });
+      payload.forEach((t) => onAddTransaction(t));
+    }
+
+    if (invalidTrades.length > 0) {
+      setBatchTrades(invalidTrades);
+      setErrorMsg(`${invalidTrades.length} screenshot(s) could not be read. The ${validTrades.length} valid trade(s) were logged; please correct the remaining item(s) and log them separately.`);
+      return;
     }
 
     resetModal();

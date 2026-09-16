@@ -545,6 +545,10 @@ export default function App() {
   };
 
   // AI Screenshot Batch Transactions
+  // Process the entire OCR batch as one working ledger. For same-day trades on the
+  // same ticker, BUYs are applied before SELLs because OCR has no execution-time
+  // field. This prevents a valid SELL from being rejected merely because its
+  // corresponding BUY screenshot appeared later in the upload order.
   const handleAIScreenshotAddBatchTransactions = (
     parsedTxs: Array<{
       ticker: string;
@@ -559,45 +563,118 @@ export default function App() {
     }>
   ) => {
     if (parsedTxs.length === 0) return;
+
+    const orderedTxs = parsedTxs
+      .map((tx, index) => ({ tx, index }))
+      .sort((a, b) => {
+        const dateDiff = new Date(a.tx.date).getTime() - new Date(b.tx.date).getTime();
+        if (Number.isFinite(dateDiff) && dateDiff !== 0) return dateDiff;
+        const sameTicker = a.tx.ticker.trim().toUpperCase() === b.tx.ticker.trim().toUpperCase();
+        if (sameTicker && a.tx.type !== b.tx.type) {
+          return a.tx.type === 'BUY' ? -1 : 1;
+        }
+        return a.index - b.index;
+      })
+      .map(({ tx }) => tx);
+
     let workingTransactions = [...transactions];
     let workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
+    let processedCount = 0;
+    let skippedCount = 0;
+    const pending = [...orderedTxs];
 
-    for (const parsedTx of parsedTxs) {
-      const ticker = parsedTx.ticker.toUpperCase().trim();
-      const shares = Number(parsedTx.shares);
-      const price = Number(parsedTx.price);
-      const fees = Number(parsedTx.fees) || 0;
-      if (!ticker || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) continue;
-      const maxTradeId = workingTransactions.reduce((max, t) => {
-        const id = Number(t.tradeId);
-        return Number.isFinite(id) && id > max ? id : max;
-      }, 0);
-      const tradeId = maxTradeId > 0 ? maxTradeId + 1 : workingTransactions.length + 1;
+    // Keep retrying blocked SELLs after later BUYs have been applied. This makes
+    // the batch dependency-aware instead of treating upload order as execution order.
+    while (pending.length > 0) {
+      let progressed = false;
 
-      if (parsedTx.type === 'BUY') {
-        const impact = calculateBuyImpact(shares, price, fees);
-        const tx: TradeTransaction = {
-          id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, tradeId, type: 'BUY', ticker,
-          companyName: parsedTx.companyName || ticker, sector: parsedTx.sector, shares, price, date: parsedTx.date, fees,
-          totalAmount: impact.cashOutflow, grossTradeValue: impact.grossCost, netCashImpact: -impact.cashOutflow,
-          notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-        };
-        workingTransactions = [tx, ...workingTransactions];
-      } else {
-        const position = workingReport.reconciledPositions.find((p) => p.ticker.toUpperCase() === ticker);
-        if (!position || shares > position.shares) continue;
-        const accounting = calculateSellAccounting(shares, price, fees, position.shares, position.shares * position.avgBuyPrice, position.totalFees || 0);
-        const tx: TradeTransaction = {
-          id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, tradeId, type: 'SELL', ticker,
-          companyName: position.companyName || parsedTx.companyName || ticker, sector: position.sector || parsedTx.sector,
-          shares, price, date: parsedTx.date, fees, totalAmount: accounting.netProceeds, grossTradeValue: accounting.grossProceeds,
-          netCashImpact: accounting.netProceeds, realizedPnlEgp: accounting.realizedPnlEgp,
-          realizedPnlPercent: accounting.realizedPnlPercent, outcome: accounting.outcome,
-          holdingDays: calculateHoldingDays(position.buyDate, parsedTx.date), notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-        };
-        workingTransactions = [tx, ...workingTransactions];
+      for (let i = 0; i < pending.length; i++) {
+        const parsedTx = pending[i];
+        const ticker = parsedTx.ticker.toUpperCase().trim();
+        const shares = Number(parsedTx.shares);
+        const price = Number(parsedTx.price);
+        const fees = Number(parsedTx.fees) || 0;
+
+        if (!ticker || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) {
+          pending.splice(i, 1);
+          i--;
+          skippedCount++;
+          continue;
+        }
+
+        const maxTradeId = workingTransactions.reduce((max, t) => {
+          const id = Number(t.tradeId);
+          return Number.isFinite(id) && id > max ? id : max;
+        }, 0);
+        const tradeId = maxTradeId > 0 ? maxTradeId + 1 : workingTransactions.length + 1;
+
+        if (parsedTx.type === 'SELL') {
+          const position = workingReport.reconciledPositions.find((p) => p.ticker.toUpperCase() === ticker);
+          if (!position || shares > position.shares) {
+            continue;
+          }
+
+          const accounting = calculateSellAccounting(
+            shares,
+            price,
+            fees,
+            position.shares,
+            position.shares * position.avgBuyPrice,
+            position.totalFees || 0
+          );
+          const tx: TradeTransaction = {
+            id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            tradeId,
+            type: 'SELL',
+            ticker,
+            companyName: position.companyName || parsedTx.companyName || ticker,
+            sector: position.sector || parsedTx.sector,
+            shares,
+            price,
+            date: parsedTx.date,
+            fees,
+            totalAmount: accounting.netProceeds,
+            grossTradeValue: accounting.grossProceeds,
+            netCashImpact: accounting.netProceeds,
+            realizedPnlEgp: accounting.realizedPnlEgp,
+            realizedPnlPercent: accounting.realizedPnlPercent,
+            outcome: accounting.outcome,
+            holdingDays: calculateHoldingDays(position.buyDate, parsedTx.date),
+            notes: parsedTx.notes || 'Logged via Screenshot Scanner',
+          };
+          workingTransactions = [tx, ...workingTransactions];
+        } else {
+          const impact = calculateBuyImpact(shares, price, fees);
+          const tx: TradeTransaction = {
+            id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            tradeId,
+            type: 'BUY',
+            ticker,
+            companyName: parsedTx.companyName || ticker,
+            sector: parsedTx.sector,
+            shares,
+            price,
+            date: parsedTx.date,
+            fees,
+            totalAmount: impact.cashOutflow,
+            grossTradeValue: impact.grossCost,
+            netCashImpact: -impact.cashOutflow,
+            notes: parsedTx.notes || 'Logged via Screenshot Scanner',
+          };
+          workingTransactions = [tx, ...workingTransactions];
+        }
+
+        pending.splice(i, 1);
+        i--;
+        progressed = true;
+        processedCount++;
+        workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
       }
-      workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
+
+      if (!progressed) {
+        skippedCount += pending.length;
+        break;
+      }
     }
 
     const finalReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
@@ -605,8 +682,20 @@ export default function App() {
     setPositions(finalReport.reconciledPositions);
     setClosedTrades(finalReport.reconciledClosedTrades);
     setCashBalance(finalReport.reconciledCashBalance);
-    void forceFullSyncToFirestore({ positions: finalReport.reconciledPositions, closedTrades: finalReport.reconciledClosedTrades, transactions: workingTransactions, cashBalance: finalReport.reconciledCashBalance, capitalDeposits, tickers });
-    showToast(`Successfully processed ${workingTransactions.length - transactions.length} transactions from screenshots!`, 'success');
+    void forceFullSyncToFirestore({
+      positions: finalReport.reconciledPositions,
+      closedTrades: finalReport.reconciledClosedTrades,
+      transactions: workingTransactions,
+      cashBalance: finalReport.reconciledCashBalance,
+      capitalDeposits,
+      tickers,
+    });
+
+    if (skippedCount > 0) {
+      showToast(`Logged ${processedCount} OCR trades. ${skippedCount} trade(s) could not be reconciled and were skipped.`, 'error', 6500);
+    } else {
+      showToast(`Successfully processed all ${processedCount} OCR trades!`, 'success');
+    }
   };
 
   // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Position } from '../types';
-import { calculatePortfolioMetrics } from './portfolioMetrics';
+import { calculatePortfolioMetrics, normalizeTransaction } from './portfolioMetrics';
 
 const position = (overrides: Partial<Position> = {}): Position => ({
   id: 'pos-1',
@@ -57,5 +57,29 @@ describe('portfolio metrics', () => {
     expect(metrics.totalValue).toBe(1000);
     expect(metrics.dayChangeEgp).toBe(0);
     expect(metrics.dayChangePercent).toBe(0);
+  });
+
+  it('preserves legacy deposits and withdrawals as CASH flows instead of BUY trades', () => {
+    const deposit = normalizeTransaction({
+      id: 'cash-in-1',
+      type: 'DEPOSIT',
+      amount: 1000,
+      date: '2026-01-01',
+    });
+    const withdrawal = normalizeTransaction({
+      id: 'cash-out-1',
+      type: 'WITHDRAWAL',
+      amount: 250,
+      date: '2026-01-02',
+    });
+
+    expect(deposit).toMatchObject({ type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000 });
+    expect(withdrawal).toMatchObject({ type: 'SELL', ticker: 'CASH', shares: 250, price: 1, totalAmount: 250 });
+  });
+
+  it('rejects unknown transaction types instead of silently converting them to BUY', () => {
+    expect(() => normalizeTransaction({ type: 'UNKNOWN', ticker: 'TEST', shares: 1, price: 10 })).toThrow(
+      'Unsupported transaction type: UNKNOWN',
+    );
   });
 });

@@ -95,6 +95,9 @@ export interface ClosedTrade {
   tradeCycle?: number;
   cycleTag?: string;
   notes?: string;
+  /** Exact ledger legs used to build this closed cycle. Optional for legacy data. */
+  buyTransactionIds?: string[];
+  sellTransactionIds?: string[];
 }
 
 export interface PortfolioMetrics {

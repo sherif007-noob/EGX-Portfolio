@@ -47,8 +47,9 @@ describe('portfolio metrics', () => {
     );
 
     // Current NAV = 2,000. Prior NAV = 1,900. Return = 100 / 1,900.
+    // calculatePortfolioMetrics exposes percentages rounded to two decimals.
     expect(metrics.dayChangeEgp).toBe(100);
-    expect(metrics.dayChangePercent).toBeCloseTo(5.2632, 3);
+    expect(metrics.dayChangePercent).toBe(5.26);
   });
 
   it('handles a cash-only portfolio without using the securities value as denominator', () => {

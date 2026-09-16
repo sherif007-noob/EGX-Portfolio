@@ -12,36 +12,82 @@ function getFirebaseAdminAuth() {
   }
   return getAdminAuth();
 }
+
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key || !key.startsWith('sb_secret_')) throw new Error('Supabase server credentials are not configured correctly.');
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
+
 export async function verifyFirebaseBearerToken(authorization?: string): Promise<string> {
   if (!authorization?.startsWith('Bearer ')) throw new Error('Missing Firebase ID token.');
   const token = authorization.slice('Bearer '.length).trim();
   if (!token) throw new Error('Missing Firebase ID token.');
   return (await getFirebaseAdminAuth().verifyIdToken(token)).uid;
 }
+
 async function requirePortfolio(uid: string) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from('portfolios').select('*').eq('owner_key', uid).maybeSingle();
   if (error) throw new Error(`Supabase portfolio lookup failed: ${error.message}`);
   return { supabase, portfolio: data };
 }
-function toDate(value: unknown): string | null { if (!value) return null; const d = new Date(String(value)); return Number.isNaN(d.getTime()) ? null : d.toISOString(); }
+
+function toDate(value: unknown): string | null {
+  if (!value) return null;
+  const d = new Date(String(value));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 function mapPosition(row: any, portfolioId: string) {
-  return { id: String(row.id), portfolio_id: portfolioId, ticker: String(row.ticker).toUpperCase(), company_name: row.companyName ?? '', sector: row.sector ?? 'Other', shares: Number(row.shares ?? 0), avg_buy_price: Number(row.avgBuyPrice ?? 0), current_price: Number(row.currentPrice ?? 0), day_change: Number(row.dayChange ?? 0), day_change_percent: Number(row.dayChangePercent ?? 0), buy_date: row.buyDate ?? null, total_fees: Number(row.totalFees ?? 0), target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null, notes: row.notes ?? '', price_updated_at: toDate(row.priceUpdatedAt), updated_at: new Date().toISOString() };
+  return {
+    id: String(row.id), portfolio_id: portfolioId, ticker: String(row.ticker).toUpperCase(), company_name: row.companyName ?? '',
+    sector: row.sector ?? 'Other', shares: Number(row.shares ?? 0), avg_buy_price: Number(row.avgBuyPrice ?? 0),
+    current_price: Number(row.currentPrice ?? 0), day_change: Number(row.dayChange ?? 0), day_change_percent: Number(row.dayChangePercent ?? 0),
+    buy_date: row.buyDate ?? null, total_fees: Number(row.totalFees ?? 0), target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null,
+    notes: row.notes ?? '', price_updated_at: toDate(row.priceUpdatedAt), updated_at: new Date().toISOString(),
+  };
 }
+
 function mapTransaction(row: any, portfolioId: string) {
-  return { id: String(row.id), portfolio_id: portfolioId, transaction_type: row.type ?? row.transactionType ?? 'BUY', ticker: row.ticker ? String(row.ticker).toUpperCase() : null, company_name: row.companyName ?? null, sector: row.sector ?? null, shares: Number(row.shares ?? 0), price: Number(row.price ?? 0), transaction_date: row.date ?? row.transactionDate, executed_at: toDate(row.executedAt), fees: Number(row.fees ?? 0), total_amount: Number(row.totalAmount ?? 0), cash_flow_type: row.cashFlowType ?? null, cash_flow_amount: row.cashFlowAmount ?? null, is_dca: Boolean(row.isDca ?? row.isDCA ?? false), notes: row.notes ?? '', target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null, trade_id: row.tradeId ?? null, trade_cycle: row.tradeCycle ?? null, cycle_tag: row.cycleTag ?? null, running_shares: row.runningShares ?? null, gross_trade_value: row.grossTradeValue ?? null, net_cash_impact: row.netCashImpact ?? null, realized_pnl_egp: row.realizedPnlEgp ?? null, realized_pnl_percent: row.realizedPnlPercent ?? null, outcome: row.outcome ?? null, holding_days: row.holdingDays ?? null, position_id: row.positionId ?? null, created_at: toDate(row.createdAt) ?? new Date().toISOString(), updated_at: new Date().toISOString() };
+  return {
+    id: String(row.id), portfolio_id: portfolioId, transaction_type: row.type ?? row.transactionType ?? 'BUY',
+    ticker: row.ticker ? String(row.ticker).toUpperCase() : null, company_name: row.companyName ?? null, sector: row.sector ?? null,
+    shares: Number(row.shares ?? 0), price: Number(row.price ?? 0), transaction_date: row.date ?? row.transactionDate,
+    executed_at: toDate(row.executedAt), fees: Number(row.fees ?? 0), total_amount: Number(row.totalAmount ?? 0),
+    cash_flow_type: row.cashFlowType ?? null, cash_flow_amount: row.cashFlowAmount ?? null, is_dca: Boolean(row.isDca ?? row.isDCA ?? false),
+    notes: row.notes ?? '', target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null, trade_id: row.tradeId ?? null,
+    trade_cycle: row.tradeCycle ?? null, cycle_tag: row.cycleTag ?? null, running_shares: row.runningShares ?? null,
+    gross_trade_value: row.grossTradeValue ?? null, net_cash_impact: row.netCashImpact ?? null, realized_pnl_egp: row.realizedPnlEgp ?? null,
+    realized_pnl_percent: row.realizedPnlPercent ?? null, outcome: row.outcome ?? null, holding_days: row.holdingDays ?? null,
+    position_id: row.positionId ?? null, created_at: toDate(row.createdAt) ?? new Date().toISOString(), updated_at: new Date().toISOString(),
+  };
 }
+
 function mapClosedTrade(row: any, portfolioId: string) {
-  return { id: String(row.id), portfolio_id: portfolioId, ticker: String(row.ticker).toUpperCase(), company_name: row.companyName ?? '', sector: row.sector ?? 'Other', shares: Number(row.shares ?? 0), buy_price: Number(row.buyPrice ?? 0), sell_price: Number(row.sellPrice ?? 0), buy_date: row.buyDate, sell_date: row.sellDate, holding_days: Number(row.holdingDays ?? 0), realized_pnl_egp: Number(row.realizedPnlEgp ?? 0), realized_pnl_percent: Number(row.realizedPnlPercent ?? 0), buy_fees: Number(row.buyFees ?? 0), sell_fees: Number(row.sellFees ?? 0), total_fees: Number(row.totalFees ?? 0), outcome: row.outcome ?? null, trade_type: row.tradeType ?? null, trade_cycle: row.tradeCycle ?? null, cycle_tag: row.cycleTag ?? null, notes: row.notes ?? '', buy_transaction_ids: Array.isArray(row.buyTransactionIds) ? row.buyTransactionIds : [], sell_transaction_ids: Array.isArray(row.sellTransactionIds) ? row.sellTransactionIds : [], created_at: toDate(row.createdAt) ?? new Date().toISOString(), updated_at: new Date().toISOString() };
+  return {
+    id: String(row.id), portfolio_id: portfolioId, ticker: String(row.ticker).toUpperCase(), company_name: row.companyName ?? '',
+    sector: row.sector ?? 'Other', shares: Number(row.shares ?? 0), buy_price: Number(row.buyPrice ?? 0), sell_price: Number(row.sellPrice ?? 0),
+    buy_date: row.buyDate, sell_date: row.sellDate, holding_days: Number(row.holdingDays ?? 0), realized_pnl_egp: Number(row.realizedPnlEgp ?? 0),
+    realized_pnl_percent: Number(row.realizedPnlPercent ?? 0), buy_fees: Number(row.buyFees ?? 0), sell_fees: Number(row.sellFees ?? 0),
+    total_fees: Number(row.totalFees ?? 0), outcome: row.outcome ?? null, trade_type: row.tradeType ?? null, trade_cycle: row.tradeCycle ?? null,
+    cycle_tag: row.cycleTag ?? null, notes: row.notes ?? '', buy_transaction_ids: Array.isArray(row.buyTransactionIds) ? row.buyTransactionIds : [],
+    sell_transaction_ids: Array.isArray(row.sellTransactionIds) ? row.sellTransactionIds : [], created_at: toDate(row.createdAt) ?? new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 }
+
 function mapTicker(row: any) {
-  return { ticker: String(row.ticker).toUpperCase(), name_en: row.nameEn ?? null, name_ar: row.nameAr ?? null, isin: row.isin ?? null, sector: row.sector ?? null, last_price: Number(row.lastPrice ?? 0), change: Number(row.change ?? 0), change_percent: Number(row.changePercent ?? 0), day_low: row.dayLow ?? null, day_high: row.dayHigh ?? null, year_low: row.yearLow ?? null, year_high: row.yearHigh ?? null, volume: row.volume ?? null, value_egp: row.valueEGP ?? row.valueEgp ?? null, trend_status: row.trendStatus ?? null, rsi14: row.rsi14 ?? null, support: row.support ?? null, resistance: row.resistance ?? null, target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null, notes: row.notes ?? null, last_updated: toDate(row.lastUpdated), price_updated_at: toDate(row.priceUpdatedAt), logo_url: row.logoUrl ?? null, updated_at: new Date().toISOString() };
+  return {
+    ticker: String(row.ticker).toUpperCase(), name_en: row.nameEn ?? null, name_ar: row.nameAr ?? null, isin: row.isin ?? null, sector: row.sector ?? null,
+    last_price: Number(row.lastPrice ?? 0), change: Number(row.change ?? 0), change_percent: Number(row.changePercent ?? 0),
+    day_low: row.dayLow ?? null, day_high: row.dayHigh ?? null, year_low: row.yearLow ?? null, year_high: row.yearHigh ?? null,
+    volume: row.volume ?? null, value_egp: row.valueEGP ?? row.valueEgp ?? null, trend_status: row.trendStatus ?? null, rsi14: row.rsi14 ?? null,
+    support: row.support ?? null, resistance: row.resistance ?? null, target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null,
+    notes: row.notes ?? null, last_updated: toDate(row.lastUpdated), price_updated_at: toDate(row.priceUpdatedAt), logo_url: row.logoUrl ?? null,
+    updated_at: new Date().toISOString(),
+  };
 }
 
 export async function loadSupabasePortfolio(uid: string) {
@@ -54,7 +100,11 @@ export async function loadSupabasePortfolio(uid: string) {
     supabase.from('tickers').select('*').order('ticker', { ascending: true }),
   ]);
   for (const result of [positions, transactions, closedTrades, tickers]) if (result.error) throw new Error(`Supabase portfolio read failed: ${result.error.message}`);
-  return { positions: positions.data ?? [], closedTrades: closedTrades.data ?? [], transactions: transactions.data ?? [], cashBalance: Number(portfolio.cash_balance ?? 0), capitalDeposits: Number(portfolio.capital_deposits ?? 0), tickers: tickers.data ?? [], updatedAt: portfolio.updated_at, schemaVersion: Number(portfolio.schema_version ?? 3), lastPriceWriteAt: portfolio.last_price_write_at ?? undefined };
+  return {
+    positions: positions.data ?? [], closedTrades: closedTrades.data ?? [], transactions: transactions.data ?? [],
+    cashBalance: Number(portfolio.cash_balance ?? 0), capitalDeposits: Number(portfolio.capital_deposits ?? 0), tickers: tickers.data ?? [],
+    updatedAt: portfolio.updated_at, schemaVersion: Number(portfolio.schema_version ?? 3), lastPriceWriteAt: portfolio.last_price_write_at ?? undefined,
+  };
 }
 
 export async function saveSupabasePortfolio(uid: string, payload: any) {
@@ -68,17 +118,30 @@ export async function saveSupabasePortfolio(uid: string, payload: any) {
   const { error: pError } = await supabase.from('portfolios').update(portfolioUpdate).eq('id', portfolioId).eq('owner_key', uid);
   if (pError) throw new Error(`Supabase portfolio write failed: ${pError.message}`);
 
-  const txs = Array.isArray(payload.transactions) ? payload.transactions.map((r: any) => mapTransaction(r, portfolioId)) : [];
-  const positions = Array.isArray(payload.positions) ? payload.positions.map((r: any) => mapPosition(r, portfolioId)) : [];
-  const closed = Array.isArray(payload.closedTrades) ? payload.closedTrades.map((r: any) => mapClosedTrade(r, portfolioId)) : [];
-  for (const [table, rows] of [['transactions', txs], ['positions', positions], ['closed_trades', closed]] as const) {
+  const txs = Array.isArray(payload.transactions) ? payload.transactions.map((r: any) => mapTransaction(r, portfolioId)) : null;
+  const positions = Array.isArray(payload.positions) ? payload.positions.map((r: any) => mapPosition(r, portfolioId)) : null;
+  const closed = Array.isArray(payload.closedTrades) ? payload.closedTrades.map((r: any) => mapClosedTrade(r, portfolioId)) : null;
+
+  // A partial compatibility call must not erase tables that were not included in the payload.
+  // Full portfolio saves include all three arrays; narrow callers only update the tables they provide.
+  for (const [table, rows] of [
+    ['transactions', txs], ['positions', positions], ['closed_trades', closed],
+  ] as const) {
+    if (rows === null) continue;
     const { error: deleteError } = await supabase.from(table).delete().eq('portfolio_id', portfolioId);
     if (deleteError) throw new Error(`Supabase ${table} cleanup failed: ${deleteError.message}`);
-    if (rows.length) { const { error: insertError } = await supabase.from(table).insert(rows); if (insertError) throw new Error(`Supabase ${table} write failed: ${insertError.message}`); }
+    if (rows.length) {
+      const { error: insertError } = await supabase.from(table).insert(rows);
+      if (insertError) throw new Error(`Supabase ${table} write failed: ${insertError.message}`);
+    }
   }
-  if (Array.isArray(payload.tickers) && payload.tickers.length) {
-    const { error } = await supabase.from('tickers').upsert(payload.tickers.map(mapTicker), { onConflict: 'ticker' });
-    if (error) throw new Error(`Supabase ticker write failed: ${error.message}`);
+
+  if (Array.isArray(payload.tickers)) {
+    const tickerRows = payload.tickers.map(mapTicker);
+    if (tickerRows.length) {
+      const { error } = await supabase.from('tickers').upsert(tickerRows, { onConflict: 'ticker' });
+      if (error) throw new Error(`Supabase ticker write failed: ${error.message}`);
+    }
   }
   return { success: true, updatedAt: now };
 }
@@ -89,16 +152,24 @@ export async function saveSupabasePriceTick(uid: string, positions: any[], ticke
   const now = new Date().toISOString();
   if (!force && portfolio.last_price_write_at && Date.now() - new Date(portfolio.last_price_write_at).getTime() < 15 * 60 * 1000) return false;
   const positionRows = positions.map((p) => mapPosition(p, portfolio.id));
-  if (positionRows.length) { const { error } = await supabase.from('positions').upsert(positionRows, { onConflict: 'id' }); if (error) throw new Error(`Supabase price position write failed: ${error.message}`); }
+  if (positionRows.length) {
+    const { error } = await supabase.from('positions').upsert(positionRows, { onConflict: 'id' });
+    if (error) throw new Error(`Supabase price position write failed: ${error.message}`);
+  }
   const tickerRows = tickers.map((t) => mapTicker(t));
-  if (tickerRows.length) { const { error } = await supabase.from('tickers').upsert(tickerRows, { onConflict: 'ticker' }); if (error) throw new Error(`Supabase price ticker write failed: ${error.message}`); }
+  if (tickerRows.length) {
+    const { error } = await supabase.from('tickers').upsert(tickerRows, { onConflict: 'ticker' });
+    if (error) throw new Error(`Supabase price ticker write failed: ${error.message}`);
+  }
   const { error } = await supabase.from('portfolios').update({ last_price_write_at: now, updated_at: now }).eq('id', portfolio.id).eq('owner_key', uid);
   if (error) throw new Error(`Supabase price timestamp write failed: ${error.message}`);
   return true;
 }
+
 export async function loadHistoricalPrices(uid: string, tickers: string[], startDate?: string, endDate?: string) {
   const { supabase } = await requirePortfolio(uid);
   const normalized = tickers.map((t) => t.trim().toUpperCase()).filter(Boolean);
+  if (!normalized.length) return [];
   let query = supabase.from('price_history').select('*').in('ticker', normalized).order('trading_date', { ascending: true });
   if (startDate) query = query.gte('trading_date', startDate);
   if (endDate) query = query.lte('trading_date', endDate);

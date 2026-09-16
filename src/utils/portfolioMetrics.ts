@@ -27,14 +27,9 @@ export function calculatePortfolioMetrics(
   const grossUnrealizedPnlEgp = totalMarketValue - totalCost;
   const totalRealizedPnl = closedTrades.reduce((sum, trade) => sum + (trade.realizedPnlEgp || 0), 0);
   const totalValue = calculatePortfolioValue(cashBalance, positions);
-
   const feeBreakdown = calculateFeeBreakdown(transactions);
-  const closedFeesPaid = closedTrades.reduce(
-    (sum, trade) => sum + (trade.totalFees ?? ((trade.buyFees || 0) + (trade.sellFees || 0))),
-    0,
-  );
+  const closedFeesPaid = closedTrades.reduce((sum, trade) => sum + (trade.totalFees ?? ((trade.buyFees || 0) + (trade.sellFees || 0))), 0);
   const totalFeesPaid = transactions.length > 0 ? feeBreakdown.totalFees : openFeesPaid + closedFeesPaid;
-
   const tickerMap = new Map<string, EGXTicker>();
   tickers.forEach((ticker) => {
     const raw = ticker.ticker.trim().toUpperCase();
@@ -42,42 +37,31 @@ export function calculatePortfolioMetrics(
     tickerMap.set(raw, ticker);
     tickerMap.set(clean, ticker);
   });
-
   let dayChangeEgp = 0;
   let winningPositionsCount = 0;
   let losingPositionsCount = 0;
-
   positions.forEach((position) => {
     const unrealized = calculatePositionUnrealizedPnl(position);
     if (position.currentPrice > 0) {
       if (unrealized > 0.01) winningPositionsCount++;
       else if (unrealized < -0.01) losingPositionsCount++;
     }
-
     const clean = position.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
     const quote = tickerMap.get(clean) || tickerMap.get(position.ticker.trim().toUpperCase());
     let perShareChange = 0;
-
-    if (quote?.change !== undefined && Number.isFinite(quote.change)) {
-      perShareChange = quote.change;
-    } else if (quote?.changePercent !== undefined && quote.lastPrice > 0) {
+    if (quote?.change !== undefined && Number.isFinite(quote.change)) perShareChange = quote.change;
+    else if (quote?.changePercent !== undefined && quote.lastPrice > 0) {
       const previousClose = quote.lastPrice / (1 + quote.changePercent / 100);
       perShareChange = quote.lastPrice - previousClose;
-    } else if (position.dayChange !== undefined && Number.isFinite(position.dayChange)) {
-      perShareChange = position.dayChange;
-    } else if (position.dayChangePercent !== undefined && position.currentPrice > 0) {
+    } else if (position.dayChange !== undefined && Number.isFinite(position.dayChange)) perShareChange = position.dayChange;
+    else if (position.dayChangePercent !== undefined && position.currentPrice > 0) {
       const previousClose = position.currentPrice / (1 + position.dayChangePercent / 100);
       perShareChange = position.currentPrice - previousClose;
     }
-
     dayChangeEgp += position.shares * perShareChange;
   });
-
   const previousPortfolioValue = totalValue - dayChangeEgp;
-  const dayChangePercent = previousPortfolioValue > 0
-    ? (dayChangeEgp / previousPortfolioValue) * 100
-    : 0;
-
+  const dayChangePercent = previousPortfolioValue > 0 ? (dayChangeEgp / previousPortfolioValue) * 100 : 0;
   return {
     totalValue: Number(totalValue.toFixed(2)),
     totalMarketValue: Number(totalMarketValue.toFixed(2)),
@@ -100,18 +84,10 @@ export function calculatePortfolioMetrics(
   };
 }
 
-/**
- * Presentation adapter for performance statistics. Breakevens are excluded
- * from the win-rate denominator by the accounting engine.
- */
-export function calculatePerformanceStats(
-  closedTrades: ClosedTrade[],
-  positions: Position[] = []
-): PerformanceStats {
+export function calculatePerformanceStats(closedTrades: ClosedTrade[], positions: Position[] = []): PerformanceStats {
   const accounting = calculateAccountingPerformanceStats(closedTrades);
   const totalPositionValue = positions.reduce((sum, position) => sum + calculatePositionMarketValue(position), 0);
   const sectorMap: Record<string, { value: number; count: number }> = {};
-
   positions.forEach((position) => {
     const value = calculatePositionMarketValue(position);
     const sector = position.sector || 'Other';
@@ -119,28 +95,18 @@ export function calculatePerformanceStats(
     sectorMap[sector].value += value;
     sectorMap[sector].count += 1;
   });
-
-  const sectorAllocation = Object.entries(sectorMap)
-    .map(([sector, data]) => ({
-      sector: sector as Sector,
-      value: Number(data.value.toFixed(2)),
-      percentage: totalPositionValue > 0 ? Number(((data.value / totalPositionValue) * 100).toFixed(1)) : 0,
-      count: data.count,
-    }))
-    .sort((a, b) => b.value - a.value);
-
+  const sectorAllocation = Object.entries(sectorMap).map(([sector, data]) => ({
+    sector: sector as Sector,
+    value: Number(data.value.toFixed(2)),
+    percentage: totalPositionValue > 0 ? Number(((data.value / totalPositionValue) * 100).toFixed(1)) : 0,
+    count: data.count,
+  })).sort((a, b) => b.value - a.value);
   const bestTradePercent = closedTrades.length ? Math.max(...closedTrades.map(t => t.realizedPnlPercent || 0)) : 0;
   const worstTradePercent = closedTrades.length ? Math.min(...closedTrades.map(t => t.realizedPnlPercent || 0)) : 0;
-  const totalBrokerageFeesPaid = closedTrades.reduce(
-    (sum, trade) => sum + (trade.totalFees ?? ((trade.buyFees || 0) + (trade.sellFees || 0))),
-    0,
-  );
-
+  const totalBrokerageFeesPaid = closedTrades.reduce((sum, trade) => sum + (trade.totalFees ?? ((trade.buyFees || 0) + (trade.sellFees || 0))), 0);
   return {
     winRate: accounting.winRate === null ? 0 : Number(accounting.winRate.toFixed(1)),
-    profitFactor: accounting.profitFactor === null || !Number.isFinite(accounting.profitFactor)
-      ? (accounting.profitFactor === Infinity ? Infinity : 0)
-      : Number(accounting.profitFactor.toFixed(2)),
+    profitFactor: accounting.profitFactor === null || !Number.isFinite(accounting.profitFactor) ? (accounting.profitFactor === Infinity ? Infinity : 0) : Number(accounting.profitFactor.toFixed(2)),
     totalTrades: accounting.totalTrades,
     winningTrades: accounting.winningTrades,
     losingTrades: accounting.losingTrades,
@@ -159,18 +125,13 @@ export function calculatePerformanceStats(
   };
 }
 
-/** Normalize legacy transaction records without silently turning cash flows into BUY trades. */
 export function normalizeTransaction(tx: any): TradeTransaction {
   const rawType = String(tx?.type || '').trim().toUpperCase();
   const isDeposit = rawType === 'DEPOSIT' || (rawType === 'CASH' && String(tx?.direction || '').toUpperCase() === 'IN');
   const isWithdrawal = rawType === 'WITHDRAWAL' || rawType === 'WITHDRAW' || (rawType === 'CASH' && String(tx?.direction || '').toUpperCase() === 'OUT');
   const isDividend = rawType === 'DIVIDEND';
   const isTrade = rawType === 'BUY' || rawType === 'SELL';
-
-  if (!isTrade && !isDeposit && !isWithdrawal && !isDividend) {
-    throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
-  }
-
+  if (!isTrade && !isDeposit && !isWithdrawal && !isDividend) throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
   const price = typeof tx.price === 'number' ? tx.price : parseFloat(tx.price) || 0;
   const shares = typeof tx.shares === 'number' ? tx.shares : parseFloat(tx.shares) || 0;
@@ -179,17 +140,10 @@ export function normalizeTransaction(tx: any): TradeTransaction {
   const grossAmount = shares * price;
   const cashFlow = isDeposit || isWithdrawal || isDividend;
   const normalizedType = isWithdrawal ? 'SELL' : isTrade ? rawType : 'BUY';
-  const normalizedTicker = cashFlow
-    ? 'CASH'
-    : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  const normalizedTicker = cashFlow ? 'CASH' : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   const normalizedShares = cashFlow && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
   const normalizedPrice = cashFlow ? 1 : price;
-  const totalAmount = cashFlow
-    ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? grossAmount))
-    : typeof tx.totalAmount === 'number'
-      ? tx.totalAmount
-      : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
-
+  const totalAmount = cashFlow ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? grossAmount)) : typeof tx.totalAmount === 'number' ? tx.totalAmount : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
   return {
     id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     type: normalizedType as 'BUY' | 'SELL',
@@ -199,6 +153,7 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     shares: normalizedShares,
     price: normalizedPrice,
     date: tx.date || new Date().toISOString().split('T')[0],
+    executedAt: typeof tx.executedAt === 'string' && tx.executedAt.trim() ? tx.executedAt : undefined,
     fees,
     totalAmount,
     tradeId,

@@ -83,4 +83,23 @@ describe('portfolio reconciliation', () => {
 
     expect(report.reconciledPositions[0].shares).toBe(10.125);
   });
+
+  it('applies normalized deposits and withdrawals with the correct cash sign', () => {
+    const report = reconcilePortfolioFromLedger([
+      tx({ id: 'deposit', type: 'DEPOSIT' as TradeTransaction['type'], ticker: 'CASH', shares: 500, price: 1, totalAmount: 500 }),
+      tx({ id: 'withdraw', type: 'WITHDRAWAL' as TradeTransaction['type'], ticker: 'CASH', shares: 200, price: 1, totalAmount: 200 }),
+    ], [], 1000);
+
+    expect(report.reconciledCashBalance).toBe(1300);
+    expect(report.discrepanciesFound).toHaveLength(0);
+  });
+
+  it('treats dividends as cash inflows without creating an equity position', () => {
+    const report = reconcilePortfolioFromLedger([
+      tx({ id: 'dividend', type: 'DIVIDEND' as TradeTransaction['type'], ticker: 'ABC', shares: 1, price: 5, totalAmount: 5 }),
+    ], [], 1000);
+
+    expect(report.reconciledCashBalance).toBe(1005);
+    expect(report.reconciledPositions).toHaveLength(0);
+  });
 });

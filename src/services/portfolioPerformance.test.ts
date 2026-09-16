@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ClosedTrade, Position } from '../types';
+import { Position } from '../types';
 import { calculateEquityBridge, calculateMaxDrawdown, isEquityBridgeBalanced } from './portfolioPerformance';
 
 const position = (overrides: Partial<Position> = {}): Position => ({
@@ -15,50 +15,26 @@ const position = (overrides: Partial<Position> = {}): Position => ({
   ...overrides,
 });
 
-const trade = (overrides: Partial<ClosedTrade> = {}): ClosedTrade => ({
-  id: 'trade-1',
-  ticker: 'TEST',
-  companyName: 'Test',
-  sector: 'Other',
-  shares: 10,
-  buyPrice: 10,
-  sellPrice: 11,
-  buyDate: '2026-01-01',
-  sellDate: '2026-01-02',
-  holdingDays: 1,
-  realizedPnlEgp: 10,
-  realizedPnlPercent: 9.8,
-  buyFees: 2,
-  sellFees: 1,
-  totalFees: 3,
-  outcome: 'WIN',
-  tradeType: 'Swing',
-  ...overrides,
-});
-
 describe('portfolio performance accounting', () => {
-  it('reconciles equity using net capital plus realized and unrealized P&L', () => {
-    const bridge = calculateEquityBridge(1000, [trade()], [position()], 100);
+  it('reconciles equity using net capital plus unrealized P&L without double-counting fees', () => {
+    const bridge = calculateEquityBridge(102, [], [position()], 0);
 
-    // Equity = cash 100 + market value 120 = 220.
-    // Unrealized P&L = 120 - 100 - 2 fees = 18.
-    // 1000 + 10 + 18 = 1028, so this intentionally exposes an inconsistent
-    // fixture rather than silently treating the difference as performance.
-    expect(bridge.endingEquity).toBe(220);
-    expect(bridge.realizedPnl).toBe(10);
+    // The 102 contributed capital funded 100 of gross stock cost + 2 of buy
+    // fees. Unrealized P&L is 120 - 100 - 2 = 18, so equity is 120.
+    expect(bridge.endingEquity).toBe(120);
+    expect(bridge.realizedPnl).toBe(0);
     expect(bridge.unrealizedPnl).toBe(18);
-    expect(bridge.reconciliationDelta).toBe(-808);
-    expect(isEquityBridgeBalanced(bridge)).toBe(false);
+    expect(bridge.reconciliationDelta).toBe(0);
+    expect(isEquityBridgeBalanced(bridge)).toBe(true);
   });
 
-  it('does not double-count fees in the equity bridge', () => {
+  it('exposes inconsistent capital/equity data instead of inventing performance', () => {
     const bridge = calculateEquityBridge(100, [], [position()], 0);
 
-    // 100 capital -> 120 market value, with 2 of open buy fees already
-    // deducted from unrealized P&L. The bridge is therefore balanced.
     expect(bridge.endingEquity).toBe(120);
     expect(bridge.unrealizedPnl).toBe(18);
     expect(bridge.reconciliationDelta).toBe(2);
+    expect(isEquityBridgeBalanced(bridge)).toBe(false);
   });
 
   it('calculates peak-to-trough drawdown from equity, not realized P&L', () => {

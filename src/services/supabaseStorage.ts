@@ -71,8 +71,6 @@ function enqueueSave(data: PortfolioWrite): Promise<boolean> {
     const canonical = deriveLedgerState(data);
     let complete = canonical;
 
-    // Some legacy callers omit capitalDeposits. Never replace it with zero;
-    // recover the current remote value before issuing a complete snapshot save.
     if (typeof complete.capitalDeposits !== 'number' || !Number.isFinite(complete.capitalDeposits)) {
       const current = await loadPortfolioFromSupabase();
       if (!current || typeof current.capitalDeposits !== 'number' || !Number.isFinite(current.capitalDeposits)) {
@@ -132,7 +130,44 @@ async function mergeAndSave(patch: Partial<PortfolioDataDocument>) {
 
 export function updateFirestorePositions(positions: Position[]) { return mergeAndSave({ positions }); }
 export function updateFirestoreClosedTrades(closedTrades: ClosedTrade[]) { return mergeAndSave({ closedTrades }); }
-export function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?: number) { return mergeAndSave({ cashBalance, ...(capitalDeposits === undefined ? {} : { capitalDeposits }) }); }
+
+export async function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?: number) {
+  const current = await loadPortfolioFromSupabase();
+  if (!current) return false;
+  if (!Number.isFinite(cashBalance)) return false;
+
+  const canonical = deriveLedgerState(current);
+  const delta = Number((cashBalance - canonical.cashBalance).toFixed(2));
+  if (Math.abs(delta) < 0.005) return true;
+
+  // A manual cash correction is an auditable ledger event, not a mutation of a
+  // derived balance. It changes cash only; it does not change contributed capital.
+  const adjustment: TradeTransaction = {
+    id: `tx-cash-adjustment-${Date.now()}`,
+    type: delta >= 0 ? 'BUY' : 'SELL',
+    ticker: 'CASH',
+    companyName: 'Cash Balance Adjustment',
+    sector: 'Liquid Buying Power',
+    shares: Math.abs(delta),
+    price: 1,
+    date: new Date().toISOString().slice(0, 10),
+    fees: 0,
+    totalAmount: Math.abs(delta),
+    cashFlowType: 'CASH_ADJUSTMENT',
+    cashFlowAmount: delta,
+    notes: 'Manual cash balance adjustment',
+  };
+
+  return forceFullSyncToFirestore({
+    positions: canonical.positions,
+    closedTrades: canonical.closedTrades,
+    transactions: [...canonical.transactions, adjustment],
+    cashBalance: cashBalance,
+    capitalDeposits: capitalDeposits ?? canonical.capitalDeposits,
+    tickers: canonical.tickers,
+  });
+}
+
 export function updateFirestoreTickers(tickers: EGXTicker[]) { return mergeAndSave({ tickers }); }
 
 export async function updateFirestoreTransactions(transactions: TradeTransaction[], _positions?: Position[], _closedTrades?: ClosedTrade[], _cashBalance?: number, capitalDeposits?: number) {

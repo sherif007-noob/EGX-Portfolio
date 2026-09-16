@@ -91,17 +91,26 @@ function mapPosition(row: any, portfolioId: string) {
 }
 
 function mapTransaction(row: any, portfolioId: string) {
+  const rawType = String(row.type ?? row.transactionType ?? '').trim().toUpperCase();
+  const cashFlowType = row.cashFlowType ?? row.cash_flow_type ?? null;
+  const normalizedType = rawType === 'WITHDRAW' ? 'SELL' : rawType || 'BUY';
+  const rawTicker = row.ticker ?? row.tickerSymbol ?? row.symbol ?? null;
+  const ticker = rawTicker ? String(rawTicker).trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '') : '';
+  const transactionDate = row.date ?? row.transactionDate ?? row.transaction_date ?? null;
+  if (!ticker || !transactionDate) {
+    throw new Error(`Invalid transaction ${String(row.id ?? '')}: ticker and transaction date are required.`);
+  }
   return {
-    id: String(row.id), portfolio_id: portfolioId, transaction_type: row.type ?? row.transactionType ?? 'BUY',
-    ticker: row.ticker ? String(row.ticker).toUpperCase() : null, company_name: row.companyName ?? null, sector: row.sector ?? null,
-    shares: Number(row.shares ?? 0), price: Number(row.price ?? 0), transaction_date: row.date ?? row.transactionDate,
-    executed_at: toDate(row.executedAt), fees: Number(row.fees ?? 0), total_amount: Number(row.totalAmount ?? 0),
-    cash_flow_type: row.cashFlowType ?? null, cash_flow_amount: row.cashFlowAmount ?? null, is_dca: Boolean(row.isDca ?? row.isDCA ?? false),
-    notes: row.notes ?? '', target_price: row.targetPrice ?? null, stop_loss: row.stopLoss ?? null, trade_id: row.tradeId ?? null,
-    trade_cycle: row.tradeCycle ?? null, cycle_tag: row.cycleTag ?? null, running_shares: row.runningShares ?? null,
-    gross_trade_value: row.grossTradeValue ?? null, net_cash_impact: row.netCashImpact ?? null, realized_pnl_egp: row.realizedPnlEgp ?? null,
-    realized_pnl_percent: row.realizedPnlPercent ?? null, outcome: row.outcome ?? null, holding_days: row.holdingDays ?? null,
-    position_id: row.positionId ?? null, created_at: toDate(row.createdAt) ?? new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: String(row.id), portfolio_id: portfolioId, transaction_type: normalizedType,
+    ticker, company_name: row.companyName ?? row.company_name ?? '', sector: row.sector ?? 'Other',
+    shares: Number(row.shares ?? 0), price: Number(row.price ?? 0), transaction_date: transactionDate,
+    executed_at: toDate(row.executedAt ?? row.executed_at), fees: Number(row.fees ?? 0), total_amount: Number(row.totalAmount ?? row.total_amount ?? 0),
+    cash_flow_type: cashFlowType, cash_flow_amount: row.cashFlowAmount ?? row.cash_flow_amount ?? null, is_dca: Boolean(row.isDca ?? row.isDCA ?? row.is_dca ?? false),
+    notes: row.notes ?? '', target_price: row.targetPrice ?? row.target_price ?? null, stop_loss: row.stopLoss ?? row.stop_loss ?? null, trade_id: row.tradeId ?? row.trade_id ?? null,
+    trade_cycle: row.tradeCycle ?? row.trade_cycle ?? null, cycle_tag: row.cycleTag ?? row.cycle_tag ?? null, running_shares: row.runningShares ?? row.running_shares ?? null,
+    gross_trade_value: row.grossTradeValue ?? row.gross_trade_value ?? null, net_cash_impact: row.netCashImpact ?? row.net_cash_impact ?? null, realized_pnl_egp: row.realizedPnlEgp ?? row.realized_pnl_egp ?? null,
+    realized_pnl_percent: row.realizedPnlPercent ?? row.realized_pnl_percent ?? null, outcome: row.outcome ?? null, holding_days: row.holdingDays ?? row.holding_days ?? null,
+    position_id: row.positionId ?? row.position_id ?? null, created_at: toDate(row.createdAt ?? row.created_at) ?? new Date().toISOString(), updated_at: new Date().toISOString(),
   };
 }
 

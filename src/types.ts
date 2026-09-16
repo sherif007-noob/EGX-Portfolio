@@ -64,8 +64,8 @@ export interface Position {
   shares: number;
   avgBuyPrice: number;
   currentPrice: number;
-  dayChange?: number; // Absolute daily price change in EGP per share
-  dayChangePercent?: number; // Daily percentage change
+  dayChange?: number;
+  dayChangePercent?: number;
   buyDate: string;
   totalFees?: number;
   targetPrice?: number;
@@ -150,8 +150,8 @@ export interface GoogleSheetsConfig {
 export interface LivePriceQuote {
   ticker: string;
   price: number;
-  change?: number; // Absolute daily change in EGP (from change_abs)
-  changePercent: number; // Daily percentage change
+  change?: number;
+  changePercent: number;
   volume: number;
   dayHigh?: number;
   dayLow?: number;
@@ -162,8 +162,8 @@ export interface PriceAlertSettings {
   notifyOnTarget: boolean;
   notifyOnStopLoss: boolean;
   notifyOnProximity: boolean;
-  proximityPercent: number; // e.g. 1.5%
-  cairoHoursOnly: boolean; // Only alert during Cairo trading sessions (Sun 9:30-14:30, Mon-Thu 10:00-14:30)
+  proximityPercent: number;
+  cairoHoursOnly: boolean;
   soundEnabled: boolean;
   vibrateEnabled: boolean;
 }
@@ -182,7 +182,7 @@ export interface TriggeredPriceAlert {
   currentPrice: number;
   thresholdPrice: number;
   distancePercent: number;
-  timestamp: string; // ISO
+  timestamp: string;
   timeFormatted: string;
   read: boolean;
   shares?: number;
@@ -213,6 +213,7 @@ export interface TradeTransaction {
   shares: number;
   price: number;
   date: string;
+  executedAt?: string;
   fees: number;
   totalAmount: number;
   isDCA?: boolean;
@@ -226,7 +227,6 @@ export interface TradeTransaction {
   runningShares?: number;
   grossTradeValue?: number;
   netCashImpact?: number;
-  // For SELL transactions:
   realizedPnlEgp?: number;
   realizedPnlPercent?: number;
   outcome?: 'WIN' | 'LOSS' | 'BREAKEVEN';

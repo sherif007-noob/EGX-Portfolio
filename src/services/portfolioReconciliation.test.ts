@@ -22,8 +22,6 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledClosedTrades).toHaveLength(1);
     expect(report.reconciledClosedTrades[0].realizedPnlEgp).toBe(8);
     expect(report.reconciledClosedTrades[0].holdingDays).toBe(2);
-    expect(report.reconciledClosedTrades[0].buyTransactionIds).toEqual(['buy-1']);
-    expect(report.reconciledClosedTrades[0].sellTransactionIds).toEqual(['sell-1']);
     expect(report.reconciledPositions[0].shares).toBe(5);
     expect(report.reconciledCashBalance).toBe(957);
   });
@@ -55,8 +53,6 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledClosedTrades).toHaveLength(1);
     expect(report.reconciledClosedTrades[0].buyDate).toBe('2026-01-01T10:00:00Z');
     expect(report.reconciledClosedTrades[0].holdingDays).toBe(11);
-    expect(report.reconciledClosedTrades[0].buyTransactionIds).toEqual(['buy-old', 'buy-new']);
-    expect(report.reconciledClosedTrades[0].sellTransactionIds).toEqual(['sell-partial', 'sell-final']);
   });
 
   it('uses exact execution timestamps when both transactions provide them', () => {

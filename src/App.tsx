@@ -34,7 +34,7 @@ import { useMarketData } from './hooks/useMarketData';
 import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
 import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
-import { getIsQuotaExceeded } from './services/firestoreStorage';
+import { getIsQuotaExceeded, forceFullSyncToFirestore } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
 import { getAccessToken } from './services/firebaseAuth';
 import {
@@ -44,6 +44,8 @@ import {
   syncStockPricesToSheet,
 } from './services/googleSheets';
 import { RotateCcw } from 'lucide-react';
+import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
+import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -556,8 +558,55 @@ export default function App() {
       notes?: string;
     }>
   ) => {
-    parsedTxs.forEach((tx) => handleAIScreenshotAddTransaction(tx));
-    showToast(`Successfully processed ${parsedTxs.length} transactions from screenshots!`, 'success');
+    if (parsedTxs.length === 0) return;
+    let workingTransactions = [...transactions];
+    let workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
+
+    for (const parsedTx of parsedTxs) {
+      const ticker = parsedTx.ticker.toUpperCase().trim();
+      const shares = Number(parsedTx.shares);
+      const price = Number(parsedTx.price);
+      const fees = Number(parsedTx.fees) || 0;
+      if (!ticker || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) continue;
+      const maxTradeId = workingTransactions.reduce((max, t) => {
+        const id = Number(t.tradeId);
+        return Number.isFinite(id) && id > max ? id : max;
+      }, 0);
+      const tradeId = maxTradeId > 0 ? maxTradeId + 1 : workingTransactions.length + 1;
+
+      if (parsedTx.type === 'BUY') {
+        const impact = calculateBuyImpact(shares, price, fees);
+        const tx: TradeTransaction = {
+          id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, tradeId, type: 'BUY', ticker,
+          companyName: parsedTx.companyName || ticker, sector: parsedTx.sector, shares, price, date: parsedTx.date, fees,
+          totalAmount: impact.cashOutflow, grossTradeValue: impact.grossCost, netCashImpact: -impact.cashOutflow,
+          notes: parsedTx.notes || 'Logged via Screenshot Scanner',
+        };
+        workingTransactions = [tx, ...workingTransactions];
+      } else {
+        const position = workingReport.reconciledPositions.find((p) => p.ticker.toUpperCase() === ticker);
+        if (!position || shares > position.shares) continue;
+        const accounting = calculateSellAccounting(shares, price, fees, position.shares, position.shares * position.avgBuyPrice, position.totalFees || 0);
+        const tx: TradeTransaction = {
+          id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, tradeId, type: 'SELL', ticker,
+          companyName: position.companyName || parsedTx.companyName || ticker, sector: position.sector || parsedTx.sector,
+          shares, price, date: parsedTx.date, fees, totalAmount: accounting.netProceeds, grossTradeValue: accounting.grossProceeds,
+          netCashImpact: accounting.netProceeds, realizedPnlEgp: accounting.realizedPnlEgp,
+          realizedPnlPercent: accounting.realizedPnlPercent, outcome: accounting.outcome,
+          holdingDays: calculateHoldingDays(position.buyDate, parsedTx.date), notes: parsedTx.notes || 'Logged via Screenshot Scanner',
+        };
+        workingTransactions = [tx, ...workingTransactions];
+      }
+      workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
+    }
+
+    const finalReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
+    setTransactions(workingTransactions);
+    setPositions(finalReport.reconciledPositions);
+    setClosedTrades(finalReport.reconciledClosedTrades);
+    setCashBalance(finalReport.reconciledCashBalance);
+    void forceFullSyncToFirestore({ positions: finalReport.reconciledPositions, closedTrades: finalReport.reconciledClosedTrades, transactions: workingTransactions, cashBalance: finalReport.reconciledCashBalance, capitalDeposits, tickers });
+    showToast(`Successfully processed ${workingTransactions.length - transactions.length} transactions from screenshots!`, 'success');
   };
 
   // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)

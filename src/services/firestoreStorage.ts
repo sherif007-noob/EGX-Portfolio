@@ -257,7 +257,7 @@ export async function savePriceTickToFirestore(positions: Position[], tickers: E
   const now = Date.now();
   if (!force && now - lastPriceWriteTimestamp < PRICE_WRITE_THROTTLE_MS) return false;
   lastPriceWriteTimestamp = now;
-  const patch = { positions: sanitizeForFirestore(positions), tickers: sanitizeForFirestore(tickers), lastPriceWriteAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  const patch = { positions: sanitizeForFirestore(positions), tickers: sanitizeForFirestore(tickers), lastPriceWriteAt: new Date().toISOString() };
   try {
     markLocalMutation(3000);
     await setDoc(doc(db, 'portfolios', uid), patch, { merge: true });

@@ -173,20 +173,11 @@ export function usePortfolioState() {
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
 
-          const txMap = new Map<string, TradeTransaction>();
-          if (Array.isArray(remoteData.transactions)) {
-            remoteData.transactions.forEach((tx) => {
-              if (tx?.id) txMap.set(tx.id, normalizeTransaction(tx));
-            });
-          }
-          transactions.forEach((tx) => {
-            if (tx?.id && !txMap.has(tx.id)) txMap.set(tx.id, normalizeTransaction(tx));
-          });
-
-          let loadedTransactions = Array.from(txMap.values()).sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
-          if (loadedTransactions.length === 0) loadedTransactions = transactions;
+          let loadedTransactions = Array.isArray(remoteData.transactions)
+            ? remoteData.transactions.map(normalizeTransaction).sort(
+                (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+              )
+            : [];
 
           let loadedCash = typeof remoteData.cashBalance === 'number' ? remoteData.cashBalance : cashBalance;
           let loadedCapital = typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0
@@ -244,9 +235,9 @@ export function usePortfolioState() {
               if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
             }
 
-            if (loadedPositions.length > 0) setPositions(loadedPositions);
-            if (loadedClosed.length > 0) setClosedTrades(loadedClosed);
-            if (loadedTransactions.length > 0) setTransactions(loadedTransactions);
+            setPositions(loadedPositions);
+            setClosedTrades(loadedClosed);
+            setTransactions(loadedTransactions);
             if (typeof remoteData.cashBalance === 'number' && remoteData.cashBalance >= 0) setCashBalance(remoteData.cashBalance);
             if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
             setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
@@ -636,12 +627,11 @@ export function usePortfolioState() {
       let mergedCapital = capitalDeposits;
 
       if (remote) {
-        const txMap = new Map<string, TradeTransaction>();
-        (remote.transactions || []).forEach((t) => { if (t?.id) txMap.set(t.id, normalizeTransaction(t)); });
-        transactions.forEach((t) => { if (t?.id && !txMap.has(t.id)) txMap.set(t.id, normalizeTransaction(t)); });
-        mergedTxs = Array.from(txMap.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        if (Array.isArray(remote.positions) && remote.positions.length > 0) mergedPositions = remote.positions;
-        if (Array.isArray(remote.closedTrades) && remote.closedTrades.length > 0) mergedClosed = remote.closedTrades;
+        mergedTxs = Array.isArray(remote.transactions)
+          ? remote.transactions.map(normalizeTransaction).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          : [];
+        mergedPositions = Array.isArray(remote.positions) ? remote.positions : [];
+        mergedClosed = Array.isArray(remote.closedTrades) ? remote.closedTrades : [];
         if (typeof remote.cashBalance === 'number' && remote.cashBalance >= 0) mergedCash = remote.cashBalance;
         if (typeof remote.capitalDeposits === 'number' && remote.capitalDeposits >= 0) mergedCapital = remote.capitalDeposits;
         setTransactions(mergedTxs);

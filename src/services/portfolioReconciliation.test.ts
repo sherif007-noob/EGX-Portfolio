@@ -103,3 +103,14 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledPositions).toHaveLength(0);
   });
 });
+
+
+it('price update must not resurrect a deleted ledger transaction', () => {
+  const buy = { id: 'buy-1', type: 'BUY', ticker: 'COMI', companyName: 'COMI', sector: 'Banking', shares: 100, price: 50, fees: 0, date: '2026-09-01', totalAmount: 5000 };
+  const sell = { id: 'sell-1', type: 'SELL', ticker: 'COMI', companyName: 'COMI', sector: 'Banking', shares: 40, price: 60, fees: 0, date: '2026-09-02', totalAmount: 2400 };
+  const withSell = reconcilePortfolioFromLedger([buy, sell], [], 5000);
+  expect(withSell.reconciledPositions[0].shares).toBe(60);
+  const afterDelete = reconcilePortfolioFromLedger([buy], [], 5000);
+  expect(afterDelete.reconciledPositions[0].shares).toBe(100);
+  expect(afterDelete.reconciledClosedTrades).toHaveLength(0);
+});

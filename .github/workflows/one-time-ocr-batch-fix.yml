@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'scripts/one_time_ocr_batch_fix.py'
+      - '.github/workflows/one-time-ocr-batch-fix.yml'
 
 jobs:
   fix:

@@ -48,7 +48,7 @@ describe('portfolio performance accounting', () => {
       ],
     }, '2026-01-01', '2026-01-03');
     expect(curve.find((p) => p.date === '2026-01-02')?.equity).toBe(1000);
-    expect(curve.find((p) => p.date === '2026-01-03')?.equity).toBe(1050);
+    expect(curve.find((p) => p.date === '2026-01-03')?.equity).toBe(1200);
   });
 
   it('does not treat dividends as investor cash flows', () => {

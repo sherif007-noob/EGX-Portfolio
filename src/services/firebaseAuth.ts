@@ -4,7 +4,6 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
-  signInAnonymously,
   signOut,
   setPersistence,
   browserLocalPersistence,
@@ -15,7 +14,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
-// Enforce long-lived local persistence so sign-in never expires on tab close or PWA restart
+// Keep the Google-authenticated Firebase session across reloads and PWA restarts.
 if (typeof window !== 'undefined') {
   setPersistence(auth, browserLocalPersistence).catch((err) => {
     console.warn('[FirebaseAuth] Could not enforce browserLocalPersistence:', err);
@@ -31,42 +30,38 @@ provider.addScope(DRIVE_READONLY_SCOPE);
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
-let isAnonymousBlocked = false;
 
-export const isAnonymousAuthBlocked = (): boolean => isAnonymousBlocked;
+// Anonymous Firebase users must never be used for the cloud portfolio because
+// Supabase ownership is keyed to the user's Google-authenticated Firebase UID.
+export const isAnonymousAuthBlocked = (): boolean => true;
 
 /**
- * Ensures there is an authenticated user (Google or Anonymous).
- * If no user is logged in, attempts anonymous auth or returns null if disabled.
+ * Returns the currently authenticated Firebase user.
+ *
+ * Do not create an anonymous user here. Doing so would generate a different UID
+ * and make the migrated Supabase portfolio appear empty.
  */
 export const ensureAuthUser = async (): Promise<User | null> => {
   if (auth.currentUser) {
     return auth.currentUser;
   }
+
   return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let settled = false;
+    let unsubscribe: () => void = () => undefined;
+    const finish = (user: User | null) => {
+      if (settled) return;
+      settled = true;
       unsubscribe();
       if (user) {
-        resolve(user);
+        console.info('[FirebaseAuth] Authenticated Firebase UID:', user.uid);
       } else {
-        if (isAnonymousBlocked) {
-          resolve(null);
-          return;
-        }
-        try {
-          const cred = await signInAnonymously(auth);
-          resolve(cred.user);
-        } catch (err: any) {
-          if (err?.code === 'auth/admin-restricted-operation' || String(err).includes('admin-restricted-operation')) {
-            isAnonymousBlocked = true;
-            console.info('[FirebaseAuth] Anonymous auth is disabled in Firebase console. Sign in with Google to enable Cloud Sync.');
-          } else {
-            console.warn('[FirebaseAuth] Anonymous sign-in failed:', err);
-          }
-          resolve(null);
-        }
+        console.warn('[FirebaseAuth] No Google-authenticated Firebase user is available.');
       }
-    });
+      resolve(user);
+    };
+
+    unsubscribe = onAuthStateChanged(auth, (user) => finish(user));
   });
 };
 
@@ -79,20 +74,12 @@ export const initAuth = (
     if (storedToken) {
       cachedAccessToken = storedToken;
     }
+
     if (user) {
+      console.info('[FirebaseAuth] Auth state:', user.isAnonymous ? 'anonymous' : 'Google-authenticated', 'UID:', user.uid);
       if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || '');
     } else {
-      if (!isAnonymousBlocked) {
-        try {
-          await signInAnonymously(auth);
-        } catch (e: any) {
-          if (e?.code === 'auth/admin-restricted-operation' || String(e).includes('admin-restricted-operation')) {
-            isAnonymousBlocked = true;
-          } else {
-            console.warn('Anonymous auth initialization deferred:', e);
-          }
-        }
-      }
+      console.info('[FirebaseAuth] Auth state: signed out');
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -110,6 +97,8 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
       localStorage.setItem('google_sheets_access_token', token);
       localStorage.setItem('google_sheets_token_timestamp', Date.now().toString());
     }
+
+    console.info('[FirebaseAuth] Google sign-in successful. Firebase UID:', result.user.uid);
     return { user: result.user, accessToken: token };
   } catch (error: any) {
     console.error('Sign in error:', error);
@@ -142,10 +131,5 @@ export const getAccessToken = async (): Promise<string | null> => {
 export const logout = async () => {
   await signOut(auth);
   clearExpiredToken();
-  // Immediately re-create anonymous session for local sync
-  try {
-    await signInAnonymously(auth);
-  } catch {
-    // ignore
-  }
+  console.info('[FirebaseAuth] Signed out. No anonymous session will be created.');
 };

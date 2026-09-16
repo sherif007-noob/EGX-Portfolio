@@ -238,7 +238,7 @@ export default function App() {
       targetPrice: newTradeData.targetPrice,
       stopLoss: newTradeData.stopLoss,
       notes: newTradeData.notes,
-      deductFromCash: deductCash,
+      deductCash: deductCash,
     });
 
     // Auto-sync transaction to Google Sheets if connected
@@ -808,7 +808,7 @@ export default function App() {
             positions={positions}
             metrics={metrics}
             cashBalance={cashBalance}
-            transactions={transactions}
+            capitalDeposits={capitalDeposits}
           />
         )}
 

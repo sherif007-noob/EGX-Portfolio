@@ -90,12 +90,13 @@ export function reconcilePortfolioFromLedger(
   const chronologicalTxs = Array.isArray(transactions) ? sortTransactions(transactions) : [];
   const openingCapital = Number.isFinite(totalCapitalDeposited) && totalCapitalDeposited >= 0 ? totalCapitalDeposited : 0;
 
-  // If explicit external cash-flow events exist, they are the source of truth
-  // for opening/ongoing cash and capitalDeposits must not be double-counted.
+  // Explicit external cash-flow events replace the legacy implicit opening-capital
+  // model. A CASH_ADJUSTMENT is different: it corrects the derived cash ledger
+  // without redefining the amount of contributed capital.
   const hasExternalCashFlow = chronologicalTxs.some((tx) => {
     const kind = cashFlowKind(tx);
     const ticker = tx.ticker.trim().toUpperCase();
-    return ticker === 'CASH' || kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || kind === 'DIVIDEND' || kind === 'FEE' || kind === 'CASH_ADJUSTMENT';
+    return ticker === 'CASH' || kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || kind === 'DIVIDEND' || kind === 'FEE';
   });
 
   let runningCash = hasExternalCashFlow ? 0 : openingCapital;
@@ -149,9 +150,6 @@ export function reconcilePortfolioFromLedger(
     const tickerKey = tx.ticker.trim().toUpperCase();
     const kind = cashFlowKind(tx);
 
-    // Normalize all external cash events before security-trade accounting.
-    // This is important because legacy DIVIDEND/DEPOSIT rows may have been
-    // normalized to type=BUY while retaining their cashFlowType.
     if (kind === 'CASH_ADJUSTMENT') {
       const amount = Number(tx.cashFlowAmount ?? tx.totalAmount);
       if (!Number.isFinite(amount)) discrepancies.push(`CASH_ADJUSTMENT ${tx.id} has an invalid amount.`);

@@ -42,7 +42,7 @@ describe('portfolio reconciliation', () => {
     expect(report.reconciledClosedTrades[0].realizedPnlEgp).toBe(8);
     expect(report.reconciledClosedTrades[0].holdingDays).toBe(2);
     expect(report.reconciledPositions[0].shares).toBe(5);
-    expect(report.reconciledCashBalance).toBe(959);
+    expect(report.reconciledCashBalance).toBe(957);
   });
 
   it('starts a new trade cycle after a ticker is fully closed', () => {

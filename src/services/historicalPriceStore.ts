@@ -8,8 +8,8 @@ export interface HistoricalPricePoint {
   low?: number;
   close: number;
   volume?: number;
-  source: 'tradingview' | 'yahoo' | 'other';
-  retrievedAt: string;
+  source?: 'tradingview' | 'yahoo' | 'other';
+  retrievedAt?: string;
 }
 
 export type HistoricalPriceSeries = Record<string, HistoricalPricePoint[]>;

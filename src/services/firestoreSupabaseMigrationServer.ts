@@ -1,13 +1,11 @@
-import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, getFirestore, orderBy, query } from 'firebase/firestore';
+import { cert, getApps as getAdminApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { createClient } from '@supabase/supabase-js';
-import firebaseConfig from '../../firebase-applet-config.json';
 
 type R = Record<string, any>;
 type Kind = 'number' | 'date' | 'text' | 'bool';
 type Event = { phase: string; message: string; counts?: Record<string, number> };
-export type MigrationOptions = { firebaseEmail: string; firebasePassword: string; confirm: boolean; onProgress?: (event: Event) => void };
+export type MigrationOptions = { confirm: boolean; onProgress?: (event: Event) => void };
 export type Reconciliation = { passed: boolean; checked: number; mismatches: Array<{ table: string; id: string; field: string; source: unknown; destination: unknown }> };
 
 const ticker = (v: unknown) => String(v || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
@@ -15,8 +13,16 @@ const num = (v: unknown): number | null => v === undefined || v === null || v ==
 const zero = (v: unknown) => num(v) ?? 0;
 const date = (v: unknown) => { const s = String(v || ''); if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10); const d = new Date(s); if (Number.isNaN(d.getTime())) throw new Error(`Invalid date: ${s}`); return d.toISOString().slice(0,10); };
 const same = (a: unknown,b: unknown,k: Kind) => k === 'number' ? (() => { const x=num(a),y=num(b); return x===null||y===null ? x===y : Math.abs(x-y)<=1e-6*Math.max(1,Math.abs(x),Math.abs(y)); })() : k === 'date' ? date(a)===date(b) : k === 'bool' ? Boolean(a)===Boolean(b) : String(a??'')===String(b??'');
-const sb = () => { const key=process.env.SUPABASE_SERVICE_ROLE_KEY; if(!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.'); return createClient(process.env.SUPABASE_URL || 'https://jhubsrbfiqjxdgngnwaq.supabase.co',key,{auth:{persistSession:false,autoRefreshToken:false}}); };
+const sb = () => { const key=process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY; if(!key) throw new Error('SUPABASE_SECRET_KEY is not configured on the server.'); return createClient(process.env.SUPABASE_URL || 'https://jhubsrbfiqjxdgngnwaq.supabase.co',key,{auth:{persistSession:false,autoRefreshToken:false}}); };
 const emit = (o: MigrationOptions,e: Event) => { o.onProgress?.(e); console.log(`[migration] ${e.phase}: ${e.message}`); };
+const firebaseAdmin = () => {
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  if (!projectId || !clientEmail || !privateKey) throw new Error('Firebase Admin credentials are not configured. Required: FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY.');
+  const app = getAdminApps().length ? getAdminApps()[0] : initializeAdminApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+  return getAdminFirestore(app);
+};
 async function upsert(table:string,rows:R[],conflict:string){const s=sb();for(let i=0;i<rows.length;i+=500){const {error}=await s.from(table).upsert(rows.slice(i,i+500),{onConflict:conflict});if(error)throw new Error(`${table} upsert failed: ${error.message}`);}}
 
 async function reconcile(s:any, portfolioId:string, source:{portfolio:R;tickers:R[];positions:R[];closedTrades:R[];transactions:R[];cashTransactions:R[];history:R[]}, o:MigrationOptions):Promise<Reconciliation>{
@@ -38,9 +44,17 @@ async function reconcile(s:any, portfolioId:string, source:{portfolio:R;tickers:
 }
 
 export async function runFirestoreSupabaseMigration(o:MigrationOptions){
-  if(!o.confirm)throw new Error('Migration was not explicitly confirmed.');if(!o.firebaseEmail||!o.firebasePassword)throw new Error('Firebase email and password are required.');
-  const app=getApps().length?getApp():initializeApp(firebaseConfig);const credential=await signInWithEmailAndPassword(getAuth(app),o.firebaseEmail,o.firebasePassword);const uid=credential.user.uid;const db=getFirestore(app,firebaseConfig.firestoreDatabaseId);const s=sb();
-  emit(o,{phase:'source',message:'Reading Firestore portfolio snapshots.'});const us=await getDoc(doc(db,'portfolios',uid)),ms=await getDoc(doc(db,'portfolios','main_portfolio'));const ud=us.exists()?us.data() as R:null,md=ms.exists()?ms.data() as R:null;if(!ud&&!md)throw new Error('No portfolio document found in Firestore.');const ut=new Date(ud?.updatedAt||0).getTime(),mt=new Date(md?.updatedAt||0).getTime();const portfolio=ud&&md?(ut>=mt?ud:md):(ud||md)!;
+  if(!o.confirm)throw new Error('Migration was not explicitly confirmed.');
+  const db=firebaseAdmin();
+  const s=sb();
+  emit(o,{phase:'source',message:'Reading Firestore portfolio snapshots with Firebase Admin SDK (read-only).'});
+  const mainSnap=await db.collection('portfolios').doc('main_portfolio').get();
+  const adminUid=process.env.FIREBASE_ADMIN_OWNER_UID;
+  const uidSnap=adminUid ? await db.collection('portfolios').doc(adminUid).get() : null;
+  const ud=uidSnap?.exists?uidSnap.data() as R:null,md=mainSnap.exists?mainSnap.data() as R:null;
+  if(!ud&&!md)throw new Error('No portfolio document found in Firestore. Set FIREBASE_ADMIN_OWNER_UID if the portfolio is stored under the Firebase Auth UID.');
+  const ut=new Date(ud?.updatedAt||0).getTime(),mt=new Date(md?.updatedAt||0).getTime();const portfolio=ud&&md?(ut>=mt?ud:md):(ud||md)!;
+  const uid=adminUid || String(portfolio.ownerKey || portfolio.uid || 'main_portfolio');
   const ep=await s.from('portfolios').select('id').eq('owner_key',uid).maybeSingle();if(ep.error)throw new Error(`Could not inspect Supabase portfolio: ${ep.error.message}`);let portfolioId=ep.data?.id as string|undefined;const pp={owner_key:uid,name:'Main Portfolio',cash_balance:zero(portfolio.cashBalance),capital_deposits:zero(portfolio.capitalDeposits),schema_version:Number(portfolio.schemaVersion||1),last_price_write_at:portfolio.lastPriceWriteAt||null,updated_at:portfolio.updatedAt||new Date().toISOString()};if(portfolioId){const {error}=await s.from('portfolios').update(pp).eq('id',portfolioId);if(error)throw new Error(`Could not update Supabase portfolio: ${error.message}`);}else{const {data,error}=await s.from('portfolios').insert(pp).select('id').single();if(error)throw new Error(`Could not create Supabase portfolio: ${error.message}`);portfolioId=data.id;}
   const positions=Array.isArray(portfolio.positions)?portfolio.positions:[],closedTrades=Array.isArray(portfolio.closedTrades)?portfolio.closedTrades:[],transactions=Array.isArray(portfolio.transactions)?portfolio.transactions:[],tickers=Array.isArray(portfolio.tickers)?portfolio.tickers:[];const tm=new Map<string,R>();for(const r of tickers){const t=ticker(r.ticker);if(t)tm.set(t,r);}for(const r of [...positions,...transactions,...closedTrades]){const t=ticker(r.ticker);if(t&&!tm.has(t))tm.set(t,{ticker:t,nameEn:r.companyName||'',nameAr:'',isin:'',sector:r.sector||'Other'});}
   const tickerRows=[...tm.entries()].map(([t,r])=>({ticker:t,name_en:String(r.nameEn||r.companyName||''),name_ar:String(r.nameAr||''),isin:String(r.isin||''),sector:String(r.sector||'Other'),last_price:zero(r.lastPrice),change:zero(r.change),change_percent:zero(r.changePercent),day_low:zero(r.dayLow),day_high:zero(r.dayHigh),year_low:zero(r.yearLow),year_high:zero(r.yearHigh),volume:zero(r.volume),value_egp:zero(r.valueEgp),trend_status:String(r.trendStatus||'Rangebound Neutral'),rsi14:zero(r.rsi14),support:zero(r.support),resistance:zero(r.resistance),target_price:zero(r.targetPrice),stop_loss:zero(r.stopLoss),notes:r.notes??null,last_updated:r.lastUpdated||null,price_updated_at:r.priceUpdatedAt||null,logo_url:r.logoUrl||null,updated_at:new Date().toISOString()}));await upsert('tickers',tickerRows,'ticker');emit(o,{phase:'tickers',message:`Migrated ${tickerRows.length} tickers.`,counts:{tickers:tickerRows.length}});
@@ -48,7 +62,7 @@ export async function runFirestoreSupabaseMigration(o:MigrationOptions){
   const closedRows=closedTrades.map((t:R)=>({id:String(t.id),portfolio_id:portfolioId,ticker:ticker(t.ticker),company_name:String(t.companyName||''),sector:String(t.sector||'Other'),shares:zero(t.shares),buy_price:zero(t.buyPrice),sell_price:zero(t.sellPrice),buy_date:date(t.buyDate),sell_date:date(t.sellDate),holding_days:Math.max(0,Math.trunc(zero(t.holdingDays))),realized_pnl_egp:zero(t.realizedPnlEgp),realized_pnl_percent:zero(t.realizedPnlPercent),buy_fees:zero(t.buyFees),sell_fees:zero(t.sellFees),total_fees:zero(t.totalFees),outcome:String(t.outcome||'BREAKEVEN'),trade_type:String(t.tradeType||'Core'),trade_cycle:num(t.tradeCycle),cycle_tag:t.cycleTag??null,notes:t.notes??null,buy_transaction_ids:Array.isArray(t.buyTransactionIds)?t.buyTransactionIds.map(String):[],sell_transaction_ids:Array.isArray(t.sellTransactionIds)?t.sellTransactionIds.map(String):[]}));await upsert('closed_trades',closedRows,'id');
   const txRows=transactions.map((t:R)=>({id:String(t.id),portfolio_id:portfolioId,transaction_type:String(t.type||'BUY'),ticker:ticker(t.ticker),company_name:String(t.companyName||''),sector:String(t.sector||'Other'),shares:zero(t.shares),price:zero(t.price),transaction_date:date(t.date),executed_at:t.executedAt||null,fees:zero(t.fees),total_amount:zero(t.totalAmount),cash_flow_type:t.cashFlowType||null,cash_flow_amount:num(t.cashFlowAmount),is_dca:Boolean(t.isDCA),notes:t.notes??null,target_price:num(t.targetPrice),stop_loss:num(t.stopLoss),trade_id:t.tradeId==null?(t.trade_id==null?null:String(t.trade_id)):String(t.tradeId),trade_cycle:num(t.tradeCycle),cycle_tag:t.cycleTag??null,running_shares:num(t.runningShares),gross_trade_value:num(t.grossTradeValue),net_cash_impact:num(t.netCashImpact),realized_pnl_egp:num(t.realizedPnlEgp),realized_pnl_percent:num(t.realizedPnlPercent),outcome:t.outcome||null,holding_days:num(t.holdingDays),position_id:t.positionId||null}));await upsert('transactions',txRows,'id');
   const cashRows=transactions.filter((t:R)=>['DEPOSIT','WITHDRAWAL','DIVIDEND','FEE'].includes(String(t.cashFlowType||'').toUpperCase())).map((t:R)=>({id:String(t.id),portfolio_id:portfolioId,transaction_type:String(t.cashFlowType).toUpperCase(),amount:zero(t.cashFlowAmount??t.totalAmount),transaction_date:date(t.date),notes:t.notes??null,balance_after:num(t.balanceAfter)}));await upsert('cash_transactions',cashRows,'id');
-  const history:R[]=[];for(const t of [...tm.keys()].filter(x=>x!=='CASH')){const snap=await getDocs(query(collection(db,'historicalPrices',t,'daily'),orderBy('date','asc')));const rows=snap.docs.map(d=>{const p=d.data() as R;return{ticker:t,trading_date:date(p.date),open:num(p.open),high:num(p.high),low:num(p.low),close:zero(p.close),volume:num(p.volume),source:String(p.source||'tradingview'),retrieved_at:p.retrievedAt||null};}).filter(r=>r.close>0);history.push(...rows);await upsert('price_history',rows,'ticker,trading_date');emit(o,{phase:'history',message:`${t}: ${rows.length} historical price rows.`,counts:{historicalPrices:history.length}});}
+  const history:R[]=[];for(const t of [...tm.keys()].filter(x=>x!=='CASH')){const snap=await db.collection('historicalPrices').doc(t).collection('daily').orderBy('date','asc').get();const rows=snap.docs.map(d=>{const p=d.data() as R;return{ticker:t,trading_date:date(p.date),open:num(p.open),high:num(p.high),low:num(p.low),close:zero(p.close),volume:num(p.volume),source:String(p.source||'tradingview'),retrieved_at:p.retrievedAt||null};}).filter(r=>r.close>0);history.push(...rows);await upsert('price_history',rows,'ticker,trading_date');emit(o,{phase:'history',message:`${t}: ${rows.length} historical price rows.`,counts:{historicalPrices:history.length}});}
   const sourceTickers=tickerRows.map(r=>({ticker:r.ticker,nameEn:r.name_en,nameAr:r.name_ar,isin:r.isin,sector:r.sector,lastPrice:r.last_price,change:r.change,changePercent:r.change_percent,dayLow:r.day_low,dayHigh:r.day_high,yearLow:r.year_low,yearHigh:r.year_high,volume:r.volume,valueEgp:r.value_egp,rsi14:r.rsi14,support:r.support,resistance:r.resistance,targetPrice:r.target_price,stopLoss:r.stop_loss}));
   const reconciliation=await reconcile(s,portfolioId,{portfolio,tickers:sourceTickers,positions,closedTrades,transactions,cashTransactions:cashRows,history},o);
   const counts={tickers:tickerRows.length,positions:positionRows.length,transactions:txRows.length,closedTrades:closedRows.length,cashTransactions:cashRows.length,historicalPrices:history.length};

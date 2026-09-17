@@ -25,7 +25,9 @@ jobs:
         run: python3 scripts/applyHistoricalPerformanceIntegration.py
 
       - name: Install dependencies
-        run: yarn install --non-interactive --no-progress
+        run: |
+          yarn install --non-interactive --no-progress
+          yarn add --non-interactive --no-progress --ignore-workspace-root-check react-is@^19.0.0
 
       - name: Typecheck
         run: npm run lint

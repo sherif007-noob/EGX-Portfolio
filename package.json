@@ -13,7 +13,8 @@
     "test": "vitest run",
     "sync:historical": "tsx scripts/syncHistoricalPrices.ts",
     "migrate:firestore:supabase": "tsx scripts/migrateFirestoreToSupabase.ts",
-    "verify:firestore:supabase": "tsx scripts/verifyFirestoreSupabaseMigration.ts"
+    "verify:firestore:supabase": "tsx scripts/verifyFirestoreSupabaseMigration.ts",
+    "verify:production-data": "tsx scripts/verifyProductionData.ts"
   },
   "dependencies": {
     "@ch99q/twc": "^0.1.4",

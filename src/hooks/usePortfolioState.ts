@@ -18,7 +18,6 @@ import {
   updateFirestorePositions,
   updateFirestoreTickers,
   updateFirestoreTransactions,
-  updateFirestoreCashBalance,
   flushPendingWriteQueue,
   markLocalMutation,
 } from '../services/firestoreStorage';
@@ -34,6 +33,7 @@ import {
   calculateHoldingDays,
 } from '../services/portfolioAccounting';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
+import { applyCashLedgerEvent } from '../services/cashLedger';
 
 const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
 const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v3_reconciled';
@@ -504,43 +504,21 @@ export function usePortfolioState() {
     return updatedTransactions;
   }, [transactions, tickers, capitalDeposits]);
 
-  const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => {
-    const cleanAmount = Math.abs(amount);
-    let newBalance = cashBalance;
-    let newCapital = capitalDeposits;
-    if (type === 'DEPOSIT') {
-      newBalance = cashBalance + cleanAmount;
-      newCapital = capitalDeposits + cleanAmount;
-      setCapitalDeposits(newCapital);
-    } else if (type === 'WITHDRAW') {
-      newBalance = cashBalance - cleanAmount;
-      newCapital = capitalDeposits - cleanAmount;
-      setCapitalDeposits(newCapital);
-    } else {
-      newBalance = cashBalance + cleanAmount;
-    }
-    setCashBalance(newBalance);
+  const commitCashEvent = useCallback((kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT', amount: number, notes?: string) => {
+    const next = applyCashLedgerEvent({ transactions, positions, tickers, capitalDeposits }, kind, amount, notes);
+    markLocalMutation();
+    setTransactions(next.transactions);
+    setPositions(next.positions);
+    setClosedTrades(next.closedTrades);
+    setCashBalance(next.cashBalance);
+    setCapitalDeposits(next.capitalDeposits);
+    const { transaction: _transaction, ...snapshot } = next;
+    return forceFullSyncToFirestore(snapshot);
+  }, [transactions, positions, tickers, capitalDeposits]);
 
-    let updatedTxList = transactions;
-    if (type === 'DIVIDEND' && notes) {
-      const divTx: TradeTransaction = {
-        id: `tx-div-${Date.now()}`,
-        type: 'BUY',
-        ticker: 'CASH',
-        companyName: notes,
-        sector: 'Banking',
-        shares: 1,
-        price: cleanAmount,
-        fees: 0,
-        date: new Date().toISOString().split('T')[0],
-        totalAmount: cleanAmount,
-        notes: `Cash Dividend: ${notes}`,
-      };
-      updatedTxList = [divTx, ...transactions];
-      setTransactions(updatedTxList);
-    }
-    savePortfolioToFirestore({ positions, closedTrades, transactions: updatedTxList, cashBalance: newBalance, capitalDeposits: newCapital, tickers }, false, 'cash-transaction');
-  }, [cashBalance, capitalDeposits, transactions, positions, closedTrades, tickers]);
+  const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => {
+    return commitCashEvent(type === 'WITHDRAW' ? 'WITHDRAWAL' : type, amount, notes);
+  }, [commitCashEvent]);
 
   const importBackup = useCallback(async (backup: {
     positions?: Position[];
@@ -610,12 +588,12 @@ export function usePortfolioState() {
   const updateTickers = useCallback((newTickers: EGXTicker[]) => setTickers(newTickers), []);
 
   const updateCashBalance = useCallback((newCash: number) => {
-    const validCash = Number(newCash);
-    if (!Number.isFinite(validCash)) return;
-    setCashBalance(validCash);
-    try { localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(validCash)); } catch { /* ignore */ }
-    updateFirestoreCashBalance(validCash, capitalDeposits);
-  }, [capitalDeposits]);
+    if (!Number.isFinite(newCash)) return;
+    const current = reconcilePortfolioFromLedger(transactions, tickers, capitalDeposits, positions);
+    const delta = Number((newCash - current.reconciledCashBalance).toFixed(2));
+    if (delta === 0) return;
+    return commitCashEvent('CASH_ADJUSTMENT', delta, 'Manual cash balance adjustment');
+  }, [transactions, tickers, capitalDeposits, positions, commitCashEvent]);
 
   const forceSync = useCallback(async () => {
     try {

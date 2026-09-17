@@ -19,6 +19,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { ClosedTrade, PerformanceStats, Position } from '../../types';
+import { calculatePerformanceStats as calculateAccountingPerformanceStats } from '../../services/portfolioAccounting';
 
 interface TradingPerformanceReportProps {
   stats: PerformanceStats;
@@ -32,11 +33,11 @@ type TimeframeFilter = 'ALL' | 'YTD' | '90D' | '30D';
 const formatEgp = (val: number) =>
   val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : '∞');
+
 export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> = ({
   stats,
   closedTrades,
-  positions,
-  cashBalance,
 }) => {
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('ALL');
   const [tradeTypeFilter, setTradeTypeFilter] = useState<'ALL' | 'Swing' | 'Day Trade' | 'Position'>('ALL');
@@ -73,68 +74,52 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
     });
   }, [closedTrades, timeframe, tradeTypeFilter]);
 
-  // Compute institutional indicators dynamically
+  // Trade statistics come from the authoritative accounting engine. Historical
+  // drawdown is only shown when an actual equity-curve result has been supplied.
   const indicators = useMemo(() => {
-    const totalClosed = filteredTrades.length;
-    const wins = filteredTrades.filter((t) => t.outcome === 'WIN');
-    const losses = filteredTrades.filter((t) => t.outcome === 'LOSS');
-    const winCount = wins.length;
-    const lossCount = losses.length;
-
-    const winRate = totalClosed > 0 ? (winCount / totalClosed) * 100 : 0;
-
-    const grossProfit = wins.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
-    const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.realizedPnlEgp, 0));
-    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 99.99 : 0;
-
-    const winLossRatio = lossCount > 0 ? winCount / lossCount : winCount > 0 ? winCount : 0;
+    const accounting = calculateAccountingPerformanceStats(filteredTrades);
+    const totalClosed = accounting.totalTrades;
+    const wins = filteredTrades.filter((t) => t.realizedPnlEgp > 0.01);
+    const losses = filteredTrades.filter((t) => t.realizedPnlEgp < -0.01);
+    const winCount = accounting.winningTrades;
+    const lossCount = accounting.losingTrades;
+    const winRate = accounting.winRate ?? 0;
+    const grossProfit = accounting.grossProfit;
+    const grossLoss = accounting.grossLoss;
+    const profitFactor = accounting.profitFactor ?? 0;
+    const winLossRatio = lossCount > 0 ? winCount / lossCount : winCount > 0 ? Infinity : 0;
     const netRealized = grossProfit - grossLoss;
     const avgTradePnl = totalClosed > 0 ? netRealized / totalClosed : 0;
-    const avgWin = winCount > 0 ? grossProfit / winCount : 0;
-    const avgLoss = lossCount > 0 ? grossLoss / lossCount : 0;
-
-    const payoffRatio = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? 99.99 : 0;
-    const winRateDecimal = totalClosed > 0 ? winCount / totalClosed : 0;
-    const lossRateDecimal = totalClosed > 0 ? lossCount / totalClosed : 0;
-    const expectancy = (winRateDecimal * avgWin) - (lossRateDecimal * avgLoss);
+    const avgWin = accounting.avgWin;
+    const avgLoss = accounting.avgLoss;
+    const payoffRatio = accounting.payoffRatio ?? 0;
+    const expectancy = accounting.expectancy ?? 0;
 
     const sortedWins = [...wins].sort((a, b) => b.realizedPnlEgp - a.realizedPnlEgp);
     const sortedLosses = [...losses].sort((a, b) => a.realizedPnlEgp - b.realizedPnlEgp);
 
     const largestWinTrade = sortedWins[0] || null;
     const largestLossTrade = sortedLosses[0] || null;
-
     const largestWin = largestWinTrade ? largestWinTrade.realizedPnlEgp : 0;
     const largestLoss = largestLossTrade ? Math.abs(largestLossTrade.realizedPnlEgp) : 0;
 
-    // Accurate Max Drawdown from chronological curve
-    const sortedChronological = [...filteredTrades].sort((a, b) => {
-      const dateA = a.sellDate || a.buyDate || '2026-01-01';
-      const dateB = b.sellDate || b.buyDate || '2026-01-01';
-      return dateA.localeCompare(dateB);
-    });
-
-    let runningEquity = 0;
-    let peakEquity = 0;
-    let maxDrawdownEgp = 0;
-
-    sortedChronological.forEach((t) => {
-      runningEquity += t.realizedPnlEgp;
-      if (runningEquity > peakEquity) peakEquity = runningEquity;
-      const dd = peakEquity - runningEquity;
-      if (dd > maxDrawdownEgp) maxDrawdownEgp = dd;
-    });
-
-    const openCost = positions.reduce((acc, p) => acc + p.shares * p.avgBuyPrice, 0);
-    const baselineCapital = Math.max(1000, cashBalance + openCost);
-    const maxDrawdownPercent = (maxDrawdownEgp / (baselineCapital + Math.max(0, peakEquity))) * 100;
-
-    const recoveryFactor = maxDrawdownEgp > 0 ? netRealized / maxDrawdownEgp : netRealized > 0 ? 99.99 : 0;
+    const drawdownAvailable =
+      timeframe === 'ALL' &&
+      tradeTypeFilter === 'ALL' &&
+      Number.isFinite(stats.maxDrawdownEgp) &&
+      Number.isFinite(stats.maxDrawdownPercent);
+    const maxDrawdownEgp = drawdownAvailable ? stats.maxDrawdownEgp! : null;
+    const maxDrawdownPercent = drawdownAvailable ? stats.maxDrawdownPercent! : null;
+    const recoveryFactor = drawdownAvailable
+      ? maxDrawdownEgp! > 0
+        ? netRealized / maxDrawdownEgp!
+        : netRealized > 0
+          ? Infinity
+          : 0
+      : null;
 
     const totalFees = filteredTrades.reduce((acc, t) => acc + (t.totalFees || 0), 0);
-    const avgHoldDays = totalClosed > 0
-      ? Math.round(filteredTrades.reduce((acc, t) => acc + (t.holdingDays || 1), 0) / totalClosed)
-      : 0;
+    const avgHoldDays = Math.round(accounting.avgHoldDays ?? 0);
 
     return {
       totalClosed,
@@ -155,13 +140,14 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       largestLoss,
       largestWinTrade,
       largestLossTrade,
+      drawdownAvailable,
       maxDrawdownEgp,
       maxDrawdownPercent,
       recoveryFactor,
       totalFees,
       avgHoldDays,
     };
-  }, [filteredTrades, positions, cashBalance]);
+  }, [filteredTrades, timeframe, tradeTypeFilter, stats.maxDrawdownEgp, stats.maxDrawdownPercent]);
 
   // Export Report to CSV
   const handleExportCSV = () => {
@@ -171,13 +157,13 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       [],
       ['Indicator', 'Measured Result', 'Institutional Benchmark', 'Status Assessment'],
       ['Win Rate %', `${indicators.winRate.toFixed(1)}%`, '> 50.0%', indicators.winRate >= 50 ? 'TARGET MET' : 'BELOW TARGET'],
-      ['Profit Factor', indicators.profitFactor.toFixed(2), '> 1.50', indicators.profitFactor >= 1.5 ? 'OUTPERFORMING' : indicators.profitFactor >= 1.0 ? 'MODERATE' : 'UNPROFITABLE'],
-      ['Payoff Ratio (Avg Win / Avg Loss)', `${indicators.payoffRatio.toFixed(2)} : 1`, '> 1.50 : 1', indicators.payoffRatio >= 1.5 ? 'EXCELLENT' : 'MODERATE'],
+      ['Profit Factor', formatRatio(indicators.profitFactor), '> 1.50', indicators.profitFactor >= 1.5 ? 'OUTPERFORMING' : indicators.profitFactor >= 1.0 ? 'MODERATE' : 'UNPROFITABLE'],
+      ['Payoff Ratio (Avg Win / Avg Loss)', `${formatRatio(indicators.payoffRatio)} : 1`, '> 1.50 : 1', indicators.payoffRatio >= 1.5 ? 'EXCELLENT' : 'MODERATE'],
       ['Mathematical Trade Expectancy', `${indicators.expectancy >= 0 ? '+' : ''}${indicators.expectancy.toFixed(2)} EGP`, '> 0.00 EGP', indicators.expectancy > 0 ? 'POSITIVE EDGE' : 'NEGATIVE'],
       ['Total Closed Trades', `${indicators.totalClosed}`, '>= 20 for statistical confidence', indicators.totalClosed >= 20 ? 'STATISTICALLY SIGNIFICANT' : 'PRELIMINARY SAMPLE'],
       ['Winning Trades', `${indicators.winCount} (${indicators.totalClosed > 0 ? ((indicators.winCount / indicators.totalClosed) * 100).toFixed(1) : 0}%)`, '> Losing Trades', indicators.winCount > indicators.lossCount ? 'DOMINANT' : 'EQUAL/BELOW'],
       ['Losing Trades', `${indicators.lossCount} (${indicators.totalClosed > 0 ? ((indicators.lossCount / indicators.totalClosed) * 100).toFixed(1) : 0}%)`, '< Winning Trades', indicators.lossCount < indicators.winCount ? 'CONTROLLED' : 'HIGH'],
-      ['Win / Loss Ratio', `${indicators.winLossRatio.toFixed(2)} : 1`, '> 1.00 : 1', indicators.winLossRatio >= 1.0 ? 'FAVORABLE' : 'UNFAVORABLE'],
+      ['Win / Loss Ratio', `${formatRatio(indicators.winLossRatio)} : 1`, '> 1.00 : 1', indicators.winLossRatio >= 1.0 ? 'FAVORABLE' : 'UNFAVORABLE'],
       ['Average Trade P&L', `${indicators.avgTradePnl >= 0 ? '+' : ''}${indicators.avgTradePnl.toFixed(2)} EGP`, '> 0.00 EGP', indicators.avgTradePnl > 0 ? 'PROFITABLE' : 'UNPROFITABLE'],
       ['Average Win', `+${indicators.avgWin.toFixed(2)} EGP`, 'Maximize Gains', 'NET WIN'],
       ['Average Loss', `-${indicators.avgLoss.toFixed(2)} EGP`, 'Minimize Drawdowns', 'NET LOSS'],
@@ -186,8 +172,8 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       ['Gross Profit', `+${indicators.grossProfit.toFixed(2)} EGP`, 'Gross Wins', 'GAINS'],
       ['Gross Loss', `-${indicators.grossLoss.toFixed(2)} EGP`, 'Gross Losses', 'LOSSES'],
       ['Net Realized P&L', `${indicators.netRealized >= 0 ? '+' : ''}${indicators.netRealized.toFixed(2)} EGP`, '> 0.00 EGP', indicators.netRealized >= 0 ? 'PROFITABLE' : 'NET LOSS'],
-      ['Max Peak-to-Trough Drawdown', `-${indicators.maxDrawdownPercent.toFixed(2)}% (-${indicators.maxDrawdownEgp.toFixed(2)} EGP)`, '<= 10.0%', indicators.maxDrawdownPercent <= 10 ? 'TARGET MET' : 'ELEVATED RISK'],
-      ['Recovery Factor', indicators.recoveryFactor.toFixed(2), '> 2.00', indicators.recoveryFactor >= 2 ? 'RESILIENT' : 'MODERATE'],
+      ['Max Peak-to-Trough Drawdown', indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}% (-${indicators.maxDrawdownEgp!.toFixed(2)} EGP)` : 'N/A — historical equity data unavailable', '<= 10.0%', indicators.drawdownAvailable ? (indicators.maxDrawdownPercent! <= 10 ? 'TARGET MET' : 'ELEVATED RISK') : 'NOT AVAILABLE'],
+      ['Recovery Factor', indicators.recoveryFactor === null ? 'N/A' : formatRatio(indicators.recoveryFactor), '> 2.00', indicators.recoveryFactor === null ? 'NOT AVAILABLE' : indicators.recoveryFactor >= 2 ? 'RESILIENT' : 'MODERATE'],
       ['Brokerage Commissions Paid', `${indicators.totalFees.toFixed(2)} EGP`, 'Execution Friction', 'COSTS'],
       ['Average Holding Period', `${indicators.avgHoldDays} days`, 'Swing: 1-14 days', 'DURATION'],
     ];
@@ -312,7 +298,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.profitFactor >= 1.5 ? 'text-emerald-400' : indicators.profitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'}`}>
-              {indicators.profitFactor >= 99 ? '99.9+' : indicators.profitFactor.toFixed(2)}
+              {formatRatio(indicators.profitFactor)}
             </span>
             <span className="text-[11px] text-slate-500 font-mono">Gross Gain/Loss</span>
           </div>
@@ -333,7 +319,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.payoffRatio >= 1.5 ? 'text-purple-300' : 'text-slate-200'}`}>
-              {indicators.payoffRatio >= 99 ? '99.9+' : indicators.payoffRatio.toFixed(2)} : 1
+              {formatRatio(indicators.payoffRatio)} : 1
             </span>
           </div>
           <div className="mt-1 text-[10px] text-slate-400 flex items-center gap-1">
@@ -347,11 +333,11 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.maxDrawdownPercent <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
-              -{indicators.maxDrawdownPercent.toFixed(2)}%
+            <span className={`text-xl sm:text-2xl font-bold font-mono ${!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent! <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
+              {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
             </span>
             <span className="text-[11px] text-slate-500 font-mono">
-              (-{formatEgp(indicators.maxDrawdownEgp)} EGP)
+              {indicators.drawdownAvailable ? `(-${formatEgp(indicators.maxDrawdownEgp!)} EGP)` : '(historical equity unavailable)'}
             </span>
           </div>
           <div className="mt-1 text-[10px] text-slate-400">
@@ -420,7 +406,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                       : 'text-rose-400'
                   }
                 >
-                  {indicators.profitFactor >= 99 ? '99.9+' : indicators.profitFactor.toFixed(2)}
+                  {formatRatio(indicators.profitFactor)}
                 </span>
               </td>
               <td className="py-3 px-4 text-slate-300">Target: &gt; 1.50 (Breakeven = 1.00)</td>
@@ -461,7 +447,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 <div className="text-[11px] text-slate-400">Average Winning Trade divided by Average Losing Trade</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-purple-300">
-                {indicators.payoffRatio >= 99 ? '99.9+' : indicators.payoffRatio.toFixed(2)} : 1
+                {formatRatio(indicators.payoffRatio)} : 1
               </td>
               <td className="py-3 px-4 text-slate-300">Target: &gt; 1.50 : 1</td>
               <td className="py-3 px-4 text-right">
@@ -601,7 +587,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 <div className="text-[11px] text-slate-400">Ratio of winning positions count to losing positions count</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-white">
-                {indicators.winLossRatio.toFixed(2)} : 1
+                {formatRatio(indicators.winLossRatio)} : 1
               </td>
               <td className="py-3 px-4 text-slate-300">Target: &gt; 1.00 : 1</td>
               <td className="py-3 px-4 text-right">
@@ -829,24 +815,26 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 <div className="text-[11px] text-slate-400">Maximum cumulative equity drop from historical peak</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
-                <span className={indicators.maxDrawdownPercent <= 5 ? 'text-emerald-400' : 'text-amber-400'}>
-                  -{indicators.maxDrawdownPercent.toFixed(2)}%
+                <span className={!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : 'text-amber-400'}>
+                  {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
                 </span>
                 <span className="block text-[10px] text-slate-400 font-normal">
-                  -{formatEgp(indicators.maxDrawdownEgp)} EGP
+                  {indicators.drawdownAvailable ? `-${formatEgp(indicators.maxDrawdownEgp!)} EGP` : 'Historical equity data unavailable'}
                 </span>
               </td>
               <td className="py-3 px-4 text-slate-300">Target: &le; 10.0% of Capital</td>
               <td className="py-3 px-4 text-right">
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    indicators.maxDrawdownPercent <= 10
+                    !indicators.drawdownAvailable
+                      ? 'bg-slate-800 text-slate-300 border border-slate-700'
+                      : indicators.maxDrawdownPercent! <= 10
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                       : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                   }`}
                 >
-                  {indicators.maxDrawdownPercent <= 10 ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                  {indicators.maxDrawdownPercent <= 10 ? 'Risk Contained (<=10%)' : 'High Drawdown (>10%)'}
+                  {indicators.drawdownAvailable && indicators.maxDrawdownPercent! <= 10 ? <CheckCircle2 className="w-3 h-3" /> : <Info className="w-3 h-3" />}
+                  {!indicators.drawdownAvailable ? 'Awaiting Historical Equity' : indicators.maxDrawdownPercent! <= 10 ? 'Risk Contained (<=10%)' : 'High Drawdown (>10%)'}
                 </span>
               </td>
             </tr>
@@ -861,19 +849,21 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 <div className="text-[11px] text-slate-400">Measures ability of system to generate profits relative to drawdown depth</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-cyan-300">
-                {indicators.recoveryFactor >= 99 ? '99.9+' : indicators.recoveryFactor.toFixed(2)}x
+                {indicators.recoveryFactor === null ? 'N/A' : `${formatRatio(indicators.recoveryFactor)}x`}
               </td>
               <td className="py-3 px-4 text-slate-300">Target: &gt; 2.0x</td>
               <td className="py-3 px-4 text-right">
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    indicators.recoveryFactor >= 2
+                    indicators.recoveryFactor === null
+                      ? 'bg-slate-800 text-slate-300 border border-slate-700'
+                      : indicators.recoveryFactor >= 2
                       ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
                       : 'bg-slate-800 text-slate-300 border border-slate-700'
                   }`}
                 >
                   <CheckCircle2 className="w-3 h-3" />
-                  {indicators.recoveryFactor >= 2 ? 'Resilient Edge (>2.0x)' : 'Moderate Resilience'}
+                  {indicators.recoveryFactor === null ? 'Awaiting Historical Equity' : indicators.recoveryFactor >= 2 ? 'Resilient Edge (>2.0x)' : 'Moderate Resilience'}
                 </span>
               </td>
             </tr>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Position,
   ClosedTrade,
@@ -46,6 +46,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
+import { getHistoricalPricesForTransactions } from './services/historicalPriceStore';
+import { buildPerformanceEngineResult } from './services/performanceEngine';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -183,9 +185,51 @@ export default function App() {
     return calculatePortfolioMetrics(positions, cashBalance, closedTrades, tickers, transactions);
   }, [positions, cashBalance, closedTrades, tickers, transactions]);
 
+  const [historicalDrawdown, setHistoricalDrawdown] = useState<{
+    maxDrawdownEgp: number;
+    maxDrawdownPercent: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'reports') return;
+
+    let cancelled = false;
+    setHistoricalDrawdown(null);
+
+    const loadHistoricalPerformance = async () => {
+      const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
+      if (!hasMarketTransactions) return;
+
+      try {
+        const historicalPrices = await getHistoricalPricesForTransactions(transactions);
+        const result = buildPerformanceEngineResult(transactions, historicalPrices);
+        const hasCompleteCurve =
+          result.dataQuality.valuationDays >= 2 &&
+          result.dataQuality.incompleteDays === 0 &&
+          result.dataQuality.missingTickers.length === 0;
+
+        if (!cancelled && hasCompleteCurve) {
+          setHistoricalDrawdown({
+            maxDrawdownEgp: result.maxDrawdownEgp,
+            maxDrawdownPercent: result.maxDrawdownPercent,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) setHistoricalDrawdown(null);
+        console.warn('Historical performance data is unavailable; drawdown will remain N/A.', error);
+      }
+    };
+
+    void loadHistoricalPerformance();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, transactions]);
+
   const stats: PerformanceStats = useMemo(() => {
-    return calculatePerformanceStats(closedTrades, positions);
-  }, [closedTrades, positions]);
+    const baseStats = calculatePerformanceStats(closedTrades, positions);
+    return historicalDrawdown ? { ...baseStats, ...historicalDrawdown } : baseStats;
+  }, [closedTrades, positions, historicalDrawdown]);
 
   // Execute Undo Action
   const executeUndo = () => {

@@ -79,6 +79,26 @@ describe('portfolio reconciliation', () => {
     expect(report.discrepanciesFound).toHaveLength(0);
   });
 
+  it('keeps implicit opening capital when a manual cash adjustment is present', () => {
+    const report = reconcilePortfolioFromLedger([
+      tx({
+        id: 'cash-adjustment',
+        type: 'SELL',
+        ticker: 'CASH',
+        companyName: 'Cash Balance Adjustment',
+        sector: 'Liquid Buying Power',
+        shares: 250,
+        price: 1,
+        totalAmount: 250,
+        cashFlowType: 'CASH_ADJUSTMENT',
+        cashFlowAmount: -250,
+      }),
+    ], [], 1000);
+    expect(report.reconciledCashBalance).toBe(750);
+    expect(report.reconciledPositions).toHaveLength(0);
+    expect(report.discrepanciesFound).toHaveLength(0);
+  });
+
   it('treats dividends as cash inflows without creating an equity position', () => {
     const report = reconcilePortfolioFromLedger([tx({ id: 'dividend', type: 'DIVIDEND' as TradeTransaction['type'], ticker: 'ABC', shares: 1, price: 5, totalAmount: 5 })], [], 1000);
     expect(report.reconciledCashBalance).toBe(1005);
@@ -93,5 +113,40 @@ describe('portfolio reconciliation', () => {
     const afterDelete = reconcilePortfolioFromLedger([buy], [], 5000);
     expect(afterDelete.reconciledPositions[0].shares).toBe(100);
     expect(afterDelete.reconciledClosedTrades).toHaveLength(0);
+  });
+
+  it('removing a duplicate TALM buy deterministically reduces shares and releases its exact cash outflow', () => {
+    const firstBuy = tx({
+      id: 'talm-buy-a',
+      ticker: 'TALM',
+      companyName: 'TALM',
+      shares: 320,
+      price: 24.99,
+      fees: 7,
+      totalAmount: 8003.8,
+      date: '2026-09-15T10:00:00Z',
+    });
+    const duplicateBuy = tx({
+      id: 'talm-buy-b',
+      ticker: 'TALM',
+      companyName: 'TALM',
+      shares: 320,
+      price: 24.99,
+      fees: 7,
+      totalAmount: 8003.8,
+      date: '2026-09-15T10:01:00Z',
+    });
+
+    const withDuplicate = reconcilePortfolioFromLedger([firstBuy, duplicateBuy], [], 20000);
+    expect(withDuplicate.reconciledPositions).toHaveLength(1);
+    expect(withDuplicate.reconciledPositions[0].ticker).toBe('TALM');
+    expect(withDuplicate.reconciledPositions[0].shares).toBe(640);
+    expect(withDuplicate.reconciledCashBalance).toBeCloseTo(3992.4, 2);
+
+    const afterDelete = reconcilePortfolioFromLedger([firstBuy], [], 20000);
+    expect(afterDelete.reconciledPositions).toHaveLength(1);
+    expect(afterDelete.reconciledPositions[0].shares).toBe(320);
+    expect(afterDelete.reconciledCashBalance).toBeCloseTo(11996.2, 2);
+    expect(afterDelete.reconciledCashBalance - withDuplicate.reconciledCashBalance).toBeCloseTo(8003.8, 2);
   });
 });

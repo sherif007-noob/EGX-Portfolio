@@ -178,8 +178,8 @@ export default function App() {
 
   // Performance Metrics & Indicators (Centralized calculation engine)
   const metrics: PortfolioMetrics = useMemo(() => {
-    return calculatePortfolioMetrics(positions, cashBalance, closedTrades, tickers);
-  }, [positions, cashBalance, closedTrades, tickers]);
+    return calculatePortfolioMetrics(positions, cashBalance, closedTrades, tickers, transactions);
+  }, [positions, cashBalance, closedTrades, tickers, transactions]);
 
   const stats: PerformanceStats = useMemo(() => {
     return calculatePerformanceStats(closedTrades, positions);

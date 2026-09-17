@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - historical-performance-integration
-    paths:
-      - .github/workflows/apply-historical-performance-integration.yml
 
 permissions:
   contents: write
@@ -24,82 +22,8 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Patch App historical performance bridge
-        run: |
-          python <<'PY'
-          from pathlib import Path
-
-          path = Path('src/App.tsx')
-          text = path.read_text()
-
-          old = "import React, { useState, useMemo, useCallback, useRef } from 'react';"
-          new = "import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';"
-          if old not in text:
-              raise SystemExit('React import anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = "import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';"
-          new = """import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
-import { getHistoricalPricesForTransactions } from './services/historicalPriceStore';
-import { buildPerformanceEngineResult } from './services/performanceEngine';"""
-          if old not in text:
-              raise SystemExit('service import anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = """  const stats: PerformanceStats = useMemo(() => {
-    return calculatePerformanceStats(closedTrades, positions);
-  }, [closedTrades, positions]);"""
-          new = """  const [historicalDrawdown, setHistoricalDrawdown] = useState<{
-    maxDrawdownEgp: number;
-    maxDrawdownPercent: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (activeTab !== 'reports') return;
-
-    let cancelled = false;
-    setHistoricalDrawdown(null);
-
-    const loadHistoricalPerformance = async () => {
-      const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
-      if (!hasMarketTransactions) return;
-
-      try {
-        const historicalPrices = await getHistoricalPricesForTransactions(transactions);
-        const result = buildPerformanceEngineResult(transactions, historicalPrices);
-        const hasCompleteCurve =
-          result.dataQuality.valuationDays >= 2 &&
-          result.dataQuality.incompleteDays === 0 &&
-          result.dataQuality.missingTickers.length === 0;
-
-        if (!cancelled && hasCompleteCurve) {
-          setHistoricalDrawdown({
-            maxDrawdownEgp: result.maxDrawdownEgp,
-            maxDrawdownPercent: result.maxDrawdownPercent,
-          });
-        }
-      } catch (error) {
-        if (!cancelled) setHistoricalDrawdown(null);
-        console.warn('Historical performance data is unavailable; drawdown will remain N/A.', error);
-      }
-    };
-
-    void loadHistoricalPerformance();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeTab, transactions]);
-
-  const stats: PerformanceStats = useMemo(() => {
-    const baseStats = calculatePerformanceStats(closedTrades, positions);
-    return historicalDrawdown ? { ...baseStats, ...historicalDrawdown } : baseStats;
-  }, [closedTrades, positions, historicalDrawdown]);"""
-          if old not in text:
-              raise SystemExit('stats anchor not found')
-          text = text.replace(old, new, 1)
-
-          path.write_text(text)
-          PY
+      - name: Apply historical performance bridge
+        run: python3 scripts/applyHistoricalPerformanceIntegration.py
 
       - name: Install dependencies
         run: npm ci
@@ -113,11 +37,12 @@ import { buildPerformanceEngineResult } from './services/performanceEngine';"""
       - name: Build
         run: npm run build
 
-      - name: Commit verified integration and remove temporary workflow
+      - name: Commit verified integration
         run: |
           rm .github/workflows/apply-historical-performance-integration.yml
+          rm scripts/applyHistoricalPerformanceIntegration.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/App.tsx .github/workflows/apply-historical-performance-integration.yml
+          git add src/App.tsx .github/workflows/apply-historical-performance-integration.yml scripts/applyHistoricalPerformanceIntegration.py
           git commit -m "fix: connect historical drawdown to performance reports"
           git push origin HEAD:historical-performance-integration

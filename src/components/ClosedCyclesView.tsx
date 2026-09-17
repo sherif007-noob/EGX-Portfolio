@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
+import { calculatePerformanceStats } from '../services/portfolioAccounting';
 import {
   RotateCcw,
   TrendingUp,
@@ -199,19 +200,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
   // Overall Statistics for Closed Cycles
   const summary = useMemo(() => {
-    const totalCount = enrichedCycles.length;
-    const winTrades = enrichedCycles.filter((c) => c.outcome === 'WIN');
-    const lossTrades = enrichedCycles.filter((c) => c.outcome === 'LOSS');
-    const breakevenTrades = enrichedCycles.filter((c) => c.outcome === 'BREAKEVEN');
-
+    const performance = calculatePerformanceStats(enrichedCycles);
     const totalRealizedPnl = enrichedCycles.reduce((acc, c) => acc + c.realizedPnlEgp, 0);
-    const totalWinningPnl = winTrades.reduce((acc, c) => acc + c.realizedPnlEgp, 0);
-    const totalLosingPnl = Math.abs(lossTrades.reduce((acc, c) => acc + c.realizedPnlEgp, 0));
-    const profitFactor = totalLosingPnl > 0 ? totalWinningPnl / totalLosingPnl : totalWinningPnl > 0 ? 9.99 : 1.0;
-
-    const winRate = totalCount > 0 ? (winTrades.length / totalCount) * 100 : 0;
-    const avgReturnPct = totalCount > 0 ? enrichedCycles.reduce((acc, c) => acc + c.realizedPnlPercent, 0) / totalCount : 0;
-    const avgHoldingDays = totalCount > 0 ? Math.round(enrichedCycles.reduce((acc, c) => acc + c.holdingDays, 0) / totalCount) : 0;
     const totalFees = enrichedCycles.reduce((acc, c) => acc + (c.totalFees || 0), 0);
 
     const multiPhaseCount = enrichedCycles.filter(
@@ -219,15 +209,15 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
     ).length;
 
     return {
-      totalCount,
-      winCount: winTrades.length,
-      lossCount: lossTrades.length,
-      breakevenCount: breakevenTrades.length,
+      totalCount: performance.totalTrades,
+      winCount: performance.winningTrades,
+      lossCount: performance.losingTrades,
+      breakevenCount: performance.breakevenTrades,
       totalRealizedPnl,
-      profitFactor,
-      winRate,
-      avgReturnPct,
-      avgHoldingDays,
+      profitFactor: performance.profitFactor,
+      winRate: performance.winRate,
+      avgReturnPct: performance.avgReturnPercent ?? 0,
+      avgHoldingDays: Math.round(performance.avgHoldDays ?? 0),
       totalFees,
       multiPhaseCount,
     };
@@ -323,7 +313,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             <Percent className="w-3.5 h-3.5 text-blue-400" />
           </div>
           <div className="mt-2 text-lg font-black font-mono text-white">
-            {summary.winRate.toFixed(1)}%
+            {summary.winRate === null ? 'N/A' : `${summary.winRate.toFixed(1)}%`}
           </div>
           <div className="text-[10px] text-slate-500 mt-0.5">
             {summary.winCount}W / {summary.lossCount}L / {summary.breakevenCount}BE
@@ -337,7 +327,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
           </div>
           <div className="mt-2 text-lg font-black font-mono text-purple-300">
-            {summary.profitFactor.toFixed(2)}
+            {summary.profitFactor === null ? 'N/A' : Number.isFinite(summary.profitFactor) ? summary.profitFactor.toFixed(2) : '∞'}
           </div>
           <div className="text-[10px] text-slate-500 mt-0.5">Wins / Gross Losses</div>
         </div>

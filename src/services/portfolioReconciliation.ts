@@ -322,8 +322,13 @@ export function reconcilePortfolioFromLedger(
     }
   }
 
-  // Open cycles are intentionally not finalized. A ClosedTrade projection is
-  // created only after the ledger shows the corresponding position fully closed.
+  // A partially realized cycle is reportable because the ledger contains an
+  // executed SELL and therefore realized P&L. A buy-only cycle remains open and
+  // must never be projected as a ClosedTrade.
+  Object.values(activeCyclesByTicker)
+    .filter((cycle) => cycle.sellTransactionIds.length > 0)
+    .forEach(finalizeCycle);
+
   const reconciledPositions: Position[] = [];
   Object.entries(openLotsByTicker).forEach(([ticker, lots]) => {
     const shares = lots.reduce((sum, lot) => sum + lot.shares, 0);

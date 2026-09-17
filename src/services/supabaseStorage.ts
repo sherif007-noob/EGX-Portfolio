@@ -92,7 +92,7 @@ function enqueueSave(data: PortfolioWrite): Promise<boolean> {
   return next;
 }
 
-export async function savePortfolioToFirestore(data: PortfolioWrite, allowEmpty = false) {
+export async function savePortfolioToFirestore(data: PortfolioWrite, allowEmpty = false, _reason?: string) {
   if (!allowEmpty && !(data.positions?.length || data.transactions?.length)) return false;
   return enqueueSave(data);
 }

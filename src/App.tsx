@@ -72,6 +72,8 @@ export default function App() {
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
     addCashTransaction,
+    editCashTransaction,
+    deleteCashTransaction,
     reconcileLedger,
     importBackup,
     updateTickers,
@@ -977,10 +979,9 @@ export default function App() {
             closedTrades={closedTrades}
             tradeTransactions={transactions}
             capitalDeposits={capitalDeposits}
-            onAddCashTransaction={(amount, type, notes) => {
-              addCashTransaction(amount, type, notes);
-              showToast(`${type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} of ${amount.toLocaleString()} EGP recorded and synced.`, 'success');
-            }}
+            onAddCashTransaction={addCashTransaction}
+            onEditCashTransaction={editCashTransaction}
+            onDeleteCashTransaction={deleteCashTransaction}
             onReconcileLedger={() => {
               const report = reconcileLedger();
               showToast(`Reconciled ${report.transactionsProcessed} transactions: Cash adjusted to ${report.reconciledCashBalance.toLocaleString()} EGP.`, 'success');

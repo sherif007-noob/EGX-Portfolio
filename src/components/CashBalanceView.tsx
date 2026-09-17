@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { getTodayISO } from '../utils/dateUtils';
+import { buildCashHistory } from '../services/cashLedger';
 import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliation';
 
 interface CashBalanceViewProps {
@@ -34,11 +35,11 @@ interface CashBalanceViewProps {
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
   capitalDeposits?: number;
-  onAddCashTransaction?: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => void;
+  onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => Promise<boolean>;
+  onEditCashTransaction: (tx: CashTransaction) => Promise<boolean>;
+  onDeleteCashTransaction: (id: string) => Promise<boolean>;
   onReconcileLedger?: () => void;
 }
-
-const STORAGE_KEY_TRANSACTIONS = 'egx_cash_transactions_v2_reconciled';
 
 export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   cashBalance,
@@ -49,6 +50,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   tradeTransactions = [],
   capitalDeposits,
   onAddCashTransaction,
+  onEditCashTransaction,
+  onDeleteCashTransaction,
   onReconcileLedger,
 }) => {
   const [activeAction, setActiveAction] = useState<'deposit' | 'withdraw'>('deposit');
@@ -72,40 +75,24 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [editDate, setEditDate] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
 
-  // Transactions Ledger State
-  const [transactions, setTransactions] = useState<CashTransaction[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    // Seed initial balance transaction matching account capital or current cash
-    const initialSeed = (capitalDeposits && capitalDeposits > 0)
-      ? capitalDeposits
-      : (cashBalance > 0 ? cashBalance : 0);
-    return [
-      {
-        id: 'init-cash-seed',
-        type: 'DEPOSIT',
-        amount: initialSeed,
-        date: '2026-01-01',
-        notes: 'Initial Account Capital Allocation',
-        balanceAfter: initialSeed,
-      },
-    ];
-  });
+  const transactions = useMemo(() => buildCashHistory({
+    transactions: tradeTransactions, positions, tickers: [], capitalDeposits: capitalDeposits ?? 0,
+  }), [tradeTransactions, positions, capitalDeposits]);
 
-  useEffect(() => {
+  const mutationPending = useRef(false);
+  const saveCashChange = async (save: () => Promise<boolean>) => {
+    if (mutationPending.current) return false;
+    mutationPending.current = true;
     try {
-      localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions));
-    } catch {
-      // ignore
+      if (!await save()) throw new Error('Cash change could not be saved. Please try again.');
+      return true;
+    } catch (error) {
+      setFeedbackMessage({ text: error instanceof Error ? error.message : 'Cash change could not be saved.', type: 'error' });
+      return false;
+    } finally {
+      mutationPending.current = false;
     }
-  }, [transactions]);
+  };
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -130,7 +117,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
   // 1. Net Capital Inflows: Uses authoritative capitalDeposits if available, or derives from ledger
   const netCapitalDeposited = useMemo(() => {
-    if (typeof capitalDeposits === 'number' && capitalDeposits > 0) {
+    if (typeof capitalDeposits === 'number' && Number.isFinite(capitalDeposits)) {
       return capitalDeposits;
     }
     return totalDeposits - totalWithdrawals;
@@ -180,7 +167,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   };
 
   // Save changes to edited transaction
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTransaction) return;
 
@@ -210,9 +197,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       balanceAfter: newBalance,
     };
 
-    const updatedList = transactions.map((t) => (t.id === editingTransaction.id ? updatedTx : t));
-    setTransactions(updatedList);
-    onUpdateCashBalance(newBalance);
+    if (!await saveCashChange(() => onEditCashTransaction(updatedTx))) return;
     setEditingTransaction(null);
 
     setFeedbackMessage({
@@ -223,7 +208,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   };
 
   // Handle Deposit
-  const handleConfirmDeposit = (e: React.FormEvent) => {
+  const handleConfirmDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amountNum = parseFloat(depositAmount);
     if (!amountNum || amountNum <= 0) {
@@ -233,21 +218,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance + amountNum).toFixed(2));
     const noteText = `${depositMethod}${depositNotes ? ` - ${depositNotes}` : ''}`;
-    const newTx: CashTransaction = {
-      id: `dep-${Date.now()}`,
-      type: 'DEPOSIT',
-      amount: amountNum,
-      date: depositDate || new Date().toISOString().slice(0, 10),
-      notes: noteText,
-      balanceAfter: newBalance,
-    };
-
-    setTransactions([newTx, ...transactions]);
-    if (onAddCashTransaction) {
-      onAddCashTransaction(amountNum, 'DEPOSIT', noteText);
-    } else {
-      onUpdateCashBalance(newBalance);
-    }
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'DEPOSIT', noteText, depositDate || getTodayISO()))) return;
     setDepositAmount('');
     setDepositNotes('');
     setFeedbackMessage({
@@ -258,7 +229,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   };
 
   // Handle Withdrawal
-  const handleConfirmWithdrawal = (e: React.FormEvent) => {
+  const handleConfirmWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
     const amountNum = parseFloat(withdrawAmount);
     if (!amountNum || amountNum <= 0) {
@@ -276,21 +247,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance - amountNum).toFixed(2));
     const noteText = `${withdrawDestination}${withdrawNotes ? ` - ${withdrawNotes}` : ''}`;
-    const newTx: CashTransaction = {
-      id: `wdr-${Date.now()}`,
-      type: 'WITHDRAWAL',
-      amount: amountNum,
-      date: withdrawDate || new Date().toISOString().slice(0, 10),
-      notes: noteText,
-      balanceAfter: newBalance,
-    };
-
-    setTransactions([newTx, ...transactions]);
-    if (onAddCashTransaction) {
-      onAddCashTransaction(amountNum, 'WITHDRAW', noteText);
-    } else {
-      onUpdateCashBalance(newBalance);
-    }
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'WITHDRAW', noteText, withdrawDate || getTodayISO()))) return;
     setWithdrawAmount('');
     setWithdrawNotes('');
     setFeedbackMessage({
@@ -300,7 +257,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     setTimeout(() => setFeedbackMessage(null), 5000);
   };
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string) => {
     const tx = transactions.find((t) => t.id === id);
     if (!tx) return;
 
@@ -311,8 +268,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       revertedBalance = Number((cashBalance + tx.amount).toFixed(2));
     }
 
-    setTransactions(transactions.filter((t) => t.id !== id));
-    onUpdateCashBalance(revertedBalance);
+    if (!await saveCashChange(() => onDeleteCashTransaction(id))) return;
     setFeedbackMessage({
       text: `${tx.type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} record of ${formatEgp(tx.amount)} EGP removed. Cash balance adjusted to ${formatEgp(revertedBalance)} EGP.`,
       type: 'success',

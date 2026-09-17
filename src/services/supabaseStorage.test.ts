@@ -102,4 +102,35 @@ describe('ledger storage mutations', () => {
     expect(await storage.appendTransactionToFirestore(buy('buy-2'))).toBe(true);
     expect(remote.transactions).toHaveLength(2);
   });
+
+  it('persists cash edits and deletions and reconstructs them on reload', async () => {
+    const { applyCashLedgerEvent, changeCashLedgerEntry } = await import('./cashLedger');
+    const deposited = applyCashLedgerEvent({ ...remote, capitalDeposits: 1000, tickers: [] }, 'DEPOSIT', 200, 'Bank', '2026-01-03');
+    await storage.forceFullSyncToFirestore(deposited);
+    const edited = changeCashLedgerEntry(deposited, deposited.transaction.id, { type: 'DEPOSIT', amount: 300, date: '2026-01-04' });
+    await storage.forceFullSyncToFirestore(edited);
+    const reloaded = await storage.loadPortfolioFromFirestore();
+    expect(reloaded?.capitalDeposits).toBe(1300);
+    expect(reloaded?.cashBalance).toBe(1199);
+    expect(reloaded?.transactions.find(tx => tx.id === deposited.transaction.id)?.date).toBe('2026-01-04');
+    const deleted = changeCashLedgerEntry(edited, deposited.transaction.id, null);
+    await storage.forceFullSyncToFirestore(deleted);
+    const final = await storage.loadPortfolioFromFirestore();
+    expect(final?.capitalDeposits).toBe(1000);
+    expect(final?.cashBalance).toBe(899);
+    expect(final?.transactions.some(tx => tx.id === deposited.transaction.id)).toBe(false);
+  });
+
+  it('leaves the saved cash row intact after failure and permits a retry', async () => {
+    const { applyCashLedgerEvent, changeCashLedgerEntry } = await import('./cashLedger');
+    const deposited = applyCashLedgerEvent({ ...remote, capitalDeposits: 1000, tickers: [] }, 'DEPOSIT', 200);
+    await storage.forceFullSyncToFirestore(deposited);
+    const deleted = changeCashLedgerEntry(deposited, deposited.transaction.id, null);
+    vi.mocked(savePortfolioToSupabase).mockResolvedValueOnce(false);
+    expect(await storage.forceFullSyncToFirestore(deleted)).toBe(false);
+    expect(remote.transactions.some(tx => tx.id === deposited.transaction.id)).toBe(true);
+    expect(await storage.forceFullSyncToFirestore(deleted)).toBe(true);
+    expect(remote.transactions.some(tx => tx.id === deposited.transaction.id)).toBe(false);
+  });
+
 });

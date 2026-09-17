@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCashLedgerEvent } from './cashLedger';
+import { applyCashLedgerEvent, changeCashLedgerEntry, buildCashHistory, rebuildAfterLedgerChange } from './cashLedger';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import type { TradeTransaction } from '../types';
 
@@ -79,5 +79,83 @@ describe('cash ledger events', () => {
 
   it.each([NaN, Infinity, -10, 0, 0.001])('rejects invalid deposit amount %s', (amount) => {
     expect(() => applyCashLedgerEvent(legacy(), 'DEPOSIT', amount)).toThrow();
+  });
+});
+
+
+describe('cash history editing and deletion', () => {
+  const deposited = () => applyCashLedgerEvent(legacy(), 'DEPOSIT', 200, 'Bank', '2026-01-05');
+
+  it('uses ledger IDs and selected dates in the history', () => {
+    const state = deposited();
+    const history = buildCashHistory(state);
+    expect(history[0]).toMatchObject({ id: state.transaction.id, date: '2026-01-05', amount: 200, balanceAfter: 999 });
+    expect(history).toHaveLength(2);
+  });
+
+  it('edits the original row and recalculates capital and cash without an adjustment', () => {
+    const state = deposited();
+    const next = changeCashLedgerEntry(state, state.transaction.id, { type: 'DEPOSIT', amount: 300, date: '2026-01-06', notes: 'Corrected' });
+    expect(next.transactions).toHaveLength(state.transactions.length);
+    expect(next.transactions.find(tx => tx.id === state.transaction.id)).toMatchObject({ totalAmount: 300, date: '2026-01-06', notes: 'Corrected' });
+    expect(next.transactions.some(tx => tx.cashFlowType === 'CASH_ADJUSTMENT')).toBe(false);
+    expect(next.capitalDeposits).toBe(1300);
+    expect(next.cashBalance).toBe(1099);
+    expectReloadStable({ ...next, transaction: next.transactions[0] });
+  });
+
+  it('changes a deposit into a withdrawal using the correct signed capital delta', () => {
+    const state = deposited();
+    const next = changeCashLedgerEntry(state, state.transaction.id, { type: 'WITHDRAWAL', amount: 100, date: '2026-01-05' });
+    expect(next.capitalDeposits).toBe(900);
+    expect(next.cashBalance).toBe(699);
+    expect(buildCashHistory(next)[0].type).toBe('WITHDRAWAL');
+  });
+
+  it('deletes the actual deposit and retains trades and opening capital', () => {
+    const state = deposited();
+    const next = changeCashLedgerEntry(state, state.transaction.id, null);
+    expect(next.transactions.some(tx => tx.id === state.transaction.id)).toBe(false);
+    expect(next.capitalDeposits).toBe(1000);
+    expect(next.cashBalance).toBe(799);
+    expect(next.positions[0].shares).toBe(10);
+    expectReloadStable({ ...next, transaction: next.transactions[0] });
+  });
+
+  it('never restores the last deleted deposit as implicit capital', () => {
+    const state = applyCashLedgerEvent({ ...legacy(), transactions: [], capitalDeposits: 0 }, 'DEPOSIT', 1000);
+    const next = changeCashLedgerEntry(state, state.transaction.id, null);
+    expect(next.transactions).toEqual([]);
+    expect(next.capitalDeposits).toBe(0);
+    expect(next.cashBalance).toBe(0);
+    expect(buildCashHistory(next)).toEqual([]);
+  });
+
+  it('supports edits and deletion of legacy opening capital without fabricating a new balance correction', () => {
+    const state = legacy();
+    const opening = buildCashHistory(state)[0];
+    const edited = changeCashLedgerEntry(state, opening.id, { ...opening, amount: 800 });
+    expect(edited.capitalDeposits).toBe(800);
+    expect(edited.cashBalance).toBe(599);
+    const deleted = changeCashLedgerEntry(state, opening.id, null);
+    expect(deleted.cashBalance).toBe(-201);
+    expect(deleted.capitalDeposits).toBe(0);
+    expect(buildCashHistory(deleted)).toEqual([]);
+    expectReloadStable({ ...deleted, transaction: buy });
+  });
+
+  it('keeps capital correct when a cash row is deleted through the general journal', () => {
+    const state = deposited();
+    const next = rebuildAfterLedgerChange(state, state.transactions.filter(tx => tx.id !== state.transaction.id));
+    expect(next.capitalDeposits).toBe(1000);
+    expect(next.cashBalance).toBe(799);
+  });
+
+  it('rejects stale IDs and invalid calendar dates without changing inputs', () => {
+    const state = deposited();
+    const original = JSON.stringify(state);
+    expect(() => changeCashLedgerEntry(state, 'missing', null)).toThrow('not found');
+    expect(() => changeCashLedgerEntry(state, state.transaction.id, { type: 'DEPOSIT', amount: 200, date: '2026-02-30' })).toThrow('valid date');
+    expect(JSON.stringify(state)).toBe(original);
   });
 });

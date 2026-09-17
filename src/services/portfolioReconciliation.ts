@@ -55,7 +55,7 @@ function transactionTime(tx: TradeTransaction): number {
   return Number.isFinite(date) ? date : Number.POSITIVE_INFINITY;
 }
 
-function sortTransactions(transactions: TradeTransaction[]): TradeTransaction[] {
+export function sortTransactions(transactions: TradeTransaction[]): TradeTransaction[] {
   return transactions.map(normalizeTransaction).sort((a, b) => {
     const timeA = transactionTime(a);
     const timeB = transactionTime(b);

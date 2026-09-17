@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector } from '../types';
+import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector, CashTransaction } from '../types';
 import { INITIAL_EGX_TICKERS } from '../data/egxTickers';
 import {
   INITIAL_POSITIONS,
@@ -33,7 +33,7 @@ import {
   calculateHoldingDays,
 } from '../services/portfolioAccounting';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
-import { applyCashLedgerEvent } from '../services/cashLedger';
+import { applyCashLedgerEvent, changeCashLedgerEntry, rebuildAfterLedgerChange } from '../services/cashLedger';
 
 const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
 const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v3_reconciled';
@@ -481,44 +481,62 @@ export function usePortfolioState() {
     return updatedTransactions;
   }, [positions, transactions, tickers, capitalDeposits]);
 
-  const editTransaction = useCallback((updatedTx: TradeTransaction) => {
-    const normalized = normalizeTransaction(updatedTx);
-    const updatedTransactions = transactions.map((t) => (t.id === normalized.id ? normalized : t));
-    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
-    setTransactions(updatedTransactions);
-    setPositions(report.reconciledPositions);
-    setClosedTrades(report.reconciledClosedTrades);
-    setCashBalance(report.reconciledCashBalance);
-    updateFirestoreTransactions(updatedTransactions, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance, capitalDeposits);
-    return updatedTransactions;
-  }, [transactions, tickers, capitalDeposits]);
-
-  const deleteTransaction = useCallback((txId: string) => {
-    const updatedTransactions = transactions.filter((t) => t.id !== txId);
-    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
-    setTransactions(updatedTransactions);
-    setPositions(report.reconciledPositions);
-    setClosedTrades(report.reconciledClosedTrades);
-    setCashBalance(report.reconciledCashBalance);
-    updateFirestoreTransactions(updatedTransactions, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance, capitalDeposits);
-    return updatedTransactions;
-  }, [transactions, tickers, capitalDeposits]);
-
-  const commitCashEvent = useCallback((kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT', amount: number, notes?: string) => {
-    const next = applyCashLedgerEvent({ transactions, positions, tickers, capitalDeposits }, kind, amount, notes);
-    markLocalMutation();
+  const applyLedgerSnapshot = useCallback((next: ReturnType<typeof rebuildAfterLedgerChange>) => {
     setTransactions(next.transactions);
     setPositions(next.positions);
     setClosedTrades(next.closedTrades);
     setCashBalance(next.cashBalance);
     setCapitalDeposits(next.capitalDeposits);
-    const { transaction: _transaction, ...snapshot } = next;
-    return forceFullSyncToFirestore(snapshot);
-  }, [transactions, positions, tickers, capitalDeposits]);
+  }, []);
 
-  const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string) => {
-    return commitCashEvent(type === 'WITHDRAW' ? 'WITHDRAWAL' : type, amount, notes);
+  const editTransaction = useCallback((updatedTx: TradeTransaction) => {
+    const normalized = normalizeTransaction(updatedTx);
+    const updated = transactions.map((t) => t.id === normalized.id ? normalized : t);
+    const next = rebuildAfterLedgerChange({ transactions, positions, tickers, capitalDeposits }, updated);
+    applyLedgerSnapshot(next);
+    void forceFullSyncToFirestore(next);
+    return next.transactions;
+  }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
+
+  const deleteTransaction = useCallback((txId: string) => {
+    const next = rebuildAfterLedgerChange({ transactions, positions, tickers, capitalDeposits }, transactions.filter((t) => t.id !== txId));
+    applyLedgerSnapshot(next);
+    void forceFullSyncToFirestore(next);
+    return next.transactions;
+  }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
+
+  const cashSaveInFlight = useRef(false);
+  const persistCashSnapshot = useCallback(async (next: ReturnType<typeof rebuildAfterLedgerChange>) => {
+    if (cashSaveInFlight.current) return false;
+    cashSaveInFlight.current = true;
+    markLocalMutation();
+    try {
+      const saved = await forceFullSyncToFirestore(next);
+      if (saved) applyLedgerSnapshot(next);
+      return saved;
+    } catch {
+      return false;
+    } finally {
+      cashSaveInFlight.current = false;
+    }
+  }, [applyLedgerSnapshot]);
+
+  const commitCashEvent = useCallback((kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT', amount: number, notes?: string, date?: string) => {
+    const { transaction: _transaction, ...next } = applyCashLedgerEvent({ transactions, positions, tickers, capitalDeposits }, kind, amount, notes, date);
+    return persistCashSnapshot(next);
+  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
+
+  const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => {
+    return commitCashEvent(type === 'WITHDRAW' ? 'WITHDRAWAL' : type, amount, notes, date);
   }, [commitCashEvent]);
+
+  const editCashTransaction = useCallback((tx: CashTransaction) => {
+    return persistCashSnapshot(changeCashLedgerEntry({ transactions, positions, tickers, capitalDeposits }, tx.id, tx));
+  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
+
+  const deleteCashTransaction = useCallback((id: string) => {
+    return persistCashSnapshot(changeCashLedgerEntry({ transactions, positions, tickers, capitalDeposits }, id, null));
+  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
 
   const importBackup = useCallback(async (backup: {
     positions?: Position[];
@@ -650,6 +668,8 @@ export function usePortfolioState() {
     editTransaction,
     deleteTransaction,
     addCashTransaction,
+    editCashTransaction,
+    deleteCashTransaction,
     reconcileLedger,
     importBackup,
     restoreInitialState,

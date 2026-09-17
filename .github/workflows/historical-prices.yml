@@ -19,6 +19,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Sync TradingView historical prices
         env:
-          EGX_FIREBASE_EMAIL: ${{ secrets.EGX_FIREBASE_EMAIL }}
-          EGX_FIREBASE_PASSWORD: ${{ secrets.EGX_FIREBASE_PASSWORD }}
+          SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          FIREBASE_ADMIN_OWNER_UID: ${{ secrets.FIREBASE_ADMIN_OWNER_UID }}
         run: npm run sync:historical

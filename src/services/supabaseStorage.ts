@@ -24,10 +24,14 @@ let lastPriceWriteTimestamp = 0;
 let saveQueue: Promise<boolean> = Promise.resolve(true);
 
 export function generateFingerprint(data: Partial<PortfolioDataDocument>): string {
-  const txIds = (data.transactions || []).map((t) => t.id).sort().join(',');
+  // IDs alone miss edits to dates, notes, fees, and other ledger fields.
+  // Sort keys and rows so equivalent payload ordering does not trigger a write.
+  const ledger = (data.transactions || []).map((tx) => JSON.stringify(
+    Object.fromEntries(Object.entries(tx).sort(([a], [b]) => a.localeCompare(b))),
+  )).sort();
   const positions = (data.positions || []).map((p) => `${p.ticker}:${p.shares}:${p.avgBuyPrice}:${p.totalFees || 0}`).sort().join('|');
   const closed = (data.closedTrades || []).map((t) => `${t.id}:${t.realizedPnlEgp}:${t.shares}`).sort().join('|');
-  return `${txIds}||${positions}||${closed}||${Number(data.cashBalance ?? 0).toFixed(6)}||${Number(data.capitalDeposits ?? 0).toFixed(6)}`;
+  return `${JSON.stringify(ledger)}||${positions}||${closed}||${Number(data.cashBalance ?? 0).toFixed(6)}||${Number(data.capitalDeposits ?? 0).toFixed(6)}`;
 }
 
 export function updateLastSavedSnapshot(data: Partial<PortfolioDataDocument>) {
@@ -66,30 +70,41 @@ export async function loadPortfolioFromFirestore(): Promise<PortfolioDataDocumen
   return snapshot;
 }
 
-function enqueueSave(data: PortfolioWrite): Promise<boolean> {
-  const run = async () => {
-    const canonical = deriveLedgerState(data);
-    let complete = canonical;
+function cancelPendingSave() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = null;
+}
 
-    if (typeof complete.capitalDeposits !== 'number' || !Number.isFinite(complete.capitalDeposits)) {
-      const current = await loadPortfolioFromSupabase();
-      if (!current || typeof current.capitalDeposits !== 'number' || !Number.isFinite(current.capitalDeposits)) {
-        console.error('[Supabase] Refusing to save an incomplete portfolio snapshot: capitalDeposits is unavailable.');
-        return false;
-      }
-      complete = { ...complete, capitalDeposits: current.capitalDeposits };
-    }
-
-    const fingerprint = generateFingerprint(complete);
-    if (fingerprint === lastSerializedPayload) return true;
-    markLocalMutation(5000);
-    const ok = await savePortfolioToSupabase(complete);
-    if (ok) updateLastSavedSnapshot({ ...complete, updatedAt: new Date().toISOString(), schemaVersion: 3 });
-    return ok;
-  };
+function enqueueOperation(run: () => Promise<boolean>): Promise<boolean> {
   const next = saveQueue.then(run, run);
   saveQueue = next.catch(() => false);
   return next;
+}
+
+async function persistSnapshot(data: PortfolioWrite): Promise<boolean> {
+  let complete = data;
+  if (typeof complete.capitalDeposits !== 'number' || !Number.isFinite(complete.capitalDeposits)) {
+    const current = await loadPortfolioFromSupabase();
+    if (!current || typeof current.capitalDeposits !== 'number' || !Number.isFinite(current.capitalDeposits)) {
+      console.error('[Supabase] Refusing to save an incomplete portfolio snapshot: capitalDeposits is unavailable.');
+      return false;
+    }
+    complete = { ...complete, capitalDeposits: current.capitalDeposits };
+  }
+
+  // Resolve the opening-capital input before deriving cash, not afterwards.
+  const canonical = deriveLedgerState(complete);
+  const fingerprint = generateFingerprint(canonical);
+  if (fingerprint === lastSerializedPayload) return true;
+  markLocalMutation(5000);
+  const ok = await savePortfolioToSupabase(canonical);
+  if (ok) updateLastSavedSnapshot({ ...canonical, updatedAt: new Date().toISOString(), schemaVersion: 3 });
+  return ok;
+}
+
+function enqueueSave(data: PortfolioWrite): Promise<boolean> {
+  cancelPendingSave();
+  return enqueueOperation(() => persistSnapshot(data));
 }
 
 export async function savePortfolioToFirestore(data: PortfolioWrite, allowEmpty = false, _reason?: string) {
@@ -114,80 +129,85 @@ export async function forceFullSyncToFirestore(data: PortfolioWrite) {
   return enqueueSave(data);
 }
 
-async function mergeAndSave(patch: Partial<PortfolioDataDocument>) {
-  const current = await loadPortfolioFromSupabase();
-  if (!current) return false;
-  const canonical = deriveLedgerState(current);
-  return savePortfolioToFirestore({
-    positions: patch.positions ?? canonical.positions,
-    closedTrades: patch.closedTrades ?? canonical.closedTrades,
-    transactions: patch.transactions ?? canonical.transactions,
-    cashBalance: patch.cashBalance ?? canonical.cashBalance,
-    capitalDeposits: patch.capitalDeposits ?? canonical.capitalDeposits,
-    tickers: patch.tickers ?? canonical.tickers,
-  }, true);
+function mergeAndSave(patch: Partial<PortfolioDataDocument>) {
+  cancelPendingSave();
+  return enqueueOperation(async () => {
+    const current = await loadPortfolioFromSupabase();
+    if (!current) return false;
+    const canonical = deriveLedgerState(current);
+    return persistSnapshot({
+      positions: patch.positions ?? canonical.positions,
+      closedTrades: patch.closedTrades ?? canonical.closedTrades,
+      transactions: patch.transactions ?? canonical.transactions,
+      cashBalance: patch.cashBalance ?? canonical.cashBalance,
+      capitalDeposits: patch.capitalDeposits ?? canonical.capitalDeposits,
+      tickers: patch.tickers ?? canonical.tickers,
+    });
+  });
 }
 
 export function updateFirestorePositions(positions: Position[]) { return mergeAndSave({ positions }); }
 export function updateFirestoreClosedTrades(closedTrades: ClosedTrade[]) { return mergeAndSave({ closedTrades }); }
 
-export async function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?: number) {
-  const current = await loadPortfolioFromSupabase();
-  if (!current) return false;
-  if (!Number.isFinite(cashBalance)) return false;
+export function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?: number) {
+  cancelPendingSave();
+  return enqueueOperation(async () => {
+    const current = await loadPortfolioFromSupabase();
+    if (!current) return false;
+    if (!Number.isFinite(cashBalance)) return false;
 
-  const canonical = deriveLedgerState(current);
-  const delta = Number((cashBalance - canonical.cashBalance).toFixed(2));
-  if (Math.abs(delta) < 0.005) return true;
+    const canonical = deriveLedgerState(current);
+    const delta = Number((cashBalance - canonical.cashBalance).toFixed(2));
+    if (Math.abs(delta) < 0.005) return true;
 
-  // A manual cash correction is an auditable ledger event, not a mutation of a
-  // derived balance. It changes cash only; it does not change contributed capital.
-  const adjustment: TradeTransaction = {
-    id: `tx-cash-adjustment-${Date.now()}`,
-    type: delta >= 0 ? 'BUY' : 'SELL',
-    ticker: 'CASH',
-    companyName: 'Cash Balance Adjustment',
-    sector: 'Liquid Buying Power',
-    shares: Math.abs(delta),
-    price: 1,
-    date: new Date().toISOString().slice(0, 10),
-    fees: 0,
-    totalAmount: Math.abs(delta),
-    cashFlowType: 'CASH_ADJUSTMENT',
-    cashFlowAmount: delta,
-    notes: 'Manual cash balance adjustment',
-  };
+    // A manual cash correction is an auditable ledger event, not a mutation of a
+    // derived balance. It changes cash only; it does not change contributed capital.
+    const adjustment: TradeTransaction = {
+      id: `tx-cash-adjustment-${crypto.randomUUID()}`,
+      type: delta >= 0 ? 'BUY' : 'SELL',
+      ticker: 'CASH',
+      companyName: 'Cash Balance Adjustment',
+      sector: 'Liquid Buying Power',
+      shares: Math.abs(delta),
+      price: 1,
+      date: new Date().toISOString().slice(0, 10),
+      fees: 0,
+      totalAmount: Math.abs(delta),
+      cashFlowType: 'CASH_ADJUSTMENT',
+      cashFlowAmount: delta,
+      notes: 'Manual cash balance adjustment',
+    };
 
-  return forceFullSyncToFirestore({
-    positions: canonical.positions,
-    closedTrades: canonical.closedTrades,
-    transactions: [...canonical.transactions, adjustment],
-    cashBalance: cashBalance,
-    capitalDeposits: capitalDeposits ?? canonical.capitalDeposits,
-    tickers: canonical.tickers,
+    return persistSnapshot({
+      positions: canonical.positions,
+      closedTrades: canonical.closedTrades,
+      transactions: [...canonical.transactions, adjustment],
+      cashBalance: cashBalance,
+      capitalDeposits: capitalDeposits ?? canonical.capitalDeposits,
+      tickers: canonical.tickers,
+    });
   });
 }
 
 export function updateFirestoreTickers(tickers: EGXTicker[]) { return mergeAndSave({ tickers }); }
 
-export async function updateFirestoreTransactions(transactions: TradeTransaction[], _positions?: Position[], _closedTrades?: ClosedTrade[], _cashBalance?: number, capitalDeposits?: number) {
-  const current = await loadPortfolioFromSupabase();
-  if (!current) {
-    console.error('[Supabase] Refusing transaction save because the remote portfolio could not be loaded.');
-    return false;
-  }
-  const canonicalCurrent = deriveLedgerState(current);
-  return forceFullSyncToFirestore({
-    positions: canonicalCurrent.positions,
-    closedTrades: canonicalCurrent.closedTrades,
-    transactions,
-    cashBalance: canonicalCurrent.cashBalance,
-    capitalDeposits: capitalDeposits ?? canonicalCurrent.capitalDeposits,
-    tickers: canonicalCurrent.tickers,
-  });
+export function updateFirestoreTransactions(transactions: TradeTransaction[], _positions?: Position[], _closedTrades?: ClosedTrade[], _cashBalance?: number, capitalDeposits?: number) {
+  return mergeAndSave({ transactions, capitalDeposits });
 }
 
-export function appendTransactionToFirestore(tx: TradeTransaction, positions?: Position[], closedTrades?: ClosedTrade[], cashBalance?: number, capitalDeposits?: number) { return updateFirestoreTransactions([tx], positions, closedTrades, cashBalance, capitalDeposits); }
+export function appendTransactionToFirestore(tx: TradeTransaction, _positions?: Position[], _closedTrades?: ClosedTrade[], _cashBalance?: number, capitalDeposits?: number) {
+  cancelPendingSave();
+  return enqueueOperation(async () => {
+    const current = await loadPortfolioFromSupabase();
+    if (!current) return false;
+    // Retry by ID without duplicating the row; retain every other ledger entry.
+    return persistSnapshot({
+      ...current,
+      transactions: [...current.transactions.filter((existing) => existing.id !== tx.id), tx],
+      capitalDeposits: capitalDeposits ?? current.capitalDeposits,
+    });
+  });
+}
 
 export async function savePriceTickToFirestore(positions: Position[], tickers: EGXTicker[], force = false) {
   const now = Date.now();

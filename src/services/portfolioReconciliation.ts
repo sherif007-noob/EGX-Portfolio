@@ -96,7 +96,9 @@ export function reconcilePortfolioFromLedger(
   const hasExternalCashFlow = chronologicalTxs.some((tx) => {
     const kind = cashFlowKind(tx);
     const ticker = tx.ticker.trim().toUpperCase();
-    return ticker === 'CASH' || kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || kind === 'DIVIDEND' || kind === 'FEE';
+    if (kind === 'CASH_ADJUSTMENT') return false;
+    if (kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || kind === 'DIVIDEND' || kind === 'FEE') return true;
+    return ticker === 'CASH' && !kind && (tx.type === 'BUY' || tx.type === 'SELL');
   });
 
   let runningCash = hasExternalCashFlow ? 0 : openingCapital;

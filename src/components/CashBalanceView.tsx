@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { getTodayISO } from '../utils/dateUtils';
+import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliation';
 
 interface CashBalanceViewProps {
   cashBalance: number;
@@ -149,12 +150,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     return closedTrades.reduce((acc, ct) => acc + (ct.realizedPnlEgp || 0), 0);
   }, [closedTrades]);
 
-  // 4. Exact Audited Liquid Available Cash
-  // Formula: Net Capital Inflows - Cost of Active Holdings + Net Realized P&L
-  const auditedLiquidCash = Math.max(0, netCapitalDeposited - totalOpenPositionsCost + totalRealizedPnl);
+  // 4. Canonical audited liquid cash comes from the same ledger-first accounting
+  // engine used by portfolio reconciliation. Never clamp negative ledger cash to zero.
+  const ledgerAudit = useMemo(() => {
+    if (tradeTransactions.length === 0) return null;
+    return reconcilePortfolioFromLedger(
+      tradeTransactions,
+      [],
+      typeof capitalDeposits === 'number' ? capitalDeposits : 0,
+      positions
+    );
+  }, [tradeTransactions, capitalDeposits, positions]);
+  const auditedLiquidCash = ledgerAudit?.reconciledCashBalance ?? cashBalance;
 
   // 5. Audited Portfolio Equity (NAV)
-  // Formula: Liquid Cash + Open Positions Market Value = Net Capital Deposited + Realized P&L + Unrealized P&L
   const auditedPortfolioNav = auditedLiquidCash + totalOpenPositionsMarketValue;
 
   // 6. Cash Discrepancy detection
@@ -186,11 +195,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       return;
     }
 
-    // Calculate balance difference
+    // Calculate balance difference. Negative cash is a valid ledger state and must not be silently clamped.
     const oldContribution = editingTransaction.type === 'DEPOSIT' ? editingTransaction.amount : -editingTransaction.amount;
     const newContribution = editType === 'DEPOSIT' ? newAmountNum : -newAmountNum;
     const delta = newContribution - oldContribution;
-    const newBalance = Math.max(0, cashBalance + delta);
+    const newBalance = Number((cashBalance + delta).toFixed(2));
 
     const updatedTx: CashTransaction = {
       ...editingTransaction,
@@ -297,9 +306,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     let revertedBalance = cashBalance;
     if (tx.type === 'DEPOSIT') {
-      revertedBalance = Math.max(0, cashBalance - tx.amount);
+      revertedBalance = Number((cashBalance - tx.amount).toFixed(2));
     } else if (tx.type === 'WITHDRAWAL') {
-      revertedBalance = cashBalance + tx.amount;
+      revertedBalance = Number((cashBalance + tx.amount).toFixed(2));
     }
 
     setTransactions(transactions.filter((t) => t.id !== id));
@@ -553,9 +562,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               )}
               <button
                 onClick={() => {
-                  onUpdateCashBalance(auditedLiquidCash);
+                  if (onReconcileLedger) {
+                    onReconcileLedger();
+                  } else {
+                    onUpdateCashBalance(auditedLiquidCash);
+                  }
                   setFeedbackMessage({
-                    text: `Cash balance adjusted to audited liquid amount of ${formatEgp(auditedLiquidCash)} EGP.`,
+                    text: `Cash balance reconciled to ledger-derived amount of ${formatEgp(auditedLiquidCash)} EGP.`,
                     type: 'success',
                   });
                   setTimeout(() => setFeedbackMessage(null), 4000);
@@ -1128,14 +1141,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     New Balance will become:{' '}
                     <span className="font-mono font-bold text-emerald-400">
                       {formatEgp(
-                        Math.max(
-                          0,
-                          cashBalance +
-                            (editType === 'DEPOSIT' ? parseFloat(editAmount) : -parseFloat(editAmount)) -
-                            (editingTransaction.type === 'DEPOSIT'
-                              ? editingTransaction.amount
-                              : -editingTransaction.amount)
-                        )
+                        cashBalance +
+                          (editType === 'DEPOSIT' ? parseFloat(editAmount) : -parseFloat(editAmount)) -
+                          (editingTransaction.type === 'DEPOSIT'
+                            ? editingTransaction.amount
+                            : -editingTransaction.amount)
                       )}{' '}
                       EGP
                     </span>

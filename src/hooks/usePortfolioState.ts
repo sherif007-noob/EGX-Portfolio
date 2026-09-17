@@ -119,7 +119,7 @@ export function usePortfolioState() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CASH);
       const parsed = saved !== null ? JSON.parse(saved) : null;
-      if (typeof parsed === 'number' && Number.isFinite(parsed) && parsed >= 0) return parsed;
+      if (typeof parsed === 'number' && Number.isFinite(parsed)) return parsed;
       const txsToUse = (() => {
         try {
           const rawTxs = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
@@ -130,7 +130,7 @@ export function usePortfolioState() {
         }
       })();
       const report = reconcilePortfolioFromLedger(txsToUse, INITIAL_EGX_TICKERS, INITIAL_CAPITAL_DEPOSITS);
-      return Number.isFinite(report.reconciledCashBalance) && report.reconciledCashBalance >= 0
+      return Number.isFinite(report.reconciledCashBalance)
         ? report.reconciledCashBalance
         : INITIAL_CASH_BALANCE;
     } catch {
@@ -238,7 +238,7 @@ export function usePortfolioState() {
             setPositions(loadedPositions);
             setClosedTrades(loadedClosed);
             setTransactions(loadedTransactions);
-            if (typeof remoteData.cashBalance === 'number' && remoteData.cashBalance >= 0) setCashBalance(remoteData.cashBalance);
+            if (typeof remoteData.cashBalance === 'number' && Number.isFinite(remoteData.cashBalance)) setCashBalance(remoteData.cashBalance);
             if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
             setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
           });
@@ -265,6 +265,7 @@ export function usePortfolioState() {
       closedTrades: report.reconciledClosedTrades,
       transactions,
       cashBalance: report.reconciledCashBalance,
+      capitalDeposits,
       tickers,
     }, 300);
     return report;
@@ -609,7 +610,8 @@ export function usePortfolioState() {
   const updateTickers = useCallback((newTickers: EGXTicker[]) => setTickers(newTickers), []);
 
   const updateCashBalance = useCallback((newCash: number) => {
-    const validCash = Math.max(0, Number(newCash) || 0);
+    const validCash = Number(newCash);
+    if (!Number.isFinite(validCash)) return;
     setCashBalance(validCash);
     try { localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(validCash)); } catch { /* ignore */ }
     updateFirestoreCashBalance(validCash, capitalDeposits);
@@ -632,7 +634,7 @@ export function usePortfolioState() {
           : [];
         mergedPositions = Array.isArray(remote.positions) ? remote.positions : [];
         mergedClosed = Array.isArray(remote.closedTrades) ? remote.closedTrades : [];
-        if (typeof remote.cashBalance === 'number' && remote.cashBalance >= 0) mergedCash = remote.cashBalance;
+        if (typeof remote.cashBalance === 'number' && Number.isFinite(remote.cashBalance)) mergedCash = remote.cashBalance;
         if (typeof remote.capitalDeposits === 'number' && remote.capitalDeposits >= 0) mergedCapital = remote.capitalDeposits;
         setTransactions(mergedTxs);
         setPositions(mergedPositions);

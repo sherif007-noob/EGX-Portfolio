@@ -90,14 +90,13 @@ export function reconcilePortfolioFromLedger(
   const chronologicalTxs = Array.isArray(transactions) ? sortTransactions(transactions) : [];
   const openingCapital = Number.isFinite(totalCapitalDeposited) && totalCapitalDeposited >= 0 ? totalCapitalDeposited : 0;
 
-  // Explicit external cash-flow events replace the legacy implicit opening-capital
-  // model. A CASH_ADJUSTMENT is different: it corrects the derived cash ledger
-  // without redefining the amount of contributed capital.
+  // Explicit contributed-capital events replace the legacy implicit opening-capital
+  // model. Dividends, fees, and CASH_ADJUSTMENT modify cash without redefining
+  // contributed capital, so they must preserve the opening-capital baseline.
   const hasExternalCashFlow = chronologicalTxs.some((tx) => {
     const kind = cashFlowKind(tx);
     const ticker = tx.ticker.trim().toUpperCase();
-    if (kind === 'CASH_ADJUSTMENT') return false;
-    if (kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || kind === 'DIVIDEND' || kind === 'FEE') return true;
+    if (kind === 'DEPOSIT' || kind === 'WITHDRAWAL') return true;
     return ticker === 'CASH' && !kind && (tx.type === 'BUY' || tx.type === 'SELL');
   });
 
@@ -323,8 +322,8 @@ export function reconcilePortfolioFromLedger(
     }
   }
 
-  Object.values(activeCyclesByTicker).forEach(finalizeCycle);
-
+  // Open cycles are intentionally not finalized. A ClosedTrade projection is
+  // created only after the ledger shows the corresponding position fully closed.
   const reconciledPositions: Position[] = [];
   Object.entries(openLotsByTicker).forEach(([ticker, lots]) => {
     const shares = lots.reduce((sum, lot) => sum + lot.shares, 0);

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector, CashTransaction } from '../types';
 import { INITIAL_EGX_TICKERS } from '../data/egxTickers';
 import {
@@ -21,7 +20,7 @@ import {
   flushPendingWriteQueue,
   markLocalMutation,
 } from '../services/firestoreStorage';
-import { auth, ensureAuthUser } from '../services/firebaseAuth';
+import { getSupabaseBrowserClient } from '../services/supabaseBrowser';
 import {
   reconcilePortfolioFromLedger,
   getOpenBuyTransactionIdsForTicker,
@@ -158,29 +157,22 @@ export function usePortfolioState() {
     let activeUnsubscribe: (() => void) | null = null;
     let isMounted = true;
 
-    const authUnsub = onAuthStateChanged(auth, async (user) => {
-      if (!isMounted) return;
-      if (activeUnsubscribe) {
-        activeUnsubscribe();
-        activeUnsubscribe = null;
-      }
-
+    const initializeRemotePortfolio = async () => {
       try {
-        if (!user) await ensureAuthUser();
         const remoteData = await loadPortfolioFromFirestore();
         if (remoteData && isMounted) {
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
 
-          let loadedTransactions = Array.isArray(remoteData.transactions)
+          const loadedTransactions = Array.isArray(remoteData.transactions)
             ? remoteData.transactions.map(normalizeTransaction).sort(
                 (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
               )
             : [];
 
           let loadedCash = typeof remoteData.cashBalance === 'number' ? remoteData.cashBalance : cashBalance;
-          let loadedCapital = typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0
+          const loadedCapital = typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0
             ? remoteData.capitalDeposits
             : capitalDeposits;
           const loadedTickers = Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
@@ -211,47 +203,47 @@ export function usePortfolioState() {
           setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
         }
       } catch (err) {
-        console.warn('Initial Firestore load failed, using local cache:', err);
+        console.warn('Initial Supabase load failed, using local cache:', err);
       } finally {
         if (isMounted) setIsInitialized(true);
       }
 
       try { await flushPendingWriteQueue(); } catch { /* ignore */ }
 
-      if (isMounted) {
-        try {
-          activeUnsubscribe = subscribeToPortfolioFromFirestore((remoteData) => {
-            if (!remoteData || !isMounted) return;
-            isRemoteSyncingRef.current = true;
-            let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
-            let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
-            const loadedTransactions = Array.isArray(remoteData.transactions)
-              ? remoteData.transactions.map(normalizeTransaction)
-              : [];
+      if (!isMounted) return;
+      try {
+        activeUnsubscribe = subscribeToPortfolioFromFirestore((remoteData) => {
+          if (!remoteData || !isMounted) return;
+          isRemoteSyncingRef.current = true;
+          let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
+          let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
+          const loadedTransactions = Array.isArray(remoteData.transactions)
+            ? remoteData.transactions.map(normalizeTransaction)
+            : [];
 
-            if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
-              const report = reconcilePortfolioFromLedger(loadedTransactions, tickers, capitalDeposits, loadedPositions);
-              if (loadedPositions.length === 0) loadedPositions = report.reconciledPositions;
-              if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
-            }
+          if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
+            const report = reconcilePortfolioFromLedger(loadedTransactions, tickers, capitalDeposits, loadedPositions);
+            if (loadedPositions.length === 0) loadedPositions = report.reconciledPositions;
+            if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
+          }
 
-            setPositions(loadedPositions);
-            setClosedTrades(loadedClosed);
-            setTransactions(loadedTransactions);
-            if (typeof remoteData.cashBalance === 'number' && Number.isFinite(remoteData.cashBalance)) setCashBalance(remoteData.cashBalance);
-            if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
-            setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
-          });
-        } catch (subErr) {
-          console.warn('Firestore subscription failed:', subErr);
-        }
+          setPositions(loadedPositions);
+          setClosedTrades(loadedClosed);
+          setTransactions(loadedTransactions);
+          if (typeof remoteData.cashBalance === 'number' && Number.isFinite(remoteData.cashBalance)) setCashBalance(remoteData.cashBalance);
+          if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
+          setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
+        });
+      } catch (subErr) {
+        console.warn('Supabase portfolio subscription failed:', subErr);
       }
-    });
+    };
+
+    void initializeRemotePortfolio();
 
     return () => {
       isMounted = false;
       if (activeUnsubscribe) activeUnsubscribe();
-      authUnsub();
     };
   }, []);
 
@@ -615,7 +607,8 @@ export function usePortfolioState() {
 
   const forceSync = useCallback(async () => {
     try {
-      await ensureAuthUser();
+      const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
+      if (!session) throw new Error('No authenticated Supabase session.');
       const remote = await loadPortfolioFromFirestore();
       let mergedPositions = positions;
       let mergedClosed = closedTrades;

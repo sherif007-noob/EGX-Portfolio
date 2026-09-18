@@ -1,4 +1,5 @@
 name: Export EGX Historical Universe
+# rerun after TradingView bar-count fix
 on:
   push:
     branches: [egx-history-universe-export]

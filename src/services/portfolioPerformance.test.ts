@@ -51,6 +51,44 @@ describe('portfolio performance accounting', () => {
     expect(curve.find((p) => p.date === '2026-01-03')?.equity).toBe(1200);
   });
 
+  it('uses legacy opening capital when the ledger has no explicit capital flow', () => {
+    const transactions = [
+      { id: 'buy', type: 'BUY' as const, ticker: 'TEST', companyName: 'Test', sector: 'Other' as const, shares: 10, price: 50, date: '2026-01-02', fees: 0, totalAmount: 500 },
+    ];
+    const curve = buildHistoricalEquityCurve(transactions, {
+      TEST: [{ date: '2026-01-02', close: 50 }, { date: '2026-01-03', close: 55 }],
+    }, '2026-01-02', '2026-01-03', 1000);
+    expect(curve.find((p) => p.date === '2026-01-02')?.equity).toBe(1000);
+    expect(curve.find((p) => p.date === '2026-01-03')?.equity).toBe(1050);
+    expect(buildExternalCashFlows(transactions, 1000, '2026-01-02')).toEqual([
+      { date: '2026-01-02', amount: -1000, type: 'DEPOSIT' },
+    ]);
+  });
+
+  it('does not double-count legacy capital when explicit deposits exist', () => {
+    const transactions = [
+      { id: 'dep', type: 'BUY' as const, ticker: 'CASH', companyName: 'Cash', sector: 'Liquid Buying Power' as const, shares: 1000, price: 1, date: '2026-01-01', fees: 0, totalAmount: 1000, cashFlowType: 'DEPOSIT' as const },
+      { id: 'buy', type: 'BUY' as const, ticker: 'TEST', companyName: 'Test', sector: 'Other' as const, shares: 10, price: 50, date: '2026-01-02', fees: 0, totalAmount: 500 },
+    ];
+    const curve = buildHistoricalEquityCurve(transactions, {
+      TEST: [{ date: '2026-01-02', close: 50 }],
+    }, '2026-01-01', '2026-01-02', 9999);
+    expect(curve.find((p) => p.date === '2026-01-02')?.equity).toBe(1000);
+    expect(buildExternalCashFlows(transactions, 9999)).toEqual([
+      { date: '2026-01-01', amount: -1000, type: 'DEPOSIT' },
+    ]);
+  });
+
+  it('normalizes EGX ticker decorations when reconstructing historical equity', () => {
+    const curve = buildHistoricalEquityCurve([
+      { id: 'buy', type: 'BUY', ticker: 'EGX:TEST.CA', companyName: 'Test', sector: 'Other', shares: 10, price: 50, date: '2026-01-02', fees: 0, totalAmount: 500 },
+    ], {
+      TEST: [{ date: '2026-01-02', close: 55 }],
+    }, '2026-01-02', '2026-01-02', 1000);
+    expect(curve[0].complete).toBe(true);
+    expect(curve[0].equity).toBe(1050);
+  });
+
   it('does not treat dividends as investor cash flows', () => {
     const flows = buildExternalCashFlows([
       { id: 'dep', type: 'BUY', ticker: 'CASH', companyName: 'Cash', sector: 'Liquid Buying Power', shares: 1000, price: 1, date: '2026-01-01', fees: 0, totalAmount: 1000, cashFlowType: 'DEPOSIT' },

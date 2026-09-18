@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
+import { combineExecutionDateTime } from '../utils/executionTime';
 
 interface SellPositionModalProps {
   position: Position | null;
@@ -12,6 +13,7 @@ interface SellPositionModalProps {
     soldShares: number,
     sellPrice: number,
     sellDate: string,
+    executedAt: string | undefined,
     brokerageFee: number,
     notes: string,
     remainingShares: number
@@ -29,6 +31,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
   const [sellPrice, setSellPrice] = useState<number>(position.currentPrice || position.avgBuyPrice);
   const [sellDate, setSellDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [executionTime, setExecutionTime] = useState<string>('');
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
   const [isManualFee, setIsManualFee] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('Target reached / booked profits');
@@ -76,6 +79,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
       sharesToSell,
       sellPrice,
       sellDate,
+      combineExecutionDateTime(sellDate, executionTime),
       Math.max(0, brokerageFee || 0),
       notes,
       remainingShares
@@ -175,13 +179,30 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 required
               />
             </div>
-            <DateInput
-              id="sell-execution-date"
-              label="Sale Date"
-              value={sellDate}
-              onChange={setSellDate}
-              required
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <DateInput
+                id="sell-execution-date"
+                label="Sale Date"
+                value={sellDate}
+                onChange={setSellDate}
+                required
+              />
+              <div>
+                <label htmlFor="sell-execution-time" className="block font-semibold text-slate-300 mb-1">
+                  Execution Time
+                </label>
+                <input
+                  id="sell-execution-time"
+                  type="time"
+                  value={executionTime}
+                  onChange={(e) => setExecutionTime(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Optional, but recommended when matching broker receipts.
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Brokerage Fees on Sale */}

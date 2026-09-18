@@ -25,6 +25,7 @@ export interface ParsedTradeItem {
   price: number;
   fees: number;
   date: string;
+  executedAt?: string;
   brokerName?: string;
   notes?: string;
   confidenceScore?: number;
@@ -43,6 +44,7 @@ interface TradeScreenshotModalProps {
     shares: number;
     price: number;
     date: string;
+    executedAt?: string;
     fees: number;
     notes?: string;
   }) => void;
@@ -54,6 +56,7 @@ interface TradeScreenshotModalProps {
     shares: number;
     price: number;
     date: string;
+    executedAt?: string;
     fees: number;
     notes?: string;
   }>) => void;

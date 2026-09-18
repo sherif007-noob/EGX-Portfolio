@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { Check, ChevronDown } from 'lucide-react';
 import type { TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, normalizeIntradayTicker } from '../../services/intradayPriceStore';
@@ -24,6 +25,13 @@ import {
   type AnalyticsTimeframe,
 } from '../../services/analyticsTimeframes';
 import {
+  ANALYTICS_MODES,
+  analyticsModePoints,
+  analyticsModeSummary,
+  getAnalyticsModeDefinition,
+  type AnalyticsChartMode,
+} from '../../services/analyticsModes';
+import {
   ANALYTICS_CHART_THEME,
   AnalyticsChartLoadingState,
   AnalyticsChartTooltip,
@@ -32,6 +40,8 @@ import {
   analyticsTooltipCursor,
   analyticsXAxisProps,
   analyticsYAxisProps,
+  formatAnalyticsCompactEgp,
+  formatAnalyticsEgp,
   formatAnalyticsPercent,
 } from './AnalyticsChartTheme';
 
@@ -89,6 +99,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   historicalLoading = false,
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
+  const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [intradayError, setIntradayError] = useState<string | null>(null);
@@ -154,53 +166,247 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
   const loading = timeframe === 'TODAY' ? intradayLoading : historicalLoading;
-  const points = result?.points.filter((point) => Number.isFinite(point.mwrrPercent)) ?? [];
-  const periodReturn = result?.summary.mwrrPercent;
-  const positive = (periodReturn ?? 0) >= 0;
-  const selectedLabel = result?.window.label ?? TIMEFRAMES.find((item) => item.value === timeframe)?.label ?? '';
+  const definition = getAnalyticsModeDefinition(mode);
+  const summary = analyticsModeSummary(result, mode);
+  const points = analyticsModePoints(result, mode);
+  const selectedLabel =
+    result?.window.label ??
+    TIMEFRAMES.find((item) => item.value === timeframe)?.label ??
+    '';
+
   const chartData = points.map((point) => ({
     ...point,
     axisLabel: timeframe === 'TODAY' ? formatCairoTime(point.date) : formatDailyLabel(point.date),
   }));
 
+  const isPercentMode = definition.valueKind === 'percent';
+  const isDepositsMode = mode === 'PORTFOLIO_DEPOSITS';
+  const isPortfolioReturnMode = mode === 'PORTFOLIO_RETURN';
+
+  const toneValue = isPercentMode
+    ? summary.primaryValue
+    : summary.changeEgp;
+  const positive = (toneValue ?? 0) >= 0;
+  const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
+
   const tooltip = (props: any) => (
     <AnalyticsChartTooltip
       {...props}
-      title="Performance (MWR)"
+      title={definition.label}
       labelFormatter={(_, payload) => {
         const value = payload?.[0]?.payload?.date || '';
         return timeframe === 'TODAY' ? formatCairoDateTime(value) : String(value).slice(0, 10);
       }}
-      nameFormatter={() => 'Return'}
-      valueFormatter={(value) => formatAnalyticsPercent(value, true)}
+      nameFormatter={(name) => {
+        if (name === 'equity') return 'Portfolio';
+        if (name === 'netDeposits') return 'Net Deposits';
+        if (name === 'twrPercent') return 'TWR';
+        if (name === 'mwrrPercent') return 'MWR';
+        return name;
+      }}
+      valueFormatter={(value) =>
+        isPercentMode
+          ? formatAnalyticsPercent(value, true)
+          : formatAnalyticsEgp(value)
+      }
       tone={positive ? 'positive' : 'negative'}
     />
+  );
+
+  const headline = isPercentMode
+    ? summary.primaryValue == null
+      ? '—'
+      : formatAnalyticsPercent(summary.primaryValue, true)
+    : summary.primaryValue == null
+      ? '—'
+      : formatAnalyticsEgp(summary.primaryValue);
+
+  const renderYAxis = () => (
+    <YAxis
+      {...analyticsYAxisProps}
+      tickFormatter={(value: number) =>
+        isPercentMode ? `${value.toFixed(timeframe === 'TODAY' ? 2 : 1)}%` : formatAnalyticsCompactEgp(value)
+      }
+    />
+  );
+
+  const renderReferenceLine = () =>
+    isPercentMode ? (
+      <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+    ) : null;
+
+  const renderPrimaryArea = () => (
+    <Area
+      type="monotone"
+      dataKey={definition.primaryKey}
+      name={definition.primaryLabel}
+      stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
+      strokeWidth={2.25}
+      fill="url(#analyticsPrimaryGradient)"
+      fillOpacity={1}
+      dot={false}
+      activeDot={{
+        r: 5,
+        fill: isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue,
+        stroke: '#020617',
+        strokeWidth: 2,
+      }}
+    />
+  );
+
+  const renderLinearLines = () => (
+    <>
+      <Line
+        type="linear"
+        dataKey={definition.primaryKey}
+        name={definition.primaryLabel}
+        stroke={
+          isPercentMode
+            ? positive
+              ? ANALYTICS_CHART_THEME.emerald
+              : ANALYTICS_CHART_THEME.rose
+            : ANALYTICS_CHART_THEME.blue
+        }
+        strokeWidth={2.25}
+        dot={false}
+        activeDot={{
+          r: 5,
+          fill:
+            isPercentMode
+              ? positive
+                ? ANALYTICS_CHART_THEME.emerald
+                : ANALYTICS_CHART_THEME.rose
+              : ANALYTICS_CHART_THEME.blue,
+          stroke: '#020617',
+          strokeWidth: 2,
+        }}
+        isAnimationActive={false}
+      />
+      {definition.secondaryKey && (
+        <Line
+          type="linear"
+          dataKey={definition.secondaryKey}
+          name={definition.secondaryLabel}
+          stroke={ANALYTICS_CHART_THEME.purple}
+          strokeWidth={1.8}
+          strokeDasharray="6 4"
+          dot={false}
+          activeDot={{
+            r: 4,
+            fill: ANALYTICS_CHART_THEME.purple,
+            stroke: '#020617',
+            strokeWidth: 2,
+          }}
+          isAnimationActive={false}
+        />
+      )}
+    </>
   );
 
   return (
     <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-bold text-white">Performance (MWR)</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Non-annualized money-weighted return for the selected period.
-            </p>
-          </div>
-          <div className="sm:text-right">
-            <div className={`text-2xl font-black font-mono ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {periodReturn == null ? '—' : formatAnalyticsPercent(periodReturn, true)}
-            </div>
-            <div className="text-[11px] text-slate-400">{selectedLabel}</div>
-            {timeframe === 'ALL' && result?.summary.annualizedMwrrPercent != null && (
-              <div className="text-[10px] text-slate-500 mt-0.5">
-                Annualized XIRR: {formatAnalyticsPercent(result.summary.annualizedMwrrPercent, true)}
+          <div className="relative min-w-0">
+            <button
+              type="button"
+              onClick={() => setModeMenuOpen((value) => !value)}
+              className="group flex max-w-full items-center gap-1.5 text-left"
+              aria-haspopup="menu"
+              aria-expanded={modeMenuOpen}
+            >
+              <h3 className="truncate text-sm font-bold text-white group-hover:text-cyan-200 transition">
+                {definition.label}
+              </h3>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${modeMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <p className="text-xs text-slate-400 mt-1">{definition.description}</p>
+
+            {modeMenuOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl"
+              >
+                {ANALYTICS_MODES.map((item) => {
+                  const selected = item.mode === mode;
+                  return (
+                    <button
+                      key={item.mode}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        setMode(item.mode);
+                        setModeMenuOpen(false);
+                      }}
+                      className={[
+                        'flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition',
+                        selected
+                          ? 'bg-cyan-500/10 text-cyan-200'
+                          : 'text-slate-300 hover:bg-slate-900 hover:text-white',
+                      ].join(' ')}
+                    >
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        {selected && <Check className="h-3.5 w-3.5 text-cyan-400" />}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold">{item.label}</span>
+                        <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
+                          {item.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            )}
+          </div>
+
+          <div className="sm:text-right">
+            <div className={`text-2xl font-black font-mono ${isPercentMode || isPortfolioReturnMode ? toneClass : 'text-slate-100'}`}>
+              {headline}
+            </div>
+
+            {isPortfolioReturnMode && (
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:justify-end">
+                <span className={toneClass}>
+                  {summary.changeEgp == null ? '—' : formatAnalyticsEgp(summary.changeEgp, true)}
+                </span>
+                <span className={toneClass}>
+                  {summary.changePercent == null ? '—' : formatAnalyticsPercent(summary.changePercent, true)}
+                </span>
+                <span className="text-slate-500">{selectedLabel}</span>
+              </div>
+            )}
+
+            {isDepositsMode && (
+              <div className="mt-0.5 space-y-0.5 text-[11px]">
+                <div className="text-purple-300">
+                  Net deposits: {summary.secondaryValue == null ? '—' : formatAnalyticsEgp(summary.secondaryValue)}
+                </div>
+                <div className={toneClass}>
+                  Portfolio P&amp;L: {summary.changeEgp == null ? '—' : formatAnalyticsEgp(summary.changeEgp, true)}
+                </div>
+                <div className="text-slate-500">{selectedLabel}</div>
+              </div>
+            )}
+
+            {isPercentMode && (
+              <>
+                <div className="text-[11px] text-slate-400">{selectedLabel}</div>
+                {mode === 'MWR' && timeframe === 'ALL' && result?.summary.annualizedMwrrPercent != null && (
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    Annualized XIRR: {formatAnalyticsPercent(result.summary.annualizedMwrrPercent, true)}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Performance timeframe">
+        <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Analytics timeframe">
           {TIMEFRAMES.map((item) => {
             const selected = timeframe === item.value;
             return (
@@ -245,60 +451,69 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   interval="preserveStartEnd"
                   minTickGap={28}
                 />
-                <YAxis
-                  {...analyticsYAxisProps}
-                  tickFormatter={(value: number) => `${value.toFixed(2)}%`}
-                />
-                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+                {renderYAxis()}
+                {renderReferenceLine()}
+                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
+                {renderLinearLines()}
+              </LineChart>
+            ) : isDepositsMode ? (
+              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid {...analyticsGridProps} />
+                <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
+                {renderYAxis()}
                 <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
                 <Line
-                  type="linear"
-                  dataKey="mwrrPercent"
-                  name="MWR"
-                  stroke={positive ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose}
+                  type="monotone"
+                  dataKey="equity"
+                  name="Portfolio"
+                  stroke={ANALYTICS_CHART_THEME.blue}
                   strokeWidth={2.25}
                   dot={false}
                   activeDot={{
                     r: 5,
-                    fill: positive ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose,
+                    fill: ANALYTICS_CHART_THEME.blue,
                     stroke: '#020617',
                     strokeWidth: 2,
                   }}
-                  isAnimationActive={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="netDeposits"
+                  name="Net Deposits"
+                  stroke={ANALYTICS_CHART_THEME.purple}
+                  strokeWidth={1.8}
+                  strokeDasharray="6 4"
+                  dot={false}
+                  activeDot={{
+                    r: 4,
+                    fill: ANALYTICS_CHART_THEME.purple,
+                    stroke: '#020617',
+                    strokeWidth: 2,
+                  }}
                 />
               </LineChart>
             ) : (
               <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="timeframeMwrGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.28} />
-                    <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.01} />
+                  <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="5%"
+                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
+                      stopOpacity={0.28}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
+                      stopOpacity={0.01}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid {...analyticsGridProps} />
                 <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
-                <YAxis
-                  {...analyticsYAxisProps}
-                  tickFormatter={(value: number) => `${value.toFixed(1)}%`}
-                />
-                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+                {renderYAxis()}
+                {renderReferenceLine()}
                 <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                <Area
-                  type="monotone"
-                  dataKey="mwrrPercent"
-                  name="MWR"
-                  stroke={ANALYTICS_CHART_THEME.cyan}
-                  strokeWidth={2.25}
-                  fill="url(#timeframeMwrGradient)"
-                  fillOpacity={1}
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: ANALYTICS_CHART_THEME.cyan,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
+                {renderPrimaryArea()}
               </AreaChart>
             )}
           </ResponsiveContainer>

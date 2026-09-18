@@ -296,24 +296,6 @@ export default function App() {
       return;
     }
 
-    const duplicate = findStrongDuplicateExecution(transactions, {
-      type: 'BUY',
-      ticker: newTradeData.ticker,
-      shares: newTradeData.shares,
-      price: newTradeData.buyPrice,
-      date: newTradeData.buyDate,
-      executedAt: newTradeData.executedAt,
-      fees: newTradeData.brokerageFee,
-    });
-    if (duplicate) {
-      showToast(
-        `Duplicate execution blocked: BUY ${newTradeData.ticker.toUpperCase()} already exists at this execution time.`,
-        'error',
-        5500,
-      );
-      return;
-    }
-
     const newTx = executeAddTrade({
       ticker: newTradeData.ticker,
       companyName: newTradeData.companyName,
@@ -379,24 +361,6 @@ export default function App() {
 
     if (!valResult.valid) {
       showToast(`Sell Validation Error: ${valResult.errors.join(', ')}`, 'error');
-      return;
-    }
-
-    const duplicate = findStrongDuplicateExecution(transactions, {
-      type: 'SELL',
-      ticker: pos.ticker,
-      shares: soldShares,
-      price: sellPrice,
-      date: sellDate,
-      executedAt,
-      fees: sellFees,
-    });
-    if (duplicate) {
-      showToast(
-        `Duplicate execution blocked: SELL ${pos.ticker.toUpperCase()} already exists at this execution time.`,
-        'error',
-        5500,
-      );
       return;
     }
 
@@ -606,6 +570,24 @@ export default function App() {
     fees: number;
     notes?: string;
   }) => {
+    const duplicate = findStrongDuplicateExecution(transactions, {
+      type: parsedTx.type,
+      ticker: parsedTx.ticker,
+      shares: parsedTx.shares,
+      price: parsedTx.price,
+      date: parsedTx.date,
+      executedAt: parsedTx.executedAt,
+      fees: parsedTx.fees,
+    });
+    if (duplicate) {
+      showToast(
+        `Duplicate screenshot execution blocked: ${parsedTx.type} ${parsedTx.ticker.toUpperCase()} already exists at this execution time.`,
+        'error',
+        5500,
+      );
+      return;
+    }
+
     if (parsedTx.type === 'BUY') {
       handleAddPosition(
         {

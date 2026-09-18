@@ -263,14 +263,6 @@ export function usePortfolioState() {
     return report;
   }, [transactions, tickers, capitalDeposits, positions]);
 
-  const hasReconciledRef = useRef(false);
-  useEffect(() => {
-    if (isInitialized && transactions.length > 0 && !hasReconciledRef.current) {
-      hasReconciledRef.current = true;
-      reconcileLedger();
-    }
-  }, [isInitialized, transactions.length, reconcileLedger]);
-
   const rehydratePositionsWithTickers = useCallback((posList: Position[], tickerList: EGXTicker[]): Position[] => {
     if (!tickerList?.length || !posList?.length) return posList;
     const tickerMap = new Map(tickerList.map((t) => [t.ticker.trim().toUpperCase(), t]));

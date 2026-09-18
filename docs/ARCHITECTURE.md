@@ -152,7 +152,9 @@ Normal browser portfolio persistence now talks directly to Supabase using RLS. T
 
 Current EGX data is fetched through server endpoints that proxy TradingView. This avoids browser cross-origin restrictions and keeps the market-data implementation isolated from React components.
 
-Historical prices are stored in `price_history` and are synchronized by `scripts/syncHistoricalPrices.ts`.
+Daily historical prices are stored in `price_history` and synchronized by `scripts/syncHistoricalPrices.ts`.
+
+15-minute bars are stored separately in `intraday_price_history` and synchronized by `scripts/syncIntradayPrices.ts`. The intraday table is read-only to authenticated browser sessions; writes and retention cleanup are performed by trusted automation. See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md).
 
 ## Google Sheets
 

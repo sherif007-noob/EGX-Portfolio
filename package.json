@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "sync:historical": "tsx scripts/syncHistoricalPrices.ts",
+    "sync:intraday": "tsx scripts/syncIntradayPrices.ts",
     "migrate:firestore:supabase": "tsx scripts/migrateFirestoreToSupabase.ts",
     "verify:firestore:supabase": "tsx scripts/verifyFirestoreSupabaseMigration.ts",
     "verify:production-data": "tsx scripts/verifyProductionData.ts"

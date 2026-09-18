@@ -126,6 +126,45 @@ EGX_PORTFOLIO_ID
 
 The workflow uses the server secret only inside GitHub Actions.
 
+### Intraday Prices
+
+File:
+
+```text
+.github/workflows/intraday-prices.yml
+```
+
+Schedule:
+
+```text
+*/15 6-13 * * 0-4
+```
+
+The broad UTC window covers the EGX session across Cairo daylight-saving changes. TradingView supplies the actual 15-minute bar timestamps.
+
+The job:
+
+- runs with Node 22 and npm;
+- discovers current/recent portfolio tickers;
+- performs an initial retention-window backfill when needed;
+- incrementally upserts recent 15-minute bars afterward;
+- prunes bars older than the configured retention window;
+- uses workflow concurrency to prevent overlapping ingestion runs.
+
+Manual run:
+
+```bash
+npm run sync:intraday
+```
+
+Default retention:
+
+```env
+EGX_INTRADAY_RETENTION_DAYS=90
+```
+
+See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) for the full design.
+
 ### Production Data Audit
 
 File:

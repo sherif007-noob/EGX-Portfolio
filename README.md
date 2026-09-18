@@ -12,7 +12,7 @@ The application is built with React, TypeScript, Vite, Express, Supabase, and a 
 - Stores portfolio data in Supabase.
 - Uses Supabase email/password authentication for portfolio access.
 - Uses Row Level Security (RLS) to scope portfolio rows to the authenticated user.
-- Stores historical EGX prices and uses them to reconstruct daily portfolio valuations.
+- Stores daily EGX history plus 15-minute intraday bars for transaction-aware analytics.
 - Calculates money-weighted return (MWRR) and drawdown only when sufficient historical data exists.
 - Supports OCR-assisted trade entry and optional Google Sheets synchronization.
 - Includes scheduled GitHub Actions for historical-price synchronization and production-data auditing.
@@ -82,6 +82,7 @@ npm test
 npm run build
 npm start
 npm run sync:historical
+npm run sync:intraday
 npm run verify:production-data
 ```
 
@@ -117,6 +118,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
 - [API reference](docs/API.md)
 - [Authentication and security](docs/AUTH_AND_SECURITY.md)
 - [Performance analytics](docs/PERFORMANCE_ANALYTICS.md)
+- [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
 - [Testing](docs/TESTING.md)
 - [Operations and deployment](docs/OPERATIONS.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
@@ -153,7 +155,8 @@ Pull requests and pushes to `main` run:
 
 Scheduled workflows also:
 
-- synchronize historical EGX prices Sunday through Thursday;
+- synchronize daily historical EGX prices Sunday through Thursday;
+- ingest 15-minute EGX bars during the trading-day window;
 - audit production portfolio data Sunday through Thursday.
 
 See [docs/OPERATIONS.md](docs/OPERATIONS.md).

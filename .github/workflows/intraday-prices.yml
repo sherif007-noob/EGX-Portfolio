@@ -1,13 +1,24 @@
-name: Historical Prices
+name: Intraday Prices
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 12 * * 0-4'
+    # Broad UTC window covers the EGX session across Cairo DST changes.
+    # TradingView supplies the actual 15-minute bar timestamps; the cron time
+    # only determines how often we ingest newly completed/current bars.
+    - cron: '*/15 6-13 * * 0-4'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-intraday-prices
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,9 +47,10 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Sync TradingView historical prices
+      - name: Sync TradingView 15-minute prices
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
-        run: npm run sync:historical
+          EGX_INTRADAY_RETENTION_DAYS: '90'
+        run: npm run sync:intraday

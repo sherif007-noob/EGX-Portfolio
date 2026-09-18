@@ -368,6 +368,47 @@ export async function loadHistoricalPricesFromSupabase(tickers: string[], startD
   return data ?? [];
 }
 
+export async function loadIntradayPricesFromSupabase(
+  tickers: string[],
+  startTimestamp: string,
+  endTimestamp: string,
+  intervalMinutes = 15,
+) {
+  const supabase = getSupabaseBrowserClient();
+  const normalized = [...new Set(
+    tickers
+      .map((ticker) => ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''))
+      .filter(Boolean),
+  )];
+
+  if (!normalized.length) return [];
+
+  const pageSize = 1000;
+  const rows: any[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('intraday_price_history')
+      .select('*')
+      .in('ticker', normalized)
+      .eq('interval_minutes', intervalMinutes)
+      .gte('bar_timestamp', startTimestamp)
+      .lte('bar_timestamp', endTimestamp)
+      .order('bar_timestamp', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return rows;
+}
+
 export async function getSupabaseAuthUserId(): Promise<string | null> {
   const { data } = await getSupabaseBrowserClient().auth.getUser();
   return data.user?.id ?? null;

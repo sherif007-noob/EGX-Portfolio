@@ -36,6 +36,7 @@ import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
 import { forceFullSyncToFirestore } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
+import { findStrongDuplicateExecution } from './utils/tradeExecutionIdentity';
 import { getAccessToken } from './services/firebaseAuth';
 import {
   appendTransactionToSheet,
@@ -52,7 +53,7 @@ import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
 
-  // Portfolio State Hook (Encapsulates LocalStorage, Firestore sync, and CRUD)
+  // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
   const {
     positions,
     setPositions,
@@ -295,6 +296,24 @@ export default function App() {
       return;
     }
 
+    const duplicate = findStrongDuplicateExecution(transactions, {
+      type: 'BUY',
+      ticker: newTradeData.ticker,
+      shares: newTradeData.shares,
+      price: newTradeData.buyPrice,
+      date: newTradeData.buyDate,
+      executedAt: newTradeData.executedAt,
+      fees: newTradeData.brokerageFee,
+    });
+    if (duplicate) {
+      showToast(
+        `Duplicate execution blocked: BUY ${newTradeData.ticker.toUpperCase()} already exists at this execution time.`,
+        'error',
+        5500,
+      );
+      return;
+    }
+
     const newTx = executeAddTrade({
       ticker: newTradeData.ticker,
       companyName: newTradeData.companyName,
@@ -360,6 +379,24 @@ export default function App() {
 
     if (!valResult.valid) {
       showToast(`Sell Validation Error: ${valResult.errors.join(', ')}`, 'error');
+      return;
+    }
+
+    const duplicate = findStrongDuplicateExecution(transactions, {
+      type: 'SELL',
+      ticker: pos.ticker,
+      shares: soldShares,
+      price: sellPrice,
+      date: sellDate,
+      executedAt,
+      fees: sellFees,
+    });
+    if (duplicate) {
+      showToast(
+        `Duplicate execution blocked: SELL ${pos.ticker.toUpperCase()} already exists at this execution time.`,
+        'error',
+        5500,
+      );
       return;
     }
 
@@ -598,38 +635,19 @@ export default function App() {
           Math.max(0, pos.shares - parsedTx.shares)
         );
       } else {
-        const maxExistingTradeId = transactions.reduce((max, t) => {
-          const tid = Number(t.tradeId);
-          return !isNaN(tid) && tid > max ? tid : max;
-        }, 0);
-        const nextTradeId = maxExistingTradeId > 0 ? maxExistingTradeId + 1 : (transactions.length + 1);
-
-        const newTx: TradeTransaction = {
-          id: `tx-sell-${Date.now()}-${parsedTx.ticker}`,
-          tradeId: nextTradeId,
-          type: 'SELL',
-          ticker: parsedTx.ticker.toUpperCase(),
-          companyName: parsedTx.companyName,
-          sector: parsedTx.sector,
-          shares: parsedTx.shares,
-          price: parsedTx.price,
-          date: parsedTx.date,
-          executedAt: parsedTx.executedAt,
-          fees: parsedTx.fees,
-          totalAmount: parsedTx.shares * parsedTx.price - parsedTx.fees,
-          notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-        };
-        setTransactions((prev) => [newTx, ...prev]);
-        setCashBalance((prev) => prev + (parsedTx.shares * parsedTx.price - parsedTx.fees));
+        showToast(
+          `Could not log SELL ${parsedTx.ticker.toUpperCase()}: no matching open position exists. Import the corresponding BUY first or use batch import.`,
+          'error',
+          6500,
+        );
       }
     }
   };
 
   // AI Screenshot Batch Transactions
-  // Process the entire OCR batch as one working ledger. For same-day trades on the
-  // same ticker, BUYs are applied before SELLs because OCR has no execution-time
-  // field. This prevents a valid SELL from being rejected merely because its
-  // corresponding BUY screenshot appeared later in the upload order.
+  // Process the entire OCR batch as one working ledger. Exact execution timestamps
+  // are honored when present; only timestamp-missing same-day ties fall back to
+  // BUY-before-SELL ordering so dependent sells can still reconcile safely.
   const handleAIScreenshotAddBatchTransactions = (
     parsedTxs: Array<{
       ticker: string;
@@ -665,6 +683,7 @@ export default function App() {
     let workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
     let processedCount = 0;
     let skippedCount = 0;
+    let duplicateCount = 0;
     const pending = [...orderedTxs];
 
     // Keep retrying blocked SELLs after later BUYs have been applied. This makes
@@ -683,6 +702,23 @@ export default function App() {
           pending.splice(i, 1);
           i--;
           skippedCount++;
+          continue;
+        }
+
+        const duplicate = findStrongDuplicateExecution(workingTransactions, {
+          type: parsedTx.type,
+          ticker,
+          shares,
+          price,
+          date: parsedTx.date,
+          executedAt: parsedTx.executedAt,
+          fees,
+        });
+        if (duplicate) {
+          pending.splice(i, 1);
+          i--;
+          duplicateCount++;
+          progressed = true;
           continue;
         }
 
@@ -777,8 +813,12 @@ export default function App() {
       tickers,
     });
 
-    if (skippedCount > 0) {
-      showToast(`Logged ${processedCount} OCR trades. ${skippedCount} trade(s) could not be reconciled and were skipped.`, 'error', 6500);
+    if (skippedCount > 0 || duplicateCount > 0) {
+      const details = [
+        duplicateCount > 0 ? `${duplicateCount} duplicate execution(s) blocked` : '',
+        skippedCount > 0 ? `${skippedCount} unreconciled trade(s) skipped` : '',
+      ].filter(Boolean).join('; ');
+      showToast(`Logged ${processedCount} OCR trades. ${details}.`, skippedCount > 0 ? 'error' : 'success', 6500);
     } else {
       showToast(`Successfully processed all ${processedCount} OCR trades!`, 'success');
     }

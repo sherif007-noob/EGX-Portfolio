@@ -59,8 +59,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <p className="text-xs text-slate-400 leading-relaxed">
               {isQuotaError
-                ? 'Firebase Firestore daily free quota (20,000 writes / 50,000 reads) or network rate limit was exceeded. Your portfolio data remains completely safe in local cache.'
-                : 'The application encountered an unexpected runtime exception. You can refresh or use local cache.'}
+                ? 'The remote data service reported a quota or rate-limit error. Reload after the limit clears; locally cached state may still be available, but Supabase remains the authoritative portfolio store.'
+                : 'The application encountered an unexpected runtime exception. Reload first; resetting local cache should only be used if the problem persists.'}
             </p>
 
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-left overflow-auto max-h-32 text-[11px] font-mono text-amber-300">

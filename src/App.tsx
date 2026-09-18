@@ -34,7 +34,7 @@ import { useMarketData } from './hooks/useMarketData';
 import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
 import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
-import { getIsQuotaExceeded, forceFullSyncToFirestore } from './services/firestoreStorage';
+import { forceFullSyncToFirestore } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
 import { getAccessToken } from './services/firebaseAuth';
 import {
@@ -886,25 +886,6 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {getIsQuotaExceeded() && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-              <span>
-                <strong>Firebase Daily Write Quota Reached:</strong> Cloud database sync is paused until daily quota resets tomorrow. Your app continues working 100% offline via Local Storage & Google Sheets sync.
-              </span>
-            </div>
-            <a
-              href="https://firebase.google.com/pricing#cloud-firestore"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] underline text-amber-200 hover:text-white shrink-0 font-semibold"
-            >
-              Quota Info
-            </a>
-          </div>
-        )}
-
         {/* Top Summary Banner */}
         <PortfolioSummary
           metrics={metrics}

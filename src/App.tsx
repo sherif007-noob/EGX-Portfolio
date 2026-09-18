@@ -206,17 +206,17 @@ export default function App() {
       try {
         const historicalPrices = await getHistoricalPricesForTransactions(transactions);
         const result = buildPerformanceEngineResult(transactions, historicalPrices, undefined, undefined, capitalDeposits);
-        const hasCompleteCurve =
-          result.dataQuality.valuationDays >= 2 &&
-          result.dataQuality.incompleteDays === 0 &&
-          result.dataQuality.missingTickers.length === 0;
+        const completeValuations = result.valuations.filter((point) => point.complete);
+        const hasUsableCurve = completeValuations.length >= 2;
 
-        if (!cancelled && hasCompleteCurve) {
+        if (!cancelled && hasUsableCurve) {
           setHistoricalDrawdown({
             maxDrawdownEgp: result.maxDrawdownEgp,
             maxDrawdownPercent: result.maxDrawdownPercent,
           });
-          setHistoricalPerformanceSeries(result.valuations);
+          // Keep trustworthy complete valuation days instead of blanking the entire
+          // report because one newer ticker is temporarily missing history.
+          setHistoricalPerformanceSeries(completeValuations);
         }
       } catch (error) {
         if (!cancelled) {

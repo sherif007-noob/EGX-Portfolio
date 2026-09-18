@@ -237,3 +237,52 @@ The result exposes:
 - whether the selected range has enough complete points;
 - whether the timeframe requires intraday reconstruction.
 
+
+
+## Timeframe UI and intraday reconstruction
+
+The Reports performance card now uses one shared timeframe selector:
+
+```text
+Today · 1W · 1M · 90D · YTD · All
+```
+
+The daily timeframes use `buildUnifiedAnalyticsResult()` and therefore share the same NAV, external-flow, TWR, MWR, and drawdown semantics defined by the unified analytics engine.
+
+### Today
+
+`Today` is reconstructed by `src/services/intradayAnalyticsEngine.ts`.
+
+The engine:
+
+- selects the current EGX session after market open, otherwise the latest completed session;
+- starts from pre-session cash and holdings rebuilt from the transaction ledger;
+- values opening holdings from the prior trusted daily close;
+- applies same-session trades at their exact `executedAt` timestamps;
+- applies 15-minute TradingView bars without look-ahead;
+- uses the current partial bar only up to the current time during an active session;
+- includes intraday round trips even when the security is no longer held at session end;
+- includes brokerage fees through the ledger cash impact;
+- computes intraday NAV, TWR, MWR, net deposits, and drawdown from the same timeline.
+
+A same-session transaction without an execution timestamp makes the 1D reconstruction incomplete. The app does not guess its position inside the session.
+
+The Today chart uses a straight `linear` line rather than a smoothed curve so the UI does not imply market observations that did not occur.
+
+### Current-session versus completed-session behavior
+
+During an active session, the newest available partial 15-minute bar is valued only through the current time.
+
+After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session.
+
+### MWR presentation
+
+The headline remains the non-annualized selected-period MWR.
+
+For `All`, annualized XIRR is shown only as a secondary reference value.
+
+### Data availability
+
+If no 15-minute rows exist for the selected session, Today remains explicitly unavailable instead of falling back to a daily price.
+
+The ingestion workflow is also triggered when its own workflow/script changes are merged to `main`, which allows an empty production intraday store to seed immediately after deployment while preserving the normal 15-minute scheduled ingestion.

@@ -153,3 +153,18 @@ The same visual system will be reused for:
 - cumulative fees
 
 This visual layer must remain separate from financial calculations in the unified analytics engine.
+
+
+## Secondary chart layout
+
+Risk and cost analytics follow the same visual system as the primary analytics card.
+
+- Drawdown uses the rose risk accent.
+- Fees use the amber cost accent.
+- Realized P&L uses emerald.
+- Unrealized P&L uses cyan.
+- Today uses unsmoothed linear observations.
+- Longer price/performance series may use restrained monotone interpolation.
+- Cumulative fees use a step line because costs occur at discrete transaction events.
+- Secondary charts share a Recharts `syncId` so crosshair position stays aligned when comparing the same valuation timestamp.
+- Responsive containers use a small resize debounce to reduce layout churn on mobile orientation/viewport changes.

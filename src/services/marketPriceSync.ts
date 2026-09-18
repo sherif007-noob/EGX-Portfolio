@@ -343,14 +343,12 @@ export function applyLivePricesToPortfolio(
  * and calculates precise milliseconds until the next scheduled update tick.
  * 
  * Schedule Rules:
- * - Sunday: 09:30 AM – 02:30 PM Cairo time
- * - Monday–Thursday: 10:00 AM – 02:30 PM Cairo time
+ * - Sunday–Thursday regular session: 10:00 AM – 02:30 PM Cairo time
  * - Friday & Saturday: Market closed, no syncing (isSessionActive: false)
- * - Closing session final price update: 03:15 PM (15:15 Cairo time) on trading days (Sunday–Thursday)
+ * - A separate closing-price snapshot is persisted at 03:15 PM Cairo time.
  */
-export function getEGXSessionStatus(): EGXScheduleStatus {
+export function getEGXSessionStatus(now = new Date()): EGXScheduleStatus {
   try {
-    const now = new Date();
     const cairoDateFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo',
       year: 'numeric',
@@ -380,20 +378,8 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
 
     let inSession = false;
 
-    if (isTradingDay) {
-      if (dayOfWeek === 0) {
-        if (currentTotalMinutes >= 570 && currentTotalMinutes <= 870) {
-          inSession = true;
-        }
-      } else {
-        if (currentTotalMinutes >= 600 && currentTotalMinutes <= 870) {
-          inSession = true;
-        }
-      }
-
-      if (currentTotalMinutes >= 915 && currentTotalMinutes <= 925) {
-        inSession = true;
-      }
+    if (isTradingDay && currentTotalMinutes >= 600 && currentTotalMinutes <= 870) {
+      inSession = true;
     }
 
     let nextTickHour = hour;
@@ -414,7 +400,7 @@ export function getEGXSessionStatus(): EGXScheduleStatus {
     } else {
       const targetsToday: number[] = [];
       if (isTradingDay) {
-        const openMin = dayOfWeek === 0 ? 570 : 600;
+        const openMin = 600;
         if (openMin > currentTotalMinutes) targetsToday.push(openMin);
         if (915 > currentTotalMinutes) targetsToday.push(915);
       }

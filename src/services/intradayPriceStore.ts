@@ -36,6 +36,24 @@ export function cairoDateKey(timestamp: string): string {
   return year && month && day ? `${year}-${month}-${day}` : '';
 }
 
+export function latestIntradaySessionDate(
+  series: IntradayPriceSeries,
+  notAfterDate?: string,
+): string | null {
+  let latest = '';
+
+  for (const bars of Object.values(series)) {
+    for (const bar of bars) {
+      const date = cairoDateKey(bar.timestamp);
+      if (!date) continue;
+      if (notAfterDate && date > notAfterDate.slice(0, 10)) continue;
+      if (date > latest) latest = date;
+    }
+  }
+
+  return latest || null;
+}
+
 export function rowsToIntradayPriceSeries(
   tickers: string[],
   rows: Array<Record<string, unknown>>,

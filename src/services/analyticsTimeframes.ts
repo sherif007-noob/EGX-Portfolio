@@ -66,7 +66,10 @@ export function getLatestEgxSessionDate(now = new Date()): string {
   const weekday = parseDateKey(date).getUTCDay();
 
   if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
-  if (minuteOfDay < 9 * 60 + 30) return previousEgxTradingDate(date);
+
+  // Keep the analytics session boundary aligned with the regular EGX session.
+  // Pre-market may begin earlier, but portfolio session analytics start at 10:00 Cairo.
+  if (minuteOfDay < 10 * 60) return previousEgxTradingDate(date);
   return date;
 }
 

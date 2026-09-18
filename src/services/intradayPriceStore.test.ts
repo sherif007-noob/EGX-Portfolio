@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cairoDateKey,
+  latestIntradaySessionDate,
   normalizeIntradayTicker,
   rowsToIntradayPriceSeries,
 } from './intradayPriceStore';
@@ -45,6 +46,22 @@ describe('intraday price store', () => {
   it('keeps UTC storage timestamps while deriving the Cairo trading date', () => {
     // Egypt is UTC+3 in September, so 21:30 UTC belongs to the next Cairo date.
     expect(cairoDateKey('2026-09-17T21:30:00.000Z')).toBe('2026-09-18');
+  });
+
+  it('resolves the latest actual market session from stored bars', () => {
+    const series = {
+      ORAS: [
+        { timestamp: '2026-09-16T07:00:00.000Z', intervalMinutes: 15, open: 800, high: 810, low: 795, close: 808 },
+        { timestamp: '2026-09-17T07:00:00.000Z', intervalMinutes: 15, open: 820, high: 830, low: 818, close: 829 },
+      ],
+      TALM: [
+        { timestamp: '2026-09-17T08:00:00.000Z', intervalMinutes: 15, open: 24, high: 25, low: 24, close: 24.8 },
+      ],
+    };
+
+    expect(latestIntradaySessionDate(series, '2026-09-18')).toBe('2026-09-17');
+    expect(latestIntradaySessionDate(series, '2026-09-16')).toBe('2026-09-16');
+    expect(latestIntradaySessionDate({}, '2026-09-18')).toBeNull();
   });
 
   it('ignores malformed market rows rather than fabricating prices', () => {

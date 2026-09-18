@@ -123,6 +123,18 @@ These variables grant powerful access and should be:
 - never committed;
 - never copied into screenshots or issue reports.
 
+## Internal RLS event trigger
+
+The production project contains `public.rls_auto_enable()`, a `SECURITY DEFINER` event-trigger function used by the database-level `ensure_rls` DDL event trigger to automatically enable RLS on newly created `public` tables.
+
+It is an internal database function, not a browser RPC. Production permissions explicitly revoke `EXECUTE` from:
+
+- `PUBLIC`;
+- `anon`;
+- `authenticated`.
+
+The event trigger continues to function after those revocations. This removes direct API-role execution without disabling automatic RLS enforcement.
+
 ## Current security hardening notes
 
 When operating this project:

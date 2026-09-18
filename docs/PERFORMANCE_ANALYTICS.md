@@ -220,7 +220,7 @@ The unified engine exposes two related quantities:
 - **performance drawdown %**: decline in the external-flow-neutral TWR performance index from its prior peak;
 - **equity drawdown EGP**: raw decline in portfolio equity from its prior nominal equity peak.
 
-Performance drawdown is preferred for comparing investment performance because deposits cannot erase a loss simply by increasing account size.
+Performance drawdown is preferred for comparing investment performance because deposits cannot erase a loss simply by increasing account size. The legacy report KPI now uses this same TWR-based percentage. When an EGP drawdown figure is shown beside it, that EGP value is explicitly the nominal equity peak-to-trough gap rather than a second percentage-equivalent calculation.
 
 ## Data quality
 
@@ -255,7 +255,7 @@ The daily timeframes use `buildUnifiedAnalyticsResult()` and therefore share the
 
 The engine:
 
-- selects the current EGX session after market open, otherwise the latest completed session;
+- selects the current EGX session after market open, otherwise the latest completed session; if a nominal weekday has no intraday bars, it falls back to the latest actual stored EGX session (holiday-safe);
 - starts from pre-session cash and holdings rebuilt from the transaction ledger;
 - values opening holdings from the prior trusted daily close;
 - applies same-session trades at their exact `executedAt` timestamps;
@@ -273,7 +273,7 @@ The Today chart uses a straight `linear` line rather than a smoothed curve so th
 
 During an active session, the newest available partial 15-minute bar is valued only through the current time.
 
-After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session.
+The session boundary is shared with the live-market scheduler: the regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is treated as pre-market, not portfolio-session performance. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
 
 ### MWR presentation
 

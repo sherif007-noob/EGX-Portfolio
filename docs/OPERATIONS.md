@@ -286,3 +286,18 @@ ENABLE_SUPABASE_MIGRATION_UI
 unset or false in normal operation.
 
 Do not rerun a migration against an already-live portfolio unless there is a documented recovery plan and a verified reconciliation target.
+
+
+## Final analytics audit checks
+
+Before promoting analytics changes, verify:
+
+- transaction-ledger cash equals stored portfolio cash;
+- transaction-derived shares equal stored positions;
+- no exact duplicate non-cash transaction groups exist;
+- all portfolio trades have execution timestamps when intraday analytics depend on them;
+- every open holding has the latest daily market close;
+- every open holding has intraday coverage for the latest completed session;
+- final-session NAV from 15-minute closes agrees with stored portfolio market value.
+
+The production RLS event-trigger function is intentionally not executable by browser API roles. The remaining Supabase security-advisor item at the time of the analytics audit is leaked-password protection, which should be enabled in Supabase Auth settings when available for the project.

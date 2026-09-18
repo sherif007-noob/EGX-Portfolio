@@ -1,4 +1,4 @@
-import { auth, ensureAuthUser } from './firebaseAuth';
+import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 
 export interface SupabasePortfolioData {
@@ -13,19 +13,16 @@ export interface SupabasePortfolioData {
   lastPriceWriteAt?: string;
 }
 
-async function firebaseIdToken(): Promise<string | null> {
-  const user = await ensureAuthUser();
-  if (!user) {
-    console.warn('[Supabase] Cloud persistence skipped: no Google-authenticated Firebase user.');
-    return null;
-  }
-  console.info('[Supabase] Using Firebase UID:', user.uid, user.isAnonymous ? '(anonymous)' : '(Google)');
-  return user.getIdToken();
+async function supabaseAccessToken(): Promise<string | null> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return data.session?.access_token ?? null;
 }
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = await firebaseIdToken();
-  if (!token) throw new Error('No authenticated Firebase user is available for Supabase persistence.');
+  const token = await supabaseAccessToken();
+  if (!token) throw new Error('No authenticated Supabase session is available for portfolio persistence.');
 
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${token}`);
@@ -133,4 +130,7 @@ export async function loadHistoricalPricesFromSupabase(tickers: string[], startD
   return body.data;
 }
 
-export function getSupabaseAuthUserId(): string | null { return auth.currentUser?.uid ?? null; }
+export async function getSupabaseAuthUserId(): Promise<string | null> {
+  const { data } = await getSupabaseBrowserClient().auth.getUser();
+  return data.user?.id ?? null;
+}

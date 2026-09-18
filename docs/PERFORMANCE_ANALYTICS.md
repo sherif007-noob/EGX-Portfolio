@@ -273,7 +273,7 @@ The Today chart uses a straight `linear` line rather than a smoothed curve so th
 
 During an active session, the newest available partial 15-minute bar is valued only through the current time.
 
-The session boundary is shared with the live-market scheduler: Sunday opens at 09:30 Cairo and Monday–Thursday at 10:00 Cairo. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
+The session boundary is shared with the live-market scheduler: the regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is treated as pre-market, not portfolio-session performance. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
 
 ### MWR presentation
 

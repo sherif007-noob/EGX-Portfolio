@@ -94,7 +94,6 @@ export function analyticsModeSummary(
   }
 
   const points = analyticsModePoints(result, mode);
-  const first = points[0];
   const last = points.at(-1);
 
   if (mode === 'PORTFOLIO_RETURN') {

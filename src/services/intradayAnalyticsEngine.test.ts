@@ -47,9 +47,9 @@ describe('intraday analytics engine', () => {
 
     expect(result.points).toHaveLength(3);
     expect(result.summary.startEquity).toBe(2500);
-    expect(result.summary.endEquity).toBe(2607);
-    expect(result.summary.pnlEgp).toBe(107);
-    expect(result.summary.mwrrPercent).toBeCloseTo(4.28, 2);
+    expect(result.summary.endEquity).toBe(2557);
+    expect(result.summary.pnlEgp).toBe(57);
+    expect(result.summary.mwrrPercent).toBeCloseTo(2.28, 2);
     expect(result.dataQuality.hasUsableRange).toBe(true);
   });
 

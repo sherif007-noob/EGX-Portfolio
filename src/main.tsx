@@ -1,13 +1,13 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
+import { SupabaseAuthGate } from './components/SupabaseAuthGate.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <SupabaseAuthGate />
     </ErrorBoundary>
   </StrictMode>,
 );

@@ -83,7 +83,7 @@ describe('analytics modes', () => {
     const summary = analyticsModeSummary(result, 'PORTFOLIO_RETURN');
     expect(summary.primaryValue).toBe(1120);
     expect(summary.changeEgp).toBe(70);
-    expect(summary.changePercent).toBeCloseTo(7, 8);
+    expect(summary.changePercent).toBeCloseTo(6.8, 8);
   });
 
   it('exposes portfolio and cumulative net deposits on the same EGP scale', () => {

@@ -7,7 +7,7 @@ import {
   handlePutSheetValues, handleAppendSheetValues, handleBatchUpdate, handleListDriveSpreadsheets,
 } from "./src/services/googleSheetsServer";
 import { runFirestoreSupabaseMigration } from "./src/services/firestoreSupabaseMigrationServer";
-import { verifyFirebaseBearerToken, loadSupabasePortfolio, saveSupabasePortfolio, saveSupabasePriceTick, loadHistoricalPrices } from "./src/services/supabasePortfolioServer";
+import { verifySupabaseBearerToken, loadSupabasePortfolio, saveSupabasePortfolio, saveSupabasePriceTick, loadHistoricalPrices } from "./src/services/supabasePortfolioServer";
 
 async function startServer() {
   const app = express();
@@ -26,9 +26,9 @@ async function startServer() {
   app.post("/api/sheets/batchUpdate", handleBatchUpdate);
   app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
 
-  const withFirebaseUser = async (req: express.Request, res: express.Response, handler: (uid: string) => Promise<unknown>) => {
+  const withSupabaseUser = async (req: express.Request, res: express.Response, handler: (uid: string) => Promise<unknown>) => {
     try {
-      const uid = await verifyFirebaseBearerToken(req.headers.authorization);
+      const uid = await verifySupabaseBearerToken(req.headers.authorization);
       res.json(await handler(uid));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -38,12 +38,12 @@ async function startServer() {
     }
   };
 
-  // Firebase authenticates the browser. The server verifies that Firebase ID token,
-  // scopes by Firebase UID, and uses the Supabase secret key server-side only.
-  app.get("/api/supabase/portfolio", (req, res) => withFirebaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
-  app.put("/api/supabase/portfolio", (req, res) => withFirebaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
-  app.post("/api/supabase/price-tick", (req, res) => withFirebaseUser(req, res, async (uid) => ({ saved: await saveSupabasePriceTick(uid, req.body?.positions || [], req.body?.tickers || [], req.body?.force === true) })));
-  app.get("/api/supabase/price-history", (req, res) => withFirebaseUser(req, res, async (uid) => {
+  // Supabase authenticates the browser. The server verifies that Supabase access token,
+  // scopes by Supabase user ID, and uses the Supabase secret key server-side only.
+  app.get("/api/supabase/portfolio", (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
+  app.put("/api/supabase/portfolio", (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
+  app.post("/api/supabase/price-tick", (req, res) => withSupabaseUser(req, res, async (uid) => ({ saved: await saveSupabasePriceTick(uid, req.body?.positions || [], req.body?.tickers || [], req.body?.force === true) })));
+  app.get("/api/supabase/price-history", (req, res) => withSupabaseUser(req, res, async (uid) => {
     const tickers = String(req.query.tickers || '').split(',').map((t) => t.trim()).filter(Boolean);
     if (!tickers.length) throw new Error("At least one ticker is required.");
     return { data: await loadHistoricalPrices(uid, tickers, String(req.query.startDate || '') || undefined, String(req.query.endDate || '') || undefined) };

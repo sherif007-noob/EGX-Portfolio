@@ -55,7 +55,7 @@ Its definition is committed under `supabase/migrations/` so a fresh environment 
 
 Transaction IDs are globally unique, but different IDs can still describe the same broker execution.
 
-The app therefore uses strong execution-level duplicate detection for timestamped entries. A trade is automatically blocked only when all of the following agree:
+The screenshot/OCR import paths therefore use strong execution-level duplicate detection for timestamped entries. A trade is automatically blocked only when all of the following agree:
 
 - BUY/SELL side;
 - normalized ticker;
@@ -65,7 +65,7 @@ The app therefore uses strong execution-level duplicate detection for timestampe
 - price;
 - fees.
 
-Date-only entries are not automatically deduplicated because two legitimate fills can otherwise appear identical.
+Date-only OCR entries are not automatically deduplicated because two legitimate fills can otherwise appear identical. Manual entry is also not auto-blocked by this heuristic, preserving a path for legitimate same-minute split fills.
 
 The OCR batch importer also deduplicates against:
 

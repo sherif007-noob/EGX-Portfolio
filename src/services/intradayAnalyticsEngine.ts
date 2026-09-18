@@ -102,7 +102,7 @@ function previousClose(
 
 function barValuationMs(bar: IntradayPricePoint, asOfMs: number): number {
   const start = parseMs(bar.timestamp);
-  if (!Number.isFinite(start)) return Number.NaN;
+  if (!Number.isFinite(start) || start > asOfMs) return Number.NaN;
   const end = start + Math.max(1, bar.intervalMinutes) * 60_000;
   return Math.min(end, asOfMs);
 }
@@ -111,15 +111,15 @@ function sessionBars(
   intradayPrices: IntradayPriceSeries,
   sessionDate: string,
   asOfMs: number,
-): Map<string, Array<{ at: number; close: number }>> {
-  const result = new Map<string, Array<{ at: number; close: number }>>();
+): Map<string, Array<{ start: number; at: number; close: number }>> {
+  const result = new Map<string, Array<{ start: number; at: number; close: number }>>();
 
   for (const [rawTicker, bars] of Object.entries(intradayPrices)) {
     const ticker = normalizeIntradayTicker(rawTicker);
     const clean = bars
       .filter((bar) => cairoDateKey(bar.timestamp) === sessionDate)
-      .map((bar) => ({ at: barValuationMs(bar, asOfMs), close: Number(bar.close) }))
-      .filter((bar) => Number.isFinite(bar.at) && Number.isFinite(bar.close) && bar.close > 0 && bar.at <= asOfMs)
+      .map((bar) => ({ start: parseMs(bar.timestamp), at: barValuationMs(bar, asOfMs), close: Number(bar.close) }))
+      .filter((bar) => Number.isFinite(bar.start) && Number.isFinite(bar.at) && Number.isFinite(bar.close) && bar.close > 0 && bar.at <= asOfMs)
       .sort((a, b) => a.at - b.at);
 
     if (clean.length) result.set(ticker, clean);
@@ -129,7 +129,7 @@ function sessionBars(
 }
 
 function latestPriceAt(
-  bars: Array<{ at: number; close: number }> | undefined,
+  bars: Array<{ start: number; at: number; close: number }> | undefined,
   at: number,
 ): number | undefined {
   if (!bars?.length) return undefined;
@@ -201,9 +201,7 @@ export function buildIntradayAnalyticsResult(
   }
 
   const baselineMs = Math.min(
-    ...[...barsByTicker.values()].flatMap((bars) =>
-      bars.map((bar) => bar.at - 15 * 60_000),
-    ),
+    ...[...barsByTicker.values()].flatMap((bars) => bars.map((bar) => bar.start)),
   );
   const state = {
     cash: hasExplicitCapitalFlow(ordered) ? 0 : openingCapital,

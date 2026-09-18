@@ -3,6 +3,7 @@ import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../ty
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
+import type { MWRRPoint } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
@@ -14,6 +15,7 @@ interface PerformanceReportsProps {
   metrics?: PortfolioMetrics;
   cashBalance?: number;
   capitalDeposits?: number;
+  historicalPerformance?: MWRRPoint[];
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
@@ -25,6 +27,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   metrics,
   cashBalance = 0,
   capitalDeposits = 0,
+  historicalPerformance = [],
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
@@ -71,6 +74,14 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
     return rows.map((row) => ({ ...row, percentage: total > 0 ? row.value / total * 100 : 0 }))
       .sort((a, b) => b.value - a.value);
   }, [positions, cashBalance, includeCash]);
+
+  const mwrrData = useMemo(() => historicalPerformance
+    .filter((point) => point.complete && Number.isFinite(point.mwrrPercent))
+    .map((point) => ({
+      date: point.date,
+      label: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-EG', { month: 'short', day: 'numeric' }),
+      mwrrPercent: Number(point.mwrrPercent),
+    })), [historicalPerformance]);
 
   const trajectoryData = useMemo(() => {
     let cumulative = 0;
@@ -130,6 +141,11 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
       </div>
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
+
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-cyan-400" />Money-Weighted Return (MWRR)</h3><p className="text-xs text-slate-400 mt-1">Historical annualized money-weighted return reconstructed from the transaction ledger, contributed capital, and daily EGX closes.</p></div>
+        {mwrrData.length < 2 ? <div className="py-10 text-center text-xs text-slate-500">Historical MWRR is unavailable until enough complete valuation days are present.</div> : <div className="h-64"><ResponsiveContainer width="100%" height="100%"><AreaChart data={mwrrData}><CartesianGrid strokeDasharray="3 3" stroke="#1e293b" /><XAxis dataKey="label" stroke="#64748b" fontSize={10} /><YAxis stroke="#64748b" fontSize={10} tickFormatter={(value: number) => `${value.toFixed(1)}%`} /><ReferenceLine y={0} stroke="#475569" /><Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''} /><Area type="monotone" dataKey="mwrrPercent" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.15} /></AreaChart></ResponsiveContainer></div>}
+      </div>
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" />Realized P&amp;L Trajectory</h3><p className="text-xs text-slate-400 mt-1">Closed-trade realized P&amp;L over time. This is not the portfolio equity curve.</p></div>

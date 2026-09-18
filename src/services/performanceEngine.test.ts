@@ -17,4 +17,22 @@ describe('performance engine', () => {
     expect(result.valuations.at(-1)?.equity).toBe(1100);
     expect(result.maxDrawdownEgp).toBe(0);
   });
+  it('produces MWRR from legacy opening capital without fake ledger cash rows', () => {
+    const result = buildPerformanceEngineResult([
+      { id: 'buy', type: 'BUY', ticker: 'TEST', companyName: 'Test', sector: 'Other', shares: 10, price: 50, date: '2026-01-02', fees: 0, totalAmount: 500 },
+    ], {
+      TEST: [
+        { date: '2026-01-02', close: 50 },
+        { date: '2026-02-02', close: 55 },
+      ],
+    }, '2026-01-02', '2026-02-02', 1000);
+
+    expect(result.externalCashFlows).toEqual([
+      { date: '2026-01-02', amount: -1000, type: 'DEPOSIT' },
+    ]);
+    expect(result.dataQuality.incompleteDays).toBe(0);
+    expect(result.valuations.at(-1)?.equity).toBe(1050);
+    expect(result.valuations.at(-1)?.mwrrPercent).not.toBeNull();
+  });
+
 });

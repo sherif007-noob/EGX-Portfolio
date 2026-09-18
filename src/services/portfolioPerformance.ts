@@ -81,6 +81,17 @@ export interface PerformanceSnapshot extends MWRRPoint {
 
 function dayKey(date: string): string { return String(date || '').slice(0, 10); }
 function dateMs(date: string): number { const n = new Date(date).getTime(); return Number.isFinite(n) ? n : NaN; }
+function normalizePerformanceTicker(ticker: string): string { return String(ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''); }
+function cashFlowKind(tx: TradeTransaction): string | undefined {
+  return typeof tx.cashFlowType === 'string' ? tx.cashFlowType.trim().toUpperCase() : undefined;
+}
+function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
+  return transactions.some((tx) => {
+    if (normalizePerformanceTicker(tx.ticker) !== 'CASH') return false;
+    const kind = cashFlowKind(tx);
+    return kind === 'DEPOSIT' || kind === 'WITHDRAWAL' || (!kind && (tx.type === 'BUY' || tx.type === 'SELL'));
+  });
+}
 
 function closeAtOrBefore(series: HistoricalPricePoint[] | undefined, date: string): number | undefined {
   if (!series?.length) return undefined;
@@ -117,7 +128,13 @@ export function sortPerformanceTransactions(transactions: TradeTransaction[]): T
   });
 }
 
-export function buildHistoricalEquityCurve(transactions: TradeTransaction[], historicalPrices: HistoricalPriceSeries, startDate?: string, endDate = new Date().toISOString().slice(0, 10)): PortfolioValuationPoint[] {
+export function buildHistoricalEquityCurve(
+  transactions: TradeTransaction[],
+  historicalPrices: HistoricalPriceSeries,
+  startDate?: string,
+  endDate = new Date().toISOString().slice(0, 10),
+  openingCapital = 0,
+): PortfolioValuationPoint[] {
   const txs = sortPerformanceTransactions(transactions);
   const first = startDate || txs.map((tx) => dayKey(tx.date)).filter(Boolean).sort()[0];
   if (!first) return [];
@@ -127,16 +144,22 @@ export function buildHistoricalEquityCurve(transactions: TradeTransaction[], his
   for (const series of Object.values(historicalPrices)) for (const point of series) { const date = dayKey(point.date); if (date >= first && date <= endDate) dates.add(date); }
 
   const holdings: Record<string, number> = {};
-  let cash = 0;
+  const legacyOpeningCapital = Number.isFinite(openingCapital) && openingCapital > 0 ? openingCapital : 0;
+  let cash = hasExplicitCapitalFlow(txs) ? 0 : legacyOpeningCapital;
   let txIndex = 0;
   const result: PortfolioValuationPoint[] = [];
 
   for (const date of [...dates].sort()) {
     while (txIndex < txs.length && dayKey(txs[txIndex].date) <= date) {
       const tx = txs[txIndex++];
-      const ticker = tx.ticker.trim().toUpperCase();
+      const ticker = normalizePerformanceTicker(tx.ticker);
       if (ticker === 'CASH') {
-        cash += tx.type === 'BUY' ? Math.abs(tx.totalAmount) : -Math.abs(tx.totalAmount);
+        const kind = cashFlowKind(tx);
+        const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
+        if (!Number.isFinite(amount)) continue;
+        if (kind === 'DIVIDEND' || kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) cash += amount;
+        else if (kind === 'FEE' || kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) cash -= amount;
+        else if (kind === 'CASH_ADJUSTMENT') cash += Number(tx.cashFlowAmount ?? tx.totalAmount);
         continue;
       }
       const gross = Number.isFinite(tx.grossTradeValue) ? Number(tx.grossTradeValue) : tx.shares * tx.price;
@@ -165,18 +188,31 @@ export function buildHistoricalEquityCurve(transactions: TradeTransaction[], his
   return result;
 }
 
-export function buildExternalCashFlows(transactions: TradeTransaction[]): MWRRCashFlow[] {
-  return sortPerformanceTransactions(transactions)
-    .filter((tx) => tx.ticker.trim().toUpperCase() === 'CASH')
+export function buildExternalCashFlows(
+  transactions: TradeTransaction[],
+  openingCapital = 0,
+  openingDate?: string,
+): MWRRCashFlow[] {
+  const ordered = sortPerformanceTransactions(transactions);
+  const flows = ordered
+    .filter((tx) => normalizePerformanceTicker(tx.ticker) === 'CASH')
     .map((tx) => {
-      const rawType = (tx as TradeTransaction & { cashFlowType?: string }).cashFlowType;
-      const amount = Math.abs(Number((tx as TradeTransaction & { cashFlowAmount?: number }).cashFlowAmount ?? tx.totalAmount));
+      const rawType = cashFlowKind(tx);
+      const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
       if (!Number.isFinite(amount) || amount === 0) return null;
-      if (rawType === 'DIVIDEND' || rawType === 'FEE') return { date: tx.date, amount: 0, type: rawType } as MWRRCashFlow;
-      const type = rawType === 'WITHDRAWAL' || tx.type === 'SELL' ? 'WITHDRAWAL' : 'DEPOSIT';
-      return { date: tx.executedAt || tx.date, amount: type === 'DEPOSIT' ? -amount : amount, type };
+      if (rawType === 'DIVIDEND' || rawType === 'FEE' || rawType === 'CASH_ADJUSTMENT') return null;
+      const type = rawType === 'WITHDRAWAL' || (!rawType && tx.type === 'SELL') ? 'WITHDRAWAL' : 'DEPOSIT';
+      return { date: tx.executedAt || tx.date, amount: type === 'DEPOSIT' ? -amount : amount, type } as MWRRCashFlow;
     })
-    .filter((flow): flow is MWRRCashFlow => !!flow && flow.amount !== 0);
+    .filter((flow): flow is MWRRCashFlow => !!flow);
+
+  if (flows.length > 0) return flows;
+
+  const legacyOpeningCapital = Number.isFinite(openingCapital) && openingCapital > 0 ? openingCapital : 0;
+  const fallbackDate = dayKey(openingDate || ordered[0]?.date || '');
+  return legacyOpeningCapital > 0 && fallbackDate
+    ? [{ date: fallbackDate, amount: -legacyOpeningCapital, type: 'DEPOSIT' }]
+    : [];
 }
 
 function xnpv(rate: number, flows: MWRRCashFlow[]): number {

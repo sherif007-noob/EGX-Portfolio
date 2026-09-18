@@ -22,9 +22,11 @@ export function buildPerformanceEngineResult(
   historicalPrices: HistoricalPriceSeries,
   startDate?: string,
   endDate = new Date().toISOString().slice(0, 10),
+  openingCapital = 0,
 ): PerformanceEngineResult {
-  const valuations = buildHistoricalEquityCurve(transactions, historicalPrices, startDate, endDate);
-  const externalCashFlows = buildExternalCashFlows(transactions);
+  const valuations = buildHistoricalEquityCurve(transactions, historicalPrices, startDate, endDate, openingCapital);
+  const firstTransactionDate = transactions.map((tx) => String(tx.date || '').slice(0, 10)).filter(Boolean).sort()[0];
+  const externalCashFlows = buildExternalCashFlows(transactions, openingCapital, startDate || firstTransactionDate);
   const mwrrSeries = buildMWRRSeries(valuations, externalCashFlows);
   const drawdown = calculateMaxDrawdown(mwrrSeries.filter((point) => point.complete).map((point) => ({ equity: point.equity })));
   const missingTickers = [...new Set(mwrrSeries.flatMap((point) => point.missingTickers || []))];

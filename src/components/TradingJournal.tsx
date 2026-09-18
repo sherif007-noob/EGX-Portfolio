@@ -4,6 +4,7 @@ import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
 import { DateInput } from './DateInput';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import {
   BookOpen,
   Clock,
@@ -87,6 +88,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const [editShares, setEditShares] = useState<string>('');
   const [editPrice, setEditPrice] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
+  const [editTime, setEditTime] = useState<string>('');
   const [editFees, setEditFees] = useState<string>('');
   const [editCycleTag, setEditCycleTag] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
@@ -254,8 +256,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         }
 
         // Mode 2 & 3: Chronological (asc) or Newest First (desc)
-        const timeA = new Date(a.date).getTime() || 0;
-        const timeB = new Date(b.date).getTime() || 0;
+        const timeA = new Date(a.executedAt || a.date).getTime() || 0;
+        const timeB = new Date(b.executedAt || b.date).getTime() || 0;
 
         if (timeA !== timeB) {
           return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
@@ -307,7 +309,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     setEditSector(tx.sector || 'Banking');
     setEditShares(tx.shares ? tx.shares.toString() : '0');
     setEditPrice(tx.price ? tx.price.toString() : '0');
-    setEditDate(tx.date || new Date().toISOString().split('T')[0]);
+    setEditDate(executionDateInputValue(tx.executedAt, tx.date || new Date().toISOString().split('T')[0]));
+    setEditTime(executionTimeInputValue(tx.executedAt));
     setEditFees(tx.fees !== undefined ? tx.fees.toString() : '0');
     setEditCycleTag(tx.cycleTag || '');
     setEditNotes(tx.notes || '');
@@ -378,6 +381,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       shares: sharesNum,
       price: priceNum,
       date: editDate,
+      executedAt: combineExecutionDateTime(editDate, editTime),
       fees: feesNum,
       totalAmount,
       cycleTag: editCycleTag.trim() || undefined,
@@ -886,6 +890,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   </span>
                   <span className="text-[10px] text-slate-500 block font-mono">
                     {formatDateDDMMYYYY(tx.date)}
+                    {formatExecutionTime(tx.executedAt) ? ` • ${formatExecutionTime(tx.executedAt)}` : ''}
                   </span>
                 </div>
 
@@ -1169,6 +1174,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   onChange={setEditDate}
                   required
                 />
+
+                <div className="space-y-1">
+                  <label htmlFor="edit-tx-time" className="text-slate-300 font-semibold">Execution Time</label>
+                  <input
+                    id="edit-tx-time"
+                    type="time"
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               {/* Fees & Cycle Tag */}

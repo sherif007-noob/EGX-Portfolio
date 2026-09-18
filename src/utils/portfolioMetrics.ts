@@ -1,37 +1,14 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, PortfolioMetrics, PerformanceStats, Sector, CashFlowType } from '../types';
 import { calculatePortfolioValue, calculatePositionMarketValue, calculatePositionUnrealizedPnl, calculatePerformanceStats as calculateAccountingPerformanceStats, calculateFeeBreakdown } from '../services/portfolioAccounting';
+import { getLatestEgxSessionDate } from '../services/analyticsTimeframes';
 
 
 function normalizeTickerKey(ticker: string): string {
   return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
 }
 
-function previousEgxTradingDate(date: string): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  do {
-    d.setUTCDate(d.getUTCDate() - 1);
-  } while (d.getUTCDay() === 5 || d.getUTCDay() === 6);
-  return d.toISOString().slice(0, 10);
-}
-
 export function getLatestEgxTradingSessionDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(now);
-  const read = (type: string) => parts.find((part) => part.type === type)?.value || '';
-  const date = `${read('year')}-${read('month')}-${read('day')}`;
-  const minuteOfDay = Number(read('hour')) * 60 + Number(read('minute'));
-  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-
-  if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
-  if (minuteOfDay < 9 * 60 + 30) return previousEgxTradingDate(date);
-  return date;
+  return getLatestEgxSessionDate(now);
 }
 
 function quotePreviousClose(quote: EGXTicker | undefined): number | undefined {

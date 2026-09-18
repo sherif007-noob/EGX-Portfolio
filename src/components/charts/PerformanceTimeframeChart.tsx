@@ -12,9 +12,10 @@ import {
   YAxis,
 } from 'recharts';
 import { Check, ChevronDown } from 'lucide-react';
+import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
 import type { TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
-import { getIntradayPrices, normalizeIntradayTicker } from '../../services/intradayPriceStore';
+import { getIntradayPrices, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
 import {
   buildUnifiedAnalyticsResult,
@@ -102,6 +103,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
+  const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [intradayError, setIntradayError] = useState<string | null>(null);
 
@@ -119,6 +121,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     setIntradayLoading(true);
     setIntradayError(null);
     setIntradayResult(null);
+    setLoadedIntradayPrices({});
 
     const load = async () => {
       try {
@@ -148,7 +151,10 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           },
         );
 
-        if (!cancelled) setIntradayResult(result);
+        if (!cancelled) {
+          setLoadedIntradayPrices(intradayPrices);
+          setIntradayResult(result);
+        }
       } catch (error) {
         if (!cancelled) {
           setIntradayError(error instanceof Error ? error.message : 'Intraday analytics unavailable.');
@@ -304,7 +310,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   );
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+    <>
+      <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="relative min-w-0">
@@ -441,7 +448,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         </AnalyticsEmptyState>
       ) : (
         <div className="h-64 sm:h-72">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" debounce={80}>
             {timeframe === 'TODAY' ? (
               <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid {...analyticsGridProps} />
@@ -534,6 +541,14 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           )}
         </div>
       )}
-    </div>
+      </div>
+
+      <SecondaryAnalyticsCharts
+        transactions={transactions}
+        historicalPrices={historicalPrices}
+        intradayPrices={loadedIntradayPrices}
+        result={result}
+      />
+    </>
   );
 };

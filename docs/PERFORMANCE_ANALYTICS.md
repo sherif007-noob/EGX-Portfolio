@@ -362,3 +362,67 @@ Today · 1W · 1M · 90D · YTD · All
 - Portfolio vs Net Deposits uses two distinct same-scale lines.
 - Longer single-series views may use the restrained area treatment from the shared chart visual system.
 - Tooltips, axes, crosshairs, empty states, EGP formatting, and percentage formatting use the shared Phase 3 analytics theme.
+
+
+## Secondary analytics
+
+Phase 6 adds secondary analytical views that reuse the same selected timeframe and valuation result as the primary analytics card.
+
+### Performance drawdown
+
+The drawdown chart uses the unified engine's external-flow-neutral performance drawdown series.
+
+This means deposits and withdrawals cannot make a drawdown disappear merely by changing account size.
+
+The percentage series is:
+
+```text
+current TWR performance index
+relative to
+the prior peak TWR performance index
+```
+
+The card also reports nominal equity peak-to-trough loss in EGP as a secondary reference.
+
+### Cumulative fees
+
+The fee chart measures fees paid inside the visible timeframe.
+
+Included:
+
+- BUY brokerage fees;
+- SELL brokerage fees;
+- explicit `CASH` rows with `cashFlowType = FEE`.
+
+Excluded:
+
+- deposits;
+- withdrawals;
+- dividends;
+- ordinary cash adjustments.
+
+The series is cumulative within the selected visible range and is not used as a second deduction from P&L; trading P&L already includes fees where appropriate.
+
+### Realized vs Unrealized P&L
+
+The P&L composition chart is reconstructed read-only from the transaction ledger.
+
+Realized P&L uses the same proportional cost and buy-fee allocation semantics as portfolio reconciliation:
+
+```text
+net sell proceeds
+- allocated gross cost
+- allocated buy fees
+```
+
+Unrealized P&L is calculated for remaining open shares using the trusted market price for each valuation point:
+
+```text
+open market value
+- remaining gross cost
+- remaining buy fees
+```
+
+For daily timeframes the chart uses historical daily closes. For Today it uses 15-minute prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
+
+The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.

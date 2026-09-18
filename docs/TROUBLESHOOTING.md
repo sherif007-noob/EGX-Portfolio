@@ -111,13 +111,33 @@ open shares = sum(BUY shares) - sum(SELL shares)
 
 If the database `positions` table differs from the ledger, treat the ledger as authoritative and run reconciliation.
 
-## MWRR looks extremely large
+## MWR or annualized XIRR looks unusual
 
-The performance chart uses an annualized money-weighted-return calculation.
+The main analytics chart uses a **non-annualized money-weighted return for the selected period**.
 
-For a very young portfolio, annualization can produce very large values even when the underlying absolute gain/loss is modest.
+Only the All-time MWR view exposes annualized XIRR as a secondary reference. For a young portfolio, that annualized reference can be very large even when the underlying period gain/loss is modest.
 
-Verify the dated cash flows before changing the formula.
+If the selected-period MWR looks wrong, verify:
+
+- the timeframe baseline valuation;
+- deposits and withdrawals inside the selected period;
+- transaction timestamps for Today;
+- complete daily/intraday market-price coverage.
+
+Do not replace the selected-period MWR with annualized XIRR.
+
+## Today shows no intraday curve
+
+Today resolves to the latest **actual** EGX session available in the 15-minute store, including across exchange holidays.
+
+If it is unavailable, check:
+
+- `intraday_price_history` has rows for the latest completed/current session;
+- all same-session trades have `executedAt`;
+- required holdings have a prior trusted close;
+- the intraday workflow completed successfully.
+
+The app does not fabricate a 1D curve from daily prices.
 
 ## Drawdown shows N/A
 

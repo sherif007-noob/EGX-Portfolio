@@ -263,14 +263,6 @@ export function usePortfolioState() {
     return report;
   }, [transactions, tickers, capitalDeposits, positions]);
 
-  const hasReconciledRef = useRef(false);
-  useEffect(() => {
-    if (isInitialized && transactions.length > 0 && !hasReconciledRef.current) {
-      hasReconciledRef.current = true;
-      reconcileLedger();
-    }
-  }, [isInitialized, transactions.length, reconcileLedger]);
-
   const rehydratePositionsWithTickers = useCallback((posList: Position[], tickerList: EGXTicker[]): Position[] => {
     if (!tickerList?.length || !posList?.length) return posList;
     const tickerMap = new Map(tickerList.map((t) => [t.ticker.trim().toUpperCase(), t]));
@@ -490,10 +482,19 @@ export function usePortfolioState() {
     return next.transactions;
   }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
 
-  const deleteTransaction = useCallback((txId: string) => {
-    const next = rebuildAfterLedgerChange({ transactions, positions, tickers, capitalDeposits }, transactions.filter((t) => t.id !== txId));
+  const deleteTransaction = useCallback(async (txId: string): Promise<TradeTransaction[] | null> => {
+    const next = rebuildAfterLedgerChange(
+      { transactions, positions, tickers, capitalDeposits },
+      transactions.filter((t) => t.id !== txId),
+    );
+
+    const saved = await forceFullSyncToFirestore(next);
+    if (!saved) {
+      console.error('[Supabase] Transaction delete was not persisted; keeping current local state.', txId);
+      return null;
+    }
+
     applyLedgerSnapshot(next);
-    void forceFullSyncToFirestore(next);
     return next.transactions;
   }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
 

@@ -38,7 +38,7 @@ interface TradingJournalProps {
   transactions: TradeTransaction[];
   closedTrades: ClosedTrade[];
   positions: Position[];
-  onDeleteTransaction: (id: string) => void;
+  onDeleteTransaction: (id: string) => Promise<boolean>;
   onEditTransaction?: (updatedTx: TradeTransaction) => void;
   onDeleteTrade?: (id: string) => void;
   onDeletePosition?: (id: string) => void;
@@ -1017,10 +1017,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       <ConfirmDeleteModal
         isOpen={!!txToDelete}
         onClose={() => setTxToDelete(null)}
-        onConfirm={() => {
-          if (txToDelete) {
-            onDeleteTransaction(txToDelete.id);
-            setDeletedIdToast(txToDelete.ticker);
+        onConfirm={async () => {
+          if (!txToDelete) return;
+          const ticker = txToDelete.ticker;
+          const deleted = await onDeleteTransaction(txToDelete.id);
+          if (deleted) {
+            setDeletedIdToast(ticker);
             setTimeout(() => setDeletedIdToast(null), 3000);
             setTxToDelete(null);
           }

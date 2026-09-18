@@ -67,10 +67,9 @@ export function getLatestEgxSessionDate(now = new Date()): string {
 
   if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
 
-  // Keep the analytics session boundary aligned with the live-market scheduler:
-  // Sunday opens at 09:30 Cairo; Monday-Thursday open at 10:00 Cairo.
-  const openMinute = weekday === 0 ? 9 * 60 + 30 : 10 * 60;
-  if (minuteOfDay < openMinute) return previousEgxTradingDate(date);
+  // Keep the analytics session boundary aligned with the regular EGX session.
+  // Pre-market may begin earlier, but portfolio session analytics start at 10:00 Cairo.
+  if (minuteOfDay < 10 * 60) return previousEgxTradingDate(date);
   return date;
 }
 

@@ -15,6 +15,9 @@ import {
   analyticsTooltipCursor,
   analyticsXAxisProps,
   analyticsYAxisProps,
+  formatAnalyticsCompactEgp,
+  formatAnalyticsEgp,
+  formatAnalyticsPercent,
 } from './charts/AnalyticsChartTheme';
 
 interface PerformanceReportsProps {
@@ -182,7 +185,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                       title="MWRR"
                       labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''}
                       nameFormatter={() => 'Return'}
-                      valueFormatter={(value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`}
+                      valueFormatter={(value) => formatAnalyticsPercent(value, true)}
                     />
                   )}
                 />
@@ -226,11 +229,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 <XAxis dataKey="label" {...analyticsXAxisProps} />
                 <YAxis
                   {...analyticsYAxisProps}
-                  tickFormatter={(value: number) =>
-                    Math.abs(value) >= 1000
-                      ? `${value >= 0 ? '+' : ''}${(value / 1000).toFixed(1)}k`
-                      : `${value >= 0 ? '+' : ''}${value.toFixed(0)}`
-                  }
+                  tickFormatter={formatAnalyticsCompactEgp}
                 />
                 <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
                 <Tooltip
@@ -241,7 +240,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                       title="Realized P&L"
                       labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ''}
                       nameFormatter={() => 'Cumulative'}
-                      valueFormatter={(value) => `${value >= 0 ? '+' : ''}${formatEgp(value)} EGP`}
+                      valueFormatter={(value) => formatAnalyticsEgp(value, true)}
                     />
                   )}
                 />
@@ -281,7 +280,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                       title="Allocation"
                       labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
                       nameFormatter={() => 'Market Value'}
-                      valueFormatter={(value) => `${formatEgp(value)} EGP`}
+                      valueFormatter={(value) => formatAnalyticsEgp(value)}
                     />
                   )}
                 /></PieChart></ResponsiveContainer>}</div>

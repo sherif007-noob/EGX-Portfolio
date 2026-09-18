@@ -164,8 +164,14 @@ function pointIncludesTransaction(
   tx: TradeTransaction,
   pointDate: string,
   intraday: boolean,
+  sessionDate: string,
 ): boolean {
   if (!intraday) return dayKey(tx.date) <= dayKey(pointDate);
+
+  const txDay = dayKey(tx.date);
+  if (txDay < sessionDate) return true;
+  if (txDay > sessionDate) return false;
+
   const executed = tx.executedAt ? new Date(tx.executedAt).getTime() : Number.NaN;
   const point = new Date(pointDate).getTime();
   return Number.isFinite(executed) && Number.isFinite(point) && executed <= point;
@@ -220,7 +226,7 @@ export function buildSecondaryAnalytics(
   for (const point of result.points) {
     while (
       transactionIndex < orderedTransactions.length &&
-      pointIncludesTransaction(orderedTransactions[transactionIndex], point.date, intraday)
+      pointIncludesTransaction(orderedTransactions[transactionIndex], point.date, intraday, sessionDate)
     ) {
       realizedPnl += applyTrade(orderedTransactions[transactionIndex], states);
       transactionIndex += 1;
@@ -233,9 +239,11 @@ export function buildSecondaryAnalytics(
       if (state.shares <= EPSILON) continue;
 
       const marketPrice = intraday
-        ? intradayCloseAtOrBefore(intradayPrices, ticker, point.date)
-          ?? previousDailyClose(historicalPrices, ticker, sessionDate)
-          ?? state.lastExecutionPrice
+        ? point.date === firstPointDate
+          ? previousDailyClose(historicalPrices, ticker, sessionDate) ?? state.lastExecutionPrice
+          : intradayCloseAtOrBefore(intradayPrices, ticker, point.date)
+            ?? previousDailyClose(historicalPrices, ticker, sessionDate)
+            ?? state.lastExecutionPrice
         : dailyCloseAtOrBefore(historicalPrices, ticker, point.date);
 
       if (marketPrice === undefined) {

@@ -99,10 +99,10 @@ export interface AnalyticsTooltipValue {
 
 interface AnalyticsChartTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: readonly any[];
   label?: string | number;
   title?: string;
-  labelFormatter?: (label: string | number, payload: any[]) => string;
+  labelFormatter?: (label: string | number, payload: readonly any[]) => string;
   valueFormatter?: (value: number, name: string, payload: any) => string;
   nameFormatter?: (name: string, payload: any) => string;
   tone?: 'neutral' | 'positive' | 'negative';

@@ -275,6 +275,8 @@ export function buildIntradayAnalyticsResult(
 
   const baselineComplete = missingAtBaseline.length === 0 && missingTimestampIds.length === 0;
   const baselineEquity = state.cash + baselineMarketValue;
+  const missingTickerSet = new Set<string>(missingAtBaseline);
+
   const points: UnifiedAnalyticsPoint[] = [
     {
       date: formatIso(baselineMs),
@@ -322,6 +324,7 @@ export function buildIntradayAnalyticsResult(
         previousCloses.get(ticker);
       if (price === undefined) {
         missingTickers.push(ticker);
+        missingTickerSet.add(ticker);
         continue;
       }
       marketValue += shares * price;
@@ -399,11 +402,6 @@ export function buildIntradayAnalyticsResult(
     ? Math.max(...completePoints.map((point) => point.equityDrawdownEgp))
     : null;
 
-  const missingTickers = [...new Set([
-    ...missingAtBaseline,
-    ...points.filter((point) => !point.complete).flatMap(() => missingAtBaseline),
-  ])];
-
   return {
     timeframe: 'TODAY',
     window,
@@ -425,7 +423,7 @@ export function buildIntradayAnalyticsResult(
       valuationDays: points.length,
       completeDays: completePoints.length,
       incompleteDays: points.length - completePoints.length,
-      missingTickers,
+      missingTickers: [...missingTickerSet],
       hasUsableRange: completePoints.length >= 2,
       requiresIntraday: true,
     },

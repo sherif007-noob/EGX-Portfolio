@@ -114,6 +114,12 @@ async function main() {
     throw new Error(`Invalid historical range: ${startDate} → ${endDate}`);
   }
 
+  // TradingView currently rejects the library's explicit [start, end] range form
+  // for daily series. Request enough recent bars to cover the calendar span,
+  // then let writeBars enforce the exact date boundaries.
+  const calendarDays = Math.max(1, Math.ceil((endTimestamp - startTimestamp) / 86_400) + 1);
+  const requestedBars = Math.max(30, calendarDays + 30);
+
   const session = await createSession();
   let failures = 0;
   try {
@@ -124,7 +130,7 @@ async function main() {
     for (const ticker of tickers) {
       try {
         const resolved = await chart.resolve(TICKER_ALIASES[ticker] || ticker, 'EGX');
-        const series = await createSeries(session, chart, resolved, '1D', 0, [startTimestamp, endTimestamp]);
+        const series = await createSeries(session, chart, resolved, '1D', requestedBars);
         try {
           const result = await writeBars(sb, ticker, ((series.history || []) as HistoryBar[]), startDate, endDate);
           totalRows += result.written;

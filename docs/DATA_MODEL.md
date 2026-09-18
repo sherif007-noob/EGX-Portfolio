@@ -134,6 +134,33 @@ Primary analytical fields:
 
 Historical portfolio valuations are reconstructed from transactions plus this table.
 
+### intraday_price_history
+
+15-minute EGX OHLCV bars used for current/latest-session analytics.
+
+Primary fields:
+
+- `ticker`
+- `interval_minutes` (currently 15)
+- `bar_timestamp` (`timestamptz`, stored in UTC)
+- `open`
+- `high`
+- `low`
+- `close`
+- `volume`
+- `source`
+- `retrieved_at`
+
+Primary key:
+
+```text
+(ticker, interval_minutes, bar_timestamp)
+```
+
+Intraday rows use a rolling 90-day retention policy by default. They are kept separate from permanent daily history so different resolutions cannot be confused.
+
+Authenticated application sessions have SELECT-only access. Trusted automation owns writes and retention cleanup.
+
 ### daily_valuations
 
 Optional persisted daily valuation structure containing:
@@ -188,6 +215,6 @@ A production data audit should maintain:
 
 Portfolio-owned tables use ownership-aware policies.
 
-Market-reference tables `tickers` and `price_history` are readable by authenticated users and currently allow authenticated writes.
+Market-reference tables are readable by authenticated users. Legacy `tickers` and `price_history` currently allow authenticated writes; the newer `intraday_price_history` table is intentionally SELECT-only for authenticated browser sessions, with writes restricted to trusted automation.
 
 See [AUTH_AND_SECURITY.md](AUTH_AND_SECURITY.md) for the security model.

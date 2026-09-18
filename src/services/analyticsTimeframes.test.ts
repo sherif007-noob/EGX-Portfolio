@@ -15,11 +15,11 @@ describe('analytics timeframe semantics', () => {
     expect(getLatestEgxSessionDate(mondayAtOpen)).toBe('2026-09-14');
   });
 
-  it('keeps the earlier 09:30 Cairo Sunday open', () => {
-    const sundayBeforeOpen = new Date('2026-09-13T06:15:00Z'); // 09:15 Cairo
-    const sundayAtOpen = new Date('2026-09-13T06:30:00Z'); // 09:30 Cairo
+  it('treats Sunday 09:30 as pre-market and starts the session at 10:00 Cairo', () => {
+    const sundayPreMarket = new Date('2026-09-13T06:30:00Z'); // 09:30 Cairo
+    const sundayAtOpen = new Date('2026-09-13T07:00:00Z'); // 10:00 Cairo
 
-    expect(getLatestEgxSessionDate(sundayBeforeOpen)).toBe('2026-09-10');
+    expect(getLatestEgxSessionDate(sundayPreMarket)).toBe('2026-09-10');
     expect(getLatestEgxSessionDate(sundayAtOpen)).toBe('2026-09-13');
   });
 

@@ -172,7 +172,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       ['Gross Profit', `+${indicators.grossProfit.toFixed(2)} EGP`, 'Gross Wins', 'GAINS'],
       ['Gross Loss', `-${indicators.grossLoss.toFixed(2)} EGP`, 'Gross Losses', 'LOSSES'],
       ['Net Realized P&L', `${indicators.netRealized >= 0 ? '+' : ''}${indicators.netRealized.toFixed(2)} EGP`, '> 0.00 EGP', indicators.netRealized >= 0 ? 'PROFITABLE' : 'NET LOSS'],
-      ['Max Peak-to-Trough Drawdown', indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}% (-${indicators.maxDrawdownEgp!.toFixed(2)} EGP)` : 'N/A — historical equity data unavailable', '<= 10.0%', indicators.drawdownAvailable ? (indicators.maxDrawdownPercent! <= 10 ? 'TARGET MET' : 'ELEVATED RISK') : 'NOT AVAILABLE'],
+      ['Max Performance Drawdown', indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}% (nominal equity gap: ${indicators.maxDrawdownEgp!.toFixed(2)} EGP)` : 'N/A — historical analytics unavailable', '<= 10.0%', indicators.drawdownAvailable ? (indicators.maxDrawdownPercent! <= 10 ? 'TARGET MET' : 'ELEVATED RISK') : 'NOT AVAILABLE'],
       ['Recovery Factor', indicators.recoveryFactor === null ? 'N/A' : formatRatio(indicators.recoveryFactor), '> 2.00', indicators.recoveryFactor === null ? 'NOT AVAILABLE' : indicators.recoveryFactor >= 2 ? 'RESILIENT' : 'MODERATE'],
       ['Brokerage Commissions Paid', `${indicators.totalFees.toFixed(2)} EGP`, 'Execution Friction', 'COSTS'],
       ['Average Holding Period', `${indicators.avgHoldDays} days`, 'Swing: 1-14 days', 'DURATION'],
@@ -329,7 +329,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
 
         <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Max Drawdown</span>
+            <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
@@ -337,11 +337,11 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
               {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
             </span>
             <span className="text-[11px] text-slate-500 font-mono">
-              {indicators.drawdownAvailable ? `(-${formatEgp(indicators.maxDrawdownEgp!)} EGP)` : '(historical equity unavailable)'}
+              {indicators.drawdownAvailable ? `(nominal gap ${formatEgp(indicators.maxDrawdownEgp!)} EGP)` : '(historical analytics unavailable)'}
             </span>
           </div>
           <div className="mt-1 text-[10px] text-slate-400">
-            <span>Target: &le; 10.0% &bull; Peak-to-Trough</span>
+            <span>Target: &le; 10.0% &bull; TWR peak-to-trough</span>
           </div>
         </div>
       </div>

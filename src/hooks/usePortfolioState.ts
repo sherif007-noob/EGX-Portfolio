@@ -294,6 +294,7 @@ export function usePortfolioState() {
     price: number;
     fees?: number;
     date: string;
+    executedAt?: string;
     targetPrice?: number;
     stopLoss?: number;
     notes?: string;
@@ -322,6 +323,7 @@ export function usePortfolioState() {
       shares: tradeInput.shares,
       price: tradeInput.price,
       date: tradeInput.date,
+      executedAt: tradeInput.executedAt,
       fees,
       totalAmount: cashOutflow,
       targetPrice: tradeInput.targetPrice,
@@ -386,10 +388,11 @@ export function usePortfolioState() {
     sellPrice: number;
     fees?: number;
     sellDate: string;
+    executedAt?: string;
     addToCash?: boolean;
     notes?: string;
   }) => {
-    const { position, sharesToSell, sellPrice, fees = 0, sellDate, addToCash = true, notes } = sellInput;
+    const { position, sharesToSell, sellPrice, fees = 0, sellDate, executedAt, addToCash = true, notes } = sellInput;
     const tickerKey = position.ticker.trim().toUpperCase();
     const accounting = calculateSellAccounting(
       sharesToSell,
@@ -416,6 +419,7 @@ export function usePortfolioState() {
       shares: sharesToSell,
       price: sellPrice,
       date: sellDate,
+      executedAt,
       fees,
       totalAmount: addToCash ? accounting.netProceeds : 0,
       grossTradeValue: accounting.grossProceeds,

@@ -107,9 +107,6 @@ export function parseTradeText(rawText: string, tickers: EGXTicker[]): Partial<P
     if (meridiem === 'AM' && hours === 12) hours = 0;
     if (hours >= 0 && hours <= 23 && minutes <= 59 && seconds <= 59) {
       executedAt = `${date}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      // The current OCR batch interface carries `date` forward, so keep the exact
-      // execution timestamp there as well. normalizeTransaction also preserves executedAt.
-      date = executedAt;
     }
   }
 

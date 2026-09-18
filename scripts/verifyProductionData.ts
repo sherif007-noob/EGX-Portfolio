@@ -55,20 +55,51 @@ function mapTransaction(row: any): TradeTransaction {
 }
 
 function duplicateKey(tx: TradeTransaction) {
-  return [tx.type, normalizeTicker(tx.ticker), tx.date, tx.shares, tx.price, tx.fees, tx.totalAmount, tx.cashFlowType ?? '', tx.cashFlowAmount ?? ''].join('|');
+  return [
+    tx.type,
+    normalizeTicker(tx.ticker),
+    tx.date,
+    tx.executedAt ?? '',
+    tx.shares,
+    tx.price,
+    tx.fees,
+    tx.totalAmount,
+    tx.cashFlowType ?? '',
+    tx.cashFlowAmount ?? '',
+  ].join('|');
+}
+
+function cairoDateKey(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${read('year')}-${read('month')}-${read('day')}`;
 }
 
 async function main() {
   const sb = client();
   const portfolioId = await resolvePortfolioId(sb);
-  const [{ data: portfolio, error: pe }, { data: positionRows, error: pose }, { data: txRows, error: te }] = await Promise.all([
+  const [
+    { data: portfolio, error: pe },
+    { data: positionRows, error: pose },
+    { data: txRows, error: te },
+    { data: closedRows, error: ce },
+  ] = await Promise.all([
     sb.from('portfolios').select('id,cash_balance,capital_deposits').eq('id', portfolioId).single(),
     sb.from('positions').select('id,ticker,company_name,sector,shares,avg_buy_price,current_price,day_change,day_change_percent,buy_date,total_fees').eq('portfolio_id', portfolioId),
     sb.from('transactions').select('*').eq('portfolio_id', portfolioId),
+    sb.from('closed_trades').select('id,realized_pnl_egp').eq('portfolio_id', portfolioId),
   ]);
   if (pe) throw new Error(`Portfolio read failed: ${pe.message}`);
   if (pose) throw new Error(`Position read failed: ${pose.message}`);
   if (te) throw new Error(`Transaction read failed: ${te.message}`);
+  if (ce) throw new Error(`Closed-trade read failed: ${ce.message}`);
 
   const positions: Position[] = (positionRows ?? []).map((row: any) => ({
     id: String(row.id), ticker: String(row.ticker ?? ''), companyName: row.company_name ?? '', sector: row.sector ?? 'Other',
@@ -103,13 +134,104 @@ async function main() {
   const duplicates = [...duplicateGroups.entries()].filter(([, ids]) => ids.length > 1);
   for (const [key, ids] of duplicates) issues.push(`Duplicate-equivalent ledger rows: ${ids.join(', ')} [${key}]`);
 
+  const storedClosedCount = (closedRows ?? []).length;
+  const rebuiltClosedCount = reconciliation.reconciledClosedTrades.length;
+  if (storedClosedCount !== rebuiltClosedCount) {
+    issues.push(`Closed-trade count drift: stored=${storedClosedCount}, ledger=${rebuiltClosedCount}.`);
+  }
+
+  const storedRealized = (closedRows ?? []).reduce((sum: number, row: any) => sum + num(row.realized_pnl_egp), 0);
+  const rebuiltRealized = reconciliation.reconciledClosedTrades.reduce(
+    (sum, trade) => sum + num(trade.realizedPnlEgp),
+    0,
+  );
+  if (Math.abs(storedRealized - rebuiltRealized) > 0.01) {
+    issues.push(
+      `Closed-trade realized P&L drift: stored=${storedRealized.toFixed(2)}, ledger=${rebuiltRealized.toFixed(2)}.`,
+    );
+  }
+
+  const missingExecutionTimestamps = transactions.filter(
+    (tx) => normalizeTicker(tx.ticker) !== 'CASH' && !tx.executedAt,
+  );
+  if (missingExecutionTimestamps.length) {
+    issues.push(
+      `Market trades missing executedAt: ${missingExecutionTimestamps.map((tx) => tx.id).join(', ')}.`,
+    );
+  }
+
   const securityTickers = [...new Set(transactions.map(tx => normalizeTicker(tx.ticker)).filter(t => t && t !== 'CASH'))];
   const historyCoverage = await Promise.all(securityTickers.map(async ticker => {
     const { count, error } = await sb.from('price_history').select('ticker', { count: 'exact', head: true }).eq('ticker', ticker);
     if (error) throw new Error(`Historical coverage read failed for ${ticker}: ${error.message}`);
     return { ticker, rows: count ?? 0 };
   }));
-  for (const item of historyCoverage.filter(item => item.rows === 0)) issues.push(`Missing historical prices for ${item.ticker}.`);
+  for (const item of historyCoverage.filter(item => item.rows === 0)) {
+    issues.push(`Missing historical prices for ${item.ticker}.`);
+  }
+
+  const openTickers = [...new Set(positions.filter((p) => p.shares > EPSILON).map((p) => normalizeTicker(p.ticker)))];
+
+  const { data: latestDailyRows, error: latestDailyError } = await sb
+    .from('price_history')
+    .select('trading_date')
+    .order('trading_date', { ascending: false })
+    .limit(1);
+  if (latestDailyError) throw new Error(`Latest daily-price read failed: ${latestDailyError.message}`);
+  const latestDailyDate = latestDailyRows?.[0]?.trading_date ? String(latestDailyRows[0].trading_date) : null;
+
+  let openTickersMissingLatestDaily: string[] = [];
+  if (latestDailyDate && openTickers.length) {
+    const { data, error } = await sb
+      .from('price_history')
+      .select('ticker')
+      .in('ticker', openTickers)
+      .eq('trading_date', latestDailyDate);
+    if (error) throw new Error(`Latest daily coverage read failed: ${error.message}`);
+    const covered = new Set((data ?? []).map((row: any) => normalizeTicker(row.ticker)));
+    openTickersMissingLatestDaily = openTickers.filter((ticker) => !covered.has(ticker));
+    for (const ticker of openTickersMissingLatestDaily) {
+      issues.push(`Open ticker missing latest daily price (${latestDailyDate}): ${ticker}.`);
+    }
+  }
+
+  const { data: latestIntradayRows, error: latestIntradayError } = await sb
+    .from('intraday_price_history')
+    .select('bar_timestamp')
+    .order('bar_timestamp', { ascending: false })
+    .limit(1);
+  if (latestIntradayError) throw new Error(`Latest intraday-price read failed: ${latestIntradayError.message}`);
+
+  const latestIntradayTimestamp = latestIntradayRows?.[0]?.bar_timestamp
+    ? String(latestIntradayRows[0].bar_timestamp)
+    : null;
+  const latestIntradayDate = latestIntradayTimestamp ? cairoDateKey(latestIntradayTimestamp) : null;
+
+  let openTickersMissingLatestIntraday: string[] = [];
+  if (!latestIntradayDate) {
+    issues.push('Intraday price history is empty.');
+  } else if (openTickers.length) {
+    const utcWindowStart = `${latestIntradayDate}T00:00:00.000Z`;
+    const nextUtcDate = new Date(utcWindowStart);
+    nextUtcDate.setUTCDate(nextUtcDate.getUTCDate() + 1);
+    const { data, error } = await sb
+      .from('intraday_price_history')
+      .select('ticker,bar_timestamp')
+      .in('ticker', openTickers)
+      .gte('bar_timestamp', utcWindowStart)
+      .lt('bar_timestamp', nextUtcDate.toISOString());
+    if (error) throw new Error(`Latest intraday coverage read failed: ${error.message}`);
+
+    const covered = new Set(
+      (data ?? [])
+        .filter((row: any) => cairoDateKey(String(row.bar_timestamp)) === latestIntradayDate)
+        .map((row: any) => normalizeTicker(row.ticker)),
+    );
+    openTickersMissingLatestIntraday = openTickers.filter((ticker) => !covered.has(ticker));
+    for (const ticker of openTickersMissingLatestIntraday) {
+      issues.push(`Open ticker missing latest intraday session (${latestIntradayDate}): ${ticker}.`);
+    }
+  }
 
   console.log(JSON.stringify({
     portfolioId,
@@ -119,7 +241,16 @@ async function main() {
     storedCash,
     rebuiltCash: reconciliation.reconciledCashBalance,
     duplicateGroups: duplicates.map(([key, ids]) => ({ key, ids })),
+    missingExecutionTimestamps: missingExecutionTimestamps.map((tx) => tx.id),
+    storedClosedTrades: storedClosedCount,
+    rebuiltClosedTrades: rebuiltClosedCount,
+    storedRealizedPnl: storedRealized,
+    rebuiltRealizedPnl: rebuiltRealized,
     historyCoverage,
+    latestDailyDate,
+    openTickersMissingLatestDaily,
+    latestIntradayDate,
+    openTickersMissingLatestIntraday,
     issues,
     passed: issues.length === 0,
   }, null, 2));

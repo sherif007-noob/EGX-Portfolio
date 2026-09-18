@@ -18,7 +18,7 @@ try {
   for (const ticker of TICKERS) {
     try {
       const resolved = await chart.resolve(ALIASES[ticker] || ticker, 'EGX');
-      const series = await createSeries(session, chart, resolved, '1D', 0, [startTs,endTs]);
+      const series = await createSeries(session, chart, resolved, '1D', barCount);
       try {
         output[ticker] = ((series.history || []) as HistoryBar[]).map(bar => ({
           trading_date: new Date(Number(bar[0])*1000).toISOString().slice(0,10),

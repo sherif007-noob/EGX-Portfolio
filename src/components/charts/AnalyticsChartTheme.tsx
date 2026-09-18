@@ -45,6 +45,31 @@ export const analyticsTooltipCursor = {
   opacity: 0.75,
 } as const;
 
+
+export function formatAnalyticsEgp(value: number, signed = false): string {
+  if (!Number.isFinite(value)) return '—';
+  const prefix = signed && value > 0 ? '+' : '';
+  return `${prefix}${value.toLocaleString('en-EG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} EGP`;
+}
+
+export function formatAnalyticsPercent(value: number, signed = false): string {
+  if (!Number.isFinite(value)) return '—';
+  const prefix = signed && value > 0 ? '+' : '';
+  return `${prefix}${value.toFixed(2)}%`;
+}
+
+export function formatAnalyticsCompactEgp(value: number): string {
+  if (!Number.isFinite(value)) return '—';
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  const absolute = Math.abs(value);
+  if (absolute >= 1_000_000) return `${sign}${(absolute / 1_000_000).toFixed(1)}m`;
+  if (absolute >= 1_000) return `${sign}${(absolute / 1_000).toFixed(1)}k`;
+  return `${sign}${absolute.toFixed(0)}`;
+}
+
 interface ChartTooltipShellProps {
   children: React.ReactNode;
   className?: string;
@@ -158,5 +183,14 @@ interface AnalyticsEmptyStateProps {
 export const AnalyticsEmptyState: React.FC<AnalyticsEmptyStateProps> = ({ children }) => (
   <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-950/30 px-4 py-8 text-center text-xs text-slate-500">
     {children}
+  </div>
+);
+
+export const AnalyticsChartLoadingState: React.FC = () => (
+  <div
+    className="min-h-40 animate-pulse rounded-xl border border-slate-800 bg-slate-950/30 p-4"
+    aria-label="Loading chart data"
+  >
+    <div className="h-full min-h-32 rounded-lg bg-gradient-to-b from-slate-800/50 to-slate-900/20" />
   </div>
 );

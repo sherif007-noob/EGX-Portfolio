@@ -1,5 +1,3 @@
-import { cert, getApps as getAdminApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_JWT_RETRY_DELAYS_MS = [300, 900, 1800];
@@ -39,17 +37,6 @@ async function supabaseFetchWithJwtRetry(input: RequestInfo | URL, init?: Reques
   }
 }
 
-function getFirebaseAdminAuth() {
-  if (!getAdminApps().length) {
-    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    if (!projectId || !clientEmail || !privateKey) throw new Error('Firebase Admin credentials are not configured on the server.');
-    initializeAdminApp({ credential: cert({ projectId, clientEmail, privateKey }) });
-  }
-  return getAdminAuth();
-}
-
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -60,11 +47,13 @@ function getSupabaseAdmin() {
   });
 }
 
-export async function verifyFirebaseBearerToken(authorization?: string): Promise<string> {
-  if (!authorization?.startsWith('Bearer ')) throw new Error('Missing Firebase ID token.');
+export async function verifySupabaseBearerToken(authorization?: string): Promise<string> {
+  if (!authorization?.startsWith('Bearer ')) throw new Error('Missing Supabase access token.');
   const token = authorization.slice('Bearer '.length).trim();
-  if (!token) throw new Error('Missing Firebase ID token.');
-  return (await getFirebaseAdminAuth().verifyIdToken(token)).uid;
+  if (!token) throw new Error('Missing Supabase access token.');
+  const { data, error } = await getSupabaseAdmin().auth.getUser(token);
+  if (error || !data.user) throw new Error(error?.message || 'Invalid Supabase access token.');
+  return data.user.id;
 }
 
 async function requirePortfolio(uid: string) {
@@ -214,7 +203,7 @@ export async function loadSupabasePortfolio(uid: string) {
 
 export async function saveSupabasePortfolio(uid: string, payload: any) {
   const { supabase, portfolio } = await requirePortfolio(uid);
-  if (!portfolio) throw new Error('No migrated Supabase portfolio exists for this Firebase user. Run the one-time migration first.');
+  if (!portfolio) throw new Error('No Supabase portfolio exists for this authenticated user.');
 
   if (!Array.isArray(payload.transactions) || !Array.isArray(payload.positions) || !Array.isArray(payload.closedTrades)) {
     throw new Error('Supabase portfolio save requires a complete accounting snapshot: transactions, positions, and closedTrades.');

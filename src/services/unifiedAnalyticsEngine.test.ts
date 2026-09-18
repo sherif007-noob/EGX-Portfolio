@@ -66,9 +66,9 @@ describe('unified analytics engine', () => {
     expect(result.summary.netExternalFlow).toBe(1000);
     expect(result.summary.pnlEgp).toBe(160);
 
-    // TWR chains the +10% security return from Jan 3 -> Jan 4 without
-    // treating the extra deposit as investment performance.
-    expect(result.summary.twrPercent).toBeCloseTo(32, 6);
+    // TWR neutralizes the deposit. Jan 1 -> 2 returns +10%, Jan 2 -> 3 is 0%,
+    // and Jan 3 -> 4 returns 60 / 2100 = 2.8571%.
+    expect(result.summary.twrPercent).toBeCloseTo(13.142857, 6);
     expect(result.summary.mwrrPercent).not.toBeNull();
     expect(result.summary.mwrrPercent).not.toBeCloseTo(result.summary.twrPercent ?? 0, 2);
   });
@@ -113,7 +113,7 @@ describe('unified analytics engine', () => {
   it('calculates performance drawdown independently of deposit-driven equity jumps', () => {
     const transactions = [
       cash('dep-1', '2026-01-01', 1000, 'DEPOSIT'),
-      buy('buy', '2026-01-01', 10, 50),
+      buy('buy', '2026-01-01', 20, 50),
       cash('dep-2', '2026-01-03', 5000, 'DEPOSIT'),
     ];
     const history = {

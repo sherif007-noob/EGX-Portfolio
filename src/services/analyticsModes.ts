@@ -99,10 +99,7 @@ export function analyticsModeSummary(
 
   if (mode === 'PORTFOLIO_RETURN') {
     const changeEgp = result.summary.pnlEgp;
-    const changePercent =
-      first && Number.isFinite(first.equity) && first.equity > 0 && changeEgp != null
-        ? (changeEgp / first.equity) * 100
-        : null;
+    const changePercent = result.summary.mwrrPercent;
 
     return {
       primaryValue: last?.equity ?? result.summary.endEquity,

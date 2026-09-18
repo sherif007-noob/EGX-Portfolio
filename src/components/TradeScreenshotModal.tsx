@@ -25,6 +25,7 @@ export interface ParsedTradeItem {
   price: number;
   fees: number;
   date: string;
+  executedAt?: string;
   brokerName?: string;
   notes?: string;
   confidenceScore?: number;
@@ -43,6 +44,7 @@ interface TradeScreenshotModalProps {
     shares: number;
     price: number;
     date: string;
+    executedAt?: string;
     fees: number;
     notes?: string;
   }) => void;
@@ -54,6 +56,7 @@ interface TradeScreenshotModalProps {
     shares: number;
     price: number;
     date: string;
+    executedAt?: string;
     fees: number;
     notes?: string;
   }>) => void;
@@ -134,6 +137,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               price: parsed.price || 0,
               fees: parsed.fees || 0,
               date: parsed.date || getTodayISO(),
+              executedAt: parsed.executedAt,
               brokerName: parsed.brokerName || 'Telda',
               notes: parsed.notes || `${parsed.brokerName || 'Telda'} ${parsed.type === 'BUY' ? 'Buy' : 'Sell'} • OCR Scanned`,
               confidenceScore: parsed.confidenceScore || 92,
@@ -238,6 +242,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
       shares: Number(t.shares),
       price: Number(t.price),
       date: t.date,
+      executedAt: t.executedAt,
       fees: Number(t.fees) || 0,
       notes: t.notes || `Imported via ${t.brokerName || 'Telda'}`,
     }));

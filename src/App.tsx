@@ -259,6 +259,7 @@ export default function App() {
       shares: number;
       buyPrice: number;
       buyDate: string;
+      executedAt?: string;
       brokerageFee: number;
       targetPrice?: number;
       stopLoss?: number;
@@ -290,6 +291,7 @@ export default function App() {
       price: newTradeData.buyPrice,
       fees: newTradeData.brokerageFee,
       date: newTradeData.buyDate,
+      executedAt: newTradeData.executedAt,
       targetPrice: newTradeData.targetPrice,
       stopLoss: newTradeData.stopLoss,
       notes: newTradeData.notes,
@@ -326,6 +328,7 @@ export default function App() {
     soldShares: number,
     sellPrice: number,
     sellDate: string,
+    executedAt: string | undefined,
     sellFees: number,
     notes: string,
     remainingShares: number
@@ -354,6 +357,7 @@ export default function App() {
       sellPrice,
       fees: sellFees,
       sellDate,
+      executedAt,
       addToCash: true,
       notes,
     });
@@ -549,6 +553,7 @@ export default function App() {
     shares: number;
     price: number;
     date: string;
+    executedAt?: string;
     fees: number;
     notes?: string;
   }) => {
@@ -561,6 +566,7 @@ export default function App() {
           shares: parsedTx.shares,
           buyPrice: parsedTx.price,
           buyDate: parsedTx.date,
+          executedAt: parsedTx.executedAt,
           brokerageFee: parsedTx.fees,
           notes: parsedTx.notes || 'Logged via Screenshot Scanner',
         },
@@ -574,6 +580,7 @@ export default function App() {
           parsedTx.shares,
           parsedTx.price,
           parsedTx.date,
+          parsedTx.executedAt,
           parsedTx.fees,
           parsedTx.notes || 'Logged via Screenshot Scanner',
           Math.max(0, pos.shares - parsedTx.shares)
@@ -595,6 +602,7 @@ export default function App() {
           shares: parsedTx.shares,
           price: parsedTx.price,
           date: parsedTx.date,
+          executedAt: parsedTx.executedAt,
           fees: parsedTx.fees,
           totalAmount: parsedTx.shares * parsedTx.price - parsedTx.fees,
           notes: parsedTx.notes || 'Logged via Screenshot Scanner',
@@ -619,6 +627,7 @@ export default function App() {
       shares: number;
       price: number;
       date: string;
+      executedAt?: string;
       fees: number;
       notes?: string;
     }>
@@ -628,7 +637,9 @@ export default function App() {
     const orderedTxs = parsedTxs
       .map((tx, index) => ({ tx, index }))
       .sort((a, b) => {
-        const dateDiff = new Date(a.tx.date).getTime() - new Date(b.tx.date).getTime();
+        const aTime = new Date(a.tx.executedAt || a.tx.date).getTime();
+        const bTime = new Date(b.tx.executedAt || b.tx.date).getTime();
+        const dateDiff = aTime - bTime;
         if (Number.isFinite(dateDiff) && dateDiff !== 0) return dateDiff;
         const sameTicker = a.tx.ticker.trim().toUpperCase() === b.tx.ticker.trim().toUpperCase();
         if (sameTicker && a.tx.type !== b.tx.type) {
@@ -693,6 +704,7 @@ export default function App() {
             shares,
             price,
             date: parsedTx.date,
+            executedAt: parsedTx.executedAt,
             fees,
             totalAmount: accounting.netProceeds,
             grossTradeValue: accounting.grossProceeds,
@@ -716,6 +728,7 @@ export default function App() {
             shares,
             price,
             date: parsedTx.date,
+            executedAt: parsedTx.executedAt,
             fees,
             totalAmount: impact.cashOutflow,
             grossTradeValue: impact.grossCost,

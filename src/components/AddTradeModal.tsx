@@ -3,6 +3,7 @@ import { EGXTicker, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap } from 'lucide-react';
 import { DateInput } from './DateInput';
+import { combineExecutionDateTime } from '../utils/executionTime';
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface AddTradeModalProps {
       shares: number;
       buyPrice: number;
       buyDate: string;
+      executedAt?: string;
       brokerageFee: number;
       targetPrice?: number;
       stopLoss?: number;
@@ -47,6 +49,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const [shares, setShares] = useState<number>(1000);
   const [buyPrice, setBuyPrice] = useState<number>(0);
   const [buyDate, setBuyDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [executionTime, setExecutionTime] = useState<string>('');
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
   const [isManualFee, setIsManualFee] = useState<boolean>(false);
   const [targetPrice, setTargetPrice] = useState<number>(0);
@@ -151,6 +154,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
         shares,
         buyPrice,
         buyDate,
+        executedAt: combineExecutionDateTime(buyDate, executionTime),
         brokerageFee: Math.max(0, brokerageFee || 0),
         targetPrice: targetPrice > 0 ? targetPrice : undefined,
         stopLoss: stopLoss > 0 ? stopLoss : undefined,
@@ -435,14 +439,31 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             </div>
           </div>
 
-          {/* Purchase Date */}
-          <DateInput
-            id="trade-execution-date"
-            label="Trade Execution Date"
-            value={buyDate}
-            onChange={setBuyDate}
-            required
-          />
+          {/* Execution date and time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <DateInput
+              id="trade-execution-date"
+              label="Trade Execution Date"
+              value={buyDate}
+              onChange={setBuyDate}
+              required
+            />
+            <div>
+              <label htmlFor="trade-execution-time" className="block font-semibold text-slate-300 mb-1">
+                Execution Time
+              </label>
+              <input
+                id="trade-execution-time"
+                type="time"
+                value={executionTime}
+                onChange={(e) => setExecutionTime(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+              />
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                Optional, but recommended when matching broker receipts.
+              </span>
+            </div>
+          </div>
 
           {/* Financial Breakdown Ribbon */}
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">

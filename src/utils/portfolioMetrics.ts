@@ -1,6 +1,52 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, PortfolioMetrics, PerformanceStats, Sector, CashFlowType } from '../types';
 import { calculatePortfolioValue, calculatePositionMarketValue, calculatePositionUnrealizedPnl, calculatePerformanceStats as calculateAccountingPerformanceStats, calculateFeeBreakdown } from '../services/portfolioAccounting';
 
+
+function normalizeTickerKey(ticker: string): string {
+  return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+}
+
+function previousEgxTradingDate(date: string): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  do {
+    d.setUTCDate(d.getUTCDate() - 1);
+  } while (d.getUTCDay() === 5 || d.getUTCDay() === 6);
+  return d.toISOString().slice(0, 10);
+}
+
+export function getLatestEgxTradingSessionDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value || '';
+  const date = `${read('year')}-${read('month')}-${read('day')}`;
+  const minuteOfDay = Number(read('hour')) * 60 + Number(read('minute'));
+  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+
+  if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
+  if (minuteOfDay < 9 * 60 + 30) return previousEgxTradingDate(date);
+  return date;
+}
+
+function quotePreviousClose(quote: EGXTicker | undefined): number | undefined {
+  if (!quote || !Number.isFinite(quote.lastPrice) || quote.lastPrice <= 0) return undefined;
+  if (Number.isFinite(quote.change)) {
+    const previous = quote.lastPrice - quote.change;
+    if (previous > 0) return previous;
+  }
+  if (Number.isFinite(quote.changePercent) && Math.abs(1 + quote.changePercent / 100) > 1e-9) {
+    const previous = quote.lastPrice / (1 + quote.changePercent / 100);
+    if (Number.isFinite(previous) && previous > 0) return previous;
+  }
+  return undefined;
+}
+
 /** Presentation adapter around the authoritative accounting engine. */
 export function calculatePortfolioMetrics(positions: Position[], cashBalance: number, closedTrades: ClosedTrade[] = [], tickers: EGXTicker[] = [], transactions: TradeTransaction[] = []): PortfolioMetrics {
   const totalMarketValue = positions.reduce((sum, position) => sum + calculatePositionMarketValue(position), 0);
@@ -15,20 +61,105 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
   const closedFeesPaid = closedTrades.reduce((sum, trade) => sum + (trade.totalFees ?? ((trade.buyFees || 0) + (trade.sellFees || 0))), 0);
   const totalFeesPaid = transactions.length > 0 ? feeBreakdown.totalFees : openFeesPaid + closedFeesPaid;
   const tickerMap = new Map<string, EGXTicker>();
-  tickers.forEach((ticker) => { const raw = ticker.ticker.trim().toUpperCase(); const clean = raw.replace(/^EGX:/, '').replace(/\.CA$/, ''); tickerMap.set(raw, ticker); tickerMap.set(clean, ticker); });
-  let dayChangeEgp = 0; let winningPositionsCount = 0; let losingPositionsCount = 0;
+  tickers.forEach((ticker) => {
+    const raw = ticker.ticker.trim().toUpperCase();
+    const clean = normalizeTickerKey(raw);
+    tickerMap.set(raw, ticker);
+    tickerMap.set(clean, ticker);
+  });
+
+  let winningPositionsCount = 0;
+  let losingPositionsCount = 0;
   positions.forEach((position) => {
     const unrealized = calculatePositionUnrealizedPnl(position);
-    if (position.currentPrice > 0) { if (unrealized > 0.01) winningPositionsCount++; else if (unrealized < -0.01) losingPositionsCount++; }
-    const clean = position.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
-    const quote = tickerMap.get(clean) || tickerMap.get(position.ticker.trim().toUpperCase());
-    let perShareChange = 0;
-    if (quote?.change !== undefined && Number.isFinite(quote.change)) perShareChange = quote.change;
-    else if (quote?.changePercent !== undefined && quote.lastPrice > 0) { const previousClose = quote.lastPrice / (1 + quote.changePercent / 100); perShareChange = quote.lastPrice - previousClose; }
-    else if (position.dayChange !== undefined && Number.isFinite(position.dayChange)) perShareChange = position.dayChange;
-    else if (position.dayChangePercent !== undefined && position.currentPrice > 0) { const previousClose = position.currentPrice / (1 + position.dayChangePercent / 100); perShareChange = position.currentPrice - previousClose; }
-    dayChangeEgp += position.shares * perShareChange;
+    if (position.currentPrice > 0) {
+      if (unrealized > 0.01) winningPositionsCount++;
+      else if (unrealized < -0.01) losingPositionsCount++;
+    }
   });
+
+  // Reconstruct the portfolio at the start of the latest EGX session. This makes
+  // "Today" transaction-aware: intraday round trips affect today's P&L and shares
+  // bought during the session are measured from their actual execution cash cost,
+  // not as if they were already owned at yesterday's close.
+  const sessionDate = getLatestEgxTradingSessionDate();
+  const startShares = new Map<string, number>();
+  positions.forEach((position) => startShares.set(normalizeTickerKey(position.ticker), position.shares));
+  let startCash = cashBalance;
+  let externalNetFlow = 0;
+
+  const sessionTransactions = transactions.filter((tx) => String(tx.date || '').slice(0, 10) === sessionDate);
+  for (const tx of [...sessionTransactions].reverse()) {
+    const ticker = normalizeTickerKey(tx.ticker);
+    const kind = String(tx.cashFlowType || '').trim().toUpperCase();
+    const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount ?? 0));
+
+    if (ticker === 'CASH') {
+      if (!Number.isFinite(amount)) continue;
+      if (kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) {
+        startCash -= amount;
+        externalNetFlow += amount;
+      } else if (kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) {
+        startCash += amount;
+        externalNetFlow -= amount;
+      } else if (kind === 'DIVIDEND') {
+        startCash -= amount;
+      } else if (kind === 'FEE') {
+        startCash += amount;
+      } else if (kind === 'CASH_ADJUSTMENT') {
+        const signed = Number(tx.cashFlowAmount ?? tx.totalAmount ?? 0);
+        if (Number.isFinite(signed)) {
+          startCash -= signed;
+          externalNetFlow += signed;
+        }
+      }
+      continue;
+    }
+
+    if (tx.type === 'BUY') {
+      startCash += Number(tx.totalAmount || tx.shares * tx.price + (tx.fees || 0));
+      startShares.set(ticker, (startShares.get(ticker) || 0) - tx.shares);
+    } else if (tx.type === 'SELL') {
+      startCash -= Number(tx.totalAmount || tx.shares * tx.price - (tx.fees || 0));
+      startShares.set(ticker, (startShares.get(ticker) || 0) + tx.shares);
+    }
+  }
+
+  let startMarketValue = 0;
+  let sessionReconstructionComplete = true;
+  for (const [ticker, shares] of startShares) {
+    if (shares <= 0.000001) continue;
+    const previousClose = quotePreviousClose(tickerMap.get(ticker));
+    if (previousClose === undefined) {
+      sessionReconstructionComplete = false;
+      break;
+    }
+    startMarketValue += shares * previousClose;
+  }
+
+  let dayChangeEgp: number;
+  if (sessionReconstructionComplete) {
+    const startEquity = startCash + startMarketValue;
+    dayChangeEgp = totalValue - startEquity - externalNetFlow;
+  } else {
+    // Conservative fallback for an unavailable previous close.
+    dayChangeEgp = positions.reduce((sum, position) => {
+      const clean = normalizeTickerKey(position.ticker);
+      const quote = tickerMap.get(clean);
+      let perShareChange = 0;
+      if (quote?.change !== undefined && Number.isFinite(quote.change)) perShareChange = quote.change;
+      else if (quote?.changePercent !== undefined && quote.lastPrice > 0) {
+        const previousClose = quote.lastPrice / (1 + quote.changePercent / 100);
+        perShareChange = quote.lastPrice - previousClose;
+      } else if (position.dayChange !== undefined && Number.isFinite(position.dayChange)) perShareChange = position.dayChange;
+      else if (position.dayChangePercent !== undefined && position.currentPrice > 0) {
+        const previousClose = position.currentPrice / (1 + position.dayChangePercent / 100);
+        perShareChange = position.currentPrice - previousClose;
+      }
+      return sum + position.shares * perShareChange;
+    }, 0);
+  }
+
   const previousPortfolioValue = totalValue - dayChangeEgp;
   const dayChangePercent = previousPortfolioValue > 0 ? (dayChangeEgp / previousPortfolioValue) * 100 : 0;
   return { totalValue: Number(totalValue.toFixed(2)), totalMarketValue: Number(totalMarketValue.toFixed(2)), totalCost: Number(totalCost.toFixed(2)), totalCostWithFees: Number(totalCostWithFees.toFixed(2)), unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)), unrealizedPnlPercent: totalCostWithFees > 0 ? Number(((unrealizedPnlEgp / totalCostWithFees) * 100).toFixed(2)) : 0, grossUnrealizedPnlEgp: Number(grossUnrealizedPnlEgp.toFixed(2)), grossUnrealizedPnlPercent: totalCost > 0 ? Number(((grossUnrealizedPnlEgp / totalCost) * 100).toFixed(2)) : 0, realizedPnlEgp: Number(totalRealizedPnl.toFixed(2)), cashBalance: Number(cashBalance.toFixed(2)), dayChangeEgp: Number(dayChangeEgp.toFixed(2)), dayChangePercent: Number(dayChangePercent.toFixed(2)), totalPositions: positions.length, winningPositionsCount, losingPositionsCount, totalFeesPaid: Number(totalFeesPaid.toFixed(2)), openFeesPaid: Number(openFeesPaid.toFixed(2)), closedFeesPaid: Number(closedFeesPaid.toFixed(2)) };

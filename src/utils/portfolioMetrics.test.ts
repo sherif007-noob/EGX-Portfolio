@@ -117,6 +117,21 @@ describe('portfolio metrics', () => {
     expect(withdrawal).toMatchObject({ type: 'SELL', ticker: 'CASH', shares: 250, price: 1, totalAmount: 250 });
   });
 
+  it('preserves database-shaped executed_at timestamps during normalization', () => {
+    const normalized = normalizeTransaction({
+      id: 'db-row',
+      type: 'BUY',
+      ticker: 'TEST',
+      shares: 1,
+      price: 10,
+      transaction_date: '2026-09-17',
+      executed_at: '2026-09-17T07:12:34.000Z',
+      total_amount: 10,
+    });
+
+    expect(normalized.executedAt).toBe('2026-09-17T07:12:34.000Z');
+  });
+
   it('rejects unknown transaction types instead of silently converting them to BUY', () => {
     expect(() => normalizeTransaction({ type: 'UNKNOWN', ticker: 'TEST', shares: 1, price: 10 })).toThrow(
       'Unsupported transaction type: UNKNOWN',

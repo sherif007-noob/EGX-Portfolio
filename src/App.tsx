@@ -442,20 +442,26 @@ export default function App() {
   };
 
   // Delete Transaction
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async (id: string): Promise<boolean> => {
     const tx = transactions.find((t) => t.id === id);
-    if (!tx) return;
+    if (!tx) return false;
+
+    const previousState = { positions, closedTrades, transactions, cashBalance };
+    const updatedTxs = await executeDeleteTransaction(id);
+
+    if (!updatedTxs) {
+      showToast(`Could not delete ${tx.type} ${tx.ticker}: Supabase save failed. Nothing was changed.`, 'error');
+      return false;
+    }
 
     setUndoState({
-      previousState: { positions, closedTrades, transactions, cashBalance },
+      previousState,
       message: `Deleted ${tx.type} ${tx.ticker} transaction`,
     });
-
-    const updatedTxs = executeDeleteTransaction(id);
     showToast(`Deleted ${tx.type} ${tx.ticker} transaction and updated portfolio balances`, 'success');
 
-    // Auto-sync updated transactions to Google Sheets to clear deleted rows
-    if (sheetsConfig?.spreadsheetId && updatedTxs) {
+    // Only mirror to Google Sheets after the authoritative Supabase delete succeeds.
+    if (sheetsConfig?.spreadsheetId) {
       getAccessToken()
         .then((token) => {
           syncTransactionsLedgerToSheet(
@@ -474,6 +480,8 @@ export default function App() {
           ).catch((err) => console.warn('Background sheets delete sync fallback:', err));
         });
     }
+
+    return true;
   };
 
   // Edit Transaction

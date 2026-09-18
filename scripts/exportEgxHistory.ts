@@ -9,6 +9,8 @@ const startDate = process.env.EGX_HISTORY_START || '2026-09-01';
 const endDate = process.env.EGX_HISTORY_END || '2026-09-18';
 const startTs = Math.floor(new Date(startDate+'T00:00:00Z').getTime()/1000);
 const endTs = Math.floor(new Date(endDate+'T23:59:59Z').getTime()/1000);
+const calendarDays = Math.max(1, Math.ceil((endTs - startTs) / 86400) + 1);
+const barCount = Math.max(30, Math.ceil(calendarDays * 1.6) + 10);
 
 const session = await createSession();
 const output: Record<string, Array<{trading_date:string,open:number,high:number,low:number,close:number,volume:number|null}>> = {};

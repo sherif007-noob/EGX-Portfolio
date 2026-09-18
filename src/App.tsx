@@ -47,7 +47,7 @@ import { RotateCcw } from 'lucide-react';
 import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
-import { buildPerformanceEngineResult } from './services/performanceEngine';
+import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -209,15 +209,22 @@ export default function App() {
 
       try {
         const historicalPrices = await getHistoricalPricesForTransactions(transactions);
-        const result = buildPerformanceEngineResult(transactions, historicalPrices, undefined, undefined, capitalDeposits);
-        const completeValuations = result.valuations.filter((point) => point.complete);
+        const result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
+          openingCapital: capitalDeposits,
+        });
 
         if (!cancelled) {
           setHistoricalPriceSeries(historicalPrices);
-          if (completeValuations.length >= 2) {
+          if (
+            result.dataQuality.hasUsableRange &&
+            result.summary.maxDrawdownPercent != null &&
+            result.summary.maxEquityDrawdownEgp != null
+          ) {
             setHistoricalDrawdown({
-              maxDrawdownEgp: result.maxDrawdownEgp,
-              maxDrawdownPercent: result.maxDrawdownPercent,
+              // Performance percentage is external-flow-neutral TWR drawdown.
+              // The EGP companion remains the nominal equity peak-to-trough gap.
+              maxDrawdownEgp: result.summary.maxEquityDrawdownEgp,
+              maxDrawdownPercent: Math.abs(result.summary.maxDrawdownPercent),
             });
           }
         }
@@ -226,7 +233,7 @@ export default function App() {
           setHistoricalDrawdown(null);
           setHistoricalPriceSeries({});
         }
-        console.warn('Historical performance data is unavailable; drawdown will remain N/A.', error);
+        console.warn('Unified historical analytics are unavailable; drawdown will remain N/A.', error);
       } finally {
         if (!cancelled) setHistoricalAnalyticsLoading(false);
       }

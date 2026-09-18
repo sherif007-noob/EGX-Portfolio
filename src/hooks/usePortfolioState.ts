@@ -20,6 +20,7 @@ import {
   flushPendingWriteQueue,
   markLocalMutation,
 } from '../services/firestoreStorage';
+import { getSupabaseBrowserClient } from '../services/supabaseBrowser';
 import {
   reconcilePortfolioFromLedger,
   getOpenBuyTransactionIdsForTicker,
@@ -606,7 +607,8 @@ export function usePortfolioState() {
 
   const forceSync = useCallback(async () => {
     try {
-      await ensureAuthUser();
+      const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
+      if (!session) throw new Error('No authenticated Supabase session.');
       const remote = await loadPortfolioFromFirestore();
       let mergedPositions = positions;
       let mergedClosed = closedTrades;

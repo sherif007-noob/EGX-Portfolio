@@ -286,3 +286,79 @@ For `All`, annualized XIRR is shown only as a secondary reference value.
 If no 15-minute rows exist for the selected session, Today remains explicitly unavailable instead of falling back to a daily price.
 
 The ingestion workflow is also triggered when its own workflow/script changes are merged to `main`, which allows an empty production intraday store to seed immediately after deployment while preserving the normal 15-minute scheduled ingestion.
+
+
+## Analytics chart modes
+
+The primary analytics card supports four modes that all reuse the same selected timeframe and the same unified/intraday valuation result.
+
+### Portfolio vs Return
+
+Primary series:
+
+```text
+portfolio equity / NAV
+```
+
+The headline is ending portfolio value. The companion values are selected-period portfolio P&L in EGP and the flow-aware selected-period MWR percentage.
+
+The percentage is intentionally not calculated as simple `P&L / starting equity` because deposits and withdrawals inside the selected period would distort that result.
+
+### Portfolio vs Net Deposits
+
+Two EGP series share one scale:
+
+```text
+Portfolio
+Net Deposits
+```
+
+`Net Deposits` is cumulative contributed investor capital from inception:
+
+```text
+deposits - withdrawals
+```
+
+This mode makes the gap between contributed capital and current portfolio value visually explicit.
+
+### Performance (TWR)
+
+The chart displays the unified engine's time-weighted return series.
+
+External deposits and withdrawals are neutralized so this view answers:
+
+```text
+How did the investment strategy itself perform?
+```
+
+### Performance (MWR)
+
+The chart displays selected-period money-weighted return.
+
+This view answers:
+
+```text
+What return did the investor's actual money experience,
+given the timing of deposits and withdrawals?
+```
+
+For `All`, annualized XIRR remains a secondary reference only.
+
+### Mode and timeframe independence
+
+Changing chart mode does not reset the selected timeframe. Changing timeframe does not change the selected mode.
+
+All four modes support:
+
+```text
+Today · 1W · 1M · 90D · YTD · All
+```
+
+`Today` uses the 15-minute transaction-aware series. Longer periods use complete daily valuation points.
+
+### Visual behavior
+
+- Today remains a straight linear chart for all modes.
+- Portfolio vs Net Deposits uses two distinct same-scale lines.
+- Longer single-series views may use the restrained area treatment from the shared chart visual system.
+- Tooltips, axes, crosshairs, empty states, EGP formatting, and percentage formatting use the shared Phase 3 analytics theme.

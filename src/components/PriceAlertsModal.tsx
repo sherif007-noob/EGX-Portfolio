@@ -459,7 +459,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                       Alert Only During Cairo Market Hours
                     </span>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Restrict alerts to Sunday–Thursday active floor hours (09:30/10:00 AM – 02:30 PM Cairo time)
+                      Restrict alerts to Sunday–Thursday regular trading hours (10:00 AM – 02:30 PM Cairo time)
                     </p>
                   </div>
                   <input

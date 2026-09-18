@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+
+/*
+ * Recharts fallback theme.
+ * Analytics charts should use AnalyticsChartTooltip, but these rules keep any
+ * accidental/default Recharts tooltip readable inside the dark application UI.
+ */
+.recharts-default-tooltip {
+  background: rgba(2, 6, 23, 0.96) !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35) !important;
+  color: #e2e8f0 !important;
+}
+
+.recharts-tooltip-label {
+  color: #94a3b8 !important;
+}
+
+.recharts-tooltip-item,
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value {
+  color: #e2e8f0 !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}

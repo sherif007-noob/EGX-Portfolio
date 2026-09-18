@@ -118,6 +118,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
 - [API reference](docs/API.md)
 - [Authentication and security](docs/AUTH_AND_SECURITY.md)
 - [Performance analytics](docs/PERFORMANCE_ANALYTICS.md)
+- [Analytics visual system](docs/ANALYTICS_VISUAL_SYSTEM.md)
 - [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
 - [Testing](docs/TESTING.md)
 - [Operations and deployment](docs/OPERATIONS.md)

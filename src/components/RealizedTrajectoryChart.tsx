@@ -14,6 +14,14 @@ import {
   ReferenceLine,
   Cell
 } from 'recharts';
+import {
+  ANALYTICS_CHART_THEME,
+  ChartTooltipShell,
+  analyticsGridProps,
+  analyticsTooltipCursor,
+  analyticsXAxisProps,
+  analyticsYAxisProps,
+} from './charts/AnalyticsChartTheme';
 
 interface RealizedTrajectoryChartProps {
   closedTrades: ClosedTrade[];
@@ -184,33 +192,30 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
             <AreaChart data={trajectoryData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="pnlGrowthGradReusable" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.32} />
+                  <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <CartesianGrid {...analyticsGridProps} />
               <XAxis
                 dataKey="tradeLabel"
-                stroke="#64748b"
+                {...analyticsXAxisProps}
                 fontSize={11}
-                tickLine={false}
-                axisLine={{ stroke: '#334155' }}
               />
               <YAxis
-                stroke="#64748b"
+                {...analyticsYAxisProps}
                 fontSize={11}
-                tickLine={false}
-                axisLine={{ stroke: '#334155' }}
                 tickFormatter={(val) => `${val >= 0 ? '+' : ''}${(val / 1000).toFixed(0)}k`}
               />
-              <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
               <Tooltip
+                cursor={analyticsTooltipCursor}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     const isWin = data.tradePnl >= 0;
                     return (
-                      <div className="bg-slate-950 border border-slate-700 p-3 rounded-xl shadow-2xl text-xs space-y-1 z-50">
+                      <ChartTooltipShell className="space-y-1">
                         <div className="flex items-center justify-between gap-4 border-b border-slate-800 pb-1 font-semibold text-white">
                           <span>{data.ticker}</span>
                           <span
@@ -246,7 +251,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
                             </span>
                           </div>
                         </div>
-                      </div>
+                      </ChartTooltipShell>
                     );
                   }
                   return null;
@@ -255,7 +260,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
               <Area
                 type="monotone"
                 dataKey="cumulativePnl"
-                stroke="#10b981"
+                stroke={ANALYTICS_CHART_THEME.emerald}
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#pnlGrowthGradReusable)"
@@ -281,14 +286,14 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
                       cx={cx}
                       cy={cy}
                       r={5}
-                      fill={isWin ? '#10b981' : '#f43f5e'}
+                      fill={isWin ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose}
                       stroke="#0f172a"
                       strokeWidth={2}
                       className="cursor-pointer transition-transform hover:scale-125"
                     />
                   );
                 }}
-                activeDot={{ r: 7, fill: '#34d399', stroke: '#0f172a', strokeWidth: 2 }}
+                activeDot={{ r: 7, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
               />
             </AreaChart>
           ) : (
@@ -296,29 +301,26 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
               data={trajectoryData.filter((d) => d.index > 0)}
               margin={{ top: 10, right: 15, left: 10, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <CartesianGrid {...analyticsGridProps} />
               <XAxis
                 dataKey="tradeLabel"
-                stroke="#64748b"
+                {...analyticsXAxisProps}
                 fontSize={11}
-                tickLine={false}
-                axisLine={{ stroke: '#334155' }}
               />
               <YAxis
-                stroke="#64748b"
+                {...analyticsYAxisProps}
                 fontSize={11}
-                tickLine={false}
-                axisLine={{ stroke: '#334155' }}
                 tickFormatter={(val) => `${val >= 0 ? '+' : ''}${(val / 1000).toFixed(0)}k`}
               />
-              <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
               <Tooltip
+                cursor={analyticsTooltipCursor}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     const isWin = data.tradePnl >= 0;
                     return (
-                      <div className="bg-slate-950 border border-slate-700 p-3 rounded-xl shadow-2xl text-xs space-y-1 z-50">
+                      <ChartTooltipShell className="space-y-1">
                         <div className="flex items-center justify-between gap-4 border-b border-slate-800 pb-1 font-semibold text-white">
                           <span>{data.ticker}</span>
                           <span
@@ -348,7 +350,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
                             </div>
                           )}
                         </div>
-                      </div>
+                      </ChartTooltipShell>
                     );
                   }
                   return null;
@@ -360,7 +362,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
                   .map((entry) => (
                     <Cell
                       key={`bar-${entry.index}-${entry.ticker}`}
-                      fill={entry.tradePnl >= 0 ? '#10b981' : '#f43f5e'}
+                      fill={entry.tradePnl >= 0 ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose}
                     />
                   ))}
               </Bar>

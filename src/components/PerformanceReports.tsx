@@ -7,6 +7,18 @@ import type { MWRRPoint } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
+import {
+  ANALYTICS_CHART_THEME,
+  AnalyticsChartTooltip,
+  AnalyticsEmptyState,
+  analyticsGridProps,
+  analyticsTooltipCursor,
+  analyticsXAxisProps,
+  analyticsYAxisProps,
+  formatAnalyticsCompactEgp,
+  formatAnalyticsEgp,
+  formatAnalyticsPercent,
+} from './charts/AnalyticsChartTheme';
 
 interface PerformanceReportsProps {
   stats: PerformanceStats;
@@ -144,12 +156,114 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-cyan-400" />Money-Weighted Return (MWRR)</h3><p className="text-xs text-slate-400 mt-1">Historical annualized money-weighted return reconstructed from the transaction ledger, contributed capital, and daily EGX closes.</p></div>
-        {mwrrData.length < 2 ? <div className="py-10 text-center text-xs text-slate-500">Historical MWRR is unavailable until enough complete valuation days are present.</div> : <div className="h-64"><ResponsiveContainer width="100%" height="100%"><AreaChart data={mwrrData}><CartesianGrid strokeDasharray="3 3" stroke="#1e293b" /><XAxis dataKey="label" stroke="#64748b" fontSize={10} /><YAxis stroke="#64748b" fontSize={10} tickFormatter={(value: number) => `${value.toFixed(1)}%`} /><ReferenceLine y={0} stroke="#475569" /><Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''} /><Area type="monotone" dataKey="mwrrPercent" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.15} /></AreaChart></ResponsiveContainer></div>}
+        {mwrrData.length < 2 ? (
+          <AnalyticsEmptyState>
+            Historical MWRR is unavailable until enough complete valuation days are present.
+          </AnalyticsEmptyState>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={mwrrData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="mwrrChartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.28} />
+                    <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid {...analyticsGridProps} />
+                <XAxis dataKey="label" {...analyticsXAxisProps} />
+                <YAxis
+                  {...analyticsYAxisProps}
+                  tickFormatter={(value: number) => `${value.toFixed(1)}%`}
+                />
+                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+                <Tooltip
+                  cursor={analyticsTooltipCursor}
+                  content={(props) => (
+                    <AnalyticsChartTooltip
+                      {...props}
+                      title="MWRR"
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''}
+                      nameFormatter={() => 'Return'}
+                      valueFormatter={(value) => formatAnalyticsPercent(value, true)}
+                    />
+                  )}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="mwrrPercent"
+                  name="MWRR"
+                  stroke={ANALYTICS_CHART_THEME.cyan}
+                  strokeWidth={2.25}
+                  fill="url(#mwrrChartGradient)"
+                  fillOpacity={1}
+                  dot={false}
+                  activeDot={{
+                    r: 5,
+                    fill: ANALYTICS_CHART_THEME.cyan,
+                    stroke: '#020617',
+                    strokeWidth: 2,
+                  }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" />Realized P&amp;L Trajectory</h3><p className="text-xs text-slate-400 mt-1">Closed-trade realized P&amp;L over time. This is not the portfolio equity curve.</p></div>
-        {trajectoryData.length === 0 ? <div className="py-10 text-center text-xs text-slate-500">No closed trades recorded yet.</div> : <div className="h-64"><ResponsiveContainer width="100%" height="100%"><AreaChart data={trajectoryData}><CartesianGrid strokeDasharray="3 3" stroke="#1e293b" /><XAxis dataKey="label" stroke="#64748b" fontSize={10} /><YAxis stroke="#64748b" fontSize={10} /><ReferenceLine y={0} stroke="#475569" /><Tooltip formatter={(v: number) => `${formatEgp(v)} EGP`} /><Area type="monotone" dataKey="cumulative" stroke="#10b981" fill="#10b981" fillOpacity={0.15} /></AreaChart></ResponsiveContainer></div>}
+        {trajectoryData.length === 0 ? (
+          <AnalyticsEmptyState>No closed trades recorded yet.</AnalyticsEmptyState>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trajectoryData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="realizedTrajectoryGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.28} />
+                    <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid {...analyticsGridProps} />
+                <XAxis dataKey="label" {...analyticsXAxisProps} />
+                <YAxis
+                  {...analyticsYAxisProps}
+                  tickFormatter={formatAnalyticsCompactEgp}
+                />
+                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+                <Tooltip
+                  cursor={analyticsTooltipCursor}
+                  content={(props) => (
+                    <AnalyticsChartTooltip
+                      {...props}
+                      title="Realized P&L"
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ''}
+                      nameFormatter={() => 'Cumulative'}
+                      valueFormatter={(value) => formatAnalyticsEgp(value, true)}
+                    />
+                  )}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  name="Cumulative"
+                  stroke={ANALYTICS_CHART_THEME.emerald}
+                  strokeWidth={2.25}
+                  fill="url(#realizedTrajectoryGradient)"
+                  fillOpacity={1}
+                  dot={false}
+                  activeDot={{
+                    r: 5,
+                    fill: ANALYTICS_CHART_THEME.emerald,
+                    stroke: '#020617',
+                    strokeWidth: 2,
+                  }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
@@ -158,7 +272,18 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           <div className="flex items-center gap-2 text-xs"><button onClick={() => setAllocationTab('sector')} className={`px-3 py-1 rounded-lg ${allocationTab === 'sector' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-800 text-slate-400'}`}>Sectors</button><button onClick={() => setAllocationTab('stock')} className={`px-3 py-1 rounded-lg ${allocationTab === 'stock' ? 'bg-blue-500/20 text-blue-300' : 'bg-slate-800 text-slate-400'}`}>Stocks</button>{allocationTab === 'stock' && <label className="flex items-center gap-1.5 text-slate-300"><input type="checkbox" checked={includeCash} onChange={(e) => setIncludeCash(e.target.checked)} />Cash</label>}</div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-center">
-          <div className="h-64">{(allocationTab === 'sector' ? sectorData : stockData).length === 0 ? <div className="h-full flex items-center justify-center text-xs text-slate-500">No allocation data.</div> : <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={allocationTab === 'sector' ? sectorData : stockData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90}>{(allocationTab === 'sector' ? sectorData : stockData).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip formatter={(v: number) => `${formatEgp(v)} EGP`} /></PieChart></ResponsiveContainer>}</div>
+          <div className="h-64">{(allocationTab === 'sector' ? sectorData : stockData).length === 0 ? <div className="h-full flex items-center justify-center text-xs text-slate-500">No allocation data.</div> : <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={allocationTab === 'sector' ? sectorData : stockData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90}>{(allocationTab === 'sector' ? sectorData : stockData).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip
+                  cursor={false}
+                  content={(props) => (
+                    <AnalyticsChartTooltip
+                      {...props}
+                      title="Allocation"
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
+                      nameFormatter={() => 'Market Value'}
+                      valueFormatter={(value) => formatAnalyticsEgp(value)}
+                    />
+                  )}
+                /></PieChart></ResponsiveContainer>}</div>
           <div className="space-y-2 max-h-64 overflow-auto">{(allocationTab === 'sector' ? sectorData : stockData).map((row, i) => <div key={row.name} className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800 text-xs"><span className="flex items-center gap-2 text-slate-200"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />{row.name}</span><span className="font-mono text-slate-300">{formatEgp(row.value)} EGP ({row.percentage.toFixed(1)}%)</span></div>)}</div>
         </div>
       </div>

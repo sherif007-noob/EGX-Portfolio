@@ -2,6 +2,12 @@ name: Intraday Prices
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/intraday-prices.yml'
+      - 'scripts/syncIntradayPrices.ts'
   schedule:
     # Broad UTC window covers the EGX session across Cairo DST changes.
     # TradingView supplies the actual 15-minute bar timestamps; the cron time

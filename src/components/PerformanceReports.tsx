@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../types';
+import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
-import type { MWRRPoint } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
+import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
+import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
 import {
@@ -17,7 +18,6 @@ import {
   analyticsYAxisProps,
   formatAnalyticsCompactEgp,
   formatAnalyticsEgp,
-  formatAnalyticsPercent,
 } from './charts/AnalyticsChartTheme';
 
 interface PerformanceReportsProps {
@@ -27,7 +27,9 @@ interface PerformanceReportsProps {
   metrics?: PortfolioMetrics;
   cashBalance?: number;
   capitalDeposits?: number;
-  historicalPerformance?: MWRRPoint[];
+  transactions: TradeTransaction[];
+  historicalPrices: HistoricalPriceSeries;
+  historicalLoading?: boolean;
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
@@ -39,7 +41,9 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   metrics,
   cashBalance = 0,
   capitalDeposits = 0,
-  historicalPerformance = [],
+  transactions,
+  historicalPrices,
+  historicalLoading = false,
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
@@ -86,14 +90,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
     return rows.map((row) => ({ ...row, percentage: total > 0 ? row.value / total * 100 : 0 }))
       .sort((a, b) => b.value - a.value);
   }, [positions, cashBalance, includeCash]);
-
-  const mwrrData = useMemo(() => historicalPerformance
-    .filter((point) => point.complete && Number.isFinite(point.mwrrPercent))
-    .map((point) => ({
-      date: point.date,
-      label: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-EG', { month: 'short', day: 'numeric' }),
-      mwrrPercent: Number(point.mwrrPercent),
-    })), [historicalPerformance]);
 
   const trajectoryData = useMemo(() => {
     let cumulative = 0;
@@ -154,62 +150,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
 
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-cyan-400" />Money-Weighted Return (MWRR)</h3><p className="text-xs text-slate-400 mt-1">Historical annualized money-weighted return reconstructed from the transaction ledger, contributed capital, and daily EGX closes.</p></div>
-        {mwrrData.length < 2 ? (
-          <AnalyticsEmptyState>
-            Historical MWRR is unavailable until enough complete valuation days are present.
-          </AnalyticsEmptyState>
-        ) : (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mwrrData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="mwrrChartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.28} />
-                    <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.cyan} stopOpacity={0.01} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="label" {...analyticsXAxisProps} />
-                <YAxis
-                  {...analyticsYAxisProps}
-                  tickFormatter={(value: number) => `${value.toFixed(1)}%`}
-                />
-                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
-                <Tooltip
-                  cursor={analyticsTooltipCursor}
-                  content={(props) => (
-                    <AnalyticsChartTooltip
-                      {...props}
-                      title="MWRR"
-                      labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''}
-                      nameFormatter={() => 'Return'}
-                      valueFormatter={(value) => formatAnalyticsPercent(value, true)}
-                    />
-                  )}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="mwrrPercent"
-                  name="MWRR"
-                  stroke={ANALYTICS_CHART_THEME.cyan}
-                  strokeWidth={2.25}
-                  fill="url(#mwrrChartGradient)"
-                  fillOpacity={1}
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: ANALYTICS_CHART_THEME.cyan,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
+      <PerformanceTimeframeChart
+        transactions={transactions}
+        historicalPrices={historicalPrices}
+        capitalDeposits={capitalDeposits}
+        historicalLoading={historicalLoading}
+      />
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" />Realized P&amp;L Trajectory</h3><p className="text-xs text-slate-400 mt-1">Closed-trade realized P&amp;L over time. This is not the portfolio equity curve.</p></div>

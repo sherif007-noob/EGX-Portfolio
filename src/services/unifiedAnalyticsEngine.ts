@@ -179,8 +179,13 @@ export function calculatePeriodMWR(
   const durationMs = endMs - startMs;
   if (!Number.isFinite(durationMs) || durationMs <= 0) return 0;
 
+  const dailyBoundary = startingDate.length <= 10 && endingDate.length <= 10;
   const relevantFlows = externalCashFlows
     .filter((flow) => {
+      if (dailyBoundary) {
+        const flowDay = dayKey(flow.date);
+        return flowDay > dayKey(startingDate) && flowDay <= dayKey(endingDate);
+      }
       const flowMs = dateMs(flow.date);
       return Number.isFinite(flowMs) && flowMs > startMs && flowMs <= endMs;
     })

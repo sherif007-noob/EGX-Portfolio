@@ -133,22 +133,33 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             .filter((ticker) => ticker && ticker !== 'CASH'),
         )];
 
-        const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
-        lookback.setUTCDate(lookback.getUTCDate() - 14);
-        const lookbackDate = lookback.toISOString().slice(0, 10);
-
-        const intradayPrices = await getIntradayPrices(
+        let intradayPrices = await getIntradayPrices(
           tickers,
-          `${lookbackDate}T00:00:00.000Z`,
+          `${requestedSessionDate}T00:00:00.000Z`,
           `${requestedSessionDate}T23:59:59.999Z`,
           15,
         );
 
-        // Resolve against actual stored bars rather than weekday arithmetic alone.
-        // This keeps Today on the latest real EGX session across exchange holidays.
-        const sessionDate =
-          latestIntradaySessionDate(intradayPrices, requestedSessionDate) ??
-          requestedSessionDate;
+        let sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
+
+        // Normal sessions stay on a one-day query. Only fall back to a wider
+        // lookback when the requested weekday has no actual market bars
+        // (for example, an exchange holiday).
+        if (!sessionDate) {
+          const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
+          lookback.setUTCDate(lookback.getUTCDate() - 14);
+          const lookbackDate = lookback.toISOString().slice(0, 10);
+
+          intradayPrices = await getIntradayPrices(
+            tickers,
+            `${lookbackDate}T00:00:00.000Z`,
+            `${requestedSessionDate}T23:59:59.999Z`,
+            15,
+          );
+          sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
+        }
+
+        sessionDate = sessionDate ?? requestedSessionDate;
 
         const result = buildIntradayAnalyticsResult(
           transactions,

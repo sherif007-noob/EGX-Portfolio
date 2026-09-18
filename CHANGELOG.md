@@ -6,6 +6,14 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 
 ## Unreleased
 
+### Analytics
+
+- Added shared Today/1W/1M/90D/YTD/All portfolio analytics.
+- Added Portfolio vs Return, Portfolio vs Net Deposits, TWR, and MWR chart modes.
+- Added 15-minute transaction-aware Today reconstruction.
+- Added performance drawdown, cumulative-fee, and realized-vs-unrealized P&L charts.
+- Standardized dark chart tooltips, crosshairs, axes, empty states, and mobile resize behavior.
+
 ### Documentation
 
 - Added full project documentation covering architecture, development, data model, API routes, authentication/security, analytics, testing, operations, troubleshooting, contribution workflow, and security policy.

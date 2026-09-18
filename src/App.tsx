@@ -46,9 +46,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
-import { getHistoricalPricesForTransactions } from './services/historicalPriceStore';
+import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildPerformanceEngineResult } from './services/performanceEngine';
-import type { MWRRPoint } from './services/portfolioPerformance';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -190,40 +189,46 @@ export default function App() {
     maxDrawdownEgp: number;
     maxDrawdownPercent: number;
   } | null>(null);
-  const [historicalPerformanceSeries, setHistoricalPerformanceSeries] = useState<MWRRPoint[]>([]);
+  const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
+  const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab !== 'reports') return;
 
     let cancelled = false;
     setHistoricalDrawdown(null);
-    setHistoricalPerformanceSeries([]);
+    setHistoricalPriceSeries({});
+    setHistoricalAnalyticsLoading(true);
 
     const loadHistoricalPerformance = async () => {
       const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
-      if (!hasMarketTransactions) return;
+      if (!hasMarketTransactions) {
+        if (!cancelled) setHistoricalAnalyticsLoading(false);
+        return;
+      }
 
       try {
         const historicalPrices = await getHistoricalPricesForTransactions(transactions);
         const result = buildPerformanceEngineResult(transactions, historicalPrices, undefined, undefined, capitalDeposits);
         const completeValuations = result.valuations.filter((point) => point.complete);
-        const hasUsableCurve = completeValuations.length >= 2;
 
-        if (!cancelled && hasUsableCurve) {
-          setHistoricalDrawdown({
-            maxDrawdownEgp: result.maxDrawdownEgp,
-            maxDrawdownPercent: result.maxDrawdownPercent,
-          });
-          // Keep trustworthy complete valuation days instead of blanking the entire
-          // report because one newer ticker is temporarily missing history.
-          setHistoricalPerformanceSeries(completeValuations);
+        if (!cancelled) {
+          setHistoricalPriceSeries(historicalPrices);
+          if (completeValuations.length >= 2) {
+            setHistoricalDrawdown({
+              maxDrawdownEgp: result.maxDrawdownEgp,
+              maxDrawdownPercent: result.maxDrawdownPercent,
+            });
+          }
         }
       } catch (error) {
         if (!cancelled) {
           setHistoricalDrawdown(null);
-          setHistoricalPerformanceSeries([]);
+          setHistoricalPriceSeries({});
         }
         console.warn('Historical performance data is unavailable; drawdown will remain N/A.', error);
+      } finally {
+        if (!cancelled) setHistoricalAnalyticsLoading(false);
       }
     };
 
@@ -1021,7 +1026,9 @@ export default function App() {
             metrics={metrics}
             cashBalance={cashBalance}
             capitalDeposits={capitalDeposits}
-            historicalPerformance={historicalPerformanceSeries}
+            transactions={transactions}
+            historicalPrices={historicalPriceSeries}
+            historicalLoading={historicalAnalyticsLoading}
           />
         )}
 

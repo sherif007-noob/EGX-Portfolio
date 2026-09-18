@@ -66,7 +66,11 @@ export function getLatestEgxSessionDate(now = new Date()): string {
   const weekday = parseDateKey(date).getUTCDay();
 
   if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
-  if (minuteOfDay < 9 * 60 + 30) return previousEgxTradingDate(date);
+
+  // Keep the analytics session boundary aligned with the live-market scheduler:
+  // Sunday opens at 09:30 Cairo; Monday-Thursday open at 10:00 Cairo.
+  const openMinute = weekday === 0 ? 9 * 60 + 30 : 10 * 60;
+  if (minuteOfDay < openMinute) return previousEgxTradingDate(date);
   return date;
 }
 

@@ -48,6 +48,7 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { getHistoricalPricesForTransactions } from './services/historicalPriceStore';
 import { buildPerformanceEngineResult } from './services/performanceEngine';
+import type { MWRRPoint } from './services/portfolioPerformance';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
@@ -189,12 +190,14 @@ export default function App() {
     maxDrawdownEgp: number;
     maxDrawdownPercent: number;
   } | null>(null);
+  const [historicalPerformanceSeries, setHistoricalPerformanceSeries] = useState<MWRRPoint[]>([]);
 
   useEffect(() => {
     if (activeTab !== 'reports') return;
 
     let cancelled = false;
     setHistoricalDrawdown(null);
+    setHistoricalPerformanceSeries([]);
 
     const loadHistoricalPerformance = async () => {
       const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
@@ -202,7 +205,7 @@ export default function App() {
 
       try {
         const historicalPrices = await getHistoricalPricesForTransactions(transactions);
-        const result = buildPerformanceEngineResult(transactions, historicalPrices);
+        const result = buildPerformanceEngineResult(transactions, historicalPrices, undefined, undefined, capitalDeposits);
         const hasCompleteCurve =
           result.dataQuality.valuationDays >= 2 &&
           result.dataQuality.incompleteDays === 0 &&
@@ -213,9 +216,13 @@ export default function App() {
             maxDrawdownEgp: result.maxDrawdownEgp,
             maxDrawdownPercent: result.maxDrawdownPercent,
           });
+          setHistoricalPerformanceSeries(result.valuations);
         }
       } catch (error) {
-        if (!cancelled) setHistoricalDrawdown(null);
+        if (!cancelled) {
+          setHistoricalDrawdown(null);
+          setHistoricalPerformanceSeries([]);
+        }
         console.warn('Historical performance data is unavailable; drawdown will remain N/A.', error);
       }
     };
@@ -224,7 +231,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, transactions]);
+  }, [activeTab, transactions, capitalDeposits]);
 
   const stats: PerformanceStats = useMemo(() => {
     const baseStats = calculatePerformanceStats(closedTrades, positions);
@@ -993,6 +1000,7 @@ export default function App() {
             metrics={metrics}
             cashBalance={cashBalance}
             capitalDeposits={capitalDeposits}
+            historicalPerformance={historicalPerformanceSeries}
           />
         )}
 

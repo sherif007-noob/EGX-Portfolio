@@ -82,7 +82,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <AnalyticsSelect
               value={selectedSector}
-              onChange={setSelectedSector}
+              onChange={(value) => setSelectedSector(String(value))}
               compact
               ariaLabel="Filter positions by sector"
               className="min-w-[170px]"

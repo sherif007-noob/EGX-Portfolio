@@ -73,6 +73,31 @@ describe('unified analytics engine', () => {
     expect(result.summary.mwrrPercent).not.toBeCloseTo(result.summary.twrPercent ?? 0, 2);
   });
 
+  it('includes first trading-day performance when legacy opening capital is the inception baseline', () => {
+    const transactions = [
+      buy('buy-1', '2026-09-02', 10, 50),
+    ];
+    const history = {
+      TEST: [
+        { date: '2026-09-02', close: 51 },
+        { date: '2026-09-03', close: 52 },
+      ],
+    };
+
+    const result = buildUnifiedAnalyticsResult(transactions, history, 'ALL', {
+      latestSessionDate: '2026-09-03',
+      openingCapital: 1000,
+    });
+
+    expect(result.points[0].equity).toBe(1010);
+    expect(result.points[0].twrPercent).toBeCloseTo(1, 8);
+    expect(result.points[0].mwrrPercent).toBeCloseTo(1, 8);
+    expect(result.summary.startEquity).toBe(1000);
+    expect(result.summary.pnlEgp).toBe(20);
+    expect(result.summary.twrPercent).toBeCloseTo(2, 8);
+    expect(result.summary.mwrrPercent).toBeCloseTo(2, 8);
+  });
+
   it('uses the last complete valuation at or before a rolling boundary as baseline', () => {
     const transactions = [
       cash('dep', '2026-09-01', 1000, 'DEPOSIT'),

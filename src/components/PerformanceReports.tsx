@@ -81,13 +81,20 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   }, [positions]);
 
   const stockData = useMemo(() => {
-    const rows = positions.map((position) => ({
+    const rows: Array<{
+      name: string;
+      value: number;
+      percentage: number;
+      shares: number;
+      currentPrice: number;
+      kind: 'holding' | 'cash';
+    }> = positions.map((position) => ({
       name: position.ticker,
       value: position.shares * position.currentPrice,
       percentage: 0,
       shares: position.shares,
       currentPrice: position.currentPrice,
-      kind: 'holding' as const,
+      kind: 'holding',
     }));
     if (includeCash && cashBalance > 0) {
       rows.push({

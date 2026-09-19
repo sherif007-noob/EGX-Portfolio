@@ -285,7 +285,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="premium-section-enter space-y-6">
       {/* Top Banner */}
       <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { AnalyticsSelect } from '../AnalyticsSelect';
 import {
   Calendar,
   ArrowUpRight,
@@ -330,15 +331,19 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
         {/* Search & Status Filter */}
         <div className="flex items-center gap-2">
           {/* Status filter */}
-          <select
+          <AnalyticsSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-purple-500"
-          >
-            <option value="ALL">All Records</option>
-            <option value="LIQUIDATED">Liquidated Trades Only</option>
-            <option value="HOLDINGS">Month-End Holdings Only</option>
-          </select>
+            onChange={(value) => setStatusFilter(value as StatusFilter)}
+            compact
+            accent="purple"
+            ariaLabel="Filter monthly report records"
+            className="min-w-[185px]"
+            options={[
+              { value: 'ALL', label: 'All Records' },
+              { value: 'LIQUIDATED', label: 'Liquidated Trades Only' },
+              { value: 'HOLDINGS', label: 'Month-End Holdings Only' },
+            ]}
+          />
 
           {/* Search */}
           <div className="relative">

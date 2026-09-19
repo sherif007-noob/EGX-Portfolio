@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { NumberStepperInput } from './NumberStepperInput';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { 
@@ -510,12 +511,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           <label className="block text-[10px] font-medium text-slate-400 mb-1">
                             Shares
                           </label>
-                          <input
-                            type="number"
-                            min="1"
+                          <NumberStepperInput
+                            min={1}
+                            step={1}
                             value={trade.shares || ''}
-                            onChange={(e) => updateTradeItem(idx, { shares: Number(e.target.value) })}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            onValueChange={(value) => updateTradeItem(idx, { shares: Number(value) })}
+                            accent="indigo"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
                           />
                         </div>
 
@@ -523,13 +525,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           <label className="block text-[10px] font-medium text-slate-400 mb-1">
                             Price (EGP)
                           </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                          <NumberStepperInput
+                            step={0.01}
+                            min={0.01}
                             value={trade.price || ''}
-                            onChange={(e) => updateTradeItem(idx, { price: Number(e.target.value) })}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            onValueChange={(value) => updateTradeItem(idx, { price: Number(value) })}
+                            accent="indigo"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
                           />
                         </div>
 
@@ -547,13 +549,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           <label className="block text-[10px] font-medium text-slate-400 mb-1">
                             Fees (EGP)
                           </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
+                          <NumberStepperInput
+                            step={0.01}
+                            min={0}
                             value={trade.fees || ''}
-                            onChange={(e) => updateTradeItem(idx, { fees: Number(e.target.value) })}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            onValueChange={(value) => updateTradeItem(idx, { fees: Number(value) })}
+                            accent="amber"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
                           />
                         </div>
                       </div>

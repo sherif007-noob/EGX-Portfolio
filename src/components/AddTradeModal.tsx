@@ -67,6 +67,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsManualPrice(false);
+    setIsManualFee(false);
+  }, [isOpen]);
+
   // Check if ticker is already in active portfolio
   const activeExistingPosition = existingPositions.find(
     (p) => p.ticker.toUpperCase() === tickerInput.trim().toUpperCase()

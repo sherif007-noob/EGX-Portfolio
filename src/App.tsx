@@ -1168,6 +1168,7 @@ export default function App() {
         preselectedTicker={selectedTickerForTrade}
         cashBalance={cashBalance}
         existingPositions={positions}
+        transactions={transactions}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
       />
 

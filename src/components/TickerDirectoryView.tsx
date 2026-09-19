@@ -88,7 +88,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
+      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />
@@ -105,7 +105,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               id="sync-directory-prices-btn"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition hover:border-cyan-400 disabled:opacity-50"
+              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition hover:border-cyan-400 disabled:opacity-50"
               title="Sync latest prices directly from TradingView Egypt Scanner"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -118,7 +118,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               id="push-prices-to-sheet-btn"
               onClick={handlePushSheetClick}
               disabled={isPushingSheet}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition hover:border-emerald-400 disabled:opacity-50"
+              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition hover:border-emerald-400 disabled:opacity-50"
               title="Push live quotes into ticker directory tab in Google Sheets"
             >
               <FileSpreadsheet className={`w-3.5 h-3.5 text-emerald-400 ${isPushingSheet ? 'animate-spin' : ''}`} />
@@ -129,7 +129,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           <button
             id="download-directory-json-btn"
             onClick={handleDownloadJson}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
+            className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
           >
             <Download className="w-3.5 h-3.5" />
             Export JSON
@@ -145,7 +145,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       )}
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+      <div className="premium-panel flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -153,7 +153,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter by ticker (COMI, ESRS, ABUK), English or Arabic name..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-800 text-slate-100 placeholder-slate-400 text-xs sm:text-sm border border-slate-700 focus:outline-none focus:border-teal-500"
+            className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/72 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-teal-500/60"
           />
         </div>
 
@@ -181,7 +181,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           return (
             <div
               key={ticker.ticker}
-              className="p-4 rounded-xl bg-slate-900 border border-slate-800/90 hover:border-slate-700 transition shadow-sm space-y-3"
+              className="premium-card premium-radial p-4 rounded-2xl space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
@@ -224,13 +224,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               </div>
 
               {/* Sector & Volume */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 px-2 py-1 rounded bg-slate-950/40">
+              <div className="premium-subpanel flex items-center justify-between text-[11px] text-slate-400 px-2 py-1 rounded-lg">
                 <span>{ticker.sector}</span>
                 <span>Vol: {(ticker.volume / 1000000).toFixed(2)}M shrs</span>
               </div>
 
               {/* Technical Levels */}
-              <div className="grid grid-cols-3 gap-1.5 p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 text-[11px]">
+              <div className="premium-subpanel grid grid-cols-3 gap-1.5 p-2 rounded-xl text-[11px]">
                 <div>
                   <span className="text-slate-400 text-[10px] block">RSI(14)</span>
                   <span className={`font-mono font-bold ${ticker.rsi14 >= 70 ? 'text-rose-400' : ticker.rsi14 <= 35 ? 'text-emerald-400' : 'text-slate-200'}`}>
@@ -250,7 +250,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               {/* Action Button */}
               <button
                 onClick={() => onSelectTickerForTrade(ticker)}
-                className="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700 transition"
+                className="premium-control w-full py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/80"
               >
                 <ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />
                 Add to Portfolio / Log Trade

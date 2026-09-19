@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { NumberStepperInput } from './NumberStepperInput';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
@@ -154,12 +155,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 </button>
               </div>
             </div>
-            <input
-              type="number"
-              min="1"
+            <NumberStepperInput
+              min={1}
               max={position.shares}
+              step={1}
               value={sharesToSell || ''}
-              onChange={(e) => setSharesToSell(Number(e.target.value))}
+              onValueChange={(value) => setSharesToSell(Number(value))}
+              accent="blue"
               className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
               required
             />
@@ -169,12 +171,12 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Sell Price (EGP)</label>
-              <input
-                type="number"
-                min="0.001"
-                step="0.001"
+              <NumberStepperInput
+                min={0.001}
+                step={0.001}
                 value={sellPrice || ''}
-                onChange={(e) => setSellPrice(Number(e.target.value))}
+                onValueChange={(value) => setSellPrice(Number(value))}
+                accent="blue"
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 required
               />
@@ -226,16 +228,16 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-3 items-center">
               <div>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <NumberStepperInput
+                  min={0}
+                  step={0.01}
                   value={brokerageFee}
-                  onChange={(e) => {
+                  onValueChange={(value) => {
                     setIsManualFee(true);
-                    setBrokerageFee(Math.max(0, Number(e.target.value)));
+                    setBrokerageFee(Math.max(0, Number(value)));
                   }}
-                  className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                  accent="amber"
+                  className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
                 />
               </div>
               <div className="text-[11px] text-slate-400">

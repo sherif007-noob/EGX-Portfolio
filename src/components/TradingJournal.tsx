@@ -402,7 +402,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="premium-section-enter space-y-4">
       {/* Toast Notification for deletion */}
       {deletedIdToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">

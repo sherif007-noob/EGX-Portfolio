@@ -1041,9 +1041,6 @@ export default function App() {
             metrics={metrics}
             cashBalance={cashBalance}
             capitalDeposits={capitalDeposits}
-            transactions={transactions}
-            historicalPrices={historicalPriceSeries}
-            historicalLoading={historicalAnalyticsLoading}
           />
         )}
 

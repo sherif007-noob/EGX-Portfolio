@@ -108,14 +108,14 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
+    <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-3 gap-x-2">
           
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/80 flex items-center justify-center p-1.5 shadow-md shadow-black/50 shrink-0">
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900/95 to-slate-800/80 border border-slate-700/70 flex items-center justify-center p-1.5 shadow-[0_10px_28px_rgba(0,0,0,0.32),0_0_26px_rgba(34,211,238,0.08)] shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
               <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -144,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700 hover:bg-slate-800 hover:border-amber-500/50 transition group"
+                className="premium-control relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700 hover:bg-slate-800 hover:border-amber-500/50 transition group"
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
@@ -169,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 transition hover:border-cyan-400 disabled:opacity-50"
+                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 transition hover:border-cyan-400 disabled:opacity-50"
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -181,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+              className={`premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border ${
                 isTokenExpired
                   ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50 animate-pulse'
                   : isSheetsConnected
@@ -207,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-force-sync-btn"
                 onClick={handleForceSync}
                 disabled={syncStatus === 'syncing'}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition active:scale-95 ${
+                className={`premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border ${
                   syncStatus === 'syncing'
                     ? 'bg-amber-950/60 text-amber-300 border-amber-500/50 cursor-wait'
                     : syncStatus === 'success'
@@ -242,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-backup-reconcile-btn"
                 onClick={onOpenBackupModal}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition"
+                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition"
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
@@ -255,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-900/30 transition active:scale-95"
+                className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-900/30 transition active:scale-95"
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
+              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Add Trade</span>
@@ -289,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="logout-btn"
                   onClick={onLogout}
-                  className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
+                  className="premium-control p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
                   title="Sign out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -308,7 +308,7 @@ export const Header: React.FC<HeaderProps> = ({
                     console.error('Login error:', e);
                   }
                 }}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/50 transition active:scale-95 shrink-0"
+                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/50 shrink-0"
                 title="Sign in with Google to enable Firebase Cloud Sync across your devices"
               >
                 <LogIn className="w-3.5 h-3.5 text-blue-400" />
@@ -320,15 +320,15 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60 overflow-x-auto scrollbar-none">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto scrollbar-none">
         <nav className="flex space-x-1 sm:space-x-3 py-2 min-w-max">
           <button
             id="tab-overview"
             onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'overview'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -338,10 +338,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-positions"
             onClick={() => setActiveTab('positions')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'positions'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <Layers className="w-4 h-4 text-blue-400" />
@@ -351,10 +351,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-closed-cycles"
             onClick={() => setActiveTab('closed_cycles')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'closed_cycles'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <RotateCcw className="w-4 h-4 text-purple-400" />
@@ -364,10 +364,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-transactions"
             onClick={() => setActiveTab('journal')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'journal'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
@@ -377,10 +377,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-cash-ledger"
             onClick={() => setActiveTab('cash')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'cash'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <Wallet className="w-4 h-4 text-amber-400" />
@@ -390,10 +390,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-reports"
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'reports'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <BarChart3 className="w-4 h-4 text-purple-400" />
@@ -403,10 +403,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-directory"
             onClick={() => setActiveTab('directory')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'directory'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <ListOrdered className="w-4 h-4 text-teal-400" />

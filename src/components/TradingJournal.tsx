@@ -4,6 +4,7 @@ import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
 import { DateInput } from './DateInput';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { AnalyticsSelect } from './AnalyticsSelect';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import {
   BookOpen,
@@ -588,33 +589,39 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           {/* Compact Sort Dropdown Select */}
           <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
             <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <select
-              id="journal-sort-dropdown"
+            <AnalyticsSelect
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
-              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
-            >
-              <option value="desc" className="bg-slate-900 text-slate-200">Sort: Newest First</option>
-              <option value="asc" className="bg-slate-900 text-slate-200">Sort: Oldest First</option>
-              <option value="trade_id" className="bg-slate-900 text-slate-200">Sort: By Trade #</option>
-              <option value="ticker" className="bg-slate-900 text-slate-200">Sort: By Ticker (A-Z)</option>
-            </select>
+              onChange={(value) => setSortOrder(value as typeof sortOrder)}
+              compact
+              accent="amber"
+              ariaLabel="Sort transaction journal"
+              className="min-w-[170px]"
+              options={[
+                { value: 'desc', label: 'Sort: Newest First' },
+                { value: 'asc', label: 'Sort: Oldest First' },
+                { value: 'trade_id', label: 'Sort: By Trade #' },
+                { value: 'ticker', label: 'Sort: By Ticker (A-Z)' },
+              ]}
+            />
           </div>
 
           {/* Page Size Selector */}
           <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
             <span className="text-[11px] font-medium text-slate-400">Show:</span>
-            <select
+            <AnalyticsSelect
               value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
-            >
-              <option value={15} className="bg-slate-900 text-slate-200">15 / page</option>
-              <option value={25} className="bg-slate-900 text-slate-200">25 / page</option>
-              <option value={50} className="bg-slate-900 text-slate-200">50 / page</option>
-              <option value={100} className="bg-slate-900 text-slate-200">100 / page</option>
-              <option value={1000} className="bg-slate-900 text-slate-200">All</option>
-            </select>
+              onChange={(value) => setPageSize(Number(value))}
+              compact
+              ariaLabel="Rows per page"
+              className="min-w-[112px]"
+              options={[
+                { value: 15, label: '15 / page' },
+                { value: 25, label: '25 / page' },
+                { value: 50, label: '50 / page' },
+                { value: 100, label: '100 / page' },
+                { value: 1000, label: 'All' },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -1242,15 +1249,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                     <div className="space-y-1">
                       <label className="text-slate-300 font-semibold">Outcome Status</label>
-                      <select
+                      <AnalyticsSelect
                         value={editOutcome}
-                        onChange={(e) => setEditOutcome(e.target.value as any)}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-purple-500 font-bold"
-                      >
-                        <option value="WIN">WIN (Profitable Exit)</option>
-                        <option value="LOSS">LOSS (Cut Loss Exit)</option>
-                        <option value="BREAKEVEN">BREAKEVEN (Flat Exit)</option>
-                      </select>
+                        onChange={(value) => setEditOutcome(value as typeof editOutcome)}
+                        accent="purple"
+                        ariaLabel="Outcome status"
+                        options={[
+                          { value: 'WIN', label: 'WIN', description: 'Profitable exit' },
+                          { value: 'LOSS', label: 'LOSS', description: 'Cut-loss exit' },
+                          { value: 'BREAKEVEN', label: 'BREAKEVEN', description: 'Flat exit' },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>

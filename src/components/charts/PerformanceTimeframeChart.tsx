@@ -658,7 +658,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
   return (
     <>
-      <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="relative min-w-0">
@@ -681,7 +681,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             {modeMenuOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl"
+                className="premium-floating absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
               >
                 {ANALYTICS_MODES.map((item) => {
                   const selected = item.mode === mode;

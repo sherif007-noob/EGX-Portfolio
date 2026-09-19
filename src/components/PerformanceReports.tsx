@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
+import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
-import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
 import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
@@ -20,9 +19,6 @@ interface PerformanceReportsProps {
   metrics?: PortfolioMetrics;
   cashBalance?: number;
   capitalDeposits?: number;
-  transactions: TradeTransaction[];
-  historicalPrices: HistoricalPriceSeries;
-  historicalLoading?: boolean;
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
@@ -34,9 +30,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   metrics,
   cashBalance = 0,
   capitalDeposits = 0,
-  transactions,
-  historicalPrices,
-  historicalLoading = false,
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);

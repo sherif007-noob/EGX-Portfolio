@@ -27,7 +27,7 @@ import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { PriceAlertsModal } from './components/PriceAlertsModal';
-import { RealizedTrajectoryChart } from './components/RealizedTrajectoryChart';
+import { PerformanceTimeframeChart } from './components/charts/PerformanceTimeframeChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { usePortfolioState } from './hooks/usePortfolioState';
 import { useMarketData } from './hooks/useMarketData';
@@ -976,8 +976,13 @@ export default function App() {
               />
             </div>
 
-            {/* Realized P&L Equity Trajectory Curve */}
-            <RealizedTrajectoryChart closedTrades={closedTrades} stats={stats} />
+            {/* Unified portfolio analytics */}
+            <PerformanceTimeframeChart
+              transactions={transactions}
+              historicalPrices={historicalPriceSeries}
+              capitalDeposits={capitalDeposits}
+              historicalLoading={historicalAnalyticsLoading}
+            />
           </div>
         )}
 

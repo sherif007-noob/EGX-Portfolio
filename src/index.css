@@ -453,7 +453,6 @@ body {
 
 .premium-modal {
   position: relative;
-  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.19);
   background:
     linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 36%),

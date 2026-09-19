@@ -8,9 +8,10 @@ import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
 import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import {
   AnalyticsChartTooltip,
+  ChartTooltipShell,
   formatAnalyticsEgp,
 } from './charts/AnalyticsChartTheme';
 
@@ -41,6 +42,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
+  const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
 
   const formatEgp = (value: number) => new Intl.NumberFormat('en-EG', {
     minimumFractionDigits: 2,
@@ -61,25 +63,42 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   ), [capitalDeposits, closedTrades, positions, cashBalance]);
 
   const sectorData = useMemo(() => {
-    const map: Record<string, number> = {};
-    positions.forEach((p) => {
-      map[p.sector] = (map[p.sector] || 0) + p.shares * p.currentPrice;
+    const map: Record<string, { value: number; count: number }> = {};
+    positions.forEach((position) => {
+      const key = position.sector;
+      if (!map[key]) map[key] = { value: 0, count: 0 };
+      map[key].value += position.shares * position.currentPrice;
+      map[key].count += 1;
     });
-    const total = Object.values(map).reduce((a, b) => a + b, 0);
-    return Object.entries(map).map(([name, value]) => ({
+    const total = Object.values(map).reduce((sum, row) => sum + row.value, 0);
+    return Object.entries(map).map(([name, row]) => ({
       name,
-      value,
-      percentage: total > 0 ? value / total * 100 : 0,
+      value: row.value,
+      percentage: total > 0 ? row.value / total * 100 : 0,
+      count: row.count,
+      kind: 'sector' as const,
     })).sort((a, b) => b.value - a.value);
   }, [positions]);
 
   const stockData = useMemo(() => {
-    const rows = positions.map((p) => ({
-      name: p.ticker,
-      value: p.shares * p.currentPrice,
+    const rows = positions.map((position) => ({
+      name: position.ticker,
+      value: position.shares * position.currentPrice,
       percentage: 0,
+      shares: position.shares,
+      currentPrice: position.currentPrice,
+      kind: 'holding' as const,
     }));
-    if (includeCash && cashBalance > 0) rows.push({ name: 'CASH', value: cashBalance, percentage: 0 });
+    if (includeCash && cashBalance > 0) {
+      rows.push({
+        name: 'CASH',
+        value: cashBalance,
+        percentage: 0,
+        shares: 0,
+        currentPrice: 1,
+        kind: 'cash' as const,
+      });
+    }
     const total = rows.reduce((sum, row) => sum + row.value, 0);
     return rows.map((row) => ({ ...row, percentage: total > 0 ? row.value / total * 100 : 0 }))
       .sort((a, b) => b.value - a.value);
@@ -163,7 +182,10 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950/70 p-1 text-xs">
               <button
                 type="button"
-                onClick={() => setAllocationTab('sector')}
+                onClick={() => {
+                  setAllocationTab('sector');
+                  setActiveAllocationIndex(null);
+                }}
                 className={`rounded-lg px-3 py-1.5 font-semibold transition ${
                   allocationTab === 'sector'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
@@ -174,7 +196,10 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setAllocationTab('stock')}
+                onClick={() => {
+                  setAllocationTab('stock');
+                  setActiveAllocationIndex(null);
+                }}
                 className={`rounded-lg px-3 py-1.5 font-semibold transition ${
                   allocationTab === 'stock'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
@@ -228,6 +253,27 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                       paddingAngle={2}
                       stroke="#020617"
                       strokeWidth={2}
+                      onMouseEnter={(_, index) => setActiveAllocationIndex(index)}
+                      onMouseLeave={() => setActiveAllocationIndex(null)}
+                      shape={(shapeProps: any) => {
+                        const index = Number(shapeProps.index);
+                        const active = activeAllocationIndex === index;
+                        const dimmed = activeAllocationIndex != null && !active;
+                        return (
+                          <g
+                            style={{
+                              transformBox: 'fill-box',
+                              transformOrigin: 'center',
+                              transform: active ? 'scale(1.055)' : 'scale(1)',
+                              opacity: dimmed ? 0.48 : 1,
+                              transition: 'transform 180ms ease, opacity 160ms ease',
+                              filter: active ? 'drop-shadow(0 8px 12px rgba(6, 182, 212, 0.18))' : 'none',
+                            }}
+                          >
+                            <Sector {...shapeProps} />
+                          </g>
+                        );
+                      }}
                     >
                       {allocationData.map((_, index) => (
                         <Cell key={index} fill={COLORS[index % COLORS.length]} />
@@ -235,21 +281,74 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                     </Pie>
                     <Tooltip
                       cursor={false}
-                      content={(props) => (
-                        <AnalyticsChartTooltip
-                          {...props}
-                          title="Portfolio Allocation"
-                          labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
-                          nameFormatter={() => 'Market Value'}
-                          valueFormatter={(value) => formatAnalyticsEgp(value)}
-                        />
-                      )}
+                      wrapperStyle={{ zIndex: 40, pointerEvents: 'none' }}
+                      content={(props: any) => {
+                        if (!props?.active || !props?.payload?.length) return null;
+                        const row = props.payload[0]?.payload as any;
+                        const rank = allocationData.findIndex((item) => item.name === row.name) + 1;
+                        const remaining = Math.max(0, 100 - Number(row.percentage || 0));
+
+                        return (
+                          <ChartTooltipShell className="min-w-[235px]">
+                            <div className="mb-2 border-b border-slate-800 pb-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-semibold text-slate-100">{row.name}</span>
+                                <span className="font-mono text-xs font-bold text-cyan-300">
+                                  {Number(row.percentage || 0).toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="mt-0.5 text-[10px] text-slate-500">
+                                {allocationTab === 'sector' ? 'Sector allocation' : row.kind === 'cash' ? 'Cash allocation' : 'Holding allocation'}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5 text-[11px]">
+                              <div className="flex justify-between gap-4">
+                                <span className="text-slate-400">Market value</span>
+                                <span className="font-mono font-semibold text-slate-100">{formatAnalyticsEgp(Number(row.value || 0))}</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="text-slate-400">Rank</span>
+                                <span className="font-mono font-semibold text-slate-200">#{rank} of {allocationData.length}</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="text-slate-400">Rest of allocation</span>
+                                <span className="font-mono font-semibold text-slate-300">{remaining.toFixed(1)}%</span>
+                              </div>
+                              {row.kind === 'sector' && (
+                                <div className="flex justify-between gap-4">
+                                  <span className="text-slate-400">Open positions</span>
+                                  <span className="font-mono font-semibold text-slate-200">{row.count}</span>
+                                </div>
+                              )}
+                              {row.kind === 'holding' && (
+                                <>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-slate-400">Shares</span>
+                                    <span className="font-mono font-semibold text-slate-200">{Number(row.shares || 0).toLocaleString('en-EG')}</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-slate-400">Latest price</span>
+                                    <span className="font-mono font-semibold text-slate-200">{Number(row.currentPrice || 0).toFixed(2)} EGP</span>
+                                  </div>
+                                </>
+                              )}
+                              {row.kind === 'cash' && (
+                                <div className="flex justify-between gap-4">
+                                  <span className="text-slate-400">Balance type</span>
+                                  <span className="font-semibold text-purple-300">Available cash</span>
+                                </div>
+                              )}
+                            </div>
+                          </ChartTooltipShell>
+                        );
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center transition-opacity duration-150 ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="mt-5 text-center">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Largest</div>
                   <div className="mt-1 max-w-[110px] truncate text-sm font-bold text-white">

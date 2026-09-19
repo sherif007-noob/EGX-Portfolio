@@ -138,7 +138,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   const bridgeBalanced = isEquityBridgeBalanced(performanceBridge);
 
   return (
-    <div className="space-y-6">
+    <div className="premium-section-enter space-y-6">
       <div className="premium-glass p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-purple-400" />Trading Performance &amp; Analytical Reports</h2>

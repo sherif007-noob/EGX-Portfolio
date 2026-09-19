@@ -258,12 +258,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-xl bg-slate-800 border border-slate-700 shadow-2xl divide-y divide-slate-700/60">
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
                 {suggestions.map((t) => (
-                  <div
+                  <button
                     key={t.ticker}
+                    type="button"
                     onClick={() => applySelectedTicker(t)}
-                    className="p-2.5 hover:bg-slate-700/70 cursor-pointer flex items-center justify-between transition"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-slate-300 transition hover:bg-slate-900 hover:text-white"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <StockLogo
@@ -293,7 +294,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         {t.changePercent >= 0 ? '+' : ''}{t.changePercent.toFixed(2)}%
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

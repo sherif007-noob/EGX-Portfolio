@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { AnalyticsSelect } from './AnalyticsSelect';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
@@ -660,18 +661,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Funding Method</label>
-                    <select
+                    <AnalyticsSelect
                       value={depositMethod}
-                      onChange={(e) => setDepositMethod(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="Bank Transfer (InstaPay/Wire)">Bank Transfer (InstaPay/Wire)</option>
-                      <option value="Brokerage Account Deposit">Brokerage Account Deposit</option>
-                      <option value="Initial Capital Investment">Initial Capital Investment</option>
-                      <option value="Cash / ATM Deposit">Cash / ATM Deposit</option>
-                      <option value="Cheque Deposit">Cheque Deposit</option>
-                      <option value="Other Capital Inflow">Other Capital Inflow</option>
-                    </select>
+                      onChange={setDepositMethod}
+                      accent="emerald"
+                      ariaLabel="Funding method"
+                      options={[
+                        { value: 'Bank Transfer (InstaPay/Wire)', label: 'Bank Transfer (InstaPay/Wire)' },
+                        { value: 'Brokerage Account Deposit', label: 'Brokerage Account Deposit' },
+                        { value: 'Initial Capital Investment', label: 'Initial Capital Investment' },
+                        { value: 'Cash / ATM Deposit', label: 'Cash / ATM Deposit' },
+                        { value: 'Cheque Deposit', label: 'Cheque Deposit' },
+                        { value: 'Other Capital Inflow', label: 'Other Capital Inflow' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -789,17 +792,19 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Transfer Destination</label>
-                    <select
+                    <AnalyticsSelect
                       value={withdrawDestination}
-                      onChange={(e) => setWithdrawDestination(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-rose-500"
-                    >
-                      <option value="Bank Account Transfer">Bank Account Transfer</option>
-                      <option value="Profit Taking Realization">Profit Taking Realization</option>
-                      <option value="Personal Living Expenses">Personal Living Expenses</option>
-                      <option value="Emergency Reserve Transfer">Emergency Reserve Transfer</option>
-                      <option value="Other Withdrawal">Other Withdrawal</option>
-                    </select>
+                      onChange={setWithdrawDestination}
+                      accent="rose"
+                      ariaLabel="Withdrawal destination"
+                      options={[
+                        { value: 'Bank Account Transfer', label: 'Bank Account Transfer' },
+                        { value: 'Profit Taking Realization', label: 'Profit Taking Realization' },
+                        { value: 'Personal Living Expenses', label: 'Personal Living Expenses' },
+                        { value: 'Emergency Reserve Transfer', label: 'Emergency Reserve Transfer' },
+                        { value: 'Other Withdrawal', label: 'Other Withdrawal' },
+                      ]}
+                    />
                   </div>
                 </div>
 

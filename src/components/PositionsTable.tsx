@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { AnalyticsSelect } from './AnalyticsSelect';
 import {
   TrendingUp,
   TrendingDown,
@@ -79,18 +80,17 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           {/* Sector filter */}
           <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
+            <AnalyticsSelect
               value={selectedSector}
-              onChange={(e) => setSelectedSector(e.target.value)}
-              className="bg-transparent text-slate-200 focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Sectors ({positions.length})</option>
-              {sectors.map((sec) => (
-                <option key={sec} value={sec} className="bg-slate-800 text-white">
-                  {sec}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedSector}
+              compact
+              ariaLabel="Filter positions by sector"
+              className="min-w-[170px]"
+              options={[
+                { value: 'ALL', label: `All Sectors (${positions.length})` },
+                ...sectors.map((sec) => ({ value: sec, label: sec })),
+              ]}
+            />
           </div>
 
           <button

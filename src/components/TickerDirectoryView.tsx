@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { EGXTicker } from '../types';
 import { StockLogo } from './StockLogo';
+import { AnalyticsSelect } from './AnalyticsSelect';
 import {
   Search,
   ArrowUpRight,
@@ -157,18 +158,18 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <select
+          <AnalyticsSelect
             value={selectedSector}
-            onChange={(e) => setSelectedSector(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs border border-slate-700 focus:outline-none focus:border-teal-500"
-          >
-            <option value="ALL">All Sectors ({tickers.length})</option>
-            {sectors.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setSelectedSector(String(value))}
+            compact
+            accent="teal"
+            ariaLabel="Filter ticker directory by sector"
+            className="min-w-[170px]"
+            options={[
+              { value: 'ALL', label: `All Sectors (${tickers.length})` },
+              ...sectors.map((sector) => ({ value: sector, label: sector })),
+            ]}
+          />
         </div>
       </div>
 

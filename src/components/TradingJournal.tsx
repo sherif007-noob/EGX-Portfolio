@@ -4,6 +4,8 @@ import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
 import { DateInput } from './DateInput';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { AnalyticsSelect } from './AnalyticsSelect';
+import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import {
   BookOpen,
@@ -588,33 +590,39 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           {/* Compact Sort Dropdown Select */}
           <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
             <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <select
-              id="journal-sort-dropdown"
+            <AnalyticsSelect
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
-              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
-            >
-              <option value="desc" className="bg-slate-900 text-slate-200">Sort: Newest First</option>
-              <option value="asc" className="bg-slate-900 text-slate-200">Sort: Oldest First</option>
-              <option value="trade_id" className="bg-slate-900 text-slate-200">Sort: By Trade #</option>
-              <option value="ticker" className="bg-slate-900 text-slate-200">Sort: By Ticker (A-Z)</option>
-            </select>
+              onChange={(value) => setSortOrder(value as typeof sortOrder)}
+              compact
+              accent="amber"
+              ariaLabel="Sort transaction journal"
+              className="min-w-[170px]"
+              options={[
+                { value: 'desc', label: 'Sort: Newest First' },
+                { value: 'asc', label: 'Sort: Oldest First' },
+                { value: 'trade_id', label: 'Sort: By Trade #' },
+                { value: 'ticker', label: 'Sort: By Ticker (A-Z)' },
+              ]}
+            />
           </div>
 
           {/* Page Size Selector */}
           <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
             <span className="text-[11px] font-medium text-slate-400">Show:</span>
-            <select
+            <AnalyticsSelect
               value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-1 py-0.5"
-            >
-              <option value={15} className="bg-slate-900 text-slate-200">15 / page</option>
-              <option value={25} className="bg-slate-900 text-slate-200">25 / page</option>
-              <option value={50} className="bg-slate-900 text-slate-200">50 / page</option>
-              <option value={100} className="bg-slate-900 text-slate-200">100 / page</option>
-              <option value={1000} className="bg-slate-900 text-slate-200">All</option>
-            </select>
+              onChange={(value) => setPageSize(Number(value))}
+              compact
+              ariaLabel="Rows per page"
+              className="min-w-[112px]"
+              options={[
+                { value: 15, label: '15 / page' },
+                { value: 25, label: '25 / page' },
+                { value: 50, label: '50 / page' },
+                { value: 100, label: '100 / page' },
+                { value: 1000, label: 'All' },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -1141,13 +1149,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Executed Shares</label>
-                  <input
-                    type="number"
-                    step="1"
-                    min="1"
+                  <NumberStepperInput
+                    step={1}
+                    min={1}
                     required
                     value={editShares}
-                    onChange={(e) => setEditShares(e.target.value)}
+                    onValueChange={setEditShares}
+                    accent="blue"
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
                     placeholder="100"
                   />
@@ -1155,13 +1163,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Price per Share (EGP)</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    min="0.001"
+                  <NumberStepperInput
+                    step={0.001}
+                    min={0.001}
                     required
                     value={editPrice}
-                    onChange={(e) => setEditPrice(e.target.value)}
+                    onValueChange={setEditPrice}
+                    accent="blue"
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
                     placeholder="43.21"
                   />
@@ -1191,12 +1199,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Brokerage Commission (EGP)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <NumberStepperInput
+                    step={0.01}
+                    min={0}
                     value={editFees}
-                    onChange={(e) => setEditFees(e.target.value)}
+                    onValueChange={setEditFees}
+                    accent="amber"
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-amber-300 font-mono focus:outline-none focus:border-blue-500"
                     placeholder="12.50"
                   />
@@ -1224,17 +1232,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="text-slate-300 font-semibold">Realized P&amp;L (EGP)</label>
-                      <input
-                        type="number"
-                        step="0.01"
+                      <NumberStepperInput
+                        step={0.01}
                         value={editRealizedPnlEgp}
-                        onChange={(e) => {
-                          setEditRealizedPnlEgp(e.target.value);
-                          const val = parseFloat(e.target.value);
+                        onValueChange={(value) => {
+                          setEditRealizedPnlEgp(value);
+                          const val = parseFloat(value);
                           if (!isNaN(val)) {
                             setEditOutcome(val > 0.01 ? 'WIN' : val < -0.01 ? 'LOSS' : 'BREAKEVEN');
                           }
                         }}
+                        accent="purple"
                         className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-purple-500"
                         placeholder="e.g. 1250.00"
                       />
@@ -1242,15 +1250,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                     <div className="space-y-1">
                       <label className="text-slate-300 font-semibold">Outcome Status</label>
-                      <select
+                      <AnalyticsSelect
                         value={editOutcome}
-                        onChange={(e) => setEditOutcome(e.target.value as any)}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-purple-500 font-bold"
-                      >
-                        <option value="WIN">WIN (Profitable Exit)</option>
-                        <option value="LOSS">LOSS (Cut Loss Exit)</option>
-                        <option value="BREAKEVEN">BREAKEVEN (Flat Exit)</option>
-                      </select>
+                        onChange={(value) => setEditOutcome(value as typeof editOutcome)}
+                        accent="purple"
+                        ariaLabel="Outcome status"
+                        options={[
+                          { value: 'WIN', label: 'WIN', description: 'Profitable exit' },
+                          { value: 'LOSS', label: 'LOSS', description: 'Cut-loss exit' },
+                          { value: 'BREAKEVEN', label: 'BREAKEVEN', description: 'Flat exit' },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1261,11 +1271,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-slate-300 font-semibold">Target Price (Optional)</label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <NumberStepperInput
+                      step={0.01}
                       value={editTargetPrice}
-                      onChange={(e) => setEditTargetPrice(e.target.value)}
+                      onValueChange={setEditTargetPrice}
+                      accent="emerald"
                       className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-emerald-300 font-mono focus:outline-none focus:border-blue-500"
                       placeholder="e.g. 52.00"
                     />
@@ -1273,11 +1283,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   <div className="space-y-1">
                     <label className="text-slate-300 font-semibold">Stop Loss (Optional)</label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <NumberStepperInput
+                      step={0.01}
                       value={editStopLoss}
-                      onChange={(e) => setEditStopLoss(e.target.value)}
+                      onValueChange={setEditStopLoss}
+                      accent="rose"
                       className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-rose-300 font-mono focus:outline-none focus:border-blue-500"
                       placeholder="e.g. 39.50"
                     />

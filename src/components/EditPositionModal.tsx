@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { NumberStepperInput } from './NumberStepperInput';
 import { Position } from '../types';
 import { X, Target, ShieldAlert, FileText, Save, CheckCircle2 } from 'lucide-react';
 
@@ -116,11 +117,11 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
                 </span>
               )}
             </div>
-            <input
-              type="number"
-              step="0.01"
+            <NumberStepperInput
+              step={0.01}
               value={targetPrice}
-              onChange={(e) => setTargetPrice(e.target.value)}
+              onValueChange={setTargetPrice}
+              accent="emerald"
               placeholder="e.g. 120.00"
               className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500 text-sm"
             />
@@ -139,11 +140,11 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
                 </span>
               )}
             </div>
-            <input
-              type="number"
-              step="0.01"
+            <NumberStepperInput
+              step={0.01}
               value={stopLoss}
-              onChange={(e) => setStopLoss(e.target.value)}
+              onValueChange={setStopLoss}
+              accent="rose"
               placeholder="e.g. 95.00"
               className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
             />

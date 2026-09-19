@@ -65,6 +65,28 @@ function dayKey(date: string): string {
   return String(date || '').slice(0, 10);
 }
 
+function hasExplicitCapitalFlowTransaction(transactions: TradeTransaction[]): boolean {
+  return transactions.some((tx) => {
+    const ticker = String(tx.ticker || '')
+      .trim()
+      .toUpperCase()
+      .replace(/^EGX:/, '')
+      .replace(/\.CA$/, '');
+
+    if (ticker !== 'CASH') return false;
+
+    const kind = typeof tx.cashFlowType === 'string'
+      ? tx.cashFlowType.trim().toUpperCase()
+      : '';
+
+    return (
+      kind === 'DEPOSIT' ||
+      kind === 'WITHDRAWAL' ||
+      (!kind && (tx.type === 'BUY' || tx.type === 'SELL'))
+    );
+  });
+}
+
 function portfolioFlow(flow: MWRRCashFlow): number {
   return -flow.amount;
 }
@@ -208,13 +230,19 @@ export function calculatePeriodMWR(
 function buildPoints(
   valuations: PortfolioValuationPoint[],
   allExternalFlows: MWRRCashFlow[],
+  initialBaselineEquity?: number,
 ): UnifiedAnalyticsPoint[] {
   if (!valuations.length) return [];
 
   const anchor = valuations[0];
-  let twrFactor = 1;
-  let performancePeak = 100;
-  let equityPeak = anchor.equity;
+  const initialBaseline =
+    Number.isFinite(initialBaselineEquity) && Number(initialBaselineEquity) > 0
+      ? Number(initialBaselineEquity)
+      : null;
+  const periodStartingEquity = initialBaseline ?? anchor.equity;
+  let twrFactor = initialBaseline ? anchor.equity / initialBaseline : 1;
+  let performancePeak = Math.max(100, 100 * twrFactor);
+  let equityPeak = initialBaseline ?? anchor.equity;
 
   return valuations.map((point, index) => {
     const netDeposits = sumPortfolioFlows(
@@ -237,7 +265,7 @@ function buildPoints(
       }
     }
 
-    const twrPercent = index === 0 ? 0 : (twrFactor - 1) * 100;
+    const twrPercent = (twrFactor - 1) * 100;
     const performanceIndex = 100 * twrFactor;
     performancePeak = Math.max(performancePeak, performanceIndex);
     const drawdownPercent = performancePeak > 0
@@ -248,9 +276,11 @@ function buildPoints(
     const equityDrawdownEgp = Math.max(0, equityPeak - point.equity);
 
     const mwrrPercent = index === 0
-      ? 0
+      ? initialBaseline
+        ? ((point.equity / initialBaseline) - 1) * 100
+        : 0
       : calculatePeriodMWR(
-          anchor.equity,
+          periodStartingEquity,
           anchor.date,
           allExternalFlows,
           point.equity,
@@ -264,7 +294,7 @@ function buildPoints(
     const annualizedMwrrPercent = index === 0
       ? 0
       : calculateMWRR(
-          [{ date: anchor.date, amount: -anchor.equity }, ...periodFlows],
+          [{ date: anchor.date, amount: -periodStartingEquity }, ...periodFlows],
           point.equity,
           point.date,
         );
@@ -323,7 +353,16 @@ export function buildUnifiedAnalyticsResult(
   );
 
   const selectedValuations = selectValuationWindow(allValuations, window);
-  const points = buildPoints(selectedValuations, allExternalFlows);
+  const openingCapital = Number.isFinite(options.openingCapital)
+    ? Number(options.openingCapital)
+    : 0;
+  const initialBaselineEquity =
+    openingCapital > 0 &&
+    selectedValuations[0]?.date === firstTransactionDate &&
+    !hasExplicitCapitalFlowTransaction(transactions)
+      ? openingCapital
+      : undefined;
+  const points = buildPoints(selectedValuations, allExternalFlows, initialBaselineEquity);
 
   const incomplete = allValuations.filter(
     (point) => point.date >= window.startDate && point.date <= window.endDate && !point.complete,
@@ -337,8 +376,9 @@ export function buildUnifiedAnalyticsResult(
     ? allExternalFlows.filter((flow) => flowWithin(flow, first.date, last.date))
     : [];
   const netExternalFlow = sumPortfolioFlows(rangeFlows);
-  const pnlEgp = first && last
-    ? last.equity - first.equity - netExternalFlow
+  const effectiveStartEquity = initialBaselineEquity ?? first?.equity ?? null;
+  const pnlEgp = effectiveStartEquity != null && last
+    ? last.equity - effectiveStartEquity - netExternalFlow
     : null;
 
   const maxDrawdownPercent = points.length
@@ -355,7 +395,7 @@ export function buildUnifiedAnalyticsResult(
     summary: {
       startDate: first?.date ?? null,
       endDate: last?.date ?? null,
-      startEquity: first?.equity ?? null,
+      startEquity: effectiveStartEquity,
       endEquity: last?.equity ?? null,
       pnlEgp,
       netExternalFlow,

@@ -106,6 +106,7 @@ interface AnalyticsChartTooltipProps {
   valueFormatter?: (value: number, name: string, payload: any) => string;
   nameFormatter?: (name: string, payload: any) => string;
   tone?: 'neutral' | 'positive' | 'negative';
+  signedValueColors?: boolean;
 }
 
 export const AnalyticsChartTooltip: React.FC<AnalyticsChartTooltipProps> = ({
@@ -117,6 +118,7 @@ export const AnalyticsChartTooltip: React.FC<AnalyticsChartTooltipProps> = ({
   valueFormatter,
   nameFormatter,
   tone = 'neutral',
+  signedValueColors = false,
 }) => {
   if (!active || payload.length === 0) return null;
 
@@ -152,6 +154,13 @@ export const AnalyticsChartTooltip: React.FC<AnalyticsChartTooltipProps> = ({
             ? valueFormatter(rawValue, rawName, entry)
             : rawValue.toLocaleString('en-EG', { maximumFractionDigits: 2 });
           const indicator = entry?.color || entry?.stroke || entry?.fill || ANALYTICS_CHART_THEME.cyan;
+          const valueClass = signedValueColors
+            ? rawValue > 0
+              ? 'text-emerald-400'
+              : rawValue < 0
+                ? 'text-rose-400'
+                : 'text-slate-200'
+            : 'text-slate-100';
 
           return (
             <div
@@ -165,7 +174,7 @@ export const AnalyticsChartTooltip: React.FC<AnalyticsChartTooltipProps> = ({
                 />
                 <span className="truncate">{displayName}</span>
               </span>
-              <span className="shrink-0 font-mono font-semibold text-slate-100">
+              <span className={`shrink-0 font-mono font-semibold ${valueClass}`}>
                 {displayValue}
               </span>
             </div>

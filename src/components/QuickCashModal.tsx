@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NumberStepperInput } from './NumberStepperInput';
 import { X, Wallet, Plus, Minus } from 'lucide-react';
 
 interface QuickCashModalProps {
@@ -53,12 +54,12 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             <label className="block text-slate-300 font-semibold mb-1">
               Available Trading Cash (EGP)
             </label>
-            <input
-              type="number"
-              min="0"
-              step="1000"
+            <NumberStepperInput
+              min={0}
+              step={1000}
               value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              onValueChange={(value) => setAmount(parseFloat(value) || 0)}
+              accent="emerald"
               className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-mono text-base font-bold text-white focus:outline-none focus:border-emerald-500"
             />
           </div>

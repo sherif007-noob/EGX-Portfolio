@@ -28,3 +28,53 @@
 .recharts-surface:focus {
   outline: none;
 }
+
+
+/* App-wide scrollbar theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #0f172a;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569, #334155);
+  border: 2px solid #0f172a;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b, #475569);
+}
+
+*::-webkit-scrollbar-corner {
+  background: #0f172a;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Numeric inputs use the app's custom stepper controls instead of browser chrome. */
+.app-number-input {
+  appearance: textfield;
+}
+
+.app-number-input::-webkit-outer-spin-button,
+.app-number-input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}

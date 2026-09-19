@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { EGXTicker, Position, Sector } from '../types';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { EGXTicker, Position, Sector, TradeTransaction } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap } from 'lucide-react';
 import { DateInput } from './DateInput';
+import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime } from '../utils/executionTime';
+import { estimateBrokerageFee, estimateBrokerageFeeRate } from '../utils/brokerageFeeEstimator';
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ interface AddTradeModalProps {
   preselectedTicker?: EGXTicker | null;
   cashBalance: number;
   existingPositions?: Position[];
+  transactions?: TradeTransaction[];
   onOpenScreenshotModal?: () => void;
 }
 
@@ -39,6 +42,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   preselectedTicker,
   cashBalance,
   existingPositions = [],
+  transactions = [],
   onOpenScreenshotModal,
 }) => {
   const [tickerInput, setTickerInput] = useState<string>('');
@@ -48,6 +52,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const [sector, setSector] = useState<Sector>('Banking');
   const [shares, setShares] = useState<number>(1000);
   const [buyPrice, setBuyPrice] = useState<number>(0);
+  const [isManualPrice, setIsManualPrice] = useState<boolean>(false);
   const [buyDate, setBuyDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [executionTime, setExecutionTime] = useState<string>('');
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
@@ -57,7 +62,16 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [deductFromCash, setDeductFromCash] = useState<boolean>(true);
 
+  const feeEstimate = useMemo(() => estimateBrokerageFeeRate(transactions), [transactions]);
+  const learnedFeePercent = feeEstimate.rate * 100;
+
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsManualPrice(false);
+    setIsManualFee(false);
+  }, [isOpen]);
 
   // Check if ticker is already in active portfolio
   const activeExistingPosition = existingPositions.find(
@@ -85,21 +99,30 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Update default brokerage fee when shares or buyPrice changes (if user hasn't overridden manually)
+  // Update the default fee from this portfolio's observed execution history.
   useEffect(() => {
     if (!isManualFee) {
-      const gross = shares * buyPrice;
-      // Default EGX broker commission rate approx 0.0025 (0.25% or 2.5 per thousand)
-      const calculated = Math.round(gross * 0.0025 * 100) / 100;
-      setBrokerageFee(calculated);
+      setBrokerageFee(estimateBrokerageFee(shares * buyPrice, feeEstimate));
     }
-  }, [shares, buyPrice, isManualFee]);
+  }, [shares, buyPrice, isManualFee, feeEstimate]);
+
+  // Keep an auto-filled quote current when the live ticker directory refreshes.
+  useEffect(() => {
+    if (isManualPrice || !selectedTickerData?.ticker) return;
+    const latest = tickers.find(
+      (ticker) => ticker.ticker.toUpperCase() === selectedTickerData.ticker.toUpperCase(),
+    );
+    if (!latest || !Number.isFinite(latest.lastPrice) || latest.lastPrice <= 0) return;
+    setSelectedTickerData(latest);
+    setBuyPrice(latest.lastPrice);
+  }, [tickers, selectedTickerData?.ticker, isManualPrice]);
 
   const applySelectedTicker = (t: EGXTicker) => {
     setTickerInput(t.ticker);
     setSelectedTickerData(t);
     setCompanyName(t.nameEn);
     setSector(t.sector);
+    setIsManualPrice(false);
     setBuyPrice(t.lastPrice);
     if (t.targetPrice) setTargetPrice(t.targetPrice);
     if (t.stopLoss) setStopLoss(t.stopLoss);
@@ -114,6 +137,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     if (match) {
       setCompanyName(match.nameEn);
       setSector(match.sector);
+      setIsManualPrice(false);
       setBuyPrice(match.lastPrice);
       if (match.targetPrice) setTargetPrice(match.targetPrice);
       if (match.stopLoss) setStopLoss(match.stopLoss);
@@ -258,12 +282,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-xl bg-slate-800 border border-slate-700 shadow-2xl divide-y divide-slate-700/60">
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
                 {suggestions.map((t) => (
-                  <div
+                  <button
                     key={t.ticker}
+                    type="button"
                     onClick={() => applySelectedTicker(t)}
-                    className="p-2.5 hover:bg-slate-700/70 cursor-pointer flex items-center justify-between transition"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-slate-300 transition hover:bg-slate-900 hover:text-white"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <StockLogo
@@ -293,7 +318,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                         {t.changePercent >= 0 ? '+' : ''}{t.changePercent.toFixed(2)}%
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -326,12 +351,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Number of Shares</label>
-              <input
-                type="number"
-                min="1"
-                step="1"
+              <NumberStepperInput
+                min={1}
+                step={1}
                 value={shares || ''}
-                onChange={(e) => setShares(Number(e.target.value))}
+                onValueChange={(value) => setShares(Number(value))}
+                accent="blue"
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 required
               />
@@ -342,25 +367,31 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 {selectedTickerData && (
                   <button
                     type="button"
-                    onClick={() => setBuyPrice(selectedTickerData.lastPrice)}
+                    onClick={() => {
+                      setIsManualPrice(false);
+                      setBuyPrice(selectedTickerData.lastPrice);
+                    }}
                     className="text-[10px] text-blue-400 hover:text-blue-300 underline"
                   >
-                    Use latest ({selectedTickerData.lastPrice.toFixed(2)})
+                    Use latest fetched ({selectedTickerData.lastPrice.toFixed(2)})
                   </button>
                 )}
               </div>
-              <input
-                type="number"
-                min="0.001"
-                step="0.001"
+              <NumberStepperInput
+                min={0.001}
+                step={0.001}
                 value={buyPrice || ''}
-                onChange={(e) => setBuyPrice(Number(e.target.value))}
+                onValueChange={(value) => {
+                  setIsManualPrice(true);
+                  setBuyPrice(Number(value));
+                }}
+                accent="blue"
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 placeholder="Enter executed buy price..."
                 required
               />
               <span className="text-[10px] text-slate-400 block mt-0.5">
-                Pre-filled with 15m update price; editable manually if executed at a different price.
+                Auto-filled from the latest fetched quote; editable if your executed price differs.
               </span>
             </div>
           </div>
@@ -376,26 +407,25 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 type="button"
                 onClick={() => {
                   setIsManualFee(false);
-                  const gross = shares * buyPrice;
-                  setBrokerageFee(Math.round(gross * 0.0025 * 100) / 100);
+                  setBrokerageFee(estimateBrokerageFee(shares * buyPrice, feeEstimate));
                 }}
                 className="text-[10px] text-amber-400 hover:text-amber-300 underline"
               >
-                Reset to standard (0.25%)
+                Reset to learned avg ({learnedFeePercent.toFixed(3)}%)
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3 items-center">
               <div>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <NumberStepperInput
+                  min={0}
+                  step={0.01}
                   value={brokerageFee}
-                  onChange={(e) => {
+                  onValueChange={(value) => {
                     setIsManualFee(true);
-                    setBrokerageFee(Math.max(0, Number(e.target.value)));
+                    setBrokerageFee(Math.max(0, Number(value)));
                   }}
-                  className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                  accent="amber"
+                  className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
                   placeholder="0.00"
                 />
               </div>
@@ -405,7 +435,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                     Effective Fee Rate: <strong className="text-white">{((brokerageFee / grossCost) * 100).toFixed(3)}%</strong>
                   </span>
                 ) : (
-                  <span>Standard EGX rate is ~0.25%</span>
+                  <span>
+                    {feeEstimate.source === 'fallback'
+                      ? 'Using 0.25% fallback until fee history is available'
+                      : `Learned from ${feeEstimate.sampleSize} execution${feeEstimate.sampleSize === 1 ? '' : 's'}`}
+                  </span>
                 )}
               </div>
             </div>
@@ -415,24 +449,24 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Target Price (EGP)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
+              <NumberStepperInput
+                min={0}
+                step={0.01}
                 value={targetPrice || ''}
-                onChange={(e) => setTargetPrice(Number(e.target.value))}
+                onValueChange={(value) => setTargetPrice(Number(value))}
+                accent="emerald"
                 placeholder="Optional target..."
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-emerald-400 font-mono"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Stop Loss (EGP)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
+              <NumberStepperInput
+                min={0}
+                step={0.01}
                 value={stopLoss || ''}
-                onChange={(e) => setStopLoss(Number(e.target.value))}
+                onValueChange={(value) => setStopLoss(Number(value))}
+                accent="rose"
                 placeholder="Optional stop loss..."
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-rose-400 font-mono"
               />

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { AnalyticsSelect } from './AnalyticsSelect';
+import { NumberStepperInput } from './NumberStepperInput';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
@@ -606,14 +608,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <span className="text-[11px] text-slate-400">Current Balance: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <NumberStepperInput
                     id="deposit-amount-input"
-                    type="number"
-                    step="0.01"
-                    min="1"
+                    step={0.01}
+                    min={1}
                     placeholder="e.g. 50000"
                     value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
+                    onValueChange={setDepositAmount}
+                    accent="emerald"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
@@ -660,18 +662,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Funding Method</label>
-                    <select
+                    <AnalyticsSelect
                       value={depositMethod}
-                      onChange={(e) => setDepositMethod(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="Bank Transfer (InstaPay/Wire)">Bank Transfer (InstaPay/Wire)</option>
-                      <option value="Brokerage Account Deposit">Brokerage Account Deposit</option>
-                      <option value="Initial Capital Investment">Initial Capital Investment</option>
-                      <option value="Cash / ATM Deposit">Cash / ATM Deposit</option>
-                      <option value="Cheque Deposit">Cheque Deposit</option>
-                      <option value="Other Capital Inflow">Other Capital Inflow</option>
-                    </select>
+                      onChange={(value) => setDepositMethod(String(value))}
+                      accent="emerald"
+                      ariaLabel="Funding method"
+                      options={[
+                        { value: 'Bank Transfer (InstaPay/Wire)', label: 'Bank Transfer (InstaPay/Wire)' },
+                        { value: 'Brokerage Account Deposit', label: 'Brokerage Account Deposit' },
+                        { value: 'Initial Capital Investment', label: 'Initial Capital Investment' },
+                        { value: 'Cash / ATM Deposit', label: 'Cash / ATM Deposit' },
+                        { value: 'Cheque Deposit', label: 'Cheque Deposit' },
+                        { value: 'Other Capital Inflow', label: 'Other Capital Inflow' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -728,15 +732,15 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <span className="text-[11px] text-emerald-400 font-mono">Available: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <NumberStepperInput
                     id="withdraw-amount-input"
-                    type="number"
-                    step="0.01"
-                    min="1"
+                    step={0.01}
+                    min={1}
                     max={cashBalance}
                     placeholder="e.g. 15000"
                     value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    onValueChange={setWithdrawAmount}
+                    accent="rose"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
                   />
@@ -789,17 +793,19 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Transfer Destination</label>
-                    <select
+                    <AnalyticsSelect
                       value={withdrawDestination}
-                      onChange={(e) => setWithdrawDestination(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-rose-500"
-                    >
-                      <option value="Bank Account Transfer">Bank Account Transfer</option>
-                      <option value="Profit Taking Realization">Profit Taking Realization</option>
-                      <option value="Personal Living Expenses">Personal Living Expenses</option>
-                      <option value="Emergency Reserve Transfer">Emergency Reserve Transfer</option>
-                      <option value="Other Withdrawal">Other Withdrawal</option>
-                    </select>
+                      onChange={(value) => setWithdrawDestination(String(value))}
+                      accent="rose"
+                      ariaLabel="Withdrawal destination"
+                      options={[
+                        { value: 'Bank Account Transfer', label: 'Bank Account Transfer' },
+                        { value: 'Profit Taking Realization', label: 'Profit Taking Realization' },
+                        { value: 'Personal Living Expenses', label: 'Personal Living Expenses' },
+                        { value: 'Emergency Reserve Transfer', label: 'Emergency Reserve Transfer' },
+                        { value: 'Other Withdrawal', label: 'Other Withdrawal' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -1046,12 +1052,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">Amount (EGP)</label>
                 <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
+                  <NumberStepperInput
+                    step={0.01}
+                    min={0.01}
                     value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value)}
+                    onValueChange={setEditAmount}
+                    accent="blue"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-mono text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
                     placeholder="e.g. 250000"

@@ -35,8 +35,8 @@ import {
 import {
   ANALYTICS_CHART_THEME,
   AnalyticsChartLoadingState,
-  AnalyticsChartTooltip,
   AnalyticsEmptyState,
+  ChartTooltipShell,
   analyticsGridProps,
   analyticsTooltipCursor,
   analyticsXAxisProps,
@@ -92,6 +92,47 @@ function formatCairoDateTime(value: string): string {
     hour12: true,
   });
 }
+
+function formatFullDailyDate(value: string): string {
+  return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-EG', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function finiteNumber(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function signedToneClass(value: number | null): string {
+  if (value == null || Math.abs(value) < 1e-12) return 'text-slate-200';
+  return value > 0 ? 'text-emerald-400' : 'text-rose-400';
+}
+
+function normalizeDisplayTicker(value: string): string {
+  return String(value || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+}
+
+function formatShareCount(value: number): string {
+  return Number.isInteger(value)
+    ? value.toLocaleString('en-EG')
+    : value.toLocaleString('en-EG', { maximumFractionDigits: 4 });
+}
+
+const TooltipMetric: React.FC<{
+  label: string;
+  value: string;
+  valueClassName?: string;
+}> = ({ label, value, valueClassName = 'text-slate-100' }) => (
+  <div className="flex items-start justify-between gap-4">
+    <span className="min-w-0 text-slate-400">{label}</span>
+    <span className={`shrink-0 text-right font-mono font-semibold ${valueClassName}`}>
+      {value}
+    </span>
+  </div>
+);
 
 export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps> = ({
   transactions,
@@ -254,30 +295,271 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const positive = (toneValue ?? 0) >= 0;
   const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
 
-  const tooltip = (props: any) => (
-    <AnalyticsChartTooltip
-      {...props}
-      title={definition.label}
-      labelFormatter={(_, payload) => {
-        const value = payload?.[0]?.payload?.date || '';
-        return timeframe === 'TODAY' ? formatCairoDateTime(value) : String(value).slice(0, 10);
-      }}
-      nameFormatter={(name) => {
-        if (name === 'equity') return 'Portfolio';
-        if (name === 'netDeposits') return 'Net Deposits';
-        if (name === 'twrPercent') return 'TWR';
-        if (name === 'mwrrPercent') return 'MWR';
-        return name;
-      }}
-      valueFormatter={(value) =>
-        isPercentMode
-          ? formatAnalyticsPercent(value, true)
-          : formatAnalyticsEgp(value)
+  const tooltip = (props: any) => {
+    if (!props?.active || !props?.payload?.length) return null;
+
+    const point = props.payload[0]?.payload as (typeof chartData)[number] | undefined;
+    if (!point) return null;
+
+    const pointIndex = chartData.findIndex((candidate) => candidate.date === point.date);
+    const previousPoint = pointIndex > 0 ? chartData[pointIndex - 1] : null;
+    const firstPoint = chartData[0] ?? null;
+
+    const equity = finiteNumber(point.equity);
+    const cash = finiteNumber(point.cash);
+    const marketValue = finiteNumber(point.marketValue);
+    const netDeposits = finiteNumber(point.netDeposits);
+    const twr = finiteNumber(point.twrPercent);
+    const mwr = finiteNumber(point.mwrrPercent);
+    const drawdown = finiteNumber(point.drawdownPercent);
+
+    const previousEquity = finiteNumber(previousPoint?.equity);
+    const intervalExternalFlow = finiteNumber(point.externalFlow) ?? 0;
+    const intervalPnl =
+      equity != null && previousEquity != null
+        ? equity - previousEquity - intervalExternalFlow
+        : null;
+
+    const previousTwr = finiteNumber(previousPoint?.twrPercent);
+    const intervalReturn =
+      twr != null && previousTwr != null && 1 + previousTwr / 100 > 0
+        ? ((1 + twr / 100) / (1 + previousTwr / 100) - 1) * 100
+        : previousPoint == null
+          ? twr
+          : null;
+
+    const startingEquity =
+      finiteNumber(result?.summary.startEquity) ??
+      finiteNumber(firstPoint?.equity);
+    const startingNetDeposits = finiteNumber(firstPoint?.netDeposits) ?? 0;
+    const periodExternalFlow =
+      netDeposits == null ? 0 : netDeposits - startingNetDeposits;
+    const periodPnl =
+      equity != null && startingEquity != null
+        ? equity - startingEquity - periodExternalFlow
+        : null;
+    const accumulatedProfit =
+      equity != null && netDeposits != null
+        ? equity - netDeposits
+        : null;
+
+    const pointDate = String(point.date || '');
+    const pointMs = new Date(pointDate).getTime();
+    const previousMs = previousPoint ? new Date(previousPoint.date).getTime() : Number.NaN;
+    const currentDay = pointDate.slice(0, 10);
+
+    const activity = transactions.filter((tx) => {
+      const ticker = normalizeDisplayTicker(tx.ticker);
+      if (!ticker || ticker === 'CASH') return false;
+
+      if (timeframe === 'TODAY') {
+        if (!tx.executedAt || !Number.isFinite(pointMs)) return false;
+        const executedMs = new Date(tx.executedAt).getTime();
+        if (!Number.isFinite(executedMs) || executedMs > pointMs) return false;
+        return !Number.isFinite(previousMs) || executedMs > previousMs;
       }
-      tone="neutral"
-      signedValueColors={isPercentMode}
-    />
-  );
+
+      return String(tx.date || '').slice(0, 10) === currentDay;
+    });
+
+    const activitySummary = (() => {
+      if (!activity.length) return null;
+
+      const totalFees = activity.reduce(
+        (sum, tx) => sum + (Number.isFinite(tx.fees) ? Number(tx.fees) : 0),
+        0,
+      );
+
+      if (activity.length === 1) {
+        const tx = activity[0];
+        const shares = Number(tx.shares);
+        const price = Number(tx.price);
+        const base =
+          Number.isFinite(shares) && Number.isFinite(price)
+            ? `${tx.type} ${normalizeDisplayTicker(tx.ticker)} · ${formatShareCount(shares)} @ ${price.toLocaleString('en-EG', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
+            : `${tx.type} ${normalizeDisplayTicker(tx.ticker)}`;
+
+        return totalFees > 0
+          ? `${base} · ${formatAnalyticsEgp(totalFees)} fees`
+          : base;
+      }
+
+      const buys = activity.filter((tx) => tx.type === 'BUY').length;
+      const sells = activity.filter((tx) => tx.type === 'SELL').length;
+      const pieces = [
+        `${activity.length} executions`,
+        buys > 0 ? `${buys} buy${buys === 1 ? '' : 's'}` : '',
+        sells > 0 ? `${sells} sell${sells === 1 ? '' : 's'}` : '',
+      ].filter(Boolean);
+
+      if (totalFees > 0) pieces.push(`${formatAnalyticsEgp(totalFees)} fees`);
+      return pieces.join(' · ');
+    })();
+
+    const previousText = [
+      intervalPnl == null ? '' : formatAnalyticsEgp(intervalPnl, true),
+      intervalReturn == null ? '' : formatAnalyticsPercent(intervalReturn, true),
+    ].filter(Boolean).join(' · ');
+
+    const cashInvestedText =
+      cash != null && marketValue != null
+        ? `${formatAnalyticsEgp(cash)} / ${formatAnalyticsEgp(marketValue)}`
+        : '—';
+
+    const titleDate =
+      timeframe === 'TODAY'
+        ? formatCairoDateTime(pointDate)
+        : formatFullDailyDate(pointDate);
+
+    return (
+      <ChartTooltipShell className="min-w-[260px]">
+        <div className="mb-2 border-b border-slate-800 pb-2">
+          <div className="font-semibold text-slate-100">{definition.label}</div>
+          <div className="font-mono text-[10px] text-slate-400">{titleDate}</div>
+        </div>
+
+        <div className="space-y-1.5">
+          {mode === 'PORTFOLIO_RETURN' && (
+            <>
+              <TooltipMetric
+                label="Portfolio value"
+                value={equity == null ? '—' : formatAnalyticsEgp(equity)}
+              />
+              <TooltipMetric
+                label="Since previous point"
+                value={previousText || '—'}
+                valueClassName={signedToneClass(intervalReturn ?? intervalPnl)}
+              />
+              <TooltipMetric
+                label="Period P&L"
+                value={periodPnl == null ? '—' : formatAnalyticsEgp(periodPnl, true)}
+                valueClassName={signedToneClass(periodPnl)}
+              />
+              <TooltipMetric
+                label="TWR"
+                value={twr == null ? '—' : formatAnalyticsPercent(twr, true)}
+                valueClassName={signedToneClass(twr)}
+              />
+            </>
+          )}
+
+          {mode === 'PORTFOLIO_DEPOSITS' && (
+            <>
+              <TooltipMetric
+                label="Portfolio value"
+                value={equity == null ? '—' : formatAnalyticsEgp(equity)}
+              />
+              <TooltipMetric
+                label="Net deposits"
+                value={netDeposits == null ? '—' : formatAnalyticsEgp(netDeposits)}
+                valueClassName="text-purple-300"
+              />
+              <TooltipMetric
+                label="Profit over deposits"
+                value={accumulatedProfit == null ? '—' : formatAnalyticsEgp(accumulatedProfit, true)}
+                valueClassName={signedToneClass(accumulatedProfit)}
+              />
+              <TooltipMetric
+                label="Since previous point"
+                value={previousText || '—'}
+                valueClassName={signedToneClass(intervalReturn ?? intervalPnl)}
+              />
+              <TooltipMetric
+                label="TWR"
+                value={twr == null ? '—' : formatAnalyticsPercent(twr, true)}
+                valueClassName={signedToneClass(twr)}
+              />
+            </>
+          )}
+
+          {mode === 'TWR' && (
+            <>
+              <TooltipMetric
+                label="TWR"
+                value={twr == null ? '—' : formatAnalyticsPercent(twr, true)}
+                valueClassName={signedToneClass(twr)}
+              />
+              <TooltipMetric
+                label="Since previous point"
+                value={previousText || '—'}
+                valueClassName={signedToneClass(intervalReturn ?? intervalPnl)}
+              />
+              <TooltipMetric
+                label="Portfolio value"
+                value={equity == null ? '—' : formatAnalyticsEgp(equity)}
+              />
+              <TooltipMetric
+                label="Period P&L"
+                value={periodPnl == null ? '—' : formatAnalyticsEgp(periodPnl, true)}
+                valueClassName={signedToneClass(periodPnl)}
+              />
+              <TooltipMetric
+                label="Net deposits"
+                value={netDeposits == null ? '—' : formatAnalyticsEgp(netDeposits)}
+                valueClassName="text-purple-300"
+              />
+              <TooltipMetric
+                label="Drawdown from peak"
+                value={drawdown == null ? '—' : formatAnalyticsPercent(drawdown, true)}
+                valueClassName={signedToneClass(drawdown)}
+              />
+            </>
+          )}
+
+          {mode === 'MWR' && (
+            <>
+              <TooltipMetric
+                label="MWR"
+                value={mwr == null ? '—' : formatAnalyticsPercent(mwr, true)}
+                valueClassName={signedToneClass(mwr)}
+              />
+              <TooltipMetric
+                label="TWR"
+                value={twr == null ? '—' : formatAnalyticsPercent(twr, true)}
+                valueClassName={signedToneClass(twr)}
+              />
+              <TooltipMetric
+                label="Since previous point"
+                value={previousText || '—'}
+                valueClassName={signedToneClass(intervalReturn ?? intervalPnl)}
+              />
+              <TooltipMetric
+                label="Portfolio value"
+                value={equity == null ? '—' : formatAnalyticsEgp(equity)}
+              />
+              <TooltipMetric
+                label="Period P&L"
+                value={periodPnl == null ? '—' : formatAnalyticsEgp(periodPnl, true)}
+                valueClassName={signedToneClass(periodPnl)}
+              />
+              <TooltipMetric
+                label="Net deposits"
+                value={netDeposits == null ? '—' : formatAnalyticsEgp(netDeposits)}
+                valueClassName="text-purple-300"
+              />
+            </>
+          )}
+
+          {timeframe === 'TODAY' && (
+            <TooltipMetric
+              label="Cash / invested"
+              value={cashInvestedText}
+            />
+          )}
+
+          {activitySummary && (
+            <div className="mt-2 border-t border-slate-800 pt-2">
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">Activity</div>
+              <div className="mt-0.5 text-[11px] leading-4 text-amber-300">{activitySummary}</div>
+            </div>
+          )}
+        </div>
+      </ChartTooltipShell>
+    );
+  };
 
   const headline = isPercentMode
     ? summary.primaryValue == null

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
@@ -444,17 +445,21 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           </div>
 
           {/* Sort Selector */}
-          <select
+          <AnalyticsSelect
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-200 text-xs border border-slate-700 focus:outline-none focus:border-purple-500"
-          >
-            <option value="date">Sort: Exit Date (Newest)</option>
-            <option value="pnl_desc">Sort: Highest P&amp;L (EGP)</option>
-            <option value="pnl_asc">Sort: Lowest P&amp;L (EGP)</option>
-            <option value="pct_desc">Sort: Highest Return (%)</option>
-            <option value="holding">Sort: Longest Holding</option>
-          </select>
+            onChange={(value) => setSortBy(value as typeof sortBy)}
+            compact
+            accent="purple"
+            ariaLabel="Sort closed cycles"
+            className="min-w-[205px]"
+            options={[
+              { value: 'date', label: 'Sort: Exit Date (Newest)' },
+              { value: 'pnl_desc', label: 'Sort: Highest P&L (EGP)' },
+              { value: 'pnl_asc', label: 'Sort: Lowest P&L (EGP)' },
+              { value: 'pct_desc', label: 'Sort: Highest Return (%)' },
+              { value: 'holding', label: 'Sort: Longest Holding' },
+            ]}
+          />
 
           {/* Expand / Collapse All */}
           <button

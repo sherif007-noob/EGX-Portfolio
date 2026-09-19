@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { curveCardinal } from 'd3-shape';
 import { Check, ChevronDown } from 'lucide-react';
 import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
 import type { TradeTransaction } from '../../types';
@@ -252,6 +253,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const isPercentMode = definition.valueKind === 'percent';
   const isDepositsMode = mode === 'PORTFOLIO_DEPOSITS';
   const isPortfolioReturnMode = mode === 'PORTFOLIO_RETURN';
+  const longRangeCurve = curveCardinal.tension(0.55);
 
   const yDomain: [number, number] | undefined = (() => {
     const values = chartData.flatMap((point) => {
@@ -586,7 +588,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
   const renderPrimaryArea = () => (
     <Area
-      type="linear"
+      type={longRangeCurve}
       dataKey={definition.primaryKey}
       name={definition.primaryLabel}
       stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
@@ -815,7 +817,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                 {renderYAxis()}
                 <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
                 <Line
-                  type="linear"
+                  type={longRangeCurve}
                   dataKey="equity"
                   name="Portfolio"
                   stroke={ANALYTICS_CHART_THEME.blue}
@@ -831,7 +833,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   }}
                 />
                 <Line
-                  type="linear"
+                  type={longRangeCurve}
                   dataKey="netDeposits"
                   name="Net Deposits"
                   stroke={ANALYTICS_CHART_THEME.purple}

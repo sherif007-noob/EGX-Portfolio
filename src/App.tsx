@@ -194,7 +194,7 @@ export default function App() {
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
 
   useEffect(() => {
-    if (activeTab !== 'reports') return;
+    if (activeTab !== 'overview' && activeTab !== 'reports') return;
 
     let cancelled = false;
     setHistoricalDrawdown(null);
@@ -1041,6 +1041,9 @@ export default function App() {
             metrics={metrics}
             cashBalance={cashBalance}
             capitalDeposits={capitalDeposits}
+            transactions={transactions}
+            historicalPrices={historicalPriceSeries}
+            historicalLoading={historicalAnalyticsLoading}
           />
         )}
 

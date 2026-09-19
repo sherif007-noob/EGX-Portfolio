@@ -591,6 +591,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       name={definition.primaryLabel}
       stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
       strokeWidth={2.25}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       fill="url(#analyticsPrimaryGradient)"
       fillOpacity={1}
       dot={false}
@@ -818,6 +820,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   name="Portfolio"
                   stroke={ANALYTICS_CHART_THEME.blue}
                   strokeWidth={2.25}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   dot={false}
                   activeDot={{
                     r: 5,
@@ -833,6 +837,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   stroke={ANALYTICS_CHART_THEME.purple}
                   strokeWidth={1.8}
                   strokeDasharray="6 4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   dot={false}
                   activeDot={{
                     r: 4,

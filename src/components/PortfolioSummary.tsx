@@ -53,7 +53,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   return (
     <div className="space-y-4">
       {/* Live Market Price Sync Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-800 shadow-sm">
+      <div className="premium-glass flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs uppercase tracking-wider text-slate-300 font-bold flex items-center gap-1.5">
@@ -97,7 +97,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
             <button
               id="btn-reconcile-ledger-overview"
               onClick={onReconcileLedger}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-emerald-300 border border-slate-700/80 hover:border-emerald-500/40 rounded-lg text-xs font-semibold transition active:scale-95"
+              className="premium-control flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/70 hover:bg-slate-700/80 text-emerald-300 border border-slate-700/70 hover:border-emerald-500/40 rounded-xl text-xs font-semibold"
               title="Re-audit transactions and compute positions and metrics"
             >
               <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
@@ -110,7 +110,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               id="btn-sync-live-prices-overview"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-cyan-300 border border-slate-700/80 hover:border-cyan-500/40 rounded-lg text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+              className="premium-control flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/70 hover:bg-slate-700/80 text-cyan-300 border border-slate-700/70 hover:border-cyan-500/40 rounded-xl text-xs font-semibold disabled:opacity-50"
               title="Sync live quotes for ~300 EGX stocks"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPrices ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
@@ -123,7 +123,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Portfolio Value */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card premium-hero-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Portfolio Value</span>
@@ -153,7 +153,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Total Market Value (Total Invested / Open Positions Value) */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Market Value</span>
@@ -175,7 +175,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Unrealized Gain */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Unrealized P&amp;L</span>
@@ -211,7 +211,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Realized Profit (Closed Trades) */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="text-xs text-slate-400 font-medium">Realized Gain (Booked)</div>
             <div className="mt-2 flex items-baseline gap-1.5">
@@ -232,7 +232,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Cash Balance */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Cash Available</span>
@@ -256,7 +256,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Total Brokerage Fees Paid */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Brokerage Fees</span>

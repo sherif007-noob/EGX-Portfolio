@@ -212,6 +212,42 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const isDepositsMode = mode === 'PORTFOLIO_DEPOSITS';
   const isPortfolioReturnMode = mode === 'PORTFOLIO_RETURN';
 
+  const yDomain: [number, number] | undefined = (() => {
+    const values = chartData.flatMap((point) => {
+      const visible: number[] = [];
+      const primary = Number(point[definition.primaryKey]);
+      if (Number.isFinite(primary)) visible.push(primary);
+
+      if (definition.secondaryKey) {
+        const secondary = Number(point[definition.secondaryKey]);
+        if (Number.isFinite(secondary)) visible.push(secondary);
+      }
+
+      return visible;
+    });
+
+    if (!values.length) return undefined;
+
+    let minimum = Math.min(...values);
+    let maximum = Math.max(...values);
+
+    // Percentage charts should retain the meaningful 0% reference line.
+    // Absolute portfolio/deposit charts should not be flattened against zero.
+    if (isPercentMode) {
+      minimum = Math.min(0, minimum);
+      maximum = Math.max(0, maximum);
+    }
+
+    const span = maximum - minimum;
+    const fallbackPadding = Math.max(
+      Math.abs(maximum || minimum) * 0.005,
+      isPercentMode ? 0.05 : 1,
+    );
+    const padding = span > 0 ? span * 0.08 : fallbackPadding;
+
+    return [minimum - padding, maximum + padding];
+  })();
+
   const toneValue = isPercentMode
     ? summary.primaryValue
     : summary.changeEgp;
@@ -238,7 +274,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           ? formatAnalyticsPercent(value, true)
           : formatAnalyticsEgp(value)
       }
-      tone={positive ? 'positive' : 'negative'}
+      tone="neutral"
+      signedValueColors={isPercentMode}
     />
   );
 
@@ -253,6 +290,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const renderYAxis = () => (
     <YAxis
       {...analyticsYAxisProps}
+      domain={yDomain}
       tickFormatter={(value: number) =>
         isPercentMode ? `${value.toFixed(timeframe === 'TODAY' ? 2 : 1)}%` : formatAnalyticsCompactEgp(value)
       }
@@ -266,7 +304,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
   const renderPrimaryArea = () => (
     <Area
-      type="monotone"
+      type="linear"
       dataKey={definition.primaryKey}
       name={definition.primaryLabel}
       stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
@@ -493,7 +531,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                 {renderYAxis()}
                 <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="equity"
                   name="Portfolio"
                   stroke={ANALYTICS_CHART_THEME.blue}
@@ -507,7 +545,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   }}
                 />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="netDeposits"
                   name="Net Deposits"
                   stroke={ANALYTICS_CHART_THEME.purple}

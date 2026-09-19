@@ -663,7 +663,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     <label className="text-xs font-semibold text-slate-300">Funding Method</label>
                     <AnalyticsSelect
                       value={depositMethod}
-                      onChange={setDepositMethod}
+                      onChange={(value) => setDepositMethod(String(value))}
                       accent="emerald"
                       ariaLabel="Funding method"
                       options={[
@@ -794,7 +794,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     <label className="text-xs font-semibold text-slate-300">Transfer Destination</label>
                     <AnalyticsSelect
                       value={withdrawDestination}
-                      onChange={setWithdrawDestination}
+                      onChange={(value) => setWithdrawDestination(String(value))}
                       accent="rose"
                       ariaLabel="Withdrawal destination"
                       options={[

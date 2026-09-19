@@ -5,18 +5,11 @@ import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
 import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
-import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
+import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
+import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import {
-  ANALYTICS_CHART_THEME,
   AnalyticsChartTooltip,
-  AnalyticsEmptyState,
-  analyticsGridProps,
-  analyticsTooltipCursor,
-  analyticsXAxisProps,
-  analyticsYAxisProps,
-  formatAnalyticsCompactEgp,
   formatAnalyticsEgp,
 } from './charts/AnalyticsChartTheme';
 
@@ -91,21 +84,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
       .sort((a, b) => b.value - a.value);
   }, [positions, cashBalance, includeCash]);
 
-  const trajectoryData = useMemo(() => {
-    let cumulative = 0;
-    return [...closedTrades]
-      .sort((a, b) => String(a.sellDate || '').localeCompare(String(b.sellDate || '')))
-      .map((trade, index) => {
-        cumulative += trade.realizedPnlEgp;
-        return {
-          index: index + 1,
-          label: `${index + 1}. ${trade.ticker}`,
-          pnl: trade.realizedPnlEgp,
-          cumulative,
-        };
-      });
-  }, [closedTrades]);
-
   const waterfallSteps = useMemo(() => {
     const steps = [
       { name: 'Net Capital Contributed', delta: performanceBridge.netCapitalContributed, total: true },
@@ -150,67 +128,10 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
 
-      <PerformanceTimeframeChart
-        transactions={transactions}
-        historicalPrices={historicalPrices}
-        capitalDeposits={capitalDeposits}
-        historicalLoading={historicalLoading}
+      <RealizedTrajectoryChart
+        closedTrades={closedTrades}
+        stats={stats}
       />
-
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" />Realized P&amp;L Trajectory</h3><p className="text-xs text-slate-400 mt-1">Closed-trade realized P&amp;L over time. This is not the portfolio equity curve.</p></div>
-        {trajectoryData.length === 0 ? (
-          <AnalyticsEmptyState>No closed trades recorded yet.</AnalyticsEmptyState>
-        ) : (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trajectoryData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="realizedTrajectoryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.28} />
-                    <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.01} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="label" {...analyticsXAxisProps} />
-                <YAxis
-                  {...analyticsYAxisProps}
-                  tickFormatter={formatAnalyticsCompactEgp}
-                />
-                <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
-                <Tooltip
-                  cursor={analyticsTooltipCursor}
-                  content={(props) => (
-                    <AnalyticsChartTooltip
-                      {...props}
-                      title="Realized P&L"
-                      labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ''}
-                      nameFormatter={() => 'Cumulative'}
-                      valueFormatter={(value) => formatAnalyticsEgp(value, true)}
-                    />
-                  )}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="cumulative"
-                  name="Cumulative"
-                  stroke={ANALYTICS_CHART_THEME.emerald}
-                  strokeWidth={2.25}
-                  fill="url(#realizedTrajectoryGradient)"
-                  fillOpacity={1}
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: ANALYTICS_CHART_THEME.emerald,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
 
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

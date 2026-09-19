@@ -946,7 +946,7 @@ export default function App() {
 
         {/* Tab Content Panels */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="premium-section-enter space-y-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
@@ -987,7 +987,7 @@ export default function App() {
         )}
 
         {activeTab === 'positions' && (
-          <div className="space-y-4">
+          <div className="premium-section-enter space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-white tracking-tight">

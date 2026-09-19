@@ -194,11 +194,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   return (
     <div
       id="add-trade-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto"
+      className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg my-6 rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
+        className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -274,7 +274,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 onChange={(e) => handleTickerInputChange(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 placeholder="Type ticker symbol (e.g. COMI, ESRS, TMGH) or company name..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold tracking-wide focus:outline-none focus:border-blue-500 uppercase placeholder:normal-case placeholder:font-normal placeholder:tracking-normal"
+                className="premium-field w-full pl-9 pr-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold tracking-wide focus:outline-none focus:border-blue-500 uppercase placeholder:normal-case placeholder:font-normal placeholder:tracking-normal"
                 autoComplete="off"
                 required
               />
@@ -282,7 +282,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl">
+              <div className="premium-floating absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5">
                 {suggestions.map((t) => (
                   <button
                     key={t.ticker}
@@ -332,7 +332,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"
                 required
               />
             </div>
@@ -342,7 +342,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 type="text"
                 value={sector}
                 readOnly
-                className="w-full px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-400"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-400"
               />
             </div>
           </div>
@@ -357,7 +357,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 value={shares || ''}
                 onValueChange={(value) => setShares(Number(value))}
                 accent="blue"
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 required
               />
             </div>
@@ -386,7 +386,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                   setBuyPrice(Number(value));
                 }}
                 accent="blue"
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 placeholder="Enter executed buy price..."
                 required
               />
@@ -397,7 +397,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Brokerage Fees */}
-          <div className="p-3 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
+          <div className="premium-subpanel p-3 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-slate-200 flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
@@ -491,7 +491,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 type="time"
                 value={executionTime}
                 onChange={(e) => setExecutionTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
               />
               <span className="text-[10px] text-slate-400 block mt-0.5">
                 Optional, but recommended when matching broker receipts.
@@ -500,7 +500,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Financial Breakdown Ribbon */}
-          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="premium-subpanel p-3 rounded-xl grid grid-cols-3 gap-2 text-center text-xs">
             <div>
               <span className="text-slate-400 text-[10px] block">Gross Equities</span>
               <span className="font-mono font-bold text-white">
@@ -529,12 +529,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Rationale, technical triggers, resistance breakouts..."
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
             />
           </div>
 
           {/* Cash Deduction Option */}
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-800/60 border border-slate-700">
+          <div className="premium-subpanel flex items-center gap-2 p-3 rounded-xl">
             <input
               type="checkbox"
               id="deductCash"
@@ -552,13 +552,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 font-semibold"
+              className="premium-control px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md shadow-blue-950/50"
+              className="premium-control premium-shimmer-border px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-950/35"
             >
               {activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
             </button>

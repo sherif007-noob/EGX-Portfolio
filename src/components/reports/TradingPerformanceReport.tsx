@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { AnalyticsSelect } from '../AnalyticsSelect';
 import {
   TrendingUp,
   TrendingDown,
@@ -233,16 +234,20 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
 
           {/* Trade Type Filter */}
-          <select
+          <AnalyticsSelect
             value={tradeTypeFilter}
-            onChange={(e) => setTradeTypeFilter(e.target.value as any)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
-          >
-            <option value="ALL">All Trade Types</option>
-            <option value="Swing">Swing Only</option>
-            <option value="Day Trade">Day Trade Only</option>
-            <option value="Position">Position Only</option>
-          </select>
+            onChange={(value) => setTradeTypeFilter(value as typeof tradeTypeFilter)}
+            compact
+            accent="blue"
+            ariaLabel="Filter by trade type"
+            className="min-w-[165px]"
+            options={[
+              { value: 'ALL', label: 'All Trade Types' },
+              { value: 'Swing', label: 'Swing Only' },
+              { value: 'Day Trade', label: 'Day Trade Only' },
+              { value: 'Position', label: 'Position Only' },
+            ]}
+          />
 
           {/* Export & Print */}
           <button

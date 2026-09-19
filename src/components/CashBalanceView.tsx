@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { AnalyticsSelect } from './AnalyticsSelect';
+import { NumberStepperInput } from './NumberStepperInput';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
@@ -607,14 +608,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <span className="text-[11px] text-slate-400">Current Balance: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <NumberStepperInput
                     id="deposit-amount-input"
-                    type="number"
-                    step="0.01"
-                    min="1"
+                    step={0.01}
+                    min={1}
                     placeholder="e.g. 50000"
                     value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
+                    onValueChange={setDepositAmount}
+                    accent="emerald"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
@@ -731,15 +732,15 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <span className="text-[11px] text-emerald-400 font-mono">Available: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <NumberStepperInput
                     id="withdraw-amount-input"
-                    type="number"
-                    step="0.01"
-                    min="1"
+                    step={0.01}
+                    min={1}
                     max={cashBalance}
                     placeholder="e.g. 15000"
                     value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    onValueChange={setWithdrawAmount}
+                    accent="rose"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
                   />
@@ -1051,12 +1052,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">Amount (EGP)</label>
                 <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
+                  <NumberStepperInput
+                    step={0.01}
+                    min={0.01}
                     value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value)}
+                    onValueChange={setEditAmount}
+                    accent="blue"
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-mono text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
                     placeholder="e.g. 250000"

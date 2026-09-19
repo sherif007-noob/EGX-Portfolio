@@ -160,7 +160,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
         <div className="flex items-center gap-2">
           <AnalyticsSelect
             value={selectedSector}
-            onChange={setSelectedSector}
+            onChange={(value) => setSelectedSector(String(value))}
             compact
             accent="teal"
             ariaLabel="Filter ticker directory by sector"

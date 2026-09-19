@@ -91,11 +91,11 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   return (
     <div
       id="sell-position-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto"
+      className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md my-6 rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
+        className="premium-modal w-full max-w-md my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-slate-800 pb-3">
@@ -117,7 +117,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           {/* Summary Box */}
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex justify-between">
+          <div className="premium-subpanel p-3 rounded-xl flex justify-between">
             <div>
               <span className="text-slate-400 block text-[10px]">Held Shares</span>
               <span className="font-mono font-bold text-white">{position.shares.toLocaleString()}</span>
@@ -162,7 +162,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               value={sharesToSell || ''}
               onValueChange={(value) => setSharesToSell(Number(value))}
               accent="blue"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
               required
             />
           </div>
@@ -177,7 +177,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 value={sellPrice || ''}
                 onValueChange={(value) => setSellPrice(Number(value))}
                 accent="blue"
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
                 required
               />
             </div>
@@ -198,7 +198,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                   type="time"
                   value={executionTime}
                   onChange={(e) => setExecutionTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                  className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
                 />
                 <span className="text-[10px] text-slate-400 block mt-0.5">
                   Optional, but recommended when matching broker receipts.
@@ -208,7 +208,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* Brokerage Fees on Sale */}
-          <div className="p-3 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
+          <div className="premium-subpanel p-3 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-slate-200 flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
@@ -247,7 +247,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* P&L Preview Ribbon */}
-          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+          <div className="premium-subpanel p-3.5 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Net Cash Inflow (After Sell Fee):</span>
               <span className="font-mono font-bold text-white text-sm">
@@ -290,7 +290,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white text-xs"
             />
           </div>
 
@@ -299,13 +299,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 font-semibold"
+              className="premium-control px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md shadow-amber-950/50"
+              className="premium-control premium-shimmer-border px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-lg shadow-amber-950/35"
             >
               Confirm Sale &amp; Book Net P&amp;L
             </button>

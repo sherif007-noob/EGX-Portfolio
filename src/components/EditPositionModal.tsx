@@ -58,8 +58,8 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
+    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="premium-modal w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
           <div className="flex items-center gap-2.5">
@@ -87,7 +87,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
         </div>
 
         {/* Current Metrics Reference */}
-        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
+        <div className="premium-subpanel grid grid-cols-2 gap-3 p-3 rounded-xl text-xs">
           <div>
             <span className="text-slate-500 block">Current Market Price</span>
             <span className="font-mono font-bold text-white text-sm">
@@ -161,7 +161,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Thesis, catalyst, resistance levels, or risk limits..."
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-blue-500 resize-none"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-cyan-500/60 resize-none"
             />
           </div>
 
@@ -170,13 +170,13 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+              className="premium-control px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
+              className="premium-control premium-shimmer-border flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-900/25"
             >
               <Save className="w-3.5 h-3.5" />
               Save Targets

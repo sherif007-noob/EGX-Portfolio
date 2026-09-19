@@ -96,7 +96,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           onBlur={handleBlur}
           placeholder="DD/MM/YYYY (e.g. 08/09/2026)"
           required={required}
-          className="w-full px-3 py-2 pr-10 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-blue-500 placeholder-slate-500 tracking-wider"
+          className="premium-field w-full px-3 py-2 pr-10 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono text-xs focus:outline-none focus:border-cyan-500/60 placeholder-slate-500 tracking-wider"
         />
 
         {/* Hidden native date picker with trigger button */}
@@ -111,7 +111,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           />
           <button
             type="button"
-            className="p-1 rounded-lg text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 pointer-events-none"
+            className="premium-control p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800/75 hover:bg-slate-700/80 pointer-events-none"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-300" />
           </button>

@@ -74,9 +74,9 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         max={max}
         disabled={disabled}
         onChange={(event) => onValueChange(event.target.value)}
-        className={`app-number-input pr-10 ${className}`}
+        className={`premium-field app-number-input pr-10 ${className}`}
       />
-      <div className="absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/80 bg-slate-950/75">
+      <div className="absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/70 bg-slate-950/65 backdrop-blur-md">
         <button
           type="button"
           tabIndex={-1}

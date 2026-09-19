@@ -101,7 +101,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       : 0);
 
   return (
-    <div className={`p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-4 ${className}`}>
+    <div className={`premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -112,7 +112,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
           <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs self-start sm:self-auto">
+        <div className="premium-subpanel flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
           <button
             onClick={() => setTrajectoryMode('cumulative')}
             className={`px-3 py-1 rounded-md font-medium transition ${
@@ -137,7 +137,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       </div>
 
       {/* Trajectory Key Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+      <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
         <div>
           <span className="text-slate-400 block text-[10px]">Net Realized P&amp;L</span>
           <span className={`font-mono font-bold ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>

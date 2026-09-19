@@ -402,7 +402,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="premium-section-enter space-y-4">
       {/* Toast Notification for deletion */}
       {deletedIdToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -414,7 +414,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       )}
 
       {/* Top Banner with P&L, Transaction Stats and Commissions */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+      <div className="premium-glass flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -458,7 +458,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+          <div className="premium-subpanel p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Total Transactions</span>
             <span className="font-mono font-bold text-white text-sm">
               {transactions.length}{' '}
@@ -468,7 +468,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+          <div className="premium-subpanel p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Net Realized P&amp;L</span>
             <span
               className={`font-mono font-bold text-sm ${
@@ -480,14 +480,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+          <div className="premium-subpanel p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Total Buy Inflow</span>
             <span className="font-mono font-bold text-blue-400 text-sm">
               {formatEgp(totalBuyOutlay)} EGP
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+          <div className="premium-subpanel p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Brokerage Fees Paid</span>
             <span className="font-mono font-bold text-amber-400 text-sm">
               {formatEgp(totalFeesPaid)} EGP
@@ -497,7 +497,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </div>
 
       {/* Filter and Search Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-2xl border border-slate-800 shadow-sm">
+      <div className="premium-panel flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="relative flex-1 min-w-[240px] max-w-xl">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
@@ -588,7 +588,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </button>
 
           {/* Compact Sort Dropdown Select */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
+          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1 rounded-xl">
             <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <AnalyticsSelect
               value={sortOrder}
@@ -607,7 +607,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
 
           {/* Page Size Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
+          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1 rounded-xl">
             <span className="text-[11px] font-medium text-slate-400">Show:</span>
             <AnalyticsSelect
               value={pageSize}
@@ -629,7 +629,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Pagination Status & Controls (Top) */}
       {totalFilteredCount > pageSize && (
-        <div className="flex items-center justify-between px-3 py-2 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-400">
+        <div className="premium-subpanel flex items-center justify-between px-3 py-2 rounded-xl text-xs text-slate-400">
           <span>
             Showing <strong className="text-white">{(safeCurrentPage - 1) * pageSize + 1}</strong> - <strong className="text-white">{Math.min(safeCurrentPage * pageSize, totalFilteredCount)}</strong> of <strong className="text-white">{totalFilteredCount}</strong> trades
           </span>
@@ -694,7 +694,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           return (
             <div
               key={tx.id}
-              className={`p-4 rounded-2xl bg-slate-900 border transition shadow-sm space-y-3 relative overflow-hidden ${
+              className={`premium-card premium-radial p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
                 isBuy
                   ? isOpenPosition
                     ? 'border-blue-500/40 hover:border-blue-500/60'
@@ -870,7 +870,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Row 2: Detailed Transaction Attributes Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
+              <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs">
                 <div>
                   <span className="text-slate-400 text-[10px] block font-medium">Transaction Shares</span>
                   <span className="font-mono text-slate-100 font-bold">
@@ -955,7 +955,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         })}
 
         {filteredAndSortedTransactions.length === 0 && (
-          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-3">
+          <div className="premium-subpanel text-center py-12 rounded-2xl border-dashed text-xs text-slate-400 space-y-3">
             <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-1" />
             <div>
               <p className="font-semibold text-slate-300">No transactions match your criteria.</p>
@@ -982,7 +982,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Pagination Controls (Bottom) */}
       {totalFilteredCount > pageSize && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-xs text-slate-400 shadow-sm">
+        <div className="premium-panel flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400">
           <span>
             Page <strong className="text-white">{safeCurrentPage}</strong> of <strong className="text-white">{totalPages}</strong> ({totalFilteredCount} total transactions)
           </span>
@@ -1057,8 +1057,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Edit Transaction Modal */}
       {editingTx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="premium-modal w-full max-w-xl rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
               <div className="flex items-center gap-2">

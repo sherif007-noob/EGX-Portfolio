@@ -62,7 +62,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 p-3.5 sm:p-4 rounded-xl border border-slate-800 shadow-sm">
+      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -71,14 +71,14 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ticker (e.g. COMI) or company..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-800 text-slate-100 placeholder-slate-400 text-xs sm:text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
+              className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Sector filter */}
-          <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <AnalyticsSelect
               value={selectedSector}
@@ -95,7 +95,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
           <button
             onClick={onAddNewTrade}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-blue-950/40 transition active:scale-95 ml-auto"
+            className="premium-control premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/95 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/30 ml-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add Trade</span>
@@ -104,7 +104,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden lg:block rounded-xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-sm">
+      <div className="premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-medium">
@@ -271,7 +271,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onBuyMore(pos)}
                         title="Buy more shares of this stock (DCA / Accumulate)"
-                        className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-control px-2.5 py-1 rounded bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
                       >
                         <Layers className="w-3 h-3 text-blue-400" />
                         Buy More
@@ -281,7 +281,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onSellPosition(pos)}
                         title="Sell Shares / Book P&L"
-                        className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-control px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
                       >
                         <DollarSign className="w-3 h-3" />
                         Sell
@@ -290,7 +290,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onEditPosition(pos)}
                         title="Edit Position / Targets"
-                        className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                        className="premium-control p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -298,7 +298,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => setPositionToDelete(pos)}
                         title="Delete Position Record"
-                        className="p-1 rounded bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
+                        className="premium-control p-1 rounded bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -332,7 +332,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3"
+              className="premium-card premium-radial p-4 rounded-2xl space-y-3"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
@@ -369,7 +369,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               </div>
 
               {/* Stats details */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
+              <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-xl">
                 <div>
                   <span className="text-slate-500 text-[10px] block">Shares</span>
                   <span className="font-mono text-slate-200">{pos.shares.toLocaleString()}</span>

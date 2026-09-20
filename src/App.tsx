@@ -945,6 +945,7 @@ export default function App() {
         )}
 
         {/* Tab Content Panels */}
+        <div key={activeTab} className="premium-tab-stage">
         {activeTab === 'overview' && (
           <div className="premium-section-enter space-y-6">
             <div className="space-y-3">
@@ -1099,6 +1100,7 @@ export default function App() {
             isSheetsConnected={!!sheetsConfig?.spreadsheetId}
           />
         )}
+        </div>
       </main>
 
       {/* Modals & Dialogs */}

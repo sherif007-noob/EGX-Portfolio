@@ -62,7 +62,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
+      <div className="premium-glass relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />

@@ -95,7 +95,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
           <button
             onClick={onAddNewTrade}
-            className="premium-control premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/95 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-950/30 ml-auto"
+            className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ml-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add Trade</span>
@@ -280,7 +280,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onBuyMore(pos)}
                         title="Buy more shares of this stock (DCA / Accumulate)"
-                        className="premium-control px-2.5 py-1 rounded bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                       >
                         <Layers className="w-3 h-3 text-blue-400" />
                         Buy More
@@ -290,7 +290,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onSellPosition(pos)}
                         title="Sell Shares / Book P&L"
-                        className="premium-control px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-action premium-action-warning px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                       >
                         <DollarSign className="w-3 h-3" />
                         Sell
@@ -299,7 +299,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onEditPosition(pos)}
                         title="Edit Position / Targets"
-                        className="premium-control p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                        className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -307,7 +307,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => setPositionToDelete(pos)}
                         title="Delete Position Record"
-                        className="premium-control p-1 rounded bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
+                        className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -434,7 +434,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 <div className="text-[11px] text-slate-500">
                   <button
                     onClick={() => onEditPosition(pos)}
-                    className="hover:text-amber-400 transition"
+                    className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px]"
                   >
                     + Set Target &amp; Stop-Loss Alerts
                   </button>
@@ -447,27 +447,27 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <button
                     onClick={() => onBuyMore(pos)}
-                    className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 text-xs font-semibold flex items-center gap-1"
+                    className="premium-action premium-action-primary px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
                   >
                     <Layers className="w-3.5 h-3.5 text-blue-400" />
                     Buy More (DCA)
                   </button>
                   <button
                     onClick={() => onSellPosition(pos)}
-                    className="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-semibold flex items-center gap-1"
+                    className="premium-action premium-action-warning px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
                   >
                     <DollarSign className="w-3.5 h-3.5" />
                     Sell
                   </button>
                   <button
                     onClick={() => onEditPosition(pos)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setPositionToDelete(pos)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400"
+                    className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -478,7 +478,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
         })}
 
         {filteredPositions.length === 0 && (
-          <div className="p-8 text-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-sm">
+          <div className="premium-inset-glass p-8 text-center rounded-xl text-slate-400 text-sm">
             No stock positions match your filters.
           </div>
         )}

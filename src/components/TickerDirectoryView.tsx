@@ -105,7 +105,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               id="sync-directory-prices-btn"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition hover:border-cyan-400 disabled:opacity-50"
+              className="premium-action premium-action-primary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
               title="Sync latest prices directly from TradingView Egypt Scanner"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -118,7 +118,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               id="push-prices-to-sheet-btn"
               onClick={handlePushSheetClick}
               disabled={isPushingSheet}
-              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition hover:border-emerald-400 disabled:opacity-50"
+              className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
               title="Push live quotes into ticker directory tab in Google Sheets"
             >
               <FileSpreadsheet className={`w-3.5 h-3.5 text-emerald-400 ${isPushingSheet ? 'animate-spin' : ''}`} />
@@ -129,7 +129,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           <button
             id="download-directory-json-btn"
             onClick={handleDownloadJson}
-            className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
+            className="premium-action flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             Export JSON
@@ -250,7 +250,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               {/* Action Button */}
               <button
                 onClick={() => onSelectTickerForTrade(ticker)}
-                className="premium-control w-full py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700/80"
+                className="premium-action premium-action-primary w-full py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
               >
                 <ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />
                 Add to Portfolio / Log Trade

@@ -189,11 +189,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950/70 p-1 text-xs">
               <button
                 type="button"
+                aria-pressed={allocationTab === 'sector'}
                 onClick={() => {
                   setAllocationTab('sector');
                   setActiveAllocationIndex(null);
                 }}
-                className={`rounded-lg px-3 py-1.5 font-semibold transition ${
+                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
                   allocationTab === 'sector'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
@@ -203,11 +204,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               </button>
               <button
                 type="button"
+                aria-pressed={allocationTab === 'stock'}
                 onClick={() => {
                   setAllocationTab('stock');
                   setActiveAllocationIndex(null);
                 }}
-                className={`rounded-lg px-3 py-1.5 font-semibold transition ${
+                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
                   allocationTab === 'stock'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
@@ -222,7 +224,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 type="button"
                 aria-pressed={includeCash}
                 onClick={() => setIncludeCash((current) => !current)}
-                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                className={`premium-segment rounded-xl border px-3 py-2 text-xs font-semibold ${
                   includeCash
                     ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
                     : 'border-slate-800 bg-slate-950/70 text-slate-500 hover:text-slate-300'

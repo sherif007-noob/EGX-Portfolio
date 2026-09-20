@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
@@ -511,7 +512,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               {onReconcileLedger && (
                 <button
                   onClick={onReconcileLedger}
-                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 hover:border-emerald-500/40 font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5"
+                  className="premium-action premium-action-success px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5"
                   title="Reconstruct ledger from all transactions and update cash and positions"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -574,11 +575,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               id="action-select-deposit"
               aria-pressed={activeAction === 'deposit'}
               onClick={() => setActiveAction('deposit')}
-              className={`premium-segment flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${
-                activeAction === 'deposit'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'deposit' ? 'premium-filter-active-emerald' : ''}`}
             >
               <ArrowDownLeft className="w-3.5 h-3.5" />
               Deposit Cash
@@ -587,11 +584,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               id="action-select-withdraw"
               aria-pressed={activeAction === 'withdraw'}
               onClick={() => setActiveAction('withdraw')}
-              className={`premium-segment flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${
-                activeAction === 'withdraw'
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'withdraw' ? 'premium-filter-active-rose' : ''}`}
             >
               <ArrowUpRight className="w-3.5 h-3.5" />
               Withdraw Cash
@@ -634,7 +627,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                       key={amt}
                       type="button"
                       onClick={() => setDepositAmount(String((parseFloat(depositAmount) || 0) + amt))}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono font-medium border border-slate-700 transition"
+                      className="premium-action px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium"
                     >
                       +{amt >= 1000 ? `${amt / 1000}k` : amt}
                     </button>
@@ -643,7 +636,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setDepositAmount('')}
-                      className="px-2 py-1 rounded-lg text-rose-400 hover:bg-rose-950/30 text-[11px] transition"
+                      className="premium-action premium-action-danger px-2 py-1 rounded-lg text-[11px]"
                     >
                       Clear
                     </button>
@@ -715,7 +708,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             <button
               id="submit-deposit-btn"
               type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-950/40 transition active:scale-95 flex items-center justify-center gap-2"
+              className="premium-action premium-action-success premium-shimmer-border w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
             >
               <ArrowDownLeft className="w-4 h-4" />
               Confirm Cash Deposit
@@ -765,7 +758,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                       type="button"
                       onClick={() => setWithdrawAmount((cashBalance * preset.ratio).toFixed(2))}
                       disabled={cashBalance <= 0}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono font-medium border border-slate-700 transition disabled:opacity-40"
+                      className="premium-action px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium disabled:opacity-40"
                     >
                       {preset.label}
                     </button>
@@ -774,7 +767,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setWithdrawAmount('')}
-                      className="px-2 py-1 rounded-lg text-rose-400 hover:bg-rose-950/30 text-[11px] transition"
+                      className="premium-action premium-action-danger px-2 py-1 rounded-lg text-[11px]"
                     >
                       Clear
                     </button>
@@ -858,7 +851,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               id="submit-withdraw-btn"
               type="submit"
               disabled={parseFloat(withdrawAmount) > cashBalance || !parseFloat(withdrawAmount)}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold shadow-lg shadow-rose-950/40 transition active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40"
+              className="premium-action premium-action-danger premium-shimmer-border w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
             >
               <ArrowUpRight className="w-4 h-4" />
               Confirm Cash Withdrawal
@@ -883,31 +876,19 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setHistoryFilter('ALL')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                historyFilter === 'ALL'
-                  ? 'bg-slate-700 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({transactions.length})
             </button>
             <button
               onClick={() => setHistoryFilter('DEPOSIT')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                historyFilter === 'DEPOSIT'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
             >
               Deposits ({transactions.filter((t) => t.type === 'DEPOSIT').length})
             </button>
             <button
               onClick={() => setHistoryFilter('WITHDRAWAL')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                historyFilter === 'WITHDRAWAL'
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
             >
               Withdrawals ({transactions.filter((t) => t.type === 'WITHDRAWAL').length})
             </button>
@@ -965,14 +946,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                         <button
                           onClick={() => handleStartEdit(tx)}
                           title="Edit Transaction"
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                          className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
                         >
                           <Edit3 className="w-3.5 h-3.5 text-blue-400" />
                         </button>
                         <button
                           onClick={() => handleDeleteTransaction(tx.id)}
                           title="Delete Record"
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                          className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -995,7 +976,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Edit Transaction Modal */}
-      {editingTransaction && (
+      {editingTransaction && createPortal((
         <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="premium-modal relative w-full max-w-lg rounded-2xl p-6 space-y-5">
             {/* Header */}
@@ -1011,7 +992,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               </div>
               <button
                 onClick={() => setEditingTransaction(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="premium-icon-action p-1.5 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1026,11 +1007,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setEditType('DEPOSIT')}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition ${
-                      editType === 'DEPOSIT'
-                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-950/40'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-                    }`}
+                    className={`premium-choice py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
                   >
                     <ArrowDownLeft className="w-3.5 h-3.5" />
                     Deposit (+ Cash)
@@ -1038,11 +1015,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setEditType('WITHDRAWAL')}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition ${
-                      editType === 'WITHDRAWAL'
-                        ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-950/40'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-                    }`}
+                    className={`premium-choice py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
                   >
                     <ArrowUpRight className="w-3.5 h-3.5" />
                     Withdrawal (- Cash)
@@ -1061,7 +1034,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onValueChange={setEditAmount}
                     accent="blue"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-mono text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-sm focus:outline-none"
                     placeholder="e.g. 250000"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
@@ -1087,13 +1060,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   placeholder="e.g. Initial Capital Deposit, InstaPay transfer, etc."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-xs border border-slate-700 focus:outline-none focus:border-blue-500"
+                  className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none"
                 />
               </div>
 
               {/* Live Impact Preview */}
               {parseFloat(editAmount) > 0 && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                <div className="premium-modal-section p-3 rounded-xl space-y-1 text-xs">
                   <div className="text-slate-400">
                     Original Amount:{' '}
                     <span className="font-mono text-slate-200">
@@ -1122,13 +1095,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingTransaction(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+                  className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-950/40 transition flex items-center gap-1.5"
+                  className="premium-action premium-action-primary premium-shimmer-border px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Changes
@@ -1137,7 +1110,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </form>
           </div>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 };

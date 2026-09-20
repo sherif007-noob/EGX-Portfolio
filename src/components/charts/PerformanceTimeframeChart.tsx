@@ -316,11 +316,15 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const positive = (toneValue ?? 0) >= 0;
   const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
   const chartCurve = timeframe === 'TODAY' ? 'linear' : longRangeCurve;
+  const todaySemanticStroke =
+    (toneValue ?? 0) > 0
+      ? ANALYTICS_CHART_THEME.emerald
+      : (toneValue ?? 0) < 0
+      ? ANALYTICS_CHART_THEME.rose
+      : ANALYTICS_CHART_THEME.amber;
   const primaryStroke =
-    timeframe === 'TODAY' && isPercentMode
-      ? positive
-        ? ANALYTICS_CHART_THEME.emerald
-        : ANALYTICS_CHART_THEME.rose
+    timeframe === 'TODAY'
+      ? todaySemanticStroke
       : isPercentMode
         ? ANALYTICS_CHART_THEME.cyan
         : ANALYTICS_CHART_THEME.blue;

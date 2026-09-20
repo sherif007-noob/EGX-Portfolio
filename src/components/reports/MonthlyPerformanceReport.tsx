@@ -396,7 +396,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
               }`}
             >
               {/* Monthly Banner Ribbon */}
-              <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 font-display">

@@ -54,6 +54,8 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   const netRealizedPnl = grossProfit - grossLoss;
   const closedFees = stats.totalBrokerageFeesPaid || 0;
   const openFees = positions.reduce((sum, p) => sum + (p.totalFees || 0), 0);
+  const netRealizedGlow =
+    netRealizedPnl > 0 ? 'premium-state-win' : netRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven';
 
   const performanceBridge = useMemo(() => calculateEquityBridge(
     Number.isFinite(capitalDeposits) && capitalDeposits >= 0 ? capitalDeposits : 0,
@@ -151,10 +153,10 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="premium-card p-4 rounded-2xl"><div className="text-xs text-emerald-400 font-semibold">Realized Gains</div><div className="mt-2 text-2xl font-black font-mono text-emerald-400">+{formatEgp(grossProfit)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="premium-card p-4 rounded-2xl"><div className="text-xs text-rose-400 font-semibold">Realized Losses</div><div className="mt-2 text-2xl font-black font-mono text-rose-400">-{formatEgp(grossLoss)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="premium-card p-4 rounded-2xl"><div className="text-xs text-slate-300 font-semibold">Net Realized P&amp;L</div><div className={`mt-2 text-2xl font-black font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="premium-card p-4 rounded-2xl"><div className="text-xs text-amber-400 font-semibold flex items-center gap-1"><Receipt className="w-4 h-4" /> Fees</div><div className="mt-2 text-2xl font-black font-mono text-amber-400">{formatEgp(closedFees + openFees)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-win p-4 rounded-2xl"><div className="text-xs text-emerald-400 font-semibold">Realized Gains</div><div className="mt-2 text-2xl font-black font-mono text-emerald-400">+{formatEgp(grossProfit)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-loss p-4 rounded-2xl"><div className="text-xs text-rose-400 font-semibold">Realized Losses</div><div className="mt-2 text-2xl font-black font-mono text-rose-400">-{formatEgp(grossLoss)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className={`premium-card ${netRealizedGlow} p-4 rounded-2xl`}><div className="text-xs text-slate-300 font-semibold">Net Realized P&amp;L</div><div className={`mt-2 text-2xl font-black font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-breakeven p-4 rounded-2xl"><div className="text-xs text-amber-400 font-semibold flex items-center gap-1"><Receipt className="w-4 h-4" /> Fees</div><div className="mt-2 text-2xl font-black font-mono text-amber-400">{formatEgp(closedFees + openFees)} <span className="text-xs text-slate-400">EGP</span></div></div>
       </div>
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
@@ -431,8 +433,8 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         {!bridgeBalanced && <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><div><strong>Accounting reconciliation difference:</strong> {formatEgp(performanceBridge.reconciliationDelta)} EGP. The report is showing the actual ledger/equity values instead of inventing a balancing capital figure.</div></div>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
           <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Net Capital Contributed</span><strong className="font-mono text-blue-300">{formatEgp(performanceBridge.netCapitalContributed)} EGP</strong></div>
-          <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Realized P&amp;L</span><strong className={`font-mono ${performanceBridge.realizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.realizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.realizedPnl)} EGP</strong></div>
-          <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Unrealized P&amp;L</span><strong className={`font-mono ${performanceBridge.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.unrealizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.unrealizedPnl)} EGP</strong></div>
+          <div className={`premium-subpanel p-3 rounded-xl ${performanceBridge.realizedPnl > 0 ? 'premium-state-win' : performanceBridge.realizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}><span className="text-slate-400 block">Realized P&amp;L</span><strong className={`font-mono ${performanceBridge.realizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.realizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.realizedPnl)} EGP</strong></div>
+          <div className={`premium-subpanel p-3 rounded-xl ${performanceBridge.unrealizedPnl > 0 ? 'premium-state-win' : performanceBridge.unrealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}><span className="text-slate-400 block">Unrealized P&amp;L</span><strong className={`font-mono ${performanceBridge.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.unrealizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.unrealizedPnl)} EGP</strong></div>
           <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Ending Equity / NAV</span><strong className="font-mono text-purple-300">{formatEgp(performanceBridge.endingEquity)} EGP</strong></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">

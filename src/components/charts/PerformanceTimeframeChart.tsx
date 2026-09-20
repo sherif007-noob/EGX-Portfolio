@@ -675,7 +675,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             <button
               type="button"
               onClick={() => setModeMenuOpen((value) => !value)}
-              className="group flex max-w-full items-center gap-1.5 text-left"
+              className="premium-accordion-trigger group flex max-w-full items-center gap-1.5 text-left"
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
             >
@@ -706,7 +706,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                         setModeMenuOpen(false);
                       }}
                       className={[
-                        'flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition',
+                        'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
                         selected
                           ? 'bg-cyan-500/10 text-cyan-200'
                           : 'text-slate-300 hover:bg-slate-900 hover:text-white',
@@ -780,7 +780,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                 aria-pressed={selected}
                 onClick={() => setTimeframe(item.value)}
                 className={[
-                  'shrink-0 min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold transition',
+                  'premium-segment shrink-0 min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
                   selected
                     ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',

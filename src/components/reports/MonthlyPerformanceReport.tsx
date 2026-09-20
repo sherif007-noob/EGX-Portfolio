@@ -300,8 +300,9 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
+            aria-pressed={selectedMonth === 'ALL'}
             onClick={() => setSelectedMonth('ALL')}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+            className={`premium-segment px-3 py-1 rounded-lg text-xs font-medium ${
               selectedMonth === 'ALL'
                 ? 'bg-purple-600 text-white font-semibold shadow-sm'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -313,8 +314,9 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
             <button
               key={m.monthKey}
               type="button"
+              aria-pressed={selectedMonth === m.monthKey}
               onClick={() => setSelectedMonth(m.monthKey)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+              className={`premium-segment px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
                 selectedMonth === m.monthKey
                   ? 'bg-purple-600 text-white font-semibold shadow-sm'
                   : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'

@@ -133,7 +133,16 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               const isProfit = pnlEgp >= 0;
 
               return (
-                <tr key={pos.id} className="hover:bg-slate-800/40 transition">
+                <tr
+                  key={pos.id}
+                  className={`hover:bg-slate-800/40 transition ${
+                    pnlEgp > 0
+                      ? 'premium-row-win'
+                      : pnlEgp < 0
+                      ? 'premium-row-loss'
+                      : 'premium-row-breakeven'
+                  }`}
+                >
                   {/* Ticker & Name */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2.5">
@@ -332,7 +341,13 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className="premium-card premium-radial p-4 rounded-2xl space-y-3"
+              className={`premium-card p-4 rounded-2xl space-y-3 ${
+                pnlEgp > 0
+                  ? 'premium-glow-win'
+                  : pnlEgp < 0
+                  ? 'premium-glow-loss'
+                  : 'premium-glow-breakeven'
+              }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">

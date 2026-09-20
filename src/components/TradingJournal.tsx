@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
@@ -432,7 +433,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   type="button"
                   onClick={onSyncToSheets}
                   disabled={isSyncingToSheets}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-500/40 text-xs font-bold shadow-sm transition active:scale-95 disabled:opacity-50"
+                  className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold disabled:opacity-50"
                   title="Sync local transaction ledger to Google Sheet"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isSyncingToSheets ? 'animate-spin' : ''}`} />
@@ -444,7 +445,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 <button
                   type="button"
                   onClick={onOpenScreenshotModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-500/40 text-xs font-bold shadow-sm transition active:scale-95"
+                  className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
                 >
                   <Zap className="w-3.5 h-3.5 text-emerald-300" />
                   <span>Scan Trade Screenshot</span>
@@ -506,7 +507,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by ticker (COMI), company, or notes..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-800 text-slate-100 placeholder-slate-400 text-xs sm:text-sm border border-slate-700 focus:outline-none focus:border-amber-500"
+            className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl text-slate-100 placeholder-slate-400 text-xs sm:text-sm focus:outline-none"
           />
         </div>
 
@@ -515,11 +516,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-all"
             onClick={() => setFilterMode('ALL')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'ALL'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
           >
             All ({transactions.length})
           </button>
@@ -527,11 +524,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-open"
             onClick={() => setFilterMode('OPEN')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'OPEN'
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
           >
             <Layers className="w-3.5 h-3.5 text-blue-400" />
             Open Positions ({openPositionsTransactionsCount})
@@ -540,11 +533,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-wins"
             onClick={() => setFilterMode('WIN')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'WIN'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
             Wins ({winCount})
@@ -553,11 +542,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-losses"
             onClick={() => setFilterMode('LOSS')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'LOSS'
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
             Losses ({lossCount})
@@ -566,11 +551,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-buys"
             onClick={() => setFilterMode('BUY')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'BUY'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
             Buys Only ({buyCount})
           </button>
@@ -578,11 +559,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           <button
             id="journal-filter-sells"
             onClick={() => setFilterMode('SELL')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-              filterMode === 'SELL'
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
-            }`}
+            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})
           </button>
@@ -637,7 +614,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage(1)}
               disabled={safeCurrentPage === 1}
-              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              className="premium-icon-action p-1.5 rounded-lg disabled:opacity-30 text-slate-300"
               title="First Page"
             >
               <ChevronsLeft className="w-4 h-4" />
@@ -645,18 +622,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safeCurrentPage === 1}
-              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              className="premium-icon-action p-1.5 rounded-lg disabled:opacity-30 text-slate-300"
               title="Previous Page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-2 py-0.5 rounded bg-slate-800 font-mono text-white font-semibold">
+            <span className="premium-chip px-2 py-0.5 rounded-lg font-mono text-white font-semibold">
               {safeCurrentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safeCurrentPage === totalPages}
-              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              className="premium-icon-action p-1.5 rounded-lg disabled:opacity-30 text-slate-300"
               title="Next Page"
             >
               <ChevronRight className="w-4 h-4" />
@@ -664,7 +641,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage(totalPages)}
               disabled={safeCurrentPage === totalPages}
-              className="p-1 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition"
+              className="premium-icon-action p-1.5 rounded-lg disabled:opacity-30 text-slate-300"
               title="Last Page"
             >
               <ChevronsRight className="w-4 h-4" />
@@ -722,7 +699,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                       {/* Trade Sequence ID */}
                       {(tx.tradeId !== undefined || (tx as any).trade_id !== undefined) && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800/90 text-amber-300 border border-amber-500/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold premium-chip text-amber-300 border-amber-500/30">
                           Trade #{tx.tradeId ?? (tx as any).trade_id}
                         </span>
                       )}
@@ -772,7 +749,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                         </span>
                       )}
 
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-400">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium premium-chip text-slate-400">
                         {tx.sector}
                       </span>
                     </div>
@@ -837,14 +814,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     <button
                       onClick={() => handleOpenEditModal(tx)}
                       title="Edit Transaction Record"
-                      className="p-2 rounded-xl bg-slate-800/90 hover:bg-blue-950/60 border border-slate-700 hover:border-blue-500/50 text-slate-400 hover:text-blue-300 transition active:scale-95"
+                      className="premium-icon-action premium-icon-edit p-2 rounded-xl"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(tx)}
                       title="Delete Transaction Record"
-                      className="p-2 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500/50 text-slate-400 hover:text-rose-300 transition active:scale-95"
+                      className="premium-icon-action premium-icon-delete p-2 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -853,7 +830,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Row 2: Detailed Transaction Attributes Grid */}
-              <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs">
+              <div className="premium-inset-glass grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs">
                 <div>
                   <span className="text-slate-400 text-[10px] block font-medium">Transaction Shares</span>
                   <span className="font-mono text-slate-100 font-bold">
@@ -906,7 +883,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs pt-0.5">
                 <div className="flex items-center gap-3 flex-wrap">
                   {isSell && tx.holdingDays !== undefined && (
-                    <span className="text-slate-400 flex items-center gap-1 font-medium bg-slate-800/60 px-2.5 py-1 rounded-lg border border-slate-800">
+                    <span className="premium-chip text-slate-400 flex items-center gap-1 font-medium px-2.5 py-1 rounded-lg">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       Holding Period: <strong className="text-slate-200">{tx.holdingDays} days</strong>
                     </span>
@@ -928,7 +905,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
 
                 {tx.notes && (
-                  <div className="text-xs text-slate-300 italic bg-slate-800/50 px-3 py-1.5 rounded-xl border border-slate-800 flex-1 sm:max-w-md truncate">
+                  <div className="premium-chip text-xs text-slate-300 italic px-3 py-1.5 rounded-xl flex-1 sm:max-w-md truncate">
                     &ldquo;{tx.notes}&rdquo;
                   </div>
                 )}
@@ -953,7 +930,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     setSearchQuery('');
                     setFilterMode('ALL');
                   }}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition active:scale-95 shadow-md shadow-blue-900/30"
+                  className="premium-action premium-action-primary px-4 py-2 rounded-xl font-semibold text-xs"
                 >
                   Reset All Filters &amp; Show All ({transactions.length})
                 </button>
@@ -973,7 +950,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage(1)}
               disabled={safeCurrentPage === 1}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               <ChevronsLeft className="w-3.5 h-3.5" />
               First
@@ -981,18 +958,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safeCurrentPage === 1}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               Prev
             </button>
-            <span className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-white font-bold">
+            <span className="premium-chip px-3 py-1 rounded-xl font-mono text-white font-bold">
               {safeCurrentPage}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safeCurrentPage === totalPages}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               Next
               <ChevronRight className="w-3.5 h-3.5" />
@@ -1000,7 +977,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <button
               onClick={() => setCurrentPage(totalPages)}
               disabled={safeCurrentPage === totalPages}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               Last
               <ChevronsRight className="w-3.5 h-3.5" />
@@ -1039,7 +1016,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       />
 
       {/* Edit Transaction Modal */}
-      {editingTx && (
+      {editingTx && createPortal((
         <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="premium-modal w-full max-w-xl rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
@@ -1057,7 +1034,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
               <button
                 onClick={() => setEditingTx(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="premium-icon-action p-1.5 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1078,11 +1055,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEditType('BUY')}
-                    className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition ${
-                      editType === 'BUY'
-                        ? 'bg-blue-600 text-white border-blue-500 shadow-md'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-                    }`}
+                    className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
                   >
                     <PlusCircle className="w-4 h-4" />
                     BUY (Stock Entry / DCA)
@@ -1090,11 +1063,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEditType('SELL')}
-                    className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition ${
-                      editType === 'SELL'
-                        ? 'bg-purple-600 text-white border-purple-500 shadow-md'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-                    }`}
+                    className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
                   >
                     <ArrowUpDown className="w-4 h-4" />
                     SELL (Exit / Liquidation)
@@ -1111,7 +1080,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     required
                     value={editTicker}
                     onChange={(e) => setEditTicker(e.target.value.toUpperCase())}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono font-bold focus:outline-none focus:border-blue-500"
                     placeholder="e.g. CANA, TAQA, ADIB"
                   />
                 </div>
@@ -1122,7 +1091,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="text"
                     value={editCompanyName}
                     onChange={(e) => setEditCompanyName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white focus:outline-none focus:border-blue-500"
                     placeholder="e.g. Suez Canal Bank"
                   />
                 </div>
@@ -1139,7 +1108,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     value={editShares}
                     onValueChange={setEditShares}
                     accent="blue"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono font-bold focus:outline-none focus:border-blue-500"
                     placeholder="100"
                   />
                 </div>
@@ -1153,7 +1122,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     value={editPrice}
                     onValueChange={setEditPrice}
                     accent="blue"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono font-bold focus:outline-none focus:border-blue-500"
                     placeholder="43.21"
                   />
                 </div>
@@ -1173,7 +1142,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="time"
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -1188,7 +1157,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     value={editFees}
                     onValueChange={setEditFees}
                     accent="amber"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-amber-300 font-mono focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-amber-300 font-mono focus:outline-none focus:border-blue-500"
                     placeholder="12.50"
                   />
                 </div>
@@ -1199,7 +1168,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="text"
                     value={editCycleTag}
                     onChange={(e) => setEditCycleTag(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-purple-300 font-mono focus:outline-none focus:border-blue-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-purple-300 font-mono focus:outline-none focus:border-blue-500"
                     placeholder="e.g. CANA-C1, TAQA-C1"
                   />
                 </div>
@@ -1207,7 +1176,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
               {/* If SELL: Realized P&L and Outcome */}
               {editType === 'SELL' && (
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 space-y-3">
+                <div className="premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
                   <div className="text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     Sell Exit Financial Outcome
@@ -1226,7 +1195,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           }
                         }}
                         accent="purple"
-                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono font-bold focus:outline-none focus:border-purple-500"
+                        className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono font-bold focus:outline-none focus:border-purple-500"
                         placeholder="e.g. 1250.00"
                       />
                     </div>
@@ -1259,7 +1228,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       value={editTargetPrice}
                       onValueChange={setEditTargetPrice}
                       accent="emerald"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-emerald-300 font-mono focus:outline-none focus:border-blue-500"
+                      className="premium-field w-full px-3 py-2 rounded-xl text-emerald-300 font-mono focus:outline-none focus:border-blue-500"
                       placeholder="e.g. 52.00"
                     />
                   </div>
@@ -1271,7 +1240,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       value={editStopLoss}
                       onValueChange={setEditStopLoss}
                       accent="rose"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-rose-300 font-mono focus:outline-none focus:border-blue-500"
+                      className="premium-field w-full px-3 py-2 rounded-xl text-rose-300 font-mono focus:outline-none focus:border-blue-500"
                       placeholder="e.g. 39.50"
                     />
                   </div>
@@ -1285,13 +1254,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   rows={2}
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="premium-field w-full px-3 py-2 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   placeholder="Order execution notes, broker phase details, strategy reasoning..."
                 />
               </div>
 
               {/* Calculated Preview */}
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+              <div className="premium-modal-section p-3 rounded-xl flex items-center justify-between text-xs">
                 <span className="text-slate-400">
                   {editType === 'BUY' ? 'Total Cash Outlay (Cost + Fees):' : 'Net Sales Proceeds (Gross - Fees):'}
                 </span>
@@ -1312,13 +1281,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingTx(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition"
+                  className="premium-action px-4 py-2 rounded-xl font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition"
+                  className="premium-action premium-action-primary premium-shimmer-border px-5 py-2 rounded-xl font-bold flex items-center gap-1.5"
                 >
                   <Save className="w-4 h-4" />
                   Save Changes
@@ -1327,7 +1296,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </form>
           </div>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 };

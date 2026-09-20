@@ -867,11 +867,11 @@ export default function App() {
       {/* Undo Toast Notification */}
       {undoState && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl text-xs font-semibold flex items-center gap-3 text-slate-200">
+          <div className="premium-floating px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
             <span>{undoState.message}</span>
             <button
               onClick={executeUndo}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1 transition"
+              className="premium-action premium-action-success px-2.5 py-1 rounded-lg font-bold flex items-center gap-1"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Undo
@@ -886,10 +886,10 @@ export default function App() {
           <div
             className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'
-                ? 'bg-slate-900/95 border-emerald-500/60 text-emerald-300'
+                ? 'premium-floating border-emerald-500/60 text-emerald-300'
                 : toastNotification.type === 'info'
-                ? 'bg-slate-900/95 border-blue-500/60 text-blue-300'
-                : 'bg-slate-900/95 border-rose-500/60 text-rose-300'
+                ? 'premium-floating border-blue-500/60 text-blue-300'
+                : 'premium-floating border-rose-500/60 text-rose-300'
             }`}
           >
             <span
@@ -925,7 +925,7 @@ export default function App() {
 
         {/* Ledger Reconciliation Alert if transactions exist but positions/closed cycles are empty */}
         {transactions.length > 0 && positions.length === 0 && (
-          <div className="p-4 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in">
+          <div className="premium-glass p-4 rounded-xl border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping shrink-0" />
               <span>
@@ -937,7 +937,7 @@ export default function App() {
                 const report = reconcileLedger();
                 showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs whitespace-nowrap shadow transition active:scale-95"
+              className="premium-action premium-action-primary px-3.5 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap"
             >
               ⚡ Reconcile Portfolio Now
             </button>
@@ -955,7 +955,7 @@ export default function App() {
                 </h2>
                 <button
                   onClick={() => setActiveTab('positions')}
-                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition"
+                  className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-xs font-semibold"
                 >
                   View Full Table →
                 </button>
@@ -1003,7 +1003,7 @@ export default function App() {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow transition"
+                className="premium-action premium-action-primary premium-shimmer-border px-3.5 py-1.5 rounded-lg text-xs font-semibold"
               >
                 + Add Position
               </button>

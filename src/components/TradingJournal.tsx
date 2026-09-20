@@ -696,14 +696,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               key={tx.id}
               className={`premium-card p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
                 isBuy
-                  ? isOpenPosition
-                    ? 'border-blue-500/40 hover:border-blue-400/70 shadow-[0_0_26px_rgba(59,130,246,0.10)]'
-                    : 'border-slate-700/70 hover:border-cyan-500/35 shadow-[0_0_22px_rgba(34,211,238,0.055)]'
+                  ? 'premium-glow-buy'
                   : isWinningSell
-                  ? 'border-emerald-500/30 hover:border-emerald-400/60 shadow-[0_0_24px_rgba(16,185,129,0.085)]'
+                  ? 'premium-glow-win'
                   : isLosingSell
-                  ? 'border-rose-500/30 hover:border-rose-400/60 shadow-[0_0_24px_rgba(244,63,94,0.08)]'
-                  : 'border-amber-500/30 hover:border-amber-400/60 shadow-[0_0_24px_rgba(245,158,11,0.075)]'
+                  ? 'premium-glow-loss'
+                  : 'premium-glow-breakeven'
               }`}
             >
               {/* Row 1: Ticker, Type Tag, Date, and P&L / Total Outlay */}

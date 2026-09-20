@@ -221,8 +221,9 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
               <button
                 key={tf}
                 type="button"
+                aria-pressed={timeframe === tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                className={`premium-segment px-2.5 py-1 rounded-lg text-xs font-medium ${
                   timeframe === tf
                     ? 'bg-blue-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'

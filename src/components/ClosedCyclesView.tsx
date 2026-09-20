@@ -488,12 +488,12 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           return (
             <div
               key={cycle.id}
-              className={`premium-card premium-radial p-4 sm:p-5 rounded-2xl border transition-all ${
+              className={`premium-card p-4 sm:p-5 rounded-2xl border transition-all ${
                 isWin
-                  ? 'border-emerald-500/20 hover:border-emerald-500/40'
+                  ? 'premium-glow-win'
                   : isLoss
-                  ? 'border-rose-500/20 hover:border-rose-500/40'
-                  : 'border-slate-800 hover:border-slate-700'
+                  ? 'premium-glow-loss'
+                  : 'premium-glow-breakeven'
               }`}
             >
               {/* Top Row: Header & Performance Badges */}

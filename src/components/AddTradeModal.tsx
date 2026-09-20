@@ -4,7 +4,7 @@ import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { NumberStepperInput } from './NumberStepperInput';
-import { combineExecutionDateTime } from '../utils/executionTime';
+import { cairoExecutionInputValues, combineExecutionDateTime, isCairoCurrentDate } from '../utils/executionTime';
 import { estimateBrokerageFee, estimateBrokerageFeeRate } from '../utils/brokerageFeeEstimator';
 
 interface AddTradeModalProps {
@@ -53,8 +53,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const [shares, setShares] = useState<number>(1000);
   const [buyPrice, setBuyPrice] = useState<number>(0);
   const [isManualPrice, setIsManualPrice] = useState<boolean>(false);
-  const [buyDate, setBuyDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [executionTime, setExecutionTime] = useState<string>('');
+  const initialCairoExecution = cairoExecutionInputValues();
+  const [buyDate, setBuyDate] = useState<string>(initialCairoExecution.date);
+  const [executionTime, setExecutionTime] = useState<string>(initialCairoExecution.time);
+  const [isAutoExecutionTime, setIsAutoExecutionTime] = useState<boolean>(true);
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
   const [isManualFee, setIsManualFee] = useState<boolean>(false);
   const [targetPrice, setTargetPrice] = useState<number>(0);
@@ -72,6 +74,19 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     setIsManualPrice(false);
     setIsManualFee(false);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isCairoCurrentDate(buyDate)) {
+      if (!executionTime || isAutoExecutionTime) {
+        setExecutionTime(cairoExecutionInputValues().time);
+        setIsAutoExecutionTime(true);
+      }
+    } else if (isAutoExecutionTime) {
+      setExecutionTime('');
+      setIsAutoExecutionTime(false);
+    }
+  }, [buyDate, isOpen]);
 
   // Check if ticker is already in active portfolio
   const activeExistingPosition = existingPositions.find(
@@ -157,6 +172,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
         .slice(0, 10)
     : tickers.slice(0, 8);
 
+  const requiresExecutionTime = isCairoCurrentDate(buyDate);
   const grossCost = shares * buyPrice;
   const netTotalCost = grossCost + (brokerageFee || 0);
 
@@ -169,6 +185,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     e.preventDefault();
     const cleanTicker = tickerInput.trim().toUpperCase();
     if (!cleanTicker || shares <= 0 || buyPrice <= 0) return;
+    if (requiresExecutionTime && !executionTime) return;
 
     onAddPosition(
       {
@@ -490,11 +507,17 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 id="trade-execution-time"
                 type="time"
                 value={executionTime}
-                onChange={(e) => setExecutionTime(e.target.value)}
+                onChange={(e) => {
+                  setExecutionTime(e.target.value);
+                  setIsAutoExecutionTime(false);
+                }}
+                required={requiresExecutionTime}
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
               />
-              <span className="text-[10px] text-slate-400 block mt-0.5">
-                Optional, but recommended when matching broker receipts.
+              <span className={`text-[10px] block mt-0.5 ${requiresExecutionTime ? 'text-cyan-300' : 'text-slate-400'}`}>
+                {requiresExecutionTime
+                  ? 'Required for today’s intraday analytics. Prefilled to current Cairo time; edit it if your broker execution differs.'
+                  : 'Optional for historical trades, but recommended when matching broker receipts.'}
               </span>
             </div>
           </div>

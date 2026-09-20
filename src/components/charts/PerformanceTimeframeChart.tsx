@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -144,6 +144,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
@@ -157,13 +158,9 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   }, [transactions, historicalPrices, timeframe, capitalDeposits]);
 
   useEffect(() => {
-    if (timeframe !== 'TODAY') return;
-
     let cancelled = false;
     setIntradayLoading(true);
     setIntradayError(null);
-    setIntradayResult(null);
-    setLoadedIntradayPrices({});
 
     const load = async () => {
       try {
@@ -231,10 +228,30 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     return () => {
       cancelled = true;
     };
-  }, [timeframe, transactions, historicalPrices, capitalDeposits]);
+  }, [transactions, historicalPrices, capitalDeposits]);
+
+  useEffect(() => {
+    if (!modeMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (modeMenuRef.current && !modeMenuRef.current.contains(event.target as Node)) {
+        setModeMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setModeMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modeMenuOpen]);
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
-  const loading = timeframe === 'TODAY' ? intradayLoading : historicalLoading;
+  const loading = timeframe === 'TODAY' ? intradayLoading && !intradayResult : historicalLoading;
   const definition = getAnalyticsModeDefinition(mode);
   const summary = analyticsModeSummary(result, mode);
   const points = analyticsModePoints(result, mode);
@@ -650,7 +667,9 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             stroke: '#020617',
             strokeWidth: 2,
           }}
-          isAnimationActive={false}
+          isAnimationActive
+          animationDuration={260}
+          animationEasing="ease-out"
         />
       )}
     </>
@@ -661,7 +680,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       <div className="premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="relative min-w-0">
+          <div ref={modeMenuRef} className="relative min-w-0 z-20">
             <button
               type="button"
               onClick={() => setModeMenuOpen((value) => !value)}
@@ -785,7 +804,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
       {loading ? (
         <AnalyticsChartLoadingState />
-      ) : intradayError ? (
+      ) : intradayError && !intradayResult ? (
         <AnalyticsEmptyState>{intradayError}</AnalyticsEmptyState>
       ) : chartData.length < 2 ? (
         <AnalyticsEmptyState>

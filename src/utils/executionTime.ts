@@ -43,3 +43,26 @@ export function formatExecutionTime(executedAt?: string): string | null {
   }
   return date.toLocaleTimeString('en-EG', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
+
+
+export function cairoExecutionInputValues(now: Date = new Date()): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    time: `${values.hour}:${values.minute}`,
+  };
+}
+
+export function isCairoCurrentDate(value: string, now: Date = new Date()): boolean {
+  const date = String(value || '').trim().slice(0, 10);
+  return Boolean(date) && date === cairoExecutionInputValues(now).date;
+}

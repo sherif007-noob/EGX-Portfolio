@@ -694,33 +694,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           return (
             <div
               key={tx.id}
-              className={`premium-card premium-radial p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
+              className={`premium-card p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
                 isBuy
                   ? isOpenPosition
-                    ? 'border-blue-500/40 hover:border-blue-500/60'
-                    : 'border-slate-800 hover:border-slate-700'
+                    ? 'border-blue-500/40 hover:border-blue-400/70 shadow-[0_0_26px_rgba(59,130,246,0.10)]'
+                    : 'border-slate-700/70 hover:border-cyan-500/35 shadow-[0_0_22px_rgba(34,211,238,0.055)]'
                   : isWinningSell
-                  ? 'border-emerald-500/30 hover:border-emerald-500/50'
+                  ? 'border-emerald-500/30 hover:border-emerald-400/60 shadow-[0_0_24px_rgba(16,185,129,0.085)]'
                   : isLosingSell
-                  ? 'border-rose-500/30 hover:border-rose-500/50'
-                  : 'border-amber-500/30 hover:border-amber-500/50'
+                  ? 'border-rose-500/30 hover:border-rose-400/60 shadow-[0_0_24px_rgba(244,63,94,0.08)]'
+                  : 'border-amber-500/30 hover:border-amber-400/60 shadow-[0_0_24px_rgba(245,158,11,0.075)]'
               }`}
             >
-              {/* Subtle background glow for quick recognition */}
-              <div
-                className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full pointer-events-none opacity-5 ${
-                  isBuy
-                    ? isOpenPosition
-                      ? 'bg-blue-500'
-                      : 'bg-cyan-500'
-                    : isWinningSell
-                    ? 'bg-emerald-500'
-                    : isLosingSell
-                    ? 'bg-rose-500'
-                    : 'bg-amber-500'
-                }`}
-              />
-
               {/* Row 1: Ticker, Type Tag, Date, and P&L / Total Outlay */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">

@@ -101,7 +101,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       : 0);
 
   return (
-    <div className={`premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
+    <div className={`premium-report-glass premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -112,7 +112,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
           <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
         </div>
 
-        <div className="premium-subpanel flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
+        <div className="premium-report-glass-soft flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
           <button
             aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
@@ -139,7 +139,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       </div>
 
       {/* Trajectory Key Stats Summary */}
-      <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
+      <div className="premium-report-glass-soft grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
         <div className={`rounded-lg border p-2 ${
           netRealizedPnl > 0
             ? 'premium-state-win'

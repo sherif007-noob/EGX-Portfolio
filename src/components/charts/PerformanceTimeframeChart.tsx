@@ -144,8 +144,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
-  const chartPlotRef = useRef<HTMLDivElement>(null);
-  const [chartTooltipEnabled, setChartTooltipEnabled] = useState(true);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
@@ -237,15 +235,9 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       if (target && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
         setModeMenuOpen(false);
       }
-      if (target && chartPlotRef.current && !chartPlotRef.current.contains(target)) {
-        setChartTooltipEnabled(false);
-      }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setModeMenuOpen(false);
-        setChartTooltipEnabled(false);
-      }
+      if (event.key === 'Escape') setModeMenuOpen(false);
     };
 
     document.addEventListener('pointerdown', handleGlobalPress, true);
@@ -808,14 +800,13 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div
-          ref={chartPlotRef}
-          className="h-64 sm:h-72"
-          onPointerDownCapture={() => setChartTooltipEnabled(true)}
-          onTouchStartCapture={() => setChartTooltipEnabled(true)}
-        >
+        <div className="h-64 sm:h-72">
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
-            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={chartData}
+              syncId="portfolio-secondary-analytics"
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop
@@ -840,7 +831,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
               {renderYAxis()}
               {renderReferenceLine()}
               <Tooltip
-                active={chartTooltipEnabled ? undefined : false}
                 cursor={analyticsTooltipCursor}
                 content={tooltip}
               />

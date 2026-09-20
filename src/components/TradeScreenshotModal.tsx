@@ -15,6 +15,7 @@ import {
 import { DateInput } from './DateInput';
 import { recognizeTradeScreenshot, parseTradeText } from '../services/ocrParser';
 import { getTodayISO } from '../utils/dateUtils';
+import { combineExecutionDateTime, executionTimeInputValue, isCairoCurrentDate } from '../utils/executionTime';
 
 export interface ParsedTradeItem {
   id: string;
@@ -226,12 +227,25 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     // Keep failed/unparsed items visible for manual correction and submit only the
     // valid transactions.
     const validTrades = batchTrades.filter(
-      (t) => Boolean(t.ticker.trim()) && Number.isFinite(Number(t.shares)) && Number(t.shares) > 0 && Number.isFinite(Number(t.price)) && Number(t.price) > 0
+      (t) =>
+        Boolean(t.ticker.trim()) &&
+        Number.isFinite(Number(t.shares)) &&
+        Number(t.shares) > 0 &&
+        Number.isFinite(Number(t.price)) &&
+        Number(t.price) > 0 &&
+        (!isCairoCurrentDate(t.date) || Boolean(t.executedAt))
     );
     const invalidTrades = batchTrades.filter((t) => !validTrades.includes(t));
 
     if (validTrades.length === 0) {
-      setErrorMsg('None of the screenshots contain a valid trade yet. Please correct the failed OCR items first.');
+      const missingCurrentSessionTime = batchTrades.some(
+        (t) => isCairoCurrentDate(t.date) && !t.executedAt && Boolean(t.ticker.trim()) && Number(t.shares) > 0 && Number(t.price) > 0,
+      );
+      setErrorMsg(
+        missingCurrentSessionTime
+          ? 'Execution time is required for current-session trades so Today analytics remain accurate.'
+          : 'None of the screenshots contain a valid trade yet. Please correct the failed OCR items first.',
+      );
       return;
     }
 
@@ -256,7 +270,14 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
 
     if (invalidTrades.length > 0) {
       setBatchTrades(invalidTrades);
-      setErrorMsg(`${invalidTrades.length} screenshot(s) could not be read. The ${validTrades.length} valid trade(s) were logged; please correct the remaining item(s) and log them separately.`);
+      const missingCurrentSessionTime = invalidTrades.some(
+        (t) => isCairoCurrentDate(t.date) && !t.executedAt && Boolean(t.ticker.trim()) && Number(t.shares) > 0 && Number(t.price) > 0,
+      );
+      setErrorMsg(
+        missingCurrentSessionTime
+          ? `${validTrades.length} valid trade(s) were logged. Add execution time to the remaining current-session trade(s) before logging them.`
+          : `${invalidTrades.length} screenshot(s) could not be read. The ${validTrades.length} valid trade(s) were logged; please correct the remaining item(s) and log them separately.`,
+      );
       return;
     }
 
@@ -506,7 +527,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                       </div>
 
                       {/* Middle Row: Editable Inputs */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-1">
                             Shares
@@ -541,8 +562,34 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           </label>
                           <DateInput
                             value={trade.date}
-                            onChange={(d) => updateTradeItem(idx, { date: d })}
+                            onChange={(d) => {
+                              const existingTime = executionTimeInputValue(trade.executedAt);
+                              updateTradeItem(idx, {
+                                date: d,
+                                executedAt: existingTime ? combineExecutionDateTime(d, existingTime) : undefined,
+                              });
+                            }}
                           />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            Execution Time
+                          </label>
+                          <input
+                            type="time"
+                            value={executionTimeInputValue(trade.executedAt)}
+                            onChange={(e) =>
+                              updateTradeItem(idx, {
+                                executedAt: combineExecutionDateTime(trade.date, e.target.value),
+                              })
+                            }
+                            required={isCairoCurrentDate(trade.date)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                          />
+                          {isCairoCurrentDate(trade.date) && !trade.executedAt && (
+                            <span className="mt-1 block text-[9px] text-cyan-300">Required today</span>
+                          )}
                         </div>
 
                         <div>

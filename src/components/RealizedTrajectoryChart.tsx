@@ -140,7 +140,13 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
 
       {/* Trajectory Key Stats Summary */}
       <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
-        <div>
+        <div className={`rounded-lg border p-2 ${
+          netRealizedPnl > 0
+            ? 'premium-state-win'
+            : netRealizedPnl < 0
+            ? 'premium-state-loss'
+            : 'premium-state-breakeven'
+        }`}>
           <span className="text-slate-400 block text-[10px]">Net Realized P&amp;L</span>
           <span className={`font-mono font-bold ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} EGP

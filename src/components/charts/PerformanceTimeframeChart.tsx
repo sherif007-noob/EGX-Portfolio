@@ -700,7 +700,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             {modeMenuOpen && (
               <div
                 role="menu"
-                className="premium-floating absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
+                className="premium-floating premium-dropdown absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
               >
                 {ANALYTICS_MODES.map((item) => {
                   const selected = item.mode === mode;

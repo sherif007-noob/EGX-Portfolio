@@ -1175,3 +1175,268 @@ body {
     backdrop-filter: blur(8px) saturate(115%);
   }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 4.1 — perceptible motion correction                                  */
+/* The first motion pass was too subtle in real use.                           */
+/* -------------------------------------------------------------------------- */
+:root {
+  --motion-instant: 120ms;
+  --motion-fast: 180ms;
+  --motion-control: 220ms;
+  --motion-popover: 280ms;
+  --motion-panel: 340ms;
+  --motion-modal: 360ms;
+}
+
+/* Every main tab now has one obvious, coherent entrance. */
+.premium-tab-stage {
+  transform-origin: 50% 0%;
+  animation: premium-tab-stage-in var(--motion-panel) var(--motion-emphasized) both;
+}
+
+.premium-tab-stage .premium-section-enter {
+  animation: none;
+}
+
+@keyframes premium-tab-stage-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(22px, 10px, 0) scale(0.982);
+    filter: blur(5px);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 0, 0) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Dropdowns visibly detach from their trigger with a short spring settle. */
+.premium-dropdown {
+  animation: premium-popover-strong-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-popover-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.93);
+    filter: blur(5px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.012);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Menu contents enter in sequence so opening a dropdown visibly reads as motion. */
+.premium-dropdown .premium-menu-item {
+  animation: premium-menu-item-in 240ms var(--motion-emphasized) both;
+}
+
+.premium-dropdown .premium-menu-item:nth-child(1) { animation-delay: 20ms; }
+.premium-dropdown .premium-menu-item:nth-child(2) { animation-delay: 38ms; }
+.premium-dropdown .premium-menu-item:nth-child(3) { animation-delay: 56ms; }
+.premium-dropdown .premium-menu-item:nth-child(4) { animation-delay: 74ms; }
+.premium-dropdown .premium-menu-item:nth-child(5) { animation-delay: 92ms; }
+.premium-dropdown .premium-menu-item:nth-child(6) { animation-delay: 110ms; }
+.premium-dropdown .premium-menu-item:nth-child(n+7) { animation-delay: 126ms; }
+
+@keyframes premium-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-9px) translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* Modals now have enough travel/scale to be visually obvious. */
+.premium-modal-backdrop {
+  animation: premium-backdrop-strong-in 280ms ease-out both;
+}
+
+.premium-modal {
+  animation: premium-modal-strong-in var(--motion-modal) var(--motion-emphasized) both;
+}
+
+@keyframes premium-backdrop-strong-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+    filter: blur(6px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Stronger tactile controls. */
+.premium-control:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: scale(0.94);
+  transition-duration: var(--motion-instant);
+}
+
+.premium-card:active {
+  transform: scale(0.982);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card:hover {
+    transform: translateY(-4px) scale(1.006);
+  }
+}
+
+/* Active nav/tab selection itself animates, not just its color. */
+.premium-nav-active {
+  animation: premium-nav-select 260ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-nav-select {
+  0% {
+    transform: translateY(2px) scale(0.94);
+  }
+  65% {
+    transform: translateY(-2px) scale(1.025);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Segmented controls visibly pop when selection changes. */
+.premium-segment[aria-pressed='true'] {
+  animation: premium-segment-select 280ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-segment-select {
+  0% {
+    transform: translateY(2px) scale(0.88);
+    filter: brightness(0.88);
+  }
+  62% {
+    transform: translateY(-2px) scale(1.045);
+    filter: brightness(1.12);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Accordion/reveal movement is now intentionally readable. */
+.premium-reveal {
+  animation: premium-reveal-strong-in 300ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-reveal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scaleY(0.91);
+    filter: blur(4px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scaleY(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Tooltips stay fast, but the arrival is now visible. */
+.premium-tooltip-content {
+  animation: premium-tooltip-strong-in 190ms var(--motion-snappy) both;
+}
+
+@keyframes premium-tooltip-strong-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-tab-stage {
+    animation-duration: 300ms;
+  }
+
+  .premium-dropdown {
+    animation-duration: 240ms;
+  }
+
+  .premium-modal {
+    animation-duration: 320ms;
+  }
+
+  .premium-control:active:not(:disabled),
+  .premium-nav:active:not(:disabled),
+  .premium-segment:active:not(:disabled),
+  .premium-accordion-trigger:active:not(:disabled) {
+    transform: scale(0.93);
+  }
+
+  .premium-card:active {
+    transform: scale(0.975);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-tab-stage,
+  .premium-dropdown,
+  .premium-dropdown .premium-menu-item,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-nav-active,
+  .premium-segment[aria-pressed='true'],
+  .premium-reveal,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+}

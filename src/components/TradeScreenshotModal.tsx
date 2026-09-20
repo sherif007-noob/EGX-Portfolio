@@ -279,8 +279,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   const totalFees = batchTrades.reduce((acc, t) => acc + (t.fees || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80 shrink-0">
           <div className="flex items-center gap-3">

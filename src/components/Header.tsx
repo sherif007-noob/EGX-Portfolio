@@ -144,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="premium-control relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700 hover:bg-slate-800 hover:border-amber-500/50 transition group"
+                className="premium-action relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
@@ -169,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 transition hover:border-cyan-400 disabled:opacity-50"
+                className="premium-action premium-filter-active-cyan flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -181,12 +181,12 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
-              className={`premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+              className={`premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                 isTokenExpired
-                  ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50 animate-pulse'
+                  ? 'premium-action-warning animate-pulse'
                   : isSheetsConnected
-                  ? 'bg-emerald-950/40 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/40'
-                  : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                  ? 'premium-action-success'
+                  : ''
               }`}
               title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
             >
@@ -207,14 +207,14 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-force-sync-btn"
                 onClick={handleForceSync}
                 disabled={syncStatus === 'syncing'}
-                className={`premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                className={`premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                   syncStatus === 'syncing'
-                    ? 'bg-amber-950/60 text-amber-300 border-amber-500/50 cursor-wait'
+                    ? 'premium-action-warning cursor-wait'
                     : syncStatus === 'success'
-                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/50'
+                    ? 'premium-action-success'
                     : syncStatus === 'error'
-                    ? 'bg-rose-950/60 text-rose-300 border-rose-500/50'
-                    : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                    ? 'premium-action-danger'
+                    : ''
                 }`}
                 title="Force bidirectional sync with Firebase (pulls newest trades from phone & pushes local updates)"
               >
@@ -242,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-backup-reconcile-btn"
                 onClick={onOpenBackupModal}
-                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition"
+                className="premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
@@ -255,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-900/30 transition active:scale-95"
+                className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
-              className="premium-control flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
+              className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Add Trade</span>
@@ -289,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="logout-btn"
                   onClick={onLogout}
-                  className="premium-control p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
+                  className="premium-icon-action premium-icon-delete p-1.5 rounded-md"
                   title="Sign out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -308,7 +308,7 @@ export const Header: React.FC<HeaderProps> = ({
                     console.error('Login error:', e);
                   }
                 }}
-                className="premium-control flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/50 shrink-0"
+                className="premium-action premium-action-primary flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0"
                 title="Sign in with Google to enable Firebase Cloud Sync across your devices"
               >
                 <LogIn className="w-3.5 h-3.5 text-blue-400" />

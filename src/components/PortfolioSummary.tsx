@@ -40,6 +40,12 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   const isPositiveUnrealized = metrics.unrealizedPnlEgp >= 0;
   const isPositiveRealized = metrics.realizedPnlEgp >= 0;
   const isPositiveDay = metrics.dayChangeEgp >= 0;
+  const dayGlowClass =
+    metrics.dayChangeEgp > 0
+      ? 'premium-glow-win'
+      : metrics.dayChangeEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
   const totalMarketVal = metrics.totalMarketValue !== undefined ? metrics.totalMarketValue : Math.max(0, metrics.totalValue - metrics.cashBalance);
 
   const formatEgp = (val: number) => {
@@ -123,7 +129,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Portfolio Value */}
-        <div className="premium-card premium-hero-card p-4 rounded-2xl flex flex-col justify-between">
+        <div className={`premium-card premium-hero-card p-4 rounded-2xl flex flex-col justify-between ${dayGlowClass}`}>
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Portfolio Value</span>

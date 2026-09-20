@@ -101,7 +101,7 @@ export function AnalyticsSelect<T extends string | number = string>({
   if (!selectedOption) return null;
 
   return (
-    <div ref={wrapperRef} className={`relative ${className}`}>
+    <div ref={wrapperRef} className={`relative ${open ? 'z-[70]' : ''} ${className}`}>
       <button
         type="button"
         aria-label={ariaLabel}

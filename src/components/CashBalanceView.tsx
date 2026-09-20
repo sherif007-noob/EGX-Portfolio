@@ -572,8 +572,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           <div className="premium-subpanel flex items-center gap-1.5 p-1 rounded-xl">
             <button
               id="action-select-deposit"
+              aria-pressed={activeAction === 'deposit'}
               onClick={() => setActiveAction('deposit')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`premium-segment flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${
                 activeAction === 'deposit'
                   ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
                   : 'text-slate-400 hover:text-white'
@@ -584,8 +585,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </button>
             <button
               id="action-select-withdraw"
+              aria-pressed={activeAction === 'withdraw'}
               onClick={() => setActiveAction('withdraw')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`premium-segment flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${
                 activeAction === 'withdraw'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
                   : 'text-slate-400 hover:text-white'
@@ -599,7 +601,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
         {/* Deposit Form */}
         {activeAction === 'deposit' && (
-          <form onSubmit={handleConfirmDeposit} className="space-y-4">
+          <form onSubmit={handleConfirmDeposit} className="premium-reveal space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Deposit Amount */}
               <div className="space-y-2">

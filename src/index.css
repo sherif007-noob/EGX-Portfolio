@@ -1007,3 +1007,36 @@ body {
     transition: none !important;
   }
 }
+
+
+/* Shared menu-item and select-trigger motion */
+.premium-select-trigger[aria-expanded='true'] {
+  border-color: rgba(34, 211, 238, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.premium-select-trigger[aria-expanded='true'] > svg:last-child {
+  color: #67e8f9;
+  filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.35));
+}
+
+.premium-menu-item {
+  transition:
+    transform var(--motion-fast) var(--motion-emphasized),
+    background-color var(--motion-fast) ease-out,
+    color var(--motion-fast) ease-out,
+    box-shadow var(--motion-fast) ease-out;
+}
+
+.premium-menu-item:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-menu-item:hover {
+    transform: translateX(3px);
+  }
+}

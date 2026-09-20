@@ -114,8 +114,9 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
 
         <div className="premium-subpanel flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
           <button
+            aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
+            className={`premium-segment px-3 py-1 rounded-md font-medium ${
               trajectoryMode === 'cumulative'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -124,8 +125,9 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
             Cumulative Curve
           </button>
           <button
+            aria-pressed={trajectoryMode === 'discrete'}
             onClick={() => setTrajectoryMode('discrete')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
+            className={`premium-segment px-3 py-1 rounded-md font-medium ${
               trajectoryMode === 'discrete'
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 : 'text-slate-400 hover:text-slate-200'

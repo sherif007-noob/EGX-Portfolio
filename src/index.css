@@ -1040,3 +1040,61 @@ body {
     transform: translateX(3px);
   }
 }
+
+
+/* Reports semantic state glows — usable on compact KPI/subpanel surfaces. */
+.premium-state-win,
+.premium-state-loss,
+.premium-state-breakeven,
+.premium-state-buy {
+  position: relative;
+  transition:
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    transform var(--premium-medium) var(--premium-ease);
+}
+
+.premium-state-win {
+  border-color: rgba(16, 185, 129, 0.44) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(16,185,129,0.16),
+    0 0 54px rgba(5,150,105,0.075);
+}
+
+.premium-state-loss {
+  border-color: rgba(244, 63, 94, 0.46) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(244,63,94,0.17),
+    0 0 54px rgba(225,29,72,0.08);
+}
+
+.premium-state-breakeven {
+  border-color: rgba(245, 158, 11, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(245,158,11,0.15),
+    0 0 52px rgba(217,119,6,0.07);
+}
+
+.premium-state-buy {
+  border-color: rgba(59, 130, 246, 0.44) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(59,130,246,0.16),
+    0 0 54px rgba(37,99,235,0.075);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-state-win:hover,
+  .premium-state-loss:hover,
+  .premium-state-breakeven:hover,
+  .premium-state-buy:hover {
+    transform: translateY(-1px);
+  }
+}

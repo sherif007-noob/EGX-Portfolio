@@ -390,7 +390,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+              className="premium-action absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-[10px]"
             >
               Clear
             </button>
@@ -403,41 +403,25 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           <div className="premium-subpanel flex items-center gap-1 p-1 rounded-xl">
             <button
               onClick={() => setOutcomeFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'ALL'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
             <button
               onClick={() => setOutcomeFilter('WIN')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'WIN'
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-emerald-400'
-              }`}
+              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
             <button
               onClick={() => setOutcomeFilter('LOSS')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'LOSS'
-                  ? 'bg-rose-600 text-white'
-                  : 'text-slate-400 hover:text-rose-400'
-              }`}
+              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
             <button
               onClick={() => setOutcomeFilter('BREAKEVEN')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'BREAKEVEN'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-400 hover:text-amber-400'
-              }`}
+              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>
@@ -468,7 +452,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 filteredCycles.map((c) => c.id)
               )
             }
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+            className="premium-action px-3 py-1.5 rounded-xl text-xs font-medium"
           >
             {expandedCycleIds.size < filteredCycles.length ? 'Expand All Phases' : 'Collapse All'}
           </button>
@@ -589,7 +573,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     <button
                       onClick={() => handleDelete(cycle)}
                       title="Delete this closed cycle"
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                      className="premium-icon-action premium-icon-delete p-2 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -794,7 +778,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     setSearchQuery('');
                     setOutcomeFilter('ALL');
                   }}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition active:scale-95 shadow-md shadow-purple-900/30"
+                  className="premium-action premium-action-purple px-4 py-2 rounded-xl font-semibold text-xs"
                 >
                   Clear All Filters &amp; Show All ({enrichedCycles.length})
                 </button>

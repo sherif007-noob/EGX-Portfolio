@@ -4,7 +4,6 @@ import {
   AreaChart,
   CartesianGrid,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -145,6 +144,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
+  const chartPlotRef = useRef<HTMLDivElement>(null);
+  const [chartTooltipEnabled, setChartTooltipEnabled] = useState(true);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
@@ -231,24 +232,33 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   }, [transactions, historicalPrices, capitalDeposits]);
 
   useEffect(() => {
-    if (!modeMenuOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (modeMenuRef.current && !modeMenuRef.current.contains(event.target as Node)) {
+    const handleGlobalPress = (event: Event) => {
+      const target = event.target as Node | null;
+      if (target && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
         setModeMenuOpen(false);
+      }
+      if (target && chartPlotRef.current && !chartPlotRef.current.contains(target)) {
+        setChartTooltipEnabled(false);
       }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setModeMenuOpen(false);
+      if (event.key === 'Escape') {
+        setModeMenuOpen(false);
+        setChartTooltipEnabled(false);
+      }
     };
 
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handleGlobalPress, true);
+    document.addEventListener('touchstart', handleGlobalPress, true);
+    document.addEventListener('mousedown', handleGlobalPress, true);
+    document.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handleGlobalPress, true);
+      document.removeEventListener('touchstart', handleGlobalPress, true);
+      document.removeEventListener('mousedown', handleGlobalPress, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [modeMenuOpen]);
+  }, []);
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
   const loading = timeframe === 'TODAY' ? intradayLoading && !intradayResult : historicalLoading;
@@ -313,6 +323,15 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     : summary.changeEgp;
   const positive = (toneValue ?? 0) >= 0;
   const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
+  const chartCurve = timeframe === 'TODAY' ? 'linear' : longRangeCurve;
+  const primaryStroke =
+    timeframe === 'TODAY' && isPercentMode
+      ? positive
+        ? ANALYTICS_CHART_THEME.emerald
+        : ANALYTICS_CHART_THEME.rose
+      : isPercentMode
+        ? ANALYTICS_CHART_THEME.cyan
+        : ANALYTICS_CHART_THEME.blue;
 
   const tooltip = (props: any) => {
     if (!props?.active || !props?.payload?.length) return null;
@@ -605,10 +624,10 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
   const renderPrimaryArea = () => (
     <Area
-      type={longRangeCurve}
+      type={chartCurve}
       dataKey={definition.primaryKey}
       name={definition.primaryLabel}
-      stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
+      stroke={primaryStroke}
       strokeWidth={2.25}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -617,63 +636,39 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       dot={false}
       activeDot={{
         r: 5,
-        fill: isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue,
+        fill: primaryStroke,
         stroke: '#020617',
         strokeWidth: 2,
       }}
+      isAnimationActive
+      animationDuration={320}
+      animationEasing="ease-out"
     />
   );
 
-  const renderLinearLines = () => (
-    <>
+  const renderSecondaryLine = () =>
+    definition.secondaryKey ? (
       <Line
-        type="linear"
-        dataKey={definition.primaryKey}
-        name={definition.primaryLabel}
-        stroke={
-          isPercentMode
-            ? positive
-              ? ANALYTICS_CHART_THEME.emerald
-              : ANALYTICS_CHART_THEME.rose
-            : ANALYTICS_CHART_THEME.blue
-        }
-        strokeWidth={2.25}
+        type={chartCurve}
+        dataKey={definition.secondaryKey}
+        name={definition.secondaryLabel}
+        stroke={ANALYTICS_CHART_THEME.purple}
+        strokeWidth={1.8}
+        strokeDasharray="6 4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         dot={false}
         activeDot={{
-          r: 5,
-          fill:
-            isPercentMode
-              ? positive
-                ? ANALYTICS_CHART_THEME.emerald
-                : ANALYTICS_CHART_THEME.rose
-              : ANALYTICS_CHART_THEME.blue,
+          r: 4,
+          fill: ANALYTICS_CHART_THEME.purple,
           stroke: '#020617',
           strokeWidth: 2,
         }}
-        isAnimationActive={false}
+        isAnimationActive
+        animationDuration={320}
+        animationEasing="ease-out"
       />
-      {definition.secondaryKey && (
-        <Line
-          type="linear"
-          dataKey={definition.secondaryKey}
-          name={definition.secondaryLabel}
-          stroke={ANALYTICS_CHART_THEME.purple}
-          strokeWidth={1.8}
-          strokeDasharray="6 4"
-          dot={false}
-          activeDot={{
-            r: 4,
-            fill: ANALYTICS_CHART_THEME.purple,
-            stroke: '#020617',
-            strokeWidth: 2,
-          }}
-          isAnimationActive
-          animationDuration={260}
-          animationEasing="ease-out"
-        />
-      )}
-    </>
-  );
+    ) : null;
 
   return (
     <>
@@ -700,7 +695,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             {modeMenuOpen && (
               <div
                 role="menu"
-                className="premium-floating premium-dropdown absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
+                className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
               >
                 {ANALYTICS_MODES.map((item) => {
                   const selected = item.mode === mode;
@@ -813,86 +808,45 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div className="h-64 sm:h-72">
+        <div
+          ref={chartPlotRef}
+          className="h-64 sm:h-72"
+          onPointerDownCapture={() => setChartTooltipEnabled(true)}
+          onTouchStartCapture={() => setChartTooltipEnabled(true)}
+        >
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
-            {timeframe === 'TODAY' ? (
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis
-                  dataKey="axisLabel"
-                  {...analyticsXAxisProps}
-                  interval="preserveStartEnd"
-                  minTickGap={28}
-                />
-                {renderYAxis()}
-                {renderReferenceLine()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                {renderLinearLines()}
-              </LineChart>
-            ) : isDepositsMode ? (
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
-                {renderYAxis()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                <Line
-                  type={longRangeCurve}
-                  dataKey="equity"
-                  name="Portfolio"
-                  stroke={ANALYTICS_CHART_THEME.blue}
-                  strokeWidth={2.25}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: ANALYTICS_CHART_THEME.blue,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-                <Line
-                  type={longRangeCurve}
-                  dataKey="netDeposits"
-                  name="Net Deposits"
-                  stroke={ANALYTICS_CHART_THEME.purple}
-                  strokeWidth={1.8}
-                  strokeDasharray="6 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: ANALYTICS_CHART_THEME.purple,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            ) : (
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
-                      stopOpacity={0.28}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
-                      stopOpacity={0.01}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
-                {renderYAxis()}
-                {renderReferenceLine()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                {renderPrimaryArea()}
-              </AreaChart>
-            )}
+            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={primaryStroke}
+                    stopOpacity={timeframe === 'TODAY' ? 0.32 : 0.28}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={primaryStroke}
+                    stopOpacity={0.01}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...analyticsGridProps} />
+              <XAxis
+                dataKey="axisLabel"
+                {...analyticsXAxisProps}
+                interval="preserveStartEnd"
+                minTickGap={timeframe === 'TODAY' ? 28 : undefined}
+              />
+              {renderYAxis()}
+              {renderReferenceLine()}
+              <Tooltip
+                active={chartTooltipEnabled ? undefined : false}
+                cursor={analyticsTooltipCursor}
+                content={tooltip}
+              />
+              {renderPrimaryArea()}
+              {renderSecondaryLine()}
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       )}

@@ -804,7 +804,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div className="h-64 sm:h-72">
+        <div key={`${timeframe}-${mode}`} className="premium-chart-stage h-64 sm:h-72">
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
             <AreaChart
               data={chartData}

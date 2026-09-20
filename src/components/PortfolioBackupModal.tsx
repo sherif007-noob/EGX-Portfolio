@@ -293,8 +293,8 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl space-y-5">
+    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="premium-modal relative w-full max-w-lg p-6 rounded-2xl space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2.5">

@@ -194,7 +194,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
   };
 
   return (
-    <div id="report-trading-performance" className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6 shadow-sm">
+    <div id="report-trading-performance" className="premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -216,7 +216,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
         {/* Action Controls: Filters & Export */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Timeframe selector */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="premium-report-glass-soft flex items-center p-1 rounded-xl">
             {(['ALL', 'YTD', '90D', '30D'] as TimeframeFilter[]).map((tf) => (
               <button
                 key={tf}
@@ -253,7 +253,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-control premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Download CSV report"
           >
             <Download className="w-3.5 h-3.5 text-blue-400" />
@@ -262,7 +262,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-control premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
@@ -273,7 +273,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
 
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
+        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -296,7 +296,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -317,7 +317,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -332,7 +332,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -352,10 +352,10 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       </div>
 
       {/* Main Indicators Scorecard Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+      <div className="premium-report-table overflow-x-auto rounded-xl">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+            <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
               <th className="py-3 px-4">Performance Indicator</th>
               <th className="py-3 px-4 text-right">Measured Result</th>
               <th className="py-3 px-4">Institutional Benchmark / Target</th>
@@ -364,7 +364,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-sans">
             {/* 1. Win Rate */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Percent className="w-3.5 h-3.5 text-blue-400" />
@@ -393,7 +393,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 2. Profit Factor */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -443,7 +443,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 3. Payoff Ratio */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -474,7 +474,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 4. Mathematical Expectancy */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -510,7 +510,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 5. Total Closed Trades & Confidence */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5 text-slate-400" />
@@ -539,7 +539,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 6. Total Winning Trades */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -561,7 +561,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 7. Total Losing Trades */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -583,7 +583,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 8. Win / Loss Count Ratio */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
@@ -610,7 +610,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 9. Average Trade P&L */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Target className="w-3.5 h-3.5 text-teal-400" />
@@ -638,7 +638,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 10. Average Win */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -658,7 +658,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 11. Average Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -684,7 +684,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 12. Largest Win */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Award className="w-3.5 h-3.5 text-emerald-400" />
@@ -713,7 +713,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 13. Largest Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -742,7 +742,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 14. Gross Profit */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -762,7 +762,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 15. Gross Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -782,7 +782,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 16. Net Realized P&L */}
-            <tr className="hover:bg-slate-900/50 transition bg-slate-900/40">
+            <tr className="transition bg-white/[0.012]">
               <td className="py-3 px-4">
                 <div className="font-bold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
@@ -811,7 +811,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 17. Max Drawdown */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -845,7 +845,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 18. Recovery Factor */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
@@ -874,7 +874,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 19. Average Holding Days */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-blue-400" />
@@ -894,7 +894,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 20. Total Brokerage Fees */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-amber-400" />

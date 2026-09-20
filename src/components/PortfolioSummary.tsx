@@ -46,6 +46,18 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       : metrics.dayChangeEgp < 0
       ? 'premium-glow-loss'
       : 'premium-glow-breakeven';
+  const unrealizedGlowClass =
+    metrics.unrealizedPnlEgp > 0
+      ? 'premium-glow-win'
+      : metrics.unrealizedPnlEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
+  const realizedGlowClass =
+    metrics.realizedPnlEgp > 0
+      ? 'premium-glow-win'
+      : metrics.realizedPnlEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
   const totalMarketVal = metrics.totalMarketValue !== undefined ? metrics.totalMarketValue : Math.max(0, metrics.totalValue - metrics.cashBalance);
 
   const formatEgp = (val: number) => {
@@ -181,7 +193,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Unrealized Gain */}
-        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
+        <div className={`premium-card p-4 rounded-2xl flex flex-col justify-between ${unrealizedGlowClass}`}>
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Unrealized P&amp;L</span>
@@ -217,7 +229,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Realized Profit (Closed Trades) */}
-        <div className="premium-card p-4 rounded-2xl flex flex-col justify-between">
+        <div className={`premium-card p-4 rounded-2xl flex flex-col justify-between ${realizedGlowClass}`}>
           <div>
             <div className="text-xs text-slate-400 font-medium">Realized Gain (Booked)</div>
             <div className="mt-2 flex items-baseline gap-1.5">

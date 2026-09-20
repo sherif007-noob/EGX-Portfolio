@@ -666,7 +666,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
                 <button
                   onClick={() => toggleExpand(cycle.id)}
-                  className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition"
+                  className="premium-accordion-trigger flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition"
                 >
                   {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   <span>
@@ -684,7 +684,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
               {/* Expanded Multi-Phase Execution Breakdown */}
               {isExpanded && (
-                <div className="mt-3.5 p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-3 animate-in fade-in duration-150">
+                <div className="premium-reveal mt-3.5 p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
                     <span className="flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-purple-400" />

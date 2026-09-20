@@ -81,7 +81,7 @@ export const ChartTooltipShell: React.FC<ChartTooltipShellProps> = ({
 }) => (
   <div
     className={[
-      'premium-floating min-w-[150px] max-w-[min(78vw,320px)] rounded-xl border',
+      'premium-floating premium-tooltip-content min-w-[150px] max-w-[min(78vw,320px)] rounded-xl border',
       'px-3 py-2.5 text-xs',
       'text-slate-200',
       className,

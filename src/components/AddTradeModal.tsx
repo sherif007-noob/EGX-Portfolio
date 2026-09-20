@@ -218,14 +218,14 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Screenshot Banner Shortcut */}
         {onOpenScreenshotModal && (
-          <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-blue-500/15 border border-emerald-500/30 text-xs flex items-center justify-between gap-3">
+          <div className="premium-modal-section p-3 rounded-xl border-emerald-500/30 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-emerald-200">
               <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Have a broker receipt or screenshot?</span>
@@ -236,7 +236,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 onClose();
                 onOpenScreenshotModal();
               }}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shrink-0 transition shadow-sm"
+              className="premium-action premium-action-success px-3 py-1.5 rounded-lg font-bold text-[11px] shrink-0"
             >
               Scan &amp; Auto-Fill
             </button>
@@ -245,7 +245,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
         {/* Existing Position DCA Banner */}
         {activeExistingPosition && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
+          <div className="premium-modal-section p-3 rounded-xl border-amber-500/30 text-xs text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-amber-300">
               <Layers className="w-4 h-4" />
               <span>Existing Position Detected (DCA Mode)</span>
@@ -288,7 +288,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                     key={t.ticker}
                     type="button"
                     onClick={() => applySelectedTicker(t)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-slate-300 transition hover:bg-slate-900 hover:text-white"
+                    className="premium-menu-item flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-slate-300 hover:text-white"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <StockLogo
@@ -301,7 +301,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-white tracking-wider">{t.ticker}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-300">
+                          <span className="premium-chip text-[10px] px-1.5 py-0.5 rounded text-slate-300">
                             {t.sector}
                           </span>
                         </div>
@@ -371,7 +371,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                       setIsManualPrice(false);
                       setBuyPrice(selectedTickerData.lastPrice);
                     }}
-                    className="text-[10px] text-blue-400 hover:text-blue-300 underline"
+                    className="premium-action px-2 py-1 rounded-lg text-[10px] text-blue-300"
                   >
                     Use latest fetched ({selectedTickerData.lastPrice.toFixed(2)})
                   </button>
@@ -397,7 +397,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Brokerage Fees */}
-          <div className="premium-subpanel p-3 rounded-xl space-y-2">
+          <div className="premium-inset-glass p-3 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <label className="font-semibold text-slate-200 flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
@@ -409,7 +409,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                   setIsManualFee(false);
                   setBrokerageFee(estimateBrokerageFee(shares * buyPrice, feeEstimate));
                 }}
-                className="text-[10px] text-amber-400 hover:text-amber-300 underline"
+                className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px]"
               >
                 Reset to learned avg ({learnedFeePercent.toFixed(3)}%)
               </button>
@@ -425,7 +425,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                     setBrokerageFee(Math.max(0, Number(value)));
                   }}
                   accent="amber"
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                  className="premium-field w-full px-3 py-1.5 rounded-xl text-amber-300 font-mono text-xs"
                   placeholder="0.00"
                 />
               </div>
@@ -456,7 +456,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 onValueChange={(value) => setTargetPrice(Number(value))}
                 accent="emerald"
                 placeholder="Optional target..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-emerald-400 font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl text-emerald-400 font-mono"
               />
             </div>
             <div>
@@ -468,7 +468,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 onValueChange={(value) => setStopLoss(Number(value))}
                 accent="rose"
                 placeholder="Optional stop loss..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-rose-400 font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl text-rose-400 font-mono"
               />
             </div>
           </div>
@@ -500,7 +500,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Financial Breakdown Ribbon */}
-          <div className="premium-subpanel p-3 rounded-xl grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="premium-inset-glass p-3 rounded-xl grid grid-cols-3 gap-2 text-center text-xs">
             <div>
               <span className="text-slate-400 text-[10px] block">Gross Equities</span>
               <span className="font-mono font-bold text-white">
@@ -534,7 +534,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Cash Deduction Option */}
-          <div className="premium-subpanel flex items-center gap-2 p-3 rounded-xl">
+          <div className="premium-modal-section flex items-center gap-2 p-3 rounded-xl">
             <input
               type="checkbox"
               id="deductCash"
@@ -552,13 +552,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="premium-control px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 font-semibold"
+              className="premium-action px-4 py-2 rounded-xl font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="premium-control premium-shimmer-border px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-950/35"
+              className="premium-action premium-action-primary premium-shimmer-border px-5 py-2 rounded-xl font-semibold"
             >
               {activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
             </button>

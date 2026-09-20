@@ -52,25 +52,6 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
   const sectors = Array.from(new Set(positions.map((p) => p.sector)));
 
-  const visibleUnrealizedPnl = filteredPositions.reduce((sum, pos) => {
-    const totalCost = pos.shares * pos.avgBuyPrice + (pos.totalFees || 0);
-    const effectivePrice =
-      pos.currentPrice && pos.currentPrice > 0
-        ? pos.currentPrice
-        : pos.avgBuyPrice > 0
-        ? pos.avgBuyPrice
-        : 0;
-    const currentValue = pos.shares * effectivePrice;
-    return sum + (effectivePrice > 0 ? currentValue - totalCost : 0);
-  }, 0);
-
-  const visibleGlowClass =
-    visibleUnrealizedPnl > 0
-      ? 'premium-panel-glow-win'
-      : visibleUnrealizedPnl < 0
-      ? 'premium-panel-glow-loss'
-      : 'premium-panel-glow-breakeven';
-
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
       minimumFractionDigits: 2,
@@ -81,7 +62,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className={`premium-glass relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl ${visibleGlowClass}`}>
+      <div className="premium-glass relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -123,8 +104,8 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className={`premium-table-shell hidden lg:block rounded-2xl overflow-visible ${visibleGlowClass}`}>
-        <table className="w-full text-left text-xs border-separate border-spacing-y-[2px]">
+      <div className="premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
+        <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-medium">
               <th className="py-3 px-4">Ticker &amp; Security</th>

@@ -6,7 +6,7 @@ import { DateInput } from './DateInput';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
-import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
+import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime, isCairoCurrentDate } from '../utils/executionTime';
 import {
   BookOpen,
   Clock,
@@ -354,6 +354,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
     if (isNaN(priceNum) || priceNum <= 0) {
       setEditFeedback('Please enter a valid positive price per share.');
+      return;
+    }
+
+    if (editTicker.trim().toUpperCase() !== 'CASH' && isCairoCurrentDate(editDate) && !editTime) {
+      setEditFeedback('Execution time is required for a current-session market trade so Today analytics remain accurate.');
       return;
     }
 
@@ -1190,8 +1195,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="time"
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
+                    required={editTicker.trim().toUpperCase() !== 'CASH' && isCairoCurrentDate(editDate)}
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
                   />
+                  {editTicker.trim().toUpperCase() !== 'CASH' && isCairoCurrentDate(editDate) && (
+                    <span className="block text-[10px] text-cyan-300">
+                      Required for current-session intraday analytics.
+                    </span>
+                  )}
                 </div>
               </div>
 

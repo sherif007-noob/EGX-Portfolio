@@ -133,7 +133,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         <div
           role="listbox"
           className={[
-            'premium-floating absolute left-0 top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
+            'premium-floating premium-dropdown absolute left-0 top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
             'max-h-72 overflow-y-auto',
             menuClassName,
           ].join(' ')}

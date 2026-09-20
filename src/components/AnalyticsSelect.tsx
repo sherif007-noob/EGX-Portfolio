@@ -109,7 +109,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         className={[
-          'premium-control group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200',
+          'premium-control premium-select-trigger group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200',
           'hover:border-slate-600 hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2',
           accentClasses.ring,
           compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm',
@@ -151,7 +151,7 @@ export function AnalyticsSelect<T extends string | number = string>({
                   setOpen(false);
                 }}
                 className={[
-                  'flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-[background-color,color,transform] duration-150 ease-out hover:translate-x-0.5',
+                  'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
                   selected
                     ? accentClasses.selected
                     : 'text-slate-300 hover:bg-slate-900 hover:text-white',

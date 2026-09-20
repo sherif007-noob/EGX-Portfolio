@@ -282,7 +282,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="premium-floating absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5">
+              <div className="premium-floating premium-dropdown absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5">
                 {suggestions.map((t) => (
                   <button
                     key={t.ticker}

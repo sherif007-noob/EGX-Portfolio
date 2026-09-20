@@ -145,11 +145,11 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
   return (
     <div
       id="schema-sync-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto"
+      className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl my-6 rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
+        className="premium-modal w-full max-w-3xl my-6 rounded-2xl p-6 text-slate-100 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

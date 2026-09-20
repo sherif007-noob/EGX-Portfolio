@@ -273,7 +273,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
 
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -296,7 +296,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -317,7 +317,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -332,7 +332,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />

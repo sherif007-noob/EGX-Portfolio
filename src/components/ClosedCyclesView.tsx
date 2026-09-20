@@ -21,7 +21,6 @@ import {
   Receipt,
   Trash2,
   ChevronDown,
-  ChevronUp,
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
@@ -668,7 +667,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   onClick={() => toggleExpand(cycle.id)}
                   className="premium-accordion-trigger flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition"
                 >
-                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                   <span>
                     {isExpanded ? 'Hide' : 'View'} Execution Phases &amp; Leg Breakdown (
                     {cycle.buyPhases.length} Buy / {cycle.sellPhases.length} Sell phases)

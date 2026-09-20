@@ -720,3 +720,24 @@ body {
 .premium-row-breakeven {
   box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.58);
 }
+
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-table-shell tbody tr.premium-row-win:hover {
+    box-shadow:
+      inset 3px 0 0 rgba(52, 211, 153, 0.82),
+      inset 14px 0 28px rgba(16, 185, 129, 0.055);
+  }
+
+  .premium-table-shell tbody tr.premium-row-loss:hover {
+    box-shadow:
+      inset 3px 0 0 rgba(251, 113, 133, 0.84),
+      inset 14px 0 28px rgba(244, 63, 94, 0.055);
+  }
+
+  .premium-table-shell tbody tr.premium-row-breakeven:hover {
+    box-shadow:
+      inset 3px 0 0 rgba(251, 191, 36, 0.78),
+      inset 14px 0 28px rgba(245, 158, 11, 0.05);
+  }
+}

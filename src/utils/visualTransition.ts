@@ -14,6 +14,8 @@ type ViewTransitionDocument = Document & {
   startViewTransition?: (update: () => void) => ViewTransitionLike;
 };
 
+let activeTransitionId = 0;
+
 export function runVisualTransition(
   name: PremiumVisualTransition,
   update: () => void,
@@ -35,6 +37,7 @@ export function runVisualTransition(
   }
 
   const root = document.documentElement;
+  const transitionId = ++activeTransitionId;
   root.dataset.premiumTransition = name;
 
   try {
@@ -42,7 +45,7 @@ export function runVisualTransition(
     Promise.resolve(transition.finished)
       .catch(() => undefined)
       .finally(() => {
-        if (root.dataset.premiumTransition === name) {
+        if (activeTransitionId === transitionId && root.dataset.premiumTransition === name) {
           delete root.dataset.premiumTransition;
         }
       });

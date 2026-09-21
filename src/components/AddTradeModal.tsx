@@ -232,10 +232,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                runVisualTransition('modal-close', () => {
-                  onClose();
-                  onOpenScreenshotModal();
-                });
+                onClose();
+                window.setTimeout(() => onOpenScreenshotModal(), 260);
               }}
               className="premium-action premium-action-success px-3 py-1.5 rounded-lg font-bold text-[11px] shrink-0"
             >

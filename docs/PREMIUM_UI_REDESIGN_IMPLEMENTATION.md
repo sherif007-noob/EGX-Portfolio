@@ -285,7 +285,55 @@ Representative audit commits:
 - Family 4: Cash Deposit/Withdraw, Cash history, Closed Cycle filters, Transaction filters, Edit Transaction BUY/SELL sections, allocation state changes, Trading Performance filters, Monthly filters, Positions sector filters, Directory sector filters, feedback/state banners, and accordion reveals.
 - Family 5: primary unified analytics chart and all secondary Risk & Cost chart series.
 
-Phase 4 remains **in progress** pending user visual validation of this audited pass.
+
+
+### Screen-recording deep audit — mobile + desktop
+
+Two real recordings were reviewed frame-by-frame after the audit pass:
+
+- iPhone/mobile recording: ~71.4 s at ~55.8 fps, 1320×2868.
+- Desktop Chrome recording: ~50.3 s at 24 fps, 1920×1200.
+
+The recordings exposed problems that were not obvious from static code review:
+
+- Browser View Transition snapshots painted old and new application trees simultaneously, producing visible duplicate cards, duplicated report headings, ghosted controls, and stale content overlays.
+- Several tab/filter changes contained near-empty midpoint frames because the outgoing snapshot faded before the incoming snapshot became readable.
+- Snapshot geometry interpolation interacted badly with long responsive pages and current scroll position, producing apparent jumps/crops on phone.
+- A large tab wrapper was permanently promoted with `will-change` / `translateZ(0)`, forcing expensive raster/compositor work over very tall mobile pages.
+- Nested/legacy entrance animations could replay inside a parent transition, making a single state change look like several unrelated appearances.
+- Rapid repeated state changes could complete one animation while a newer request was pending, allowing an older cached tree to flash back before the next transition began.
+- Modal exits were inconsistent: some used presence, some instant unmount, and some retained legacy exit classes.
+
+#### Recording-driven correction
+
+The accepted architecture is now **single-tree sequential motion**:
+
+`current tree exits in place -> React swaps once -> latest requested tree enters`
+
+No app-content transition uses browser full-page snapshots.
+
+Implementation:
+- **943ff47 / 9ef1e28 / 619275d** — retire snapshot-based app-content transitions and introduce deterministic motion primitives.
+- **9f22b49** — deterministic tab exit/swap/enter.
+- **8a2e48f** — duplicate-free Transaction filter swaps.
+- **7f27137** — Trading Performance transitions one stable result tree.
+- **e366256** — Monthly report swaps one stable tree.
+- **368041c / cc0f827 / 9bac54c / 973504c** — stabilize Closed Cycles, Positions, Directory, and Cash result swaps.
+- **963a1c6** — make the MotionSwap state machine resilient to rapid repeated state changes so an older tree cannot flash back.
+- **a6767d2** — reduce midpoint disappearance, remove permanent whole-page GPU promotion, reduce mobile displacement, and fully neutralize retired `view-transition-name` behavior.
+- **22a3eef** — unify modal exit behavior without snapshot compositing; presence-aware overlays keep their React exit, legacy overlays receive a short DOM exit before their normal close callback.
+- **f981a5e / b39fdbf** — repair MotionSwap wrapper markup found by CI during the recording-driven rewrite.
+
+The revised transition midpoint intentionally remains partially visible instead of fading near zero:
+- tabs meet around ~46–52% opacity;
+- state/result changes meet around ~58–62% opacity.
+
+This masks the single React swap without creating duplicate layers or a blank flash.
+
+The chart family remains unchanged because the user had already validated Today <-> daily main/secondary chart interpolation as correct.
+
+
+Phase 4 remains **in progress** pending user visual validation of the recording-driven single-tree pass.
 
 ## Current validated visual rules
 

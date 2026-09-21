@@ -14,6 +14,10 @@ import {
 import { curveCardinal } from 'd3-shape';
 import { Check, ChevronDown } from 'lucide-react';
 import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
+import {
+  interpolateWeeklyAreaFullWidth,
+  interpolateWeeklyLineFullWidth,
+} from './weeklyTransitionInterpolation';
 import type { TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
@@ -143,7 +147,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
-  const [chartAnimationDuration, setChartAnimationDuration] = useState(520);
+  const [useWeeklyFullWidthMorph, setUseWeeklyFullWidthMorph] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
@@ -257,13 +261,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const handleTimeframeChange = (nextTimeframe: AnalyticsTimeframe) => {
     if (nextTimeframe === timeframe) return;
 
-    // Before Phase 4 v2, the native Recharts morph used 320 ms. The later
-    // 520 ms timing exposed Recharts' sparse-point intermediate geometry for
-    // the short 1W series. Preserve the current 520 ms feel everywhere else,
-    // but restore the proven pre-v2 timing whenever 1W is one side of the
-    // transition.
-    const crossesOneWeek = timeframe === '1W' || nextTimeframe === '1W';
-    setChartAnimationDuration(crossesOneWeek ? 320 : 520);
+    setUseWeeklyFullWidthMorph(timeframe === '1W' || nextTimeframe === '1W');
     setTimeframe(nextTimeframe);
   };
 
@@ -652,8 +650,11 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         strokeWidth: 2,
       }}
       isAnimationActive
-      animationDuration={chartAnimationDuration}
+      animationDuration={520}
       animationEasing="ease-out"
+      animationInterpolateFn={
+        useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+      }
     />
   );
 
@@ -676,8 +677,11 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           strokeWidth: 2,
         }}
         isAnimationActive
-        animationDuration={chartAnimationDuration}
+        animationDuration={520}
         animationEasing="ease-out"
+        animationInterpolateFn={
+          useWeeklyFullWidthMorph ? interpolateWeeklyLineFullWidth : undefined
+        }
       />
     ) : null;
 
@@ -882,6 +886,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
+        useWeeklyFullWidthMorph={useWeeklyFullWidthMorph}
       />
     </>
   );

@@ -107,6 +107,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
+        data-accent={accent}
         onClick={() => setOpen((current) => !current)}
         className={[
           'premium-control premium-select-trigger group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import { EGXTicker } from '../types';
 import { StockLogo } from './StockLogo';
 import { AnalyticsSelect } from './AnalyticsSelect';
@@ -180,7 +181,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </div>
 
       {/* Grid of Tickers */}
-      <div className="premium-directory-results grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-directory-results grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredTickers.map((ticker) => {
           const isPositive = ticker.changePercent >= 0;
 
@@ -264,7 +265,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             </div>
           );
         })}
-      </div>
+      </MotionSwap>
     </div>
   );
 };

@@ -2129,3 +2129,196 @@ body {
     transform: none !important;
   }
 }
+
+
+/* Phase 3/3.2 selector + modal consistency refinement */
+
+/* Selector language: inspired by Portfolio Allocation / trajectory segmented controls. */
+.premium-selector-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.026), transparent 55%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 8px 22px rgba(0,0,0,0.14);
+  -webkit-backdrop-filter: blur(15px) saturate(135%);
+  backdrop-filter: blur(15px) saturate(135%);
+}
+
+.premium-filter-pill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgb(148 163 184);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.premium-filter-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 120%, rgba(34, 211, 238, 0.18), transparent 64%);
+  transition: opacity 160ms ease-out;
+}
+
+.premium-filter-pill > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-filter-pill:hover:not(:disabled) {
+  color: rgb(226 232 240);
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.42);
+}
+
+/* Keep selected state visible under the pointer; hover must never mask it. */
+.premium-filter-pill[aria-pressed="true"]::before {
+  opacity: 1;
+}
+
+.premium-filter-active-neutral,
+.premium-filter-active-neutral:hover:not(:disabled) {
+  color: rgb(241 245 249);
+  border-color: rgba(148,163,184,0.30);
+  background: rgba(71,85,105,0.26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 16px rgba(0,0,0,0.16);
+}
+.premium-filter-active-blue,
+.premium-filter-active-blue:hover:not(:disabled) {
+  color: rgb(191 219 254);
+  border-color: rgba(59,130,246,0.34);
+  background: rgba(59,130,246,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(59,130,246,0.09);
+}
+.premium-filter-active-cyan,
+.premium-filter-active-cyan:hover:not(:disabled) {
+  color: rgb(165 243 252);
+  border-color: rgba(34,211,238,0.34);
+  background: rgba(34,211,238,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(34,211,238,0.09);
+}
+.premium-filter-active-emerald,
+.premium-filter-active-emerald:hover:not(:disabled) {
+  color: rgb(167 243 208);
+  border-color: rgba(16,185,129,0.34);
+  background: rgba(16,185,129,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(16,185,129,0.09);
+}
+.premium-filter-active-rose,
+.premium-filter-active-rose:hover:not(:disabled) {
+  color: rgb(254 205 211);
+  border-color: rgba(244,63,94,0.34);
+  background: rgba(244,63,94,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(244,63,94,0.09);
+}
+.premium-filter-active-purple,
+.premium-filter-active-purple:hover:not(:disabled) {
+  color: rgb(221 214 254);
+  border-color: rgba(139,92,246,0.34);
+  background: rgba(139,92,246,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(139,92,246,0.09);
+}
+.premium-filter-active-amber,
+.premium-filter-active-amber:hover:not(:disabled) {
+  color: rgb(253 230 138);
+  border-color: rgba(245,158,11,0.34);
+  background: rgba(245,158,11,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(245,158,11,0.08);
+}
+
+/* Semantic choices remain colored even when not selected in edit-cash modal. */
+.premium-choice-success {
+  color: rgb(167 243 208);
+  border-color: rgba(16,185,129,0.24);
+  background: rgba(16,185,129,0.07);
+}
+.premium-choice-danger {
+  color: rgb(254 205 211);
+  border-color: rgba(244,63,94,0.24);
+  background: rgba(244,63,94,0.07);
+}
+.premium-choice-success:hover:not(:disabled) {
+  color: rgb(209 250 229);
+  border-color: rgba(16,185,129,0.40);
+  background: rgba(16,185,129,0.13);
+}
+.premium-choice-danger:hover:not(:disabled) {
+  color: rgb(255 228 230);
+  border-color: rgba(244,63,94,0.40);
+  background: rgba(244,63,94,0.13);
+}
+
+/* Strong input outline where financial amount fields need explicit boundaries. */
+.premium-field-strong {
+  border-color: rgba(100,116,139,0.68) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 0 0 1px rgba(15,23,42,0.18);
+}
+.premium-field-strong:focus,
+.premium-field-strong:focus-visible {
+  border-color: rgba(56,189,248,0.60) !important;
+}
+
+/* Notes are readable above the surface rather than visually buried beneath blur. */
+.premium-textarea-surface {
+  position: relative;
+  z-index: 2;
+  background: rgba(7, 15, 30, 0.76) !important;
+  border-color: rgba(100,116,139,0.58) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: rgb(248 250 252) !important;
+}
+
+/* Native time-picker glyph should match the white custom date control. */
+.premium-time-input {
+  color-scheme: dark;
+}
+.premium-time-input::-webkit-calendar-picker-indicator {
+  opacity: 0.92;
+  filter: invert(1) brightness(1.55);
+  cursor: pointer;
+}
+
+/* Analytics dropdowns must float above report/month cards rather than below them. */
+.premium-report-glass:has([aria-expanded="true"]),
+.premium-report-glass-soft:has([aria-expanded="true"]),
+.premium-card:has([aria-expanded="true"]) {
+  z-index: 140;
+  overflow: visible;
+}
+
+/* Hero-level report metrics use the same hierarchy as the dashboard hero cards. */
+.premium-hero-metric,
+.premium-report-hero {
+  position: relative;
+  border: 1px solid rgba(148,163,184,0.20);
+  background:
+    radial-gradient(circle at 16% -20%, rgba(34,211,238,0.07), transparent 38%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), transparent 42%),
+    rgba(15,23,42,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.075),
+    0 18px 42px rgba(0,0,0,0.26),
+    0 0 30px rgba(34,211,238,0.045);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+
+.premium-report-hero {
+  overflow: hidden;
+}

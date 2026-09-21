@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
+import { PremiumModalMotion } from './PremiumMotion';
 import { Position } from '../types';
 import { X, Target, ShieldAlert, FileText, Save, CheckCircle2 } from 'lucide-react';
 
@@ -23,19 +24,23 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
   onSave,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
+  const lastPositionRef = useRef<Position | null>(position);
+  if (position) lastPositionRef.current = position;
+  const displayPosition = position ?? lastPositionRef.current;
+
   const [targetPrice, setTargetPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
     if (position) {
-      setTargetPrice(position.targetPrice !== undefined ? String(position.targetPrice) : '');
-      setStopLoss(position.stopLoss !== undefined ? String(position.stopLoss) : '');
-      setNotes(position.notes || '');
+      setTargetPrice(displayPosition.targetPrice !== undefined ? String(displayPosition.targetPrice) : '');
+      setStopLoss(displayPosition.stopLoss !== undefined ? String(displayPosition.stopLoss) : '');
+      setNotes(displayPosition.notes || '');
     }
   }, [position]);
 
-  if (!isOpen || !position) return null;
+  if (!displayPosition) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +48,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
     const slNum = stopLoss ? parseFloat(stopLoss) : undefined;
 
     onSave({
-      id: position.id,
+      id: displayPosition.id,
       targetPrice: tpNum && !isNaN(tpNum) && tpNum > 0 ? tpNum : undefined,
       stopLoss: slNum && !isNaN(slNum) && slNum > 0 ? slNum : undefined,
       notes: notes.trim() || undefined,
@@ -51,17 +56,22 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
     requestClose();
   };
 
-  const currentPrice = position.currentPrice || position.avgBuyPrice;
+  const currentPrice = displayPosition.currentPrice || displayPosition.avgBuyPrice;
   const targetProfitPct = targetPrice && parseFloat(targetPrice) > 0
-    ? ((parseFloat(targetPrice) - position.avgBuyPrice) / position.avgBuyPrice) * 100
+    ? ((parseFloat(targetPrice) - displayPosition.avgBuyPrice) / displayPosition.avgBuyPrice) * 100
     : null;
   const stopLossPct = stopLoss && parseFloat(stopLoss) > 0
-    ? ((parseFloat(stopLoss) - position.avgBuyPrice) / position.avgBuyPrice) * 100
+    ? ((parseFloat(stopLoss) - displayPosition.avgBuyPrice) / displayPosition.avgBuyPrice) * 100
     : null;
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="premium-modal w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-5">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      panelClassName="premium-modal w-full max-w-md rounded-2xl p-5 sm:p-6 space-y-5"
+      onBackdropClick={requestClose}
+      panelAriaLabel={`Edit ${displayPosition.ticker} position targets`}
+    >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
           <div className="flex items-center gap-2.5">
@@ -72,11 +82,11 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 Edit Position Targets
                 <span className="premium-chip text-xs px-2 py-0.5 rounded-lg font-mono text-emerald-400">
-                  {position.ticker}
+                  {displayPosition.ticker}
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                {position.companyName} • Avg Cost: {position.avgBuyPrice.toFixed(2)} EGP
+                {displayPosition.companyName} • Avg Cost: {displayPosition.avgBuyPrice.toFixed(2)} EGP
               </p>
             </div>
           </div>
@@ -99,7 +109,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
           <div>
             <span className="text-slate-500 block">Shares Held</span>
             <span className="font-mono font-bold text-slate-200 text-sm">
-              {position.shares.toLocaleString()}
+              {displayPosition.shares.toLocaleString()}
             </span>
           </div>
         </div>
@@ -185,7 +195,6 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

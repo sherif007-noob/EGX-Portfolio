@@ -998,6 +998,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </tbody>
           </table>
         </div>
+        </MotionSwap>
       </div>
 
       {/* Edit Transaction Modal */}

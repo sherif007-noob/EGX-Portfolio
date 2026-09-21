@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -110,7 +111,8 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="premium-positions-results premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
+      <div className="premium-table-shell rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
@@ -334,9 +336,10 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           </tbody>
         </table>
       </div>
+      </MotionSwap>
 
       {/* Mobile Card Layout */}
-      <div className="premium-positions-results lg:hidden space-y-3">
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results lg:hidden space-y-3">
         {filteredPositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
           const currentValue = pos.shares * pos.currentPrice;

@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900/95 to-slate-800/80 border border-slate-700/70 flex items-center justify-center p-1.5 shadow-[0_10px_28px_rgba(0,0,0,0.32),0_0_26px_rgba(34,211,238,0.08)] shrink-0">
+            <div className="premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
               <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -277,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
             {authUser ? (
               <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800 shrink-0">
                 <div 
-                  className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xs overflow-hidden ring-1 ring-emerald-500/40"
+                  className="premium-chip w-7 h-7 rounded-full flex items-center justify-center text-slate-300 text-xs overflow-hidden ring-1 ring-emerald-500/40"
                   title={`Signed in: ${authUser.email || 'User'} (Cloud Synced)`}
                 >
                   {authUser.photoURL ? (

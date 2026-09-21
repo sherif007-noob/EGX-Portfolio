@@ -172,8 +172,9 @@ Intent:
 - Never make navigation feel blocked by animation.
 
 Target timing:
-- Major page/context transition: approximately **420–460 ms**.
-- Nav-selection feedback: approximately **300–320 ms**.
+- Major page/context transition: approximately **520–560 ms**.
+- Nav-selection feedback: approximately **380–420 ms**.
+- Major tab changes must animate both the outgoing and incoming context, not only the new tab entrance.
 
 ### Family 2 — Interactive controls
 
@@ -191,8 +192,8 @@ Intent:
 - Avoid exaggerated bouncing.
 
 Target timing:
-- Hover/focus/control transition: approximately **240–280 ms**.
-- Selector state settle: approximately **300–320 ms**.
+- Hover/focus/control transition: approximately **300–320 ms**.
+- Selector state settle: approximately **400–420 ms**.
 - Press response may be faster than hover, but must not snap abruptly.
 
 ### Family 3 — Overlays
@@ -210,8 +211,9 @@ Intent:
 - Overlay motion must preserve viewport focus and layering.
 
 Target timing:
-- Dropdown/popover: approximately **340–380 ms**.
-- Modal/backdrop: approximately **380–440 ms**.
+- Dropdown/popover: approximately **440–480 ms**.
+- Modal/backdrop: approximately **520–560 ms**.
+- Modal exit is part of the overlay family and must be visibly animated rather than disappearing on unmount.
 
 ### Family 4 — Content / state changes
 
@@ -229,8 +231,9 @@ Intent:
 - Dynamic content should enter as one coherent surface.
 
 Target timing:
-- Content/reveal transition: approximately **400–420 ms**.
+- Content/reveal/result transition: approximately **500–540 ms**.
 - Tooltips stay quicker, approximately **200–220 ms**.
+- Filtered/replaced content should transition old -> new; selector animation alone is not sufficient.
 
 ### Family 5 — Charts / financial data visualization
 
@@ -254,7 +257,7 @@ Target timing:
 
 The accepted implementation must specifically satisfy:
 
-- Motion is clearly noticeable but **slower than the provisional pass**, which was judged too fast.
+- Motion is clearly noticeable and uses the slower audited cadence; the earlier provisional and first canonical pass were both judged too fast in several families.
 - Motion coverage is systematic through the five families rather than added component-by-component without a shared language.
 - The primary analytics chart transition **to and from Today** must match the quality/continuity of transitions between daily timeframes.
 - The secondary Risk & Cost charts must animate Today/intraday data with the same transition language as other timeframes.
@@ -270,6 +273,9 @@ Guardrails:
 Acceptance:
 - Every major interaction belongs to one of the five families.
 - Timing is consistent within each family.
+- Tab/context changes include outgoing + incoming motion.
+- Overlay family includes modal exit motion.
+- Filter families animate both control state and the affected result surface.
 - No leftover provisional motion visibly conflicts with the canonical family timing.
 - Today and non-Today chart transitions feel like one system.
 - Reduced-motion removes nonessential animation.

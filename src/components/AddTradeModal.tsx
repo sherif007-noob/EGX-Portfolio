@@ -325,7 +325,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Company Name & Sector */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="premium-form-section grid grid-cols-2 gap-3 p-3 rounded-xl">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Company Name</label>
               <input
@@ -348,7 +348,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Shares & Buy Price */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="premium-form-section grid grid-cols-2 gap-3 p-3 rounded-xl">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Number of Shares</label>
               <NumberStepperInput
@@ -446,7 +446,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Targets & Stop Loss */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="premium-form-section grid grid-cols-2 gap-3 p-3 rounded-xl">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Target Price (EGP)</label>
               <NumberStepperInput
@@ -474,7 +474,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Execution date and time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
             <DateInput
               id="trade-execution-date"
               label="Trade Execution Date"
@@ -540,7 +540,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               id="deductCash"
               checked={deductFromCash}
               onChange={(e) => setDeductFromCash(e.target.checked)}
-              className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 bg-slate-700 border-slate-600"
+              className="premium-checkbox"
             />
             <label htmlFor="deductCash" className="text-slate-300 text-xs select-none">
               Deduct <strong className="text-white font-mono">{netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong> (including fees) from cash balance ({cashBalance.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP available)

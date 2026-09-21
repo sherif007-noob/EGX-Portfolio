@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -81,8 +82,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   const [activeSingleIndex, setActiveSingleIndex] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!isOpen) return null;
 
   const resolveTickerData = (rawTicker: string, companyName?: string) => {
     const clean = (rawTicker || '').trim().toUpperCase();
@@ -281,8 +280,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   const totalFees = batchTrades.reduce((acc, t) => acc + (t.fees || 0), 0);
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-8 max-h-[90vh] flex flex-col"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Trade screenshot scanner"
+    >
         {/* Modal Header */}
         <div className="premium-modal-section px-6 py-4 border-b border-slate-700/50 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -616,7 +620,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { PremiumModalMotion } from './PremiumMotion';
+import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -278,6 +278,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   }, 0);
 
   const totalFees = batchTrades.reduce((acc, t) => acc + (t.fees || 0), 0);
+  const scannerStage = isScanning ? 'scanning' : batchTrades.length > 0 ? 'review' : 'empty';
 
   return (
     <PremiumModalMotion
@@ -324,7 +325,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
 
         {/* Modal Scrollable Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
-          {errorMsg && (
+          <SurfacePresence isOpen={!!errorMsg}>
+            {errorMsg && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -338,8 +340,10 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-          )}
+            )}
+          </SurfacePresence>
 
+          <MotionSwap motionKey={scannerStage} variant="state">
           {/* Dropzone for 1 or multiple screenshots */}
           {batchTrades.length === 0 && !isScanning && (
             <div
@@ -574,6 +578,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               </div>
             </div>
           )}
+          </MotionSwap>
         </div>
 
         {/* Modal Footer */}

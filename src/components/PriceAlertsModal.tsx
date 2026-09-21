@@ -228,6 +228,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
 
         {/* Modal Body Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
+          <MotionSwap motionKey={activeTab} variant="state">
           
           {/* TAB 1: WATCHES */}
           {activeTab === 'watches' && (
@@ -589,6 +590,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               )}
             </div>
           )}
+          </MotionSwap>
 
         </div>
 

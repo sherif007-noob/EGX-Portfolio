@@ -223,11 +223,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 type="button"
                 aria-pressed={timeframe === tf}
                 onClick={() => setTimeframe(tf)}
-                className={`premium-segment px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  timeframe === tf
-                    ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
               >
                 {tf === 'ALL' ? 'All Time' : tf}
               </button>
@@ -254,7 +250,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handleExportCSV}
-            className="premium-control premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Download CSV report"
           >
             <Download className="w-3.5 h-3.5 text-blue-400" />
@@ -263,7 +259,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handlePrint}
-            className="premium-control premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />

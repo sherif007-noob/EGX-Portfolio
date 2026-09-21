@@ -1035,8 +1035,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Edit Transaction Modal */}
       {editingTx && createPortal((
-        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="premium-modal w-full max-w-xl rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -1067,12 +1067,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
             <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
               {/* Type Switcher */}
-              <div className="space-y-1.5">
+              <div className="premium-form-section p-3 rounded-xl space-y-1.5">
                 <label className="text-slate-300 font-semibold block">Transaction Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditType('BUY')}
+                    aria-pressed={editType === 'BUY'}
+                     onClick={() => setEditType('BUY')}
                     className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
                   >
                     <PlusCircle className="w-4 h-4" />
@@ -1080,7 +1081,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditType('SELL')}
+                    aria-pressed={editType === 'SELL'}
+                     onClick={() => setEditType('SELL')}
                     className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
                   >
                     <ArrowUpDown className="w-4 h-4" />

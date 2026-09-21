@@ -462,7 +462,35 @@ Representative commits:
 
 Quality Checks #502 passed typecheck, tests, and production build for the final implementation.
 
-Phase 4 remains **in progress** pending visual confirmation that 1W now has the same continuous character as Today <-> 1M, plus the separate desktop motion-performance pass.
+### Desktop motion-performance optimization
+
+Phone validation was smooth while desktop/PC showed frame stutter during tab and state transitions. Code audit identified desktop-specific render cost rather than a need to weaken the choreography:
+
+- desktop state/result swaps were using Motion `layout="size"` plus child `layout="position"` across large tables/reports;
+- main tab transitions briefly render old/new heavy desktop trees together;
+- tiny whole-page scale transforms forced raster resampling of large glass-heavy pages;
+- controls still carried persistent `will-change: transform` hints from older passes;
+- moving result trees applied blanket `backface-visibility: hidden` to nested tables/cards/panels, encouraging unnecessary compositor layers.
+
+The optimization preserves the visible Phase 4 motion while lowering desktop cost:
+
+- desktop is detected with `(min-width: 1024px) and (hover: hover) and (pointer: fine)`;
+- phone/tablet behavior is unchanged;
+- desktop state/result swaps keep the same opacity/y enter-exit choreography but disable Motion layout projection;
+- desktop main tabs keep the same opacity/x/y choreography but remove the nearly invisible scale component to avoid full-page raster resampling;
+- persistent per-control `will-change` is removed;
+- blanket nested `backface-visibility` promotion is removed;
+- Motion shells use `contain: layout style` to reduce layout/style invalidation without clipping glass/shadows;
+- ordinary row hover motion remains intact.
+
+Representative commits:
+- **324498a** — reduce desktop Motion layout/raster cost.
+- **7364d4d** — reduce compositor pressure and remove persistent layer hints.
+- **cfa29d9** — preserve row hover motion after compositor cleanup.
+
+The analytics chart implementation, including the approved 1W full-profile fix, is not changed by this performance pass.
+
+Phase 4 remains **in progress** pending desktop visual/performance validation.
 
 ## Current validated visual rules
 

@@ -1038,7 +1038,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="premium-modal w-full max-w-xl rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
+            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-5 h-5" />
@@ -1266,7 +1266,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               )}
 
               {/* Notes */}
-              <div className="space-y-1">
+              <div className="premium-form-section p-3 rounded-xl space-y-1">
                 <label className="text-slate-300 font-semibold">Transaction Notes</label>
                 <textarea
                   rows={2}

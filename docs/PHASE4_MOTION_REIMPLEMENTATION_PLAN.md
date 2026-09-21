@@ -507,6 +507,32 @@ Reject if the current validated Recharts transition changes.
 
 ---
 
+## Choreography refinement after second recording review
+
+Fresh phone + desktop recordings of the first v3 implementation showed that the architecture was stable but the choreography still felt discontinuous:
+
+- `AnimatePresence mode="wait"` created a perceptual hard cut between outgoing and incoming tab/result trees.
+- result height/layout changes occurred as a separate event after opacity motion;
+- dropdowns were too fast and read as pop-in surfaces;
+- modal entrance movement was too subtle for the panel size;
+- transitions into **1W** remained asymmetric because Recharts was morphing between very different point counts and coordinate domains.
+
+The refinement pass therefore changes choreography without reintroducing snapshot/timer systems:
+
+- tabs and result swaps use **controlled real-DOM overlap with `mode="popLayout"`**;
+- result shells use Motion layout-size interpolation with measurements scoped by `layoutDependency`;
+- tab entrance/exit uses more visible horizontal displacement with a short overlap;
+- dropdowns use ~360 ms entrance / ~240 ms exit with a larger anchored transform;
+- modal panels use ~420 ms entrance / ~300 ms exit with more legible y/scale displacement;
+- ordinary chart timeframe changes remain Recharts-owned;
+- crossings **to or from 1W** use a localized whole-chart crossfade so axes/domain/path change together;
+- Recharts series tween is temporarily suppressed during that 1W boundary to avoid incompatible point-count/path interpolation;
+- secondary Risk & Cost charts use the same 1W boundary treatment.
+
+This remains presentation-only: chart observations/data are unchanged; the special 1W handling changes only how two real chart states are visually handed off.
+
+---
+
 ## Implementation status
 
 Implemented:
@@ -530,7 +556,7 @@ Phase 4 is not complete until:
 - Motion for React owns lifecycle presence;
 - browser snapshot transitions are absent from app content;
 - timer-driven MotionSwap is removed;
-- tabs and filters are visibly animated but smooth;
+- tabs and filters use controlled overlap + layout continuity and are visibly animated but smooth;
 - modal exits are consistent;
 - dropdowns animate in and out;
 - accordions animate both directions;

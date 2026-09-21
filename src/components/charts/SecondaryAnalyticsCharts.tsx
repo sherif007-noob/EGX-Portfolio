@@ -184,7 +184,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -249,7 +251,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -314,7 +318,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                   <Line
                     type={lineType}
@@ -324,7 +330,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.cyan, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>

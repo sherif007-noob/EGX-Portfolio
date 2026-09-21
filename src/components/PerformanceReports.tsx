@@ -277,7 +277,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                               transformOrigin: 'center',
                               transform: active ? 'scale(1.055)' : 'scale(1)',
                               opacity: dimmed ? 0.48 : 1,
-                              transition: 'transform 180ms ease, opacity 160ms ease',
+                              transition: 'transform 320ms cubic-bezier(0.22, 0.8, 0.24, 1), opacity 280ms ease-out',
                               filter: active ? 'drop-shadow(0 8px 12px rgba(6, 182, 212, 0.18))' : 'none',
                             }}
                           >
@@ -359,7 +359,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 </ResponsiveContainer>
               </div>
 
-              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center transition-opacity duration-150 ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
+              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center premium-motion-opacity ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="mt-5 text-center">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Largest</div>
                   <div className="mt-1 max-w-[110px] truncate text-sm font-bold text-white">
@@ -389,7 +389,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 {allocationData.map((row, index) => (
                   <div
                     key={row.name}
-                    className="premium-subpanel px-3 py-2.5 rounded-xl transition hover:border-cyan-500/20 hover:bg-white/[0.025]"
+                    className="premium-subpanel px-3 py-2.5 rounded-xl hover:border-cyan-500/20 hover:bg-white/[0.025]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2.5">

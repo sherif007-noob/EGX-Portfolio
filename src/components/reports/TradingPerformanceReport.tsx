@@ -573,7 +573,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 Split: {indicators.totalClosed > 0 ? ((indicators.lossCount / indicators.totalClosed) * 100).toFixed(1) : 0}% of closed trades
               </td>
               <td className="py-3 px-4 text-right">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="premium-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-300">
                   <Info className="w-3 h-3" /> Controlled Risk Exits
                 </span>
               </td>

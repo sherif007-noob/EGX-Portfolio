@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -128,6 +129,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   onRestoreBackup,
   onReconcileLedger,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [importPreview, setImportPreview] = useState<ParsedBackupData | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -284,7 +286,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
       setImportPreview(null);
       setTimeout(() => {
         setIsRestoring(false);
-        onClose();
+        requestClose();
       }, 1400);
     } catch (err: any) {
       setIsRestoring(false);
@@ -307,7 +309,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />

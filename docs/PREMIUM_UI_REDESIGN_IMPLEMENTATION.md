@@ -27,7 +27,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3 | Complete / validating | Full component migration performed. |
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
-| 4 | **Paused / provisional** | Motion partially started earlier; not accepted as complete. |
+| 4 | **In progress** | Five-family motion system approved; provisional motion is being normalized and completed. |
 | 5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -176,13 +176,26 @@ Established rules:
 - Non-selected dropdown hover uses a frosted accent wash; selected rows remain distinct.
 - Date/time controls belong to the same visual family.
 
-## Phase 4 — Motion: provisional work already present
+## Phase 4 — Motion: accepted five-family implementation
 
-Phase 4 was started before Phase 3 completeness was fully validated. It was then paused for the full Phase 3/3.2 sweep.
+Phase 4 was originally started before Phase 3 completeness was fully validated, then paused. The provisional motion was noticeable but user validation identified two problems:
 
-Existing provisional Phase 4 commits include:
+1. Motion was generally **too fast**.
+2. Motion coverage was incomplete/inconsistent across the application.
+3. The analytics transition to/from **Today** no longer matched the smooth transition between other timeframes after the provisional chart-stage remount was introduced.
+4. Secondary analytics charts explicitly disabled animation for intraday/Today, so their Today curve behavior differed from daily timeframes.
 
-- **9443028** — add Phase 4 motion system
+The accepted implementation now uses five motion families:
+
+1. **Navigation / page context**
+2. **Interactive controls**
+3. **Overlays**
+4. **Content / state changes**
+5. **Charts / financial data visualization**
+
+Existing provisional Phase 4 commits remain useful historical context, including:
+
+- **9443028** — initial Phase 4 motion system
 - **f2f3781** — analytics tooltip entrance
 - **e79c52b** — dropdown micro-interactions
 - **a748dbb** — analytics controls/timeframes
@@ -193,12 +206,57 @@ Existing provisional Phase 4 commits include:
 - **8fa209a** — realized-chart mode switcher
 - modal-motion commits for delete, screenshot, alerts, Schema Sync, Sheets, and Backup
 - **b8bb158** — main-tab transitions
-- **b146767** — make Phase 4 motion more perceptible
+- **b146767** — stronger provisional motion
 - **d9eea80**, **68951ad**, **9d4c181**, **3c107b0** — report/month/chart motion work
+- **cdfa147** — later Phase 3/3.2 overrides that also altered motion timing
 
-These changes **remain on the branch**, but Phase 4 is not considered complete or approved.
+### Current accepted Phase 4 implementation
 
-**cdfa147** later strengthened several glass and motion declarations while responding to Phase 3 feedback. Its motion rules must be reviewed during Phase 4 rather than assumed final.
+Representative commits:
+
+- **87a9053** — establish five-family Phase 4 motion system
+- **358e3f9** — restore unified analytics timeframe interpolation
+- **b4dcf91** — unify Today secondary-chart transitions
+- **1abaf0e** — animate allocation state transitions
+- **a4db661** — animate Trading Performance filter-result changes
+- **375dde6** — animate Monthly report state changes
+- **f2ae057** — scope Edit Transaction BUY/SELL state motion correctly
+- **06ded20** — normalize surface response timing
+- **44d2820** — align Journal feedback with content-family motion
+- **c53fb17** — align Cash feedback with content-family motion
+- **9417325** — animate Add Trade contextual state
+
+Canonical timing introduced:
+- Controls: ~260 ms
+- Selectors: ~320 ms
+- Dropdowns/overlays: ~380 ms
+- Modals: ~440 ms
+- Content/state: ~420 ms
+- Main navigation/context: ~460 ms
+- Charts: ~520 ms
+- Tooltips: ~220 ms
+
+### Analytics transition correction
+
+The provisional **9d4c181** change keyed/remounted the main analytics plot on every timeframe/mode change and added an outer chart-stage animation. That disrupted the previously smooth Today <-> daily interpolation.
+
+The accepted correction:
+- Keeps one main chart instance across timeframe changes.
+- Lets Recharts interpolate the data-series change directly.
+- Slows the primary/secondary series animation to ~520 ms.
+- Enables the same animation for intraday/Today secondary charts instead of disabling it with `isAnimationActive={!intraday}`.
+
+This is presentation-only: it does not modify analytics observations, calculations, timeframe resolution, market data, or financial semantics.
+
+### Coverage implemented so far
+
+- Family 1: main tab/context stage and active navigation.
+- Family 2: shared actions, icon actions, selectors, controls, dropdown triggers, accordion triggers, and form fields.
+- Family 3: premium dropdowns, menu items, modal backdrops, and modal panels.
+- Family 4: Cash Deposit/Withdraw reveal, Closed Cycle expansion, Edit Transaction BUY/SELL sections, allocation state changes, Trading Performance filter-result changes, Monthly month/status changes, and contextual feedback/state banners.
+- Family 5: primary unified analytics chart and all secondary Risk & Cost chart series.
+
+Phase 4 remains **in progress** until the full application is visually tested and any uncovered legacy/too-fast motion is swept.
 
 ## Current validated visual rules
 
@@ -210,7 +268,7 @@ These changes **remain on the branch**, but Phase 4 is not considered complete o
 - Selected selector state is immediately visible, including while hovered.
 - Button/selector glow matches semantic color.
 - Modal families share shell, grouping, fields, actions, and close-control language.
-- Motion expansion remains paused until Phase 4 is discussed and approved.
+- Phase 4 follows the approved five-family motion system; new motion must map to one of those families.
 
 ## Quality / CI
 

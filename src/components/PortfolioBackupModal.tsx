@@ -323,7 +323,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         )}
 
         {/* Option 1: Reconcile Ledger */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-cyan-400" />
@@ -342,7 +342,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 2: Export JSON Backup */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileJson className="w-4 h-4 text-amber-400" />
@@ -362,7 +362,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 3: Export to Excel Spreadsheets (CSV) */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
@@ -393,7 +393,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 3: Restore Backup */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+        <div className="premium-modal-section p-4 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
@@ -456,7 +456,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div className="premium-inset-glass grid grid-cols-2 gap-2 text-[11px] font-mono p-2.5 rounded-lg">
                 <div className="text-slate-300">
                   Positions: <span className="font-bold text-white">{importPreview.positions.length}</span>
                 </div>

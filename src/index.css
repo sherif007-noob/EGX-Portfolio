@@ -2523,77 +2523,28 @@ body {
 }
 
 
-/* Phase 4 — five-family canonical motion layer */
+/* Phase 4 v3 — canonical motion tokens and CSS micro-interactions */
 /*
- * Family 1: navigation/context
- * Family 2: interactive controls
- * Family 3: overlays
- * Family 4: content/state changes
- * Family 5: charts/data visualization
- *
- * This block intentionally comes after the provisional Phase 4 and Phase 3
- * overrides. It is the canonical timing layer for the accepted Phase 4 pass.
+ * Lifecycle ownership moved to Motion for React. CSS owns only tactile/control
+ * feedback plus chart/tooltip compatibility. All browser View Transition,
+ * timer-swap, modal snapshot, and duplicated lifecycle keyframes from earlier
+ * Phase 4 experiments are intentionally retired here.
  */
 :root {
   --motion-family-control: 260ms;
-  --motion-family-selector: 320ms;
-  --motion-family-overlay: 380ms;
-  --motion-family-modal: 440ms;
-  --motion-family-content: 420ms;
-  --motion-family-navigation: 460ms;
+  --motion-family-selector: 340ms;
+  --motion-family-overlay: 240ms;
+  --motion-family-modal: 330ms;
+  --motion-family-content: 310ms;
+  --motion-family-navigation: 380ms;
   --motion-family-chart: 520ms;
-  --motion-family-tooltip: 220ms;
+  --motion-family-tooltip: 200ms;
   --motion-family-standard: cubic-bezier(0.22, 0.8, 0.24, 1);
   --motion-family-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Family 1 — Navigation / page context                                        */
-/* -------------------------------------------------------------------------- */
-.premium-tab-stage {
-  animation: premium-tab-family-in var(--motion-family-navigation) var(--motion-family-standard) both;
-}
-
-@keyframes premium-tab-family-in {
-  0% {
-    opacity: 0;
-    transform: translate3d(14px, 7px, 0) scale(0.988);
-    filter: blur(3px);
-  }
-  72% {
-    opacity: 1;
-    transform: translate3d(-1px, 0, 0) scale(1.001);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-  }
-}
-
-.premium-nav {
-  transition:
-    transform var(--motion-family-control) var(--motion-family-standard),
-    color var(--motion-family-control) ease-out,
-    border-color var(--motion-family-control) ease-out,
-    background var(--motion-family-control) ease-out,
-    box-shadow var(--motion-family-control) var(--motion-family-standard);
-}
-
-.premium-nav-active {
-  animation: premium-nav-family-select var(--motion-family-selector) var(--motion-family-emphasized) both;
-}
-
-@keyframes premium-nav-family-select {
-  0% { transform: translateY(1px) scale(0.975); }
-  68% { transform: translateY(-1px) scale(1.008); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family 2 — Interactive controls                                             */
-/* -------------------------------------------------------------------------- */
+/* Family 2 — controls remain CSS-driven and immediately responsive. */
+.premium-nav,
 .premium-action,
 .premium-filter-pill,
 .premium-choice,
@@ -2612,12 +2563,7 @@ body {
 .premium-choice,
 .premium-icon-action,
 .premium-segment {
-  transition:
-    transform var(--motion-family-control) var(--motion-family-standard),
-    border-color var(--motion-family-control) ease-out,
-    background var(--motion-family-control) ease-out,
-    color var(--motion-family-control) ease-out,
-    box-shadow var(--motion-family-control) var(--motion-family-standard);
+  transition-property: transform, border-color, background-color, color, box-shadow, opacity;
 }
 
 .premium-action > svg,
@@ -2641,7 +2587,7 @@ body {
   .premium-icon-action:hover:not(:disabled),
   .premium-segment:hover:not(:disabled),
   .premium-control:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-1px) scale(1.006);
   }
 }
 
@@ -2653,418 +2599,22 @@ body {
 .premium-nav:active:not(:disabled),
 .premium-segment:active:not(:disabled),
 .premium-accordion-trigger:active:not(:disabled) {
-  transform: translateY(0) scale(0.972);
-  transition-duration: 180ms;
+  transform: translateY(0) scale(0.976);
+  transition-duration: 140ms;
 }
 
+/* Selected states settle through property interpolation, not replaying keyframes. */
 .premium-filter-pill[aria-pressed="true"],
-.premium-segment[aria-pressed="true"] {
-  animation: premium-selector-family-select var(--motion-family-selector) var(--motion-family-emphasized) both;
+.premium-segment[aria-pressed="true"],
+.premium-nav-active {
+  transition-duration: var(--motion-family-selector);
 }
 
-@keyframes premium-selector-family-select {
-  0% {
-    transform: translateY(1px) scale(0.965);
-    filter: brightness(0.94);
-  }
-  68% {
-    transform: translateY(-1px) scale(1.012);
-    filter: brightness(1.05);
-  }
-  100% {
-    transform: translateY(-1px) scale(1);
-    filter: brightness(1);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family 3 — Overlays                                                         */
-/* -------------------------------------------------------------------------- */
-.premium-dropdown {
-  animation: premium-overlay-family-in var(--motion-family-overlay) var(--motion-family-emphasized) both;
-}
-
-@keyframes premium-overlay-family-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-9px) scale(0.965);
-    filter: blur(3px);
-  }
-  72% {
-    opacity: 1;
-    transform: translateY(1px) scale(1.004);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-.premium-dropdown .premium-menu-item {
-  animation: premium-menu-family-item-in 300ms var(--motion-family-standard) both;
-}
-
-.premium-dropdown .premium-menu-item:nth-child(1) { animation-delay: 18ms; }
-.premium-dropdown .premium-menu-item:nth-child(2) { animation-delay: 34ms; }
-.premium-dropdown .premium-menu-item:nth-child(3) { animation-delay: 50ms; }
-.premium-dropdown .premium-menu-item:nth-child(4) { animation-delay: 66ms; }
-.premium-dropdown .premium-menu-item:nth-child(5) { animation-delay: 82ms; }
-.premium-dropdown .premium-menu-item:nth-child(6) { animation-delay: 98ms; }
-.premium-dropdown .premium-menu-item:nth-child(n+7) { animation-delay: 112ms; }
-
-@keyframes premium-menu-family-item-in {
-  from {
-    opacity: 0;
-    transform: translateX(-5px) translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
-  }
-}
-
-.premium-modal-backdrop {
-  animation: premium-backdrop-family-in var(--motion-family-overlay) ease-out both;
-}
-
-.premium-modal {
-  animation: premium-modal-family-in var(--motion-family-modal) var(--motion-family-emphasized) both;
-}
-
-@keyframes premium-backdrop-family-in {
-  from {
-    opacity: 0;
-    -webkit-backdrop-filter: blur(0) saturate(100%);
-    backdrop-filter: blur(0) saturate(100%);
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes premium-modal-family-in {
-  0% {
-    opacity: 0;
-    transform: translateY(18px) scale(0.958);
-    filter: blur(3px);
-  }
-  72% {
-    opacity: 1;
-    transform: translateY(-1px) scale(1.003);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family 4 — Content / state changes                                          */
-/* -------------------------------------------------------------------------- */
-.premium-reveal {
-  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-emphasized) both;
-}
-
-.premium-section-enter > .premium-panel,
-.premium-section-enter > .premium-glass,
-.premium-section-enter > .premium-report-glass,
-.premium-section-enter > .premium-card {
-  animation-duration: var(--motion-family-content);
-  animation-timing-function: var(--motion-family-standard);
-}
-
-.premium-content-swap {
-  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-emphasized) both;
-}
-
-@keyframes premium-content-family-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px) scaleY(0.965);
-    filter: blur(2px);
-  }
-  72% {
-    opacity: 1;
-    transform: translateY(1px) scaleY(1.003);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
-    filter: blur(0);
-  }
-}
-
-.premium-tooltip-content {
-  animation: premium-tooltip-family-in var(--motion-family-tooltip) var(--motion-family-standard) both;
-}
-
-@keyframes premium-tooltip-family-in {
-  from {
-    opacity: 0;
-    transform: translateY(5px) scale(0.975);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family 5 — Charts                                                           */
-/* -------------------------------------------------------------------------- */
-/*
- * Recharts owns timeframe interpolation. Do not key/remount the plot solely
- * for motion: keeping one chart instance preserves the smooth Today <-> daily
- * interpolation that existed before the provisional Phase 4 stage animation.
- */
-.premium-chart-stage {
-  animation: none;
-}
-
-@media (max-width: 767px) {
-  .premium-tab-stage {
-    animation-duration: 420ms;
-  }
-
-  .premium-dropdown {
-    animation-duration: 340ms;
-  }
-
-  .premium-modal {
-    animation-duration: 410ms;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .premium-tab-stage,
-  .premium-nav-active,
-  .premium-filter-pill[aria-pressed="true"],
-  .premium-segment[aria-pressed="true"],
-  .premium-dropdown,
-  .premium-dropdown .premium-menu-item,
-  .premium-modal-backdrop,
-  .premium-modal,
-  .premium-reveal,
-  .premium-content-swap,
-  .premium-tooltip-content {
-    animation: none !important;
-  }
-
-  .premium-action,
-  .premium-filter-pill,
-  .premium-choice,
-  .premium-icon-action,
-  .premium-segment,
-  .premium-control,
-  .premium-nav,
-  .premium-accordion-trigger,
-  .premium-select-trigger,
-  .premium-field {
-    transition: none !important;
-    transform: none !important;
-  }
-}
-
-
-/* Phase 4 surface timing normalization */
-.premium-card,
-.premium-panel,
-.premium-subpanel,
-.premium-report-glass,
-.premium-report-glass-soft,
-.premium-inset-glass,
-.premium-form-section,
-.premium-modal-section,
-.premium-table-shell,
-.premium-report-table {
-  transition-duration: 300ms;
-  transition-timing-function: var(--motion-family-standard);
-}
-
-.premium-table-shell tbody tr,
-.premium-report-table tbody tr {
-  transition:
-    transform 240ms var(--motion-family-standard),
-    background-color 240ms ease-out,
-    box-shadow 240ms ease-out;
-}
-
-
-/* Phase 4 motion audit — outgoing transitions + slower canonical cadence */
-:root {
-  --motion-family-control: 320ms;
-  --motion-family-selector: 420ms;
-  --motion-family-overlay: 480ms;
-  --motion-family-modal: 560ms;
-  --motion-family-content: 520ms;
-  --motion-family-navigation: 560ms;
-  --motion-family-chart: 520ms;
-  --motion-family-tooltip: 220ms;
-}
-
-/* True old -> new transitions for major context/state changes. */
-:root[data-premium-transition]::view-transition-old(root),
-:root[data-premium-transition]::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-:root[data-premium-transition="tab"] .premium-tab-stage {
-  view-transition-name: premium-tab-content;
-  animation: none;
-}
-
-::view-transition-old(premium-tab-content) {
-  animation: premium-tab-family-out 520ms var(--motion-family-standard) both;
-}
-
-::view-transition-new(premium-tab-content) {
-  animation: premium-tab-family-in 560ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-tab-family-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-  }
-  to {
-    opacity: 0;
-    transform: translate3d(-14px, -3px, 0) scale(0.988);
-    filter: blur(2px);
-  }
-}
-
-:root[data-premium-transition="journal-filter"] .premium-journal-results {
-  view-transition-name: premium-journal-results;
-}
-
-::view-transition-old(premium-journal-results) {
-  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
-}
-
-::view-transition-new(premium-journal-results) {
-  animation: premium-filter-results-in 520ms var(--motion-family-standard) both;
-}
-
-:root[data-premium-transition="performance-filter"] .premium-trading-performance-results {
-  view-transition-name: premium-performance-results;
-}
-
-::view-transition-old(premium-performance-results) {
-  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
-}
-
-::view-transition-new(premium-performance-results) {
-  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-filter-results-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.992);
-    filter: blur(2px);
-  }
-}
-
-@keyframes premium-filter-results-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.992);
-    filter: blur(2px);
-  }
-  70% {
-    opacity: 1;
-    filter: blur(0);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-/* Explicit modal exit family; React keeps the edit modal mounted until this finishes. */
-.premium-modal-backdrop-exit {
-  pointer-events: none;
-  animation: premium-modal-backdrop-family-out 560ms ease-in both !important;
-}
-
-.premium-modal-exit {
-  animation: premium-modal-family-out 560ms cubic-bezier(0.4, 0, 0.8, 0.2) both !important;
-}
-
-@keyframes premium-modal-backdrop-family-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    -webkit-backdrop-filter: blur(0) saturate(100%);
-    backdrop-filter: blur(0) saturate(100%);
-  }
-}
-
-@keyframes premium-modal-family-out {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(16px) scale(0.965);
-    filter: blur(3px);
-  }
-}
-
-/* Slow the remaining provisional hard-coded micro timings into the accepted cadence. */
 .premium-filter-pill::before {
   transition-duration: var(--motion-family-selector);
   transition-timing-function: var(--motion-family-standard);
 }
 
-.premium-table-shell tbody tr,
-.premium-report-table tbody tr {
-  transition:
-    transform 300ms var(--motion-family-standard),
-    background-color 300ms ease-out,
-    box-shadow 300ms ease-out;
-}
-
-@media (max-width: 767px) {
-  .premium-tab-stage {
-    animation-duration: 500ms;
-  }
-
-  .premium-dropdown {
-    animation-duration: 440ms;
-  }
-
-  .premium-modal {
-    animation-duration: 520ms;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .premium-modal-backdrop-exit,
-  .premium-modal-exit {
-    animation: none !important;
-  }
-}
-
-
-/* Phase 4 audited helper motion classes */
 .premium-motion-chevron {
   transition: transform var(--motion-family-control) var(--motion-family-standard);
 }
@@ -3080,423 +2630,23 @@ body {
     border-color var(--motion-family-control) ease-out;
 }
 
-/* Fallback entrance when View Transitions are unavailable. */
-.premium-journal-results {
-  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-standard) both;
-}
-
-:root[data-premium-transition="journal-filter"] .premium-journal-results,
-:root[data-premium-transition="performance-filter"] .premium-content-swap {
-  animation: none;
-}
-
-
-/* Phase 4 unified modal snapshot exit */
-:root[data-premium-transition="modal-close"] .premium-modal-backdrop {
-  view-transition-name: premium-modal-layer;
-}
-
-::view-transition-old(premium-modal-layer) {
-  animation: premium-modal-snapshot-out var(--motion-family-modal) cubic-bezier(0.4, 0, 0.8, 0.2) both;
-}
-
-::view-transition-new(premium-modal-layer) {
-  animation: none;
-}
-
-@keyframes premium-modal-snapshot-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(14px) scale(0.97);
-    filter: blur(2px);
-  }
-}
-
-
-/* Phase 4 audited state-result view transitions */
-:root[data-premium-transition="cash-action"] .premium-cash-action-content {
-  view-transition-name: premium-cash-action;
-  animation: none;
-}
-
-:root[data-premium-transition="cash-history"] .premium-cash-history-results {
-  view-transition-name: premium-cash-history;
-}
-
-:root[data-premium-transition="closed-filter"] .premium-closed-results {
-  view-transition-name: premium-closed-results;
-  animation: none;
-}
-
-:root[data-premium-transition="monthly-filter"] .premium-monthly-results {
-  view-transition-name: premium-monthly-results;
-  animation: none;
-}
-
-::view-transition-old(premium-cash-action),
-::view-transition-old(premium-cash-history),
-::view-transition-old(premium-closed-results),
-::view-transition-old(premium-monthly-results) {
-  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
-}
-
-::view-transition-new(premium-cash-action),
-::view-transition-new(premium-cash-history),
-::view-transition-new(premium-closed-results),
-::view-transition-new(premium-monthly-results) {
-  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
-}
-
-:root[data-premium-transition="closed-filter"] .premium-content-swap,
-:root[data-premium-transition="monthly-filter"] .premium-content-swap {
-  animation: none;
-}
-
-
-/* Phase 4 list filter transition coverage */
-:root[data-premium-transition="positions-filter"] .premium-positions-results {
-  view-transition-name: premium-positions-results;
-}
-
-:root[data-premium-transition="directory-filter"] .premium-directory-results {
-  view-transition-name: premium-directory-results;
-}
-
-::view-transition-old(premium-positions-results),
-::view-transition-old(premium-directory-results) {
-  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
-}
-
-::view-transition-new(premium-positions-results),
-::view-transition-new(premium-directory-results) {
-  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
-}
-
-
-/* Phase 4 recording-driven stability rewrite */
-/*
- * Browser View Transition snapshots are intentionally not used for app content.
- * They produced duplicate old/new trees, blank crossfade frames, geometry
- * interpolation artifacts, and mobile scroll/viewport drift in real recordings.
+/* Dense financial rows only animate hover decoration; result replacement belongs
+ * to MotionSwap rather than every table row moving independently.
  */
-:root {
-  --motion-family-control: 280ms;
-  --motion-family-selector: 340ms;
-  --motion-family-overlay: 320ms;
-  --motion-family-modal: 320ms;
-  --motion-family-content: 440ms;
-  --motion-family-navigation: 500ms;
-  --motion-family-chart: 520ms;
-  --motion-family-tooltip: 220ms;
-}
-
-/* Family 1 + 4: one rendered tree at a time; no snapshot overlap. */
-.premium-motion-swap {
-  position: relative;
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-.premium-motion-swap--exit,
-.premium-motion-swap--enter {
-  pointer-events: none;
-}
-
-.premium-motion-swap--tab.premium-motion-swap--exit {
-  animation: premium-stable-tab-out 180ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
-}
-
-.premium-motion-swap--tab.premium-motion-swap--enter {
-  animation: premium-stable-tab-in 320ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-stable-tab-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    opacity: 0.18;
-    transform: translate3d(-8px, 0, 0) scale(0.996);
-  }
-}
-
-@keyframes premium-stable-tab-in {
-  from {
-    opacity: 0.18;
-    transform: translate3d(10px, 0, 0) scale(0.997);
-  }
-  72% {
-    opacity: 1;
-    transform: translate3d(-1px, 0, 0) scale(1);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-.premium-motion-swap--state.premium-motion-swap--exit {
-  animation: premium-stable-state-out 140ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
-}
-
-.premium-motion-swap--state.premium-motion-swap--enter {
-  animation: premium-stable-state-in 300ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-stable-state-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    opacity: 0.24;
-    transform: translate3d(0, -4px, 0);
-  }
-}
-
-@keyframes premium-stable-state-in {
-  from {
-    opacity: 0.24;
-    transform: translate3d(0, 6px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-/* Prevent legacy entrance/stagger animation from stacking on MotionSwap. */
-.premium-motion-swap .premium-section-enter,
-.premium-motion-swap .premium-section-enter > .premium-panel,
-.premium-motion-swap .premium-section-enter > .premium-glass,
-.premium-motion-swap .premium-section-enter > .premium-report-glass,
-.premium-motion-swap .premium-section-enter > .premium-card,
-.premium-motion-swap .premium-content-swap,
-.premium-motion-swap.premium-tab-stage {
-  animation: none !important;
-}
-
-/* The old keyed tab entrance is replaced by MotionSwap. */
-.premium-tab-stage {
-  animation: none !important;
-}
-
-/* Family 3: stable overlay entrance/exit with transform + opacity only.
-   Avoid animated blur/filter: it visibly stuttered on the phone recording. */
-.premium-modal-backdrop {
-  animation: premium-stable-backdrop-in 240ms ease-out both !important;
-}
-
-.premium-modal {
-  animation: premium-stable-modal-in 320ms var(--motion-family-emphasized) both !important;
-  will-change: transform, opacity;
-}
-
-.premium-modal-backdrop[data-motion-phase="exit"],
-.premium-modal-backdrop.premium-modal-backdrop-exit {
-  pointer-events: none;
-  animation: premium-stable-backdrop-out 220ms ease-in both !important;
-}
-
-.premium-modal[data-motion-phase="exit"],
-.premium-modal.premium-modal-exit {
-  animation: premium-stable-modal-out 220ms cubic-bezier(0.4, 0, 0.8, 0.2) both !important;
-}
-
-@keyframes premium-stable-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes premium-stable-backdrop-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes premium-stable-modal-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 14px, 0) scale(0.975);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes premium-stable-modal-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translate3d(0, 10px, 0) scale(0.982);
-  }
-}
-
-/* Dropdown is one surface; staggered child animations caused a noisy/duplicated
-   appearance when options repainted. */
-.premium-dropdown {
-  animation: premium-stable-dropdown-in var(--motion-family-overlay) var(--motion-family-standard) both !important;
-  will-change: transform, opacity;
-}
-
-.premium-dropdown .premium-menu-item {
-  animation: none !important;
-}
-
-@keyframes premium-stable-dropdown-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -6px, 0) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-/* Family 2 remains tactile but no longer fights Family 4. */
-.premium-action,
-.premium-filter-pill,
-.premium-choice,
-.premium-icon-action,
-.premium-segment,
-.premium-control,
-.premium-accordion-trigger,
-.premium-select-trigger,
-.premium-field {
-  transition-duration: var(--motion-family-control);
-}
-
-.premium-filter-pill[aria-pressed="true"],
-.premium-segment[aria-pressed="true"],
-.premium-nav-active {
-  animation-duration: var(--motion-family-selector);
-}
-
-/* Do not animate entire data rows with generic transitions; result containers
-   own state motion. Row hover can still change background/border smoothly. */
 .premium-table-shell tbody tr,
 .premium-report-table tbody tr {
   transition:
     background-color 220ms ease-out,
-    box-shadow 220ms ease-out;
+    box-shadow 220ms ease-out,
+    border-color 220ms ease-out;
 }
 
-/* Preserve the already-approved chart behavior. */
+/* Family 5 — Recharts remains the sole owner of chart interpolation. */
 .premium-chart-stage {
   animation: none !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .premium-motion-swap,
-  .premium-motion-swap--exit,
-  .premium-motion-swap--enter,
-  .premium-modal-backdrop,
-  .premium-modal,
-  .premium-dropdown {
-    animation: none !important;
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}
-
-
-/* Phase 4 recording analysis — single-tree smoothing */
-/*
- * Recording findings:
- * - full-page snapshot compositing duplicated cards/headings and produced blank frames;
- * - deep fades made state changes read as disappear/reappear;
- * - permanent GPU promotion of very tall pages caused mobile raster/compositor jank;
- * - stacked legacy entrance animations amplified the jump at the swap midpoint.
- *
- * MotionSwap therefore keeps exactly one rendered tree and only promotes the
- * wrapper while it is actively transitioning.
- */
-.premium-motion-swap {
-  will-change: auto;
-  transform: none;
-}
-
-.premium-motion-swap--exit,
-.premium-motion-swap--enter {
-  will-change: opacity, transform;
-  contain: paint;
-}
-
-.premium-motion-swap--tab.premium-motion-swap--exit {
-  animation: premium-recording-tab-out 220ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
-}
-
-.premium-motion-swap--tab.premium-motion-swap--enter {
-  animation: premium-recording-tab-in 360ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-recording-tab-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    opacity: 0.46;
-    transform: translate3d(-4px, 0, 0);
-  }
-}
-
-@keyframes premium-recording-tab-in {
-  from {
-    opacity: 0.46;
-    transform: translate3d(5px, 0, 0);
-  }
-  72% {
-    opacity: 1;
-    transform: translate3d(-0.5px, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.premium-motion-swap--state.premium-motion-swap--exit {
-  animation: premium-recording-state-out 180ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
-}
-
-.premium-motion-swap--state.premium-motion-swap--enter {
-  animation: premium-recording-state-in 320ms var(--motion-family-standard) both;
-}
-
-@keyframes premium-recording-state-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    opacity: 0.58;
-    transform: translate3d(0, -2px, 0);
-  }
-}
-
-@keyframes premium-recording-state-in {
-  from {
-    opacity: 0.58;
-    transform: translate3d(0, 3px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-/* Completely neutralize the retired browser-snapshot layer. */
+/* Retired browser snapshot names are explicitly neutralized. */
 .premium-tab-stage,
 .premium-journal-results,
 .premium-trading-performance-results,
@@ -3510,36 +2660,29 @@ body {
   view-transition-name: none !important;
 }
 
-/* A MotionSwap owns its own entry/exit. Nothing below it may replay a second
- * whole-surface entrance animation during the same state change.
- */
-.premium-motion-swap .premium-reveal,
-.premium-motion-swap .premium-content-swap {
+/* Main page lifecycle is Motion-owned; never replay historical CSS tab entrances. */
+.premium-tab-stage {
   animation: none !important;
 }
 
-@media (max-width: 767px) {
-  /* Phone recordings showed the large-page transform layer was the most
-   * expensive part. Mobile keeps the same timing but reduces displacement.
-   */
-  @keyframes premium-recording-tab-out {
-    from { opacity: 1; transform: translate3d(0, 0, 0); }
-    to { opacity: 0.52; transform: translate3d(-2px, 0, 0); }
-  }
-
-  @keyframes premium-recording-tab-in {
-    from { opacity: 0.52; transform: translate3d(2px, 0, 0); }
-    to { opacity: 1; transform: translate3d(0, 0, 0); }
-  }
-
-  @keyframes premium-recording-state-out {
-    from { opacity: 1; transform: translate3d(0, 0, 0); }
-    to { opacity: 0.62; transform: translate3d(0, -1px, 0); }
-  }
-
-  @keyframes premium-recording-state-in {
-    from { opacity: 0.62; transform: translate3d(0, 1px, 0); }
-    to { opacity: 1; transform: translate3d(0, 0, 0); }
+@media (prefers-reduced-motion: reduce) {
+  .premium-nav,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-control,
+  .premium-accordion-trigger,
+  .premium-select-trigger,
+  .premium-field,
+  .premium-motion-chevron,
+  .premium-motion-opacity,
+  .premium-motion-toggle,
+  .premium-table-shell tbody tr,
+  .premium-report-table tbody tr {
+    transition: none !important;
+    transform: none !important;
   }
 }
 

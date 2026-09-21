@@ -243,7 +243,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             No allocation data.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div key={`${allocationTab}-${includeCash}`} className="premium-content-swap grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="premium-report-glass-soft relative min-h-[285px] overflow-hidden rounded-xl">
               <div className="absolute left-4 top-4 z-10">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Allocated value</div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
@@ -27,6 +28,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   onClose,
   onConfirmSell,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   if (!isOpen || !position) return null;
 
   const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
@@ -85,14 +87,14 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
       notes,
       remainingShares
     );
-    onClose();
+    requestClose();
   };
 
   return (
     <div
       id="sell-position-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-md my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
@@ -110,7 +112,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -298,7 +300,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           <div className="flex items-center justify-end gap-2.5 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="premium-action px-4 py-2 rounded-xl font-semibold"
             >
               Cancel

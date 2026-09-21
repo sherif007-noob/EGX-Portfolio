@@ -262,7 +262,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                           {!target && !stop && (
                             <button
                               onClick={() => onEditPosition(pos)}
-                              className="text-[10px] text-slate-500 hover:text-amber-400 font-sans transition"
+                              className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px] font-sans"
                               title="Set target price or stop-loss alert"
                             >
                               + Set Alerts

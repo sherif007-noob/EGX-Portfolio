@@ -349,6 +349,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       : (toneValue ?? 0) < 0
       ? ANALYTICS_CHART_THEME.rose
       : ANALYTICS_CHART_THEME.amber;
+  const primaryGradientId = `analyticsPrimaryGradient-${chartPresenceKey}`;
   const primaryStroke =
     timeframe === 'TODAY'
       ? todaySemanticStroke
@@ -654,7 +655,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       strokeWidth={2.25}
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill="url(#analyticsPrimaryGradient)"
+      fill={`url(#${primaryGradientId})`}
       fillOpacity={1}
       dot={false}
       activeDot={{
@@ -869,7 +870,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                   margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={primaryGradientId} x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="5%"
                         stopColor={primaryStroke}

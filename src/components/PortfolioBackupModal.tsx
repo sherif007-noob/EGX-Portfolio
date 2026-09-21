@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion } from './PremiumMotion';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -136,8 +137,6 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!isOpen) return null;
 
   const handleExportJson = () => {
     const payload = {
@@ -295,8 +294,13 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   };
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="premium-modal relative w-full max-w-lg p-6 rounded-2xl space-y-5">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      panelClassName="premium-modal relative w-full max-w-lg p-6 rounded-2xl space-y-5"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Backup, sync and integrity"
+    >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2.5">
@@ -499,7 +503,6 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

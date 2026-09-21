@@ -385,7 +385,34 @@ Current v3 choreography:
 - localized surfaces: ~260 ms enter / ~180 ms exit;
 - charts: validated ~520 ms Recharts interpolation, unchanged.
 
-Phase 4 remains **in progress** pending fresh phone + desktop visual validation of this v3 pass.
+### Phase 4 v3 choreography refinement
+
+A second phone/desktop recording review found the Motion architecture safe but not yet visually smooth enough. Main findings:
+- `mode="wait"` produced a visible old-tree exit -> replacement -> new-tree entrance cut;
+- result-surface height changes were not visually integrated with presence;
+- dropdowns were too fast;
+- modal entrances were too subtle relative to their size;
+- the 1W chart transition remained noticeably less smooth than other ranges because the short weekly daily series has a much smaller point count/domain than Today/monthly ranges.
+
+Implemented corrections:
+- **b021260** — switch tab/result presence to `mode="popLayout"`, add controlled overlap, and animate state-result container size;
+- **744c9cf / 6d80ac5** — centralize all dropdown timing and move AnalyticsSelect onto the shared slower dropdown presence;
+- **f71e742 / 31049e6** — introduce 1W chart-boundary crossfade and secondary-chart parity;
+- **1167b25 / 736ae04** — isolate SVG gradient definitions while old/new weekly-boundary charts overlap;
+- **f597b66** — scope layout measurement to actual result-key changes;
+- **8beffa9** — align canonical motion tokens to the choreography pass.
+
+Current choreography targets:
+- tabs: ~280 ms outgoing with ~440 ms incoming and a short controlled overlap;
+- state/results: ~220 ms outgoing with ~360 ms incoming plus layout-size interpolation;
+- dropdowns: ~360 ms in / ~240 ms out;
+- modal panels: ~420 ms in / ~300 ms out;
+- normal analytics timeframes: validated Recharts ~520 ms interpolation;
+- 1W boundary: localized chart-system crossfade (~460 ms in / ~280 ms out) with inner series interpolation suppressed only during the boundary.
+
+The 1W correction does **not** resample or invent intermediate financial data. Old and new real chart states are handed off visually as complete coordinate systems.
+
+Phase 4 remains **in progress** pending fresh phone + desktop validation of this choreography pass.
 
 ## Current validated visual rules
 

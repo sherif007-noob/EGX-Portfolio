@@ -172,9 +172,9 @@ Intent:
 - Never make navigation feel blocked by animation.
 
 Target timing:
-- Main-tab exit: approximately **200–230 ms**.
-- Main-tab entrance: approximately **340–380 ms**.
-- Total perceived context change: approximately **560–610 ms**.
+- Main-tab exit: approximately **260–300 ms**.
+- Main-tab entrance: approximately **420–460 ms** with controlled overlap.
+- Context changes use real-DOM overlap rather than a strict wait-boundary cut.
 - Nav-selection feedback: approximately **300–360 ms**.
 - Major tab changes must animate both outgoing and incoming context through real DOM presence, not browser screenshots.
 
@@ -213,8 +213,8 @@ Intent:
 - Overlay motion must preserve viewport focus and layering.
 
 Target timing:
-- Dropdown entrance: approximately **220–260 ms**; exit: **150–190 ms**.
-- Modal entrance: approximately **300–340 ms**; exit: **220–260 ms**.
+- Dropdown entrance: approximately **340–380 ms**; exit: **220–260 ms**.
+- Modal entrance: approximately **400–440 ms**; exit: **280–320 ms**.
 - Modal exit is part of the overlay family and must keep the real DOM mounted until exit completes.
 
 ### Family 4 — Content / state changes
@@ -233,9 +233,9 @@ Intent:
 - Dynamic content should enter as one coherent surface.
 
 Target timing:
-- Result/content exit: approximately **160–190 ms**.
-- Result/content entrance: approximately **280–330 ms**.
-- Total perceived state change: approximately **440–520 ms**.
+- Result/content exit: approximately **200–240 ms**.
+- Result/content entrance: approximately **340–380 ms** with controlled overlap.
+- Result container size/position changes should animate as part of the same state transition.
 - Tooltips stay quicker, approximately **180–220 ms**.
 - Filtered/replaced content should transition old -> new through keyed presence; selector animation alone is not sufficient.
 
@@ -254,7 +254,8 @@ Intent:
 - Animation must never fabricate financial observations or imply data that does not exist.
 
 Target timing:
-- Main and secondary chart data transition: approximately **500–520 ms**.
+- Main and secondary chart data transition: approximately **500–520 ms** for ordinary ranges.
+- Transitions crossing the 1W boundary use a localized complete-chart crossfade so axes/domain/path change together without resampling financial observations.
 - Tooltip motion remains short enough to track the pointer.
 
 ### Phase 4 user-validation requirements

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -471,7 +472,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       </div>
 
       {/* Closed Cycles List */}
-      <div key={`${outcomeFilter}-${sortBy}`} className="premium-closed-results premium-content-swap space-y-3.5">
+      <MotionSwap motionKey={`${outcomeFilter}-${sortBy}`} variant="state" className="premium-closed-results space-y-3.5">
         {filteredCycles.map((cycle) => {
           const isExpanded = expandedCycleIds.has(cycle.id);
           const isWin = cycle.outcome === 'WIN';
@@ -797,7 +798,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             )}
           </div>
         )}
-      </div>
+      </MotionSwap>
     </div>
   );
 };

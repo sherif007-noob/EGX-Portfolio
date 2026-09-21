@@ -425,7 +425,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             className={`p-4 rounded-xl border border-dashed transition cursor-pointer flex flex-col items-center justify-center text-center gap-2 ${
               isDragging
                 ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
-                : 'border-slate-700 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-600 text-slate-400'
+                : 'premium-choice text-slate-400 hover:text-slate-200'
             }`}
           >
             <Upload className="w-5 h-5 text-slate-400" />

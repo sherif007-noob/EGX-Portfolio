@@ -2769,8 +2769,7 @@ body {
    * after first layout, avoiding scroll jumps on subsequent visits.
    */
   .premium-tab-stage .premium-table-shell,
-  .premium-tab-stage .premium-report-table,
-  .premium-tab-stage .premium-report-glass {
+  .premium-tab-stage .premium-report-table {
     content-visibility: auto;
   }
 
@@ -2784,8 +2783,4 @@ body {
     contain: layout style;
   }
 
-  .premium-tab-stage .premium-report-glass {
-    contain-intrinsic-size: auto 420px;
-    contain: layout style;
-  }
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { PremiumModalMotion, MotionSwap } from './PremiumMotion';
+import { PremiumModalMotion, MotionSwap, SurfacePresence } from './PremiumMotion';
 import { EGXTicker, SchemaValidationResult } from '../types';
 import {
   generatePythonSyncScript,
@@ -308,7 +308,8 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
                 Validate &amp; Sync to App
               </button>
 
-              {validationResult && (
+              <SurfacePresence isOpen={!!validationResult}>
+                {validationResult && (
                 <div className="text-xs">
                   {validationResult.valid ? (
                     <span className="text-emerald-400 flex items-center gap-1 font-semibold">
@@ -322,16 +323,19 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
                     </span>
                   )}
                 </div>
-              )}
+                )}
+              </SurfacePresence>
             </div>
 
-            {validationResult && !validationResult.valid && (
+            <SurfacePresence isOpen={!!validationResult && !validationResult.valid}>
+              {validationResult && !validationResult.valid && (
               <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-600/40 text-xs text-rose-300 max-h-32 overflow-y-auto space-y-1">
                 {validationResult.errors.map((err, i) => (
                   <div key={i}>• {err}</div>
                 ))}
               </div>
-            )}
+              )}
+            </SurfacePresence>
           </div>
         )}
 

@@ -8,6 +8,7 @@ import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
+import { runVisualTransition } from '../utils/visualTransition';
 import {
   BookOpen,
   Clock,
@@ -84,6 +85,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
   // Edit Transaction State
   const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
+  const [isEditClosing, setIsEditClosing] = useState(false);
   const [editType, setEditType] = useState<'BUY' | 'SELL'>('BUY');
   const [editTicker, setEditTicker] = useState<string>('');
   const [editCompanyName, setEditCompanyName] = useState<string>('');
@@ -100,6 +102,20 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const [editOutcome, setEditOutcome] = useState<'WIN' | 'LOSS' | 'BREAKEVEN'>('WIN');
   const [editRealizedPnlEgp, setEditRealizedPnlEgp] = useState<string>('');
   const [editFeedback, setEditFeedback] = useState<string | null>(null);
+
+  const changeFilterMode = (mode: JournalFilterMode) => {
+    if (mode === filterMode) return;
+    runVisualTransition('journal-filter', () => setFilterMode(mode));
+  };
+
+  const requestCloseEdit = () => {
+    if (isEditClosing) return;
+    setIsEditClosing(true);
+    window.setTimeout(() => {
+      setEditingTx(null);
+      setIsEditClosing(false);
+    }, 560);
+  };
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -403,7 +419,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     if (onEditTransaction) {
       onEditTransaction(updatedTx);
     }
-    setEditingTx(null);
+    requestCloseEdit();
   };
 
   return (
@@ -522,7 +538,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-all"
             type="button"
             aria-pressed={filterMode === 'ALL'}
-            onClick={() => setFilterMode('ALL')}
+            onClick={() => changeFilterMode('ALL')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
           >
             All ({transactions.length})
@@ -532,7 +548,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-open"
             type="button"
             aria-pressed={filterMode === 'OPEN'}
-            onClick={() => setFilterMode('OPEN')}
+            onClick={() => changeFilterMode('OPEN')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
           >
             <Layers className="w-3.5 h-3.5 text-blue-400" />
@@ -543,7 +559,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-wins"
             type="button"
             aria-pressed={filterMode === 'WIN'}
-            onClick={() => setFilterMode('WIN')}
+            onClick={() => changeFilterMode('WIN')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
@@ -554,7 +570,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-losses"
             type="button"
             aria-pressed={filterMode === 'LOSS'}
-            onClick={() => setFilterMode('LOSS')}
+            onClick={() => changeFilterMode('LOSS')
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
@@ -565,7 +581,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-buys"
             type="button"
             aria-pressed={filterMode === 'BUY'}
-            onClick={() => setFilterMode('BUY')}
+            onClick={() => changeFilterMode('BUY')
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
             Buys Only ({buyCount})
@@ -575,7 +591,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-sells"
             type="button"
             aria-pressed={filterMode === 'SELL'}
-            onClick={() => setFilterMode('SELL')}
+            onClick={() => changeFilterMode('SELL')
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})
@@ -669,7 +685,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       )}
 
       {/* Transactions Feed */}
-      <div className="space-y-3">
+      <div className="premium-journal-results space-y-3">
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
@@ -1035,8 +1051,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Edit Transaction Modal */}
       {editingTx && createPortal((
-        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
+        <div className={`premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${isEditClosing ? 'premium-modal-backdrop-exit' : ''}`}>
+          <div className={`premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4 ${isEditClosing ? 'premium-modal-exit' : ''}`}>
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -1051,7 +1067,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => setEditingTx(null)}
+                onClick={requestCloseEdit}
                 className="premium-icon-action p-1.5 rounded-lg"
               >
                 <X className="w-5 h-5" />
@@ -1308,7 +1324,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setEditingTx(null)}
+                  onClick={requestCloseEdit}
                   className="premium-action px-4 py-2 rounded-xl font-semibold"
                 >
                   Cancel

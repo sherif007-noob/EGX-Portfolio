@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { EGXTicker, SchemaValidationResult } from '../types';
 import {
   generatePythonSyncScript,
@@ -29,6 +30,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
   onClose,
   onUpdateTickers,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [activeSubTab, setActiveSubTab] = useState<'script' | 'paste' | 'schema'>('script');
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -146,7 +148,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
     <div
       id="schema-sync-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-3xl my-6 rounded-2xl p-6 text-slate-100 space-y-4"
@@ -167,7 +169,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

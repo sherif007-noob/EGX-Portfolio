@@ -18,6 +18,10 @@ import type { IntradayPriceSeries } from '../../services/intradayPriceStore';
 import type { UnifiedAnalyticsResult } from '../../services/unifiedAnalyticsEngine';
 import { buildSecondaryAnalytics } from '../../services/secondaryAnalytics';
 import {
+  interpolateWeeklyAreaFullWidth,
+  interpolateWeeklyLineFullWidth,
+} from './weeklyTransitionInterpolation';
+import {
   ANALYTICS_CHART_THEME,
   AnalyticsChartTooltip,
   AnalyticsEmptyState,
@@ -35,6 +39,7 @@ interface SecondaryAnalyticsChartsProps {
   historicalPrices: HistoricalPriceSeries;
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
+  useWeeklyFullWidthMorph?: boolean;
 }
 
 function formatDailyLabel(value: string): string {
@@ -76,6 +81,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   historicalPrices,
   intradayPrices,
   result,
+  useWeeklyFullWidthMorph = false,
 }) => {
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -187,6 +193,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
+                    animationInterpolateFn={
+                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                    }
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -254,6 +263,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
+                    animationInterpolateFn={
+                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                    }
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -321,6 +333,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
+                    animationInterpolateFn={
+                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                    }
                   />
                   <Line
                     type={lineType}
@@ -333,6 +348,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
+                    animationInterpolateFn={
+                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                    }
                   />
                 </LineChart>
               </ResponsiveContainer>

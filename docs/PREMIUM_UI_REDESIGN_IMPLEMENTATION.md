@@ -27,7 +27,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3 | Complete / validating | Full component migration performed. |
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
-| 4 | **In progress** | Five-family motion system approved; provisional motion is being normalized and completed. |
+| 4 | **In progress** | v3 Motion-for-React lifecycle rebuild implemented; awaiting phone/desktop visual validation. |
 | 5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -304,7 +304,7 @@ The recordings exposed problems that were not obvious from static code review:
 - Rapid repeated state changes could complete one animation while a newer request was pending, allowing an older cached tree to flash back before the next transition began.
 - Modal exits were inconsistent: some used presence, some instant unmount, and some retained legacy exit classes.
 
-#### Recording-driven correction
+#### Recording-driven correction — historical, superseded by v3
 
 The accepted architecture is now **single-tree sequential motion**:
 
@@ -333,7 +333,59 @@ This masks the single React swap without creating duplicate layers or a blank fl
 The chart family remains unchanged because the user had already validated Today <-> daily main/secondary chart interpolation as correct.
 
 
-Phase 4 remains **in progress** pending user visual validation of the recording-driven single-tree pass.
+### Phase 4 v3 — Motion for React reimplementation
+
+After the recording-driven stability rewrite removed ghosting/duplication, user validation found that the timer-based sequential system had over-corrected: major transitions became too subtle and often read as plain state replacement.
+
+A dedicated implementation plan was created first:
+
+- **680c6f2** — add `docs/PHASE4_MOTION_REIMPLEMENTATION_PLAN.md`
+
+The v3 architecture makes **Motion for React** (`motion@12.23.24`) the sole lifecycle orchestration layer.
+
+Core rules:
+- `AnimatePresence mode="wait"` owns main tab and keyed result replacement.
+- Real DOM nodes remain mounted for exit; no browser View Transition screenshots.
+- No timer-driven cached React trees.
+- `MotionConfig reducedMotion="user"` honors accessibility preferences.
+- CSS owns hover/focus/press/semantic transitions only.
+- Recharts remains the sole owner of analytics-series interpolation.
+- Each interaction has one lifecycle-motion owner.
+
+Representative implementation commits:
+- **8a79c5a** — add root Motion accessibility configuration.
+- **2afb3b5** — rebuild `MotionSwap` and shared presence primitives on Motion for React.
+- **ec8c619** — make Motion authoritative over lifecycle CSS.
+- **1da5852**, **cbcad89**, **fd06213** — migrate Add Trade, Quick Cash, and confirmation overlays.
+- **a87f265** — add bidirectional Motion presence to shared AnalyticsSelect dropdowns.
+- **ed26181** — add bidirectional accordion presence to Closed Cycles.
+- **221aae3**, **70f9044** — migrate Edit/Sell Position with retained visual data during exit.
+- **05f8262**, **2eb1cd5**, **20e8dc1**, **bb86319**, **b131138** — migrate Alerts, Sheets, Schema Sync, Backup, and Screenshot overlays.
+- **9c8f0da**, **a4b5d7c** — animate modal-internal tab/result changes.
+- **00e08a3**, **76081fd** — migrate Transaction/Cash inline editors to Motion presence.
+- **f848399** — physically remove obsolete snapshot/timer-era Phase 4 lifecycle CSS systems.
+- **6ac6041** — add canonical shared dropdown presence and remove the compatibility presence hook.
+- **20f6b29** — remove legacy DOM-query/timer transition orchestration; state updates are immediate and Motion owns presentation lifecycle.
+- **5cfe67e**, **dcf709e** — migrate ticker suggestions and analytics mode menu to Motion dropdown presence.
+- **5429959** and related commits — remove historical page-entry classes from active React code.
+
+Repository-wide v3 audit result:
+- zero React usages of `premium-section-enter`;
+- zero React usages of `premium-content-swap`;
+- zero React usages of `premium-reveal`;
+- zero React usages of the retired `useMotionPresence` hook;
+- zero React browser View Transition calls;
+- zero React legacy modal-exit classes.
+
+Current v3 choreography:
+- tabs: ~220 ms exit + ~380 ms enter;
+- result/state swaps: ~180 ms exit + ~310 ms enter;
+- modal: ~330 ms enter / ~240 ms exit;
+- dropdown: ~240 ms enter / ~170 ms exit;
+- localized surfaces: ~260 ms enter / ~180 ms exit;
+- charts: validated ~520 ms Recharts interpolation, unchanged.
+
+Phase 4 remains **in progress** pending fresh phone + desktop visual validation of this v3 pass.
 
 ## Current validated visual rules
 

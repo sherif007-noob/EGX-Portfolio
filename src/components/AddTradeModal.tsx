@@ -357,7 +357,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 value={shares || ''}
                 onValueChange={(value) => setShares(Number(value))}
                 accent="blue"
-                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field premium-time-input w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 required
               />
             </div>
@@ -529,7 +529,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Rationale, technical triggers, resistance breakouts..."
-              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+              className="premium-field premium-textarea-surface w-full px-3 py-2 rounded-xl border border-slate-700 text-white text-xs"
             />
           </div>
 

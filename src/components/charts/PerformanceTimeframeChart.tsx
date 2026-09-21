@@ -15,8 +15,10 @@ import { curveCardinal } from 'd3-shape';
 import { Check, ChevronDown } from 'lucide-react';
 import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
 import {
-  interpolateWeeklyAreaFullWidth,
-  interpolateWeeklyLineFullWidth,
+  createWeeklyAreaInterpolator,
+  createWeeklyLineInterpolator,
+  matchWeeklyPointByDate,
+  type WeeklyTransitionCurve,
 } from './weeklyTransitionInterpolation';
 import type { TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
@@ -147,7 +149,10 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
-  const [useWeeklyFullWidthMorph, setUseWeeklyFullWidthMorph] = useState(false);
+  const [weeklyMorph, setWeeklyMorph] = useState<{
+    from: AnalyticsTimeframe;
+    to: AnalyticsTimeframe;
+  } | null>(null);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
@@ -261,7 +266,11 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const handleTimeframeChange = (nextTimeframe: AnalyticsTimeframe) => {
     if (nextTimeframe === timeframe) return;
 
-    setUseWeeklyFullWidthMorph(timeframe === '1W' || nextTimeframe === '1W');
+    setWeeklyMorph(
+      timeframe === '1W' || nextTimeframe === '1W'
+        ? { from: timeframe, to: nextTimeframe }
+        : null,
+    );
     setTimeframe(nextTimeframe);
   };
 
@@ -329,6 +338,26 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const positive = (toneValue ?? 0) >= 0;
   const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
   const chartCurve = timeframe === 'TODAY' ? 'linear' : longRangeCurve;
+  const weeklySourceCurve: WeeklyTransitionCurve =
+    weeklyMorph?.from === 'TODAY' ? 'linear' : 'cardinal';
+  const weeklyTargetCurve: WeeklyTransitionCurve =
+    weeklyMorph?.to === 'TODAY' ? 'linear' : 'cardinal';
+
+  const weeklyAreaInterpolator = useMemo(
+    () =>
+      weeklyMorph
+        ? createWeeklyAreaInterpolator(weeklySourceCurve, weeklyTargetCurve)
+        : undefined,
+    [weeklyMorph, weeklySourceCurve, weeklyTargetCurve],
+  );
+
+  const weeklyLineInterpolator = useMemo(
+    () =>
+      weeklyMorph
+        ? createWeeklyLineInterpolator(weeklySourceCurve, weeklyTargetCurve)
+        : undefined,
+    [weeklyMorph, weeklySourceCurve, weeklyTargetCurve],
+  );
   const todaySemanticStroke =
     (toneValue ?? 0) > 0
       ? ANALYTICS_CHART_THEME.emerald
@@ -652,9 +681,11 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       isAnimationActive
       animationDuration={520}
       animationEasing="ease-out"
-      animationInterpolateFn={
-        useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
-      }
+      animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
+      animationInterpolateFn={weeklyAreaInterpolator}
+      onAnimationEnd={() => {
+        if (weeklyMorph) setWeeklyMorph(null);
+      }}
     />
   );
 
@@ -679,9 +710,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         isAnimationActive
         animationDuration={520}
         animationEasing="ease-out"
-        animationInterpolateFn={
-          useWeeklyFullWidthMorph ? interpolateWeeklyLineFullWidth : undefined
-        }
+        animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
+        animationInterpolateFn={weeklyLineInterpolator}
       />
     ) : null;
 
@@ -886,7 +916,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
-        useWeeklyFullWidthMorph={useWeeklyFullWidthMorph}
       />
     </>
   );

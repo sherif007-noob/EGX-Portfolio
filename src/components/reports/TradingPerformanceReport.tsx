@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AnalyticsSelect } from '../AnalyticsSelect';
+import { runVisualTransition } from '../../utils/visualTransition';
 import {
   TrendingUp,
   TrendingDown,
@@ -42,6 +43,16 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
 }) => {
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('ALL');
   const [tradeTypeFilter, setTradeTypeFilter] = useState<'ALL' | 'Swing' | 'Day Trade' | 'Position'>('ALL');
+
+  const changeTimeframe = (next: TimeframeFilter) => {
+    if (next === timeframe) return;
+    runVisualTransition('performance-filter', () => setTimeframe(next));
+  };
+
+  const changeTradeTypeFilter = (next: typeof tradeTypeFilter) => {
+    if (next === tradeTypeFilter) return;
+    runVisualTransition('performance-filter', () => setTradeTypeFilter(next));
+  };
 
   // Filter trades based on user selections
   const filteredTrades = useMemo(() => {
@@ -194,7 +205,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
   };
 
   return (
-    <div id="report-trading-performance" className="premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
+    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -222,7 +233,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 key={tf}
                 type="button"
                 aria-pressed={timeframe === tf}
-                onClick={() => setTimeframe(tf)}
+                onClick={() => changeTimeframe(tf)}
                 className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
               >
                 {tf === 'ALL' ? 'All Time' : tf}
@@ -233,7 +244,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           {/* Trade Type Filter */}
           <AnalyticsSelect
             value={tradeTypeFilter}
-            onChange={(value) => setTradeTypeFilter(value as typeof tradeTypeFilter)}
+            onChange={(value) => changeTradeTypeFilter(value as typeof tradeTypeFilter)}
             compact
             accent="blue"
             ariaLabel="Filter by trade type"

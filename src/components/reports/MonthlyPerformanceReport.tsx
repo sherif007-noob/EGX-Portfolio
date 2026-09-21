@@ -51,7 +51,7 @@ interface MonthEndHolding {
   notes?: string;
 }
 
-export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> = ({
+const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps> = ({
   closedTrades,
   positions,
 }) => {
@@ -608,3 +608,5 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
     </div>
   );
 };
+
+export const MonthlyPerformanceReport = React.memo(MonthlyPerformanceReportComponent);

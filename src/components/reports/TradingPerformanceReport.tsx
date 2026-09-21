@@ -33,8 +33,12 @@ interface TradingPerformanceReportProps {
 
 type TimeframeFilter = 'ALL' | 'YTD' | '90D' | '30D';
 
-const formatEgp = (val: number) =>
-  val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const EGP_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : '∞');
 

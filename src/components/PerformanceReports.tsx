@@ -148,7 +148,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         </div>
         <div className="flex gap-2 text-xs">
           <span className="premium-chip px-2.5 py-1 rounded-lg text-slate-300">Closed Trades: {stats.totalTrades}</span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400">Win Rate: {stats.winRate.toFixed(1)}%</span>
+          <span className="premium-chip px-2.5 py-1 rounded-lg text-emerald-400 border-emerald-500/30">Win Rate: {stats.winRate.toFixed(1)}%</span>
         </div>
       </div>
 

@@ -126,7 +126,7 @@ export function AnalyticsSelect<T extends string | number = string>({
           )}
         </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`premium-motion-chevron h-4 w-4 shrink-0 text-slate-500 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 

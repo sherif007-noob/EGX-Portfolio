@@ -11,16 +11,65 @@ export type PremiumVisualTransition =
   | 'directory-filter'
   | 'modal-close';
 
+const MODAL_EXIT_MS = 220;
+let modalExitTimer: number | null = null;
+
+function reducedMotion(): boolean {
+  return typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /**
- * State updates remain immediate.
+ * Content/state continuity is owned by MotionSwap, which paints one React tree
+ * at a time. This helper therefore updates normal state immediately.
  *
- * Visual continuity is handled by MotionSwap / useMotionPresence instead of the
- * browser View Transition API. Full-page snapshots were producing duplicate,
- * cropped, and temporarily missing content on responsive financial layouts.
+ * Modal close is the one exception: legacy modal components that do not use
+ * useMotionPresence receive a short DOM-only exit phase before their ordinary
+ * close callback runs. Presence-aware modals already expose data-motion-phase,
+ * so they keep their React-driven exit path and update immediately.
  */
 export function runVisualTransition(
-  _name: PremiumVisualTransition,
+  name: PremiumVisualTransition,
   update: () => void,
 ): void {
-  update();
+  if (
+    name !== 'modal-close' ||
+    typeof document === 'undefined' ||
+    typeof window === 'undefined' ||
+    reducedMotion()
+  ) {
+    update();
+    return;
+  }
+
+  const backdrops = Array.from(
+    document.querySelectorAll<HTMLElement>('.premium-modal-backdrop'),
+  ).filter((element) => element.getClientRects().length > 0);
+  const backdrop = backdrops[backdrops.length - 1];
+
+  if (!backdrop) {
+    update();
+    return;
+  }
+
+  // Presence-aware modals keep themselves mounted after isOpen becomes false.
+  if (backdrop.hasAttribute('data-motion-phase')) {
+    update();
+    return;
+  }
+
+  if (modalExitTimer !== null) {
+    window.clearTimeout(modalExitTimer);
+  }
+
+  backdrop.dataset.motionPhase = 'exit';
+  backdrop.style.pointerEvents = 'none';
+
+  const modal = backdrop.querySelector<HTMLElement>('.premium-modal');
+  if (modal) modal.dataset.motionPhase = 'exit';
+
+  modalExitTimer = window.setTimeout(() => {
+    modalExitTimer = null;
+    update();
+  }, MODAL_EXIT_MS);
 }

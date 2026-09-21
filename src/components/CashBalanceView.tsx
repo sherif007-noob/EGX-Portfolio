@@ -689,7 +689,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
             {/* Impact Calculation Preview */}
             {parseFloat(depositAmount) > 0 && (
-              <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs">
+              <div className="premium-modal-section p-3.5 rounded-xl border-emerald-500/30 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 text-emerald-300">
                   <PlusCircle className="w-4 h-4 text-emerald-400" />
                   <span>
@@ -718,7 +718,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
         {/* Withdrawal Form */}
         {activeAction === 'withdraw' && (
-          <form onSubmit={handleConfirmWithdrawal} className="space-y-4">
+          <form onSubmit={handleConfirmWithdrawal} className="premium-reveal space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Withdrawal Amount */}
               <div className="space-y-2">
@@ -820,10 +820,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             {/* Impact Calculation Preview */}
             {parseFloat(withdrawAmount) > 0 && (
               <div
-                className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                className={`premium-modal-section p-3.5 rounded-xl border flex items-center justify-between text-xs ${
                   parseFloat(withdrawAmount) > cashBalance
-                    ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-                    : 'bg-slate-950/80 border-slate-800 text-slate-300'
+                    ? 'border-rose-500/40 text-rose-300'
+                    : 'border-slate-700/60 text-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -896,10 +896,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Ledger Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
+        <div className="premium-table-shell overflow-x-auto rounded-xl">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+              <tr className="text-slate-400 border-b border-slate-800/70 font-semibold">
                 <th className="py-3 px-4">Date</th>
                 <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Details &amp; Notes</th>
@@ -912,7 +912,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               {filteredTransactions.map((tx) => {
                 const isDeposit = tx.type === 'DEPOSIT';
                 return (
-                  <tr key={tx.id} className="hover:bg-slate-800/40 transition">
+                  <tr key={tx.id} className="transition">
                     <td className="py-3 px-4 text-slate-300 font-sans whitespace-nowrap">
                       {tx.date}
                     </td>

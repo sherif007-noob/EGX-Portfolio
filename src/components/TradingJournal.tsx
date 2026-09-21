@@ -410,7 +410,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     <div className="premium-section-enter space-y-4">
       {/* Toast Notification for deletion */}
       {deletedIdToast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="premium-content-swap fixed bottom-6 right-6 z-50">
           <div className="premium-floating px-4 py-2.5 rounded-xl border-rose-500/50 text-rose-300 text-xs font-semibold flex items-center gap-2">
             <Trash2 className="w-4 h-4 text-rose-400" />
             <span>Transaction for {deletedIdToast} deleted successfully</span>

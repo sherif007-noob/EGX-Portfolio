@@ -156,7 +156,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {testResult && (
-          <div className="px-5 py-2 bg-blue-950/60 border-b border-blue-500/30 text-xs font-medium text-blue-200 flex items-center gap-2 animate-in fade-in">
+          <div className="px-5 py-2 bg-blue-950/60 border-b border-blue-500/30 text-xs font-medium text-blue-200 flex items-center gap-2 premium-content-swap">
             <span className="w-2 h-2 rounded-full bg-blue-400" />
             <span>{testResult}</span>
           </div>
@@ -358,7 +358,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     onChange={(e) => onUpdateSettings({ enabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 premium-inset-glass peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/90 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:border-emerald-500/50 peer-checked:bg-emerald-500/20"></div>
+                  <div className="w-11 h-6 premium-inset-glass peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/90 after:rounded-full after:h-5 after:w-5 after:transition-all after:duration-300 peer-checked:border-emerald-500/50 peer-checked:bg-emerald-500/20"></div>
                 </label>
               </div>
 

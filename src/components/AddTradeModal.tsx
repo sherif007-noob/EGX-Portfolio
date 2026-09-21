@@ -245,7 +245,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
         {/* Existing Position DCA Banner */}
         {activeExistingPosition && (
-          <div className="premium-modal-section p-3 rounded-xl border-amber-500/30 text-xs text-amber-200 space-y-1">
+          <div className="premium-content-swap premium-modal-section p-3 rounded-xl border-amber-500/30 text-xs text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-amber-300">
               <Layers className="w-4 h-4" />
               <span>Existing Position Detected (DCA Mode)</span>

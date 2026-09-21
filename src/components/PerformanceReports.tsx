@@ -147,7 +147,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           <p className="text-xs text-slate-400 mt-1">All portfolio equity and P&amp;L bridge figures use the centralized accounting engine.</p>
         </div>
         <div className="flex gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Closed Trades: {stats.totalTrades}</span>
+          <span className="premium-chip px-2.5 py-1 rounded-lg text-slate-300">Closed Trades: {stats.totalTrades}</span>
           <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400">Win Rate: {stats.winRate.toFixed(1)}%</span>
         </div>
       </div>

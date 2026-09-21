@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion } from './PremiumMotion';
 import { googleSignIn, getAccessToken, logout } from '../services/firebaseAuth';
 import { 
   extractSpreadsheetId, 
@@ -178,8 +179,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
       setLoading(false);
     }
   };
-
-  if (!isOpen) return null;
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -422,8 +421,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   };
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-6">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-6"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Google Sheets sync"
+    >
         {/* Header */}
         <div className="premium-modal-section flex items-center justify-between p-5 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
@@ -836,7 +840,6 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

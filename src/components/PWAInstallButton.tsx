@@ -59,7 +59,7 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
           >
             <div className="flex items-start justify-between p-5 pb-3 border-b border-slate-800 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 overflow-hidden shadow-inner shrink-0">
+                <div className="premium-inset-glass w-11 h-11 rounded-xl flex items-center justify-center p-1.5 overflow-hidden shrink-0">
                   <img src="/icon.svg" alt="EGX App Icon" className="w-full h-full object-contain" />
                 </div>
                 <div>

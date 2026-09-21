@@ -53,7 +53,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3 | Component migration | Complete; validation ongoing |
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
-| 4 | Motion & micro-interactions | **Paused — discuss before continuing** |
+| 4 | Motion & micro-interactions | **In progress — five-family system approved** |
 | 5 | Advanced effects | Not started |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
@@ -155,27 +155,125 @@ Acceptance:
 
 ## Phase 4 — Motion & micro-interactions
 
-**Status: PAUSED.**
+**Status: IN PROGRESS.**
 
-A preliminary motion system and experimental motion commits already exist, but Phase 4 is not accepted or complete. The detailed specification must be agreed before more implementation.
+The accepted Phase 4 direction is a shared motion language organized into five families. The provisional motion code remains useful input, but it is being normalized rather than treated as final.
 
-Candidate discussion scope:
-- Page/tab transitions.
-- Modal entrance/exit.
-- Selector feedback.
-- Dropdown opening/menu response.
-- Accordion/expandable rows.
-- Card/button hover response.
-- Analytics chart transitions.
-- Visual loading/empty/success transitions.
+### Family 1 — Navigation / page context
+
+Applies to:
+- Main tab/page transitions.
+- Active navigation changes.
+- Context changes between major screens.
+
+Intent:
+- Make navigation feel continuous rather than like DOM replacement.
+- Use restrained depth/fade/translation.
+- Never make navigation feel blocked by animation.
+
+Target timing:
+- Major page/context transition: approximately **420–460 ms**.
+- Nav-selection feedback: approximately **300–320 ms**.
+
+### Family 2 — Interactive controls
+
+Applies to:
+- Buttons.
+- Icon actions.
+- Selectors/segmented controls.
+- Dropdown triggers.
+- Accordion triggers.
+- Form-field focus/response.
+
+Intent:
+- Immediate but readable tactile response.
+- Semantic controls retain their own accent family.
+- Avoid exaggerated bouncing.
+
+Target timing:
+- Hover/focus/control transition: approximately **240–280 ms**.
+- Selector state settle: approximately **300–320 ms**.
+- Press response may be faster than hover, but must not snap abruptly.
+
+### Family 3 — Overlays
+
+Applies to:
+- Dropdowns.
+- Menus.
+- Modals.
+- Backdrops.
+- Popovers and floating surfaces.
+
+Intent:
+- Dropdowns should feel attached to their trigger.
+- Modal backdrop and panel should read as one coordinated transition.
+- Overlay motion must preserve viewport focus and layering.
+
+Target timing:
+- Dropdown/popover: approximately **340–380 ms**.
+- Modal/backdrop: approximately **380–440 ms**.
+
+### Family 4 — Content / state changes
+
+Applies to:
+- Accordion/expanded content.
+- Deposit/Withdraw form switching.
+- BUY/SELL conditional sections.
+- Allocation mode changes.
+- Trading Performance filter-result changes.
+- Monthly report month/status changes.
+- Feedback/success/error banners.
+
+Intent:
+- Explain what changed without fading the entire screen.
+- Dynamic content should enter as one coherent surface.
+
+Target timing:
+- Content/reveal transition: approximately **400–420 ms**.
+- Tooltips stay quicker, approximately **200–220 ms**.
+
+### Family 5 — Charts / financial data visualization
+
+Applies to:
+- Analytics timeframe changes.
+- Analytics mode changes.
+- Primary and secondary chart-series transitions.
+- Tooltip/crosshair/active-point presentation.
+
+Intent:
+- Recharts/data-series interpolation owns the chart transition.
+- Do not force-remount the plot solely to create motion.
+- Today/intraday and daily timeframes must use the same visual transition language.
+- Animation must never fabricate financial observations or imply data that does not exist.
+
+Target timing:
+- Main and secondary chart data transition: approximately **500–520 ms**.
+- Tooltip motion remains short enough to track the pointer.
+
+### Phase 4 user-validation requirements
+
+The accepted implementation must specifically satisfy:
+
+- Motion is clearly noticeable but **slower than the provisional pass**, which was judged too fast.
+- Motion coverage is systematic through the five families rather than added component-by-component without a shared language.
+- The primary analytics chart transition **to and from Today** must match the quality/continuity of transitions between daily timeframes.
+- The secondary Risk & Cost charts must animate Today/intraday data with the same transition language as other timeframes.
+- Advanced decorative effects such as strong shimmer sweeps, parallax, animated ambient blobs, or elaborate glow pulses remain Phase 5 work.
 
 Guardrails:
 - Motion cannot delay or change data/transaction operations.
 - Animation cannot imply a financial value changed when it did not.
 - prefers-reduced-motion must be honored.
 - Motion must suit dense financial screens.
+- Phase 4 is presentation-only; no business/accounting/data behavior may be changed for animation.
 
-**Detailed acceptance criteria will be finalized in the Phase 4 discussion.**
+Acceptance:
+- Every major interaction belongs to one of the five families.
+- Timing is consistent within each family.
+- No leftover provisional motion visibly conflicts with the canonical family timing.
+- Today and non-Today chart transitions feel like one system.
+- Reduced-motion removes nonessential animation.
+- Quality Checks pass and no visual-motion change introduces a functional regression.
 
 ## Phase 5 — Advanced effects
 

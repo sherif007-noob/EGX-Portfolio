@@ -2533,10 +2533,10 @@ body {
 :root {
   --motion-family-control: 260ms;
   --motion-family-selector: 340ms;
-  --motion-family-overlay: 240ms;
-  --motion-family-modal: 330ms;
-  --motion-family-content: 310ms;
-  --motion-family-navigation: 380ms;
+  --motion-family-overlay: 360ms;
+  --motion-family-modal: 420ms;
+  --motion-family-content: 360ms;
+  --motion-family-navigation: 440ms;
   --motion-family-chart: 520ms;
   --motion-family-tooltip: 200ms;
   --motion-family-standard: cubic-bezier(0.22, 0.8, 0.24, 1);

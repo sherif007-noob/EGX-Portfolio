@@ -3089,3 +3089,30 @@ body {
 :root[data-premium-transition="performance-filter"] .premium-content-swap {
   animation: none;
 }
+
+
+/* Phase 4 unified modal snapshot exit */
+:root[data-premium-transition="modal-close"] .premium-modal-backdrop {
+  view-transition-name: premium-modal-layer;
+}
+
+::view-transition-old(premium-modal-layer) {
+  animation: premium-modal-snapshot-out var(--motion-family-modal) cubic-bezier(0.4, 0, 0.8, 0.2) both;
+}
+
+::view-transition-new(premium-modal-layer) {
+  animation: none;
+}
+
+@keyframes premium-modal-snapshot-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+    filter: blur(2px);
+  }
+}

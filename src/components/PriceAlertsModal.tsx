@@ -264,7 +264,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                             ? 'bg-emerald-950/30 border-emerald-500/50 shadow-sm shadow-emerald-950'
                             : isStopLossHit
                             ? 'bg-rose-950/30 border-rose-500/50 shadow-sm shadow-rose-950'
-                            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                            : 'premium-inset-glass hover:border-slate-600/70'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -358,7 +358,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     onChange={(e) => onUpdateSettings({ enabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div className="w-11 h-6 premium-inset-glass peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/90 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:border-emerald-500/50 peer-checked:bg-emerald-500/20"></div>
                 </label>
               </div>
 
@@ -383,7 +383,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     type="checkbox"
                     checked={settings.notifyOnTarget}
                     onChange={(e) => onUpdateSettings({ notifyOnTarget: e.target.checked })}
-                    className="w-4 h-4 rounded text-emerald-500 bg-slate-800 border-slate-700 focus:ring-emerald-500"
+                    className="premium-checkbox"
                   />
                 </div>
 
@@ -402,7 +402,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     type="checkbox"
                     checked={settings.notifyOnStopLoss}
                     onChange={(e) => onUpdateSettings({ notifyOnStopLoss: e.target.checked })}
-                    className="w-4 h-4 rounded text-rose-500 bg-slate-800 border-slate-700 focus:ring-rose-500"
+                    className="premium-checkbox"
                   />
                 </div>
 
@@ -422,7 +422,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                       type="checkbox"
                       checked={settings.notifyOnProximity}
                       onChange={(e) => onUpdateSettings({ notifyOnProximity: e.target.checked })}
-                      className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                      className="premium-checkbox"
                     />
                   </div>
 
@@ -466,7 +466,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     type="checkbox"
                     checked={settings.cairoHoursOnly}
                     onChange={(e) => onUpdateSettings({ cairoHoursOnly: e.target.checked })}
-                    className="w-4 h-4 rounded text-cyan-500 bg-slate-800 border-slate-700 focus:ring-cyan-500"
+                    className="premium-checkbox"
                   />
                 </div>
 
@@ -485,7 +485,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     type="checkbox"
                     checked={settings.soundEnabled}
                     onChange={(e) => onUpdateSettings({ soundEnabled: e.target.checked })}
-                    className="w-4 h-4 rounded text-emerald-500 bg-slate-800 border-slate-700 focus:ring-emerald-500"
+                    className="premium-checkbox"
                   />
                 </div>
 
@@ -504,7 +504,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     type="checkbox"
                     checked={settings.vibrateEnabled}
                     onChange={(e) => onUpdateSettings({ vibrateEnabled: e.target.checked })}
-                    className="w-4 h-4 rounded text-purple-500 bg-slate-800 border-slate-700 focus:ring-purple-500"
+                    className="premium-checkbox"
                   />
                 </div>
               </div>

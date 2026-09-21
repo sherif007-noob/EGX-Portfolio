@@ -2521,3 +2521,351 @@ body {
   color: rgb(var(--select-accent, 148 163 184));
   filter: drop-shadow(0 0 5px rgb(var(--select-accent, 148 163 184) / 0.24));
 }
+
+
+/* Phase 4 — five-family canonical motion layer */
+/*
+ * Family 1: navigation/context
+ * Family 2: interactive controls
+ * Family 3: overlays
+ * Family 4: content/state changes
+ * Family 5: charts/data visualization
+ *
+ * This block intentionally comes after the provisional Phase 4 and Phase 3
+ * overrides. It is the canonical timing layer for the accepted Phase 4 pass.
+ */
+:root {
+  --motion-family-control: 260ms;
+  --motion-family-selector: 320ms;
+  --motion-family-overlay: 380ms;
+  --motion-family-modal: 440ms;
+  --motion-family-content: 420ms;
+  --motion-family-navigation: 460ms;
+  --motion-family-chart: 520ms;
+  --motion-family-tooltip: 220ms;
+  --motion-family-standard: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --motion-family-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family 1 — Navigation / page context                                        */
+/* -------------------------------------------------------------------------- */
+.premium-tab-stage {
+  animation: premium-tab-family-in var(--motion-family-navigation) var(--motion-family-standard) both;
+}
+
+@keyframes premium-tab-family-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(14px, 7px, 0) scale(0.988);
+    filter: blur(3px);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(-1px, 0, 0) scale(1.001);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.premium-nav {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    color var(--motion-family-control) ease-out,
+    border-color var(--motion-family-control) ease-out,
+    background var(--motion-family-control) ease-out,
+    box-shadow var(--motion-family-control) var(--motion-family-standard);
+}
+
+.premium-nav-active {
+  animation: premium-nav-family-select var(--motion-family-selector) var(--motion-family-emphasized) both;
+}
+
+@keyframes premium-nav-family-select {
+  0% { transform: translateY(1px) scale(0.975); }
+  68% { transform: translateY(-1px) scale(1.008); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family 2 — Interactive controls                                             */
+/* -------------------------------------------------------------------------- */
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment,
+.premium-control,
+.premium-accordion-trigger,
+.premium-select-trigger,
+.premium-field {
+  transition-duration: var(--motion-family-control);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    border-color var(--motion-family-control) ease-out,
+    background var(--motion-family-control) ease-out,
+    color var(--motion-family-control) ease-out,
+    box-shadow var(--motion-family-control) var(--motion-family-standard);
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg,
+.premium-control > svg,
+.premium-nav > svg,
+.premium-segment > svg,
+.premium-accordion-trigger > svg {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    filter var(--motion-family-control) ease-out,
+    color var(--motion-family-control) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled),
+  .premium-control:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+.premium-action:active:not(:disabled),
+.premium-filter-pill:active:not(:disabled),
+.premium-choice:active:not(:disabled),
+.premium-icon-action:active:not(:disabled),
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: translateY(0) scale(0.972);
+  transition-duration: 180ms;
+}
+
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"] {
+  animation: premium-selector-family-select var(--motion-family-selector) var(--motion-family-emphasized) both;
+}
+
+@keyframes premium-selector-family-select {
+  0% {
+    transform: translateY(1px) scale(0.965);
+    filter: brightness(0.94);
+  }
+  68% {
+    transform: translateY(-1px) scale(1.012);
+    filter: brightness(1.05);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family 3 — Overlays                                                         */
+/* -------------------------------------------------------------------------- */
+.premium-dropdown {
+  animation: premium-overlay-family-in var(--motion-family-overlay) var(--motion-family-emphasized) both;
+}
+
+@keyframes premium-overlay-family-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-9px) scale(0.965);
+    filter: blur(3px);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.004);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.premium-dropdown .premium-menu-item {
+  animation: premium-menu-family-item-in 300ms var(--motion-family-standard) both;
+}
+
+.premium-dropdown .premium-menu-item:nth-child(1) { animation-delay: 18ms; }
+.premium-dropdown .premium-menu-item:nth-child(2) { animation-delay: 34ms; }
+.premium-dropdown .premium-menu-item:nth-child(3) { animation-delay: 50ms; }
+.premium-dropdown .premium-menu-item:nth-child(4) { animation-delay: 66ms; }
+.premium-dropdown .premium-menu-item:nth-child(5) { animation-delay: 82ms; }
+.premium-dropdown .premium-menu-item:nth-child(6) { animation-delay: 98ms; }
+.premium-dropdown .premium-menu-item:nth-child(n+7) { animation-delay: 112ms; }
+
+@keyframes premium-menu-family-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-5px) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.premium-modal-backdrop {
+  animation: premium-backdrop-family-in var(--motion-family-overlay) ease-out both;
+}
+
+.premium-modal {
+  animation: premium-modal-family-in var(--motion-family-modal) var(--motion-family-emphasized) both;
+}
+
+@keyframes premium-backdrop-family-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-family-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.958);
+    filter: blur(3px);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.003);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family 4 — Content / state changes                                          */
+/* -------------------------------------------------------------------------- */
+.premium-reveal {
+  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-emphasized) both;
+}
+
+.premium-section-enter > .premium-panel,
+.premium-section-enter > .premium-glass,
+.premium-section-enter > .premium-report-glass,
+.premium-section-enter > .premium-card {
+  animation-duration: var(--motion-family-content);
+  animation-timing-function: var(--motion-family-standard);
+}
+
+.premium-content-swap {
+  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-emphasized) both;
+}
+
+@keyframes premium-content-family-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scaleY(0.965);
+    filter: blur(2px);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(1px) scaleY(1.003);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+.premium-tooltip-content {
+  animation: premium-tooltip-family-in var(--motion-family-tooltip) var(--motion-family-standard) both;
+}
+
+@keyframes premium-tooltip-family-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family 5 — Charts                                                           */
+/* -------------------------------------------------------------------------- */
+/*
+ * Recharts owns timeframe interpolation. Do not key/remount the plot solely
+ * for motion: keeping one chart instance preserves the smooth Today <-> daily
+ * interpolation that existed before the provisional Phase 4 stage animation.
+ */
+.premium-chart-stage {
+  animation: none;
+}
+
+@media (max-width: 767px) {
+  .premium-tab-stage {
+    animation-duration: 420ms;
+  }
+
+  .premium-dropdown {
+    animation-duration: 340ms;
+  }
+
+  .premium-modal {
+    animation-duration: 410ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-tab-stage,
+  .premium-nav-active,
+  .premium-filter-pill[aria-pressed="true"],
+  .premium-segment[aria-pressed="true"],
+  .premium-dropdown,
+  .premium-dropdown .premium-menu-item,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-reveal,
+  .premium-content-swap,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-control,
+  .premium-nav,
+  .premium-accordion-trigger,
+  .premium-select-trigger,
+  .premium-field {
+    transition: none !important;
+    transform: none !important;
+  }
+}

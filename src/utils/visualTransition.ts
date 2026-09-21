@@ -4,6 +4,9 @@ export type PremiumVisualTransition =
   | 'performance-filter'
   | 'monthly-filter'
   | 'allocation-filter'
+  | 'cash-action'
+  | 'cash-history'
+  | 'closed-filter'
   | 'modal-close';
 
 type ViewTransitionLike = {

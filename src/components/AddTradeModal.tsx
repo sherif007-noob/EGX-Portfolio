@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { useMotionPresence } from './PremiumMotion';
 import { EGXTicker, Position, Sector, TradeTransaction } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap, Clock } from 'lucide-react';
@@ -47,6 +48,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   onOpenScreenshotModal,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
+  const { isPresent, phase: motionPhase } = useMotionPresence(isOpen);
   const [tickerInput, setTickerInput] = useState<string>('');
   const [selectedTickerData, setSelectedTickerData] = useState<EGXTicker | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -191,16 +193,18 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     requestClose();
   };
 
-  if (!isOpen) return null;
+  if (!isPresent) return null;
 
   return (
     <div
       id="add-trade-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      data-motion-phase={motionPhase}
       onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+        data-motion-phase={motionPhase}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

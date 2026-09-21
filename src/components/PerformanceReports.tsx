@@ -29,6 +29,12 @@ interface PerformanceReportsProps {
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (value: number) => EGP_FORMATTER.format(value);
 
 export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   stats,
@@ -44,11 +50,6 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
-
-  const formatEgp = (value: number) => new Intl.NumberFormat('en-EG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
 
   const grossProfit = stats.totalRealizedGainEgp || 0;
   const grossLoss = stats.totalRealizedLossEgp || 0;

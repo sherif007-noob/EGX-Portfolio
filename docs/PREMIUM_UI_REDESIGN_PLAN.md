@@ -53,7 +53,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3 | Component migration | Complete; validation ongoing |
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
-| 4 | Motion & micro-interactions | **In progress — five-family system approved** |
+| 4 | Motion & micro-interactions | **In progress — v3 Motion-for-React pass awaiting visual validation** |
 | 5 | Advanced effects | Not started |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
@@ -157,7 +157,7 @@ Acceptance:
 
 **Status: IN PROGRESS.**
 
-The accepted Phase 4 direction is a shared motion language organized into five families. The provisional motion code remains useful input, but it is being normalized rather than treated as final.
+The accepted Phase 4 direction is a shared five-family motion language implemented with **Motion for React** for lifecycle presence. Browser View Transition snapshots and timer-driven React tree swaps are retired. CSS owns tactile micro-interactions only; Recharts owns financial-series interpolation. The detailed v3 implementation plan lives in **PHASE4_MOTION_REIMPLEMENTATION_PLAN.md**.
 
 ### Family 1 — Navigation / page context
 
@@ -172,9 +172,11 @@ Intent:
 - Never make navigation feel blocked by animation.
 
 Target timing:
-- Major page/context transition: approximately **520–560 ms**.
-- Nav-selection feedback: approximately **380–420 ms**.
-- Major tab changes must animate both the outgoing and incoming context, not only the new tab entrance.
+- Main-tab exit: approximately **200–230 ms**.
+- Main-tab entrance: approximately **340–380 ms**.
+- Total perceived context change: approximately **560–610 ms**.
+- Nav-selection feedback: approximately **300–360 ms**.
+- Major tab changes must animate both outgoing and incoming context through real DOM presence, not browser screenshots.
 
 ### Family 2 — Interactive controls
 
@@ -192,9 +194,9 @@ Intent:
 - Avoid exaggerated bouncing.
 
 Target timing:
-- Hover/focus/control transition: approximately **300–320 ms**.
-- Selector state settle: approximately **400–420 ms**.
-- Press response may be faster than hover, but must not snap abruptly.
+- Hover/focus/control transition: approximately **240–280 ms**.
+- Selector state settle: approximately **300–360 ms**.
+- Press response: approximately **120–170 ms**.
 
 ### Family 3 — Overlays
 
@@ -211,9 +213,9 @@ Intent:
 - Overlay motion must preserve viewport focus and layering.
 
 Target timing:
-- Dropdown/popover: approximately **440–480 ms**.
-- Modal/backdrop: approximately **520–560 ms**.
-- Modal exit is part of the overlay family and must be visibly animated rather than disappearing on unmount.
+- Dropdown entrance: approximately **220–260 ms**; exit: **150–190 ms**.
+- Modal entrance: approximately **300–340 ms**; exit: **220–260 ms**.
+- Modal exit is part of the overlay family and must keep the real DOM mounted until exit completes.
 
 ### Family 4 — Content / state changes
 
@@ -231,9 +233,11 @@ Intent:
 - Dynamic content should enter as one coherent surface.
 
 Target timing:
-- Content/reveal/result transition: approximately **500–540 ms**.
-- Tooltips stay quicker, approximately **200–220 ms**.
-- Filtered/replaced content should transition old -> new; selector animation alone is not sufficient.
+- Result/content exit: approximately **160–190 ms**.
+- Result/content entrance: approximately **280–330 ms**.
+- Total perceived state change: approximately **440–520 ms**.
+- Tooltips stay quicker, approximately **180–220 ms**.
+- Filtered/replaced content should transition old -> new through keyed presence; selector animation alone is not sufficient.
 
 ### Family 5 — Charts / financial data visualization
 
@@ -257,7 +261,7 @@ Target timing:
 
 The accepted implementation must specifically satisfy:
 
-- Motion is clearly noticeable and uses the slower audited cadence; the earlier provisional and first canonical pass were both judged too fast in several families.
+- Motion is clearly noticeable without relying on full-page fades; the previous stability pass was judged too subtle and is superseded by the v3 Motion-for-React implementation.
 - Motion coverage is systematic through the five families rather than added component-by-component without a shared language.
 - The primary analytics chart transition **to and from Today** must match the quality/continuity of transitions between daily timeframes.
 - The secondary Risk & Cost charts must animate Today/intraday data with the same transition language as other timeframes.
@@ -268,8 +272,11 @@ Guardrails:
 - Animation cannot imply a financial value changed when it did not.
 - prefers-reduced-motion must be honored.
 - Motion must suit dense financial screens.
-- Do not permanently promote whole long pages to compositor layers with persistent `will-change` / `translateZ(0)`; only active transition wrappers may be promoted.
+- Do not permanently promote whole long pages to compositor layers with persistent `will-change` / `translateZ(0)`.
+- Browser View Transition snapshots are prohibited for app tab/filter/report lifecycle motion.
+- Timer-driven React-node caching/swap orchestration is prohibited.
 - Avoid animated blur/filter on large app surfaces, especially on mobile.
+- Every interaction has exactly one lifecycle-motion owner.
 - Phase 4 is presentation-only; no business/accounting/data behavior may be changed for animation.
 
 Acceptance:

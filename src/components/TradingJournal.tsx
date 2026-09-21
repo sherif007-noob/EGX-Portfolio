@@ -1067,14 +1067,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
             <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
               {/* Type Switcher */}
-              <div className="premium-form-section p-3 rounded-xl space-y-1.5">
+              <div className="space-y-1.5">
                 <label className="text-slate-300 font-semibold block">Transaction Type</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="premium-selector-shell grid grid-cols-2 w-full">
                   <button
                     type="button"
                     aria-pressed={editType === 'BUY'}
-                     onClick={() => setEditType('BUY')}
-                    className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
+                    onClick={() => setEditType('BUY')}
+                    className={`premium-filter-pill py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
                   >
                     <PlusCircle className="w-4 h-4" />
                     BUY (Stock Entry / DCA)
@@ -1082,8 +1082,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   <button
                     type="button"
                     aria-pressed={editType === 'SELL'}
-                     onClick={() => setEditType('SELL')}
-                    className={`premium-choice py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
+                    onClick={() => setEditType('SELL')}
+                    className={`premium-filter-pill py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
                   >
                     <ArrowUpDown className="w-4 h-4" />
                     SELL (Exit / Liquidation)

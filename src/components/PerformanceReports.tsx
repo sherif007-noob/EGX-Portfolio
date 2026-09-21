@@ -36,7 +36,7 @@ const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
 
 const formatEgp = (value: number) => EGP_FORMATTER.format(value);
 
-export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
+const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   stats,
   closedTrades,
   positions,
@@ -453,3 +453,5 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
     </div>
   );
 };
+
+export const PerformanceReports = React.memo(PerformanceReportsComponent);

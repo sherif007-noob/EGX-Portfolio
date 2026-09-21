@@ -2501,3 +2501,23 @@ body {
   pointer-events: none;
   color: rgb(226 232 240);
 }
+
+
+/* Dropdown accent fallback + trigger accent parity */
+.premium-dropdown {
+  --menu-accent: 100 116 139;
+  --menu-text: 226 232 240;
+}
+
+.premium-select-trigger[data-accent="cyan"]   { --select-accent: 34 211 238; }
+.premium-select-trigger[data-accent="emerald"]{ --select-accent: 16 185 129; }
+.premium-select-trigger[data-accent="purple"] { --select-accent: 139 92 246; }
+.premium-select-trigger[data-accent="blue"]   { --select-accent: 59 130 246; }
+.premium-select-trigger[data-accent="amber"]  { --select-accent: 245 158 11; }
+.premium-select-trigger[data-accent="rose"]   { --select-accent: 244 63 94; }
+.premium-select-trigger[data-accent="teal"]   { --select-accent: 20 184 166; }
+
+.premium-select-trigger[aria-expanded="true"] > svg:last-child {
+  color: rgb(var(--select-accent, 148 163 184));
+  filter: drop-shadow(0 0 5px rgb(var(--select-accent, 148 163 184) / 0.24));
+}

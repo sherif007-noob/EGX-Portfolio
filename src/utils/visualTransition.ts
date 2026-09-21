@@ -9,6 +9,8 @@ export type PremiumVisualTransition =
   | 'cash-action'
   | 'cash-history'
   | 'closed-filter'
+  | 'positions-filter'
+  | 'directory-filter'
   | 'modal-close';
 
 type ViewTransitionLike = {

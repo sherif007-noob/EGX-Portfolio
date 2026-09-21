@@ -52,8 +52,12 @@ export function runVisualTransition(
     return;
   }
 
-  // Presence-aware modals keep themselves mounted after isOpen becomes false.
-  if (backdrop.hasAttribute('data-motion-phase')) {
+  // Motion-owned/presence-aware modals keep themselves mounted after isOpen
+  // becomes false, so their React lifecycle should receive the close immediately.
+  if (
+    backdrop.hasAttribute('data-motion-owned') ||
+    backdrop.hasAttribute('data-motion-phase')
+  ) {
     update();
     return;
   }

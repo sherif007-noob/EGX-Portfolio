@@ -115,7 +115,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
             <button
               id="btn-reconcile-ledger-overview"
               onClick={onReconcileLedger}
-              className="premium-control flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/70 hover:bg-slate-700/80 text-emerald-300 border border-slate-700/70 hover:border-emerald-500/40 rounded-xl text-xs font-semibold"
+              className="premium-action premium-action-success flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold"
               title="Re-audit transactions and compute positions and metrics"
             >
               <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
@@ -128,7 +128,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               id="btn-sync-live-prices-overview"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="premium-control flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/70 hover:bg-slate-700/80 text-cyan-300 border border-slate-700/70 hover:border-cyan-500/40 rounded-xl text-xs font-semibold disabled:opacity-50"
+              className="premium-action premium-filter-active-cyan flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50"
               title="Sync live quotes for ~300 EGX stocks"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPrices ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
@@ -256,7 +256,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span>Cash Available</span>
               <button
                 onClick={onQuickAddCash}
-                className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold underline"
+                className="premium-action premium-action-primary px-2 py-1 rounded-lg text-[10px] font-semibold"
               >
                 Adjust
               </button>

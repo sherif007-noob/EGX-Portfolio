@@ -872,7 +872,7 @@ export default function App() {
 
       {/* Undo Toast Notification */}
       {undoState && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="premium-content-swap fixed bottom-6 right-6 z-50">
           <div className="premium-floating px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
             <span>{undoState.message}</span>
             <button
@@ -888,7 +888,7 @@ export default function App() {
 
       {/* Price / Action Notification Toast */}
       {toastNotification && (
-        <div className="fixed top-20 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="premium-content-swap fixed top-20 right-4 z-50">
           <div
             className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'

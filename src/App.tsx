@@ -49,6 +49,7 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
+import { MotionSwap } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 
 export default function App() {
@@ -951,7 +952,7 @@ export default function App() {
         )}
 
         {/* Tab Content Panels */}
-        <div key={activeTab} className="premium-tab-stage">
+        <MotionSwap motionKey={activeTab} variant="tab" className="premium-tab-stage">
         {activeTab === 'overview' && (
           <div className="premium-section-enter space-y-6">
             <div className="space-y-3">
@@ -1106,7 +1107,7 @@ export default function App() {
             isSheetsConnected={!!sheetsConfig?.spreadsheetId}
           />
         )}
-        </div>
+        </MotionSwap>
       </main>
 
       {/* Modals & Dialogs */}

@@ -2869,3 +2869,27 @@ body {
     transform: none !important;
   }
 }
+
+
+/* Phase 4 surface timing normalization */
+.premium-card,
+.premium-panel,
+.premium-subpanel,
+.premium-report-glass,
+.premium-report-glass-soft,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section,
+.premium-table-shell,
+.premium-report-table {
+  transition-duration: 300ms;
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    transform 240ms var(--motion-family-standard),
+    background-color 240ms ease-out,
+    box-shadow 240ms ease-out;
+}

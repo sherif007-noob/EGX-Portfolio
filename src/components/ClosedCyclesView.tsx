@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap } from './PremiumMotion';
+import { ExpandPresence, MotionSwap } from './PremiumMotion';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -678,8 +678,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               </div>
 
               {/* Expanded Multi-Phase Execution Breakdown */}
-              {isExpanded && (
-                <div className="premium-reveal premium-inset-glass mt-3.5 p-3.5 rounded-xl space-y-3">
+              <ExpandPresence isOpen={isExpanded} className="mt-3.5">
+                <div className="premium-inset-glass p-3.5 rounded-xl space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
                     <span className="flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-purple-400" />
@@ -769,7 +769,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     </div>
                   </div>
                 </div>
-              )}
+              </ExpandPresence>
             </div>
           );
         })}

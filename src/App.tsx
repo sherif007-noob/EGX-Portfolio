@@ -57,7 +57,19 @@ export default function App() {
 
   const handleTabChange = (nextTab: NavigationTab) => {
     if (nextTab === activeTab) return;
-    runVisualTransition('tab', () => setActiveTab(nextTab));
+
+    const desktopMotionTarget =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches;
+
+    const update = () => runVisualTransition('tab', () => setActiveTab(nextTab));
+
+    if (desktopMotionTarget) {
+      React.startTransition(update);
+      return;
+    }
+
+    update();
   };
 
   // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)

@@ -34,9 +34,9 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
 
   useEffect(() => {
     if (position) {
-      setTargetPrice(displayPosition.targetPrice !== undefined ? String(displayPosition.targetPrice) : '');
-      setStopLoss(displayPosition.stopLoss !== undefined ? String(displayPosition.stopLoss) : '');
-      setNotes(displayPosition.notes || '');
+      setTargetPrice(position.targetPrice !== undefined ? String(position.targetPrice) : '');
+      setStopLoss(position.stopLoss !== undefined ? String(position.stopLoss) : '');
+      setNotes(position.notes || '');
     }
   }, [position]);
 

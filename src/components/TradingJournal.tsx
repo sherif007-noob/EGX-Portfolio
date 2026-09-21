@@ -686,7 +686,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       )}
 
       {/* Transactions Feed */}
-      <div className="premium-journal-results space-y-3">
+      <div key={filterMode} className="premium-journal-results space-y-3">
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DropdownPresence } from '../PremiumMotion';
 import {
   Area,
   AreaChart,
@@ -688,11 +689,12 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             </button>
             <p className="text-xs text-slate-400 mt-1">{definition.description}</p>
 
-            {modeMenuOpen && (
-              <div
-                role="menu"
-                className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
-              >
+            <DropdownPresence
+              isOpen={modeMenuOpen}
+              role="menu"
+              className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
+            >
+              {modeMenuOpen && <>
                 {ANALYTICS_MODES.map((item) => {
                   const selected = item.mode === mode;
                   return (
@@ -724,8 +726,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                     </button>
                   );
                 })}
-              </div>
-            )}
+              </>}
+            </DropdownPresence>
           </div>
 
           <div className="sm:text-right">

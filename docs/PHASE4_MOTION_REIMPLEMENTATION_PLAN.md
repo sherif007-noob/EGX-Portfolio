@@ -507,6 +507,21 @@ Reject if the current validated Recharts transition changes.
 
 ---
 
+## Implementation status
+
+Implemented:
+- Pass A foundation: MotionConfig + AnimatePresence-based MotionSwap.
+- Pass B result surfaces: Transactions, Trading Performance, Monthly, Cash, Closed Cycles, Positions, and Directory use keyed Motion presence.
+- Pass C overlays: premium modal families use shared real-DOM enter/exit presence.
+- Pass D dropdowns/localized reveals: AnalyticsSelect, ticker suggestions, analytics mode menu, accordions, conditional panels, and feedback surfaces use Motion presence.
+- Pass E cleanup: obsolete browser snapshot/timer-era lifecycle CSS removed; active React source has no retired lifecycle classes/APIs.
+
+Validation:
+- Repository typecheck/tests/build must remain green.
+- Phase 4 remains open until fresh phone + desktop visual validation confirms the v3 choreography.
+
+---
+
 # Completion definition
 
 Phase 4 is not complete until:

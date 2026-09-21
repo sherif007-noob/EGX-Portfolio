@@ -166,6 +166,58 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
   );
 };
 
+interface SurfacePresenceProps {
+  isOpen: boolean;
+  children: React.ReactNode;
+  className?: string;
+}
+
+/**
+ * Small conditional surface/banner presence. Unlike MotionSwap, this doesn't
+ * replace a keyed result tree; it simply gives localized UI a matched
+ * enter/exit without replaying page-level motion.
+ */
+export const SurfacePresence: React.FC<SurfacePresenceProps> = ({
+  isOpen,
+  children,
+  className = '',
+}) => {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          key="surface"
+          className={className}
+          data-motion-owned="react"
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.992 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+              duration: reduceMotion ? 0.14 : 0.26,
+              ease: EASE_OUT,
+            },
+          }}
+          exit={{
+            opacity: 0,
+            y: reduceMotion ? 0 : -4,
+            scale: reduceMotion ? 1 : 0.995,
+            transition: {
+              duration: reduceMotion ? 0.1 : 0.18,
+              ease: EASE_IN,
+            },
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 interface ExpandPresenceProps {
   isOpen: boolean;
   children: React.ReactNode;

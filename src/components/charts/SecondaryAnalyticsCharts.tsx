@@ -35,7 +35,6 @@ interface SecondaryAnalyticsChartsProps {
   historicalPrices: HistoricalPriceSeries;
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
-  animationMatchMode?: 'index' | 'date';
 }
 
 function formatDailyLabel(value: string): string {
@@ -77,7 +76,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   historicalPrices,
   intradayPrices,
   result,
-  animationMatchMode = 'index',
 }) => {
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -88,10 +86,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
   const intraday = result.window.resolution === '15m';
   const lineType = intraday ? 'linear' : 'monotone';
-  const chartAnimationMatchBy =
-    animationMatchMode === 'date'
-      ? (item: any) => String(item?.payload?.date || '')
-      : 'index';
   const chartData = secondary.points.map((point) => ({
     ...point,
     axisLabel: intraday ? formatCairoTime(point.date) : formatDailyLabel(point.date),
@@ -192,7 +186,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     }}
                     isAnimationActive
                     animationDuration={520}
-                    animationMatchBy={chartAnimationMatchBy}
                     animationEasing="ease-out"
                   />
                 </AreaChart>
@@ -260,7 +253,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     }}
                     isAnimationActive
                     animationDuration={520}
-                    animationMatchBy={chartAnimationMatchBy}
                     animationEasing="ease-out"
                   />
                 </AreaChart>
@@ -328,7 +320,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
                     isAnimationActive
                     animationDuration={520}
-                    animationMatchBy={chartAnimationMatchBy}
                     animationEasing="ease-out"
                   />
                   <Line
@@ -341,7 +332,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.cyan, stroke: '#020617', strokeWidth: 2 }}
                     isAnimationActive
                     animationDuration={520}
-                    animationMatchBy={chartAnimationMatchBy}
                     animationEasing="ease-out"
                   />
                 </LineChart>

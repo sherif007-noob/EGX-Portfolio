@@ -873,7 +873,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="premium-selector-shell flex items-center gap-1.5">
             <button
               type="button"
               aria-pressed={historyFilter === 'ALL'}
@@ -983,12 +983,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
       {/* Edit Transaction Modal */}
       {editingTransaction && createPortal((
-        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="premium-modal relative w-full max-w-lg rounded-2xl p-6 space-y-5">
+        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="premium-modal relative w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-4 h-4" />
                 </div>
                 <div>
@@ -1007,21 +1007,23 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             {/* Edit Form */}
             <form onSubmit={handleSaveEdit} className="space-y-4">
               {/* Type Switcher */}
-              <div className="space-y-1.5">
+              <div className="premium-form-section p-3 rounded-xl space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">Transaction Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditType('DEPOSIT')}
-                    className={`premium-choice py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
+                    aria-pressed={editType === 'DEPOSIT'}
+                     onClick={() => setEditType('DEPOSIT')}
+                    className={`premium-choice premium-choice-success py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
                   >
                     <ArrowDownLeft className="w-3.5 h-3.5" />
                     Deposit (+ Cash)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditType('WITHDRAWAL')}
-                    className={`premium-choice py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
+                    aria-pressed={editType === 'WITHDRAWAL'}
+                     onClick={() => setEditType('WITHDRAWAL')}
+                    className={`premium-choice premium-choice-danger py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${editType === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
                   >
                     <ArrowUpRight className="w-3.5 h-3.5" />
                     Withdrawal (- Cash)

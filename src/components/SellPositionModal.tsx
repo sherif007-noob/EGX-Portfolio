@@ -45,8 +45,8 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   // Reset values when position changes
   useEffect(() => {
     if (position) {
-      setSharesToSell(displayPosition.shares);
-      setSellPrice(displayPosition.currentPrice || displayPosition.avgBuyPrice);
+      setSharesToSell(position.shares);
+      setSellPrice(position.currentPrice || position.avgBuyPrice);
       setIsManualFee(false);
     }
   }, [position]);

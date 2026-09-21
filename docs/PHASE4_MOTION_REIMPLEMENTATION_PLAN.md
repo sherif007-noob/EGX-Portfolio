@@ -527,7 +527,7 @@ The refinement pass therefore changes choreography without reintroducing snapsho
 - ordinary chart timeframe changes remain Recharts-owned;
 - **Rejected experiment:** crossing to/from 1W via whole-chart crossfade was tested and rolled back because it degraded the approved Recharts morphing across the complete analytics family.
 - Current chart rule: preserve native Recharts interpolation for every timeframe.
-- 1W uses the same 520 ms native Recharts lifecycle as every other timeframe. Only 1W crossings supply a custom transition-only `animationInterpolateFn` that keeps target X coordinates full-width from frame one and smoothly samples previous Y geometry across the target width. Normal ranges retain Recharts' default interpolation.
+- 1W keeps the same mounted 520 ms Recharts lifecycle, but its transition-only interpolator preserves the complete outgoing/incoming curve profiles before sampling them to dense full-width intermediate geometry. This prevents the sparse 1W target from destroying source-curve detail at frame one. Final financial data remains untouched.
 
 This remains presentation-only: chart observations/data are unchanged; the special 1W handling changes only how two real chart states are visually handed off.
 

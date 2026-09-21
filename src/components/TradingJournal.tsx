@@ -9,6 +9,7 @@ import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import {
   BookOpen,
   Clock,
@@ -679,7 +680,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       )}
 
       {/* Transactions Feed */}
-      <div key={filterMode} className="premium-journal-results space-y-3">
+      <MotionSwap motionKey={filterMode} variant="state" className="premium-journal-results space-y-3">
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
@@ -966,7 +967,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             )}
           </div>
         )}
-      </div>
+      </MotionSwap>
 
       {/* Pagination Controls (Bottom) */}
       {showPagination && (

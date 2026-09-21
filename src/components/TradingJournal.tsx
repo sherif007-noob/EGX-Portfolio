@@ -351,6 +351,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       setEditRealizedPnlEgp('');
     }
     setEditFeedback(null);
+    setIsEditClosing(false);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -570,7 +571,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-losses"
             type="button"
             aria-pressed={filterMode === 'LOSS'}
-            onClick={() => changeFilterMode('LOSS')
+            onClick={() => changeFilterMode('LOSS')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
@@ -581,7 +582,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-buys"
             type="button"
             aria-pressed={filterMode === 'BUY'}
-            onClick={() => changeFilterMode('BUY')
+            onClick={() => changeFilterMode('BUY')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
             Buys Only ({buyCount})
@@ -591,7 +592,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             id="journal-filter-sells"
             type="button"
             aria-pressed={filterMode === 'SELL'}
-            onClick={() => changeFilterMode('SELL')
+            onClick={() => changeFilterMode('SELL')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})

@@ -491,7 +491,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
             No stock positions match your filters.
           </div>
         )}
-      </div>
+      </MotionSwap>
 
       {/* Confirm Delete Position Modal */}
       <ConfirmDeleteModal

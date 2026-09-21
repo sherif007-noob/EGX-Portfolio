@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -9,7 +9,7 @@ import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap } from './PremiumMotion';
+import { MotionSwap, PremiumModalMotion } from './PremiumMotion';
 import {
   BookOpen,
   Clock,
@@ -86,6 +86,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
   // Edit Transaction State
   const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
+  const lastEditingTxRef = useRef<TradeTransaction | null>(editingTx);
+  if (editingTx) lastEditingTxRef.current = editingTx;
+  const displayEditingTx = editingTx ?? lastEditingTxRef.current;
   const [editType, setEditType] = useState<'BUY' | 'SELL'>('BUY');
   const [editTicker, setEditTicker] = useState<string>('');
   const [editCompanyName, setEditCompanyName] = useState<string>('');
@@ -1045,9 +1048,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       />
 
       {/* Edit Transaction Modal */}
-      {editingTx && createPortal((
-        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
+      {displayEditingTx && createPortal((
+        <PremiumModalMotion
+          isOpen={!!editingTx}
+          backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          panelClassName="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+          onBackdropClick={requestCloseEdit}
+          panelAriaLabel="Edit transaction"
+        >
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -1213,9 +1221,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
               </div>
 
+              <MotionSwap motionKey={editType} variant="state">
               {/* If SELL: Realized P&L and Outcome */}
               {editType === 'SELL' && (
-                <div className="premium-content-swap premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
+                <div className="premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
                   <div className="text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     Sell Exit Financial Outcome
@@ -1259,7 +1268,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
               {/* If BUY: Targets */}
               {editType === 'BUY' && (
-                <div className="premium-content-swap premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
+                <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                   <div className="space-y-1">
                     <label className="text-slate-300 font-semibold">Target Price (Optional)</label>
                     <NumberStepperInput
@@ -1285,6 +1294,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   </div>
                 </div>
               )}
+              </MotionSwap>
 
               {/* Notes */}
               <div className="space-y-1">
@@ -1333,8 +1343,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </PremiumModalMotion>
       ), document.body)}
     </div>
   );

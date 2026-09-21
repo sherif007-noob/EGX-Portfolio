@@ -237,7 +237,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                     setBrokerageFee(Math.max(0, Number(value)));
                   }}
                   accent="amber"
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                  className="premium-field w-full px-3 py-1.5 rounded-xl text-amber-300 font-mono text-xs"
                 />
               </div>
               <div className="text-[11px] text-slate-400">

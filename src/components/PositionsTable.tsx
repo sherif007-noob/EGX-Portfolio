@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -42,6 +43,11 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
 
+  const changeSelectedSector = (next: string) => {
+    if (next === selectedSector) return;
+    runVisualTransition('positions-filter', () => setSelectedSector(next));
+  };
+
   const filteredPositions = positions.filter((pos) => {
     const matchesSearch =
       pos.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -82,7 +88,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <AnalyticsSelect
               value={selectedSector}
-              onChange={(value) => setSelectedSector(String(value))}
+              onChange={(value) => changeSelectedSector(String(value))}
               compact
               ariaLabel="Filter positions by sector"
               className="min-w-[170px]"
@@ -104,7 +110,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
+      <div className="premium-positions-results premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
@@ -330,7 +336,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-3">
+      <div className="premium-positions-results lg:hidden space-y-3">
         {filteredPositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
           const currentValue = pos.shares * pos.currentPrice;

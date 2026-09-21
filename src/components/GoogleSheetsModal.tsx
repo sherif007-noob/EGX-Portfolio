@@ -434,7 +434,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
                   autoSync 
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                    : 'premium-chip text-slate-400'
                 }`}>
                   Auto Sync: {autoSync ? 'ON (Default)' : 'OFF'}
                 </span>
@@ -660,7 +660,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   <Zap className={`w-4 h-4 ${autoSync ? 'text-emerald-400' : 'text-slate-500'}`} />
                   <span className="text-xs font-bold text-white">Auto Background Sync</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                    autoSync ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                    autoSync ? 'bg-emerald-500/20 text-emerald-300' : 'premium-chip text-slate-400'
                   }`}>
                     {autoSync ? 'ON (Default)' : 'OFF'}
                   </span>

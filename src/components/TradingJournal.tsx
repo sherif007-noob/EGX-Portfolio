@@ -469,7 +469,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </span>
           </div>
 
-          <div className="premium-subpanel p-2.5 rounded-xl">
+          <div className={`premium-subpanel p-2.5 rounded-xl ${totalRealizedPnl > 0 ? 'premium-state-win' : totalRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}>
             <span className="text-slate-400 block text-[10px] font-medium">Net Realized P&amp;L</span>
             <span
               className={`font-mono font-bold text-sm ${
@@ -481,14 +481,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </span>
           </div>
 
-          <div className="premium-subpanel p-2.5 rounded-xl">
+          <div className="premium-subpanel premium-state-buy p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Total Buy Inflow</span>
             <span className="font-mono font-bold text-blue-400 text-sm">
               {formatEgp(totalBuyOutlay)} EGP
             </span>
           </div>
 
-          <div className="premium-subpanel p-2.5 rounded-xl">
+          <div className="premium-subpanel premium-state-breakeven p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Brokerage Fees Paid</span>
             <span className="font-mono font-bold text-amber-400 text-sm">
               {formatEgp(totalFeesPaid)} EGP
@@ -890,14 +890,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   )}
 
                   {isBuy && tx.targetPrice && (
-                    <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-medium">
+                    <span className="premium-chip flex items-center gap-1 text-emerald-400 px-2.5 py-1 rounded-lg border-emerald-500/30 font-medium">
                       <Target className="w-3.5 h-3.5" />
                       Target: <strong className="font-mono">{formatEgp(tx.targetPrice)}</strong>
                     </span>
                   )}
 
                   {isBuy && tx.stopLoss && (
-                    <span className="flex items-center gap-1 text-rose-400 bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-500/30 font-medium">
+                    <span className="premium-chip flex items-center gap-1 text-rose-400 px-2.5 py-1 rounded-lg border-rose-500/30 font-medium">
                       <ShieldAlert className="w-3.5 h-3.5" />
                       Stop: <strong className="font-mono">{formatEgp(tx.stopLoss)}</strong>
                     </span>
@@ -1041,7 +1041,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </div>
 
             {editFeedback && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <div className="premium-modal-section p-3 rounded-xl border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{editFeedback}</span>
               </div>

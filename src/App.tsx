@@ -49,9 +49,15 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
+import { runVisualTransition } from './utils/visualTransition';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+
+  const handleTabChange = (nextTab: NavigationTab) => {
+    if (nextTab === activeTab) return;
+    runVisualTransition('tab', () => setActiveTab(nextTab));
+  };
 
   // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
   const {
@@ -841,7 +847,7 @@ export default function App() {
       {/* App Header & Navigation */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
         onOpenSchemaSync={() => setIsSchemaModalOpen(true)}
         onOpenAddTrade={() => {
@@ -954,7 +960,7 @@ export default function App() {
                   Active Stock Positions ({positions.length})
                 </h2>
                 <button
-                  onClick={() => setActiveTab('positions')}
+                  onClick={() => handleTabChange('positions')}
                   className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-xs font-semibold"
                 >
                   View Full Table →

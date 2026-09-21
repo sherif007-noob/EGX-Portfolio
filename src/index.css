@@ -822,7 +822,6 @@ body {
 .premium-segment,
 .premium-accordion-trigger {
   -webkit-tap-highlight-color: transparent;
-  will-change: transform;
 }
 
 .premium-control:active:not(:disabled),
@@ -1981,7 +1980,6 @@ body {
 .premium-choice,
 .premium-icon-action,
 .premium-segment {
-  will-change: transform;
   transition:
     transform 170ms var(--premium-ease),
     border-color 170ms var(--premium-ease),
@@ -2720,14 +2718,51 @@ body {
   transform-origin: center top;
 }
 
-/* Keep dense data surfaces crisp while their wrapper moves. */
-[data-motion-owned="react"].premium-motion-swap table,
-[data-motion-owned="react"].premium-motion-swap .premium-card,
-[data-motion-owned="react"].premium-motion-swap .premium-panel {
-  backface-visibility: hidden;
-}
-
 /* React Motion owns the menu lifecycle. Menu rows remain stable as one surface. */
 [data-motion-owned="react"].premium-dropdown .premium-menu-item {
   animation: none !important;
+}
+
+
+/* Phase 4 desktop performance pass — preserve choreography, reduce render cost */
+.premium-motion-swap-shell {
+  /* Isolate layout/style invalidation without clipping glass shadows. */
+  contain: layout style;
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Desktop result surfaces can contain wide tables and dense reports.
+   * Their visible presence animation remains unchanged, but Motion layout
+   * projection is disabled in React to avoid measuring/projecting the full
+   * subtree every frame.
+   */
+  .premium-motion-swap-shell[data-motion-desktop="optimized"] {
+    transform: none;
+  }
+
+  /*
+   * Do not pre-promote dozens of controls/rows. Chrome can promote the active
+   * Motion wrapper when needed; persistent child layers increase GPU memory
+   * and compositor traffic during old/new page overlap.
+   */
+  .premium-control,
+  .premium-nav,
+  .premium-segment,
+  .premium-accordion-trigger,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action {
+    will-change: auto;
+  }
+
+  /*
+   * Preserve row hover color/edge feedback while avoiding an extra per-row
+   * transform layer inside a moving page/result surface.
+   */
+  .premium-motion-swap .premium-table-shell tbody tr:hover,
+  .premium-motion-swap .premium-report-table tbody tr:hover {
+    transform: none;
+  }
 }

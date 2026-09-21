@@ -216,7 +216,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
         {/* Action Controls: Filters & Export */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Timeframe selector */}
-          <div className="premium-report-glass-soft flex items-center p-1 rounded-xl">
+          <div className="premium-selector-shell flex items-center">
             {(['ALL', 'YTD', '90D', '30D'] as TimeframeFilter[]).map((tf) => (
               <button
                 key={tf}
@@ -270,7 +270,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
 
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -293,7 +293,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -314,7 +314,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -329,7 +329,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className={`p-3.5 rounded-xl premium-report-glass-soft ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />

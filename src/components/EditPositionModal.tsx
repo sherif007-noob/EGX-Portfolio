@@ -69,7 +69,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 Edit Position Targets
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 font-mono text-emerald-400 border border-slate-700">
+                <span className="premium-chip text-xs px-2 py-0.5 rounded-lg font-mono text-emerald-400">
                   {position.ticker}
                 </span>
               </h3>
@@ -123,7 +123,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               onValueChange={setTargetPrice}
               accent="emerald"
               placeholder="e.g. 120.00"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500 text-sm"
+              className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none text-sm"
             />
           </div>
 
@@ -146,7 +146,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               onValueChange={setStopLoss}
               accent="rose"
               placeholder="e.g. 95.00"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
+              className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none text-sm"
             />
           </div>
 

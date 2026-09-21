@@ -72,7 +72,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(25);
+  const [pageSize, setPageSize] = useState<number | 'ALL'>(25);
 
   // Delete Confirmation Modal State
   const [txToDelete, setTxToDelete] = useState<TradeTransaction | null>(null);
@@ -292,13 +292,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet, closedTrades]);
 
   const totalFilteredCount = filteredAndSortedTransactions.length;
-  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
+  const showAllRows = pageSize === 'ALL';
+  const numericPageSize = showAllRows ? Math.max(1, totalFilteredCount) : pageSize;
+  const totalPages = showAllRows ? 1 : Math.max(1, Math.ceil(totalFilteredCount / numericPageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
+  const showPagination = !showAllRows && totalFilteredCount > numericPageSize;
 
   const paginatedTransactions = useMemo(() => {
-    const startIdx = (safeCurrentPage - 1) * pageSize;
-    return filteredAndSortedTransactions.slice(startIdx, startIdx + pageSize);
-  }, [filteredAndSortedTransactions, safeCurrentPage, pageSize]);
+    if (showAllRows) return filteredAndSortedTransactions;
+    const startIdx = (safeCurrentPage - 1) * numericPageSize;
+    return filteredAndSortedTransactions.slice(startIdx, startIdx + numericPageSize);
+  }, [filteredAndSortedTransactions, safeCurrentPage, numericPageSize, showAllRows]);
 
   const handleDelete = (tx: TradeTransaction) => {
     setTxToDelete(tx);
@@ -513,8 +517,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         {/* Filter Pills and Sort Dropdown */}
         <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="premium-selector-shell flex items-center gap-1 flex-wrap">
           <button
             id="journal-filter-all"
+            type="button"
+            aria-pressed={filterMode === 'ALL'}
             onClick={() => setFilterMode('ALL')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
           >
@@ -523,6 +530,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           <button
             id="journal-filter-open"
+            type="button"
+            aria-pressed={filterMode === 'OPEN'}
             onClick={() => setFilterMode('OPEN')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
           >
@@ -532,6 +541,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           <button
             id="journal-filter-wins"
+            type="button"
+            aria-pressed={filterMode === 'WIN'}
             onClick={() => setFilterMode('WIN')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
           >
@@ -541,6 +552,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           <button
             id="journal-filter-losses"
+            type="button"
+            aria-pressed={filterMode === 'LOSS'}
             onClick={() => setFilterMode('LOSS')}
             className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
@@ -550,6 +563,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           <button
             id="journal-filter-buys"
+            type="button"
+            aria-pressed={filterMode === 'BUY'}
             onClick={() => setFilterMode('BUY')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
@@ -558,11 +573,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           <button
             id="journal-filter-sells"
+            type="button"
+            aria-pressed={filterMode === 'SELL'}
             onClick={() => setFilterMode('SELL')}
             className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})
           </button>
+          </div>
 
           {/* Compact Sort Dropdown Select */}
           <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1 rounded-xl">
@@ -588,7 +606,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <span className="text-[11px] font-medium text-slate-400">Show:</span>
             <AnalyticsSelect
               value={pageSize}
-              onChange={(value) => setPageSize(Number(value))}
+              onChange={(value) => setPageSize(value === 'ALL' ? 'ALL' : Number(value))}
               compact
               ariaLabel="Rows per page"
               className="min-w-[112px]"
@@ -597,7 +615,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 { value: 25, label: '25 / page' },
                 { value: 50, label: '50 / page' },
                 { value: 100, label: '100 / page' },
-                { value: 1000, label: 'All' },
+                { value: 'ALL', label: 'All' },
               ]}
             />
           </div>
@@ -605,10 +623,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </div>
 
       {/* Pagination Status & Controls (Top) */}
-      {totalFilteredCount > pageSize && (
+      {showPagination && (
         <div className="premium-subpanel flex items-center justify-between px-3 py-2 rounded-xl text-xs text-slate-400">
           <span>
-            Showing <strong className="text-white">{(safeCurrentPage - 1) * pageSize + 1}</strong> - <strong className="text-white">{Math.min(safeCurrentPage * pageSize, totalFilteredCount)}</strong> of <strong className="text-white">{totalFilteredCount}</strong> trades
+            Showing <strong className="text-white">{(safeCurrentPage - 1) * numericPageSize + 1}</strong> - <strong className="text-white">{Math.min(safeCurrentPage * numericPageSize, totalFilteredCount)}</strong> of <strong className="text-white">{totalFilteredCount}</strong> trades
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -941,7 +959,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </div>
 
       {/* Pagination Controls (Bottom) */}
-      {totalFilteredCount > pageSize && (
+      {showPagination && (
         <div className="premium-panel flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400">
           <span>
             Page <strong className="text-white">{safeCurrentPage}</strong> of <strong className="text-white">{totalPages}</strong> ({totalFilteredCount} total transactions)
@@ -1022,7 +1040,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
@@ -1072,7 +1090,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Ticker & Sector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Stock Ticker Symbol</label>
                   <input
@@ -1098,7 +1116,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Shares & Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Executed Shares</label>
                   <NumberStepperInput
@@ -1142,13 +1160,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="time"
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
-                    className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-blue-500"
+                    className="premium-field premium-time-input w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               {/* Fees & Cycle Tag */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Brokerage Commission (EGP)</label>
                   <NumberStepperInput
@@ -1220,7 +1238,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
               {/* If BUY: Targets */}
               {editType === 'BUY' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                   <div className="space-y-1">
                     <label className="text-slate-300 font-semibold">Target Price (Optional)</label>
                     <NumberStepperInput
@@ -1254,7 +1272,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   rows={2}
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  className="premium-field w-full px-3 py-2 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="premium-field premium-textarea-surface w-full px-3 py-2 rounded-xl border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   placeholder="Order execution notes, broker phase details, strategy reasoning..."
                 />
               </div>

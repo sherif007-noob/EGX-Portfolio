@@ -269,7 +269,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       </div>
 
       {/* Primary KPI Ribbon */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div key={`${timeframe}-${tradeTypeFilter}`} className="premium-content-swap grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>

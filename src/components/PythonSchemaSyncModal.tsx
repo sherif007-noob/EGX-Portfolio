@@ -167,13 +167,13 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Schema URL Banner */}
-        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="premium-modal-section p-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
             <span className="text-[11px] text-slate-400 block">Open API / JSON Schema Link:</span>
             <span className="font-mono text-xs text-indigo-300 select-all break-all">{schemaUrl}</span>
@@ -181,7 +181,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyUrl}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1 rounded-lg text-xs flex items-center gap-1"
             >
               {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedUrl ? 'Copied' : 'Copy URL'}
@@ -202,7 +202,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
         <div className="flex border-b border-slate-800 text-xs">
           <button
             onClick={() => setActiveSubTab('script')}
-            className={`pb-2.5 px-3 font-semibold border-b-2 transition ${
+            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'script'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -212,7 +212,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           </button>
           <button
             onClick={() => setActiveSubTab('paste')}
-            className={`pb-2.5 px-3 font-semibold border-b-2 transition ${
+            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'paste'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -222,7 +222,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           </button>
           <button
             onClick={() => setActiveSubTab('schema')}
-            className={`pb-2.5 px-3 font-semibold border-b-2 transition ${
+            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'schema'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -242,14 +242,14 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyScript}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition"
+                  className="premium-action premium-action-purple flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold"
                 >
                   {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedScript ? 'Copied Script!' : 'Copy Python Code'}
                 </button>
                 <button
                   onClick={handleDownloadScript}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition"
+                  className="premium-action flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Download .py
@@ -283,7 +283,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               </span>
               <button
                 onClick={handleLoadSamplePythonOutput}
-                className="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium"
+                className="premium-action premium-action-purple px-2 py-1 rounded-lg text-xs font-medium"
               >
                 Load Sample Payload
               </button>
@@ -302,7 +302,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
                 id="validate-payload-btn"
                 onClick={handleValidateAndApply}
                 disabled={!pastePayload.trim()}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow transition flex items-center gap-1.5"
+                className="premium-action premium-action-purple premium-shimmer-border px-4 py-2 rounded-xl disabled:opacity-50 font-semibold text-xs sm:text-sm flex items-center gap-1.5"
               >
                 <Play className="w-3.5 h-3.5" />
                 Validate &amp; Sync to App

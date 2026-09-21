@@ -1092,7 +1092,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Ticker & Sector */}
-              <div className="premium-content-swap premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Stock Ticker Symbol</label>
                   <input
@@ -1248,7 +1248,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
               {/* If BUY: Targets */}
               {editType === 'BUY' && (
-                <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
+                <div className="premium-content-swap premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                   <div className="space-y-1">
                     <label className="text-slate-300 font-semibold">Target Price (Optional)</label>
                     <NumberStepperInput

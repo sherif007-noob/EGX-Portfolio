@@ -359,7 +359,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   }
                 }}
               />
-              <div className="w-14 h-14 rounded-2xl bg-slate-800/80 group-hover:bg-emerald-500/20 border border-slate-700 group-hover:border-emerald-500/40 text-slate-400 group-hover:text-emerald-400 flex items-center justify-center mx-auto mb-4 transition">
+              <div className="premium-inset-glass w-14 h-14 rounded-2xl group-hover:border-emerald-500/40 text-slate-400 group-hover:text-emerald-400 flex items-center justify-center mx-auto mb-4 transition">
                 <UploadCloud className="w-7 h-7" />
               </div>
               <h4 className="text-sm font-semibold text-white mb-1">

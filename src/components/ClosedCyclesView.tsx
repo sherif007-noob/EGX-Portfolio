@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -67,6 +68,16 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'pnl_desc' | 'pnl_asc' | 'pct_desc' | 'holding'>('date');
   const [expandedCycleIds, setExpandedCycleIds] = useState<Set<string>>(new Set());
+
+  const changeOutcomeFilter = (next: 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN') => {
+    if (next === outcomeFilter) return;
+    runVisualTransition('closed-filter', () => setOutcomeFilter(next));
+  };
+
+  const changeSortBy = (next: typeof sortBy) => {
+    if (next === sortBy) return;
+    runVisualTransition('closed-filter', () => setSortBy(next));
+  };
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -402,25 +413,25 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           {/* Outcome Filter Pills */}
           <div className="premium-subpanel flex items-center gap-1 p-1 rounded-xl">
             <button
-              onClick={() => setOutcomeFilter('ALL')}
+              onClick={() => changeOutcomeFilter('ALL')}
               className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
             <button
-              onClick={() => setOutcomeFilter('WIN')}
+              onClick={() => changeOutcomeFilter('WIN')}
               className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
             <button
-              onClick={() => setOutcomeFilter('LOSS')}
+              onClick={() => changeOutcomeFilter('LOSS')}
               className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
             <button
-              onClick={() => setOutcomeFilter('BREAKEVEN')}
+              onClick={() => changeOutcomeFilter('BREAKEVEN')}
               className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
@@ -430,7 +441,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           {/* Sort Selector */}
           <AnalyticsSelect
             value={sortBy}
-            onChange={(value) => setSortBy(value as typeof sortBy)}
+            onChange={(value) => changeSortBy(value as typeof sortBy)}
             compact
             accent="purple"
             ariaLabel="Sort closed cycles"
@@ -460,7 +471,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       </div>
 
       {/* Closed Cycles List */}
-      <div className="space-y-3.5">
+      <div key={`${outcomeFilter}-${sortBy}`} className="premium-closed-results premium-content-swap space-y-3.5">
         {filteredCycles.map((cycle) => {
           const isExpanded = expandedCycleIds.has(cycle.id);
           const isWin = cycle.outcome === 'WIN';
@@ -776,7 +787,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 <button
                   onClick={() => {
                     setSearchQuery('');
-                    setOutcomeFilter('ALL');
+                    changeOutcomeFilter('ALL');
                   }}
                   className="premium-action premium-action-purple px-4 py-2 rounded-xl font-semibold text-xs"
                 >

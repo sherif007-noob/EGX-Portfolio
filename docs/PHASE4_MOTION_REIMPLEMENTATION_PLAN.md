@@ -525,9 +525,9 @@ The refinement pass therefore changes choreography without reintroducing snapsho
 - dropdowns use ~360 ms entrance / ~240 ms exit with a larger anchored transform;
 - modal panels use ~420 ms entrance / ~300 ms exit with more legible y/scale displacement;
 - ordinary chart timeframe changes remain Recharts-owned;
-- crossings **to or from 1W** use a localized whole-chart crossfade so axes/domain/path change together;
-- Recharts series tween is temporarily suppressed during that 1W boundary to avoid incompatible point-count/path interpolation;
-- secondary Risk & Cost charts use the same 1W boundary treatment.
+- **Rejected experiment:** crossing to/from 1W via whole-chart crossfade was tested and rolled back because it degraded the approved Recharts morphing across the complete analytics family.
+- Current chart rule: preserve native Recharts interpolation for every timeframe.
+- 1W remains an isolated defect to solve without wrapping, fading, remounting, or suppressing the existing chart-series animation.
 
 This remains presentation-only: chart observations/data are unchanged; the special 1W handling changes only how two real chart states are visually handed off.
 

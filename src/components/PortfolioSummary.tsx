@@ -16,6 +16,14 @@ import {
 } from 'lucide-react';
 import { EGXScheduleStatus } from '../services/marketPriceSync';
 
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  style: 'decimal',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
+
 interface PortfolioSummaryProps {
   metrics: PortfolioMetrics;
   stats: PerformanceStats;
@@ -59,14 +67,6 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       ? 'premium-glow-loss'
       : 'premium-glow-breakeven';
   const totalMarketVal = metrics.totalMarketValue !== undefined ? metrics.totalMarketValue : Math.max(0, metrics.totalValue - metrics.cashBalance);
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
 
   return (
     <div className="space-y-4">

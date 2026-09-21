@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { PremiumModalMotion } from './PremiumMotion';
+import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -321,12 +321,14 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Success Alert */}
-        {successMsg && (
+        <SurfacePresence isOpen={!!successMsg}>
+          {successMsg && (
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
-        )}
+          )}
+        </SurfacePresence>
 
         {/* Option 1: Reconcile Ledger */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">

@@ -38,7 +38,7 @@ interface RealizedTrajectoryChartProps {
   className?: string;
 }
 
-export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = ({
+const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> = ({
   closedTrades,
   stats,
   title = 'Realized P&L Gain / Loss Trajectory',
@@ -381,3 +381,5 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
     </div>
   );
 };
+
+export const RealizedTrajectoryChart = React.memo(RealizedTrajectoryChartComponent);

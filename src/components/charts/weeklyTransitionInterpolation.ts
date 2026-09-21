@@ -7,111 +7,181 @@ import {
   type LinePointItem,
 } from 'recharts';
 
+export type WeeklyTransitionCurve = 'linear' | 'cardinal';
+
 type CartesianPoint = {
   x?: number;
   y?: number;
+  payload?: unknown;
 };
 
-function interpolateCoordinate(
-  previous: number | undefined,
-  next: number | undefined,
-  progress: number,
-): number | undefined {
-  if (next == null) return undefined;
-  if (previous == null) return next;
-  return interpolate(previous, next, progress);
+export const matchWeeklyPointByDate = (
+  item: { payload?: any },
+  index: number,
+): string | number | null => {
+  const date = item?.payload?.date;
+  return date == null ? `fallback-${index}` : String(date);
+};
+
+function uniqueSorted<T extends CartesianPoint>(points: T[]): T[] {
+  const seen = new Set<T>();
+  return points
+    .filter((point) => {
+      if (seen.has(point)) return false;
+      seen.add(point);
+      return true;
+    })
+    .sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
 }
 
-function uniquePreviousProfile<T extends CartesianPoint>(
+function collectProfiles<T extends CartesianPoint>(
   items: ReadonlyArray<AnimationItem<T>>,
-): T[] {
-  const profile: T[] = [];
+): { previous: T[]; next: T[] } {
+  const previous: T[] = [];
+  const next: T[] = [];
 
   for (const item of items) {
-    if (item.status !== 'matched') continue;
-
-    const previous = item.prev;
-    const last = profile.at(-1);
-
-    // matchByIndex reuses the exact same previous point when expanding a
-    // short series into a longer one. Collapse those repeats back to the
-    // original source profile before sampling it across the new width.
-    if (last === previous) continue;
-
-    profile.push(previous);
+    if (item.status === 'matched') {
+      previous.push(item.prev);
+      next.push(item.next);
+    } else if (item.status === 'removed') {
+      previous.push(item.prev);
+    } else {
+      next.push(item.next);
+    }
   }
 
-  return profile;
+  return {
+    previous: uniqueSorted(previous),
+    next: uniqueSorted(next),
+  };
 }
 
-function samplePreviousY<T extends CartesianPoint>(
+function linearSample(values: ReadonlyArray<number>, u: number): number {
+  if (values.length <= 1) return values[0] ?? 0;
+
+  const position = Math.min(1, Math.max(0, u)) * (values.length - 1);
+  const i = Math.floor(position);
+  const j = Math.min(values.length - 1, i + 1);
+  const t = position - i;
+  return interpolate(values[i] ?? 0, values[j] ?? values[i] ?? 0, t);
+}
+
+function cardinalSample(
+  values: ReadonlyArray<number>,
+  u: number,
+  tension = 0.55,
+): number {
+  if (values.length < 3) return linearSample(values, u);
+
+  const position = Math.min(1, Math.max(0, u)) * (values.length - 1);
+  const i = Math.min(values.length - 2, Math.floor(position));
+  const t = position - i;
+
+  const p0 = values[Math.max(0, i - 1)] ?? values[i] ?? 0;
+  const p1 = values[i] ?? p0;
+  const p2 = values[Math.min(values.length - 1, i + 1)] ?? p1;
+  const p3 = values[Math.min(values.length - 1, i + 2)] ?? p2;
+
+  const tangentScale = (1 - tension) / 2;
+  const m1 = tangentScale * (p2 - p0);
+  const m2 = tangentScale * (p3 - p1);
+
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  const h00 = 2 * t3 - 3 * t2 + 1;
+  const h10 = t3 - 2 * t2 + t;
+  const h01 = -2 * t3 + 3 * t2;
+  const h11 = t3 - t2;
+
+  return h00 * p1 + h10 * m1 + h01 * p2 + h11 * m2;
+}
+
+function sampleProfileY<T extends CartesianPoint>(
   profile: ReadonlyArray<T>,
-  targetIndex: number,
-  targetCount: number,
+  u: number,
+  curve: WeeklyTransitionCurve,
 ): number | undefined {
-  if (profile.length === 0) return undefined;
-  if (profile.length === 1 || targetCount <= 1) return profile[0]?.y;
+  const values = profile
+    .map((point) => point.y)
+    .filter((value): value is number => value != null && Number.isFinite(value));
 
-  const position = (targetIndex / (targetCount - 1)) * (profile.length - 1);
-  const lowerIndex = Math.floor(position);
-  const upperIndex = Math.min(profile.length - 1, Math.ceil(position));
-  const lowerY = profile[lowerIndex]?.y;
-  const upperY = profile[upperIndex]?.y;
-
-  if (lowerY == null) return upperY;
-  if (upperY == null || lowerIndex === upperIndex) return lowerY;
-
-  return interpolate(lowerY, upperY, position - lowerIndex);
+  if (!values.length) return undefined;
+  return curve === 'linear'
+    ? linearSample(values, u)
+    : cardinalSample(values, u);
 }
 
-function interpolateFullWidth<T extends CartesianPoint>(
-  items: ReadonlyArray<AnimationItem<T>> | null,
-  progress: number,
-): ReadonlyArray<T> {
-  if (items == null) return [];
+function createFullProfileInterpolator<T extends CartesianPoint>(
+  sourceCurve: WeeklyTransitionCurve,
+  targetCurve: WeeklyTransitionCurve,
+): AnimationInterpolateFn<T, CartesianLayout> {
+  return (items, progress) => {
+    if (items == null) return [];
 
-  if (progress === 1) {
-    return items.flatMap((item) => (item.status === 'removed' ? [] : [item.next]));
-  }
+    const { previous, next } = collectProfiles(items);
+    if (!next.length) return [];
 
-  const drawableItems = items.filter((item) => item.status !== 'removed');
-  const previousProfile = uniquePreviousProfile(items);
-
-  return drawableItems.flatMap((item, targetIndex) => {
-    if (item.status === 'added') {
-      return [item.next];
+    if (progress === 1 || !previous.length) {
+      return next;
     }
 
-    const sampledPreviousY = samplePreviousY(
-      previousProfile,
-      targetIndex,
-      drawableItems.length,
+    /*
+     * Preserve enough geometry to keep the outgoing curve recognizable.
+     * This is the key difference from Recharts' default index matcher when
+     * the target is 1W: it no longer reduces Today/1M to ~5-6 source samples
+     * before the first visible animation frame.
+     */
+    const sampleCount = Math.min(
+      96,
+      Math.max(24, previous.length, next.length),
     );
 
-    return [{
-      ...item.next,
-      // X is in the target coordinate system from the first frame. This is the
-      // important part: 1W starts across the complete plot instead of growing
-      // out of the previous range's right-hand quarter.
-      x: item.next.x,
-      y: interpolateCoordinate(sampledPreviousY ?? item.prev.y, item.next.y, progress),
-    }];
-  });
+    const firstX = next[0]?.x ?? 0;
+    const lastX = next.at(-1)?.x ?? firstX;
+    const result: T[] = [];
+
+    for (let index = 0; index < sampleCount; index += 1) {
+      const u = sampleCount <= 1 ? 0 : index / (sampleCount - 1);
+      const sourceY = sampleProfileY(previous, u, sourceCurve);
+      const targetY = sampleProfileY(next, u, targetCurve);
+
+      const nearestTargetIndex =
+        next.length <= 1
+          ? 0
+          : Math.min(
+              next.length - 1,
+              Math.round(u * (next.length - 1)),
+            );
+      const template = next[nearestTargetIndex] ?? next[0];
+
+      result.push({
+        ...template,
+        x: interpolate(firstX, lastX, u),
+        y:
+          sourceY == null
+            ? targetY
+            : targetY == null
+              ? sourceY
+              : interpolate(sourceY, targetY, progress),
+      });
+    }
+
+    return result;
+  };
 }
 
-/**
- * Used only when one side of a timeframe change is 1W.
- *
- * The final data and final coordinates are untouched. This custom interpolation
- * only controls the in-between SVG geometry that Recharts renders while moving
- * between two real datasets of very different lengths.
- */
-export const interpolateWeeklyAreaFullWidth: AnimationInterpolateFn<
-  AreaPointItem,
-  CartesianLayout
-> = (items, progress) => interpolateFullWidth(items, progress);
+export function createWeeklyAreaInterpolator(
+  sourceCurve: WeeklyTransitionCurve,
+  targetCurve: WeeklyTransitionCurve,
+): AnimationInterpolateFn<AreaPointItem, CartesianLayout> {
+  return createFullProfileInterpolator(sourceCurve, targetCurve);
+}
 
-export const interpolateWeeklyLineFullWidth: AnimationInterpolateFn<
-  LinePointItem,
-  CartesianLayout
-> = (items, progress) => interpolateFullWidth(items, progress);
+export function createWeeklyLineInterpolator(
+  sourceCurve: WeeklyTransitionCurve,
+  targetCurve: WeeklyTransitionCurve,
+): AnimationInterpolateFn<LinePointItem, CartesianLayout> {
+  return createFullProfileInterpolator(sourceCurve, targetCurve);
+}

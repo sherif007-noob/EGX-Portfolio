@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
@@ -73,6 +74,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
   // Edit Transaction State & Modal
   const [editingTransaction, setEditingTransaction] = useState<CashTransaction | null>(null);
+
+  const requestCloseCashEdit = () => {
+    runVisualTransition('modal-close', () => setEditingTransaction(null));
+  };
   const [editType, setEditType] = useState<'DEPOSIT' | 'WITHDRAWAL'>('DEPOSIT');
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
@@ -201,7 +206,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     };
 
     if (!await saveCashChange(() => onEditCashTransaction(updatedTx))) return;
-    setEditingTransaction(null);
+    requestCloseCashEdit();
 
     setFeedbackMessage({
       text: `Transaction updated successfully! Cash balance adjusted to ${formatEgp(newBalance)} EGP.`,
@@ -997,7 +1002,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => setEditingTransaction(null)}
+                onClick={requestCloseCashEdit}
                 className="premium-icon-action p-1.5 rounded-lg"
               >
                 <X className="w-5 h-5" />
@@ -1102,7 +1107,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setEditingTransaction(null)}
+                  onClick={requestCloseCashEdit}
                   className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
                 >
                   Cancel

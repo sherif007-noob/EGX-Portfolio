@@ -2758,3 +2758,34 @@ body {
   }
 
 }
+
+
+/* Desktop heavy-surface paint deferral */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Reports/position tabs can be several viewport-heights tall. Let Chrome
+   * skip raster/layout work for sections that are still off-screen while the
+   * incoming tab animation is running. "auto" keeps the remembered real size
+   * after first layout, avoiding scroll jumps on subsequent visits.
+   */
+  .premium-tab-stage .premium-table-shell,
+  .premium-tab-stage .premium-report-table,
+  .premium-tab-stage .premium-report-glass {
+    content-visibility: auto;
+  }
+
+  .premium-tab-stage .premium-table-shell {
+    contain-intrinsic-size: auto 520px;
+    contain: layout style;
+  }
+
+  .premium-tab-stage .premium-report-table {
+    contain-intrinsic-size: auto 460px;
+    contain: layout style;
+  }
+
+  .premium-tab-stage .premium-report-glass {
+    contain-intrinsic-size: auto 420px;
+    contain: layout style;
+  }
+}

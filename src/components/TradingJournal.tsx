@@ -1036,7 +1036,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       {/* Edit Transaction Modal */}
       {editingTx && createPortal((
         <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -1118,7 +1118,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Shares & Price */}
-              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl">
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Executed Shares</label>
                   <NumberStepperInput
@@ -1146,7 +1146,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     placeholder="43.21"
                   />
                 </div>
+              </div>
 
+              {/* Execution date and time */}
+              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <DateInput
                   id="edit-tx-date"
                   label="Execution Date"
@@ -1157,13 +1160,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div className="space-y-1">
                   <label htmlFor="edit-tx-time" className="text-slate-300 font-semibold">Execution Time</label>
-                  <input
-                    id="edit-tx-time"
-                    type="time"
-                    value={editTime}
-                    onChange={(e) => setEditTime(e.target.value)}
-                    className="premium-field premium-time-input w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
+                  <div className="premium-time-wrap">
+                    <input
+                      id="edit-tx-time"
+                      type="time"
+                      value={editTime}
+                      onChange={(e) => setEditTime(e.target.value)}
+                      className="premium-field premium-time-input w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500"
+                    />
+                    <span className="premium-icon-action premium-time-trigger-visual p-1 rounded-lg">
+                      <Clock className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1268,7 +1276,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               )}
 
               {/* Notes */}
-              <div className="premium-form-section p-3 rounded-xl space-y-1">
+              <div className="space-y-1">
                 <label className="text-slate-300 font-semibold">Transaction Notes</label>
                 <textarea
                   rows={2}
@@ -1280,7 +1288,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Calculated Preview */}
-              <div className="premium-modal-section p-3 rounded-xl flex items-center justify-between text-xs">
+              <div className="premium-inset-glass p-3 rounded-xl flex items-center justify-between text-xs">
                 <span className="text-slate-400">
                   {editType === 'BUY' ? 'Total Cash Outlay (Cost + Fees):' : 'Net Sales Proceeds (Gross - Fees):'}
                 </span>

@@ -141,7 +141,7 @@ const TooltipMetric: React.FC<{
   </div>
 );
 
-export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps> = ({
+const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProps> = ({
   transactions,
   historicalPrices,
   capitalDeposits,
@@ -920,3 +920,5 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     </>
   );
 };
+
+export const PerformanceTimeframeChart = React.memo(PerformanceTimeframeChartComponent);

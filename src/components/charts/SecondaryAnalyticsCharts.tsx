@@ -92,6 +92,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
   const intraday = result.window.resolution === '15m';
   const lineType = intraday ? 'linear' : 'monotone';
+  const drawdownGradientId = `secondaryDrawdownGradient-${transitionKey}`;
+  const feesGradientId = `secondaryFeesGradient-${transitionKey}`;
   const chartData = secondary.points.map((point) => ({
     ...point,
     axisLabel: intraday ? formatCairoTime(point.date) : formatDailyLabel(point.date),
@@ -174,7 +176,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="secondaryDrawdownGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={drawdownGradientId} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.24} />
                       <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.02} />
                     </linearGradient>
@@ -204,7 +206,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     dataKey="drawdownPercent"
                     stroke={ANALYTICS_CHART_THEME.rose}
                     strokeWidth={2}
-                    fill="url(#secondaryDrawdownGradient)"
+                    fill={`url(#${drawdownGradientId})`}
                     fillOpacity={1}
                     dot={false}
                     activeDot={{
@@ -246,7 +248,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="secondaryFeesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={feesGradientId} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.22} />
                       <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.01} />
                     </linearGradient>
@@ -271,7 +273,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     dataKey="cumulativeFeesEgp"
                     stroke={ANALYTICS_CHART_THEME.amber}
                     strokeWidth={2}
-                    fill="url(#secondaryFeesGradient)"
+                    fill={`url(#${feesGradientId})`}
                     fillOpacity={1}
                     dot={false}
                     activeDot={{

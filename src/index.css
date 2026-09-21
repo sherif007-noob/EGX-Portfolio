@@ -1875,3 +1875,257 @@ body {
     filter: none;
   }
 }
+
+
+/* Pass 3/3.2 continuation: full component sweep + visible motion */
+
+/*
+ * These overrides deliberately make the redesign legible on dense screens.
+ * Earlier passes supplied glass classes to most components, but many secondary
+ * surfaces still looked flat because they had no surface motion, little edge
+ * separation, and hover changes below the perceptual threshold.
+ */
+.premium-panel,
+.premium-subpanel,
+.premium-report-glass,
+.premium-report-glass-soft,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section,
+.premium-table-shell,
+.premium-report-table {
+  transition:
+    transform 210ms var(--premium-ease),
+    border-color 210ms var(--premium-ease),
+    background 210ms var(--premium-ease),
+    box-shadow 210ms var(--premium-ease),
+    filter 210ms var(--premium-ease);
+}
+
+/* Stronger frosted hierarchy for report/performance secondary surfaces. */
+.premium-report-glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.014) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.040), transparent 42%, rgba(139,92,246,0.035)),
+    rgba(10, 18, 36, 0.50);
+  border-color: rgba(186, 230, 253, 0.20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.085),
+    0 20px 48px rgba(0,0,0,0.28),
+    0 0 34px rgba(34,211,238,0.055);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+
+.premium-report-glass-soft,
+.premium-subpanel,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 42%, transparent 72%),
+    rgba(3, 9, 22, 0.36);
+  border-color: rgba(148,163,184,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 10px 26px rgba(0,0,0,0.15);
+  -webkit-backdrop-filter: blur(17px) saturate(140%);
+  backdrop-filter: blur(17px) saturate(140%);
+}
+
+/* Make interaction motion unmistakable without turning the app into a toy. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-card:hover,
+  .premium-panel:hover,
+  .premium-report-glass:hover {
+    transform: translateY(-3px);
+  }
+
+  .premium-subpanel:hover,
+  .premium-report-glass-soft:hover,
+  .premium-inset-glass:hover,
+  .premium-form-section:hover,
+  .premium-modal-section:hover {
+    transform: translateY(-2px);
+    border-color: rgba(186,230,253,0.24);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.065),
+      0 15px 32px rgba(0,0,0,0.20),
+      0 0 24px rgba(34,211,238,0.045);
+  }
+
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  .premium-action:hover:not(:disabled) > svg,
+  .premium-filter-pill:hover:not(:disabled) > svg,
+  .premium-choice:hover:not(:disabled) > svg,
+  .premium-icon-action:hover:not(:disabled) > svg {
+    transform: scale(1.09);
+    filter: drop-shadow(0 0 7px currentColor);
+  }
+
+  .premium-table-shell tbody tr:hover,
+  .premium-report-table tbody tr:hover {
+    transform: translateX(2px);
+  }
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  will-change: transform;
+  transition:
+    transform 170ms var(--premium-ease),
+    border-color 170ms var(--premium-ease),
+    background 170ms var(--premium-ease),
+    color 170ms var(--premium-ease),
+    box-shadow 170ms var(--premium-ease);
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg {
+  transition:
+    transform 180ms var(--premium-ease),
+    filter 180ms ease-out,
+    color 180ms ease-out;
+}
+
+/* Selected segmented controls should visibly settle into place. */
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"] {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 8px 22px rgba(0,0,0,0.22),
+    0 0 22px rgba(56,189,248,0.07);
+}
+
+/* Add a small reveal to dense collections so navigation feels alive. */
+@media (prefers-reduced-motion: no-preference) {
+  .premium-section-enter > .premium-panel,
+  .premium-section-enter > .premium-glass,
+  .premium-section-enter > .premium-report-glass,
+  .premium-section-enter > .premium-card {
+    animation: premium-surface-arrive 360ms var(--premium-ease) both;
+  }
+
+  .premium-section-enter > :nth-child(2) { animation-delay: 35ms; }
+  .premium-section-enter > :nth-child(3) { animation-delay: 70ms; }
+  .premium-section-enter > :nth-child(4) { animation-delay: 105ms; }
+
+  @keyframes premium-surface-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.992);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .premium-modal {
+    animation: premium-modal-arrive 230ms var(--premium-ease) both;
+  }
+
+  @keyframes premium-modal-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+/* Dense transaction/report rows: glass rather than opaque slate blocks. */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  background-color: rgba(2, 6, 23, 0.14);
+  transition:
+    transform 160ms var(--premium-ease),
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.premium-table-shell tbody tr:nth-child(even),
+.premium-report-table tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.18);
+}
+
+/* Legacy bg utilities inside upgraded form surfaces should not punch opaque holes. */
+.premium-modal .premium-field,
+.premium-panel .premium-field,
+.premium-report-glass .premium-field,
+.premium-form-section .premium-field {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent),
+    rgba(2,6,23,0.42) !important;
+  border-color: rgba(148,163,184,0.18) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+/* Consistent tactile Edit/Delete/Add/Filter controls across every screen. */
+.premium-icon-edit,
+.premium-action-primary,
+.premium-action-success,
+.premium-action-warning,
+.premium-action-danger {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 8px 20px rgba(0,0,0,0.18);
+}
+
+.premium-icon-delete:hover:not(:disabled),
+.premium-action-danger:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(244,63,94,0.14);
+}
+
+.premium-icon-edit:hover:not(:disabled),
+.premium-action-primary:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(59,130,246,0.14);
+}
+
+/* Preserve accessibility and battery-friendly behavior. */
+@media (prefers-reduced-motion: reduce) {
+  .premium-panel,
+  .premium-subpanel,
+  .premium-report-glass,
+  .premium-report-glass-soft,
+  .premium-inset-glass,
+  .premium-form-section,
+  .premium-modal-section,
+  .premium-table-shell,
+  .premium-report-table,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-modal {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}

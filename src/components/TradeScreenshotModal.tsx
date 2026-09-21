@@ -582,7 +582,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        {batchTrades.length > 0 && (
+        <SurfacePresence isOpen={batchTrades.length > 0 && !isScanning}>
+          {batchTrades.length > 0 && !isScanning && (
           <div className="premium-modal-section p-4 sm:p-5 border-t border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
             <div className="text-xs text-slate-400 text-center sm:text-left">
               <span>Logging </span>
@@ -624,7 +625,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               </button>
             </div>
           </div>
-        )}
+          )}
+        </SurfacePresence>
     </PremiumModalMotion>
   );
 };

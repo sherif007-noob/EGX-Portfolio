@@ -85,7 +85,6 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
   // Edit Transaction State
   const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
-  const [isEditClosing, setIsEditClosing] = useState(false);
   const [editType, setEditType] = useState<'BUY' | 'SELL'>('BUY');
   const [editTicker, setEditTicker] = useState<string>('');
   const [editCompanyName, setEditCompanyName] = useState<string>('');
@@ -109,12 +108,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const requestCloseEdit = () => {
-    if (isEditClosing) return;
-    setIsEditClosing(true);
-    window.setTimeout(() => {
-      setEditingTx(null);
-      setIsEditClosing(false);
-    }, 560);
+    runVisualTransition('modal-close', () => setEditingTx(null));
   };
 
   const formatEgp = (val: number) => {
@@ -351,7 +345,6 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       setEditRealizedPnlEgp('');
     }
     setEditFeedback(null);
-    setIsEditClosing(false);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -1052,8 +1045,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Edit Transaction Modal */}
       {editingTx && createPortal((
-        <div className={`premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${isEditClosing ? 'premium-modal-backdrop-exit' : ''}`}>
-          <div className={`premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4 ${isEditClosing ? 'premium-modal-exit' : ''}`}>
+        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">

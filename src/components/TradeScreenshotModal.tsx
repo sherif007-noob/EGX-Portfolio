@@ -310,7 +310,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               resetModal();
               onClose();
             }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -327,7 +327,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               <button
                 type="button"
                 onClick={() => setErrorMsg(null)}
-                className="p-1 rounded-lg text-rose-400 hover:text-rose-200 transition"
+                className="premium-icon-action premium-icon-delete p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -415,7 +415,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                    className="premium-action premium-action-purple px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Upload More
@@ -424,7 +424,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   <button
                     type="button"
                     onClick={resetModal}
-                    className="text-xs font-semibold text-slate-400 hover:text-rose-400 transition"
+                    className="premium-action premium-action-danger px-2.5 py-1 rounded-lg text-xs font-semibold"
                   >
                     Clear All
                   </button>
@@ -472,22 +472,14 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                             <button
                               type="button"
                               onClick={() => updateTradeItem(idx, { type: 'BUY' })}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                                trade.type === 'BUY'
-                                  ? 'bg-emerald-500 text-white shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
+                              className={`premium-filter-pill px-2.5 py-1 rounded-md text-[11px] font-bold ${trade.type === 'BUY' ? 'premium-filter-active-emerald' : ''}`}
                             >
                               BUY
                             </button>
                             <button
                               type="button"
                               onClick={() => updateTradeItem(idx, { type: 'SELL' })}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                                trade.type === 'SELL'
-                                  ? 'bg-rose-500 text-white shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
+                              className={`premium-filter-pill px-2.5 py-1 rounded-md text-[11px] font-bold ${trade.type === 'SELL' ? 'premium-filter-active-rose' : ''}`}
                             >
                               SELL
                             </button>
@@ -497,7 +489,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           <button
                             type="button"
                             onClick={() => removeTradeItem(idx)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-900 transition"
+                            className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                             title="Remove transaction"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -603,14 +595,14 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   resetModal();
                   onClose();
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAll}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-95"
+                className="premium-action premium-action-success premium-shimmer-border px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>

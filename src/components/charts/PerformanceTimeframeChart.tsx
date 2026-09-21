@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DropdownPresence } from '../PremiumMotion';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   Area,
   AreaChart,
@@ -144,16 +143,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
-  const reduceMotion = useReducedMotion();
-  const previousTimeframeRef = useRef<AnalyticsTimeframe>(timeframe);
-  const [holdWeeklyBoundary, setHoldWeeklyBoundary] = useState(false);
-
-  const previousTimeframe = previousTimeframeRef.current;
-  const crossingWeeklyBoundary =
-    previousTimeframe !== timeframe &&
-    (previousTimeframe === '1W' || timeframe === '1W');
-  const suppressSeriesAnimation = crossingWeeklyBoundary || holdWeeklyBoundary;
-  const chartPresenceKey = timeframe === '1W' ? 'weekly-boundary' : 'standard-range';
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
@@ -167,21 +156,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       openingCapital: capitalDeposits,
     });
   }, [transactions, historicalPrices, timeframe, capitalDeposits]);
-
-  useEffect(() => {
-    const previous = previousTimeframeRef.current;
-    const crossing =
-      previous !== timeframe &&
-      (previous === '1W' || timeframe === '1W');
-
-    previousTimeframeRef.current = timeframe;
-
-    if (!crossing) return;
-
-    setHoldWeeklyBoundary(true);
-    const timer = window.setTimeout(() => setHoldWeeklyBoundary(false), 680);
-    return () => window.clearTimeout(timer);
-  }, [timeframe]);
 
   useEffect(() => {
     let cancelled = false;
@@ -349,7 +323,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       : (toneValue ?? 0) < 0
       ? ANALYTICS_CHART_THEME.rose
       : ANALYTICS_CHART_THEME.amber;
-  const primaryGradientId = `analyticsPrimaryGradient-${chartPresenceKey}`;
   const primaryStroke =
     timeframe === 'TODAY'
       ? todaySemanticStroke
@@ -655,7 +628,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       strokeWidth={2.25}
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill={`url(#${primaryGradientId})`}
+      fill="url(#analyticsPrimaryGradient)"
       fillOpacity={1}
       dot={false}
       activeDot={{
@@ -664,7 +637,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         stroke: '#020617',
         strokeWidth: 2,
       }}
-      isAnimationActive={!suppressSeriesAnimation}
+      isAnimationActive
       animationDuration={520}
       animationEasing="ease-out"
     />
@@ -688,7 +661,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           stroke: '#020617',
           strokeWidth: 2,
         }}
-        isAnimationActive={!suppressSeriesAnimation}
+        isAnimationActive
         animationDuration={520}
         animationEasing="ease-out"
       />
@@ -833,75 +806,44 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div className="relative h-64 sm:h-72">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
-              key={chartPresenceKey}
-              className="absolute inset-0"
-              data-motion-owned="react"
-              initial={
-                reduceMotion || !crossingWeeklyBoundary
-                  ? { opacity: 1, y: 0, scale: 1 }
-                  : { opacity: 0, y: 6, scale: 0.996 }
-              }
-              animate={{
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                transition: {
-                  duration: reduceMotion ? 0.12 : 0.46,
-                  ease: [0.22, 0.8, 0.24, 1],
-                },
-              }}
-              exit={{
-                opacity: 0,
-                y: reduceMotion ? 0 : -5,
-                scale: reduceMotion ? 1 : 0.997,
-                transition: {
-                  duration: reduceMotion ? 0.1 : 0.28,
-                  ease: [0.4, 0, 0.7, 0.2],
-                },
-              }}
+        <div className="h-64 sm:h-72">
+          <ResponsiveContainer width="100%" height="100%" debounce={80}>
+            <AreaChart
+              data={chartData}
+              syncId="portfolio-secondary-analytics"
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
             >
-              <ResponsiveContainer width="100%" height="100%" debounce={80}>
-                <AreaChart
-                  data={chartData}
-                  syncId="portfolio-secondary-analytics"
-                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id={primaryGradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor={primaryStroke}
-                        stopOpacity={timeframe === 'TODAY' ? 0.32 : 0.28}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor={primaryStroke}
-                        stopOpacity={0.01}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid {...analyticsGridProps} />
-                  <XAxis
-                    dataKey="axisLabel"
-                    {...analyticsXAxisProps}
-                    interval="preserveStartEnd"
-                    minTickGap={timeframe === 'TODAY' ? 28 : undefined}
+              <defs>
+                <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={primaryStroke}
+                    stopOpacity={timeframe === 'TODAY' ? 0.32 : 0.28}
                   />
-                  {renderYAxis()}
-                  {renderReferenceLine()}
-                  <Tooltip
-                    cursor={analyticsTooltipCursor}
-                    content={tooltip}
+                  <stop
+                    offset="95%"
+                    stopColor={primaryStroke}
+                    stopOpacity={0.01}
                   />
-                  {renderPrimaryArea()}
-                  {renderSecondaryLine()}
-                </AreaChart>
-              </ResponsiveContainer>
-            </motion.div>
-          </AnimatePresence>
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...analyticsGridProps} />
+              <XAxis
+                dataKey="axisLabel"
+                {...analyticsXAxisProps}
+                interval="preserveStartEnd"
+                minTickGap={timeframe === 'TODAY' ? 28 : undefined}
+              />
+              {renderYAxis()}
+              {renderReferenceLine()}
+              <Tooltip
+                cursor={analyticsTooltipCursor}
+                content={tooltip}
+              />
+              {renderPrimaryArea()}
+              {renderSecondaryLine()}
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       )}
 
@@ -926,8 +868,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
-        transitionKey={chartPresenceKey}
-        suppressSeriesAnimation={suppressSeriesAnimation}
       />
     </>
   );

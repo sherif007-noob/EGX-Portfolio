@@ -192,6 +192,7 @@ interface DropdownPresenceProps {
   children: React.ReactNode;
   className: string;
   role?: React.AriaRole;
+  dataAccent?: string;
 }
 
 /**
@@ -203,6 +204,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
   children,
   className,
   role,
+  dataAccent,
 }) => {
   const reduceMotion = useReducedMotion();
 
@@ -213,6 +215,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
           key="dropdown"
           role={role}
           className={className}
+          data-accent={dataAccent}
           data-motion-owned="react"
           style={{ transformOrigin: 'top center' }}
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.975 }}

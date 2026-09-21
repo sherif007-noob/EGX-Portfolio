@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { EGXTicker } from '../types';
 import { StockLogo } from './StockLogo';
 import { AnalyticsSelect } from './AnalyticsSelect';
@@ -39,6 +40,11 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [isPushingSheet, setIsPushingSheet] = useState(false);
   const [sheetSyncSuccess, setSheetSyncSuccess] = useState<string | null>(null);
+
+  const changeSelectedSector = (next: string) => {
+    if (next === selectedSector) return;
+    runVisualTransition('directory-filter', () => setSelectedSector(next));
+  };
 
   const sectors = Array.from(new Set(tickers.map((t) => t.sector)));
 
@@ -138,7 +144,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </div>
 
       {sheetSyncSuccess && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+        <div className="premium-content-swap p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{sheetSyncSuccess}</span>
         </div>
@@ -160,7 +166,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
         <div className="flex items-center gap-2">
           <AnalyticsSelect
             value={selectedSector}
-            onChange={(value) => setSelectedSector(String(value))}
+            onChange={(value) => changeSelectedSector(String(value))}
             compact
             accent="teal"
             ariaLabel="Filter ticker directory by sector"
@@ -174,7 +180,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </div>
 
       {/* Grid of Tickers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="premium-directory-results grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredTickers.map((ticker) => {
           const isPositive = ticker.changePercent >= 0;
 

@@ -545,7 +545,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       {/* Feedback message banner */}
       {feedbackMessage && (
         <div
-          className={`p-3.5 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-semibold animate-in fade-in duration-200 ${
+          className={`premium-content-swap p-3.5 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-semibold ${
             feedbackMessage.type === 'success'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-500/10 border-rose-500/30 text-rose-300'

@@ -432,36 +432,37 @@ Current rule:
 Phase 4 remains **in progress** pending fresh phone + desktop validation of the non-chart choreography and a separate surgical 1W investigation.
 
 
-### 1W regression root cause and full-width native interpolation fix
+### 1W regression root cause — preserve the complete outgoing curve
 
-The uploaded desktop recording showed the remaining defect precisely: when switching into 1W, the weekly curve could appear to begin from the previous range's right-hand quarter before expanding across the plot.
+The follow-up recording provided the decisive comparison:
 
-Recharts 3.10's default index matcher proportionally pairs point arrays of different lengths. The 1W daily range has far fewer points than 1M/90D/YTD/All, so its transition geometry needs special handling even though the final chart data is correct.
+- **Today -> 1M** is smooth because 1M has enough target points that Recharts preserves a detailed approximation of the outgoing Today curve during the first animation frame.
+- **Today -> 1W** is not smooth because 1W has only a handful of daily points. Recharts' normal matching reduces the complete outgoing curve to that tiny target point count before interpolation begins. The first visible frame therefore loses most of the outgoing shape and becomes a broad simplified hill.
 
-Several rejected experiments are fully removed:
-- no whole-chart fade/crossfade;
-- no chart remount;
-- no `animationMatchBy` date matching;
-- no 320 ms timing workaround.
+This explains why fixing only X placement improved the right-quarter artifact but did not make 1W feel like Today <-> 1M.
 
-The accepted correction stays inside Recharts' native animation lifecycle:
-- all chart transitions remain **520 ms**;
-- only when one side of the transition is **1W**, a custom `animationInterpolateFn` is supplied;
-- the target 1W/long-range points use their **final full-width X coordinates from the first animation frame**;
-- previous Y geometry is sampled smoothly across the full source profile and interpolated into the target Y values;
-- when expanding from 1W into a longer range, repeated weekly source points are collapsed back into the original weekly profile and smoothly resampled across the new target width;
-- final points, axes, curve type, calculations, and financial observations are unchanged;
-- ordinary non-1W transitions keep Recharts' default interpolation untouched.
+The final correction stays inside the existing mounted Recharts Area/Line lifecycle:
+
+- 1W crossings use key matching only to retain **all previous and next rendered points** for the transition calculation;
+- the custom `animationInterpolateFn` reconstructs the complete outgoing and incoming profiles;
+- both profiles are transition-only sampled to at least 24 points (capped at 96);
+- source and target Y geometry are sampled across normalized chart width;
+- Today source/target geometry uses linear sampling;
+- daily source/target geometry uses a cardinal spline matching the chart's 0.55 tension;
+- intermediate X coordinates span the complete target plot from the first frame;
+- at animation completion Recharts returns the untouched real target dataset;
+- final 1W points, calculations, tooltips, axes, and financial observations are unchanged;
+- ordinary non-1W transitions remain on the default Recharts interpolation path;
+- secondary analytics were restored to their already-approved native interpolation until the main 1W behavior is visually approved.
 
 Representative commits:
-- **45bcc77** — add shared full-width weekly interpolation helpers.
-- **9eca132** — apply full-width interpolation to the main analytics Area/Line only during 1W crossings.
-- **c2cbe72 / 1f8dfe4** — apply/fix matching secondary analytics interpolation.
-- **4a8f177** — smooth the weekly source profile across longer target ranges.
+- **f9c5852** — preserve complete previous/next profiles and add curve-aware transition sampling.
+- **6f850de** — use the full-profile interpolator only for main-chart 1W crossings.
+- **e7825cf** — restore secondary analytics to approved native interpolation.
 
-Quality Checks #498 passed typecheck, tests, and production build on the final helper implementation.
+Quality Checks #502 passed typecheck, tests, and production build for the final implementation.
 
-Phase 4 remains **in progress** pending visual validation of the corrected 1W geometry and the desktop motion-performance pass.
+Phase 4 remains **in progress** pending visual confirmation that 1W now has the same continuous character as Today <-> 1M, plus the separate desktop motion-performance pass.
 
 ## Current validated visual rules
 

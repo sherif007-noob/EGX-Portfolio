@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -70,6 +71,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   onAddTransaction,
   onAddBatchTransactions,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
   const [batchTrades, setBatchTrades] = useState<ParsedTradeItem[]>([]);
@@ -261,7 +263,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     }
 
     resetModal();
-    onClose();
+    requestClose();
   };
 
   const resetModal = () => {
@@ -308,7 +310,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           <button
             onClick={() => {
               resetModal();
-              onClose();
+              requestClose();
             }}
             className="premium-icon-action p-1.5 rounded-lg"
           >
@@ -593,7 +595,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                 type="button"
                 onClick={() => {
                   resetModal();
-                  onClose();
+                  requestClose();
                 }}
                 className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
               >

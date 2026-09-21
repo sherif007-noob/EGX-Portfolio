@@ -44,7 +44,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             <Wallet className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-white">Adjust Cash Reserve</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -68,28 +68,28 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             <button
               type="button"
               onClick={() => handleAdjust(10000)}
-              className="premium-control py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/80 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               +10k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(50000)}
-              className="premium-control py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/80 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               +50k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(-10000)}
-              className="premium-control py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/80 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               -10k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(-50000)}
-              className="premium-control py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/80 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               -50k
             </button>
@@ -97,7 +97,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
 
           <button
             type="submit"
-            className="premium-control premium-shimmer-border w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-950/30"
+            className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 rounded-xl font-bold text-sm"
           >
             Update Cash Balance
           </button>

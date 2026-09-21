@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
@@ -607,9 +608,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </div>
         </div>
 
+        <MotionSwap motionKey={activeAction} variant="state" className="premium-cash-action-content">
         {/* Deposit Form */}
         {activeAction === 'deposit' && (
-          <form onSubmit={handleConfirmDeposit} className="premium-cash-action-content premium-reveal space-y-4">
+          <form onSubmit={handleConfirmDeposit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Deposit Amount */}
               <div className="space-y-2">
@@ -733,7 +735,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
         {/* Withdrawal Form */}
         {activeAction === 'withdraw' && (
-          <form onSubmit={handleConfirmWithdrawal} className="premium-cash-action-content premium-reveal space-y-4">
+          <form onSubmit={handleConfirmWithdrawal} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Withdrawal Amount */}
               <div className="space-y-2">
@@ -873,6 +875,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </button>
           </form>
         )}
+        </MotionSwap>
       </div>
 
       {/* Cash Transaction History Ledger */}
@@ -917,7 +920,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Ledger Table */}
-        <div className="premium-cash-history-results premium-table-shell overflow-x-auto rounded-xl">
+        <MotionSwap motionKey={historyFilter} variant="state" className="premium-cash-history-results">
+        <div className="premium-table-shell overflow-x-auto rounded-xl">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="text-slate-400 border-b border-slate-800/70 font-semibold">

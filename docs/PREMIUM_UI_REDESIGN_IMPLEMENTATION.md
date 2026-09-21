@@ -412,7 +412,24 @@ Current choreography targets:
 
 The 1W correction does **not** resample or invent intermediate financial data. Old and new real chart states are handed off visually as complete coordinate systems.
 
-Phase 4 remains **in progress** pending fresh phone + desktop validation of this choreography pass.
+### Analytics chart rollback after choreography pass
+
+The first choreography implementation attempted to special-case transitions crossing **1W** by crossfading complete chart coordinate systems. User validation immediately rejected this because it replaced the previously approved native Recharts curve morph with a generic fade and degraded **all analytics chart transitions** perceptually.
+
+That approach is fully rolled back.
+
+Rollback commits:
+- **87bda85** — restore native primary analytics chart interpolation.
+- **4938913** — restore native secondary analytics chart interpolation.
+
+Current rule:
+- all timeframe transitions again use the original continuous Recharts series interpolation at ~520 ms;
+- no chart-level Motion fade/crossfade wrapper;
+- no suppression of Recharts series animation;
+- no alternate chart lifecycle system;
+- the remaining **1W-only smoothness issue** is tracked separately and must be solved without changing the already-approved transitions for the other timeframes.
+
+Phase 4 remains **in progress** pending fresh phone + desktop validation of the non-chart choreography and a separate surgical 1W investigation.
 
 ## Current validated visual rules
 

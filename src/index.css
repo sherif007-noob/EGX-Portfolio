@@ -3062,3 +3062,30 @@ body {
     animation: none !important;
   }
 }
+
+
+/* Phase 4 audited helper motion classes */
+.premium-motion-chevron {
+  transition: transform var(--motion-family-control) var(--motion-family-standard);
+}
+
+.premium-motion-opacity {
+  transition: opacity var(--motion-family-control) ease-out;
+}
+
+.premium-motion-toggle {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    background-color var(--motion-family-control) ease-out,
+    border-color var(--motion-family-control) ease-out;
+}
+
+/* Fallback entrance when View Transitions are unavailable. */
+.premium-journal-results {
+  animation: premium-content-family-in var(--motion-family-content) var(--motion-family-standard) both;
+}
+
+:root[data-premium-transition="journal-filter"] .premium-journal-results,
+:root[data-premium-transition="performance-filter"] .premium-content-swap {
+  animation: none;
+}

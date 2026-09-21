@@ -278,7 +278,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <div className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-2">
+          <div className="premium-chip px-3 py-1.5 rounded-lg text-slate-300 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
               <strong>{summary.multiPhaseCount}</strong> cycles with phased executions
@@ -385,7 +385,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             placeholder="Search by ticker, cycle tag (e.g. CANA, TAQA), company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-800 text-slate-100 placeholder-slate-400 text-xs border border-slate-700 focus:outline-none focus:border-purple-500"
+            className="premium-field w-full pl-9 pr-4 py-2 rounded-xl text-slate-100 placeholder-slate-400 text-xs focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -695,7 +695,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         {cycle.buyPhases.map((phase) => (
                           <div
                             key={phase.id}
-                            className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
+                            className="premium-inset-glass p-2 rounded-lg flex items-center justify-between gap-2"
                           >
                             <div>
                               <span className="text-blue-400 font-bold mr-2">Phase #{phase.phaseNumber}</span>
@@ -711,7 +711,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.buyPhases.length === 0 && (
-                          <div className="p-2 rounded-lg bg-slate-900 text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
                             Initial position entry: {cycle.shares} shares @ {formatEgp(cycle.buyPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.buyDate)}
                           </div>
@@ -732,7 +732,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         {cycle.sellPhases.map((phase) => (
                           <div
                             key={phase.id}
-                            className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
+                            className="premium-inset-glass p-2 rounded-lg flex items-center justify-between gap-2"
                           >
                             <div>
                               <span className="text-purple-400 font-bold mr-2">Phase #{phase.phaseNumber}</span>
@@ -748,7 +748,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.sellPhases.length === 0 && (
-                          <div className="p-2 rounded-lg bg-slate-900 text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
                             Single exit order: {cycle.shares} shares @ {formatEgp(cycle.sellPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.sellDate)}
                           </div>

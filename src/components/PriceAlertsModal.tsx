@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import {
   X,
   Bell,
@@ -52,6 +53,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
   scheduleStatus,
   onEditPosition,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [activeTab, setActiveTab] = useState<'settings' | 'watches' | 'history'>('watches');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
@@ -107,7 +109,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-5 h-5" />
@@ -319,7 +321,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                             <button
                               onClick={() => {
                                 onEditPosition(pos);
-                                onClose();
+                                requestClose();
                               }}
                               className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
                               title="Edit Target / Stop Loss"
@@ -593,7 +595,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
             <span>Service Worker Auto-Sync</span>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-action px-4 py-1.5 rounded-lg font-semibold"
           >
             Done

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { ExpandPresence, PremiumModalMotion } from './PremiumMotion';
+import { DropdownPresence, ExpandPresence, PremiumModalMotion } from './PremiumMotion';
 import { EGXTicker, Position, Sector, TradeTransaction } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap, Clock } from 'lucide-react';
@@ -282,8 +282,12 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             </div>
 
             {/* Suggestions Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="premium-floating premium-dropdown absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5">
+            <DropdownPresence
+              isOpen={showSuggestions && suggestions.length > 0}
+              role="listbox"
+              className="premium-floating premium-dropdown absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5"
+            >
+              {showSuggestions && suggestions.length > 0 && <>
                 {suggestions.map((t) => (
                   <button
                     key={t.ticker}
@@ -321,8 +325,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                     </div>
                   </button>
                 ))}
-              </div>
-            )}
+              </>}
+            </DropdownPresence>
           </div>
 
           {/* Company Name & Sector */}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
 import { Position } from '../types';
 import { X, Target, ShieldAlert, FileText, Save, CheckCircle2 } from 'lucide-react';
@@ -21,6 +22,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
   position,
   onSave,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [targetPrice, setTargetPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -46,7 +48,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
       stopLoss: slNum && !isNaN(slNum) && slNum > 0 ? slNum : undefined,
       notes: notes.trim() || undefined,
     });
-    onClose();
+    requestClose();
   };
 
   const currentPrice = position.currentPrice || position.avgBuyPrice;
@@ -79,7 +81,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -169,7 +171,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
           <div className="flex items-center justify-end gap-2.5 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
             >
               Cancel

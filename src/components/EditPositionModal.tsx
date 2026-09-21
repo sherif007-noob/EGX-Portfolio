@@ -80,7 +80,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
           </button>
@@ -170,13 +170,13 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="premium-control px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 text-xs font-semibold"
+              className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="premium-control premium-shimmer-border flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-900/25"
+              className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
             >
               <Save className="w-3.5 h-3.5" />
               Save Targets

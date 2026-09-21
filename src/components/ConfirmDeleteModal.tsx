@@ -32,7 +32,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          className="premium-icon-action absolute top-4 right-4 p-1.5 rounded-lg"
         >
           <X className="w-4 h-4" />
         </button>
@@ -93,7 +93,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         <div className="flex items-center justify-end gap-2.5 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition"
+            className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
           >
             Cancel
           </button>
@@ -103,7 +103,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               onConfirm();
               onClose();
             }}
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-950/40 flex items-center gap-1.5 transition active:scale-95"
+            className="premium-action premium-action-danger premium-shimmer-border px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Confirm & Delete</span>

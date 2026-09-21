@@ -93,7 +93,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   };
 
   return (
-    <div className="premium-section-enter space-y-4">
+    <div className="space-y-4">
       {/* Header Info */}
       <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>

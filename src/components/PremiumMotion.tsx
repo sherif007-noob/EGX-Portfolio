@@ -166,6 +166,60 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
   );
 };
 
+interface DropdownPresenceProps {
+  isOpen: boolean;
+  children: React.ReactNode;
+  className: string;
+  role?: React.AriaRole;
+}
+
+/**
+ * Canonical floating-menu lifecycle. The menu animates as one surface; rows do
+ * not stagger independently.
+ */
+export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
+  isOpen,
+  children,
+  className,
+  role,
+}) => {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          key="dropdown"
+          role={role}
+          className={className}
+          data-motion-owned="react"
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+              duration: reduceMotion ? 0.14 : 0.24,
+              ease: EASE_OUT,
+            },
+          }}
+          exit={{
+            opacity: 0,
+            y: reduceMotion ? 0 : -4,
+            scale: reduceMotion ? 1 : 0.99,
+            transition: {
+              duration: reduceMotion ? 0.1 : 0.17,
+              ease: EASE_IN,
+            },
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 interface SurfacePresenceProps {
   isOpen: boolean;
   children: React.ReactNode;
@@ -271,11 +325,3 @@ export const ExpandPresence: React.FC<ExpandPresenceProps> = ({
     </AnimatePresence>
   );
 };
-
-/**
- * Compatibility hook retained temporarily for modal components not yet
- * migrated to PremiumModalMotion. It no longer drives app-content swaps.
- */
-export function useMotionPresence(isOpen: boolean) {
-  return { isPresent: isOpen, phase: 'idle' as const };
-}

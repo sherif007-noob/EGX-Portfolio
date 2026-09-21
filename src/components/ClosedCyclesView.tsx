@@ -471,7 +471,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           return (
             <div
               key={cycle.id}
-              className={`premium-card p-4 sm:p-5 rounded-2xl border transition-all ${
+              className={`premium-card p-4 sm:p-5 rounded-2xl border ${
                 isWin
                   ? 'premium-glow-win'
                   : isLoss
@@ -649,9 +649,9 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
                 <button
                   onClick={() => toggleExpand(cycle.id)}
-                  className="premium-accordion-trigger flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition"
+                  className="premium-accordion-trigger flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold"
                 >
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`premium-motion-chevron w-4 h-4 ${isExpanded ? 'rotate-180' : ''}`} />
                   <span>
                     {isExpanded ? 'Hide' : 'View'} Execution Phases &amp; Leg Breakdown (
                     {cycle.buyPhases.length} Buy / {cycle.sellPhases.length} Sell phases)

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion, MotionSwap } from './PremiumMotion';
 import { EGXTicker, SchemaValidationResult } from '../types';
 import {
   generatePythonSyncScript,
@@ -36,8 +37,6 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [pastePayload, setPastePayload] = useState('');
   const [validationResult, setValidationResult] = useState<SchemaValidationResult | null>(null);
-
-  if (!isOpen) return null;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const schemaUrl = `${origin}/schema/ticker-directory.json`;
@@ -145,15 +144,13 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
   };
 
   return (
-    <div
-      id="schema-sync-modal"
-      className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={requestClose}
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal w-full max-w-3xl my-6 rounded-2xl p-6 text-slate-100 space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Python script and schema synchronization"
     >
-      <div
-        className="premium-modal w-full max-w-3xl my-6 rounded-2xl p-6 text-slate-100 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
@@ -357,7 +354,6 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

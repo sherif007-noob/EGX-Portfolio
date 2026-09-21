@@ -308,7 +308,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
           </button>
@@ -331,7 +331,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
             <button
               onClick={onReconcileLedger}
-              className="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition"
+              className="premium-action premium-filter-active-cyan px-3 py-1.5 rounded-lg text-xs font-semibold"
             >
               Run Reconciliation
             </button>
@@ -350,7 +350,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
             <button
               onClick={handleExportJson}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition"
+              className="premium-action premium-action-warning px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Backup</span>
@@ -371,7 +371,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleExportCsv('positions')}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 transition"
+                className="premium-action premium-action-success px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                 title="Download Active Holdings for Excel"
               >
                 <Download className="w-3 h-3" />
@@ -379,7 +379,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
               </button>
               <button
                 onClick={() => handleExportCsv('transactions')}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 transition"
+                className="premium-action premium-action-success px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                 title="Download Transaction Ledger for Excel"
               >
                 <Download className="w-3 h-3" />
@@ -401,7 +401,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="premium-action px-2.5 py-1 rounded-lg text-xs font-semibold"
             >
               Choose File
             </button>
@@ -479,7 +479,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
               <button
                 onClick={handleConfirmRestore}
                 disabled={isRestoring}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950 transition"
+                className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-40"
               >
                 {isRestoring ? (
                   <>

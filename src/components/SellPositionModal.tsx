@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
+import { PremiumModalMotion } from './PremiumMotion';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
@@ -29,10 +30,12 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   onConfirmSell,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
-  if (!isOpen || !position) return null;
+  const lastPositionRef = useRef<Position | null>(position);
+  if (position) lastPositionRef.current = position;
+  const displayPosition = position ?? lastPositionRef.current;
 
-  const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
-  const [sellPrice, setSellPrice] = useState<number>(position.currentPrice || position.avgBuyPrice);
+  const [sharesToSell, setSharesToSell] = useState<number>(position?.shares ?? 0);
+  const [sellPrice, setSellPrice] = useState<number>(position?.currentPrice || position?.avgBuyPrice || 0);
   const [sellDate, setSellDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [executionTime, setExecutionTime] = useState<string>('');
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
@@ -42,8 +45,8 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   // Reset values when position changes
   useEffect(() => {
     if (position) {
-      setSharesToSell(position.shares);
-      setSellPrice(position.currentPrice || position.avgBuyPrice);
+      setSharesToSell(displayPosition.shares);
+      setSellPrice(displayPosition.currentPrice || displayPosition.avgBuyPrice);
       setIsManualFee(false);
     }
   }, [position]);
@@ -57,28 +60,30 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
     }
   }, [sharesToSell, sellPrice, isManualFee]);
 
+  if (!displayPosition) return null;
+
   // Financial calculations
   const grossProceeds = sharesToSell * sellPrice;
   const netProceeds = Math.max(0, grossProceeds - (brokerageFee || 0));
 
   // Cost basis for sold shares
-  const costBasis = sharesToSell * position.avgBuyPrice;
+  const costBasis = sharesToSell * displayPosition.avgBuyPrice;
   // Allocated buy fees for sold shares
-  const allocatedBuyFees = position.totalFees ? (sharesToSell / position.shares) * position.totalFees : 0;
+  const allocatedBuyFees = displayPosition.totalFees ? (sharesToSell / displayPosition.shares) * displayPosition.totalFees : 0;
   const totalCostIncludingBuyFees = costBasis + allocatedBuyFees;
 
   // Realized Net P&L: Net proceeds from sale minus total cost basis (including buy fee + sell fee)
   const realizedPnlEgp = netProceeds - totalCostIncludingBuyFees;
   const realizedPnlPercent = totalCostIncludingBuyFees > 0 ? (realizedPnlEgp / totalCostIncludingBuyFees) * 100 : 0;
   const isProfit = realizedPnlEgp >= 0;
-  const remainingShares = Math.max(0, position.shares - sharesToSell);
+  const remainingShares = Math.max(0, displayPosition.shares - sharesToSell);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sharesToSell <= 0 || sharesToSell > position.shares || sellPrice <= 0) return;
+    if (sharesToSell <= 0 || sharesToSell > displayPosition.shares || sellPrice <= 0) return;
 
     onConfirmSell(
-      position.id,
+      displayPosition.id,
       sharesToSell,
       sellPrice,
       sellDate,
@@ -91,15 +96,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   };
 
   return (
-    <div
-      id="sell-position-modal"
-      className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={requestClose}
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal w-full max-w-md my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel={`Sell ${displayPosition.ticker} position`}
     >
-      <div
-        className="premium-modal w-full max-w-md my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-start justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
@@ -108,7 +111,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             <div>
               <h3 className="text-base font-bold text-white">Sell / Exit Position</h3>
               <p className="text-xs text-slate-400">
-                {position.ticker} • {position.companyName}
+                {displayPosition.ticker} • {displayPosition.companyName}
               </p>
             </div>
           </div>
@@ -122,16 +125,16 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           <div className="premium-subpanel p-3 rounded-xl flex justify-between">
             <div>
               <span className="text-slate-400 block text-[10px]">Held Shares</span>
-              <span className="font-mono font-bold text-white">{position.shares.toLocaleString()}</span>
+              <span className="font-mono font-bold text-white">{displayPosition.shares.toLocaleString()}</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Average Buy</span>
-              <span className="font-mono font-bold text-slate-200">{position.avgBuyPrice.toFixed(2)} EGP</span>
+              <span className="font-mono font-bold text-slate-200">{displayPosition.avgBuyPrice.toFixed(2)} EGP</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Current Quote</span>
               <span className="font-mono font-bold text-emerald-400">
-                {(position.currentPrice || position.avgBuyPrice).toFixed(2)} EGP
+                {(displayPosition.currentPrice || displayPosition.avgBuyPrice).toFixed(2)} EGP
               </span>
             </div>
           </div>
@@ -143,14 +146,14 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setSharesToSell(Math.floor(position.shares / 2))}
+                  onClick={() => setSharesToSell(Math.floor(displayPosition.shares / 2))}
                   className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   50%
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSharesToSell(position.shares)}
+                  onClick={() => setSharesToSell(displayPosition.shares)}
                   className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   100% (All)
@@ -159,7 +162,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </div>
             <NumberStepperInput
               min={1}
-              max={position.shares}
+              max={displayPosition.shares}
               step={1}
               value={sharesToSell || ''}
               onValueChange={(value) => setSharesToSell(Number(value))}
@@ -313,7 +316,6 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

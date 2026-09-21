@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { useMotionPresence } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
 import { X, Wallet, Plus, Minus } from 'lucide-react';
 
@@ -17,9 +18,10 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   onUpdateCash,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
+  const { isPresent, phase: motionPhase } = useMotionPresence(isOpen);
   const [amount, setAmount] = useState<number>(currentCash);
 
-  if (!isOpen) return null;
+  if (!isPresent) return null;
 
   const handleAdjust = (delta: number) => {
     setAmount((prev) => Math.max(0, prev + delta));
@@ -35,10 +37,12 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
     <div
       id="quick-cash-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      data-motion-phase={motionPhase}
       onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-sm rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+        data-motion-phase={motionPhase}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">

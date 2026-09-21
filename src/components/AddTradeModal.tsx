@@ -491,11 +491,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 type="time"
                 value={executionTime}
                 onChange={(e) => setExecutionTime(e.target.value)}
-                id="trade-execution-time"
-                type="time"
-                value={executionTime}
-                onChange={(e) => setExecutionTime(e.target.value)}
-                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field premium-time-input w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
               />
               <span className="text-[10px] text-slate-400 block mt-0.5">
                 Optional, but recommended when matching broker receipts.

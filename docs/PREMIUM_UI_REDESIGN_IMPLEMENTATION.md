@@ -178,7 +178,7 @@ Established rules:
 
 ## Phase 4 — Motion: accepted five-family implementation
 
-Phase 4 was originally started before Phase 3 completeness was fully validated, then paused. The provisional motion was noticeable but user validation identified two problems:
+Phase 4 was originally started before Phase 3 completeness was fully validated, then paused. The provisional motion was noticeable, but user validation identified four problems:
 
 1. Motion was generally **too fast**.
 2. Motion coverage was incomplete/inconsistent across the application.

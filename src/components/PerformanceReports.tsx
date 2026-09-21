@@ -7,6 +7,7 @@ import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
+import { MotionSwap } from './PremiumMotion';
 import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import {
@@ -238,12 +239,13 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           </div>
         </div>
 
+        <MotionSwap motionKey={`${allocationTab}-${includeCash}-${allocationData.length > 0 ? 'data' : 'empty'}`} variant="state">
         {allocationData.length === 0 ? (
           <div className="premium-report-glass-soft flex h-64 items-center justify-center rounded-xl text-xs text-slate-500">
             No allocation data.
           </div>
         ) : (
-          <div key={`${allocationTab}-${includeCash}`} className="premium-content-swap grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="premium-report-glass-soft relative min-h-[285px] overflow-hidden rounded-xl">
               <div className="absolute left-4 top-4 z-10">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Allocated value</div>

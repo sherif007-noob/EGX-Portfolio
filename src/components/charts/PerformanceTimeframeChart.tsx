@@ -679,11 +679,11 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
             >
-              <h3 className="truncate text-sm font-bold text-white group-hover:text-cyan-200 transition">
+              <h3 className="truncate text-sm font-bold text-white group-hover:text-cyan-200">
                 {definition.label}
               </h3>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${modeMenuOpen ? 'rotate-180' : ''}`}
+                className={`premium-motion-chevron h-4 w-4 shrink-0 text-slate-500 ${modeMenuOpen ? 'rotate-180' : ''}`}
               />
             </button>
             <p className="text-xs text-slate-400 mt-1">{definition.description}</p>

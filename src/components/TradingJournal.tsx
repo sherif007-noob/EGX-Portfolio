@@ -421,7 +421,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   return (
-    <div className="premium-section-enter space-y-4">
+    <div className="space-y-4">
       {/* Toast Notification for deletion */}
       <SurfacePresence isOpen={!!deletedIdToast} className="fixed bottom-6 right-6 z-50">
         {deletedIdToast && (

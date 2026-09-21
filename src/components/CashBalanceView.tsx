@@ -612,7 +612,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onValueChange={setDepositAmount}
                     accent="emerald"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white placeholder-slate-500 text-sm font-mono focus:outline-none"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
                     EGP
@@ -681,7 +681,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     placeholder="e.g. CIB Wire ref #98321 or Monthly Savings addition"
                     value={depositNotes}
                     onChange={(e) => setDepositNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-xs border border-slate-700 focus:outline-none focus:border-emerald-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none"
                   />
                 </div>
               </div>
@@ -737,7 +737,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onValueChange={setWithdrawAmount}
                     accent="rose"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm font-mono border border-slate-700 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                    className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white placeholder-slate-500 text-sm font-mono focus:outline-none"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
                     EGP
@@ -811,7 +811,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     placeholder="e.g. Transfer to CIB checking or EGX realized profits payout"
                     value={withdrawNotes}
                     onChange={(e) => setWithdrawNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-xs border border-slate-700 focus:outline-none focus:border-rose-500"
+                    className="premium-field w-full px-3 py-2 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none"
                   />
                 </div>
               </div>

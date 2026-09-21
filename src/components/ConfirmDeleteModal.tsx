@@ -1,5 +1,6 @@
 import React from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
+import { useMotionPresence } from './PremiumMotion';
 import { AlertTriangle, Trash2, X, ShieldAlert } from 'lucide-react';
 
 interface ConfirmDeleteModalProps {
@@ -26,11 +27,12 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   itemDetails,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
-  if (!isOpen) return null;
+  const { isPresent, phase: motionPhase } = useMotionPresence(isOpen);
+  if (!isPresent) return null;
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4">
+    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4" data-motion-phase={motionPhase}>
+      <div className="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4" data-motion-phase={motionPhase}>
         {/* Close Button */}
         <button
           onClick={requestClose}

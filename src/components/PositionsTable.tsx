@@ -107,7 +107,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       <div className="premium-table-shell hidden lg:block rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-medium">
+            <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
               <th className="py-3 px-4">Ticker &amp; Security</th>
               <th className="py-3 px-3">Sector</th>
               <th className="py-3 px-3 text-right">Shares</th>
@@ -135,7 +135,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               return (
                 <tr
                   key={pos.id}
-                  className={`hover:bg-slate-800/40 transition ${
+                  className={`transition ${
                     pnlEgp > 0
                       ? 'premium-row-win'
                       : pnlEgp < 0

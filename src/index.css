@@ -2757,12 +2757,4 @@ body {
     will-change: auto;
   }
 
-  /*
-   * Preserve row hover color/edge feedback while avoiding an extra per-row
-   * transform layer inside a moving page/result surface.
-   */
-  .premium-motion-swap .premium-table-shell tbody tr:hover,
-  .premium-motion-swap .premium-report-table tbody tr:hover {
-    transform: none;
-  }
 }

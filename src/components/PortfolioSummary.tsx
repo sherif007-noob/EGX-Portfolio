@@ -35,7 +35,7 @@ interface PortfolioSummaryProps {
   scheduleStatus?: EGXScheduleStatus;
 }
 
-export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
+const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
   metrics,
   stats,
   onQuickAddCash,
@@ -296,3 +296,5 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
     </div>
   );
 };
+
+export const PortfolioSummary = React.memo(PortfolioSummaryComponent);

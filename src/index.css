@@ -3156,3 +3156,23 @@ body {
 :root[data-premium-transition="monthly-filter"] .premium-content-swap {
   animation: none;
 }
+
+
+/* Phase 4 list filter transition coverage */
+:root[data-premium-transition="positions-filter"] .premium-positions-results {
+  view-transition-name: premium-positions-results;
+}
+
+:root[data-premium-transition="directory-filter"] .premium-directory-results {
+  view-transition-name: premium-directory-results;
+}
+
+::view-transition-old(premium-positions-results),
+::view-transition-old(premium-directory-results) {
+  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
+}
+
+::view-transition-new(premium-positions-results),
+::view-transition-new(premium-directory-results) {
+  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
+}

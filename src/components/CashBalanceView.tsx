@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap } from './PremiumMotion';
+import { MotionSwap, PremiumModalMotion } from './PremiumMotion';
 import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
@@ -75,6 +75,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
   // Edit Transaction State & Modal
   const [editingTransaction, setEditingTransaction] = useState<CashTransaction | null>(null);
+  const lastEditingTransactionRef = useRef<CashTransaction | null>(editingTransaction);
+  if (editingTransaction) lastEditingTransactionRef.current = editingTransaction;
+  const displayEditingTransaction = editingTransaction ?? lastEditingTransactionRef.current;
 
   const requestCloseCashEdit = () => {
     runVisualTransition('modal-close', () => setEditingTransaction(null));
@@ -202,7 +205,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     }
 
     // Calculate balance difference. Negative cash is a valid ledger state and must not be silently clamped.
-    const oldContribution = editingTransaction.type === 'DEPOSIT' ? editingTransaction.amount : -editingTransaction.amount;
+    const oldContribution = displayEditingTransaction.type === 'DEPOSIT' ? displayEditingTransaction.amount : -displayEditingTransaction.amount;
     const newContribution = editType === 'DEPOSIT' ? newAmountNum : -newAmountNum;
     const delta = newContribution - oldContribution;
     const newBalance = Number((cashBalance + delta).toFixed(2));
@@ -1002,9 +1005,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Edit Transaction Modal */}
-      {editingTransaction && createPortal((
-        <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="premium-modal relative w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4">
+      {displayEditingTransaction && createPortal((
+        <PremiumModalMotion
+          isOpen={!!editingTransaction}
+          backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          panelClassName="premium-modal relative w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+          onBackdropClick={requestCloseCashEdit}
+          panelAriaLabel="Edit cash transaction"
+        >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
@@ -1098,8 +1106,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   <div className="text-slate-400">
                     Original Amount:{' '}
                     <span className="font-mono text-slate-200">
-                      {editingTransaction.type === 'DEPOSIT' ? '+' : '-'}
-                      {formatEgp(editingTransaction.amount)} EGP
+                      {displayEditingTransaction.type === 'DEPOSIT' ? '+' : '-'}
+                      {formatEgp(displayEditingTransaction.amount)} EGP
                     </span>
                   </div>
                   <div className="text-slate-300 font-medium">
@@ -1108,9 +1116,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                       {formatEgp(
                         cashBalance +
                           (editType === 'DEPOSIT' ? parseFloat(editAmount) : -parseFloat(editAmount)) -
-                          (editingTransaction.type === 'DEPOSIT'
-                            ? editingTransaction.amount
-                            : -editingTransaction.amount)
+                          (displayEditingTransaction.type === 'DEPOSIT'
+                            ? displayEditingTransaction.amount
+                            : -displayEditingTransaction.amount)
                       )}{' '}
                       EGP
                     </span>
@@ -1136,8 +1144,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </PremiumModalMotion>
       ), document.body)}
     </div>
   );

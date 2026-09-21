@@ -21,6 +21,7 @@ import {
 import { Position, PriceAlertSettings, TriggeredPriceAlert } from '../types';
 import { EGXScheduleStatus } from '../services/marketPriceSync';
 import { StockLogo } from './StockLogo';
+import { PremiumModalMotion, MotionSwap } from './PremiumMotion';
 
 interface PriceAlertsModalProps {
   isOpen: boolean;
@@ -58,8 +59,6 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
-  if (!isOpen) return null;
-
   // Positions with defined Targets or Stop-Losses
   const positionsWithTargets = positions.filter(p => (p.targetPrice && p.targetPrice > 0) || (p.stopLoss && p.stopLoss > 0));
 
@@ -85,8 +84,13 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
     n !== undefined ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="premium-modal rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+      panelClassName="premium-modal rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Price target and push alerts"
+    >
         
         {/* Modal Header */}
         <div className="premium-modal-section flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
@@ -602,7 +606,6 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
           </button>
         </div>
 
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

@@ -334,7 +334,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                     animationInterpolateFn={
-                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                      useWeeklyFullWidthMorph ? interpolateWeeklyLineFullWidth : undefined
                     }
                   />
                   <Line
@@ -349,7 +349,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                     animationInterpolateFn={
-                      useWeeklyFullWidthMorph ? interpolateWeeklyAreaFullWidth : undefined
+                      useWeeklyFullWidthMorph ? interpolateWeeklyLineFullWidth : undefined
                     }
                   />
                 </LineChart>

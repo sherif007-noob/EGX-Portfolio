@@ -49,13 +49,13 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         </div>
 
         {/* Description */}
-        <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+        <p className="premium-modal-section text-xs text-slate-300 leading-relaxed p-3 rounded-xl">
           {description}
         </p>
 
         {/* Item Details Summary */}
         {itemDetails && (
-          <div className="p-3 rounded-xl bg-slate-950 border border-rose-500/20 text-xs space-y-1.5 font-mono">
+          <div className="premium-modal-section p-3 rounded-xl border-rose-500/20 text-xs space-y-1.5 font-mono">
             {itemDetails.ticker && (
               <div className="flex justify-between">
                 <span className="text-slate-400">Target Ticker:</span>

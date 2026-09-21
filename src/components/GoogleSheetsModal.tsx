@@ -585,7 +585,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
 
           {/* Drive Spreadsheets Browser (When signed in) */}
           {authUser && (
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div className="premium-modal-section p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-white flex items-center gap-2">
                   <FolderOpen className="w-4 h-4 text-emerald-400" />
@@ -675,14 +675,10 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 type="button"
                 id="auto-sync-toggle"
                 onClick={() => setAutoSync(!autoSync)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  autoSync ? 'bg-emerald-500' : 'bg-slate-700'
-                }`}
+                className={`premium-filter-pill relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 focus:outline-none ${autoSync ? 'premium-filter-active-emerald' : ''}`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    autoSync ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-100 shadow-lg ring-0 transition duration-200 ease-in-out ${autoSync ? 'translate-x-5' : 'translate-x-0'}`}
                 />
               </button>
             </div>

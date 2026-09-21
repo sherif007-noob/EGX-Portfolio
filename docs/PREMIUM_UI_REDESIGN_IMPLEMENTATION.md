@@ -431,6 +431,30 @@ Current rule:
 
 Phase 4 remains **in progress** pending fresh phone + desktop validation of the non-chart choreography and a separate surgical 1W investigation.
 
+
+### Surgical 1W native-morph fix
+
+The remaining 1W defect is now addressed **inside the existing Recharts interpolation path** rather than with any wrapper animation.
+
+Recharts 3.10 supports `animationMatchBy`, which controls how old and new rendered points are paired during a dataset update. The default index strategy proportionally stretches points when array lengths differ. That behavior is normally appropriate, but the 1W daily dataset is much shorter than 1M/90D/YTD/All.
+
+For transitions where one side is **1W** and both sides are daily-resolution ranges, the chart now matches points by their real valuation `date`:
+- overlapping trading days retain identity and animate to their new positions;
+- dates entering/leaving the window are handled natively by Recharts as added/removed points;
+- the same mounted Area/Line components remain in place;
+- animation duration remains ~520 ms;
+- curve type, axes, calculations, chart data, and financial observations are unchanged.
+
+Transitions involving **Today** deliberately retain the previously approved index-based intraday interpolation path rather than modifying working Today behavior.
+
+Representative commits:
+- **03831d6** — main analytics 1W daily-range date matching.
+- **e137b87** — secondary analytics 1W date-stable matching.
+
+This is presentation-only. It does not resample or invent portfolio observations.
+
+Phase 4 remains **in progress** pending visual validation of the 1W morph and the desktop motion-performance pass.
+
 ## Current validated visual rules
 
 - Realized P&L / Portfolio Allocation segmented language is the default selector family.

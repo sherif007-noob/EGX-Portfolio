@@ -678,7 +678,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 className={`premium-filter-pill relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 focus:outline-none ${autoSync ? 'premium-filter-active-emerald' : ''}`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-100 shadow-lg ring-0 transition duration-200 ease-in-out ${autoSync ? 'translate-x-5' : 'translate-x-0'}`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-100 shadow-lg ring-0 premium-motion-toggle ${autoSync ? 'translate-x-5' : 'translate-x-0'}`}
                 />
               </button>
             </div>

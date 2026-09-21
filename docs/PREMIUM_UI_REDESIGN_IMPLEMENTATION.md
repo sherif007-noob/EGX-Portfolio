@@ -432,30 +432,36 @@ Current rule:
 Phase 4 remains **in progress** pending fresh phone + desktop validation of the non-chart choreography and a separate surgical 1W investigation.
 
 
-### 1W regression root cause and restoration
+### 1W regression root cause and full-width native interpolation fix
 
-The uploaded desktop recording exposed two distinct problems:
+The uploaded desktop recording showed the remaining defect precisely: when switching into 1W, the weekly curve could appear to begin from the previous range's right-hand quarter before expanding across the plot.
 
-- entering 1W showed a sparse partial/wedge-shaped intermediate curve before the weekly shape settled;
-- the experimental date-matching fix then made leaving 1W worse, producing a self-crossing/looping intermediate path.
+Recharts 3.10's default index matcher proportionally pairs point arrays of different lengths. The 1W daily range has far fewer points than 1M/90D/YTD/All, so its transition geometry needs special handling even though the final chart data is correct.
 
-Commit history identified the lasting Phase 4 v2 regression: after the keyed chart-remount experiment was removed, **358e3f9** changed the already-working native Recharts animation duration from **320 ms to 520 ms**. Longer timeframes tolerate the extended tween because they contain many valuation points, but the sparse 1W series exposes Recharts' awkward intermediate geometry for much longer.
+Several rejected experiments are fully removed:
+- no whole-chart fade/crossfade;
+- no chart remount;
+- no `animationMatchBy` date matching;
+- no 320 ms timing workaround.
 
-The correction is intentionally narrow:
-- remove the rejected `animationMatchBy` experiment completely;
-- keep the same mounted Area/Line/Recharts interpolation mechanism;
-- keep the current 520 ms timing for normal timeframe transitions;
-- restore the proven pre-v2 **320 ms** timing only when either side of the transition is **1W**;
-- leave Today calculations, curves, axes, and data untouched;
-- restore secondary charts to their last known-good native 520 ms interpolation.
+The accepted correction stays inside Recharts' native animation lifecycle:
+- all chart transitions remain **520 ms**;
+- only when one side of the transition is **1W**, a custom `animationInterpolateFn` is supplied;
+- the target 1W/long-range points use their **final full-width X coordinates from the first animation frame**;
+- previous Y geometry is sampled smoothly across the full source profile and interpolated into the target Y values;
+- when expanding from 1W into a longer range, repeated weekly source points are collapsed back into the original weekly profile and smoothly resampled across the new target width;
+- final points, axes, curve type, calculations, and financial observations are unchanged;
+- ordinary non-1W transitions keep Recharts' default interpolation untouched.
 
 Representative commits:
-- **7c32421** — restore pre-v2 weekly main-chart morph timing.
-- **0b7abfc** — remove experimental weekly point matching from secondary charts.
+- **45bcc77** — add shared full-width weekly interpolation helpers.
+- **9eca132** — apply full-width interpolation to the main analytics Area/Line only during 1W crossings.
+- **c2cbe72 / 1f8dfe4** — apply/fix matching secondary analytics interpolation.
+- **4a8f177** — smooth the weekly source profile across longer target ranges.
 
-No chart wrapper fade, remount, resampling, or invented data is used.
+Quality Checks #498 passed typecheck, tests, and production build on the final helper implementation.
 
-Phase 4 remains **in progress** pending visual validation of the restored 1W behavior and the desktop motion-performance pass.
+Phase 4 remains **in progress** pending visual validation of the corrected 1W geometry and the desktop motion-performance pass.
 
 ## Current validated visual rules
 

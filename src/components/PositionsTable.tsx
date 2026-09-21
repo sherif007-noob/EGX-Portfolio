@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { MotionSwap } from './PremiumMotion';
 import { Position } from '../types';
@@ -20,6 +20,32 @@ import {
   Layers,
   Plus,
 } from 'lucide-react';
+
+const DESKTOP_LAYOUT_QUERY = '(min-width: 1024px)';
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function useDesktopLayout(): boolean {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_LAYOUT_QUERY).matches : true,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(DESKTOP_LAYOUT_QUERY);
+    const update = () => setIsDesktop(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  return isDesktop;
+}
+
+function formatEgp(val: number): string {
+  return EGP_FORMATTER.format(val);
+}
 
 interface PositionsTableProps {
   positions: Position[];
@@ -43,28 +69,26 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
+  const isDesktop = useDesktopLayout();
 
   const changeSelectedSector = (next: string) => {
     if (next === selectedSector) return;
     runVisualTransition('positions-filter', () => setSelectedSector(next));
   };
 
-  const filteredPositions = positions.filter((pos) => {
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredPositions = useMemo(() => positions.filter((pos) => {
     const matchesSearch =
-      pos.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pos.companyName.toLowerCase().includes(searchQuery.toLowerCase());
+      pos.ticker.toLowerCase().includes(normalizedSearch) ||
+      pos.companyName.toLowerCase().includes(normalizedSearch);
     const matchesSector = selectedSector === 'ALL' || pos.sector === selectedSector;
     return matchesSearch && matchesSector;
-  });
+  }), [positions, normalizedSearch, selectedSector]);
 
-  const sectors = Array.from(new Set(positions.map((p) => p.sector)));
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
+  const sectors = useMemo(
+    () => Array.from(new Set(positions.map((p) => p.sector))),
+    [positions],
+  );
 
   return (
     <div className="space-y-4">
@@ -111,6 +135,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
+      {isDesktop && (
       <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
       <div className="premium-table-shell rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
@@ -337,8 +362,10 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
         </table>
       </div>
       </MotionSwap>
+      )}
 
       {/* Mobile Card Layout */}
+      {!isDesktop && (
       <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results lg:hidden space-y-3">
         {filteredPositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
@@ -492,6 +519,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           </div>
         )}
       </MotionSwap>
+      )}
 
       {/* Confirm Delete Position Modal */}
       <ConfirmDeleteModal

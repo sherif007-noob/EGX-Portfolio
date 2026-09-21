@@ -76,13 +76,13 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         onChange={(event) => onValueChange(event.target.value)}
         className={`premium-field app-number-input pr-10 ${className}`}
       />
-      <div className="absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/70 bg-slate-950/65 backdrop-blur-md">
+      <div className="absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/50 bg-slate-950/32 backdrop-blur-xl">
         <button
           type="button"
           tabIndex={-1}
           disabled={disabled}
           onClick={() => nudge(1)}
-          className={`flex flex-1 items-center justify-center border-b border-slate-700/70 transition disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`premium-control flex flex-1 items-center justify-center border-b border-slate-700/50 disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Increase value"
         >
           <ChevronUp className="h-3.5 w-3.5" />
@@ -92,7 +92,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
           tabIndex={-1}
           disabled={disabled}
           onClick={() => nudge(-1)}
-          className={`flex flex-1 items-center justify-center transition disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`premium-control flex flex-1 items-center justify-center disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Decrease value"
         >
           <ChevronDown className="h-3.5 w-3.5" />

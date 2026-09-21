@@ -111,7 +111,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           />
           <button
             type="button"
-            className="premium-control p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800/75 hover:bg-slate-700/80 pointer-events-none"
+            className="premium-icon-action p-1 rounded-lg pointer-events-none"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-300" />
           </button>

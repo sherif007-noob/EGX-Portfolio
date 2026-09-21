@@ -1,4 +1,5 @@
 import React from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { AlertTriangle, Trash2, X, ShieldAlert } from 'lucide-react';
 
 interface ConfirmDeleteModalProps {
@@ -24,6 +25,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   description,
   itemDetails,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   if (!isOpen) return null;
 
   return (
@@ -31,7 +33,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
       <div className="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4">
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={requestClose}
           className="premium-icon-action absolute top-4 right-4 p-1.5 rounded-lg"
         >
           <X className="w-4 h-4" />
@@ -92,7 +94,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2.5 pt-2">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
           >
             Cancel
@@ -101,7 +103,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           <button
             onClick={() => {
               onConfirm();
-              onClose();
+              requestClose();
             }}
             className="premium-action premium-action-danger premium-shimmer-border px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
           >

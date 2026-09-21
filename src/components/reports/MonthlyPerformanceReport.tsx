@@ -297,7 +297,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       {/* Interactive Controls Bar: Month Tabs & Sub-filters */}
       <div className="premium-report-glass-soft flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-xl">
         {/* Month Selector Tabs */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="premium-selector-shell flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
             aria-pressed={selectedMonth === 'ALL'}
@@ -379,7 +379,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           return (
             <div
               key={m.monthKey}
-              className={`premium-report-glass rounded-xl overflow-hidden ${
+              className={`premium-card premium-report-hero rounded-xl overflow-hidden ${
                 isNoExits
                   ? 'border-slate-800'
                   : isProfitable

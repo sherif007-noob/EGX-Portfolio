@@ -87,7 +87,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
       <div className="premium-modal rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/50">
+        <div className="premium-modal-section flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <BellRing className="w-5 h-5" />
@@ -115,7 +115,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Permission Banner */}
-        <div className="px-5 py-3 bg-slate-950/70 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="premium-modal-section px-5 py-3 border-b border-slate-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5 text-xs">
             {permission === 'granted' ? (
               <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
@@ -163,7 +163,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         )}
 
         {/* Cairo Trading Hours Banner */}
-        <div className="px-5 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="premium-inset-glass px-5 py-2.5 border-b border-slate-700/50 flex items-center justify-between text-[11px] text-slate-400">
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span>Cairo Market Session:</span>
@@ -181,7 +181,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-800 bg-slate-950/30 px-5 pt-2">
+        <div className="premium-modal-section flex border-b border-slate-700/50 px-5 pt-2">
           <button
             onClick={() => setActiveTab('watches')}
             className={`premium-filter-pill pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
@@ -234,8 +234,8 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               </div>
 
               {positionsWithTargets.length === 0 ? (
-                <div className="p-8 text-center rounded-xl bg-slate-950/50 border border-slate-800 space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                <div className="premium-inset-glass p-8 text-center rounded-xl space-y-2">
+                  <div className="premium-chip w-10 h-10 rounded-full flex items-center justify-center mx-auto text-slate-400">
                     <BellOff className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-slate-300">No Target Prices or Stop-Losses Set</p>
@@ -341,7 +341,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
             <div className="space-y-4">
               
               {/* Master Toggle */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+              <div className="premium-modal-section p-4 rounded-xl flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <Bell className="w-4 h-4 text-amber-400" />
@@ -363,7 +363,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               </div>
 
               {/* Notification Types */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+              <div className="premium-modal-section p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                   Notification Triggers
                 </h4>
@@ -446,7 +446,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               </div>
 
               {/* Delivery Rules */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+              <div className="premium-modal-section p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                   Delivery &amp; Schedule Rules
                 </h4>
@@ -530,8 +530,8 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               </div>
 
               {alertHistory.length === 0 ? (
-                <div className="p-8 text-center rounded-xl bg-slate-950/50 border border-slate-800 space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                <div className="premium-inset-glass p-8 text-center rounded-xl space-y-2">
+                  <div className="premium-chip w-10 h-10 rounded-full flex items-center justify-center mx-auto text-slate-400">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-slate-300">No Triggered Alerts Yet</p>
@@ -587,7 +587,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-5 py-3.5 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div className="premium-modal-section px-5 py-3.5 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Service Worker Auto-Sync</span>

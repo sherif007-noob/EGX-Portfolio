@@ -527,7 +527,7 @@ The refinement pass therefore changes choreography without reintroducing snapsho
 - ordinary chart timeframe changes remain Recharts-owned;
 - **Rejected experiment:** crossing to/from 1W via whole-chart crossfade was tested and rolled back because it degraded the approved Recharts morphing across the complete analytics family.
 - Current chart rule: preserve native Recharts interpolation for every timeframe.
-- 1W is handled surgically inside Recharts: 1W <-> other daily ranges match existing valuation points by `date` through `animationMatchBy`, while Today keeps the existing index-based intraday morph. No wrapping, fading, remounting, resampling, or series-animation suppression is used.
+- 1W uses the same native Recharts morph as every other timeframe. The only special case is restoring the pre-v2 320 ms duration when entering/leaving 1W; normal timeframe transitions remain at the current 520 ms. The rejected date-matching/crossfade experiments are removed.
 
 This remains presentation-only: chart observations/data are unchanged; the special 1W handling changes only how two real chart states are visually handed off.
 

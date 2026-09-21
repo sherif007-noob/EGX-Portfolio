@@ -1,6 +1,6 @@
 import React from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { useMotionPresence } from './PremiumMotion';
+import { PremiumModalMotion } from './PremiumMotion';
 import { AlertTriangle, Trash2, X, ShieldAlert } from 'lucide-react';
 
 interface ConfirmDeleteModalProps {
@@ -27,12 +27,15 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   itemDetails,
 }) => {
   const requestClose = () => runVisualTransition('modal-close', onClose);
-  const { isPresent, phase: motionPhase } = useMotionPresence(isOpen);
-  if (!isPresent) return null;
 
   return (
-    <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4" data-motion-phase={motionPhase}>
-      <div className="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4" data-motion-phase={motionPhase}>
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      panelClassName="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel={title}
+    >
         {/* Close Button */}
         <button
           onClick={requestClose}
@@ -113,7 +116,6 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             <span>Confirm & Delete</span>
           </button>
         </div>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

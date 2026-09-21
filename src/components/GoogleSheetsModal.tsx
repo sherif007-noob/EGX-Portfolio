@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { PremiumModalMotion } from './PremiumMotion';
+import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { googleSignIn, getAccessToken, logout } from '../services/firebaseAuth';
 import { 
   extractSpreadsheetId, 
@@ -461,7 +461,8 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
         {/* Body */}
         <div className="p-6 space-y-5 max-h-[78vh] overflow-y-auto">
           {/* Status Banners */}
-          {error && (
+          <SurfacePresence isOpen={!!error}>
+            {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <div>
@@ -469,8 +470,10 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 <p className="mt-0.5 text-rose-300/90">{error}</p>
               </div>
             </div>
-          )}
+            )}
+          </SurfacePresence>
 
+          <SurfacePresence isOpen={!!successMsg}>
           {successMsg && (
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -480,6 +483,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
               </div>
             </div>
           )}
+          </SurfacePresence>
 
           {/* Server-Side Service Account Status Card */}
           {serviceAccountStatus.configured ? (

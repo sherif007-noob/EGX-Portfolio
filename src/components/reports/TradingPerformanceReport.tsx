@@ -42,7 +42,7 @@ const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : '∞');
 
-export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> = ({
+const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps> = ({
   stats,
   closedTrades,
 }) => {
@@ -939,3 +939,5 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
     </div>
   );
 };
+
+export const TradingPerformanceReport = React.memo(TradingPerformanceReportComponent);

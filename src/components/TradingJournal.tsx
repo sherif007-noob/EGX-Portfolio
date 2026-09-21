@@ -1092,7 +1092,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Ticker & Sector */}
-              <div className="premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
+              <div className="premium-content-swap premium-form-section grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-semibold">Stock Ticker Symbol</label>
                   <input
@@ -1204,7 +1204,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
               {/* If SELL: Realized P&L and Outcome */}
               {editType === 'SELL' && (
-                <div className="premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
+                <div className="premium-content-swap premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
                   <div className="text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     Sell Exit Financial Outcome

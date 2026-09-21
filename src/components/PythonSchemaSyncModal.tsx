@@ -190,7 +190,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               href="/schema/ticker-directory.json"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 transition"
+              className="premium-action px-2.5 py-1 rounded-lg text-xs flex items-center gap-1"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               View Schema
@@ -257,11 +257,11 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               </div>
             </div>
 
-            <pre className="p-3.5 rounded-xl bg-slate-950 font-mono text-[11px] text-slate-200 border border-slate-800 max-h-72 overflow-y-auto overflow-x-auto select-all">
+            <pre className="premium-inset-glass p-3.5 rounded-xl font-mono text-[11px] text-slate-200 max-h-72 overflow-y-auto overflow-x-auto select-all">
               {pythonScript}
             </pre>
 
-            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 text-xs text-slate-300 space-y-1">
+            <div className="premium-modal-section p-3 rounded-xl text-xs text-slate-300 space-y-1">
               <span className="font-semibold text-white">How GitHub Automation Works:</span>
               <p className="text-slate-400 text-[11px]">
                 1. Place this script in your GitHub repo as <code className="text-indigo-300">sync_egx.py</code>.
@@ -294,7 +294,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               onChange={(e) => setPastePayload(e.target.value)}
               placeholder="Paste JSON schema payload here..."
               rows={8}
-              className="w-full p-3 rounded-xl bg-slate-950 font-mono text-xs text-slate-200 border border-slate-700 focus:outline-none focus:border-indigo-500"
+              className="premium-field w-full p-3 rounded-xl font-mono text-xs text-slate-200 focus:outline-none"
             />
 
             <div className="flex items-center justify-between">
@@ -338,7 +338,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
         {/* Tab 3: Schema Details */}
         {activeSubTab === 'schema' && (
           <div className="space-y-3">
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-2">
+            <div className="premium-modal-section p-3 rounded-xl text-xs space-y-2">
               <span className="font-bold text-white">Required Ticker Directory Fields:</span>
               <ul className="grid grid-cols-2 gap-2 text-slate-300 text-[11px]">
                 <li><code className="text-indigo-300">ticker</code> (e.g. &quot;COMI&quot;)</li>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { runVisualTransition } from '../../utils/visualTransition';
 import { AnalyticsSelect } from '../AnalyticsSelect';
 import {
   Calendar,
@@ -50,7 +51,17 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
   positions,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('ALL');
+
+  const changeSelectedMonth = (next: string) => {
+    if (next === selectedMonth) return;
+    runVisualTransition('monthly-filter', () => setSelectedMonth(next));
+  };
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+
+  const changeStatusFilter = (next: StatusFilter) => {
+    if (next === statusFilter) return;
+    runVisualTransition('monthly-filter', () => setStatusFilter(next));
+  };
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Collect all months with activity
@@ -301,7 +312,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           <button
             type="button"
             aria-pressed={selectedMonth === 'ALL'}
-            onClick={() => setSelectedMonth('ALL')}
+            onClick={() => changeSelectedMonth('ALL')}
             className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
           >
             All Recorded Months
@@ -311,7 +322,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
               key={m.monthKey}
               type="button"
               aria-pressed={selectedMonth === m.monthKey}
-              onClick={() => setSelectedMonth(m.monthKey)}
+              onClick={() => changeSelectedMonth(m.monthKey)}
               className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
             >
               <span>{m.monthLabel}</span>
@@ -327,7 +338,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           {/* Status filter */}
           <AnalyticsSelect
             value={statusFilter}
-            onChange={(value) => setStatusFilter(value as StatusFilter)}
+            onChange={(value) => changeStatusFilter(value as StatusFilter)}
             compact
             accent="purple"
             ariaLabel="Filter monthly report records"
@@ -354,7 +365,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       </div>
 
       {/* Monthly Audit Statements */}
-      <div key={`${selectedMonth}-${statusFilter}`} className="premium-content-swap space-y-6">
+      <div key={`${selectedMonth}-${statusFilter}`} className="premium-monthly-results premium-content-swap space-y-6">
         {displayedMonths.map((m) => {
           // Filter items by search query and status
           const filteredLiquidated = m.liquidatedTrades.filter((t) => {

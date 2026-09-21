@@ -60,7 +60,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
               value={amount}
               onValueChange={(value) => setAmount(parseFloat(value) || 0)}
               accent="emerald"
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-mono text-base font-bold text-white focus:outline-none focus:border-emerald-500"
+              className="premium-field w-full px-3 py-2.5 rounded-xl font-mono text-base font-bold text-white focus:outline-none"
             />
           </div>
 

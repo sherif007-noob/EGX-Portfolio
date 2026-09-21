@@ -428,6 +428,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             </div>
           </div>
         )}
+        </MotionSwap>
       </div>
 
       <div className="premium-report-glass p-5 rounded-2xl space-y-4">

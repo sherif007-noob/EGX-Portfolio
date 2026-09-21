@@ -3176,3 +3176,235 @@ body {
 ::view-transition-new(premium-directory-results) {
   animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
 }
+
+
+/* Phase 4 recording-driven stability rewrite */
+/*
+ * Browser View Transition snapshots are intentionally not used for app content.
+ * They produced duplicate old/new trees, blank crossfade frames, geometry
+ * interpolation artifacts, and mobile scroll/viewport drift in real recordings.
+ */
+:root {
+  --motion-family-control: 280ms;
+  --motion-family-selector: 340ms;
+  --motion-family-overlay: 320ms;
+  --motion-family-modal: 320ms;
+  --motion-family-content: 440ms;
+  --motion-family-navigation: 500ms;
+  --motion-family-chart: 520ms;
+  --motion-family-tooltip: 220ms;
+}
+
+/* Family 1 + 4: one rendered tree at a time; no snapshot overlap. */
+.premium-motion-swap {
+  position: relative;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+.premium-motion-swap--exit,
+.premium-motion-swap--enter {
+  pointer-events: none;
+}
+
+.premium-motion-swap--tab.premium-motion-swap--exit {
+  animation: premium-stable-tab-out 180ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
+}
+
+.premium-motion-swap--tab.premium-motion-swap--enter {
+  animation: premium-stable-tab-in 320ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-stable-tab-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0.18;
+    transform: translate3d(-8px, 0, 0) scale(0.996);
+  }
+}
+
+@keyframes premium-stable-tab-in {
+  from {
+    opacity: 0.18;
+    transform: translate3d(10px, 0, 0) scale(0.997);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(-1px, 0, 0) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.premium-motion-swap--state.premium-motion-swap--exit {
+  animation: premium-stable-state-out 140ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
+}
+
+.premium-motion-swap--state.premium-motion-swap--enter {
+  animation: premium-stable-state-in 300ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-stable-state-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.24;
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes premium-stable-state-in {
+  from {
+    opacity: 0.24;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Prevent legacy entrance/stagger animation from stacking on MotionSwap. */
+.premium-motion-swap .premium-section-enter,
+.premium-motion-swap .premium-section-enter > .premium-panel,
+.premium-motion-swap .premium-section-enter > .premium-glass,
+.premium-motion-swap .premium-section-enter > .premium-report-glass,
+.premium-motion-swap .premium-section-enter > .premium-card,
+.premium-motion-swap .premium-content-swap,
+.premium-motion-swap.premium-tab-stage {
+  animation: none !important;
+}
+
+/* The old keyed tab entrance is replaced by MotionSwap. */
+.premium-tab-stage {
+  animation: none !important;
+}
+
+/* Family 3: stable overlay entrance/exit with transform + opacity only.
+   Avoid animated blur/filter: it visibly stuttered on the phone recording. */
+.premium-modal-backdrop {
+  animation: premium-stable-backdrop-in 240ms ease-out both !important;
+}
+
+.premium-modal {
+  animation: premium-stable-modal-in 320ms var(--motion-family-emphasized) both !important;
+  will-change: transform, opacity;
+}
+
+.premium-modal-backdrop[data-motion-phase="exit"],
+.premium-modal-backdrop.premium-modal-backdrop-exit {
+  pointer-events: none;
+  animation: premium-stable-backdrop-out 220ms ease-in both !important;
+}
+
+.premium-modal[data-motion-phase="exit"],
+.premium-modal.premium-modal-exit {
+  animation: premium-stable-modal-out 220ms cubic-bezier(0.4, 0, 0.8, 0.2) both !important;
+}
+
+@keyframes premium-stable-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes premium-stable-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes premium-stable-modal-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes premium-stable-modal-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.982);
+  }
+}
+
+/* Dropdown is one surface; staggered child animations caused a noisy/duplicated
+   appearance when options repainted. */
+.premium-dropdown {
+  animation: premium-stable-dropdown-in var(--motion-family-overlay) var(--motion-family-standard) both !important;
+  will-change: transform, opacity;
+}
+
+.premium-dropdown .premium-menu-item {
+  animation: none !important;
+}
+
+@keyframes premium-stable-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Family 2 remains tactile but no longer fights Family 4. */
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment,
+.premium-control,
+.premium-accordion-trigger,
+.premium-select-trigger,
+.premium-field {
+  transition-duration: var(--motion-family-control);
+}
+
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"],
+.premium-nav-active {
+  animation-duration: var(--motion-family-selector);
+}
+
+/* Do not animate entire data rows with generic transitions; result containers
+   own state motion. Row hover can still change background/border smoothly. */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    background-color 220ms ease-out,
+    box-shadow 220ms ease-out;
+}
+
+/* Preserve the already-approved chart behavior. */
+.premium-chart-stage {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-motion-swap,
+  .premium-motion-swap--exit,
+  .premium-motion-swap--enter,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-dropdown {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

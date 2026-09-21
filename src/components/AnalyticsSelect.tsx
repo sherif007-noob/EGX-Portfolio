@@ -132,6 +132,7 @@ export function AnalyticsSelect<T extends string | number = string>({
       {open && (
         <div
           role="listbox"
+          data-accent={accent}
           className={[
             'premium-floating premium-dropdown absolute left-0 top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
             'max-h-72 overflow-y-auto',
@@ -154,7 +155,7 @@ export function AnalyticsSelect<T extends string | number = string>({
                   'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
                   selected
                     ? accentClasses.selected
-                    : 'text-slate-300 hover:bg-slate-900 hover:text-white',
+                    : 'text-slate-300',
                 ].join(' ')}
               >
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">

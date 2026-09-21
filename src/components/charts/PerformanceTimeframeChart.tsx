@@ -143,7 +143,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
-  const [chartAnimationMatchMode, setChartAnimationMatchMode] = useState<'index' | 'date'>('index');
+  const [chartAnimationDuration, setChartAnimationDuration] = useState(520);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
@@ -257,19 +257,15 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   const handleTimeframeChange = (nextTimeframe: AnalyticsTimeframe) => {
     if (nextTimeframe === timeframe) return;
 
-    const weeklyDailyTransition =
-      (timeframe === '1W' || nextTimeframe === '1W') &&
-      timeframe !== 'TODAY' &&
-      nextTimeframe !== 'TODAY';
-
-    setChartAnimationMatchMode(weeklyDailyTransition ? 'date' : 'index');
+    // Before Phase 4 v2, the native Recharts morph used 320 ms. The later
+    // 520 ms timing exposed Recharts' sparse-point intermediate geometry for
+    // the short 1W series. Preserve the current 520 ms feel everywhere else,
+    // but restore the proven pre-v2 timing whenever 1W is one side of the
+    // transition.
+    const crossesOneWeek = timeframe === '1W' || nextTimeframe === '1W';
+    setChartAnimationDuration(crossesOneWeek ? 320 : 520);
     setTimeframe(nextTimeframe);
   };
-
-  const chartAnimationMatchBy =
-    chartAnimationMatchMode === 'date'
-      ? (item: any) => String(item?.payload?.date || '')
-      : 'index';
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
   const loading = timeframe === 'TODAY' ? intradayLoading && !intradayResult : historicalLoading;
@@ -656,8 +652,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         strokeWidth: 2,
       }}
       isAnimationActive
-      animationDuration={520}
-      animationMatchBy={chartAnimationMatchBy}
+      animationDuration={chartAnimationDuration}
       animationEasing="ease-out"
     />
   );
@@ -681,8 +676,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
           strokeWidth: 2,
         }}
         isAnimationActive
-        animationDuration={520}
-        animationMatchBy={chartAnimationMatchBy}
+        animationDuration={chartAnimationDuration}
         animationEasing="ease-out"
       />
     ) : null;
@@ -888,7 +882,6 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
-        animationMatchMode={chartAnimationMatchMode}
       />
     </>
   );

@@ -226,13 +226,13 @@ Representative commits:
 - **c53fb17** — align Cash feedback with content-family motion
 - **9417325** — animate Add Trade contextual state
 
-Canonical timing introduced:
-- Controls: ~260 ms
-- Selectors: ~320 ms
-- Dropdowns/overlays: ~380 ms
-- Modals: ~440 ms
-- Content/state: ~420 ms
-- Main navigation/context: ~460 ms
+Canonical timing after user validation and full motion audit:
+- Controls: ~320 ms
+- Selectors: ~420 ms
+- Dropdowns/overlays: ~480 ms
+- Modals: ~560 ms
+- Content/state/result changes: ~520 ms
+- Main navigation/context: ~560 ms
 - Charts: ~520 ms
 - Tooltips: ~220 ms
 
@@ -248,15 +248,44 @@ The accepted correction:
 
 This is presentation-only: it does not modify analytics observations, calculations, timeframe resolution, market data, or financial semantics.
 
+### Full motion audit correction
+
+User validation of the first accepted Phase 4 pass found:
+- general control/overlay timing still felt too fast;
+- Trading Performance filters felt even faster than the surrounding motion;
+- tabs animated the incoming page but had no visible outgoing transition;
+- Transaction filters changed results with no transition;
+- Edit Transaction entered correctly but disappeared instantly on close.
+
+The audit changed the architecture from entrance-only animation to coordinated old -> new / exit transitions.
+
+Representative audit commits:
+- **aec8fe3** — shared visual-transition coordinator
+- **1419389** — true outgoing-to-incoming tab transitions
+- **ca0b21b** — outgoing transitions + slower canonical cadence
+- **0aeac2b** — true Trading Performance filter transitions
+- **39f1de4**, **aa9a022** — Transaction filter/result transition and modal-exit work
+- **71f71e3** — unified premium modal snapshot exit
+- **fa73eef** — Edit Transaction exit unified with overlay family
+- **d43bf85** — Cash Edit modal exit
+- modal-exit coverage added across Add Trade, Sell, Edit Position, Quick Cash, confirmation, Alerts, Sheets, Schema Sync, Backup, and Screenshot flows
+- **ccc39e1** — Cash action/history result transitions
+- **972c170** — Closed Cycle result transitions
+- **dca8e2d** — Monthly report result transitions
+- **e0bba21** — Open Positions sector-result transition
+- **6b6b728** — Ticker Directory sector-result transition
+- **16692d3**, **140bf5d**, **70231d2** and related commits — remove legacy fast local durations and normalize helper motion
+- **e0e33e9** — flush React state before native transition snapshots for deterministic old/new capture
+
 ### Coverage implemented so far
 
-- Family 1: main tab/context stage and active navigation.
-- Family 2: shared actions, icon actions, selectors, controls, dropdown triggers, accordion triggers, and form fields.
-- Family 3: premium dropdowns, menu items, modal backdrops, and modal panels.
-- Family 4: Cash Deposit/Withdraw reveal, Closed Cycle expansion, Edit Transaction BUY/SELL sections, allocation state changes, Trading Performance filter-result changes, Monthly month/status changes, and contextual feedback/state banners.
+- Family 1: active navigation plus genuine outgoing -> incoming main-tab transitions.
+- Family 2: shared actions, icon actions, selectors, controls, dropdown triggers, accordion triggers, form fields, chevrons, and toggles use audited timing.
+- Family 3: dropdown/menu entrances, modal entrances, modal backdrops, and premium modal exits.
+- Family 4: Cash Deposit/Withdraw, Cash history, Closed Cycle filters, Transaction filters, Edit Transaction BUY/SELL sections, allocation state changes, Trading Performance filters, Monthly filters, Positions sector filters, Directory sector filters, feedback/state banners, and accordion reveals.
 - Family 5: primary unified analytics chart and all secondary Risk & Cost chart series.
 
-Phase 4 remains **in progress** until the full application is visually tested and any uncovered legacy/too-fast motion is swept.
+Phase 4 remains **in progress** pending user visual validation of this audited pass.
 
 ## Current validated visual rules
 

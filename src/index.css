@@ -3542,3 +3542,49 @@ body {
     to { opacity: 1; transform: translate3d(0, 0, 0); }
   }
 }
+
+
+/* Phase 4 v3 — Motion for React lifecycle ownership */
+/*
+ * Motion for React now owns lifecycle animation for elements carrying
+ * data-motion-owned="react". Legacy CSS keyframes remain only as compatibility
+ * for components not migrated yet and must not compete with Motion inline state.
+ */
+[data-motion-owned="react"].premium-motion-swap,
+[data-motion-owned="react"].premium-modal-backdrop,
+[data-motion-owned="react"].premium-modal,
+[data-motion-owned="react"].premium-dropdown,
+[data-motion-owned="react"].premium-expand-presence {
+  animation: none !important;
+}
+
+/* No legacy child entrance may replay during a Motion-owned result transition. */
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-panel,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-report-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-card,
+[data-motion-owned="react"].premium-motion-swap .premium-content-swap,
+[data-motion-owned="react"].premium-motion-swap .premium-reveal {
+  animation: none !important;
+}
+
+/* Motion itself promotes active transforms as needed. Do not keep giant content
+ * layers permanently promoted on idle pages.
+ */
+[data-motion-owned="react"].premium-motion-swap {
+  will-change: auto;
+  transform-origin: center top;
+}
+
+/* Keep dense data surfaces crisp while their wrapper moves. */
+[data-motion-owned="react"].premium-motion-swap table,
+[data-motion-owned="react"].premium-motion-swap .premium-card,
+[data-motion-owned="react"].premium-motion-swap .premium-panel {
+  backface-visibility: hidden;
+}
+
+/* React Motion owns the menu lifecycle. Menu rows remain stable as one surface. */
+[data-motion-owned="react"].premium-dropdown .premium-menu-item {
+  animation: none !important;
+}

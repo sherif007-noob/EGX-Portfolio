@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { runVisualTransition } from '../../utils/visualTransition';
+import { MotionSwap } from '../PremiumMotion';
 import { AnalyticsSelect } from '../AnalyticsSelect';
 import {
   Calendar,
@@ -365,7 +366,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       </div>
 
       {/* Monthly Audit Statements */}
-      <div key={`${selectedMonth}-${statusFilter}`} className="premium-monthly-results premium-content-swap space-y-6">
+      <MotionSwap motionKey={`${selectedMonth}-${statusFilter}`} variant="state" className="premium-monthly-results space-y-6">
         {displayedMonths.map((m) => {
           // Filter items by search query and status
           const filteredLiquidated = m.liquidatedTrades.filter((t) => {
@@ -599,7 +600,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
             </div>
           );
         })}
-      </div>
+      </MotionSwap>
     </div>
   );
 };

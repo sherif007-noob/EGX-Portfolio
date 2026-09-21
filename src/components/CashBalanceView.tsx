@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap, PremiumModalMotion } from './PremiumMotion';
+import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
@@ -562,9 +562,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Feedback message banner */}
-      {feedbackMessage && (
+      <SurfacePresence isOpen={!!feedbackMessage}>
+        {feedbackMessage && (
         <div
-          className={`premium-content-swap p-3.5 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-semibold ${
+          className={`p-3.5 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-semibold ${
             feedbackMessage.type === 'success'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
@@ -577,7 +578,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           )}
           <span>{feedbackMessage.text}</span>
         </div>
-      )}
+        )}
+      </SurfacePresence>
 
       {/* Main Operations Card: Deposit or Withdraw */}
       <div className="premium-panel p-5 rounded-2xl space-y-5">

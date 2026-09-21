@@ -21,7 +21,7 @@ import {
 import { Position, PriceAlertSettings, TriggeredPriceAlert } from '../types';
 import { EGXScheduleStatus } from '../services/marketPriceSync';
 import { StockLogo } from './StockLogo';
-import { PremiumModalMotion, MotionSwap } from './PremiumMotion';
+import { ExpandPresence, PremiumModalMotion, MotionSwap, SurfacePresence } from './PremiumMotion';
 
 interface PriceAlertsModalProps {
   isOpen: boolean;
@@ -161,12 +161,14 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
           </div>
         </div>
 
-        {testResult && (
-          <div className="px-5 py-2 bg-blue-950/60 border-b border-blue-500/30 text-xs font-medium text-blue-200 flex items-center gap-2 premium-content-swap">
+        <SurfacePresence isOpen={!!testResult}>
+          {testResult && (
+          <div className="px-5 py-2 bg-blue-950/60 border-b border-blue-500/30 text-xs font-medium text-blue-200 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-400" />
             <span>{testResult}</span>
           </div>
-        )}
+          )}
+        </SurfacePresence>
 
         {/* Cairo Trading Hours Banner */}
         <div className="premium-inset-glass px-5 py-2.5 border-b border-slate-700/50 flex items-center justify-between text-[11px] text-slate-400">
@@ -433,7 +435,8 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                     />
                   </div>
 
-                  {settings.notifyOnProximity && (
+                  <ExpandPresence isOpen={settings.notifyOnProximity}>
+                    {settings.notifyOnProximity && (
                     <div className="flex items-center gap-3 pt-1">
                       <input
                         type="range"
@@ -448,7 +451,8 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
                         {settings.proximityPercent}%
                       </span>
                     </div>
-                  )}
+                    )}
+                  </ExpandPresence>
                 </div>
               </div>
 

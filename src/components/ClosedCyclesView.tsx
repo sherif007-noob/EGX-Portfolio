@@ -271,7 +271,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   };
 
   return (
-    <div className="premium-section-enter space-y-6">
+    <div className="space-y-6">
       {/* Header Banner */}
       <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>

@@ -268,6 +268,8 @@ Guardrails:
 - Animation cannot imply a financial value changed when it did not.
 - prefers-reduced-motion must be honored.
 - Motion must suit dense financial screens.
+- Do not permanently promote whole long pages to compositor layers with persistent `will-change` / `translateZ(0)`; only active transition wrappers may be promoted.
+- Avoid animated blur/filter on large app surfaces, especially on mobile.
 - Phase 4 is presentation-only; no business/accounting/data behavior may be changed for animation.
 
 Acceptance:
@@ -276,6 +278,9 @@ Acceptance:
 - Tab/context changes include outgoing + incoming motion.
 - Overlay family includes modal exit motion.
 - Filter families animate both control state and the affected result surface.
+- App-content transitions must render **one React tree at a time**; browser full-page View Transition snapshots are not permitted for tab/filter/report content because real phone/desktop recordings showed ghost duplicates, blank midpoint frames, geometry drift, and scroll/viewport instability.
+- Rapid repeated changes must collapse to the latest requested state without flashing an older intermediate tree.
+- Transition midpoint opacity must stay high enough that content reads as a continuous change, not disappear/reappear.
 - No leftover provisional motion visibly conflicts with the canonical family timing.
 - Today and non-Today chart transitions feel like one system.
 - Reduced-motion removes nonessential animation.

@@ -23,6 +23,13 @@ import {
   analyticsYAxisProps,
 } from './charts/AnalyticsChartTheme';
 
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
+
 interface RealizedTrajectoryChartProps {
   closedTrades: ClosedTrade[];
   stats?: PerformanceStats;
@@ -39,13 +46,6 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
   className = '',
 }) => {
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
 
   // Prepare chronological trajectory points
   const trajectoryData = useMemo(() => {

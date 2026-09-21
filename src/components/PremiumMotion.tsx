@@ -10,8 +10,8 @@ interface MotionSwapProps {
 }
 
 const SWAP_TIMINGS: Record<MotionSwapVariant, { exit: number; enter: number }> = {
-  tab: { exit: 180, enter: 320 },
-  state: { exit: 140, enter: 300 },
+  tab: { exit: 220, enter: 360 },
+  state: { exit: 180, enter: 320 },
 };
 
 function prefersReducedMotion(): boolean {
@@ -22,12 +22,12 @@ function prefersReducedMotion(): boolean {
 /**
  * Deterministic sequential content transition.
  *
- * Unlike the browser View Transition API, this never paints old and new
- * application trees at the same time. The currently rendered tree exits,
- * React swaps to the latest requested tree, then that tree enters.
+ * Only one application tree is painted at a time:
+ * current content exits -> React swaps once -> next content enters.
  *
- * Rapid repeated changes collapse to the latest requested state rather than
- * stacking snapshots or replaying intermediate transitions.
+ * Rapid repeated changes collapse to the latest requested state. The currently
+ * displayed tree is always the source for the next exit, so an interrupted
+ * transition can never flash an older/stale tree back onto the screen.
  */
 export const MotionSwap: React.FC<MotionSwapProps> = ({
   motionKey,
@@ -40,39 +40,41 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   const [displayedNode, setDisplayedNode] = useState<React.ReactNode>(children);
   const [phase, setPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
 
-  const stableNodeRef = useRef<React.ReactNode>(children);
+  const currentNodeRef = useRef<React.ReactNode>(children);
   const pendingRef = useRef<{ key: string | number; node: React.ReactNode }>({
     key: motionKey,
     node: children,
   });
   const exitTimerRef = useRef<number | null>(null);
   const enterTimerRef = useRef<number | null>(null);
-
   const reduced = useMemo(prefersReducedMotion, []);
 
-  if (phase === 'idle' && displayedKey === motionKey) {
-    stableNodeRef.current = children;
-  }
   pendingRef.current = { key: motionKey, node: children };
+
+  if (phase === 'idle' && displayedKey === motionKey) {
+    currentNodeRef.current = children;
+  }
 
   useEffect(() => {
     if (reduced) {
+      currentNodeRef.current = children;
       setDisplayedKey(motionKey);
       setDisplayedNode(children);
       setPhase('idle');
       return;
     }
 
-    if (motionKey === displayedKey || phase !== 'idle') return;
+    if (phase !== 'idle' || motionKey === displayedKey) return;
 
     if (exitTimerRef.current !== null) window.clearTimeout(exitTimerRef.current);
     if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current);
 
-    setDisplayedNode(stableNodeRef.current);
+    setDisplayedNode(currentNodeRef.current);
     setPhase('exit');
 
     exitTimerRef.current = window.setTimeout(() => {
       const next = pendingRef.current;
+      currentNodeRef.current = next.node;
       setDisplayedKey(next.key);
       setDisplayedNode(next.node);
       setPhase('enter');
@@ -93,14 +95,13 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   const renderedNode =
     reduced || (phase === 'idle' && displayedKey === motionKey)
       ? children
-      : phase === 'idle'
-        ? stableNodeRef.current
-        : displayedNode;
+      : displayedNode;
 
   return (
     <div
       className={`premium-motion-swap premium-motion-swap--${variant} premium-motion-swap--${phase} ${className}`.trim()}
       data-motion-phase={phase}
+      aria-busy={phase !== 'idle' ? true : undefined}
     >
       {renderedNode}
     </div>
@@ -114,7 +115,6 @@ interface MotionPresenceResult {
 
 /**
  * Keeps an overlay mounted long enough to play its exit animation.
- * The owning component can update its normal open/closed state immediately.
  */
 export function useMotionPresence(
   isOpen: boolean,

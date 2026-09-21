@@ -110,7 +110,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -142,14 +142,14 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setSharesToSell(Math.floor(position.shares / 2))}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                  className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   50%
                 </button>
                 <button
                   type="button"
                   onClick={() => setSharesToSell(position.shares)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                  className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   100% (All)
                 </button>
@@ -221,7 +221,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                   const gross = sharesToSell * sellPrice;
                   setBrokerageFee(Math.round(gross * 0.0025 * 100) / 100);
                 }}
-                className="text-[10px] text-amber-400 hover:text-amber-300 underline"
+                className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px]"
               >
                 Reset to 0.25%
               </button>
@@ -299,13 +299,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="premium-control px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 font-semibold"
+              className="premium-action px-4 py-2 rounded-xl font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="premium-control premium-shimmer-border px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-lg shadow-amber-950/35"
+              className="premium-action premium-action-warning premium-shimmer-border px-5 py-2 rounded-xl font-semibold"
             >
               Confirm Sale &amp; Book Net P&amp;L
             </button>

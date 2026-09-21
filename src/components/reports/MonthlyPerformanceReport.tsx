@@ -315,7 +315,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
               className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
             >
               <span>{m.monthLabel}</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono">
+              <span className="premium-chip px-1.5 py-0.2 rounded-full text-[10px] text-slate-300 font-mono">
                 {m.liquidatedTrades.length} trades
               </span>
             </button>

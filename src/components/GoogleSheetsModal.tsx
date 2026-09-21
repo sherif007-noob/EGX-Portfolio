@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { googleSignIn, getAccessToken, logout } from '../services/firebaseAuth';
 import { 
   extractSpreadsheetId, 
@@ -74,6 +75,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   tickers = [],
   onReconcileFromLedger,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [sheetUrl, setSheetUrl] = useState(
     currentConfig?.spreadsheetId ? `https://docs.google.com/spreadsheets/d/${currentConfig.spreadsheetId}` : ''
   );
@@ -267,7 +269,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
 
     onSaveConfig(config);
     setSuccessMsg(`Google Sheet connection saved! Auto Background Sync is ${autoSync ? 'ON' : 'OFF'}. Portfolio data remains intact.`);
-    setTimeout(() => onClose(), 1200);
+    setTimeout(() => requestClose(), 1200);
   };
 
   /**
@@ -445,7 +447,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-5 h-5" />

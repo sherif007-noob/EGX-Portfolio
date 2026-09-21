@@ -3116,3 +3116,43 @@ body {
     filter: blur(2px);
   }
 }
+
+
+/* Phase 4 audited state-result view transitions */
+:root[data-premium-transition="cash-action"] .premium-cash-action-content {
+  view-transition-name: premium-cash-action;
+  animation: none;
+}
+
+:root[data-premium-transition="cash-history"] .premium-cash-history-results {
+  view-transition-name: premium-cash-history;
+}
+
+:root[data-premium-transition="closed-filter"] .premium-closed-results {
+  view-transition-name: premium-closed-results;
+  animation: none;
+}
+
+:root[data-premium-transition="monthly-filter"] .premium-monthly-results {
+  view-transition-name: premium-monthly-results;
+  animation: none;
+}
+
+::view-transition-old(premium-cash-action),
+::view-transition-old(premium-cash-history),
+::view-transition-old(premium-closed-results),
+::view-transition-old(premium-monthly-results) {
+  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
+}
+
+::view-transition-new(premium-cash-action),
+::view-transition-new(premium-cash-history),
+::view-transition-new(premium-closed-results),
+::view-transition-new(premium-monthly-results) {
+  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
+}
+
+:root[data-premium-transition="closed-filter"] .premium-content-swap,
+:root[data-premium-transition="monthly-filter"] .premium-content-swap {
+  animation: none;
+}

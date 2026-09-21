@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 export type MotionSwapVariant = 'tab' | 'state';
 
@@ -9,25 +10,31 @@ interface MotionSwapProps {
   className?: string;
 }
 
-const SWAP_TIMINGS: Record<MotionSwapVariant, { exit: number; enter: number }> = {
-  tab: { exit: 220, enter: 360 },
-  state: { exit: 180, enter: 320 },
-};
+const EASE_OUT = [0.22, 0.8, 0.24, 1] as const;
+const EASE_IN = [0.4, 0, 0.7, 0.2] as const;
 
-function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+const SWAP_MOTION = {
+  tab: {
+    initial: { opacity: 0.38, x: 14, y: 3 },
+    animate: { opacity: 1, x: 0, y: 0 },
+    exit: { opacity: 0.38, x: -12, y: -2 },
+    enterDuration: 0.38,
+    exitDuration: 0.22,
+  },
+  state: {
+    initial: { opacity: 0.44, y: 8 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0.44, y: -6 },
+    enterDuration: 0.31,
+    exitDuration: 0.18,
+  },
+} as const;
 
 /**
- * Deterministic sequential content transition.
+ * Canonical page/result presence primitive.
  *
- * Only one application tree is painted at a time:
- * current content exits -> React swaps once -> next content enters.
- *
- * Rapid repeated changes collapse to the latest requested state. The currently
- * displayed tree is always the source for the next exit, so an interrupted
- * transition can never flash an older/stale tree back onto the screen.
+ * Motion's AnimatePresence owns lifecycle. No browser screenshots, timers,
+ * cached React trees, or permanent GPU layers are involved.
  */
 export const MotionSwap: React.FC<MotionSwapProps> = ({
   motionKey,
@@ -35,132 +42,188 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   variant = 'state',
   className = '',
 }) => {
-  const timings = SWAP_TIMINGS[variant];
-  const [displayedKey, setDisplayedKey] = useState<string | number>(motionKey);
-  const [displayedNode, setDisplayedNode] = useState<React.ReactNode>(children);
-  const [phase, setPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
-
-  const currentNodeRef = useRef<React.ReactNode>(children);
-  const pendingRef = useRef<{ key: string | number; node: React.ReactNode }>({
-    key: motionKey,
-    node: children,
-  });
-  const exitTimerRef = useRef<number | null>(null);
-  const enterTimerRef = useRef<number | null>(null);
-  const reduced = useMemo(prefersReducedMotion, []);
-
-  pendingRef.current = { key: motionKey, node: children };
-
-  if (phase === 'idle' && displayedKey === motionKey) {
-    currentNodeRef.current = children;
-  }
-
-  useEffect(() => {
-    if (reduced) {
-      currentNodeRef.current = children;
-      setDisplayedKey(motionKey);
-      setDisplayedNode(children);
-      setPhase('idle');
-      return;
-    }
-
-    if (phase !== 'idle' || motionKey === displayedKey) return;
-
-    if (exitTimerRef.current !== null) window.clearTimeout(exitTimerRef.current);
-    if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current);
-
-    setDisplayedNode(currentNodeRef.current);
-    setPhase('exit');
-
-    exitTimerRef.current = window.setTimeout(() => {
-      const next = pendingRef.current;
-      currentNodeRef.current = next.node;
-      setDisplayedKey(next.key);
-      setDisplayedNode(next.node);
-      setPhase('enter');
-
-      enterTimerRef.current = window.setTimeout(() => {
-        setPhase('idle');
-      }, timings.enter);
-    }, timings.exit);
-  }, [children, displayedKey, motionKey, phase, reduced, timings.enter, timings.exit]);
-
-  useEffect(() => {
-    return () => {
-      if (exitTimerRef.current !== null) window.clearTimeout(exitTimerRef.current);
-      if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current);
-    };
-  }, []);
-
-  const renderedNode =
-    reduced || (phase === 'idle' && displayedKey === motionKey)
-      ? children
-      : displayedNode;
+  const reduceMotion = useReducedMotion();
+  const config = SWAP_MOTION[variant];
 
   return (
-    <div
-      className={`premium-motion-swap premium-motion-swap--${variant} premium-motion-swap--${phase} ${className}`.trim()}
-      data-motion-phase={phase}
-      aria-busy={phase !== 'idle' ? true : undefined}
-    >
-      {renderedNode}
-    </div>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={String(motionKey)}
+        className={`premium-motion-swap premium-motion-swap--${variant} ${className}`.trim()}
+        data-motion-owned="react"
+        initial={
+          reduceMotion
+            ? { opacity: 0 }
+            : config.initial
+        }
+        animate={{
+          opacity: 1,
+          x: 0,
+          y: 0,
+          transition: {
+            duration: reduceMotion ? 0.16 : config.enterDuration,
+            ease: EASE_OUT,
+          },
+        }}
+        exit={
+          reduceMotion
+            ? {
+                opacity: 0,
+                transition: { duration: 0.12, ease: 'easeIn' },
+              }
+            : {
+                ...config.exit,
+                transition: {
+                  duration: config.exitDuration,
+                  ease: EASE_IN,
+                },
+              }
+        }
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
-interface MotionPresenceResult {
-  isPresent: boolean;
-  phase: 'idle' | 'enter' | 'exit';
+interface PremiumModalMotionProps {
+  isOpen: boolean;
+  children: React.ReactNode;
+  backdropClassName: string;
+  panelClassName: string;
+  onBackdropClick?: () => void;
+  panelAriaLabel?: string;
 }
 
 /**
- * Keeps an overlay mounted long enough to play its exit animation.
+ * Shared modal lifecycle primitive. Backdrop and panel are actual DOM nodes,
+ * both kept present by AnimatePresence until exit finishes.
  */
-export function useMotionPresence(
-  isOpen: boolean,
-  enterMs = 320,
-  exitMs = 220,
-): MotionPresenceResult {
-  const [isPresent, setIsPresent] = useState(isOpen);
-  const [phase, setPhase] = useState<'idle' | 'enter' | 'exit'>(
-    isOpen ? 'enter' : 'idle',
+export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
+  isOpen,
+  children,
+  backdropClassName,
+  panelClassName,
+  onBackdropClick,
+  panelAriaLabel,
+}) => {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          key="premium-modal-backdrop"
+          className={backdropClassName}
+          data-motion-owned="react"
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: 1,
+            transition: { duration: reduceMotion ? 0.14 : 0.24, ease: 'easeOut' },
+          }}
+          exit={{
+            opacity: 0,
+            transition: { duration: reduceMotion ? 0.12 : 0.22, ease: 'easeIn' },
+          }}
+          onMouseDown={onBackdropClick}
+        >
+          <motion.div
+            className={panelClassName}
+            data-motion-owned="react"
+            role={panelAriaLabel ? 'dialog' : undefined}
+            aria-label={panelAriaLabel}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, y: 18, scale: 0.972 }
+            }
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              transition: {
+                duration: reduceMotion ? 0.16 : 0.33,
+                ease: EASE_OUT,
+              },
+            }}
+            exit={
+              reduceMotion
+                ? { opacity: 0, transition: { duration: 0.12 } }
+                : {
+                    opacity: 0,
+                    y: 12,
+                    scale: 0.982,
+                    transition: { duration: 0.24, ease: EASE_IN },
+                  }
+            }
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-  const timerRef = useRef<number | null>(null);
-  const reduced = useMemo(prefersReducedMotion, []);
+};
 
-  useEffect(() => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+interface ExpandPresenceProps {
+  isOpen: boolean;
+  children: React.ReactNode;
+  className?: string;
+}
 
-    if (reduced) {
-      setIsPresent(isOpen);
-      setPhase('idle');
-      return;
-    }
+/**
+ * Localized accordion/conditional reveal. Height animation is restricted to
+ * the small expandable region rather than a full page/report.
+ */
+export const ExpandPresence: React.FC<ExpandPresenceProps> = ({
+  isOpen,
+  children,
+  className = '',
+}) => {
+  const reduceMotion = useReducedMotion();
 
-    if (isOpen) {
-      setIsPresent(true);
-      setPhase('enter');
-      timerRef.current = window.setTimeout(() => setPhase('idle'), enterMs);
-      return;
-    }
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          key="expanded"
+          className={className}
+          data-motion-owned="react"
+          initial={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -4 }}
+          animate={{
+            height: 'auto',
+            opacity: 1,
+            y: 0,
+            transition: {
+              height: { duration: reduceMotion ? 0.01 : 0.3, ease: EASE_OUT },
+              opacity: { duration: reduceMotion ? 0.14 : 0.24, ease: 'easeOut' },
+              y: { duration: reduceMotion ? 0.01 : 0.28, ease: EASE_OUT },
+            },
+          }}
+          exit={{
+            height: 0,
+            opacity: 0,
+            y: -3,
+            transition: {
+              height: { duration: reduceMotion ? 0.01 : 0.24, ease: EASE_IN },
+              opacity: { duration: reduceMotion ? 0.1 : 0.16, ease: 'easeIn' },
+              y: { duration: reduceMotion ? 0.01 : 0.2, ease: EASE_IN },
+            },
+          }}
+          style={{ overflow: 'hidden' }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
-    if (isPresent) {
-      setPhase('exit');
-      timerRef.current = window.setTimeout(() => {
-        setIsPresent(false);
-        setPhase('idle');
-      }, exitMs);
-    }
-  }, [enterMs, exitMs, isOpen, isPresent, reduced]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  return { isPresent: isOpen || isPresent, phase };
+/**
+ * Compatibility hook retained temporarily for modal components not yet
+ * migrated to PremiumModalMotion. It no longer drives app-content swaps.
+ */
+export function useMotionPresence(isOpen: boolean) {
+  return { isPresent: isOpen, phase: 'idle' as const };
 }

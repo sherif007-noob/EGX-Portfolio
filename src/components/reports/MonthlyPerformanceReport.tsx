@@ -354,7 +354,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       </div>
 
       {/* Monthly Audit Statements */}
-      <div className="space-y-6">
+      <div key={`${selectedMonth}-${statusFilter}`} className="premium-content-swap space-y-6">
         {displayedMonths.map((m) => {
           // Filter items by search query and status
           const filteredLiquidated = m.liquidatedTrades.filter((t) => {

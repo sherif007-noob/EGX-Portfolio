@@ -423,7 +423,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
     <div className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-6">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/80">
+        <div className="premium-modal-section flex items-center justify-between p-5 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <FileSpreadsheet className="w-5 h-5" />
@@ -509,7 +509,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
               )}
             </div>
           ) : (
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 text-xs flex items-start gap-2.5">
+            <div className="premium-modal-section p-3.5 rounded-xl text-slate-300 text-xs flex items-start gap-2.5">
               <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
               <div className="text-[11px] space-y-1">
                 <p className="font-semibold text-slate-200">
@@ -523,7 +523,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
           )}
 
           {/* Persistent Google Account Connection Card */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+          <div className="premium-modal-section p-4 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-bold text-base">
                 {authUser?.email ? authUser.email.charAt(0).toUpperCase() : <ShieldCheck className="w-5 h-5 text-emerald-400" />}
@@ -640,7 +640,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
+                  className="premium-field flex-1 px-3.5 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none font-mono text-[11px]"
                 />
                 <button
                   onClick={() => handleFetchTabs()}
@@ -654,7 +654,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
 
             {/* Auto Background Sync Toggle Switch */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div className="premium-modal-section p-4 rounded-xl flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <div className="flex items-center gap-2">
                   <Zap className={`w-4 h-4 ${autoSync ? 'text-emerald-400' : 'text-slate-500'}`} />
@@ -684,7 +684,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
 
             {/* Target Tabs Info */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div className="premium-modal-section p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-white flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-400" />
@@ -696,7 +696,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="premium-inset-glass p-3 rounded-xl">
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                     <Receipt className="w-4 h-4 text-emerald-400" />
                     Transaction Logger
@@ -706,7 +706,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="premium-inset-glass p-3 rounded-xl">
                   <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
                     <TrendingUp className="w-4 h-4 text-amber-400" />
                     Ticker Directory
@@ -722,7 +722,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
           {/* Primary Action Buttons Section */}
           <div className="space-y-3">
             {/* 1. Save Connection Button (Preserves App State) */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="premium-modal-section p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-bold text-white flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -743,7 +743,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
 
             {/* 2. Import Data from Google Sheet Button */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="premium-modal-section p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-bold text-white flex items-center gap-2">
                   <DownloadCloud className="w-4 h-4 text-indigo-400" />
@@ -765,7 +765,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
 
             {/* 3. Export to Google Sheet Section */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div className="premium-modal-section p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-2">
@@ -776,7 +776,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                     Pushes current app transactions to <code className="text-emerald-300">Transaction Logger</code> and live prices to <code className="text-amber-300">Ticker Directory</code>.
                   </p>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">
+                <span className="premium-chip text-[10px] px-2 py-0.5 rounded-lg text-slate-300 font-semibold">
                   {(transactions || []).length} Txs • {(tickers || []).length} Prices
                 </span>
               </div>
@@ -816,7 +816,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
 
             {/* 4. Utility: Rebuild Portfolio from Local App Ledger */}
             {onReconcileFromLedger && (transactions || []).length > 0 && (
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
+              <div className="premium-modal-section p-3.5 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Wrench className="w-4 h-4 text-cyan-400 shrink-0" />
                   <span>

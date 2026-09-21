@@ -49,7 +49,7 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
-import { MotionSwap } from './components/PremiumMotion';
+import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 
 export default function App() {
@@ -872,8 +872,9 @@ export default function App() {
       />
 
       {/* Undo Toast Notification */}
-      {undoState && (
-        <div className="premium-content-swap fixed bottom-6 right-6 z-50">
+      <SurfacePresence isOpen={!!undoState} className="fixed bottom-6 right-6 z-50">
+        {undoState && (
+        <div>
           <div className="premium-floating px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
             <span>{undoState.message}</span>
             <button
@@ -885,11 +886,13 @@ export default function App() {
             </button>
           </div>
         </div>
-      )}
+        )}
+      </SurfacePresence>
 
       {/* Price / Action Notification Toast */}
-      {toastNotification && (
-        <div className="premium-content-swap fixed top-20 right-4 z-50">
+      <SurfacePresence isOpen={!!toastNotification} className="fixed top-20 right-4 z-50">
+        {toastNotification && (
+        <div>
           <div
             className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'

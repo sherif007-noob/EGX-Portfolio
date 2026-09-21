@@ -13,6 +13,23 @@ interface MotionSwapProps {
 const EASE_OUT = [0.22, 0.8, 0.24, 1] as const;
 const EASE_IN = [0.4, 0, 0.7, 0.2] as const;
 
+function useDesktopMotionPerformanceMode(): boolean {
+  const query = '(min-width: 1024px) and (hover: hover) and (pointer: fine)';
+  const [matches, setMatches] = React.useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  );
+
+  React.useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  return matches;
+}
+
 const SWAP_MOTION = {
   tab: {
     initial: { opacity: 0, x: 22, y: 5, scale: 0.996 },
@@ -45,7 +62,20 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   className = '',
 }) => {
   const reduceMotion = useReducedMotion();
+  const desktopPerformanceMode = useDesktopMotionPerformanceMode();
   const config = SWAP_MOTION[variant];
+  const animateLayout =
+    !reduceMotion && variant === 'state' && !desktopPerformanceMode;
+
+  const initialState =
+    desktopPerformanceMode && variant === 'tab'
+      ? { ...config.initial, scale: 1 }
+      : config.initial;
+
+  const exitState =
+    desktopPerformanceMode && variant === 'tab'
+      ? { ...config.exit, scale: 1 }
+      : config.exit;
 
   const animateState =
     variant === 'tab'
@@ -56,8 +86,9 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
     <motion.div
       className={`premium-motion-swap-shell premium-motion-swap-shell--${variant}`}
       data-motion-shell={variant}
-      layout={reduceMotion || variant === 'tab' ? false : 'size'}
-      layoutDependency={motionKey}
+      data-motion-desktop={desktopPerformanceMode ? 'optimized' : undefined}
+      layout={animateLayout ? 'size' : false}
+      layoutDependency={animateLayout ? motionKey : undefined}
       transition={{
         layout: {
           duration: reduceMotion ? 0 : 0.38,
@@ -71,8 +102,8 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
           key={String(motionKey)}
           className={`premium-motion-swap premium-motion-swap--${variant} ${className}`.trim()}
           data-motion-owned="react"
-          layout={reduceMotion || variant === 'tab' ? false : 'position'}
-          initial={reduceMotion ? { opacity: 0 } : config.initial}
+          layout={animateLayout ? 'position' : false}
+          initial={reduceMotion ? { opacity: 0 } : initialState}
           animate={{
             ...animateState,
             transition: {
@@ -88,7 +119,7 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
                   transition: { duration: 0.1, ease: 'easeIn' },
                 }
               : {
-                  ...config.exit,
+                  ...exitState,
                   transition: {
                     duration: config.exitDuration,
                     ease: EASE_IN,

@@ -15,18 +15,20 @@ const EASE_IN = [0.4, 0, 0.7, 0.2] as const;
 
 const SWAP_MOTION = {
   tab: {
-    initial: { opacity: 0.38, x: 14, y: 3 },
-    animate: { opacity: 1, x: 0, y: 0 },
-    exit: { opacity: 0.38, x: -12, y: -2 },
-    enterDuration: 0.38,
-    exitDuration: 0.22,
+    initial: { opacity: 0, x: 22, y: 5, scale: 0.996 },
+    animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+    exit: { opacity: 0, x: -18, y: -3, scale: 0.998 },
+    enterDuration: 0.44,
+    exitDuration: 0.28,
+    enterDelay: 0.055,
   },
   state: {
-    initial: { opacity: 0.44, y: 8 },
+    initial: { opacity: 0, y: 10 },
     animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0.44, y: -6 },
-    enterDuration: 0.31,
-    exitDuration: 0.18,
+    exit: { opacity: 0, y: -7 },
+    enterDuration: 0.36,
+    exitDuration: 0.22,
+    enterDelay: 0.045,
   },
 } as const;
 
@@ -45,44 +47,63 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   const reduceMotion = useReducedMotion();
   const config = SWAP_MOTION[variant];
 
+  const animateState =
+    variant === 'tab'
+      ? { opacity: 1, x: 0, y: 0, scale: 1 }
+      : { opacity: 1, y: 0 };
+
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={String(motionKey)}
-        className={`premium-motion-swap premium-motion-swap--${variant} ${className}`.trim()}
-        data-motion-owned="react"
-        initial={
-          reduceMotion
-            ? { opacity: 0 }
-            : config.initial
-        }
-        animate={{
-          opacity: 1,
-          x: 0,
-          y: 0,
-          transition: {
-            duration: reduceMotion ? 0.16 : config.enterDuration,
-            ease: EASE_OUT,
-          },
-        }}
-        exit={
-          reduceMotion
-            ? {
-                opacity: 0,
-                transition: { duration: 0.12, ease: 'easeIn' },
-              }
-            : {
-                ...config.exit,
-                transition: {
-                  duration: config.exitDuration,
-                  ease: EASE_IN,
-                },
-              }
-        }
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      className={`premium-motion-swap-shell premium-motion-swap-shell--${variant}`}
+      data-motion-shell={variant}
+      layout={reduceMotion || variant === 'tab' ? false : 'size'}
+      transition={{
+        layout: {
+          duration: reduceMotion ? 0 : 0.38,
+          ease: EASE_OUT,
+        },
+      }}
+      style={{ position: 'relative', width: '100%' }}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={String(motionKey)}
+          className={`premium-motion-swap premium-motion-swap--${variant} ${className}`.trim()}
+          data-motion-owned="react"
+          layout={reduceMotion || variant === 'tab' ? false : 'position'}
+          initial={reduceMotion ? { opacity: 0 } : config.initial}
+          animate={{
+            ...animateState,
+            transition: {
+              duration: reduceMotion ? 0.14 : config.enterDuration,
+              delay: reduceMotion ? 0 : config.enterDelay,
+              ease: EASE_OUT,
+            },
+          }}
+          exit={
+            reduceMotion
+              ? {
+                  opacity: 0,
+                  transition: { duration: 0.1, ease: 'easeIn' },
+                }
+              : {
+                  ...config.exit,
+                  transition: {
+                    duration: config.exitDuration,
+                    ease: EASE_IN,
+                  },
+                }
+          }
+          style={{
+            width: '100%',
+            transformOrigin: 'top center',
+            pointerEvents: 'auto',
+          }}
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
@@ -119,11 +140,11 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
           initial={{ opacity: 0 }}
           animate={{
             opacity: 1,
-            transition: { duration: reduceMotion ? 0.14 : 0.24, ease: 'easeOut' },
+            transition: { duration: reduceMotion ? 0.14 : 0.32, ease: EASE_OUT },
           }}
           exit={{
             opacity: 0,
-            transition: { duration: reduceMotion ? 0.12 : 0.22, ease: 'easeIn' },
+            transition: { duration: reduceMotion ? 0.12 : 0.27, ease: EASE_IN },
           }}
           onMouseDown={onBackdropClick}
         >
@@ -135,14 +156,14 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
             initial={
               reduceMotion
                 ? { opacity: 0 }
-                : { opacity: 0, y: 18, scale: 0.972 }
+                : { opacity: 0, y: 26, scale: 0.965 }
             }
             animate={{
               opacity: 1,
               y: 0,
               scale: 1,
               transition: {
-                duration: reduceMotion ? 0.16 : 0.33,
+                duration: reduceMotion ? 0.16 : 0.42,
                 ease: EASE_OUT,
               },
             }}
@@ -151,9 +172,9 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
                 ? { opacity: 0, transition: { duration: 0.12 } }
                 : {
                     opacity: 0,
-                    y: 12,
-                    scale: 0.982,
-                    transition: { duration: 0.24, ease: EASE_IN },
+                    y: 16,
+                    scale: 0.978,
+                    transition: { duration: 0.3, ease: EASE_IN },
                   }
             }
             onMouseDown={(event) => event.stopPropagation()}
@@ -193,22 +214,23 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
           role={role}
           className={className}
           data-motion-owned="react"
-          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
+          style={{ transformOrigin: 'top center' }}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.975 }}
           animate={{
             opacity: 1,
             y: 0,
             scale: 1,
             transition: {
-              duration: reduceMotion ? 0.14 : 0.24,
+              duration: reduceMotion ? 0.14 : 0.36,
               ease: EASE_OUT,
             },
           }}
           exit={{
             opacity: 0,
-            y: reduceMotion ? 0 : -4,
-            scale: reduceMotion ? 1 : 0.99,
+            y: reduceMotion ? 0 : -6,
+            scale: reduceMotion ? 1 : 0.985,
             transition: {
-              duration: reduceMotion ? 0.1 : 0.17,
+              duration: reduceMotion ? 0.1 : 0.24,
               ease: EASE_IN,
             },
           }}

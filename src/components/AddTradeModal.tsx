@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { EGXTicker, Position, Sector, TradeTransaction } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap, Clock } from 'lucide-react';
@@ -45,6 +46,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   transactions = [],
   onOpenScreenshotModal,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [tickerInput, setTickerInput] = useState<string>('');
   const [selectedTickerData, setSelectedTickerData] = useState<EGXTicker | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -186,7 +188,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
       },
       deductFromCash
     );
-    onClose();
+    requestClose();
   };
 
   if (!isOpen) return null;
@@ -195,7 +197,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
     <div
       id="add-trade-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
@@ -218,7 +220,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -233,8 +235,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                onClose();
-                onOpenScreenshotModal();
+                runVisualTransition('modal-close', () => {
+                  onClose();
+                  onOpenScreenshotModal();
+                });
               }}
               className="premium-action premium-action-success px-3 py-1.5 rounded-lg font-bold text-[11px] shrink-0"
             >
@@ -556,7 +560,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           <div className="flex items-center justify-end gap-2.5 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="premium-action px-4 py-2 rounded-xl font-semibold"
             >
               Cancel

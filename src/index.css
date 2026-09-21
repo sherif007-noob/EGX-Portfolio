@@ -2893,3 +2893,172 @@ body {
     background-color 240ms ease-out,
     box-shadow 240ms ease-out;
 }
+
+
+/* Phase 4 motion audit — outgoing transitions + slower canonical cadence */
+:root {
+  --motion-family-control: 320ms;
+  --motion-family-selector: 420ms;
+  --motion-family-overlay: 480ms;
+  --motion-family-modal: 560ms;
+  --motion-family-content: 520ms;
+  --motion-family-navigation: 560ms;
+  --motion-family-chart: 520ms;
+  --motion-family-tooltip: 220ms;
+}
+
+/* True old -> new transitions for major context/state changes. */
+:root[data-premium-transition]::view-transition-old(root),
+:root[data-premium-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root[data-premium-transition="tab"] .premium-tab-stage {
+  view-transition-name: premium-tab-content;
+  animation: none;
+}
+
+::view-transition-old(premium-tab-content) {
+  animation: premium-tab-family-out 520ms var(--motion-family-standard) both;
+}
+
+::view-transition-new(premium-tab-content) {
+  animation: premium-tab-family-in 560ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-tab-family-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-14px, -3px, 0) scale(0.988);
+    filter: blur(2px);
+  }
+}
+
+:root[data-premium-transition="journal-filter"] .premium-journal-results {
+  view-transition-name: premium-journal-results;
+}
+
+::view-transition-old(premium-journal-results) {
+  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
+}
+
+::view-transition-new(premium-journal-results) {
+  animation: premium-filter-results-in 520ms var(--motion-family-standard) both;
+}
+
+:root[data-premium-transition="performance-filter"] .premium-trading-performance-results {
+  view-transition-name: premium-performance-results;
+}
+
+::view-transition-old(premium-performance-results) {
+  animation: premium-filter-results-out 500ms var(--motion-family-standard) both;
+}
+
+::view-transition-new(premium-performance-results) {
+  animation: premium-filter-results-in 540ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-filter-results-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.992);
+    filter: blur(2px);
+  }
+}
+
+@keyframes premium-filter-results-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+    filter: blur(2px);
+  }
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Explicit modal exit family; React keeps the edit modal mounted until this finishes. */
+.premium-modal-backdrop-exit {
+  pointer-events: none;
+  animation: premium-modal-backdrop-family-out 560ms ease-in both !important;
+}
+
+.premium-modal-exit {
+  animation: premium-modal-family-out 560ms cubic-bezier(0.4, 0, 0.8, 0.2) both !important;
+}
+
+@keyframes premium-modal-backdrop-family-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+}
+
+@keyframes premium-modal-family-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.965);
+    filter: blur(3px);
+  }
+}
+
+/* Slow the remaining provisional hard-coded micro timings into the accepted cadence. */
+.premium-filter-pill::before {
+  transition-duration: var(--motion-family-selector);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    transform 300ms var(--motion-family-standard),
+    background-color 300ms ease-out,
+    box-shadow 300ms ease-out;
+}
+
+@media (max-width: 767px) {
+  .premium-tab-stage {
+    animation-duration: 500ms;
+  }
+
+  .premium-dropdown {
+    animation-duration: 440ms;
+  }
+
+  .premium-modal {
+    animation-duration: 520ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-modal-backdrop-exit,
+  .premium-modal-exit {
+    animation: none !important;
+  }
+}

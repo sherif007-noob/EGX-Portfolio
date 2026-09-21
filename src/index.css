@@ -3408,3 +3408,137 @@ body {
     opacity: 1 !important;
   }
 }
+
+
+/* Phase 4 recording analysis — single-tree smoothing */
+/*
+ * Recording findings:
+ * - full-page snapshot compositing duplicated cards/headings and produced blank frames;
+ * - deep fades made state changes read as disappear/reappear;
+ * - permanent GPU promotion of very tall pages caused mobile raster/compositor jank;
+ * - stacked legacy entrance animations amplified the jump at the swap midpoint.
+ *
+ * MotionSwap therefore keeps exactly one rendered tree and only promotes the
+ * wrapper while it is actively transitioning.
+ */
+.premium-motion-swap {
+  will-change: auto;
+  transform: none;
+}
+
+.premium-motion-swap--exit,
+.premium-motion-swap--enter {
+  will-change: opacity, transform;
+  contain: paint;
+}
+
+.premium-motion-swap--tab.premium-motion-swap--exit {
+  animation: premium-recording-tab-out 220ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
+}
+
+.premium-motion-swap--tab.premium-motion-swap--enter {
+  animation: premium-recording-tab-in 360ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-recording-tab-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.46;
+    transform: translate3d(-4px, 0, 0);
+  }
+}
+
+@keyframes premium-recording-tab-in {
+  from {
+    opacity: 0.46;
+    transform: translate3d(5px, 0, 0);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(-0.5px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.premium-motion-swap--state.premium-motion-swap--exit {
+  animation: premium-recording-state-out 180ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
+}
+
+.premium-motion-swap--state.premium-motion-swap--enter {
+  animation: premium-recording-state-in 320ms var(--motion-family-standard) both;
+}
+
+@keyframes premium-recording-state-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.58;
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes premium-recording-state-in {
+  from {
+    opacity: 0.58;
+    transform: translate3d(0, 3px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Completely neutralize the retired browser-snapshot layer. */
+.premium-tab-stage,
+.premium-journal-results,
+.premium-trading-performance-results,
+.premium-monthly-results,
+.premium-cash-action-content,
+.premium-cash-history-results,
+.premium-closed-results,
+.premium-positions-results,
+.premium-directory-results,
+.premium-modal-backdrop {
+  view-transition-name: none !important;
+}
+
+/* A MotionSwap owns its own entry/exit. Nothing below it may replay a second
+ * whole-surface entrance animation during the same state change.
+ */
+.premium-motion-swap .premium-reveal,
+.premium-motion-swap .premium-content-swap {
+  animation: none !important;
+}
+
+@media (max-width: 767px) {
+  /* Phone recordings showed the large-page transform layer was the most
+   * expensive part. Mobile keeps the same timing but reduces displacement.
+   */
+  @keyframes premium-recording-tab-out {
+    from { opacity: 1; transform: translate3d(0, 0, 0); }
+    to { opacity: 0.52; transform: translate3d(-2px, 0, 0); }
+  }
+
+  @keyframes premium-recording-tab-in {
+    from { opacity: 0.52; transform: translate3d(2px, 0, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+
+  @keyframes premium-recording-state-out {
+    from { opacity: 1; transform: translate3d(0, 0, 0); }
+    to { opacity: 0.62; transform: translate3d(0, -1px, 0); }
+  }
+
+  @keyframes premium-recording-state-in {
+    from { opacity: 0.62; transform: translate3d(0, 1px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+}

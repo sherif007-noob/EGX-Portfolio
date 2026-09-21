@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap } from './PremiumMotion';
+import { MotionSwap, SurfacePresence } from './PremiumMotion';
 import { EGXTicker } from '../types';
 import { StockLogo } from './StockLogo';
 import { AnalyticsSelect } from './AnalyticsSelect';
@@ -144,12 +144,14 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
         </div>
       </div>
 
-      {sheetSyncSuccess && (
-        <div className="premium-content-swap p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+      <SurfacePresence isOpen={!!sheetSyncSuccess}>
+        {sheetSyncSuccess && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{sheetSyncSuccess}</span>
         </div>
-      )}
+        )}
+      </SurfacePresence>
 
       {/* Filter Bar */}
       <div className="premium-panel flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl">

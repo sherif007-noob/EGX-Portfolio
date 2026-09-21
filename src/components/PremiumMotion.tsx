@@ -57,6 +57,7 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
       className={`premium-motion-swap-shell premium-motion-swap-shell--${variant}`}
       data-motion-shell={variant}
       layout={reduceMotion || variant === 'tab' ? false : 'size'}
+      layoutDependency={motionKey}
       transition={{
         layout: {
           duration: reduceMotion ? 0 : 0.38,

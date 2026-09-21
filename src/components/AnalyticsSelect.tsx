@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { DropdownPresence } from './PremiumMotion';
 
 export interface AnalyticsSelectOption<T extends string | number = string> {
   value: T;
@@ -70,7 +70,6 @@ export function AnalyticsSelect<T extends string | number = string>({
   accent = 'cyan',
 }: AnalyticsSelectProps<T>) {
   const [open, setOpen] = useState(false);
-  const reduceMotion = useReducedMotion();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const accentClasses = ACCENTS[accent];
 
@@ -132,32 +131,17 @@ export function AnalyticsSelect<T extends string | number = string>({
         />
       </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-        <motion.div
-          key="analytics-select-menu"
-          role="listbox"
-          data-accent={accent}
-          data-motion-owned="react"
-          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            transition: { duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 0.8, 0.24, 1] },
-          }}
-          exit={{
-            opacity: 0,
-            y: reduceMotion ? 0 : -4,
-            scale: reduceMotion ? 1 : 0.99,
-            transition: { duration: reduceMotion ? 0.1 : 0.17, ease: [0.4, 0, 0.7, 0.2] },
-          }}
-          className={[
-            'premium-floating premium-dropdown absolute left-0 top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
-            'max-h-72 overflow-y-auto',
-            menuClassName,
-          ].join(' ')}
-        >
+      <DropdownPresence
+        isOpen={open}
+        role="listbox"
+        dataAccent={accent}
+        className={[
+          'premium-floating premium-dropdown absolute left-0 top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
+          'max-h-72 overflow-y-auto',
+          menuClassName,
+        ].join(' ')}
+      >
+        {open && <>
           {options.map((option) => {
             const selected = option.value === value;
             return (
@@ -191,9 +175,8 @@ export function AnalyticsSelect<T extends string | number = string>({
               </button>
             );
           })}
-        </motion.div>
-        )}
-      </AnimatePresence>
+        </>}
+      </DropdownPresence>
     </div>
   );
 }

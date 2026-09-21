@@ -570,7 +570,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </p>
           </div>
 
-          <div className="premium-subpanel flex items-center gap-1.5 p-1 rounded-xl">
+          <div className="premium-selector-shell flex items-center gap-1.5">
             <button
               id="action-select-deposit"
               aria-pressed={activeAction === 'deposit'}
@@ -875,20 +875,26 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
+              aria-pressed={historyFilter === 'ALL'}
               onClick={() => setHistoryFilter('ALL')}
-              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({transactions.length})
             </button>
             <button
+              type="button"
+              aria-pressed={historyFilter === 'DEPOSIT'}
               onClick={() => setHistoryFilter('DEPOSIT')}
-              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
             >
               Deposits ({transactions.filter((t) => t.type === 'DEPOSIT').length})
             </button>
             <button
+              type="button"
+              aria-pressed={historyFilter === 'WITHDRAWAL'}
               onClick={() => setHistoryFilter('WITHDRAWAL')}
-              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
             >
               Withdrawals ({transactions.filter((t) => t.type === 'WITHDRAWAL').length})
             </button>
@@ -1034,7 +1040,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onValueChange={setEditAmount}
                     accent="blue"
                     required
-                    className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white font-mono text-sm focus:outline-none"
+                    className="premium-field premium-field-strong w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-sm focus:outline-none"
                     placeholder="e.g. 250000"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">

@@ -76,7 +76,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         onChange={(event) => onValueChange(event.target.value)}
         className={`premium-field app-number-input pr-10 ${className}`}
       />
-      <div className="absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/50 bg-slate-950/32 backdrop-blur-xl">
+      <div className="premium-inset-glass absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/40">
         <button
           type="button"
           tabIndex={-1}

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   Area,
   AreaChart,
@@ -36,8 +35,6 @@ interface SecondaryAnalyticsChartsProps {
   historicalPrices: HistoricalPriceSeries;
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
-  transitionKey: string;
-  suppressSeriesAnimation?: boolean;
 }
 
 function formatDailyLabel(value: string): string {
@@ -79,10 +76,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   historicalPrices,
   intradayPrices,
   result,
-  transitionKey,
-  suppressSeriesAnimation = false,
 }) => {
-  const reduceMotion = useReducedMotion();
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
     [transactions, historicalPrices, intradayPrices, result],
@@ -92,8 +86,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
   const intraday = result.window.resolution === '15m';
   const lineType = intraday ? 'linear' : 'monotone';
-  const drawdownGradientId = `secondaryDrawdownGradient-${transitionKey}`;
-  const feesGradientId = `secondaryFeesGradient-${transitionKey}`;
   const chartData = secondary.points.map((point) => ({
     ...point,
     axisLabel: intraday ? formatCairoTime(point.date) : formatDailyLabel(point.date),
@@ -112,30 +104,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   );
 
   return (
-    <AnimatePresence mode="popLayout" initial={false}>
-      <motion.section
-        key={transitionKey}
-        className="space-y-3"
-        aria-label="Secondary portfolio analytics"
-        data-motion-owned="react"
-        initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 7 }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: reduceMotion ? 0.12 : 0.44,
-            ease: [0.22, 0.8, 0.24, 1],
-          },
-        }}
-        exit={{
-          opacity: 0,
-          y: reduceMotion ? 0 : -5,
-          transition: {
-            duration: reduceMotion ? 0.1 : 0.27,
-            ease: [0.4, 0, 0.7, 0.2],
-          },
-        }}
-      >
+    <section className="space-y-3" aria-label="Secondary portfolio analytics">
       <div>
         <h3 className="text-sm font-bold text-white">Risk &amp; Cost Analytics</h3>
         <p className="mt-1 text-xs text-slate-400">
@@ -176,7 +145,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id={drawdownGradientId} x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="secondaryDrawdownGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.24} />
                       <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.02} />
                     </linearGradient>
@@ -206,7 +175,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     dataKey="drawdownPercent"
                     stroke={ANALYTICS_CHART_THEME.rose}
                     strokeWidth={2}
-                    fill={`url(#${drawdownGradientId})`}
+                    fill="url(#secondaryDrawdownGradient)"
                     fillOpacity={1}
                     dot={false}
                     activeDot={{
@@ -215,7 +184,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!suppressSeriesAnimation}
+                    isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
@@ -248,7 +217,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id={feesGradientId} x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="secondaryFeesGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.22} />
                       <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.01} />
                     </linearGradient>
@@ -273,7 +242,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     dataKey="cumulativeFeesEgp"
                     stroke={ANALYTICS_CHART_THEME.amber}
                     strokeWidth={2}
-                    fill={`url(#${feesGradientId})`}
+                    fill="url(#secondaryFeesGradient)"
                     fillOpacity={1}
                     dot={false}
                     activeDot={{
@@ -282,7 +251,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!suppressSeriesAnimation}
+                    isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
@@ -349,7 +318,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!suppressSeriesAnimation}
+                    isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
@@ -361,7 +330,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.cyan, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!suppressSeriesAnimation}
+                    isAnimationActive
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
@@ -371,7 +340,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           )}
         </div>
       </div>
-      </motion.section>
-    </AnimatePresence>
+    </section>
   );
 };

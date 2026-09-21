@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
 import { X, Wallet, Plus, Minus } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   currentCash,
   onUpdateCash,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [amount, setAmount] = useState<number>(currentCash);
 
   if (!isOpen) return null;
@@ -26,14 +28,14 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateCash(amount);
-    onClose();
+    requestClose();
   };
 
   return (
     <div
       id="quick-cash-modal"
       className="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      onClick={requestClose}
     >
       <div
         className="premium-modal w-full max-w-sm rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
@@ -44,7 +46,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             <Wallet className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-white">Adjust Cash Reserve</h3>
           </div>
-          <button onClick={onClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

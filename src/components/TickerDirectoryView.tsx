@@ -195,7 +195,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-base font-black text-white">{ticker.ticker}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-medium shrink-0">
+                      <span className="premium-chip text-[10px] px-2 py-0.5 rounded-full text-slate-300 font-medium shrink-0">
                         {ticker.trendStatus}
                       </span>
                     </div>

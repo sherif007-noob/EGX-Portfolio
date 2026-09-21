@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
-import { PremiumModalMotion } from './PremiumMotion';
+import { ExpandPresence, PremiumModalMotion } from './PremiumMotion';
 import { EGXTicker, Position, Sector, TradeTransaction } from '../types';
 import { StockLogo } from './StockLogo';
 import { PlusCircle, X, Search, Layers, DollarSign, Calculator, AlertCircle, Sparkles, Zap, Clock } from 'lucide-react';
@@ -245,8 +245,9 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
         )}
 
         {/* Existing Position DCA Banner */}
-        {activeExistingPosition && (
-          <div className="premium-content-swap premium-modal-section p-3 rounded-xl border-amber-500/30 text-xs text-amber-200 space-y-1">
+        <ExpandPresence isOpen={!!activeExistingPosition}>
+          {activeExistingPosition && (
+          <div className="premium-modal-section p-3 rounded-xl border-amber-500/30 text-xs text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-amber-300">
               <Layers className="w-4 h-4" />
               <span>Existing Position Detected (DCA Mode)</span>
@@ -258,7 +259,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               Adding this trade will adjust your open position to <strong className="text-emerald-400 font-mono">{combinedShares.toLocaleString()}</strong> total shares with a new average price of <strong className="text-emerald-400 font-mono">{newBlendedAvgBuy.toFixed(2)} EGP</strong>.
             </p>
           </div>
-        )}
+          )}
+        </ExpandPresence>
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           {/* Ticker Autocomplete Input */}

@@ -213,8 +213,6 @@ export default function App() {
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
 
   useEffect(() => {
-    if (activeTab !== 'overview' && activeTab !== 'reports') return;
-
     let cancelled = false;
     setHistoricalDrawdown(null);
     setHistoricalPriceSeries({});
@@ -263,7 +261,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, transactions, capitalDeposits]);
+  }, [transactions, capitalDeposits]);
 
   const stats: PerformanceStats = useMemo(() => {
     const baseStats = calculatePerformanceStats(closedTrades, positions);

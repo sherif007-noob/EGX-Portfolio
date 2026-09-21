@@ -1,3 +1,5 @@
+import { flushSync } from 'react-dom';
+
 export type PremiumVisualTransition =
   | 'tab'
   | 'journal-filter'
@@ -44,7 +46,7 @@ export function runVisualTransition(
   root.dataset.premiumTransition = name;
 
   try {
-    const transition = doc.startViewTransition(update);
+    const transition = doc.startViewTransition(() => flushSync(update));
     Promise.resolve(transition.finished)
       .catch(() => undefined)
       .finally(() => {

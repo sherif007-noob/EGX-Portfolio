@@ -9,7 +9,7 @@ import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { combineExecutionDateTime, executionDateInputValue, executionTimeInputValue, formatExecutionTime } from '../utils/executionTime';
 import { runVisualTransition } from '../utils/visualTransition';
-import { MotionSwap, PremiumModalMotion } from './PremiumMotion';
+import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import {
   BookOpen,
   Clock,
@@ -423,14 +423,16 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   return (
     <div className="premium-section-enter space-y-4">
       {/* Toast Notification for deletion */}
-      {deletedIdToast && (
-        <div className="premium-content-swap fixed bottom-6 right-6 z-50">
+      <SurfacePresence isOpen={!!deletedIdToast} className="fixed bottom-6 right-6 z-50">
+        {deletedIdToast && (
+        <div>
           <div className="premium-floating px-4 py-2.5 rounded-xl border-rose-500/50 text-rose-300 text-xs font-semibold flex items-center gap-2">
             <Trash2 className="w-4 h-4 text-rose-400" />
             <span>Transaction for {deletedIdToast} deleted successfully</span>
           </div>
         </div>
-      )}
+        )}
+      </SurfacePresence>
 
       {/* Top Banner with P&L, Transaction Stats and Commissions */}
       <div className="premium-glass flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl">

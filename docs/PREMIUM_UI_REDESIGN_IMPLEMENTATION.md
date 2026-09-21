@@ -490,6 +490,24 @@ Representative commits:
 
 The analytics chart implementation, including the approved 1W full-profile fix, is not changed by this performance pass.
 
+### Heavy-tab desktop scheduling and paint deferral
+
+Follow-up desktop testing showed the remaining stutter was strongest when entering tabs with large synchronous render/paint cost, especially Overview/Open Positions/Reports.
+
+A second PC-only optimization layer was added without changing visible transition timing:
+
+- desktop tab selection is wrapped in `React.startTransition`, allowing React to render the heavy incoming tree as concurrent work rather than monopolizing the main thread immediately;
+- phone/tablet tab updates remain immediate and unchanged;
+- desktop `.premium-table-shell`, `.premium-report-table`, and `.premium-report-glass` surfaces use `content-visibility: auto` so off-screen sections are not fully rasterized while the incoming tab animates;
+- `contain-intrinsic-size` supplies stable placeholder geometry and remembers real dimensions after layout;
+- layout/style containment is applied to heavy table/report surfaces to reduce invalidation spread.
+
+Representative commits:
+- **2289337** — schedule heavy desktop tab mounts concurrently.
+- **ee95f08** — defer off-screen desktop table/report paint.
+
+The transition choreography, chart interpolation, phone behavior, and row/control micro-interactions are unchanged.
+
 Phase 4 remains **in progress** pending desktop visual/performance validation.
 
 ## Current validated visual rules

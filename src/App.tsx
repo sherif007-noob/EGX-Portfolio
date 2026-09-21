@@ -824,7 +824,7 @@ export default function App() {
   };
 
   // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)
-  const handleSyncPrices = async () => {
+  const handleSyncPrices = useCallback(async () => {
     const result = await syncLivePrices(true);
     if (result && result.success) {
       if (!sheetsConfig?.spreadsheetId) {
@@ -833,7 +833,7 @@ export default function App() {
     } else {
       showToast(result?.error || 'Failed updating market prices', 'error', 4000);
     }
-  };
+  }, [syncLivePrices, sheetsConfig?.spreadsheetId, showToast]);
 
   // Push prices to connected Google Sheet
   const handlePushPricesToSheetDirectly = async () => {
@@ -852,6 +852,18 @@ export default function App() {
     }
     showToast(`Updated market quotes in Google Sheets (${res.updatedTabs?.join(' & ') || 'Directory & Positions'})`, 'success');
   };
+
+  const handleQuickAddCash = useCallback(() => {
+    setIsQuickCashModalOpen(true);
+  }, []);
+
+  const handleOverviewReconcile = useCallback(() => {
+    const report = reconcileLedger();
+    showToast(
+      `Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`,
+      'success',
+    );
+  }, [reconcileLedger, showToast]);
 
   return (
     <div className="premium-page min-h-screen text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -933,12 +945,9 @@ export default function App() {
         <PortfolioSummary
           metrics={metrics}
           stats={stats}
-          onQuickAddCash={() => setIsQuickCashModalOpen(true)}
+          onQuickAddCash={handleQuickAddCash}
           onSyncLivePrices={handleSyncPrices}
-          onReconcileLedger={() => {
-            const report = reconcileLedger();
-            showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
-          }}
+          onReconcileLedger={handleOverviewReconcile}
           isSyncingPrices={isSyncingPrices}
           lastPriceSyncTime={lastPriceSyncTime}
           scheduleStatus={scheduleStatus}

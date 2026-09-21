@@ -231,6 +231,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           </button>
         </div>
 
+        <MotionSwap motionKey={activeSubTab} variant="state">
         {/* Tab 1: Python Script */}
         {activeSubTab === 'script' && (
           <div className="space-y-3">
@@ -354,6 +355,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
             </div>
           </div>
         )}
+        </MotionSwap>
     </PremiumModalMotion>
   );
 };

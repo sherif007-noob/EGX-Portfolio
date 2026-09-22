@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Passes 0–2 complete; Pass 3 semantic & ambient refinement next. |
+| 5 | **In progress** | Pass 3 semantic & ambient refinement in progress. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -656,15 +656,27 @@ Quality Checks #558 passed for the rejected hover-triggered version. Quality Che
 
 ### Phase 5 Pass 3 — semantic & ambient refinement
 
-**Status: next; implementation not started.**
+**Status: in progress.**
 
-Planned scope:
-- normalize hero/summary semantic halo intensity;
-- normalize position/transaction/closed-cycle semantic treatments;
-- refine report-hero semantic depth;
-- audit live/offline/sync/status surfaces so motion only communicates real state;
-- tune the existing two page-ambient auroras only if necessary;
-- add no new ambient blob, no financial-state pulse, and no per-row decorative animation.
+First implementation:
+- **418870d** — unify win/loss/breakeven/buy semantics around one shared RGB palette and hierarchy-driven halo intensity.
+  - hero semantic cards are the strongest state surfaces;
+  - ordinary semantic cards are lower;
+  - compact report/subpanel semantic states are lower again;
+  - desktop table rows remain edge-only and use the same canonical palette;
+  - report hero/hero-metric state depth now aligns explicitly with dashboard hero depth.
+- The existing two desktop page auroras were calmed rather than expanded: blur 72px -> 76px, opacity 0.82 -> 0.74, and motion/scale travel reduced.
+- **30e1f3a** — Offline banner is static while its icon alone pulses to communicate the real offline state.
+- **76c584a** — remove the header's decorative always-on ping; token-expired Google Sheets warning now pulses only its warning icon instead of the whole button.
+
+State-motion policy after this pass:
+- session-active pulse remains because it maps to the actual EGX session state;
+- sync spinners remain while work is actually running;
+- unread-alert bounce remains tied to unread alerts;
+- target-hit/stop-loss pulses remain because they are actionable threshold alerts;
+- ordinary positive/negative financial state never pulses merely because of P&L sign.
+
+Pass 3 remains open pending Quality Checks and visual validation.
 
 ## Current validated visual rules
 

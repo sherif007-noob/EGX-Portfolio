@@ -26,6 +26,7 @@ interface PerformanceReportsProps {
   transactions: TradeTransaction[];
   historicalPrices: HistoricalPriceSeries;
   historicalLoading?: boolean;
+  chartsReady?: boolean;
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
@@ -46,6 +47,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   transactions,
   historicalPrices,
   historicalLoading = false,
+  chartsReady = true,
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
@@ -168,11 +170,13 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         historicalPrices={historicalPrices}
         capitalDeposits={capitalDeposits}
         historicalLoading={historicalLoading}
+        entranceReady={chartsReady}
       />
 
       <RealizedTrajectoryChart
         closedTrades={closedTrades}
         stats={stats}
+        entranceReady={chartsReady}
       />
 
       <div className="premium-report-glass premium-radial rounded-2xl p-4 sm:p-5 space-y-4">
@@ -256,6 +260,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
               </div>
 
               <div className="h-[285px]">
+                {chartsReady && (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -360,6 +365,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                )}
               </div>
 
               <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center premium-motion-opacity ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>

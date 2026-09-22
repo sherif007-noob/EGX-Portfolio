@@ -533,7 +533,7 @@ Verification:
 - the effect is continuously animated only on those 10 audited CTAs and stays perimeter-oriented;
 - Quality Checks #558 passed for the rejected hover-triggered flash version.
 - Quality Checks #560 passed for the rejected moving-band version.
-- The restored aurora-border version requires fresh CI.
+- Quality Checks #564 passed typecheck, tests, and production build for the restored aurora-border version.
 
 Validation:
 - aurora border reads as continuously alive rather than as a flashing/sweeping beam;

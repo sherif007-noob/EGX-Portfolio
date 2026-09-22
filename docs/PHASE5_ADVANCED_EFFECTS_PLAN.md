@@ -19,7 +19,7 @@ The target feeling is:
 - cleaner edge illumination;
 - subtle refraction/light-catching cues;
 - intentional semantic glow;
-- limited interaction-triggered sheen;
+- limited continuous CTA aurora-border flow on explicitly approved high-value actions;
 - no casino-dashboard visual noise;
 - no new persistent animation burden.
 
@@ -84,7 +84,7 @@ Therefore the Phase 5 architecture is:
 
 1. keep the existing page ambience as the maximum continuous ambient layer;
 2. make most new premium quality come from **static edge/refraction detail**;
-3. make sheen **interaction-triggered**, not continuously running everywhere;
+3. preserve the original continuous CTA aurora/iridescent border flow, but restrict it to the audited high-value CTA set rather than running it broadly;
 4. keep semantic glow tied to actual financial/state meaning;
 5. apply effects through shared primitives and tiers, not component-specific one-offs.
 
@@ -184,20 +184,22 @@ Implementation principle:
 - no extra React wrapper unless CSS cannot safely express the effect;
 - clipping/overflow rules must respect dropdowns/tooltips.
 
-### Family C — Interaction sheen
+### Family C — CTA aurora / iridescent border flow
 
 Purpose:
-- make important actions catch light when the user interacts with them.
+- make a small set of high-value actions feel premium through continuously shifting color around the button perimeter.
 
-The current `premium-shimmer-border` runs continuously on desktop and is used broadly across buttons and modal-related surfaces. Phase 5 should normalize this.
+The historical `premium-shimmer-border` name is retained for compatibility, but the approved visual is **not a light sweep**. It is a moving multi-stop blue/cyan/purple gradient around the CTA border/perimeter.
 
 Target rule:
-- idle state is static;
-- eligible controls may receive a **single restrained sweep on hover/focus**;
-- no infinite sweep on ordinary buttons;
-- no continuous shimmer on modal panels;
-- no per-row shimmer in tables;
-- destructive actions use their semantic family, not rainbow/cyan shimmer.
+- eligible CTA borders continuously carry the aurora/iridescent flow on desktop;
+- the effect remains limited to the audited high-value CTA set;
+- no moving light beam crosses the full button face;
+- no border-flow effect on warning/danger actions;
+- no border-flow effect on routine Save Changes actions;
+- no border-flow effect on modal panels, table rows, filters, passive cards, or financial values;
+- reduced motion disables the loop;
+- mobile/touch may degrade to a static border treatment.
 
 Eligible examples:
 - Add Trade / Open Position primary CTA;
@@ -293,7 +295,7 @@ Examples:
 
 Allowed:
 - strongest static depth and rim light in the system;
-- carefully controlled interaction sheen for primary CTA children;
+- carefully controlled CTA aurora-border flow for explicitly eligible primary actions;
 - still no looping surface animation.
 
 ---
@@ -306,8 +308,9 @@ These are Phase 5 acceptance rules, not optional optimization suggestions.
 
 - **No broad decorative infinite-animation system.**
 - Existing two desktop page auroras remain the maximum ambient continuous effects.
-- Approved exception: the limited high-value CTA sheen may recur, but only on the explicitly classified eligible CTA set, with a long quiet interval and transform-only sweep.
-- Generic full-button shimmer remains prohibited.
+- Approved exception: the audited high-value CTA set may use the original continuous aurora/iridescent border-flow loop.
+- The CTA aurora must stay border/perimeter-oriented; moving full-face sweep/flash effects are prohibited.
+- Warning/danger/routine-save controls do not receive the loop.
 - Status pulses may remain only where they communicate an actual live/active state.
 
 ### Forbidden expensive patterns
@@ -326,7 +329,7 @@ Do not add:
 ### Mobile
 
 On touch/mobile:
-- no hover sheen;
+- no animated CTA aurora loop;
 - no new continuous decorative animation;
 - edge/refraction should resolve to static CSS;
 - existing page ambience remains static as it is today;
@@ -335,7 +338,7 @@ On touch/mobile:
 ### Reduced motion
 
 `prefers-reduced-motion: reduce` must:
-- remove optional sheen animation;
+- remove optional CTA aurora animation;
 - remove ambient motion;
 - preserve useful static depth/semantic state.
 
@@ -492,31 +495,31 @@ User re-validation accepted the stronger material treatment. The approved refrac
 
 Quality Checks #551 passed typecheck, tests, and production build after the full shared-tier rollout. Pass 1 is complete.
 
-### Pass 2 — Interaction sheen normalization
+### Pass 2 — CTA aurora-border normalization
 
-**Status: REVISED — short hover flash rejected; slow recurring CTA sheen awaiting validation before Pass 3.**
+**Status: REVISED — original continuous aurora/iridescent border flow restored on the audited CTA set; awaiting validation before Pass 3.**
 
 Goal:
-- replace broad continuous shimmer behavior with intentional interaction-triggered sheen.
+- preserve the premium always-on border-flow effect the user approved originally, while restricting it to appropriate high-value CTAs.
 
 Work:
 - audit every `premium-shimmer-border` use;
 - classify each as keep-as-CTA / replace-with-static-edge / remove;
-- implement one canonical sheen behavior;
-- preserve semantic action colors;
-- no continuous modal/button shimmer.
+- keep one canonical aurora/iridescent border-flow behavior;
+- preserve warning/danger semantics by excluding those controls;
+- no continuous effect on modal panels, routine saves, tables, filters, or passive cards.
 
 Implementation:
 - repository audit found **17** active `premium-shimmer-border` uses;
 - **10** remain on intentional high-value CTAs;
 - **7** were removed from routine Save Changes and warning/danger actions;
-- **e851bca** — first attempt replaced the old loop with a short hover/focus sweep;
-- user validation rejected that version because it read as a fast flash rather than a premium light sweep;
-- **46e6351** — restore recurrence only on the 10 eligible CTAs using a narrow transform-only light band, ~2 s visible travel inside a 7.2 s cycle, with a long quiet interval;
-- primary, success, and purple CTA families now drive their own sheen colors;
-- touch/mobile keeps the recurring sweep disabled below the desktop breakpoint;
-- reduced-motion disables the optional recurring sweep;
-- `premium-border-flow` was removed; only the two existing page auroras remain as infinite CSS animations.
+- **e851bca** — first attempt replaced the original border flow with a short hover/focus sweep;
+- user validation rejected that version because it read as a fast flash rather than the premium perimeter-light effect;
+- **46e6351** — second attempt used a slower recurring moving light band, but user clarified that this still represented the wrong effect family;
+- **9d07c8c** — restore the actual original effect family: a continuous blue/cyan/purple aurora/iridescent gradient flowing around the CTA perimeter at the original 5.5 s cadence;
+- the historical `premium-shimmer-border` class name remains, but documentation now calls the effect **CTA aurora border flow**;
+- mobile/reduced-motion keep the loop disabled;
+- warning/danger/routine-save removals remain intact.
 
 Removal commits:
 - **50c79f4** — Journal routine Save Changes;
@@ -526,17 +529,18 @@ Removal commits:
 - **7992b78** — delete confirmation danger.
 
 Verification:
-- remaining sheen uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
-- generic infinite border shimmer remains removed; the only recurring CTA effect is the approved transform-only sheen on the 10 eligible CTAs;
-- Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version.
-- Quality Checks #560 passed typecheck, tests, and production build for the revised recurring sheen.
+- remaining aurora-border uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
+- the effect is continuously animated only on those 10 audited CTAs and stays perimeter-oriented;
+- Quality Checks #558 passed for the rejected hover-triggered flash version.
+- Quality Checks #560 passed for the rejected moving-band version.
+- The restored aurora-border version requires fresh CI.
 
 Validation:
-- primary CTA reads as premium without attracting attention when idle;
-- destructive controls remain semantic;
-- no noticeable idle GPU activity from button shimmer.
+- aurora border reads as continuously alive rather than as a flashing/sweeping beam;
+- destructive controls remain semantic and free of the effect;
+- the border motion does not noticeably worsen the accepted production tab-motion baseline.
 
-Pass 2 is not accepted until the new interaction sheen is visually validated in production.
+Pass 2 is not accepted until the restored CTA aurora border flow is visually validated in production.
 
 ### Pass 3 — Semantic and ambient refinement
 

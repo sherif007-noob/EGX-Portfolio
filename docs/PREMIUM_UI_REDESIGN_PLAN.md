@@ -54,7 +54,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **In progress — Pass 2 revised; recurring CTA sheen awaiting validation** |
+| 5 | Advanced effects | **In progress — Pass 2 revised; CTA aurora border flow awaiting validation** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -307,7 +307,7 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
-**Status: IN PROGRESS — Pass 2 revised after validation; recurring CTA sheen awaiting approval before Pass 3.**
+**Status: IN PROGRESS — Pass 2 revised after validation; original CTA aurora/iridescent border flow restored and awaiting approval before Pass 3.**
 
 Goal: restrained finishing effects after base visuals/motion are stable.
 
@@ -318,12 +318,12 @@ Phase 5 is deliberately system-first. The audit covers `src/App.tsx`, all 33 non
 Scope:
 - Consolidate existing advanced-effect ownership before adding new effects.
 - Refined static edge light, depth, and glass-refraction cues through shared primitives.
-- Controlled interaction-triggered sheen on a limited set of eligible primary actions.
+- Controlled continuous CTA aurora/iridescent border flow on the explicitly audited high-value action set.
 - Subtle semantic halo refinement tied to actual financial/system state.
 - Existing page ambience may be tuned, but no additional continuous full-page effect layer is planned.
 
 Performance guardrails:
-- No broad new infinite-animation system; only the explicitly approved limited recurring CTA sheen exception is allowed.
+- No broad new infinite-animation system; only the explicitly approved CTA aurora-border loop on the audited high-value action set is allowed.
 - No new animated blur/backdrop-filter.
 - No persistent `will-change` / compositor-promotion hacks.
 - No per-row decorative animation on dense tables.

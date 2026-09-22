@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION STARTED — Pass 0 effect-system cleanup/baseline in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 next.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -421,7 +421,7 @@ No implementation should skip directly to individual screens.
 
 ### Pass 0 — Effect-system cleanup and baseline
 
-**Status: IN PROGRESS.**
+**Status: COMPLETE.**
 
 Goal:
 - establish one canonical place/ownership model for existing effects before adding anything new.
@@ -445,7 +445,7 @@ Validation:
 - Phase 4 production motion must not regress;
 - typecheck/tests/build pass.
 
-Pass 0 is not complete until Quality Checks pass for the baseline refactor.
+Validation result: Quality Checks #539 passed typecheck, tests, and production build. Pass 0 is complete.
 
 ### Pass 1 — Static edge light and refraction foundation
 

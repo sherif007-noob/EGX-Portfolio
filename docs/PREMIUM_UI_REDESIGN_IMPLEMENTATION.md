@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 0–1 complete; Pass 2 interaction sheen normalization in progress. |
+| 5 | **In progress** | Pass 0–1 complete; Pass 2 CTA aurora-border normalization awaiting validation. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -627,9 +627,9 @@ Quality Checks #551 passed typecheck, tests, and production build.
 
 **Pass 1 is complete.**
 
-### Phase 5 Pass 2 — shimmer/sheen normalization
+### Phase 5 Pass 2 — CTA aurora-border normalization
 
-**Status: revised after user validation; recurring CTA sheen awaiting re-validation before Pass 3.**
+**Status: revised after user validation; original CTA aurora/iridescent border flow restored and awaiting re-validation before Pass 3.**
 
 A repository audit found **17 active `premium-shimmer-border` uses**. They divide into:
 - eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
@@ -637,21 +637,22 @@ A repository audit found **17 active `premium-shimmer-border` uses**. They divid
 - warning/danger actions that must keep their amber/rose semantics rather than receive generic cyan/purple sheen.
 
 Implemented:
-- **e851bca** — first attempt removed the 5.5 s loop and replaced it with a 720 ms semantic hover/focus sweep.
-- User validation rejected that behavior: it read as a fast flash rather than a premium light sweep.
-- **46e6351** — replace the rejected flash with a slow recurring transform-only light band: approximately 2 s of visible travel inside a 7.2 s cycle, followed by a long quiet interval.
-- Primary, success, and purple CTA families now use their own sheen colors.
-- Mobile/touch does not run the recurring sweep below the desktop breakpoint; reduced-motion disables it.
-- Seven inappropriate uses were removed:
+- **e851bca** — first attempt removed the original 5.5 s border-flow loop and replaced it with a 720 ms hover/focus sweep.
+- User validation rejected that behavior because it read as a fast flash.
+- **46e6351** — second attempt used a slower recurring moving light band, but user clarified that this still represented the wrong effect family.
+- **9d07c8c** — restore the actual original visual: a continuously shifting blue/cyan/purple aurora/iridescent gradient around the CTA perimeter at the original 5.5 s cadence.
+- The historical `premium-shimmer-border` class name remains for compatibility, but the accepted effect is now documented as **CTA aurora border flow**.
+- Mobile/touch and reduced-motion disable the loop.
+- Seven inappropriate uses remain removed:
   - **50c79f4** — Journal routine Save Changes.
   - **a170f33 / 3e74738 / 109d81b** — Cash audited warning, withdrawal danger, and routine edit save.
   - **204da43** — Edit Position routine target save.
   - **0bb93b1** — Sell confirmation warning.
   - **7992b78** — Delete confirmation danger.
-- Ten intentional high-value CTA sheen uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
-- The old generic infinite border shimmer remains removed. Recurrence is now intentionally limited to the 10 eligible high-value CTAs and uses transform/opacity rather than continuous background-position motion.
+- Ten intentional high-value CTA aurora-border uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
+- Continuous background-position motion is intentionally restored only for those 10 audited CTAs because that perimeter-flow effect is the approved visual.
 
-Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version. Quality Checks #560 passed typecheck, tests, and production build for the revised recurring sheen. Pass 3 remains blocked only on visual validation of sweep speed, quiet interval, semantic color, and motion smoothness.
+Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. The restored aurora-border implementation now requires fresh CI and visual validation of flow quality and production smoothness before Pass 3.
 
 ## Current validated visual rules
 

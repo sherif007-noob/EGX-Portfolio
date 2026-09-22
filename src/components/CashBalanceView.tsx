@@ -551,7 +551,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   });
                   setTimeout(() => setFeedbackMessage(null), 4000);
                 }}
-                className="premium-action premium-action-warning premium-shimmer-border px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5"
+                className="premium-action premium-action-warning px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Apply Audited Balance ({formatEgp(auditedLiquidCash)} EGP)</span>

@@ -8,6 +8,7 @@ interface MotionSwapProps {
   children: React.ReactNode;
   variant?: MotionSwapVariant;
   className?: string;
+  onEnterComplete?: (motionKey: string | number) => void;
 }
 
 const EASE_OUT = [0.22, 0.8, 0.24, 1] as const;
@@ -60,6 +61,7 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   children,
   variant = 'state',
   className = '',
+  onEnterComplete,
 }) => {
   const reduceMotion = useReducedMotion();
   const desktopPerformanceMode = useDesktopMotionPerformanceMode();
@@ -126,6 +128,9 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
                   },
                 }
           }
+          onAnimationComplete={() => {
+            if (variant === 'tab') onEnterComplete?.(motionKey);
+          }}
           style={{
             width: '100%',
             transformOrigin: 'top center',

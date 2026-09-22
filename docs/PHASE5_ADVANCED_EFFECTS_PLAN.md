@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 next.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 representative checkpoint awaiting visual validation.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -449,8 +449,20 @@ Validation result: Quality Checks #539 passed typecheck, tests, and production b
 
 ### Pass 1 — Static edge light and refraction foundation
 
+**Status: REPRESENTATIVE CHECKPOINT IMPLEMENTED — awaiting visual validation before expansion.**
+
 Goal:
 - obtain most of the Phase 5 quality with static material cues.
+
+Foundation:
+- **3bcee3d** — add the reusable static `premium-refraction` shadow-slot primitive plus hero/overlay intensity variants.
+- The primitive adds only static inset edge light. It adds no pseudo-element, blur, animation, JavaScript, React wrapper, or lifecycle ownership.
+
+Representative surfaces:
+- **00afaf0** — Overview Total Portfolio Value hero.
+- **08ad05d** — Reports Portfolio Allocation panel.
+- **73cbd6b** — Quick Cash modal shell.
+- **2011e71** — shared AnalyticsSelect dropdown shell.
 
 Apply through shared primitives to:
 - hero cards;
@@ -463,11 +475,13 @@ Apply through shared primitives to:
 Validation checkpoint before expansion:
 - Overview;
 - Reports;
-- one representative modal;
-- one dropdown;
+- Quick Cash modal;
+- an AnalyticsSelect dropdown;
 - desktop + phone.
 
-This checkpoint validates the primitive. It does **not** complete Phase 5.
+Quality Checks #544 passed typecheck, tests, and production build for the representative checkpoint.
+
+This checkpoint validates the primitive. It does **not** complete Pass 1 or Phase 5. Do not expand refraction across the component matrix until the representative material treatment is visually accepted.
 
 ### Pass 2 — Interaction sheen normalization
 

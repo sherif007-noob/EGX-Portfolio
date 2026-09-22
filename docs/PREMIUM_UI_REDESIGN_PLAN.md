@@ -157,7 +157,7 @@ Acceptance:
 
 **Status: COMPLETE.**
 
-The accepted Phase 4 direction is a shared five-family motion language implemented with **Motion for React** for lifecycle presence. Browser View Transition snapshots and timer-driven React tree swaps are retired. CSS owns tactile micro-interactions only; Recharts owns financial-series interpolation. The detailed v3 implementation plan lives in **PHASE4_MOTION_REIMPLEMENTATION_PLAN.md**.
+The accepted Phase 4 direction is a shared five-family motion language implemented with **Motion for React** for lifecycle presence. Browser View Transition snapshots and timer-driven React tree swaps are retired. CSS owns tactile micro-interactions only; Recharts owns financial-series interpolation. The former detailed v3 implementation plan is preserved in **PHASE4_MOTION_REIMPLEMENTATION_PLAN.md** as a historical Phase 4 reference; it is no longer an active roadmap.
 
 ### Family 1 — Navigation / page context
 

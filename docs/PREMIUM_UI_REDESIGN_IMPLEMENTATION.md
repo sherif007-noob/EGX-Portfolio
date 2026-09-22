@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 0 effect-system baseline complete; Pass 1 static edge/refraction foundation next. |
+| 5 | **In progress** | Pass 0 complete; Pass 1 representative refraction checkpoint implemented and awaiting visual validation. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -587,6 +587,24 @@ The first implementation pass is deliberately visual-neutral. It establishes can
 - No new effect, animation, blur, glow intensity, layout, or Phase 4 lifecycle timing was introduced.
 
 Quality Checks #539 passed typecheck, tests, and production build. Pass 0 is complete.
+
+### Phase 5 Pass 1 — representative static-refraction checkpoint
+
+**Status: awaiting user visual validation before rollout.**
+
+A reusable static refraction primitive was implemented without adding blur or animation:
+- **3bcee3d** — `premium-refraction` with default, hero, and overlay intensity variants.
+- The primitive uses an optional inset-shadow slot already consumed by the relevant shared surface recipes, avoiding pseudo-element collisions with `premium-radial`, modal decoration, and dropdown decoration.
+
+Representative applications only:
+- **00afaf0** — Total Portfolio Value hero.
+- **08ad05d** — Portfolio Allocation report panel.
+- **73cbd6b** — Quick Cash modal shell.
+- **2011e71** — AnalyticsSelect dropdown shell.
+
+No broader component rollout has occurred yet. This is the planned Checkpoint B: one hero, one report surface, one modal, and one dropdown must be visually accepted on desktop/phone before the shared primitive is expanded to the full coverage matrix.
+
+Quality Checks #544 passed typecheck, tests, and production build.
 
 ## Current validated visual rules
 

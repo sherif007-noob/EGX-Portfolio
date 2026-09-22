@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 3 semantic & ambient refinement in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 3 implemented; awaiting visual validation before Pass 4.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -544,7 +544,7 @@ User validation accepted the restored CTA aurora/iridescent border flow. Pass 2 
 
 ### Pass 3 — Semantic and ambient refinement
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting visual validation before Pass 4.**
 
 Goal:
 - normalize semantic halo intensity and page ambience.
@@ -568,9 +568,11 @@ Implemented so far:
 - Existing page ambience was calmed without adding layers: blur increased from 72px to 76px, opacity reduced from 0.82 to 0.74, and both desktop aurora travel/scale amplitudes were reduced.
 - **30e1f3a** — stop pulsing the complete Offline banner; only the offline icon carries status motion.
 - **76c584a** — remove decorative always-on header ping and stop pulsing the full expired-Sheets button; only the actionable warning icon pulses.
-- Session-active, syncing/spinner, unread-alert, target-hit, and stop-loss motion remain because they represent actual live/actionable state.
+- A full 33-component pulse/spinner audit confirmed the remaining motion is state-driven: active EGX session, real sync/loading work, unread alerts, target hits, and stop-loss breaches.
+- **eb5bf1a** — make the Price Alerts “Service Worker Auto-Sync” indicator pulse only when notification permission is granted and alert settings are enabled; otherwise it is static/inactive.
+- Quality Checks #577 passed typecheck, tests, and production build on the final Pass 3 code head.
 
-Pass 3 remains open pending CI and visual validation of semantic intensity/ambient balance.
+Pass 3 remains open only for visual validation of semantic intensity, ambient balance, and status-motion restraint.
 
 ### Pass 4 — Full-app coverage sweep
 

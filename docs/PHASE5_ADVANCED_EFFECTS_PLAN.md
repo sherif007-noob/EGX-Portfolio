@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 representative checkpoint awaiting visual validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Passes 0–2 complete; Pass 3 semantic & ambient refinement next.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -497,7 +497,7 @@ Quality Checks #551 passed typecheck, tests, and production build after the full
 
 ### Pass 2 — CTA aurora-border normalization
 
-**Status: REVISED — original continuous aurora/iridescent border flow restored on the audited CTA set; awaiting validation before Pass 3.**
+**Status: COMPLETE.**
 
 Goal:
 - preserve the premium always-on border-flow effect the user approved originally, while restricting it to appropriate high-value CTAs.
@@ -540,9 +540,11 @@ Validation:
 - destructive controls remain semantic and free of the effect;
 - the border motion does not noticeably worsen the accepted production tab-motion baseline.
 
-Pass 2 is not accepted until the restored CTA aurora border flow is visually validated in production.
+User validation accepted the restored CTA aurora/iridescent border flow. Pass 2 is complete.
 
 ### Pass 3 — Semantic and ambient refinement
+
+**Status: NEXT — implementation not started.**
 
 Goal:
 - normalize semantic halo intensity and page ambience.

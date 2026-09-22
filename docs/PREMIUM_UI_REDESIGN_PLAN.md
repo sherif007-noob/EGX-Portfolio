@@ -54,7 +54,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **In progress — Pass 2 revised; CTA aurora border flow awaiting validation** |
+| 5 | Advanced effects | **In progress — Passes 0–2 complete; Pass 3 next** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -307,7 +307,7 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
-**Status: IN PROGRESS — Pass 2 revised after validation; original CTA aurora/iridescent border flow restored and awaiting approval before Pass 3.**
+**Status: IN PROGRESS — Passes 0–2 complete; Pass 3 semantic & ambient refinement next.**
 
 Goal: restrained finishing effects after base visuals/motion are stable.
 

@@ -36,6 +36,7 @@ interface RealizedTrajectoryChartProps {
   title?: string;
   subtitle?: string;
   className?: string;
+  entranceReady?: boolean;
 }
 
 const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> = ({
@@ -44,6 +45,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   title = 'Realized P&L Gain / Loss Trajectory',
   subtitle = 'Historical equity growth trajectory of closed trades over time (in EGP)',
   className = '',
+  entranceReady = true,
 }) => {
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
 
@@ -195,6 +197,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
 
       {/* Chart Canvas */}
       <div className="h-64 sm:h-72 w-full pt-1">
+        {entranceReady && (
         <ResponsiveContainer width="100%" height="100%">
           {trajectoryMode === 'cumulative' ? (
             <AreaChart data={trajectoryData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }}>
@@ -377,6 +380,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             </BarChart>
           )}
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

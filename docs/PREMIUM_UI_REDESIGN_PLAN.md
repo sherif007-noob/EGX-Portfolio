@@ -55,7 +55,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
 | 5 | Advanced effects | **Complete** |
-| 6 | Mobile / responsive refinement | **Next** |
+| 6 | Mobile / responsive refinement | **Plan complete — implementation not started** |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 — Mobile / responsive refinement — is next.
+Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 has been fully audited and planned; implementation has not started.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -346,17 +346,42 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
+**Status: PLAN COMPLETE — implementation not started.**
+
+The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
+
+Audit coverage:
+- `src/App.tsx`;
+- all 33 non-test component TSX files;
+- responsive/media-query rules in `src/index.css`;
+- touch controls, fixed notifications, modal families, filters/selectors, tables, report shells, and chart shells.
+
+Key audit findings:
+- touch targets are commonly undersized on coarse pointers;
+- modal viewport/scroll behavior is inconsistent, with Portfolio Backup the highest-risk long modal;
+- fixed toast/offline/status surfaces need viewport-safe width/insets;
+- several toolbars/selectors retain fixed minimum widths that can create 320px pressure;
+- chart/report shells mostly respond well, but tooltip widths, selector targets, and mobile heights need a common contract;
+- existing mobile CSS mostly tunes material/motion cost and does not yet provide shared touch/modal/fixed-overlay layout primitives.
+
 Scope:
 - Breakpoints, wrapping, stacking, spacing.
 - Touch-target sizing.
 - Modal/dropdown viewport fit.
+- Fixed toast/status viewport fit.
 - Table overflow/card density.
 - Report selectors/charts on mobile.
+- Shared responsive primitives before one-off component fixes.
 
 Acceptance:
+- No page-level horizontal overflow at supported phone widths.
 - No clipped controls or inaccessible overlays.
 - Primary actions remain reachable.
+- Touch targets are usable without precision tapping.
+- Modal content and actions remain reachable on short mobile viewports.
+- Wide tables scroll inside their shell rather than the page.
 - Mobile hierarchy remains consistent with desktop.
+- No Phase 6 change to business logic, chart interpolation, Phase 4 lifecycle motion, or Phase 6.5 navigation architecture.
 
 ## Phase 6.5 — Navigation refinement
 

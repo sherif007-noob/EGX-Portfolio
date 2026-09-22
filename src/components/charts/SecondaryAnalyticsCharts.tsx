@@ -144,6 +144,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for drawdown.</AnalyticsEmptyState>
           ) : (
             <div className="h-52 sm:h-56">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
@@ -172,7 +173,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
-                  {entranceReady && (
                   <Area
                     type={lineType}
                     dataKey="drawdownPercent"
@@ -191,10 +191,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
-                  )}
-                  )}
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>
@@ -219,6 +218,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for fee history.</AnalyticsEmptyState>
           ) : (
             <div className="h-52 sm:h-56">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
@@ -242,7 +242,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
-                  {entranceReady && (
                   <Area
                     type="stepAfter"
                     dataKey="cumulativeFeesEgp"
@@ -263,6 +262,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>
@@ -298,6 +298,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for P&amp;L composition.</AnalyticsEmptyState>
           ) : (
             <div className="h-56 sm:h-64">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <LineChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...analyticsGridProps} />
@@ -316,8 +317,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
-                  {entranceReady && (
-                  <>
                   <Line
                     type={lineType}
                     dataKey="realizedPnlEgp"
@@ -342,10 +341,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
-                  </>
-                  )}
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>

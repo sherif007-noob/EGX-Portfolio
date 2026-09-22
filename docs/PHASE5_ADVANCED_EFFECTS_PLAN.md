@@ -493,7 +493,7 @@ Quality Checks #551 passed typecheck, tests, and production build after the full
 
 ### Pass 2 — Interaction sheen normalization
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting visual validation before Pass 3.**
 
 Goal:
 - replace broad continuous shimmer behavior with intentional interaction-triggered sheen.
@@ -505,10 +505,34 @@ Work:
 - preserve semantic action colors;
 - no continuous modal/button shimmer.
 
+Implementation:
+- repository audit found **17** active `premium-shimmer-border` uses;
+- **10** remain on intentional high-value CTAs;
+- **7** were removed from routine Save Changes and warning/danger actions;
+- **e851bca** — replace the old 5.5 s infinite border loop with one semantic hover/focus sweep;
+- primary, success, and purple CTA families now drive their own sheen colors;
+- touch/mobile keeps the sheen static because the sweep is restricted to fine-pointer hover/focus;
+- reduced-motion keeps the optional sweep disabled;
+- `premium-border-flow` was removed; only the two existing page auroras remain as infinite CSS animations.
+
+Removal commits:
+- **50c79f4** — Journal routine Save Changes;
+- **a170f33 / 3e74738 / 109d81b** — audited cash warning, cash withdrawal danger, routine cash edit save;
+- **204da43** — routine target save;
+- **0bb93b1** — sell confirmation warning;
+- **7992b78** — delete confirmation danger.
+
+Verification:
+- remaining sheen uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
+- stylesheet audit confirms no infinite shimmer remains;
+- Quality Checks #558 passed typecheck, tests, and production build.
+
 Validation:
 - primary CTA reads as premium without attracting attention when idle;
 - destructive controls remain semantic;
 - no noticeable idle GPU activity from button shimmer.
+
+Pass 2 is not accepted until the new interaction sheen is visually validated in production.
 
 ### Pass 3 — Semantic and ambient refinement
 

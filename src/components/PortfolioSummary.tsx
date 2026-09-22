@@ -141,7 +141,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Portfolio Value */}
-        <div className={`premium-card premium-hero-card premium-refraction premium-refraction-hero p-4 rounded-2xl flex flex-col justify-between ${dayGlowClass}`}>
+        <div className={`premium-card premium-hero-card p-4 rounded-2xl flex flex-col justify-between ${dayGlowClass}`}>
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Portfolio Value</span>

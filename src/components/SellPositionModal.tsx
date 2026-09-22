@@ -310,7 +310,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="premium-action premium-action-warning premium-shimmer-border px-5 py-2 rounded-xl font-semibold"
+              className="premium-action premium-action-warning px-5 py-2 rounded-xl font-semibold"
             >
               Confirm Sale &amp; Book Net P&amp;L
             </button>

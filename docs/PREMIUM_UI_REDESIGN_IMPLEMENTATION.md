@@ -574,6 +574,20 @@ Planning commit:
 
 No Phase 5 CSS/component implementation was performed during this planning pass.
 
+### Phase 5 Pass 0 — effect-system baseline
+
+**Status: in progress pending CI.**
+
+The first implementation pass is deliberately visual-neutral. It establishes canonical effect ownership before any new Phase 5 treatment is introduced.
+
+- **2d24dcd** — centralize Phase 5 effect primitives.
+- Existing ambient blur/opacity, radial-hover values, and shimmer palette/timing are now named CSS custom properties.
+- Repeated card semantic-halo recipes were consolidated into one shared recipe with per-state semantic variables.
+- Repeated compact report semantic-halo recipes were consolidated the same way.
+- No new effect, animation, blur, glow intensity, layout, or Phase 4 lifecycle timing was introduced.
+
+Quality Checks are required before Pass 0 is marked complete.
+
 ## Current validated visual rules
 
 - Realized P&L / Portfolio Allocation segmented language is the default selector family.

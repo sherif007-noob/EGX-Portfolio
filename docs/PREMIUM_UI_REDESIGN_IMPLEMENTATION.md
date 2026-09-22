@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 3 complete; Pass 4 full-app coverage sweep in progress. |
+| 5 | **In progress** | Pass 4 implemented and CI-clean; awaiting visual validation before final Pass 5. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -631,7 +631,7 @@ Quality Checks #551 passed typecheck, tests, and production build.
 
 **Status: complete.**
 
-A repository audit found **17 active `premium-shimmer-border` uses**. They divide into:
+The initial component-only audit found **17 active `premium-shimmer-border` uses**; Pass 4 found the additional eligible + Add Position use in `src/App.tsx`, making the correct original total **18**. They divide into:
 - eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
 - routine edit/save actions that should not shimmer;
 - warning/danger actions that must keep their amber/rose semantics rather than receive generic cyan/purple sheen.
@@ -649,7 +649,7 @@ Implemented:
   - **204da43** — Edit Position routine target save.
   - **0bb93b1** — Sell confirmation warning.
   - **7992b78** — Delete confirmation danger.
-- Ten intentional high-value CTA aurora-border uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
+- Eleven intentional high-value CTA aurora-border uses remain: App + Add Position, Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
 - Continuous background-position motion is intentionally restored only for those 10 audited CTAs because that perimeter-flow effect is the approved visual.
 
 Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. Quality Checks #564 passed typecheck, tests, and production build for the restored aurora-border implementation. User validation accepted the restored aurora/iridescent perimeter flow. **Pass 2 is complete.**
@@ -685,9 +685,28 @@ User validation accepted the semantic/ambient balance and status-motion restrain
 
 ### Phase 5 Pass 4 — full-app coverage sweep
 
-**Status: in progress.**
+**Status: implemented and CI-clean; awaiting visual validation.**
 
-The entire 33-component matrix is being re-audited against the final Phase 5 effect system. Each component must end this pass with one explicit disposition: direct Phase 5 change, inherited shared Phase 5 change, intentional exclusion, or later-phase defer. Secondary modals, rare status states, shared controls, report subcomponents, and chart shells are included; main-tab appearance alone is not sufficient for completion.
+The sweep covered `src/App.tsx` plus all **33** non-test component TSX files.
+
+Coverage fixes:
+- **887d9e0** — add shared premium status-surface primitive.
+- **1dc8b6f** — migrate Offline/Firestore quota banners to that shared status surface.
+- **e406ba6** — migrate the previously legacy Supabase auth/checking UI onto premium page/glass/field/action/semantic-error primitives.
+- **11c3206** — migrate all three Secondary Analytics legacy opaque card shells to shared report glass while leaving Recharts internals for Phase 7.
+- **ceff46c** — make Header glass consume the shared Phase 5 primary refraction slot without changing Header layout/composition.
+
+Audit findings:
+- Pass 2's count was incomplete because it omitted `App.tsx`: the correct original aurora-class count is **18**, split into **11 eligible kept** and **7 removed**.
+- Remaining raw slate borders/backgrounds are separators, table headers, hover states, loading skeletons, or chart/logo internals rather than missed surface containers.
+- Small local icon/logo gradients remain intentional identity graphics.
+- `StockLogo` remains intentionally excluded; `PremiumMotion` remains frozen; chart plot internals remain Phase 7.
+
+Quality Checks **#587** passed typecheck, tests, and production build on the final Pass 4 code head.
+
+The complete 34-file disposition matrix is maintained in `docs/PHASE5_ADVANCED_EFFECTS_PLAN.md`.
+
+Pass 4 now requires visual validation before the final Phase 5 validation pass begins.
 
 ## Current validated visual rules
 

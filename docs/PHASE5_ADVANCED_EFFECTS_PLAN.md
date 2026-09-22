@@ -304,9 +304,10 @@ These are Phase 5 acceptance rules, not optional optimization suggestions.
 
 ### Continuous-animation budget
 
-- **Zero new infinite animations.**
-- Existing two desktop page auroras are the maximum ambient continuous effects.
-- Existing generic infinite shimmer should be reduced/replaced rather than multiplied.
+- **No broad decorative infinite-animation system.**
+- Existing two desktop page auroras remain the maximum ambient continuous effects.
+- Approved exception: the limited high-value CTA sheen may recur, but only on the explicitly classified eligible CTA set, with a long quiet interval and transform-only sweep.
+- Generic full-button shimmer remains prohibited.
 - Status pulses may remain only where they communicate an actual live/active state.
 
 ### Forbidden expensive patterns
@@ -493,7 +494,7 @@ Quality Checks #551 passed typecheck, tests, and production build after the full
 
 ### Pass 2 — Interaction sheen normalization
 
-**Status: IMPLEMENTED — awaiting visual validation before Pass 3.**
+**Status: REVISED — short hover flash rejected; slow recurring CTA sheen awaiting validation before Pass 3.**
 
 Goal:
 - replace broad continuous shimmer behavior with intentional interaction-triggered sheen.
@@ -509,10 +510,12 @@ Implementation:
 - repository audit found **17** active `premium-shimmer-border` uses;
 - **10** remain on intentional high-value CTAs;
 - **7** were removed from routine Save Changes and warning/danger actions;
-- **e851bca** — replace the old 5.5 s infinite border loop with one semantic hover/focus sweep;
+- **e851bca** — first attempt replaced the old loop with a short hover/focus sweep;
+- user validation rejected that version because it read as a fast flash rather than a premium light sweep;
+- **46e6351** — restore recurrence only on the 10 eligible CTAs using a narrow transform-only light band, ~2 s visible travel inside a 7.2 s cycle, with a long quiet interval;
 - primary, success, and purple CTA families now drive their own sheen colors;
-- touch/mobile keeps the sheen static because the sweep is restricted to fine-pointer hover/focus;
-- reduced-motion keeps the optional sweep disabled;
+- touch/mobile keeps the recurring sweep disabled below the desktop breakpoint;
+- reduced-motion disables the optional recurring sweep;
 - `premium-border-flow` was removed; only the two existing page auroras remain as infinite CSS animations.
 
 Removal commits:
@@ -524,8 +527,8 @@ Removal commits:
 
 Verification:
 - remaining sheen uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
-- stylesheet audit confirms no infinite shimmer remains;
-- Quality Checks #558 passed typecheck, tests, and production build.
+- generic infinite border shimmer remains removed; the only recurring CTA effect is the approved transform-only sheen on the 10 eligible CTAs;
+- Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version; the revised recurring sheen requires fresh CI.
 
 Validation:
 - primary CTA reads as premium without attracting attention when idle;

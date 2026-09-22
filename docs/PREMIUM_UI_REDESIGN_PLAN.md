@@ -54,7 +54,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **In progress — Pass 2 implemented; awaiting sheen validation** |
+| 5 | Advanced effects | **In progress — Pass 2 revised; recurring CTA sheen awaiting validation** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -307,7 +307,7 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
-**Status: IN PROGRESS — Pass 2 implemented; awaiting sheen validation before Pass 3.**
+**Status: IN PROGRESS — Pass 2 revised after validation; recurring CTA sheen awaiting approval before Pass 3.**
 
 Goal: restrained finishing effects after base visuals/motion are stable.
 
@@ -323,7 +323,7 @@ Scope:
 - Existing page ambience may be tuned, but no additional continuous full-page effect layer is planned.
 
 Performance guardrails:
-- Zero new infinite animations.
+- No broad new infinite-animation system; only the explicitly approved limited recurring CTA sheen exception is allowed.
 - No new animated blur/backdrop-filter.
 - No persistent `will-change` / compositor-promotion hacks.
 - No per-row decorative animation on dense tables.

@@ -54,7 +54,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **Plan complete — implementation not started** |
+| 5 | Advanced effects | **In progress — Pass 0 complete; Pass 1 next** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 has been audited and planned; implementation has not started.
+Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 implementation is in progress; its baseline cleanup pass is complete.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -307,7 +307,7 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
-**Status: PLAN COMPLETE — implementation not started.**
+**Status: IN PROGRESS — Pass 0 complete; Pass 1 next.**
 
 Goal: restrained finishing effects after base visuals/motion are stable.
 

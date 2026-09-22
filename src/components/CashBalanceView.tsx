@@ -1139,7 +1139,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="premium-action premium-action-primary premium-shimmer-border px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                  className="premium-action premium-action-primary px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Changes

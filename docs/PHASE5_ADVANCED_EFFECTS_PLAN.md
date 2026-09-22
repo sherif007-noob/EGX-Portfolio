@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 4 implemented and CI-clean; awaiting visual validation before Pass 5.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 4 complete; Pass 5 final validation in progress.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -576,7 +576,7 @@ User validation accepted the Pass 3 semantic/ambient balance. Pass 3 is complete
 
 ### Pass 4 — Full-app coverage sweep
 
-**Status: IMPLEMENTED — CI clean; awaiting visual validation before Pass 5.**
+**Status: COMPLETE.**
 
 The sweep covered **34 render files total**: `src/App.tsx` plus all **33 non-test TSX files** under `src/components`.
 
@@ -650,9 +650,11 @@ Legacy-surface scan result:
 
 Quality Checks **#587** passed typecheck, tests, and production build on the final Pass 4 code head.
 
-Pass 4 is not accepted until the corrected rare/secondary surfaces and overall consistency are visually validated in production.
+User validation accepted the corrected Risk & Cost hierarchy and Pass 4 coverage sweep. Pass 4 is complete.
 
 ### Pass 5 — Final Phase 5 validation
+
+**Status: IN PROGRESS.**
 
 Required:
 - desktop production build;

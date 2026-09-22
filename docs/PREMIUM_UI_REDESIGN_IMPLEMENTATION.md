@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 4 implemented and CI-clean; awaiting visual validation before final Pass 5. |
+| 5 | **In progress** | Pass 4 complete; final Phase 5 validation in progress. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -685,7 +685,7 @@ User validation accepted the semantic/ambient balance and status-motion restrain
 
 ### Phase 5 Pass 4 — full-app coverage sweep
 
-**Status: implemented and CI-clean; awaiting visual validation.**
+**Status: complete.**
 
 The sweep covered `src/App.tsx` plus all **33** non-test component TSX files.
 
@@ -708,7 +708,13 @@ Quality Checks **#587** passed typecheck, tests, and production build on the fin
 
 The complete 34-file disposition matrix is maintained in `docs/PHASE5_ADVANCED_EFFECTS_PLAN.md`.
 
-Pass 4 now requires visual validation before the final Phase 5 validation pass begins.
+User validation accepted the corrected Risk & Cost hierarchy and the full coverage sweep. **Pass 4 is complete.**
+
+### Phase 5 Pass 5 — final validation
+
+**Status: in progress.**
+
+Final validation covers production build health, reduced-motion behavior, mobile/touch degradation, overlay/z-index safety, semantic readability, effect-layer pointer safety, and confirmation that Phase 5 did not alter business logic or chart interpolation ownership.
 
 ## Current validated visual rules
 

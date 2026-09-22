@@ -651,7 +651,7 @@ Implemented:
 - Ten intentional high-value CTA sheen uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
 - The old generic infinite border shimmer remains removed. Recurrence is now intentionally limited to the 10 eligible high-value CTAs and uses transform/opacity rather than continuous background-position motion.
 
-Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version. The revised recurring sheen now requires fresh CI plus visual validation of sweep speed, quiet interval, semantic color, and motion smoothness before Pass 3 begins.
+Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version. Quality Checks #560 passed typecheck, tests, and production build for the revised recurring sheen. Pass 3 remains blocked only on visual validation of sweep speed, quiet interval, semantic color, and motion smoothness.
 
 ## Current validated visual rules
 

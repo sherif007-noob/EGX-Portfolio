@@ -449,7 +449,7 @@ Validation result: Quality Checks #539 passed typecheck, tests, and production b
 
 ### Pass 1 — Static edge light and refraction foundation
 
-**Status: REPRESENTATIVE CHECKPOINT REVISION IMPLEMENTED — initial refraction was judged too subtle; stronger shared primitive awaiting validation.**
+**Status: COMPLETE.**
 
 Goal:
 - obtain most of the Phase 5 quality with static material cues.
@@ -485,9 +485,15 @@ User validation found the first refraction intensity **too subtle**. The archite
 - **5dd2bfa** — brighter static spectral edge rims plus faint static inner cyan/purple falloff on the same four representative surfaces.
 - No new blur, animation, pseudo-element, React wrapper, or broader rollout was introduced.
 
-This checkpoint validates the primitive. It does **not** complete Pass 1 or Phase 5. Do not expand refraction across the component matrix until the stronger representative material treatment is visually accepted.
+User re-validation accepted the stronger material treatment. The approved refraction was then rolled out through shared effect tiers rather than component-by-component classes:
+- **3fb75b8** — map hero, primary, secondary/inset, and overlay surface families to canonical refraction tiers while keeping tables/rows/fields/chart plots at Tier 0.
+- **5e54a17 / 4d66a94 / 522666b / 017bc77** — remove the temporary representative JSX classes so the four checkpoint surfaces inherit from the same shared tier system as the rest of the app.
+
+Quality Checks #551 passed typecheck, tests, and production build after the full shared-tier rollout. Pass 1 is complete.
 
 ### Pass 2 — Interaction sheen normalization
+
+**Status: IN PROGRESS.**
 
 Goal:
 - replace broad continuous shimmer behavior with intentional interaction-triggered sheen.

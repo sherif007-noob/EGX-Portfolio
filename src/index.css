@@ -370,6 +370,30 @@ body {
   backdrop-filter: blur(28px) saturate(160%);
 }
 
+/* Phase 5 shared floating status surface.
+ * Status banners reuse one glass/refraction recipe; semantic variants supply color.
+ */
+.premium-status-surface {
+  --premium-status-rgb: 245 158 11;
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+  position: relative;
+  border: 1px solid rgb(var(--premium-status-rgb) / 0.34);
+  background:
+    linear-gradient(180deg, rgb(var(--premium-status-rgb) / 0.10), transparent 44%),
+    rgba(8, 15, 31, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 52px rgba(0, 0, 0, 0.38),
+    0 0 28px rgb(var(--premium-status-rgb) / 0.10),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+
+.premium-status-warning {
+  --premium-status-rgb: 245 158 11;
+}
+
 .premium-section-enter {
   animation: premium-section-in var(--premium-slow) var(--premium-ease) both;
 }

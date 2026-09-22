@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 3 implemented; awaiting visual validation before Pass 4.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 3 complete; Pass 4 full-app coverage sweep in progress.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -544,7 +544,7 @@ User validation accepted the restored CTA aurora/iridescent border flow. Pass 2 
 
 ### Pass 3 — Semantic and ambient refinement
 
-**Status: IMPLEMENTED — awaiting visual validation before Pass 4.**
+**Status: COMPLETE.**
 
 Goal:
 - normalize semantic halo intensity and page ambience.
@@ -572,9 +572,11 @@ Implemented so far:
 - **eb5bf1a** — make the Price Alerts “Service Worker Auto-Sync” indicator pulse only when notification permission is granted and alert settings are enabled; otherwise it is static/inactive.
 - Quality Checks #577 passed typecheck, tests, and production build on the final Pass 3 code head.
 
-Pass 3 remains open only for visual validation of semantic intensity, ambient balance, and status-motion restraint.
+User validation accepted the Pass 3 semantic/ambient balance. Pass 3 is complete.
 
 ### Pass 4 — Full-app coverage sweep
+
+**Status: IN PROGRESS.**
 
 Use the component matrix above and audit every file, including:
 - secondary modals;

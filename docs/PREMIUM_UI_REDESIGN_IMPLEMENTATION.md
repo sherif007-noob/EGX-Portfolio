@@ -590,7 +590,7 @@ Quality Checks #539 passed typecheck, tests, and production build. Pass 0 is com
 
 ### Phase 5 Pass 1 — representative static-refraction checkpoint
 
-**Status: awaiting user visual validation before rollout.**
+**Status: revised after user validation; stronger representative primitive awaiting re-validation before rollout.**
 
 A reusable static refraction primitive was implemented without adding blur or animation:
 - **3bcee3d** — `premium-refraction` with default, hero, and overlay intensity variants.
@@ -605,6 +605,15 @@ Representative applications only:
 No broader component rollout has occurred yet. This is the planned Checkpoint B: one hero, one report surface, one modal, and one dropdown must be visually accepted on desktop/phone before the shared primitive is expanded to the full coverage matrix.
 
 Quality Checks #544 passed typecheck, tests, and production build.
+
+User feedback: the first static-refraction treatment was **too subtle**. The response was intentionally architectural rather than component-specific:
+- **5dd2bfa** — strengthen the shared refraction token/primitive values only;
+- brighter static 1px spectral rims were added;
+- faint static inner cyan/purple edge falloff was added;
+- the same four representative surfaces remain the only Phase 5 refraction applications;
+- no new blur, animation, pseudo-element, or broader rollout was introduced.
+
+The stronger checkpoint now requires fresh visual approval before Pass 1 expands.
 
 ## Current validated visual rules
 

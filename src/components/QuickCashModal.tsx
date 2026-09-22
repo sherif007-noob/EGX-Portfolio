@@ -34,7 +34,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
     <PremiumModalMotion
       isOpen={isOpen}
       backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-      panelClassName="premium-modal w-full max-w-sm rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+      panelClassName="premium-modal premium-refraction premium-refraction-overlay w-full max-w-sm rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel="Adjust cash reserve"
     >

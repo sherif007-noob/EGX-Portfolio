@@ -627,20 +627,31 @@ Quality Checks #551 passed typecheck, tests, and production build.
 
 **Pass 1 is complete.**
 
-### Phase 5 Pass 2 — shimmer/sheeen audit
+### Phase 5 Pass 2 — shimmer/sheen normalization
 
-**Status: in progress.**
+**Status: implemented; awaiting visual validation before Pass 3.**
 
-A repository audit found **16 active `premium-shimmer-border` uses**. They divide into:
+A repository audit found **17 active `premium-shimmer-border` uses**. They divide into:
 - eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
 - routine edit/save actions that should not shimmer;
 - warning/danger actions that must keep their amber/rose semantics rather than receive generic cyan/purple sheen.
 
-Pass 2 will:
-- remove infinite generic shimmer;
-- replace it with one restrained hover/focus sweep;
-- make the sweep semantic to the action family;
-- remove the shimmer class from routine Save Changes and warning/danger controls.
+Implemented:
+- **e851bca** — remove the 5.5 s infinite generic shimmer and replace it with one restrained semantic hover/focus sweep.
+- Primary, success, and purple CTA families now use their own sheen colors.
+- Mobile/touch receives no hover sweep; reduced-motion disables the optional sweep.
+- Seven inappropriate uses were removed:
+  - **50c79f4** — Journal routine Save Changes.
+  - **a170f33 / 3e74738 / 109d81b** — Cash audited warning, withdrawal danger, and routine edit save.
+  - **204da43** — Edit Position routine target save.
+  - **0bb93b1** — Sell confirmation warning.
+  - **7992b78** — Delete confirmation danger.
+- Ten intentional high-value CTA sheen uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
+- CSS verification shows only two infinite animations remain in `index.css`: the existing page auroras. No infinite shimmer remains.
+
+Quality Checks #558 passed typecheck, tests, and production build.
+
+Pass 2 now requires visual validation of idle subtlety, sweep visibility, semantic color, and motion smoothness before Pass 3 begins.
 
 ## Current validated visual rules
 

@@ -53,8 +53,8 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3 | Component migration | Complete; validation ongoing |
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
-| 4 | Motion & micro-interactions | **In progress — v3 Motion-for-React pass awaiting visual validation** |
-| 5 | Advanced effects | Not started |
+| 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
+| 5 | Advanced effects | **Next** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-After Phase 4 is completed, **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11.
+Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 is next.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -155,7 +155,7 @@ Acceptance:
 
 ## Phase 4 — Motion & micro-interactions
 
-**Status: IN PROGRESS.**
+**Status: COMPLETE.**
 
 The accepted Phase 4 direction is a shared five-family motion language implemented with **Motion for React** for lifecycle presence. Browser View Transition snapshots and timer-driven React tree swaps are retired. CSS owns tactile micro-interactions only; Recharts owns financial-series interpolation. The detailed v3 implementation plan lives in **PHASE4_MOTION_REIMPLEMENTATION_PLAN.md**.
 
@@ -255,7 +255,8 @@ Intent:
 
 Target timing:
 - Main and secondary chart data transition: approximately **500–520 ms** for ordinary ranges.
-- Transitions crossing the 1W boundary use a localized complete-chart crossfade so axes/domain/path change together without resampling financial observations.
+- 1W crossings preserve the complete outgoing/incoming profile inside the existing Recharts interpolation path so short weekly datasets do not collapse the visible curve at animation start.
+- Main-tab entry defers mounting animated chart canvases until the incoming tab transition completes, preventing page motion and chart animation from competing for the desktop render/compositor budget.
 - Tooltip motion remains short enough to track the pointer.
 
 ### Phase 4 user-validation requirements
@@ -293,6 +294,16 @@ Acceptance:
 - Today and non-Today chart transitions feel like one system.
 - Reduced-motion removes nonessential animation.
 - Quality Checks pass and no visual-motion change introduces a functional regression.
+
+### Phase 4 completion note
+
+Phase 4 is accepted as complete after desktop and phone validation. The remaining desktop stutter is minor and no longer blocks the redesign. Further motion/performance tuning is explicitly deferred to **Phase 11 — Performance, accessibility & regression QA**, where it can be profiled against the final visual system after Phases 5–10.
+
+The final desktop performance refinements include:
+- avoiding simultaneous desktop + mobile position-tree rendering;
+- memoizing heavy persistent/report/chart surfaces and derived position/report work;
+- keeping historical analytics warm across tab changes;
+- deferring expensive Recharts canvas mounting until the incoming Overview/Reports tab transition has actually completed rather than using a guessed timeout.
 
 ## Phase 5 — Advanced effects
 
@@ -413,4 +424,11 @@ Acceptance:
 
 ## Change control
 
-Update this plan whenever a phase is re-scoped, inserted, split, paused, or completed. Record actual implementation history in **PREMIUM_UI_REDESIGN_IMPLEMENTATION.md**.
+Documentation updates are part of the implementation workflow, not a separate cleanup task. Update this plan and the implementation log in the same work pass whenever:
+- a phase starts, completes, pauses, or changes scope;
+- acceptance criteria or visual rules change;
+- a workaround/rollback becomes the accepted direction;
+- performance or regression debt is intentionally deferred;
+- a new representative implementation milestone is committed.
+
+Record actual implementation history in **PREMIUM_UI_REDESIGN_IMPLEMENTATION.md** without waiting for a separate documentation request.

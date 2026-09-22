@@ -106,8 +106,17 @@
    * New advanced effects must consume/extend these primitives instead of
    * introducing component-local glow/shimmer/ambient recipes.
    */
-  --premium-effect-ambient-blur: 72px;
-  --premium-effect-ambient-opacity: 0.82;
+  --premium-effect-ambient-blur: 76px;
+  --premium-effect-ambient-opacity: 0.74;
+
+  --premium-semantic-win-rgb: 16 185 129;
+  --premium-semantic-win-deep-rgb: 5 150 105;
+  --premium-semantic-loss-rgb: 244 63 94;
+  --premium-semantic-loss-deep-rgb: 225 29 72;
+  --premium-semantic-breakeven-rgb: 245 158 11;
+  --premium-semantic-breakeven-deep-rgb: 217 119 6;
+  --premium-semantic-buy-rgb: 59 130 246;
+  --premium-semantic-buy-deep-rgb: 37 99 235;
   --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
   --premium-effect-radial-hover-opacity: 0.62;
   --premium-effect-aurora-blue: rgba(59, 130, 246, 0.28);
@@ -388,12 +397,12 @@ body {
 
 @keyframes premium-aurora-a {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(2.5rem, 1rem, 0) scale(1.08); }
+  to { transform: translate3d(1.6rem, 0.65rem, 0) scale(1.04); }
 }
 
 @keyframes premium-aurora-b {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-2rem, -1rem, 0) scale(1.06); }
+  to { transform: translate3d(-1.4rem, -0.6rem, 0) scale(1.035); }
 }
 
 @media (max-width: 767px) {
@@ -729,19 +738,45 @@ body {
 }
 
 
-/* Pass 3.2 / Phase 5 canonical semantic card halos.
- * Per-state classes only provide semantic values; the halo recipe is shared.
+/* Phase 5 canonical semantic halo system.
+ * The semantic family supplies color; the surface hierarchy supplies intensity.
+ * Dense desktop rows stay edge-coded rather than receiving a card halo.
  */
+.premium-glow-win,
+.premium-state-win {
+  --premium-semantic-rgb: var(--premium-semantic-win-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-win-deep-rgb);
+}
+
+.premium-glow-loss,
+.premium-state-loss {
+  --premium-semantic-rgb: var(--premium-semantic-loss-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-loss-deep-rgb);
+}
+
+.premium-glow-breakeven,
+.premium-state-breakeven {
+  --premium-semantic-rgb: var(--premium-semantic-breakeven-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-breakeven-deep-rgb);
+}
+
+.premium-glow-buy,
+.premium-state-buy {
+  --premium-semantic-rgb: var(--premium-semantic-buy-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-buy-deep-rgb);
+}
+
+/* Primary semantic cards. */
 .premium-card.premium-glow-buy,
 .premium-card.premium-glow-win,
 .premium-card.premium-glow-loss,
 .premium-card.premium-glow-breakeven {
-  border-color: var(--premium-semantic-border);
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha, 0.44));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.065),
     0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 30px var(--premium-semantic-glow-near),
-    0 0 var(--premium-semantic-far-radius, 68px) var(--premium-semantic-glow-far),
+    0 0 30px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha, 0.18)),
+    0 0 var(--premium-semantic-far-radius, 68px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha, 0.075)),
     var(--premium-refraction-shadow, 0 0 0 transparent);
   transition:
     transform var(--premium-medium) var(--premium-ease),
@@ -750,42 +785,16 @@ body {
     background var(--premium-medium) var(--premium-ease);
 }
 
-.premium-card.premium-glow-buy {
-  --premium-semantic-border: rgba(59, 130, 246, 0.52);
-  --premium-semantic-glow-near: rgba(59, 130, 246, 0.22);
-  --premium-semantic-glow-far: rgba(37, 99, 235, 0.10);
-  --premium-semantic-hover-border: rgba(96, 165, 250, 0.72);
-  --premium-semantic-hover-near: rgba(59, 130, 246, 0.30);
-  --premium-semantic-hover-far: rgba(37, 99, 235, 0.14);
-}
-
-.premium-card.premium-glow-win {
-  --premium-semantic-border: rgba(16, 185, 129, 0.48);
-  --premium-semantic-glow-near: rgba(16, 185, 129, 0.21);
-  --premium-semantic-glow-far: rgba(5, 150, 105, 0.095);
-  --premium-semantic-hover-border: rgba(52, 211, 153, 0.68);
-  --premium-semantic-hover-near: rgba(16, 185, 129, 0.29);
-  --premium-semantic-hover-far: rgba(5, 150, 105, 0.13);
-}
-
-.premium-card.premium-glow-loss {
-  --premium-semantic-border: rgba(244, 63, 94, 0.5);
-  --premium-semantic-glow-near: rgba(244, 63, 94, 0.21);
-  --premium-semantic-glow-far: rgba(225, 29, 72, 0.095);
-  --premium-semantic-hover-border: rgba(251, 113, 133, 0.70);
-  --premium-semantic-hover-near: rgba(244, 63, 94, 0.29);
-  --premium-semantic-hover-far: rgba(225, 29, 72, 0.13);
-}
-
-.premium-card.premium-glow-breakeven {
-  --premium-semantic-border: rgba(245, 158, 11, 0.46);
-  --premium-semantic-glow-near: rgba(245, 158, 11, 0.19);
-  --premium-semantic-glow-far: rgba(217, 119, 6, 0.085);
-  --premium-semantic-far-radius: 66px;
-  --premium-semantic-hover-border: rgba(251, 191, 36, 0.66);
-  --premium-semantic-hover-near: rgba(245, 158, 11, 0.27);
-  --premium-semantic-hover-far: rgba(217, 119, 6, 0.12);
-  --premium-semantic-hover-far-radius: 82px;
+/* Hero semantic cards are intentionally the strongest financial-state halo. */
+.premium-hero-card {
+  --premium-semantic-border-alpha: 0.52;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.095;
+  --premium-semantic-far-radius: 72px;
+  --premium-semantic-hover-border-alpha: 0.70;
+  --premium-semantic-hover-near-alpha: 0.30;
+  --premium-semantic-hover-far-alpha: 0.135;
+  --premium-semantic-hover-far-radius: 86px;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -793,51 +802,47 @@ body {
   .premium-card.premium-glow-win:hover,
   .premium-card.premium-glow-loss:hover,
   .premium-card.premium-glow-breakeven:hover {
-    border-color: var(--premium-semantic-hover-border);
+    border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-hover-border-alpha, 0.62));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       0 22px 52px rgba(0, 0, 0, 0.32),
-      0 0 38px var(--premium-semantic-hover-near),
-      0 0 var(--premium-semantic-hover-far-radius, 84px) var(--premium-semantic-hover-far),
+      0 0 38px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-hover-near-alpha, 0.25)),
+      0 0 var(--premium-semantic-hover-far-radius, 84px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-hover-far-alpha, 0.11)),
       var(--premium-refraction-shadow, 0 0 0 transparent);
   }
 }
 
-/* Desktop position table gets the same semantic state without turning rows into cards. */
+/* Desktop table semantics remain edge-only and use the same semantic palette. */
 .premium-row-win {
-  box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.62);
+  --premium-row-semantic-rgb: var(--premium-semantic-win-rgb);
 }
 .premium-row-loss {
-  box-shadow: inset 3px 0 0 rgba(244, 63, 94, 0.62);
+  --premium-row-semantic-rgb: var(--premium-semantic-loss-rgb);
 }
 .premium-row-breakeven {
-  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.58);
+  --premium-row-semantic-rgb: var(--premium-semantic-breakeven-rgb);
 }
 
+.premium-row-win,
+.premium-row-loss,
+.premium-row-breakeven {
+  box-shadow: inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.60);
+}
 
 @media (hover: hover) and (pointer: fine) {
-  .premium-table-shell tbody tr.premium-row-win:hover {
-    box-shadow:
-      inset 3px 0 0 rgba(52, 211, 153, 0.82),
-      inset 14px 0 28px rgba(16, 185, 129, 0.055);
-  }
-
-  .premium-table-shell tbody tr.premium-row-loss:hover {
-    box-shadow:
-      inset 3px 0 0 rgba(251, 113, 133, 0.84),
-      inset 14px 0 28px rgba(244, 63, 94, 0.055);
-  }
-
+  .premium-table-shell tbody tr.premium-row-win:hover,
+  .premium-table-shell tbody tr.premium-row-loss:hover,
   .premium-table-shell tbody tr.premium-row-breakeven:hover {
     box-shadow:
-      inset 3px 0 0 rgba(251, 191, 36, 0.78),
-      inset 14px 0 28px rgba(245, 158, 11, 0.05);
+      inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.80),
+      inset 14px 0 28px rgb(var(--premium-row-semantic-rgb) / 0.05);
   }
 }
 
 
 /* -------------------------------------------------------------------------- */
 /* Phase 4 — premium motion & micro-interaction system                         */
+                         */
 /* -------------------------------------------------------------------------- */
 :root {
   --motion-instant: 110ms;
@@ -1134,18 +1139,18 @@ body {
 }
 
 
-/* Reports semantic state glows — canonical compact halo recipe. */
+/* Compact semantic states use the same palette at lower intensity. */
 .premium-state-win,
 .premium-state-loss,
 .premium-state-breakeven,
 .premium-state-buy {
   position: relative;
-  border-color: var(--premium-state-border) !important;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-state-border-alpha, 0.34)) !important;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.055),
     0 10px 26px rgba(0,0,0,0.22),
-    0 0 24px var(--premium-state-glow-near),
-    0 0 var(--premium-state-far-radius, 54px) var(--premium-state-glow-far),
+    0 0 24px rgb(var(--premium-semantic-rgb) / var(--premium-state-near-alpha, 0.11)),
+    0 0 var(--premium-state-far-radius, 54px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha, 0.05)),
     var(--premium-refraction-shadow, 0 0 0 transparent);
   transition:
     border-color var(--premium-medium) var(--premium-ease),
@@ -1153,29 +1158,13 @@ body {
     transform var(--premium-medium) var(--premium-ease);
 }
 
-.premium-state-win {
-  --premium-state-border: rgba(16, 185, 129, 0.44);
-  --premium-state-glow-near: rgba(16,185,129,0.16);
-  --premium-state-glow-far: rgba(5,150,105,0.075);
-}
-
-.premium-state-loss {
-  --premium-state-border: rgba(244, 63, 94, 0.46);
-  --premium-state-glow-near: rgba(244,63,94,0.17);
-  --premium-state-glow-far: rgba(225,29,72,0.08);
-}
-
-.premium-state-breakeven {
-  --premium-state-border: rgba(245, 158, 11, 0.42);
-  --premium-state-glow-near: rgba(245,158,11,0.15);
-  --premium-state-glow-far: rgba(217,119,6,0.07);
-  --premium-state-far-radius: 52px;
-}
-
-.premium-state-buy {
-  --premium-state-border: rgba(59, 130, 246, 0.44);
-  --premium-state-glow-near: rgba(59,130,246,0.16);
-  --premium-state-glow-far: rgba(37,99,235,0.075);
+/* Report/dashboard hero semantics align to the hero-card hierarchy. */
+.premium-hero-metric,
+.premium-report-hero {
+  --premium-state-border-alpha: 0.50;
+  --premium-state-near-alpha: 0.19;
+  --premium-state-far-alpha: 0.085;
+  --premium-state-far-radius: 66px;
 }
 
 @media (hover: hover) and (pointer: fine) {

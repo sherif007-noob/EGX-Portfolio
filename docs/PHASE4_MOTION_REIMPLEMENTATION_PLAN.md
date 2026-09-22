@@ -1,5 +1,13 @@
 # Phase 4 Motion Reimplementation Plan
 
+**Status: COMPLETE — historical reference only.**
+
+This file is a Phase-4-specific architectural record, not an active redesign roadmap. The active sources of truth are:
+- `PREMIUM_UI_REDESIGN_PLAN.md` for current roadmap/scope;
+- `PREMIUM_UI_REDESIGN_IMPLEMENTATION.md` for accepted implementation history.
+
+Some timings and intermediate architectural choices below describe the reimplementation process and may be superseded by the final accepted Phase 4 state recorded in the implementation log.
+
 ## Why Phase 4 is being rebuilt again
 
 The first Phase 4 pass made motion noticeable but inconsistent and too fast.  

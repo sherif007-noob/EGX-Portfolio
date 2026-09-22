@@ -54,8 +54,8 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **In progress — final validation pass** |
-| 6 | Mobile / responsive refinement | Not started |
+| 5 | Advanced effects | **Complete** |
+| 6 | Mobile / responsive refinement | **Next** |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 implementation is in progress; its baseline cleanup pass is complete.
+Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 — Mobile / responsive refinement — is next.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -307,11 +307,11 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
-**Status: IN PROGRESS — Pass 4 complete; final validation pass in progress.**
+**Status: COMPLETE — validated.**
 
 Goal: restrained finishing effects after base visuals/motion are stable.
 
-The detailed audited execution plan lives in **docs/PHASE5_ADVANCED_EFFECTS_PLAN.md**.
+The detailed Phase 5 plan is preserved in **docs/PHASE5_ADVANCED_EFFECTS_PLAN.md** as a historical architecture/validation record.
 
 Phase 5 is deliberately system-first. The audit covers `src/App.tsx`, all 33 non-test TSX component files under `src/components`, and the accumulated premium-effect rules in `src/index.css`. Implementation must use the documented full-component coverage matrix rather than stopping after the main screens look correct.
 

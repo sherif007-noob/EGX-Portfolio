@@ -857,6 +857,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </AnalyticsEmptyState>
       ) : (
         <div className="h-64 sm:h-72">
+          {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
             <AreaChart
               data={chartData}
@@ -894,6 +895,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               {renderSecondaryLine()}
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </div>
       )}
 

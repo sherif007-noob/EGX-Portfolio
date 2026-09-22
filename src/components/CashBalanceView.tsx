@@ -873,7 +873,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               id="submit-withdraw-btn"
               type="submit"
               disabled={parseFloat(withdrawAmount) > cashBalance || !parseFloat(withdrawAmount)}
-              className="premium-action premium-action-danger premium-shimmer-border w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
+              className="premium-action premium-action-danger w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
             >
               <ArrowUpRight className="w-4 h-4" />
               Confirm Cash Withdrawal

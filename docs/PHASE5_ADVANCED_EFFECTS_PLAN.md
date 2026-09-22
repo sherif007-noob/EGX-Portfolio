@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Passes 0–2 complete; Pass 3 semantic & ambient refinement next.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 3 semantic & ambient refinement in progress.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -544,7 +544,7 @@ User validation accepted the restored CTA aurora/iridescent border flow. Pass 2 
 
 ### Pass 3 — Semantic and ambient refinement
 
-**Status: NEXT — implementation not started.**
+**Status: IN PROGRESS.**
 
 Goal:
 - normalize semantic halo intensity and page ambience.
@@ -560,6 +560,17 @@ Rules:
 - no pulsing financial state;
 - no new page blob;
 - dense rows stay edge-coded.
+
+Implemented so far:
+- **418870d** — introduce one canonical semantic win/loss/breakeven/buy palette and make halo intensity hierarchy-driven instead of independently tuned per semantic family.
+- Hero cards now own the strongest semantic halo; primary semantic cards are one tier lower; compact report/subpanel states are lower again; desktop table rows remain edge-only.
+- Report hero/hero-metric semantic intensity now explicitly aligns with the dashboard hero hierarchy.
+- Existing page ambience was calmed without adding layers: blur increased from 72px to 76px, opacity reduced from 0.82 to 0.74, and both desktop aurora travel/scale amplitudes were reduced.
+- **30e1f3a** — stop pulsing the complete Offline banner; only the offline icon carries status motion.
+- **76c584a** — remove decorative always-on header ping and stop pulsing the full expired-Sheets button; only the actionable warning icon pulses.
+- Session-active, syncing/spinner, unread-alert, target-hit, and stop-loss motion remain because they represent actual live/actionable state.
+
+Pass 3 remains open pending CI and visual validation of semantic intensity/ambient balance.
 
 ### Pass 4 — Full-app coverage sweep
 

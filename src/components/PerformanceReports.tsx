@@ -179,7 +179,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         entranceReady={chartsReady}
       />
 
-      <div className="premium-report-glass premium-radial premium-refraction rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="premium-report-glass premium-radial rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10">

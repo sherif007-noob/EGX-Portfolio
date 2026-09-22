@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **Next** | Advanced effects. |
+| 5 | **Plan complete** | Full-app advanced-effects audit completed; implementation has not started. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -538,6 +538,41 @@ User validation accepted the current motion/performance balance as good enough t
 **Phase 4 is complete.** Further PC motion/compositor optimization is intentionally deferred to **Phase 11**, after advanced effects, chart polish, header work, and the final consistency sweep establish the actual final rendering workload.
 
 The next planned stage is **Phase 5 — Advanced effects**.
+
+## Phase 5 — Advanced-effects audit and planning
+
+**Implementation status: not started.**
+
+Before any Phase 5 styling was changed, a full-app audit and detailed execution plan were completed to avoid the coverage and architecture problems encountered in earlier phases.
+
+Audit scope:
+- `src/App.tsx`;
+- all 33 non-test TSX files under `src/components`;
+- `src/index.css`;
+- chart/report visual boundaries;
+- current Phase 4 performance constraints.
+
+Key findings:
+- Phase 5 is not starting from zero: the app already has page auroras, `premium-radial`, an infinite `premium-shimmer-border`, semantic win/loss/breakeven/buy glows, multi-layer glass shadows, and custom modal/dropdown/report surfaces.
+- The stylesheet has accumulated multiple historical generations of premium rules, so adding another bottom-of-file override system would repeat earlier cascade problems.
+- The existing generic shimmer runs continuously on desktop and appears across many buttons/modal-related surfaces, making shimmer normalization a cleanup/refinement task rather than an opportunity to add more looping animation.
+- The accepted Phase 4 desktop baseline still has minor residual stutter, so Phase 5 must use a strict compositor/effect budget.
+
+The accepted Phase 5 architecture:
+- retain at most the existing two continuous page-ambient elements;
+- make static edge light/glass refraction the primary finishing effect;
+- move sheen toward limited hover/focus-triggered use instead of continuous generic shimmer;
+- keep semantic halo tied to real financial/system meaning;
+- use shared effect-intensity tiers so dense tables/inputs/charts do not receive the same treatment as hero/floating surfaces;
+- explicitly audit every component before Phase 5 can be marked complete.
+
+A mandatory component coverage matrix and staged validation gates are documented in:
+- **docs/PHASE5_ADVANCED_EFFECTS_PLAN.md**
+
+Planning commit:
+- **4233cb8** — add audited Phase 5 advanced-effects plan.
+
+No Phase 5 CSS/component implementation was performed during this planning pass.
 
 ## Current validated visual rules
 

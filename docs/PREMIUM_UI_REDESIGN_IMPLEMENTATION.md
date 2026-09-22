@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 0 complete; Pass 1 representative refraction checkpoint implemented and awaiting visual validation. |
+| 5 | **In progress** | Pass 0–1 complete; Pass 2 interaction sheen normalization in progress. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -614,6 +614,33 @@ User feedback: the first static-refraction treatment was **too subtle**. The res
 - no new blur, animation, pseudo-element, or broader rollout was introduced.
 
 The stronger checkpoint now requires fresh visual approval before Pass 1 expands.
+
+### Phase 5 Pass 1 completion
+
+The strengthened refraction checkpoint was visually accepted.
+
+Full rollout was then performed through shared surface roles rather than manual JSX decoration:
+- **3fb75b8** — canonical refraction tiers for hero, primary, secondary/inset, and overlay surfaces; data-dense tables/rows/fields/chart plots remain Tier 0.
+- **5e54a17 / 4d66a94 / 522666b / 017bc77** — remove temporary checkpoint-only classes from the representative hero/report/modal/dropdown surfaces so they inherit the shared system.
+
+Quality Checks #551 passed typecheck, tests, and production build.
+
+**Pass 1 is complete.**
+
+### Phase 5 Pass 2 — shimmer/sheeen audit
+
+**Status: in progress.**
+
+A repository audit found **16 active `premium-shimmer-border` uses**. They divide into:
+- eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
+- routine edit/save actions that should not shimmer;
+- warning/danger actions that must keep their amber/rose semantics rather than receive generic cyan/purple sheen.
+
+Pass 2 will:
+- remove infinite generic shimmer;
+- replace it with one restrained hover/focus sweep;
+- make the sweep semantic to the action family;
+- remove the shimmer class from routine Save Changes and warning/danger controls.
 
 ## Current validated visual rules
 

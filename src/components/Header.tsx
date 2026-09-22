@@ -117,10 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <div className="premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
-              <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
+              <span className="absolute -bottom-1 -right-1 inline-flex h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.32)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -183,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenGoogleSheets}
               className={`premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                 isTokenExpired
-                  ? 'premium-action-warning animate-pulse'
+                  ? 'premium-action-warning'
                   : isSheetsConnected
                   ? 'premium-action-success'
                   : ''
@@ -191,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
               title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
             >
               {isTokenExpired ? (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
               ) : (
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
               )}

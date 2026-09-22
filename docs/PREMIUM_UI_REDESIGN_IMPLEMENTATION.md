@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 4 complete; final Phase 5 validation in progress. |
+| 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -712,9 +712,24 @@ User validation accepted the corrected Risk & Cost hierarchy and the full covera
 
 ### Phase 5 Pass 5 — final validation
 
-**Status: in progress.**
+**Status: complete.**
 
-Final validation covers production build health, reduced-motion behavior, mobile/touch degradation, overlay/z-index safety, semantic readability, effect-layer pointer safety, and confirmation that Phase 5 did not alter business logic or chart interpolation ownership.
+Final validation results:
+- Quality Checks **#592** passed typecheck, tests, and production build.
+- Compare against the pre-Phase-5 head shows presentation-only scope: docs, `src/index.css`, and UI component files only; no service/accounting/persistence/type/data-engine files changed.
+- No chart interpolation implementation changed. The only chart-component Phase 5 code change was the Secondary Analytics **outer shell class hierarchy**.
+- Continuous animation is limited to the two existing page auroras plus the explicitly approved high-value CTA aurora-border loop.
+- Both page ambience and CTA aurora loops require desktop width and `prefers-reduced-motion: no-preference`; reduced motion disables them.
+- Mobile disables radial hover lighting and uses reduced static blur/depth.
+- Phase 5 effect pseudo-elements are pointer-transparent.
+- No persistent `will-change` or compositor-promotion hack was introduced.
+- Open dropdown parents retain explicit z-index/overflow elevation rules.
+- Semantic P&L state remains non-pulsing; remaining status motion maps to actual live/actionable state.
+- User visual validation accepted refraction strength, CTA aurora flow, semantic/ambient balance, the 34-file coverage corrections, and the final Risk & Cost card hierarchy.
+
+**Phase 5 is complete.**
+
+The Phase 5 detailed plan is now historical. Phase 6 — Mobile / responsive refinement — is next.
 
 ## Current validated visual rules
 

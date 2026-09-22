@@ -54,6 +54,7 @@ import { runVisualTransition } from './utils/visualTransition';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+  const [settledTab, setSettledTab] = useState<NavigationTab>('overview');
 
   const handleTabChange = (nextTab: NavigationTab) => {
     if (nextTab === activeTab) return;
@@ -69,6 +70,7 @@ export default function App() {
       return;
     }
 
+    setSettledTab(nextTab);
     update();
   };
 
@@ -975,7 +977,14 @@ export default function App() {
         )}
 
         {/* Tab Content Panels */}
-        <MotionSwap motionKey={activeTab} variant="tab" className="premium-tab-stage">
+        <MotionSwap
+          motionKey={activeTab}
+          variant="tab"
+          className="premium-tab-stage"
+          onEnterComplete={(completedTab) => {
+            if (completedTab === activeTab) setSettledTab(activeTab);
+          }}
+        >
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="space-y-3">
@@ -1013,6 +1022,7 @@ export default function App() {
               historicalPrices={historicalPriceSeries}
               capitalDeposits={capitalDeposits}
               historicalLoading={historicalAnalyticsLoading}
+              entranceReady={settledTab === activeTab}
             />
           </div>
         )}
@@ -1075,6 +1085,7 @@ export default function App() {
             transactions={transactions}
             historicalPrices={historicalPriceSeries}
             historicalLoading={historicalAnalyticsLoading}
+            chartsReady={settledTab === activeTab}
           />
         )}
 

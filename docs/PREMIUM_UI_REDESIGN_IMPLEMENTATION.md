@@ -27,8 +27,9 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3 | Complete / validating | Full component migration performed. |
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
-| 4 | **In progress** | v3 Motion-for-React lifecycle rebuild implemented; awaiting phone/desktop visual validation. |
-| 5–11 | Not started | See plan. |
+| 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
+| 5 | **Next** | Advanced effects. |
+| 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
 
@@ -509,7 +510,34 @@ Representative commits:
 
 The transition choreography, chart interpolation, phone behavior, and row/control micro-interactions are unchanged.
 
-Phase 4 remains **in progress** pending desktop visual/performance validation.
+### Final desktop pass and chart-entry scheduling
+
+The final Phase 4 desktop pass focused on the remaining stutter entering **Overview**, **Open Positions**, and **Reports** without weakening the approved choreography.
+
+Implemented:
+- desktop PositionsTable no longer renders the complete desktop table and complete mobile card tree at the same time;
+- position filtering/sector derivation and repeated currency formatting were moved off the hot path where practical;
+- historical analytics stay warm across tab switches instead of clearing/refetching solely because the active tab changed;
+- persistent summary/report/chart surfaces were memoized to avoid unrelated App updates rerendering large trees;
+- the market-sync UI callback was stabilized so memoization remains effective;
+- animated Recharts canvases in Overview/Reports are deferred until the incoming main-tab Motion transition reports completion, so tab motion and graph animation no longer compete at the same time.
+
+Representative commits:
+- **fe11ec8** — avoid duplicate position layouts on desktop.
+- **5c4e668** — keep historical analytics warm across tab switches.
+- **7e4474d / 30a5cee / 639576f / 325f609 / f72a1da / 918fa3f** — memoize persistent summary/report/chart surfaces.
+- **9279682 / cba4a4b / b478ed5** — expose actual tab-motion completion and defer chart canvases until the tab settles.
+- **13a4012 / f2fe4ad / 7926a39** — extend the same deferred-canvas behavior across report and secondary analytics charts.
+
+Quality Checks passed typecheck, tests, and production build for the final chart-entry scheduling pass.
+
+### Phase 4 completion
+
+User validation accepted the current motion/performance balance as good enough to move forward. Motion is not perfectly stutter-free on desktop, but the remaining hitch is minor and is no longer a blocker.
+
+**Phase 4 is complete.** Further PC motion/compositor optimization is intentionally deferred to **Phase 11**, after advanced effects, chart polish, header work, and the final consistency sweep establish the actual final rendering workload.
+
+The next planned stage is **Phase 5 — Advanced effects**.
 
 ## Current validated visual rules
 
@@ -531,11 +559,13 @@ Every visual phase should continue to pass the repository’s existing typecheck
 
 ## Updating this log
 
-When a phase is completed:
+Documentation is maintained continuously with implementation work. Do not wait for a separate user request.
 
-1. Update the status table.
+Whenever a phase or meaningful pass changes the accepted design state:
+1. Update the status table immediately.
 2. Summarize actual implementation, not only intended scope.
 3. Add representative commit SHAs.
-4. Record any approved visual-only exception/restoration.
+4. Record any approved visual-only exception, rollback, restoration, or deferred debt.
 5. Record user-validation findings that changed implementation.
-6. Do not mark a phase complete until the plan acceptance criteria are met.
+6. Keep the roadmap/next-phase state synchronized with the plan.
+7. Do not mark a phase complete until the plan acceptance criteria are met.

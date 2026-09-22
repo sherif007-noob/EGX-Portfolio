@@ -449,7 +449,7 @@ Validation result: Quality Checks #539 passed typecheck, tests, and production b
 
 ### Pass 1 — Static edge light and refraction foundation
 
-**Status: REPRESENTATIVE CHECKPOINT IMPLEMENTED — awaiting visual validation before expansion.**
+**Status: REPRESENTATIVE CHECKPOINT REVISION IMPLEMENTED — initial refraction was judged too subtle; stronger shared primitive awaiting validation.**
 
 Goal:
 - obtain most of the Phase 5 quality with static material cues.
@@ -481,7 +481,11 @@ Validation checkpoint before expansion:
 
 Quality Checks #544 passed typecheck, tests, and production build for the representative checkpoint.
 
-This checkpoint validates the primitive. It does **not** complete Pass 1 or Phase 5. Do not expand refraction across the component matrix until the representative material treatment is visually accepted.
+User validation found the first refraction intensity **too subtle**. The architecture was kept unchanged and the shared primitive was strengthened centrally rather than editing individual components:
+- **5dd2bfa** — brighter static spectral edge rims plus faint static inner cyan/purple falloff on the same four representative surfaces.
+- No new blur, animation, pseudo-element, React wrapper, or broader rollout was introduced.
+
+This checkpoint validates the primitive. It does **not** complete Pass 1 or Phase 5. Do not expand refraction across the component matrix until the stronger representative material treatment is visually accepted.
 
 ### Pass 2 — Interaction sheen normalization
 

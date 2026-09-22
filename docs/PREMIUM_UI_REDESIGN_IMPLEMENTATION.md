@@ -29,7 +29,8 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6–11 | Not started | See plan. |
+| 6 | **Plan complete** | Full 34-file responsive audit complete; implementation has not started. |
+| 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
 
@@ -730,6 +731,45 @@ Final validation results:
 **Phase 5 is complete.**
 
 The Phase 5 detailed plan is now historical. Phase 6 — Mobile / responsive refinement — is next.
+
+## Phase 6 — Responsive audit and planning
+
+**Status: plan complete; implementation has not started.**
+
+Detailed plan:
+- **8662376** — add `docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md`.
+
+Audit coverage:
+- `src/App.tsx` plus all **33** non-test component TSX files;
+- current responsive/media-query layer in `src/index.css`;
+- persistent shell, fixed notifications/status, modal/overlay families, filters/selectors, tables, report surfaces, shared controls, and chart shells.
+
+Key findings:
+- **Touch target debt:** many shared actions/nav/filter/segment/icon controls are around 30–34px high on mobile. `NumberStepperInput` is especially problematic because its 32px-wide side control is split into two very small buttons. `DateInput` also has a compact calendar trigger.
+- **Modal viewport inconsistency:** some complex modals are already scroll-safe, but the long Portfolio Backup modal has no outer scroll/max-height contract. Several shorter modals also rely on content fitting the viewport rather than a shared `dvh` safety rule.
+- **Fixed overlay risk:** App undo/toast surfaces and Offline/Firestore status surfaces are fixed to screen corners without a shared mobile max-width/safe-area contract.
+- **Minimum-width pressure:** Closed Cycles, Positions, Directory, Journal, and report selectors use fixed minimum widths that can become awkward inside 320px padded containers.
+- **Report/chart mobile contract:** chart series themselves are out of scope, but tooltip minimum widths, timeframe/selector target sizes, fixed chart heights, and report action groups require responsive refinement.
+- **Existing strengths:** Positions already has explicit desktop/mobile rendering, several modal families are already scroll-safe, report/cash tables already use horizontal overflow shells, and many forms/grids already stack correctly.
+- **CSS gap:** existing `max-width: 767px` media rules mostly tune glass/motion cost; there is no canonical coarse-pointer touch-target layer, modal viewport primitive, or fixed-overlay width primitive yet.
+
+Planned passes:
+1. responsive primitives and safety baseline;
+2. persistent shell/app chrome;
+3. core data tabs;
+4. full modal/overlay family;
+5. reports/chart shells;
+6. shared controls/rare states;
+7. full 34-file responsive validation.
+
+Hard boundaries:
+- navigation architecture remains Phase 6.5;
+- chart visual redesign/interpolation remains Phase 7;
+- final hierarchy remains Phase 8;
+- final header composition remains Phase 9;
+- no business/accounting/persistence/data-engine changes.
+
+No Phase 6 implementation code was changed during this audit/planning pass.
 
 ## Current validated visual rules
 

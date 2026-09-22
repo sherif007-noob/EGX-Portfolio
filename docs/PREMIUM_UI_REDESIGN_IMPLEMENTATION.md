@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 0–1 complete; Pass 2 CTA aurora-border normalization awaiting validation. |
+| 5 | **In progress** | Passes 0–2 complete; Pass 3 semantic & ambient refinement next. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -629,7 +629,7 @@ Quality Checks #551 passed typecheck, tests, and production build.
 
 ### Phase 5 Pass 2 — CTA aurora-border normalization
 
-**Status: revised after user validation; original CTA aurora/iridescent border flow restored and awaiting re-validation before Pass 3.**
+**Status: complete.**
 
 A repository audit found **17 active `premium-shimmer-border` uses**. They divide into:
 - eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
@@ -652,7 +652,19 @@ Implemented:
 - Ten intentional high-value CTA aurora-border uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
 - Continuous background-position motion is intentionally restored only for those 10 audited CTAs because that perimeter-flow effect is the approved visual.
 
-Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. Quality Checks #564 passed typecheck, tests, and production build for the restored aurora-border implementation. Pass 3 remains blocked only on visual validation of flow quality and production smoothness.
+Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. Quality Checks #564 passed typecheck, tests, and production build for the restored aurora-border implementation. User validation accepted the restored aurora/iridescent perimeter flow. **Pass 2 is complete.**
+
+### Phase 5 Pass 3 — semantic & ambient refinement
+
+**Status: next; implementation not started.**
+
+Planned scope:
+- normalize hero/summary semantic halo intensity;
+- normalize position/transaction/closed-cycle semantic treatments;
+- refine report-hero semantic depth;
+- audit live/offline/sync/status surfaces so motion only communicates real state;
+- tune the existing two page-ambient auroras only if necessary;
+- add no new ambient blob, no financial-state pulse, and no per-row decorative animation.
 
 ## Current validated visual rules
 

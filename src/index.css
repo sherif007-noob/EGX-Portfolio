@@ -110,9 +110,8 @@
   --premium-effect-ambient-opacity: 0.82;
   --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
   --premium-effect-radial-hover-opacity: 0.62;
-  --premium-effect-sheen-duration: 720ms;
-  --premium-effect-sheen-idle-opacity: 0.18;
-  --premium-effect-sheen-active-opacity: 0.88;
+  --premium-effect-sheen-cycle: 7.2s;
+  --premium-effect-sheen-opacity: 0.62;
   --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.16);
   --premium-effect-refraction-purple: rgba(139, 92, 246, 0.11);
   --premium-effect-refraction-cyan-soft: rgba(34, 211, 238, 0.045);
@@ -602,15 +601,17 @@ body {
   --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
 }
 
-/* Phase 5 interaction sheen.
- * Idle state is static. Eligible primary actions receive one semantic sweep on
- * hover/focus; no ordinary action runs a continuous decorative animation.
+/* Phase 5 recurring CTA sheen.
+ * User validation rejected the short hover-triggered flash. Eligible primary
+ * CTAs instead receive a slow transform-only light pass with a long quiet gap.
+ * Warning/danger/routine-save actions intentionally do not use this class.
  */
 .premium-shimmer-border {
   --premium-sheen-rgb: 96 165 250;
   --premium-sheen-rgb-secondary: 34 211 238;
   position: relative;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .premium-action-primary.premium-shimmer-border {
@@ -631,35 +632,54 @@ body {
 .premium-shimmer-border::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
+  z-index: 0;
+  top: -55%;
+  bottom: -55%;
+  left: -58%;
+  width: 42%;
   pointer-events: none;
+  border-radius: 999px;
   background:
     linear-gradient(
-      110deg,
-      transparent 8%,
-      rgb(var(--premium-sheen-rgb) / 0.18) 34%,
-      rgba(255, 255, 255, 0.72) 50%,
-      rgb(var(--premium-sheen-rgb-secondary) / 0.52) 64%,
-      transparent 90%
+      90deg,
+      transparent 0%,
+      rgb(var(--premium-sheen-rgb) / 0.08) 24%,
+      rgba(255, 255, 255, 0.50) 50%,
+      rgb(var(--premium-sheen-rgb-secondary) / 0.22) 68%,
+      transparent 100%
     );
-  background-size: 280% 100%;
-  background-position: -120% 50%;
-  opacity: var(--premium-effect-sheen-idle-opacity);
+  box-shadow: 0 0 18px rgb(var(--premium-sheen-rgb) / 0.10);
+  opacity: 0;
+  transform: translate3d(-220%, 0, 0) skewX(-18deg);
 }
 
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .premium-shimmer-border:hover::before,
-  .premium-shimmer-border:focus-visible::before {
-    animation: premium-sheen-sweep var(--premium-effect-sheen-duration) var(--premium-ease) 1;
-    opacity: var(--premium-effect-sheen-active-opacity);
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .premium-shimmer-border::before {
+    animation: premium-sheen-loop var(--premium-effect-sheen-cycle) linear infinite;
   }
 }
 
-@keyframes premium-sheen-sweep {
-  from { background-position: -120% 50%; }
-  to { background-position: 220% 50%; }
+@keyframes premium-sheen-loop {
+  0%,
+  58% {
+    opacity: 0;
+    transform: translate3d(-220%, 0, 0) skewX(-18deg);
+  }
+  63% {
+    opacity: 0.28;
+  }
+  69%,
+  79% {
+    opacity: var(--premium-effect-sheen-opacity);
+  }
+  86% {
+    opacity: 0;
+    transform: translate3d(520%, 0, 0) skewX(-18deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(520%, 0, 0) skewX(-18deg);
+  }
 }
 
 @media (max-width: 767px) {

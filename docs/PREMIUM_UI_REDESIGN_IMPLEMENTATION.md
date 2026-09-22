@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **In progress** | Pass 3 implemented; awaiting visual validation before Pass 4. |
+| 5 | **In progress** | Pass 3 complete; Pass 4 full-app coverage sweep in progress. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -656,7 +656,7 @@ Quality Checks #558 passed for the rejected hover-triggered version. Quality Che
 
 ### Phase 5 Pass 3 — semantic & ambient refinement
 
-**Status: implemented; awaiting visual validation before Pass 4.**
+**Status: complete.**
 
 First implementation:
 - **418870d** — unify win/loss/breakeven/buy semantics around one shared RGB palette and hierarchy-driven halo intensity.
@@ -681,7 +681,13 @@ State-motion policy after this pass:
 
 Quality Checks #577 passed typecheck, tests, and production build on the final Pass 3 code head.
 
-Pass 3 remains open only for user visual validation of semantic intensity, ambient balance, and status-motion restraint.
+User validation accepted the semantic/ambient balance and status-motion restraint. **Pass 3 is complete.**
+
+### Phase 5 Pass 4 — full-app coverage sweep
+
+**Status: in progress.**
+
+The entire 33-component matrix is being re-audited against the final Phase 5 effect system. Each component must end this pass with one explicit disposition: direct Phase 5 change, inherited shared Phase 5 change, intentional exclusion, or later-phase defer. Secondary modals, rare status states, shared controls, report subcomponents, and chart shells are included; main-tab appearance alone is not sufficient for completion.
 
 ## Current validated visual rules
 

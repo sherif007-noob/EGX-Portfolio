@@ -101,6 +101,21 @@
   --premium-blue-glow: rgba(59, 130, 246, 0.2);
   --premium-purple-glow: rgba(139, 92, 246, 0.18);
   --premium-emerald-glow: rgba(16, 185, 129, 0.16);
+
+  /* Phase 5 effect primitives — preserve the accepted pre-Phase-5 appearance.
+   * New advanced effects must consume/extend these primitives instead of
+   * introducing component-local glow/shimmer/ambient recipes.
+   */
+  --premium-effect-ambient-blur: 72px;
+  --premium-effect-ambient-opacity: 0.82;
+  --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
+  --premium-effect-radial-hover-opacity: 0.62;
+  --premium-effect-shimmer-blue: rgba(59, 130, 246, 0.28);
+  --premium-effect-shimmer-cyan: rgba(34, 211, 238, 0.58);
+  --premium-effect-shimmer-purple: rgba(139, 92, 246, 0.34);
+  --premium-effect-shimmer-opacity: 0.68;
+  --premium-effect-shimmer-duration: 5.5s;
+
   --premium-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --premium-fast: 150ms;
   --premium-medium: 220ms;
@@ -133,8 +148,8 @@ body {
   z-index: -2;
   pointer-events: none;
   border-radius: 999px;
-  filter: blur(72px);
-  opacity: 0.82;
+  filter: blur(var(--premium-effect-ambient-blur));
+  opacity: var(--premium-effect-ambient-opacity);
   transform: translateZ(0);
 }
 
@@ -500,12 +515,12 @@ body {
   inset: -30%;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.09), transparent 36%);
+  background: radial-gradient(circle at 50% 50%, var(--premium-effect-radial-color), transparent 36%);
   transition: opacity var(--premium-medium) var(--premium-ease);
 }
 
 .premium-radial:hover::after {
-  opacity: 0.62;
+  opacity: var(--premium-effect-radial-hover-opacity);
 }
 
 .premium-shimmer-border {
@@ -521,19 +536,19 @@ body {
   border-radius: inherit;
   background: linear-gradient(
     110deg,
-    rgba(59, 130, 246, 0.28),
-    rgba(34, 211, 238, 0.58),
-    rgba(139, 92, 246, 0.34),
-    rgba(59, 130, 246, 0.28)
+    var(--premium-effect-shimmer-blue),
+    var(--premium-effect-shimmer-cyan),
+    var(--premium-effect-shimmer-purple),
+    var(--premium-effect-shimmer-blue)
   );
   background-size: 220% 100%;
-  opacity: 0.68;
+  opacity: var(--premium-effect-shimmer-opacity);
   filter: blur(0.3px);
 }
 
 @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
   .premium-shimmer-border::before {
-    animation: premium-border-flow 5.5s linear infinite;
+    animation: premium-border-flow var(--premium-effect-shimmer-duration) linear infinite;
   }
 }
 
@@ -624,11 +639,19 @@ body {
 }
 
 
-/* Pass 3.2: semantic edge glows — state lives on the perimeter, never as an inner blob. */
+/* Pass 3.2 / Phase 5 canonical semantic card halos.
+ * Per-state classes only provide semantic values; the halo recipe is shared.
+ */
 .premium-card.premium-glow-buy,
 .premium-card.premium-glow-win,
 .premium-card.premium-glow-loss,
 .premium-card.premium-glow-breakeven {
+  border-color: var(--premium-semantic-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 38px rgba(0, 0, 0, 0.28),
+    0 0 30px var(--premium-semantic-glow-near),
+    0 0 var(--premium-semantic-far-radius, 68px) var(--premium-semantic-glow-far);
   transition:
     transform var(--premium-medium) var(--premium-ease),
     border-color var(--premium-medium) var(--premium-ease),
@@ -637,76 +660,54 @@ body {
 }
 
 .premium-card.premium-glow-buy {
-  border-color: rgba(59, 130, 246, 0.52);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 30px rgba(59, 130, 246, 0.22),
-    0 0 68px rgba(37, 99, 235, 0.10);
+  --premium-semantic-border: rgba(59, 130, 246, 0.52);
+  --premium-semantic-glow-near: rgba(59, 130, 246, 0.22);
+  --premium-semantic-glow-far: rgba(37, 99, 235, 0.10);
+  --premium-semantic-hover-border: rgba(96, 165, 250, 0.72);
+  --premium-semantic-hover-near: rgba(59, 130, 246, 0.30);
+  --premium-semantic-hover-far: rgba(37, 99, 235, 0.14);
 }
 
 .premium-card.premium-glow-win {
-  border-color: rgba(16, 185, 129, 0.48);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 30px rgba(16, 185, 129, 0.21),
-    0 0 68px rgba(5, 150, 105, 0.095);
+  --premium-semantic-border: rgba(16, 185, 129, 0.48);
+  --premium-semantic-glow-near: rgba(16, 185, 129, 0.21);
+  --premium-semantic-glow-far: rgba(5, 150, 105, 0.095);
+  --premium-semantic-hover-border: rgba(52, 211, 153, 0.68);
+  --premium-semantic-hover-near: rgba(16, 185, 129, 0.29);
+  --premium-semantic-hover-far: rgba(5, 150, 105, 0.13);
 }
 
 .premium-card.premium-glow-loss {
-  border-color: rgba(244, 63, 94, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 30px rgba(244, 63, 94, 0.21),
-    0 0 68px rgba(225, 29, 72, 0.095);
+  --premium-semantic-border: rgba(244, 63, 94, 0.5);
+  --premium-semantic-glow-near: rgba(244, 63, 94, 0.21);
+  --premium-semantic-glow-far: rgba(225, 29, 72, 0.095);
+  --premium-semantic-hover-border: rgba(251, 113, 133, 0.70);
+  --premium-semantic-hover-near: rgba(244, 63, 94, 0.29);
+  --premium-semantic-hover-far: rgba(225, 29, 72, 0.13);
 }
 
 .premium-card.premium-glow-breakeven {
-  border-color: rgba(245, 158, 11, 0.46);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 30px rgba(245, 158, 11, 0.19),
-    0 0 66px rgba(217, 119, 6, 0.085);
+  --premium-semantic-border: rgba(245, 158, 11, 0.46);
+  --premium-semantic-glow-near: rgba(245, 158, 11, 0.19);
+  --premium-semantic-glow-far: rgba(217, 119, 6, 0.085);
+  --premium-semantic-far-radius: 66px;
+  --premium-semantic-hover-border: rgba(251, 191, 36, 0.66);
+  --premium-semantic-hover-near: rgba(245, 158, 11, 0.27);
+  --premium-semantic-hover-far: rgba(217, 119, 6, 0.12);
+  --premium-semantic-hover-far-radius: 82px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .premium-card.premium-glow-buy:hover {
-    border-color: rgba(96, 165, 250, 0.72);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 52px rgba(0, 0, 0, 0.32),
-      0 0 38px rgba(59, 130, 246, 0.30),
-      0 0 84px rgba(37, 99, 235, 0.14);
-  }
-
-  .premium-card.premium-glow-win:hover {
-    border-color: rgba(52, 211, 153, 0.68);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 52px rgba(0, 0, 0, 0.32),
-      0 0 38px rgba(16, 185, 129, 0.29),
-      0 0 84px rgba(5, 150, 105, 0.13);
-  }
-
-  .premium-card.premium-glow-loss:hover {
-    border-color: rgba(251, 113, 133, 0.70);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 52px rgba(0, 0, 0, 0.32),
-      0 0 38px rgba(244, 63, 94, 0.29),
-      0 0 84px rgba(225, 29, 72, 0.13);
-  }
-
+  .premium-card.premium-glow-buy:hover,
+  .premium-card.premium-glow-win:hover,
+  .premium-card.premium-glow-loss:hover,
   .premium-card.premium-glow-breakeven:hover {
-    border-color: rgba(251, 191, 36, 0.66);
+    border-color: var(--premium-semantic-hover-border);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       0 22px 52px rgba(0, 0, 0, 0.32),
-      0 0 38px rgba(245, 158, 11, 0.27),
-      0 0 82px rgba(217, 119, 6, 0.12);
+      0 0 38px var(--premium-semantic-hover-near),
+      0 0 var(--premium-semantic-hover-far-radius, 84px) var(--premium-semantic-hover-far);
   }
 }
 
@@ -1041,12 +1042,18 @@ body {
 }
 
 
-/* Reports semantic state glows — usable on compact KPI/subpanel surfaces. */
+/* Reports semantic state glows — canonical compact halo recipe. */
 .premium-state-win,
 .premium-state-loss,
 .premium-state-breakeven,
 .premium-state-buy {
   position: relative;
+  border-color: var(--premium-state-border) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px var(--premium-state-glow-near),
+    0 0 var(--premium-state-far-radius, 54px) var(--premium-state-glow-far);
   transition:
     border-color var(--premium-medium) var(--premium-ease),
     box-shadow var(--premium-medium) var(--premium-ease),
@@ -1054,39 +1061,28 @@ body {
 }
 
 .premium-state-win {
-  border-color: rgba(16, 185, 129, 0.44) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.055),
-    0 10px 26px rgba(0,0,0,0.22),
-    0 0 24px rgba(16,185,129,0.16),
-    0 0 54px rgba(5,150,105,0.075);
+  --premium-state-border: rgba(16, 185, 129, 0.44);
+  --premium-state-glow-near: rgba(16,185,129,0.16);
+  --premium-state-glow-far: rgba(5,150,105,0.075);
 }
 
 .premium-state-loss {
-  border-color: rgba(244, 63, 94, 0.46) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.055),
-    0 10px 26px rgba(0,0,0,0.22),
-    0 0 24px rgba(244,63,94,0.17),
-    0 0 54px rgba(225,29,72,0.08);
+  --premium-state-border: rgba(244, 63, 94, 0.46);
+  --premium-state-glow-near: rgba(244,63,94,0.17);
+  --premium-state-glow-far: rgba(225,29,72,0.08);
 }
 
 .premium-state-breakeven {
-  border-color: rgba(245, 158, 11, 0.42) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.055),
-    0 10px 26px rgba(0,0,0,0.22),
-    0 0 24px rgba(245,158,11,0.15),
-    0 0 52px rgba(217,119,6,0.07);
+  --premium-state-border: rgba(245, 158, 11, 0.42);
+  --premium-state-glow-near: rgba(245,158,11,0.15);
+  --premium-state-glow-far: rgba(217,119,6,0.07);
+  --premium-state-far-radius: 52px;
 }
 
 .premium-state-buy {
-  border-color: rgba(59, 130, 246, 0.44) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.055),
-    0 10px 26px rgba(0,0,0,0.22),
-    0 0 24px rgba(59,130,246,0.16),
-    0 0 54px rgba(37,99,235,0.075);
+  --premium-state-border: rgba(59, 130, 246, 0.44);
+  --premium-state-glow-near: rgba(59,130,246,0.16);
+  --premium-state-glow-far: rgba(37,99,235,0.075);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1097,7 +1093,6 @@ body {
     transform: translateY(-1px);
   }
 }
-
 
 /* Reports & Performance glass hierarchy */
 .premium-report-glass {

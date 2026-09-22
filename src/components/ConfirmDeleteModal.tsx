@@ -110,7 +110,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               onConfirm();
               requestClose();
             }}
-            className="premium-action premium-action-danger premium-shimmer-border px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+            className="premium-action premium-action-danger px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Confirm & Delete</span>

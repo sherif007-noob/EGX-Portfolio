@@ -1338,7 +1338,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="premium-action premium-action-primary premium-shimmer-border px-5 py-2 rounded-xl font-bold flex items-center gap-1.5"
+                  className="premium-action premium-action-primary px-5 py-2 rounded-xl font-bold flex items-center gap-1.5"
                 >
                   <Save className="w-4 h-4" />
                   Save Changes

@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: PLAN COMPLETE — implementation has not started.**
+**Status: IMPLEMENTATION STARTED — Pass 0 effect-system cleanup/baseline in progress.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -421,6 +421,8 @@ No implementation should skip directly to individual screens.
 
 ### Pass 0 — Effect-system cleanup and baseline
 
+**Status: IN PROGRESS.**
+
 Goal:
 - establish one canonical place/ownership model for existing effects before adding anything new.
 
@@ -431,10 +433,19 @@ Work:
 - do not refactor unrelated motion or layout CSS;
 - do not append a new “final override” section as the primary architecture.
 
+Started implementation:
+- **2d24dcd** — centralize Phase 5 effect primitives without changing the accepted appearance.
+- Page ambient blur/opacity, radial-hover color/opacity, and existing shimmer palette/opacity/duration now read from canonical Phase 5 CSS custom properties.
+- Card semantic halos (buy/win/loss/breakeven) now share one halo recipe; individual classes provide semantic values only.
+- Compact report semantic states now share one halo recipe; individual classes provide semantic values only.
+- Existing effect values and animation timing are intentionally unchanged in this pass.
+
 Validation:
 - intended visual appearance should remain materially unchanged;
 - Phase 4 production motion must not regress;
 - typecheck/tests/build pass.
+
+Pass 0 is not complete until Quality Checks pass for the baseline refactor.
 
 ### Pass 1 — Static edge light and refraction foundation
 

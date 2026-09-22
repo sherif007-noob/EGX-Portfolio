@@ -188,7 +188,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
+              className="premium-action premium-action-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
             >
               <Save className="w-3.5 h-3.5" />
               Save Targets

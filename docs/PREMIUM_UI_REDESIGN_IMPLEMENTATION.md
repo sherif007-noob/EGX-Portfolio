@@ -693,7 +693,9 @@ Coverage fixes:
 - **887d9e0** — add shared premium status-surface primitive.
 - **1dc8b6f** — migrate Offline/Firestore quota banners to that shared status surface.
 - **e406ba6** — migrate the previously legacy Supabase auth/checking UI onto premium page/glass/field/action/semantic-error primitives.
-- **11c3206** — migrate all three Secondary Analytics legacy opaque card shells to shared report glass while leaving Recharts internals for Phase 7.
+- **11c3206** — initial migration moved all three Secondary Analytics legacy opaque card shells to shared report glass while leaving Recharts internals for Phase 7.
+- User validation found the Risk & Cost cards still visually out of place because `premium-report-glass-soft` is intentionally an inset/secondary tier while the main analytics chart uses `premium-panel`.
+- **53edb8a** — move all three Risk & Cost cards to `premium-panel`, matching the primary analytics material hierarchy without touching chart data, animation, or Recharts internals.
 - **ceff46c** — make Header glass consume the shared Phase 5 primary refraction slot without changing Header layout/composition.
 
 Audit findings:

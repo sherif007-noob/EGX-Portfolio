@@ -58,6 +58,7 @@ interface PerformanceTimeframeChartProps {
   historicalPrices: HistoricalPriceSeries;
   capitalDeposits: number;
   historicalLoading?: boolean;
+  entranceReady?: boolean;
 }
 
 const TIMEFRAMES: Array<{ value: AnalyticsTimeframe; label: string }> = [
@@ -146,6 +147,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   historicalPrices,
   capitalDeposits,
   historicalLoading = false,
+  entranceReady = true,
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
@@ -660,7 +662,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
     ) : null;
 
-  const renderPrimaryArea = () => (
+  const renderPrimaryArea = () => entranceReady ? (
     <Area
       type={chartCurve}
       dataKey={definition.primaryKey}
@@ -687,10 +689,10 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         if (weeklyMorph) setWeeklyMorph(null);
       }}
     />
-  );
+  ) : null;
 
   const renderSecondaryLine = () =>
-    definition.secondaryKey ? (
+    entranceReady && definition.secondaryKey ? (
       <Line
         type={chartCurve}
         dataKey={definition.secondaryKey}
@@ -916,6 +918,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
+        entranceReady={entranceReady}
       />
     </>
   );

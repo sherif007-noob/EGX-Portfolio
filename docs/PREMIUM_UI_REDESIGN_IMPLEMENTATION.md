@@ -652,7 +652,7 @@ Implemented:
 - Ten intentional high-value CTA aurora-border uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
 - Continuous background-position motion is intentionally restored only for those 10 audited CTAs because that perimeter-flow effect is the approved visual.
 
-Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. The restored aurora-border implementation now requires fresh CI and visual validation of flow quality and production smoothness before Pass 3.
+Quality Checks #558 passed for the rejected hover-triggered version. Quality Checks #560 passed for the rejected moving-band version. Quality Checks #564 passed typecheck, tests, and production build for the restored aurora-border implementation. Pass 3 remains blocked only on visual validation of flow quality and production smoothness.
 
 ## Current validated visual rules
 

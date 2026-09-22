@@ -528,7 +528,8 @@ Removal commits:
 Verification:
 - remaining sheen uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
 - generic infinite border shimmer remains removed; the only recurring CTA effect is the approved transform-only sheen on the 10 eligible CTAs;
-- Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version; the revised recurring sheen requires fresh CI.
+- Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version.
+- Quality Checks #560 passed typecheck, tests, and production build for the revised recurring sheen.
 
 Validation:
 - primary CTA reads as premium without attracting attention when idle;

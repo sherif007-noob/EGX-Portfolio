@@ -115,10 +115,12 @@
   --premium-effect-shimmer-purple: rgba(139, 92, 246, 0.34);
   --premium-effect-shimmer-opacity: 0.68;
   --premium-effect-shimmer-duration: 5.5s;
-  --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.06);
-  --premium-effect-refraction-purple: rgba(139, 92, 246, 0.04);
-  --premium-effect-refraction-cyan-strong: rgba(186, 230, 253, 0.085);
-  --premium-effect-refraction-purple-strong: rgba(196, 181, 253, 0.06);
+  --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.16);
+  --premium-effect-refraction-purple: rgba(139, 92, 246, 0.11);
+  --premium-effect-refraction-cyan-soft: rgba(34, 211, 238, 0.045);
+  --premium-effect-refraction-purple-soft: rgba(139, 92, 246, 0.035);
+  --premium-effect-refraction-cyan-strong: rgba(186, 230, 253, 0.20);
+  --premium-effect-refraction-purple-strong: rgba(196, 181, 253, 0.15);
 
   --premium-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --premium-fast: 150ms;
@@ -537,19 +539,27 @@ body {
 .premium-refraction {
   --premium-refraction-shadow:
     inset 1px 0 0 var(--premium-effect-refraction-cyan),
-    inset -1px 0 0 var(--premium-effect-refraction-purple);
+    inset -1px 0 0 var(--premium-effect-refraction-purple),
+    inset 8px 0 18px var(--premium-effect-refraction-cyan-soft),
+    inset -8px 0 18px var(--premium-effect-refraction-purple-soft);
 }
 
 .premium-refraction-hero {
   --premium-refraction-shadow:
-    inset 1px 0 0 rgba(255, 255, 255, 0.075),
-    inset -1px 0 0 rgba(34, 211, 238, 0.055);
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 1px 0 0 rgba(34, 211, 238, 0.18),
+    inset -1px 0 0 rgba(59, 130, 246, 0.12),
+    inset 10px 0 22px rgba(34, 211, 238, 0.055),
+    inset -10px 0 22px rgba(59, 130, 246, 0.04);
 }
 
 .premium-refraction-overlay {
   --premium-refraction-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
     inset 1px 0 0 var(--premium-effect-refraction-cyan-strong),
-    inset -1px 0 0 var(--premium-effect-refraction-purple-strong);
+    inset -1px 0 0 var(--premium-effect-refraction-purple-strong),
+    inset 10px 0 22px rgba(34, 211, 238, 0.06),
+    inset -10px 0 22px rgba(139, 92, 246, 0.05);
 }
 
 .premium-shimmer-border {

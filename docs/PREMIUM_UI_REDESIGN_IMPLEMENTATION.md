@@ -629,7 +629,7 @@ Quality Checks #551 passed typecheck, tests, and production build.
 
 ### Phase 5 Pass 2 — shimmer/sheen normalization
 
-**Status: implemented; awaiting visual validation before Pass 3.**
+**Status: revised after user validation; recurring CTA sheen awaiting re-validation before Pass 3.**
 
 A repository audit found **17 active `premium-shimmer-border` uses**. They divide into:
 - eligible high-value primary CTAs: Add Trade/Open Position, deposit/update/restore/log/connect/sync/install confirmations;
@@ -637,9 +637,11 @@ A repository audit found **17 active `premium-shimmer-border` uses**. They divid
 - warning/danger actions that must keep their amber/rose semantics rather than receive generic cyan/purple sheen.
 
 Implemented:
-- **e851bca** — remove the 5.5 s infinite generic shimmer and replace it with one restrained semantic hover/focus sweep.
+- **e851bca** — first attempt removed the 5.5 s loop and replaced it with a 720 ms semantic hover/focus sweep.
+- User validation rejected that behavior: it read as a fast flash rather than a premium light sweep.
+- **46e6351** — replace the rejected flash with a slow recurring transform-only light band: approximately 2 s of visible travel inside a 7.2 s cycle, followed by a long quiet interval.
 - Primary, success, and purple CTA families now use their own sheen colors.
-- Mobile/touch receives no hover sweep; reduced-motion disables the optional sweep.
+- Mobile/touch does not run the recurring sweep below the desktop breakpoint; reduced-motion disables it.
 - Seven inappropriate uses were removed:
   - **50c79f4** — Journal routine Save Changes.
   - **a170f33 / 3e74738 / 109d81b** — Cash audited warning, withdrawal danger, and routine edit save.
@@ -647,11 +649,9 @@ Implemented:
   - **0bb93b1** — Sell confirmation warning.
   - **7992b78** — Delete confirmation danger.
 - Ten intentional high-value CTA sheen uses remain: Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install.
-- CSS verification shows only two infinite animations remain in `index.css`: the existing page auroras. No infinite shimmer remains.
+- The old generic infinite border shimmer remains removed. Recurrence is now intentionally limited to the 10 eligible high-value CTAs and uses transform/opacity rather than continuous background-position motion.
 
-Quality Checks #558 passed typecheck, tests, and production build.
-
-Pass 2 now requires visual validation of idle subtlety, sweep visibility, semantic color, and motion smoothness before Pass 3 begins.
+Quality Checks #558 passed typecheck, tests, and production build for the rejected hover-triggered version. The revised recurring sheen now requires fresh CI plus visual validation of sweep speed, quiet interval, semantic color, and motion smoothness before Pass 3 begins.
 
 ## Current validated visual rules
 

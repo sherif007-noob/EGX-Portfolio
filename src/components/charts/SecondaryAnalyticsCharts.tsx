@@ -115,7 +115,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-report-glass-soft rounded-2xl p-4 sm:p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -198,7 +198,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-report-glass-soft rounded-2xl p-4 sm:p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -267,7 +267,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           )}
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-report-glass-soft xl:col-span-2 rounded-2xl p-4 sm:p-5 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">

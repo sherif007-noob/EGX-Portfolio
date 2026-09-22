@@ -583,7 +583,9 @@ The sweep covered **34 render files total**: `src/App.tsx` plus all **33 non-tes
 Coverage corrections found and fixed:
 - **887d9e0 / 1dc8b6f** — add one shared premium status-surface primitive and migrate Offline/Firestore quota banners off their ad-hoc blur/shadow recipe.
 - **e406ba6** — migrate the Supabase authentication/checking screen from raw legacy backgrounds, borders, inputs, and button styling onto `premium-page`, `premium-glass`, `premium-field`, semantic error state, and premium action primitives.
-- **11c3206** — replace the three legacy opaque Secondary Analytics chart cards with `premium-report-glass-soft` shells; Recharts internals remain untouched for Phase 7.
+- **11c3206** — first migration removed the three legacy opaque Secondary Analytics chart shells by moving them to shared report glass.
+- User validation found those Risk & Cost cards still visually one hierarchy tier too low compared with the primary analytics card.
+- **53edb8a** — correct the hierarchy by moving all three Risk & Cost shells to the same `premium-panel` material family as the main analytics chart; Recharts internals remain untouched for Phase 7.
 - **ceff46c** — make the existing Header glass consume the Phase 5 primary refraction slot without changing header layout/composition.
 - Pass 4 also corrected the Pass 2 audit count: `App.tsx` contains the eligible **+ Add Position** aurora-border CTA, so the correct original count was **18** uses, with **11 eligible kept** and **7 inappropriate uses removed**.
 
@@ -612,7 +614,7 @@ Legacy-surface scan result:
 | --- | --- |
 | `RealizedTrajectoryChart.tsx` | **Inherited / Phase 7 defer.** Outer report shells use Phase 5 system; Recharts plot internals remain Phase 7. |
 | `charts/PerformanceTimeframeChart.tsx` | **Inherited / Phase 7 defer.** Primary analytics panel/refraction covered; interpolation/plot internals frozen for Phase 7. |
-| `charts/SecondaryAnalyticsCharts.tsx` | **Direct / Phase 7 defer.** Legacy opaque shells migrated to shared report glass; chart internals untouched. |
+| `charts/SecondaryAnalyticsCharts.tsx` | **Direct / Phase 7 defer.** Legacy opaque shells were first migrated to report glass, then user validation moved all three Risk & Cost cards to the primary `premium-panel` hierarchy so they match the main analytics material; chart internals remain Phase 7. |
 | `charts/AnalyticsChartTheme.tsx` | **Inherited / intentional state / Phase 7 defer.** Tooltip uses shared floating surface; pulse is loading skeleton only; chart-theme internals remain Phase 7. |
 | `reports/MonthlyPerformanceReport.tsx` | **Inherited.** Report glass, report hero, semantic state, table-shell system covered; local header tint remains restrained report identity. |
 | `reports/TradingPerformanceReport.tsx` | **Inherited.** Hero metrics/report glass/semantic states covered; assessment chips remain static semantic indicators. |

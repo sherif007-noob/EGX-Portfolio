@@ -601,8 +601,16 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         {/* Modal Footer */}
         <div className="premium-modal-section px-5 py-3.5 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Service Worker Auto-Sync</span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                permission === 'granted' && settings.enabled
+                  ? 'bg-emerald-400 animate-pulse'
+                  : 'bg-slate-500'
+              }`}
+            />
+            <span>
+              Service Worker Auto-Sync {permission === 'granted' && settings.enabled ? 'Active' : 'Inactive'}
+            </span>
           </div>
           <button
             onClick={requestClose}

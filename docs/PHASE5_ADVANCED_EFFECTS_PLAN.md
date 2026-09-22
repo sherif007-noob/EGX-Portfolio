@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 4 complete; Pass 5 final validation in progress.**
+**Status: COMPLETE — historical Phase 5 architecture/validation reference.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -654,7 +654,7 @@ User validation accepted the corrected Risk & Cost hierarchy and Pass 4 coverage
 
 ### Pass 5 — Final Phase 5 validation
 
-**Status: IN PROGRESS.**
+**Status: COMPLETE.**
 
 Required:
 - desktop production build;
@@ -668,7 +668,21 @@ Required:
 - visual noise review;
 - Quality Checks.
 
-Only after this pass can Phase 5 be marked complete.
+Final validation result:
+- Quality Checks **#592** passed typecheck, tests, and production build on the final Phase 5 branch state.
+- Phase 5 changed only documentation, `src/index.css`, and presentation-layer component files. No services, accounting engine, persistence layer, data types, transaction semantics, or chart interpolation implementation were modified.
+- Continuous-animation inventory is intentionally limited to **three approved loops**: two desktop page auroras plus the audited high-value CTA aurora-border flow.
+- Page ambience and CTA aurora loops are desktop-only and require `prefers-reduced-motion: no-preference`; reduced-motion disables them.
+- Mobile removes radial hover lighting, keeps CTA border treatment static, and uses reduced blur for page/modal/dropdown surfaces.
+- Effect pseudo-elements use `pointer-events: none`; refraction itself is implemented through inset shadow slots and cannot intercept input.
+- Persistent compositor hints were not introduced; Motion-owned surfaces retain `will-change: auto`.
+- Existing open-dropdown z-index/overflow rules remain in place for glass/panel/report/card parents.
+- Semantic financial state remains static except for genuinely actionable/live state such as target/stop alerts, active session, offline/sync/loading indicators.
+- User visual validation was performed incrementally at every material checkpoint, including the final Risk & Cost hierarchy correction.
+
+**Phase 5 is complete.** The next roadmap stage is **Phase 6 — Mobile / responsive refinement**.
+
+This file is now a historical Phase-5-specific architecture and validation record. The active redesign roadmap remains `PREMIUM_UI_REDESIGN_PLAN.md`, and accepted implementation history remains `PREMIUM_UI_REDESIGN_IMPLEMENTATION.md`.
 
 ---
 

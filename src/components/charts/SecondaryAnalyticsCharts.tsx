@@ -35,6 +35,7 @@ interface SecondaryAnalyticsChartsProps {
   historicalPrices: HistoricalPriceSeries;
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
+  entranceReady?: boolean;
 }
 
 function formatDailyLabel(value: string): string {
@@ -76,6 +77,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   historicalPrices,
   intradayPrices,
   result,
+  entranceReady = true,
 }) => {
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -170,6 +172,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
+                  {entranceReady && (
                   <Area
                     type={lineType}
                     dataKey="drawdownPercent"
@@ -188,6 +191,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
+                  )}
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -237,6 +242,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
+                  {entranceReady && (
                   <Area
                     type="stepAfter"
                     dataKey="cumulativeFeesEgp"
@@ -310,6 +316,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       />
                     )}
                   />
+                  {entranceReady && (
+                  <>
                   <Line
                     type={lineType}
                     dataKey="realizedPnlEgp"
@@ -334,6 +342,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     animationDuration={520}
                     animationEasing="ease-out"
                   />
+                  </>
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>

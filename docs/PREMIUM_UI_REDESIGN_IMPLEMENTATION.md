@@ -28,7 +28,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.2 | Complete / validating | Completeness sweep, selectors, modal parity, overlays. |
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
-| 5 | **Plan complete** | Full-app advanced-effects audit completed; implementation has not started. |
+| 5 | **In progress** | Pass 0 effect-system baseline complete; Pass 1 static edge/refraction foundation next. |
 | 6–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -576,7 +576,7 @@ No Phase 5 CSS/component implementation was performed during this planning pass.
 
 ### Phase 5 Pass 0 — effect-system baseline
 
-**Status: in progress pending CI.**
+**Status: complete.**
 
 The first implementation pass is deliberately visual-neutral. It establishes canonical effect ownership before any new Phase 5 treatment is introduced.
 
@@ -586,7 +586,7 @@ The first implementation pass is deliberately visual-neutral. It establishes can
 - Repeated compact report semantic-halo recipes were consolidated the same way.
 - No new effect, animation, blur, glow intensity, layout, or Phase 4 lifecycle timing was introduced.
 
-Quality Checks are required before Pass 0 is marked complete.
+Quality Checks #539 passed typecheck, tests, and production build. Pass 0 is complete.
 
 ## Current validated visual rules
 

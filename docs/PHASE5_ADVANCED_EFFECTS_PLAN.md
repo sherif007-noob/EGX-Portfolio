@@ -1,6 +1,6 @@
 # Phase 5 Advanced Effects Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 3 complete; Pass 4 full-app coverage sweep in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 4 implemented and CI-clean; awaiting visual validation before Pass 5.**
 
 This document is the detailed execution plan for Phase 5 of the premium UI redesign. It exists specifically to prevent the problems seen in earlier phases: main-screen-only coverage, duplicated styling systems, late discovery of secondary surfaces, effect stacking, and performance regressions caused by adding visual behavior without a whole-app inventory first.
 
@@ -510,8 +510,8 @@ Work:
 - no continuous effect on modal panels, routine saves, tables, filters, or passive cards.
 
 Implementation:
-- repository audit found **17** active `premium-shimmer-border` uses;
-- **10** remain on intentional high-value CTAs;
+- repository audit initially counted **17** component-level `premium-shimmer-border` uses; Pass 4 found one additional eligible use in `src/App.tsx`, making the correct original total **18**;
+- **11** remain on intentional high-value CTAs;
 - **7** were removed from routine Save Changes and warning/danger actions;
 - **e851bca** — first attempt replaced the original border flow with a short hover/focus sweep;
 - user validation rejected that version because it read as a fast flash rather than the premium perimeter-light effect;
@@ -529,7 +529,7 @@ Removal commits:
 - **7992b78** — delete confirmation danger.
 
 Verification:
-- remaining aurora-border uses are exactly Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
+- remaining aurora-border uses are exactly App + Add Position, Header Add Trade, Positions Add Trade, Cash Deposit, Add Position/DCA, Quick Cash update, Google Sheets Save Connection, Python Validate & Sync, Backup restore, Trade Screenshot log, and PWA install;
 - the effect is continuously animated only on those 10 audited CTAs and stays perimeter-oriented;
 - Quality Checks #558 passed for the rejected hover-triggered flash version.
 - Quality Checks #560 passed for the rejected moving-band version.
@@ -576,22 +576,79 @@ User validation accepted the Pass 3 semantic/ambient balance. Pass 3 is complete
 
 ### Pass 4 — Full-app coverage sweep
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — CI clean; awaiting visual validation before Pass 5.**
 
-Use the component matrix above and audit every file, including:
-- secondary modals;
-- PWA/offline/error/auth states;
-- shared fields/selects;
-- report subcomponents;
-- chart outer shells.
+The sweep covered **34 render files total**: `src/App.tsx` plus all **33 non-test TSX files** under `src/components`.
 
-For each file, record:
-- direct Phase 5 change;
-- inherited shared change;
-- intentional exclusion;
-- deferred later-phase ownership.
+Coverage corrections found and fixed:
+- **887d9e0 / 1dc8b6f** — add one shared premium status-surface primitive and migrate Offline/Firestore quota banners off their ad-hoc blur/shadow recipe.
+- **e406ba6** — migrate the Supabase authentication/checking screen from raw legacy backgrounds, borders, inputs, and button styling onto `premium-page`, `premium-glass`, `premium-field`, semantic error state, and premium action primitives.
+- **11c3206** — replace the three legacy opaque Secondary Analytics chart cards with `premium-report-glass-soft` shells; Recharts internals remain untouched for Phase 7.
+- **ceff46c** — make the existing Header glass consume the Phase 5 primary refraction slot without changing header layout/composition.
+- Pass 4 also corrected the Pass 2 audit count: `App.tsx` contains the eligible **+ Add Position** aurora-border CTA, so the correct original count was **18** uses, with **11 eligible kept** and **7 inappropriate uses removed**.
 
-No file is silently omitted.
+Legacy-surface scan result:
+- remaining raw slate borders/backgrounds are separators, table headers, hover states, loading skeletons, or chart/logo internals;
+- small local icon/logo gradients are intentional identity graphics rather than surface-system ownership;
+- no additional forgotten card/modal/panel shell was found.
+
+#### Actual coverage disposition — app shell and main views
+
+| File | Final Phase 5 disposition |
+| --- | --- |
+| `src/App.tsx` | **Inherited + retained eligible CTA.** Owns `premium-page` ambient canvas; + Add Position keeps approved aurora border. No Phase 5 lifecycle/business-logic change. |
+| `Header.tsx` | **Direct + inherited.** Existing Header glass now consumes shared primary refraction; status motion was normalized in Pass 3. Bespoke header composition remains Phase 9. |
+| `PortfolioSummary.tsx` | **Inherited.** Hero refraction and hierarchy-driven semantic halo; real session/sync status motion retained. |
+| `PositionsTable.tsx` | **Inherited.** Mobile semantic cards + desktop edge-only rows; target/stop pulses remain actionable; Add Trade aurora CTA retained. |
+| `ClosedCyclesView.tsx` | **Inherited.** Semantic result cards and shared surfaces; no extra decorative loop. |
+| `TradingJournal.tsx` | **Inherited.** Semantic cards/subpanels/modal surfaces; routine saves remain free of aurora. |
+| `CashBalanceView.tsx` | **Inherited.** Hero/panel/refraction system; eligible deposit/action aurora retained; warning/danger actions remain semantic only. |
+| `TickerDirectoryView.tsx` | **Inherited.** Shared panel/card/refraction system; ticker rows/items intentionally do not get decorative glows. |
+| `PerformanceReports.tsx` | **Inherited + deferred chart internals.** Report/semantic surfaces are Phase 5; chart plot styling remains Phase 7. |
+
+#### Actual coverage disposition — reports and charts
+
+| File | Final Phase 5 disposition |
+| --- | --- |
+| `RealizedTrajectoryChart.tsx` | **Inherited / Phase 7 defer.** Outer report shells use Phase 5 system; Recharts plot internals remain Phase 7. |
+| `charts/PerformanceTimeframeChart.tsx` | **Inherited / Phase 7 defer.** Primary analytics panel/refraction covered; interpolation/plot internals frozen for Phase 7. |
+| `charts/SecondaryAnalyticsCharts.tsx` | **Direct / Phase 7 defer.** Legacy opaque shells migrated to shared report glass; chart internals untouched. |
+| `charts/AnalyticsChartTheme.tsx` | **Inherited / intentional state / Phase 7 defer.** Tooltip uses shared floating surface; pulse is loading skeleton only; chart-theme internals remain Phase 7. |
+| `reports/MonthlyPerformanceReport.tsx` | **Inherited.** Report glass, report hero, semantic state, table-shell system covered; local header tint remains restrained report identity. |
+| `reports/TradingPerformanceReport.tsx` | **Inherited.** Hero metrics/report glass/semantic states covered; assessment chips remain static semantic indicators. |
+
+#### Actual coverage disposition — modal and overlay family
+
+| File | Final Phase 5 disposition |
+| --- | --- |
+| `AddTradeModal.tsx` | **Inherited + eligible CTA.** Shared modal/refraction system; primary submit aurora retained. |
+| `EditPositionModal.tsx` | **Inherited.** Shared modal system; routine saves intentionally have no aurora. |
+| `SellPositionModal.tsx` | **Inherited.** Shared modal system; warning confirmation stays amber without aurora. |
+| `QuickCashModal.tsx` | **Inherited + eligible CTA.** Shared modal system; success update CTA keeps aurora. |
+| `ConfirmDeleteModal.tsx` | **Inherited.** Shared modal system; destructive confirmation stays rose without aurora. |
+| `PriceAlertsModal.tsx` | **Inherited + direct status fix.** Shared modal system; active/inactive worker indicator is now real-state-driven. Header icon gradient is intentional identity. |
+| `GoogleSheetsModal.tsx` | **Inherited + eligible CTA.** Shared modal/refraction system; Save Connection aurora retained; sync spinners reflect actual work. |
+| `PythonSchemaSyncModal.tsx` | **Inherited + eligible CTA.** Shared modal system; Validate & Sync aurora retained. |
+| `PortfolioBackupModal.tsx` | **Inherited + eligible CTA.** Shared modal system; restore CTA aurora retained; loading spinner remains functional. |
+| `TradeScreenshotModal.tsx` | **Inherited + eligible CTA.** Shared modal system; Log Trade aurora retained; small scanner icon gradient is intentional identity. |
+| `PWAInstallButton.tsx` | **Inherited + eligible CTA.** Install action keeps aurora; install modal uses shared modal system. |
+
+#### Actual coverage disposition — shared controls and rare states
+
+| File | Final Phase 5 disposition |
+| --- | --- |
+| `AnalyticsSelect.tsx` | **Inherited.** Shared floating/dropdown overlay refraction; menu rows intentionally have no decorative sweep. |
+| `DateInput.tsx` | **Intentional Tier 0.** Focus/control depth only; no advanced decorative effect. |
+| `NumberStepperInput.tsx` | **Intentional Tier 0.** Control depth/focus only; no advanced decorative effect. |
+| `OfflineIndicator.tsx` | **Direct.** Migrated to shared semantic status glass/refraction; motion remains localized to real status/work. |
+| `ErrorBoundary.tsx` | **Inherited.** Premium page/glass/inset primitives; readability dominates effects. |
+| `SupabaseAuthGate.tsx` | **Direct.** Previously legacy screen migrated to shared page/glass/field/action/semantic-error primitives. |
+| `StockLogo.tsx` | **Intentional exclusion.** Sector/logo gradients are identity graphics, not premium surface effects. |
+| `PremiumMotion.tsx` | **Intentional exclusion/frozen.** No Phase 5 lifecycle/easing changes; Phase 4 ownership preserved. |
+
+Quality Checks **#587** passed typecheck, tests, and production build on the final Pass 4 code head.
+
+Pass 4 is not accepted until the corrected rare/secondary surfaces and overall consistency are visually validated in production.
 
 ### Pass 5 — Final Phase 5 validation
 

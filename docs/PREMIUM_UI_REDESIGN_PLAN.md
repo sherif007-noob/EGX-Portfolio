@@ -54,7 +54,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.2 | Completeness & consistency sweep | Complete; validation ongoing |
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
-| 5 | Advanced effects | **Next** |
+| 5 | Advanced effects | **Plan complete — implementation not started** |
 | 6 | Mobile / responsive refinement | Not started |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 is next.
+Phase 4 is complete. **8 planned stages remain**: 5, 6, 6.5, 7, 8, 9, 10, and 11. Phase 5 has been audited and planned; implementation has not started.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -307,17 +307,42 @@ The final desktop performance refinements include:
 
 ## Phase 5 — Advanced effects
 
+**Status: PLAN COMPLETE — implementation not started.**
+
 Goal: restrained finishing effects after base visuals/motion are stable.
 
+The detailed audited execution plan lives in **docs/PHASE5_ADVANCED_EFFECTS_PLAN.md**.
+
+Phase 5 is deliberately system-first. The audit covers `src/App.tsx`, all 33 non-test TSX component files under `src/components`, and the accumulated premium-effect rules in `src/index.css`. Implementation must use the documented full-component coverage matrix rather than stopping after the main screens look correct.
+
 Scope:
-- Controlled shimmer/light sweep on suitable surfaces/actions.
-- Refined edge light, depth, and glass-refraction cues.
-- Subtle ambient semantic glow.
+- Consolidate existing advanced-effect ownership before adding new effects.
+- Refined static edge light, depth, and glass-refraction cues through shared primitives.
+- Controlled interaction-triggered sheen on a limited set of eligible primary actions.
+- Subtle semantic halo refinement tied to actual financial/system state.
+- Existing page ambience may be tuned, but no additional continuous full-page effect layer is planned.
+
+Performance guardrails:
+- Zero new infinite animations.
+- No new animated blur/backdrop-filter.
+- No persistent `will-change` / compositor-promotion hacks.
+- No per-row decorative animation on dense tables.
+- No Phase 5-caused regression in the accepted Phase 4 production-motion baseline.
+- Mobile/touch and reduced-motion paths degrade to static effects.
+
+Later-phase boundaries:
+- chart internals remain Phase 7;
+- responsive layout remains Phase 6;
+- navigation remains Phase 6.5;
+- visual hierarchy remains Phase 8;
+- bespoke header refinement remains Phase 9.
 
 Acceptance:
 - Effects support hierarchy, not compete with data.
 - Readability is never reduced.
-- Effects remain performant and degrade gracefully.
+- One coherent edge/refraction/sheen/semantic-halo system is used across the full component matrix.
+- Every component receives an explicit direct/inherited/excluded/deferred disposition.
+- Performance remains at least as good as the accepted Phase 4 baseline.
 
 ## Phase 6 — Mobile / responsive refinement
 

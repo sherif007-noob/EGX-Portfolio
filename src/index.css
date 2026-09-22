@@ -110,11 +110,9 @@
   --premium-effect-ambient-opacity: 0.82;
   --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
   --premium-effect-radial-hover-opacity: 0.62;
-  --premium-effect-shimmer-blue: rgba(59, 130, 246, 0.28);
-  --premium-effect-shimmer-cyan: rgba(34, 211, 238, 0.58);
-  --premium-effect-shimmer-purple: rgba(139, 92, 246, 0.34);
-  --premium-effect-shimmer-opacity: 0.68;
-  --premium-effect-shimmer-duration: 5.5s;
+  --premium-effect-sheen-duration: 720ms;
+  --premium-effect-sheen-idle-opacity: 0.18;
+  --premium-effect-sheen-active-opacity: 0.88;
   --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.16);
   --premium-effect-refraction-purple: rgba(139, 92, 246, 0.11);
   --premium-effect-refraction-cyan-soft: rgba(34, 211, 238, 0.045);
@@ -604,9 +602,30 @@ body {
   --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
 }
 
+/* Phase 5 interaction sheen.
+ * Idle state is static. Eligible primary actions receive one semantic sweep on
+ * hover/focus; no ordinary action runs a continuous decorative animation.
+ */
 .premium-shimmer-border {
+  --premium-sheen-rgb: 96 165 250;
+  --premium-sheen-rgb-secondary: 34 211 238;
   position: relative;
   isolation: isolate;
+}
+
+.premium-action-primary.premium-shimmer-border {
+  --premium-sheen-rgb: 96 165 250;
+  --premium-sheen-rgb-secondary: 34 211 238;
+}
+
+.premium-action-success.premium-shimmer-border {
+  --premium-sheen-rgb: 52 211 153;
+  --premium-sheen-rgb-secondary: 16 185 129;
+}
+
+.premium-action-purple.premium-shimmer-border {
+  --premium-sheen-rgb: 167 139 250;
+  --premium-sheen-rgb-secondary: 139 92 246;
 }
 
 .premium-shimmer-border::before {
@@ -615,26 +634,31 @@ body {
   inset: -1px;
   z-index: -1;
   border-radius: inherit;
-  background: linear-gradient(
-    110deg,
-    var(--premium-effect-shimmer-blue),
-    var(--premium-effect-shimmer-cyan),
-    var(--premium-effect-shimmer-purple),
-    var(--premium-effect-shimmer-blue)
-  );
-  background-size: 220% 100%;
-  opacity: var(--premium-effect-shimmer-opacity);
-  filter: blur(0.3px);
+  pointer-events: none;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 8%,
+      rgb(var(--premium-sheen-rgb) / 0.18) 34%,
+      rgba(255, 255, 255, 0.72) 50%,
+      rgb(var(--premium-sheen-rgb-secondary) / 0.52) 64%,
+      transparent 90%
+    );
+  background-size: 280% 100%;
+  background-position: -120% 50%;
+  opacity: var(--premium-effect-sheen-idle-opacity);
 }
 
-@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
-  .premium-shimmer-border::before {
-    animation: premium-border-flow var(--premium-effect-shimmer-duration) linear infinite;
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-shimmer-border:hover::before,
+  .premium-shimmer-border:focus-visible::before {
+    animation: premium-sheen-sweep var(--premium-effect-sheen-duration) var(--premium-ease) 1;
+    opacity: var(--premium-effect-sheen-active-opacity);
   }
 }
 
-@keyframes premium-border-flow {
-  from { background-position: 0% 50%; }
+@keyframes premium-sheen-sweep {
+  from { background-position: -120% 50%; }
   to { background-position: 220% 50%; }
 }
 

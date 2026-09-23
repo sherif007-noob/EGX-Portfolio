@@ -21,6 +21,8 @@ export type Sector =
   | 'Energy & Petrochemicals'
   | 'Energy & Oil Services'
   | 'Utilities & Logistics'
+  | 'Utilities'
+  | 'Commercial Services'
   | 'Transport & Logistics'
   | 'Consumer Goods & Automobiles'
   | 'Tourism & Leisure'

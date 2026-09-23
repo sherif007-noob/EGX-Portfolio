@@ -195,7 +195,7 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
 }
 
 export function resolveTickerSymbol(ticker: string): string {
-  const upper = ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  const upper = canonicalizeEGXSymbol(ticker);
   return TICKER_ALIASES[upper] || upper;
 }
 

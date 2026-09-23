@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 2 complete; Pass 3 modal/overlay family in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 3 implemented; awaiting CI/mobile validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -368,29 +368,36 @@ Quality Checks **#647** passed typecheck, tests, and production build on the cor
 
 ### Pass 3 — Modal and overlay family
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
 
 Goal:
-- one consistent viewport behavior across all modal families.
+- one consistent viewport behavior across all modal families without changing the accepted visual language.
 
-Priority:
-1. Portfolio Backup;
-2. Edit Position / Quick Cash / Confirm Delete;
-3. Add/Sell/Journal edit;
-4. Google Sheets / Schema Sync / Price Alerts / Trade Screenshot / PWA.
+Implemented:
+- **ff28126** — add shared `premium-modal-frame` for structured flex modals while keeping `premium-modal-viewport` for simple scrolling panels; both use `dvh` and mobile safe-area-aware height limits.
+- **6c02593** — make Portfolio Backup scroll safely within the usable viewport, reduce phone padding, stack maintenance/export/restore option rows on narrow screens, keep actions reachable, and correct the stale restore copy from Firebase to Supabase.
+- **0c848aa / 62fd38e / d69d0a7** — make Edit Position, Quick Cash, and Confirm Delete viewport-safe; keep short modals centered while allowing internal scroll when keyboard/short-landscape height requires it; make destructive/confirm action rows phone-safe.
+- **edce550 / 3e9081e** — make Add Trade and Sell Position long forms `dvh`-bounded, collapse cramped two-column input groups below `sm`, stack fee/header utility rows where needed, and keep Cancel/Confirm actions reachable.
+- **6803097 / e5630f3** — apply the same contract to Journal Edit and Cash Edit; preserve their established selector/choice styling while making action rows and calculated previews fit narrow screens.
+- **c0f6844** — convert Google Sheets to a structured fixed-header / scroll-body modal with `premium-modal-frame`; stack account/URL/rebuild controls safely on phone while preserving existing action styles.
+- **18240f3** — make Schema Sync viewport-safe, horizontally scroll its sub-tab rail instead of widening the page, stack code/payload action rows on phone, and collapse schema reference fields to one column below `sm`.
+- **b586167** — replace Price Alerts' hard `90vh` cap with the shared frame contract; make header/permission/footer rows wrap safely; keep its tab strip horizontally reachable; scroll only the modal body.
+- **cd96b6a** — replace Screenshot Scanner's hard `90vh` cap with the shared frame contract; keep header/footer fixed, make review controls/cards stack on phone, reduce phone dropzone padding, and keep footer actions reachable.
+- **7f18d1d** — make the PWA install guide use the shared frame contract with a scrollable body and fixed header/footer.
 
-Work:
-- `dvh`-aware max heights;
-- safe outer padding;
-- body scroll vs fixed footer behavior;
-- narrow-grid stacking;
-- dropdown containment inside modals;
-- touch target normalization.
+Responsive rules preserved:
+- no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;
+- accepted Phase 2–5 classes remain the source of truth;
+- Pass 3 changes layout/reachability only;
+- wide content scrolls inside its intended region, never by widening the page;
+- desktop composition remains materially unchanged.
 
 Checkpoint:
 - all modal content/actions reachable on 320px portrait and short phone landscape;
 - no footer hidden below viewport;
-- no backdrop content clipping.
+- no backdrop content clipping;
+- dropdowns remain inside the mobile viewport;
+- no selector/button style regression.
 
 ### Pass 4 — Reports and chart shells
 

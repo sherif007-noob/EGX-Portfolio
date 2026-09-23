@@ -101,7 +101,6 @@ export default function App() {
     reconcileLedger,
     importBackup,
     updateTickers,
-    forceSync,
   } = usePortfolioState();
 
   // Google Sheets Sync Hook (Encapsulates OAuth, full sync, price sync, and token expiration)
@@ -113,7 +112,6 @@ export default function App() {
     syncToSheets,
     syncPricesOnlyToSheets,
     updateSheetsConfig,
-    handleLogin,
     handleLogout,
   } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
 
@@ -874,7 +872,6 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
-        onOpenSchemaSync={() => setIsSchemaModalOpen(true)}
         onOpenAddTrade={() => {
           setSelectedTickerForTrade(null);
           setIsAddTradeModalOpen(true);
@@ -886,13 +883,8 @@ export default function App() {
         isAlertsActive={alertSettings.enabled}
         isSheetsConnected={!!sheetsConfig}
         isTokenExpired={isSheetsTokenExpired}
-        sheetsTitle={sheetsConfig?.sheetName}
-        authUser={authUser}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
         onSyncLivePrices={handleSyncPrices}
         isSyncingPrices={isSyncingPrices}
-        forceSyncToFirestore={forceSync}
       />
 
       {/* Undo Toast Notification */}

@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **Plan complete** | Full 34-file responsive audit complete; implementation has not started. |
+| 6 | **In progress** | Pass 0 responsive primitives and safety baseline in progress. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -734,7 +734,7 @@ The Phase 5 detailed plan is now historical. Phase 6 — Mobile / responsive ref
 
 ## Phase 6 — Responsive audit and planning
 
-**Status: plan complete; implementation has not started.**
+**Status: implementation in progress; Pass 0 responsive primitives and safety baseline.**
 
 Detailed plan:
 - **8662376** — add `docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md`.
@@ -769,7 +769,13 @@ Hard boundaries:
 - final header composition remains Phase 9;
 - no business/accounting/persistence/data-engine changes.
 
-No Phase 6 implementation code was changed during this audit/planning pass.
+No Phase 6 implementation code was changed during the audit/planning pass.
+
+### Phase 6 Pass 0 — responsive primitives and safety baseline
+
+**Status: in progress.**
+
+Pass 0 establishes shared coarse-pointer touch sizing, modal viewport helpers, fixed-overlay viewport/safe-area helpers, and mobile dropdown/control containment before any screen-specific responsive rollout.
 
 ## Current validated visual rules
 

@@ -151,7 +151,7 @@ Shared timeframe boundaries live in `src/services/analyticsTimeframes.ts`.
 | Timeframe | Definition | Resolution |
 | --- | --- | --- |
 | Today | Current EGX session after open, otherwise latest completed session | 15-minute |
-| 1W | Rolling 7 calendar days ending at the latest session | Daily |
+| 1W | Elapsed 7-day lookback ending at the latest session | Daily |
 | 1M | Rolling one calendar month ending at the latest session | Daily |
 | 90D | Rolling 90 calendar days ending at the latest session | Daily |
 | YTD | January 1 through the latest session | Daily |
@@ -273,7 +273,7 @@ The stored 15-minute bars reconstruct the session path. During the active sessio
 
 ### Seven-day window semantics
 
-`1W` means seven calendar dates inclusive of the ending session date. For example, an ending session of Sep 23 resolves to a window start of Sep 17. The valuation selector may still use the most recent complete valuation at or before that boundary as its performance anchor when required, but the requested window itself is not eight calendar dates wide.
+`1W` uses an elapsed seven-day lookback: the boundary is exactly seven calendar days before the ending session. For example, an ending session of Sep 23 resolves to Sep 16. This matches the usual period-return convention of comparing the current value with the value one week earlier; the two boundary dates are endpoints, not seven inclusive date labels. The valuation selector uses the most recent complete valuation at or before that boundary when required.
 
 ### Current-session versus completed-session behavior
 

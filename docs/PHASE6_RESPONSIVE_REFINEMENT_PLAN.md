@@ -368,7 +368,7 @@ Quality Checks **#647** passed typecheck, tests, and production build on the cor
 
 ### Pass 3 — Modal and overlay family
 
-**Status: CORRECTIVE IMPLEMENTATION COMPLETE — awaiting CI and mobile re-validation.**
+**Status: CORRECTIVE IMPLEMENTATION COMPLETE — historical self-healing repair added; awaiting CI and mobile/data re-validation.**
 
 Goal:
 - one consistent viewport behavior across all modal families without changing the accepted visual language.
@@ -407,6 +407,17 @@ Side-quest acceptance:
 - ticker and ISIN are both valid directory/search identifiers.
 
 Quality Checks **#692** passed typecheck, tests, and production build on the completed full-directory migration.
+
+Historical analytics repair side quest:
+- Production validation showed the 1W/1M chart excluding four valuation dates after a newly-added ACTF position. Direct Supabase inspection confirmed ACTF had **0 rows** in both `price_history` and `intraday_price_history`, while the other open positions had daily history through Sep 22.
+- The analytics engine is intentionally strict: a historical valuation is excluded when any held ticker lacks a trustworthy close at or before that valuation date. The chart was therefore protecting NAV accuracy rather than fabricating ACTF history.
+- User explicitly requested that ACTF remain empty so it can serve as the real end-to-end repair test fixture; no manual ACTF rows were inserted.
+- **90ba3fa / dc40c9b** — add a pure historical-coverage planner plus regression tests for zero-history tickers, backdated requirements, internal market-day gaps, stale tails, weekend handling, and healthy no-op coverage.
+- **03fcb0e** — rewrite `scripts/syncHistoricalPrices.ts` into a gap-aware self-healing job. It derives required history from both transactions and open positions, detects missing coverage, resolves TradingView by canonical ticker with ISIN fallback, requests only the repair range, and upserts repaired daily bars.
+- **e4310db** — change Historical Prices automation from once-daily blind sync to repeated gap-aware repair after/around the EGX close and evening; healthy coverage exits before opening a TradingView session. Workflow dispatch also supports optional ticker/date targeting for manual validation.
+- **9d4593b** — correct the weekend regression fixture so it isolates stale-tail behavior rather than accidentally testing a missing historical head.
+- **1d2be35 / 5762cab** — page Supabase history coverage reads and make paging deterministic so repair planning remains correct as stored history grows beyond one API page.
+- Acceptance rule: missing history is repaired by the automation itself; the app must never fill historical valuation holes with today's price or a fabricated zero.
 
 Responsive rules preserved:
 - no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;

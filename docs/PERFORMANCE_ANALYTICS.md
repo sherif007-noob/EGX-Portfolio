@@ -436,3 +436,7 @@ The secondary analytics service never mutates portfolio rows, positions, closed 
 
 
 <!-- deployment-trigger: premium-cloudflare-2026-09-23-2331 -->
+
+### Rolling-period boundary valuation
+
+Daily rolling periods distinguish the **first plotted date** from the **beginning-of-period valuation**. If a 1W chart ends on Sep 23, its plotted window begins Sep 16, but the return baseline is the last complete close strictly before that boundary (Sep 15). This is the portfolio value at the beginning of Sep 16; using Sep 16's closing valuation would discard the first day's performance. External capital flows after the baseline are neutralized by the return calculations.

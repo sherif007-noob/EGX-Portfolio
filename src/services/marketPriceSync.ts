@@ -1,5 +1,5 @@
 import { EGXTicker, Position, LivePriceQuote } from '../types';
-import { createEGXTickerRecord } from '../data/egxTickers';
+import { EGX_STOCK_DICTIONARY, canonicalizeEGXSymbol, createEGXTickerRecord } from '../data/egxTickers';
 
 /**
  * Maps legacy, alternate, or renamed EGX tickers to active TradingView scanner symbols.
@@ -98,7 +98,8 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
   for (const item of data) {
     if (Array.isArray(item.d) && item.d.length >= 2) {
       const rawSymbol = String(item.d[0] || '').trim().toUpperCase();
-      const cleanTicker = rawSymbol.replace(/^EGX:/, '').replace(/\.CA$/, '');
+      const scannerSymbol = rawSymbol.replace(/^EGX:/, '').replace(/\.CA$/, '');
+      const cleanTicker = canonicalizeEGXSymbol(scannerSymbol);
       
       let description = '';
       let logoId = '';
@@ -164,6 +165,7 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
         };
 
         quotes[cleanTicker] = quote;
+        quotes[scannerSymbol] = quote;
         quotes[rawSymbol] = quote;
         const alias = resolveTickerSymbol(cleanTicker);
         if (alias && alias !== cleanTicker) {
@@ -213,16 +215,30 @@ export function applyLivePricesToPortfolio(
   discoveredTickers.forEach(dt => {
     const existing = tickerMap.get(dt.ticker.toUpperCase());
     if (existing) {
+      const authoritative = EGX_STOCK_DICTIONARY[dt.ticker.toUpperCase()];
+      const nextNameEn = authoritative?.nameEn || existing.nameEn;
+      const nextNameAr = authoritative?.nameAr || existing.nameAr;
+      const nextSector = authoritative?.sector || existing.sector;
+      const nextIsin = authoritative?.isin || existing.isin;
+
       if (
         existing.lastPrice !== dt.lastPrice ||
         existing.change !== dt.change ||
         existing.volume !== dt.volume ||
         existing.dayHigh !== dt.dayHigh ||
-        existing.dayLow !== dt.dayLow
+        existing.dayLow !== dt.dayLow ||
+        existing.nameEn !== nextNameEn ||
+        existing.nameAr !== nextNameAr ||
+        existing.sector !== nextSector ||
+        existing.isin !== nextIsin
       ) {
         hasChanges = true;
         tickerMap.set(dt.ticker.toUpperCase(), {
           ...existing,
+          nameEn: nextNameEn,
+          nameAr: nextNameAr,
+          sector: nextSector,
+          isin: nextIsin,
           lastPrice: dt.lastPrice,
           change: dt.change,
           changePercent: dt.changePercent,
@@ -317,10 +333,24 @@ export function applyLivePricesToPortfolio(
       }
     }
     
-    if (newPrice !== p.currentPrice || newDayChange !== p.dayChange || newDayChangePercent !== p.dayChangePercent) {
+    const canonicalMetadata =
+      EGX_STOCK_DICTIONARY[cleanSym] ||
+      EGX_STOCK_DICTIONARY[symbol];
+    const companyName = canonicalMetadata?.nameEn || p.companyName;
+    const sector = canonicalMetadata?.sector || p.sector;
+
+    if (
+      newPrice !== p.currentPrice ||
+      newDayChange !== p.dayChange ||
+      newDayChangePercent !== p.dayChangePercent ||
+      p.companyName !== companyName ||
+      p.sector !== sector
+    ) {
       positionsChanged = true;
       return {
         ...p,
+        companyName,
+        sector,
         currentPrice: newPrice,
         dayChange: newDayChange,
         dayChangePercent: newDayChangePercent,

@@ -98,7 +98,7 @@ export function resolveAnalyticsWindow(
       return {
         timeframe,
         label: 'Past week',
-        startDate: shiftDays(endDate, -7),
+        startDate: shiftDays(endDate, -6),
         endDate,
         resolution: '1d',
         requiresIntraday: false,

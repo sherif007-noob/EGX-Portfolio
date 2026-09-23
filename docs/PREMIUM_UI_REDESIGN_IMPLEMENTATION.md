@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 1 complete; Pass 2 core data tabs in progress. |
+| 6 | **In progress** | Pass 2 implemented; awaiting CI/mobile validation before Pass 3. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -818,9 +818,19 @@ Quality Checks **#620** passed typecheck, tests, and production build on the rev
 
 ### Phase 6 Pass 2 — core data tabs
 
-**Status: in progress.**
+**Status: implemented; awaiting CI and mobile visual validation.**
 
-Scope: Positions, Closed Cycles, Transactions/Journal, Cash Ledger, and Stocks & Prices. This pass owns mobile search/filter/select width pressure, filter/pagination wrapping, mobile card action density, and intentional in-shell horizontal table overflow. The existing Positions desktop/mobile dual-render architecture remains intact.
+Scope: Positions, Closed Cycles, Transactions/Journal, Cash Ledger, and Stocks & Prices.
+
+Implementation:
+- **c387712 / fb6d709** — make the Positions tab header responsive and hide its redundant phone-only + Add Position entry point while retaining the integrated Add Trade control.
+- **221b7d9 / 0f3639b** — make Positions search/filter controls shrink safely, tighten phone card padding, preserve the desktop/mobile split, and finalize the compact DCA/Sell/Edit/Delete row.
+- **3b769ab** — replace Closed Cycles fixed mobile search/sort widths with full-width responsive controls and a 2-column phone outcome grid.
+- **94c533f / 795db90** — make Journal filters a deliberate horizontal rail, make sort/page-size controls two-column on phone, clamp delete toast width, and make both pagination control rows phone-safe.
+- **7243d37 / 830f2f3** — make Cash transfer/history selectors phone-safe and give the ledger table an explicit in-shell horizontal-scroll width rather than letting the page widen.
+- **0b8af54** — make Directory utility actions, sector filtering, and card padding responsive without altering ticker-card information architecture.
+
+No Phase 2 implementation changed accounting, persistence, transaction semantics, or chart logic. Desktop minimum widths remain at larger breakpoints where they are useful.
 
 ## Current validated visual rules
 

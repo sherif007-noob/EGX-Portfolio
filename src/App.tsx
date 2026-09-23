@@ -896,7 +896,7 @@ export default function App() {
       />
 
       {/* Undo Toast Notification */}
-      <SurfacePresence isOpen={!!undoState} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-safe fixed bottom-6 right-6 z-50">
+      <SurfacePresence isOpen={!!undoState} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-above-status fixed bottom-6 right-6 z-50">
         {undoState && (
         <div className="w-full">
           <div className="premium-floating w-full px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">

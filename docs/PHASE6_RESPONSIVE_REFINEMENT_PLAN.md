@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 persistent shell/app chrome in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 1 implemented and CI-clean; awaiting mobile visual validation before Pass 2.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -296,7 +296,7 @@ Validation:
 
 ### Pass 1 — Persistent shell and main app chrome
 
-**Status: IMPLEMENTED — awaiting CI and visual validation.**
+**Status: IMPLEMENTED — CI clean; awaiting mobile visual validation before Pass 2.**
 
 Scope:
 - `App.tsx`;
@@ -311,6 +311,8 @@ Implemented:
 - **3a625d8** — tighten phone Portfolio Summary padding/gaps, keep the 2-column KPI layout, hide low-priority KPI annotations below `sm`, allow long P&L/footer content to wrap, and align live-feed actions cleanly.
 - **132295e** — clamp Offline/Firestore status surfaces to mobile safe gutters, allow status text to wrap, and keep the Sync action independently tappable.
 - **3fd4190 / bc9e7f7** — prevent fixed-toast/header/status collisions and keep fixed-overlay width clamping mobile-only so desktop sizing remains unchanged.
+
+Quality Checks **#614** passed typecheck, tests, and production build.
 
 Validation target:
 - 320 / 360 / 390 / 430 widths;

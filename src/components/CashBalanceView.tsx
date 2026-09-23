@@ -1011,13 +1011,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         <PremiumModalMotion
           isOpen={!!editingTransaction}
           backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          panelClassName="premium-modal relative w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+          panelClassName="premium-modal premium-modal-viewport relative w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
           onBackdropClick={requestCloseCashEdit}
           panelAriaLabel="Edit cash transaction"
         >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-4 h-4" />
                 </div>
@@ -1129,17 +1129,17 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               )}
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="grid grid-cols-2 gap-2 pt-2 sm:flex sm:items-center sm:justify-end">
                 <button
                   type="button"
                   onClick={requestCloseCashEdit}
-                  className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
+                  className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="premium-action premium-action-primary px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                  className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold sm:w-auto"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Changes

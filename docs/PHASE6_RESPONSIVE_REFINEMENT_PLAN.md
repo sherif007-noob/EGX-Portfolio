@@ -395,7 +395,8 @@ Implemented:
 - **e838494** — propagate refreshed ticker identity metadata into open positions, transactions, and closed-cycle views so historical UI does not keep stale company names/sectors after the directory is corrected.
 - **0c30598 / e0ffa88** — make Add Trade and Stocks & Prices searchable by ISIN in addition to ticker and company name.
 - **8f6df6b** — stop fabricating Arabic company names for live-only scanner discoveries; unknown Arabic metadata remains blank rather than storing false text.
-- **8bc4bdf** — extend regression coverage for renamed-symbol migration, retired baseline rows, current known identities/ISINs, live-metadata precedence, classification, and live-only ticker behavior.
+- **8bc4bdf / 8e44acd** — extend regression coverage for renamed-symbol migration, retired baseline/cache cleanup, current known identities/ISINs, live-metadata precedence, classification, and live-only ticker behavior.
+- **a359617** — purge non-migratable retired rows from old local/Supabase ticker caches while preserving historical ledger records separately; when a legacy alias and a current symbol collide, the canonical/current live record wins.
 
 Side-quest acceptance:
 - the static seed is no longer expected to enumerate the whole active EGX;

@@ -14,7 +14,7 @@ import {
 import { curveCardinal } from 'd3-shape';
 import { Check, ChevronDown } from 'lucide-react';
 import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
-import type { TradeTransaction } from '../../types';
+import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
@@ -51,6 +51,7 @@ interface PerformanceTimeframeChartProps {
   transactions: TradeTransaction[];
   historicalPrices: HistoricalPriceSeries;
   capitalDeposits: number;
+  positions: Position[];
   historicalLoading?: boolean;
 }
 
@@ -139,6 +140,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   transactions,
   historicalPrices,
   capitalDeposits,
+  positions,
   historicalLoading = false,
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
@@ -203,6 +205,12 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
         sessionDate = sessionDate ?? requestedSessionDate;
 
+        const livePrices = Object.fromEntries(
+          positions
+            .map((position) => [normalizeIntradayTicker(position.ticker), Number(position.currentPrice)] as const)
+            .filter(([ticker, price]) => ticker && Number.isFinite(price) && price > 0),
+        );
+
         const result = buildIntradayAnalyticsResult(
           transactions,
           historicalPrices,
@@ -211,6 +219,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             sessionDate,
             openingCapital: capitalDeposits,
             asOf: new Date(),
+            livePrices,
           },
         );
 
@@ -231,7 +240,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     return () => {
       cancelled = true;
     };
-  }, [timeframe, transactions, historicalPrices, capitalDeposits]);
+  }, [timeframe, transactions, historicalPrices, capitalDeposits, positions]);
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
   const loading = timeframe === 'TODAY' ? intradayLoading : historicalLoading;

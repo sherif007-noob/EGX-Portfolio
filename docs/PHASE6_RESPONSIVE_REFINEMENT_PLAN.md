@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 0 implemented and CI-clean; awaiting mobile baseline validation before Pass 1.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 0 complete; Pass 1 persistent shell/app chrome in progress.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -263,7 +263,7 @@ Every render file has an explicit Phase 6 disposition.
 
 ### Pass 0 — Responsive primitives and safety baseline
 
-**Status: IMPLEMENTED — CI clean; awaiting mobile baseline validation before Pass 1.**
+**Status: COMPLETE.**
 
 Goal:
 - solve repeated responsive problems once before screen-level rollout.
@@ -287,7 +287,7 @@ Implemented:
 
 No component-specific layout was changed in Pass 0.
 
-Quality Checks **#600** passed typecheck, tests, and production build. Pass 0 remains open only for visual validation of the shared mobile/coarse-pointer baseline before the app-shell rollout begins.
+Quality Checks **#600** passed typecheck, tests, and production build. User validation accepted the shared mobile/coarse-pointer baseline. Pass 0 is complete.
 
 Validation:
 - desktop visual density materially unchanged;
@@ -295,6 +295,8 @@ Validation:
 - Phase 4/5 motion/effects unchanged.
 
 ### Pass 1 — Persistent shell and main app chrome
+
+**Status: IN PROGRESS.**
 
 Scope:
 - `App.tsx`;

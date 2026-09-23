@@ -346,7 +346,7 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
-**Status: IN PROGRESS — Pass 3 corrections plus ticker-directory and historical-coverage side quests implemented; awaiting CI/mobile/data re-validation before Pass 4.**
+**Status: IN PROGRESS — Pass 3 corrections plus ticker-directory and historical-coverage side quests are CI-clean; ACTF remains the deliberate end-to-end repair fixture before Pass 4.**
 
 The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
 

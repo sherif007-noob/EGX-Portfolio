@@ -423,7 +423,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   return (
     <div className="space-y-4">
       {/* Toast Notification for deletion */}
-      <SurfacePresence isOpen={!!deletedIdToast} className="fixed bottom-6 right-6 z-50">
+      <SurfacePresence isOpen={!!deletedIdToast} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-safe fixed bottom-6 right-6 z-50">
         {deletedIdToast && (
         <div>
           <div className="premium-floating px-4 py-2.5 rounded-xl border-rose-500/50 text-rose-300 text-xs font-semibold flex items-center gap-2">
@@ -519,7 +519,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Filter and Search Controls Bar */}
       <div className="premium-panel flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
-        <div className="relative flex-1 min-w-[240px] max-w-xl">
+        <div className="relative w-full min-w-0 flex-1 max-w-xl">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             id="journal-search-input"
@@ -532,14 +532,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         </div>
 
         {/* Filter Pills and Sort Dropdown */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <div className="premium-selector-shell flex items-center gap-1 flex-wrap">
+        <div className="grid w-full grid-cols-2 items-stretch gap-1.5 md:flex md:w-auto md:items-center md:flex-wrap">
+          <div className="premium-selector-shell col-span-2 flex w-full items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none md:w-auto md:flex-wrap md:overflow-visible">
           <button
             id="journal-filter-all"
             type="button"
             aria-pressed={filterMode === 'ALL'}
             onClick={() => changeFilterMode('ALL')}
-            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
+            className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
           >
             All ({transactions.length})
           </button>
@@ -549,7 +549,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'OPEN'}
             onClick={() => changeFilterMode('OPEN')}
-            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
+            className={`premium-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
           >
             <Layers className="w-3.5 h-3.5 text-blue-400" />
             Open Positions ({openPositionsTransactionsCount})
@@ -560,7 +560,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'WIN'}
             onClick={() => changeFilterMode('WIN')}
-            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+            className={`premium-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
             Wins ({winCount})
@@ -571,7 +571,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'LOSS'}
             onClick={() => changeFilterMode('LOSS')}
-            className={`premium-filter-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+            className={`premium-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
             Losses ({lossCount})
@@ -582,7 +582,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'BUY'}
             onClick={() => changeFilterMode('BUY')}
-            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
+            className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
             Buys Only ({buyCount})
           </button>
@@ -592,14 +592,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'SELL'}
             onClick={() => changeFilterMode('SELL')}
-            className={`premium-filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
+            className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})
           </button>
           </div>
 
           {/* Compact Sort Dropdown Select */}
-          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1 rounded-xl">
+          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-xl">
             <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <AnalyticsSelect
               value={sortOrder}
@@ -607,7 +607,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               compact
               accent="amber"
               ariaLabel="Sort transaction journal"
-              className="min-w-[170px]"
+              className="w-full min-w-0 md:w-auto md:min-w-[170px]"
               options={[
                 { value: 'desc', label: 'Sort: Newest First' },
                 { value: 'asc', label: 'Sort: Oldest First' },
@@ -625,7 +625,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               onChange={(value) => setPageSize(value === 'ALL' ? 'ALL' : Number(value))}
               compact
               ariaLabel="Rows per page"
-              className="min-w-[112px]"
+              className="w-full min-w-0 md:w-auto md:min-w-[112px]"
               options={[
                 { value: 15, label: '15 / page' },
                 { value: 25, label: '25 / page' },
@@ -640,11 +640,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Pagination Status & Controls (Top) */}
       {showPagination && (
-        <div className="premium-subpanel flex items-center justify-between px-3 py-2 rounded-xl text-xs text-slate-400">
+        <div className="premium-subpanel flex flex-col gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <span>
             Showing <strong className="text-white">{(safeCurrentPage - 1) * numericPageSize + 1}</strong> - <strong className="text-white">{Math.min(safeCurrentPage * numericPageSize, totalFilteredCount)}</strong> of <strong className="text-white">{totalFilteredCount}</strong> trades
           </span>
-          <div className="flex items-center gap-1">
+          <div className="grid w-full grid-cols-5 items-center gap-1 sm:flex sm:w-auto">
             <button
               onClick={() => setCurrentPage(1)}
               disabled={safeCurrentPage === 1}
@@ -976,18 +976,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Pagination Controls (Bottom) */}
       {showPagination && (
-        <div className="premium-panel flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400">
+        <div className="premium-panel flex flex-col items-stretch justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400 sm:flex-row sm:items-center">
           <span>
             Page <strong className="text-white">{safeCurrentPage}</strong> of <strong className="text-white">{totalPages}</strong> ({totalFilteredCount} total transactions)
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="grid w-full grid-cols-5 items-center gap-1.5 sm:flex sm:w-auto">
             <button
               onClick={() => setCurrentPage(1)}
               disabled={safeCurrentPage === 1}
               className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               <ChevronsLeft className="w-3.5 h-3.5" />
-              First
+              <span className="hidden sm:inline">First</span>
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -995,7 +995,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-              Prev
+              <span className="hidden sm:inline">Prev</span>
             </button>
             <span className="premium-chip px-3 py-1 rounded-xl font-mono text-white font-bold">
               {safeCurrentPage}
@@ -1005,7 +1005,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               disabled={safeCurrentPage === totalPages}
               className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
-              Next
+              <span className="hidden sm:inline">Next</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
             <button
@@ -1013,7 +1013,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               disabled={safeCurrentPage === totalPages}
               className="premium-action px-2.5 py-1.5 rounded-xl disabled:opacity-30 text-slate-300 flex items-center gap-1"
             >
-              Last
+              <span className="hidden sm:inline">Last</span>
               <ChevronsRight className="w-3.5 h-3.5" />
             </button>
           </div>

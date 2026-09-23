@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector, CashTransaction } from '../types';
-import { INITIAL_EGX_TICKERS, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
+import { canonicalizeEGXSymbol, INITIAL_EGX_TICKERS, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
 import {
   INITIAL_POSITIONS,
   INITIAL_CLOSED_TRADES,
@@ -51,15 +51,20 @@ function rehydrateTransactionMetadata(
 
   const next = transactionList.map((transaction) => {
     if (transaction.ticker.trim().toUpperCase() === 'CASH') return transaction;
-    const ticker = tickerMap.get(transaction.ticker.trim().toUpperCase());
+    const canonicalTicker = canonicalizeEGXSymbol(transaction.ticker);
+    const ticker = tickerMap.get(canonicalTicker);
     if (!ticker) return transaction;
 
     const companyName = ticker.nameEn || transaction.companyName;
     const sector = ticker.sector !== 'Other' ? ticker.sector : transaction.sector;
-    if (transaction.companyName === companyName && transaction.sector === sector) return transaction;
+    if (
+      transaction.ticker === canonicalTicker &&
+      transaction.companyName === companyName &&
+      transaction.sector === sector
+    ) return transaction;
 
     changed = true;
-    return { ...transaction, companyName, sector };
+    return { ...transaction, ticker: canonicalTicker, companyName, sector };
   });
 
   return changed ? next : transactionList;
@@ -298,14 +303,16 @@ export function usePortfolioState() {
     const tickerMap = new Map(tickerList.map((t) => [t.ticker.trim().toUpperCase(), t]));
     let hasChanges = false;
     const rehydrated = posList.map((p) => {
-      const t = tickerMap.get(p.ticker.trim().toUpperCase());
+      const canonicalTicker = canonicalizeEGXSymbol(p.ticker);
+      const t = tickerMap.get(canonicalTicker);
       if (!t) return p;
       const currentPrice = t.lastPrice > 0 ? t.lastPrice : p.currentPrice;
       const targetPrice = p.targetPrice ?? t.targetPrice;
       const stopLoss = p.stopLoss ?? t.stopLoss;
-      const companyName = t.nameEn || p.companyName || p.ticker;
+      const companyName = t.nameEn || p.companyName || canonicalTicker;
       const sector = t.sector !== 'Other' ? t.sector : (p.sector || 'Other');
       if (
+        p.ticker !== canonicalTicker ||
         Math.abs((p.currentPrice || 0) - currentPrice) > 0.0001 ||
         p.targetPrice !== targetPrice ||
         p.stopLoss !== stopLoss ||
@@ -313,7 +320,7 @@ export function usePortfolioState() {
         p.sector !== sector
       ) {
         hasChanges = true;
-        return { ...p, currentPrice, targetPrice, stopLoss, companyName, sector };
+        return { ...p, ticker: canonicalTicker, currentPrice, targetPrice, stopLoss, companyName, sector };
       }
       return p;
     });

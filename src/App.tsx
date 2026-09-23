@@ -1035,7 +1035,7 @@ export default function App() {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
                 }}
-                className="premium-action premium-action-primary premium-shimmer-border w-full justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
+                className="premium-action premium-action-primary premium-shimmer-border hidden px-3.5 py-1.5 rounded-lg text-xs font-semibold sm:inline-flex"
               >
                 + Add Position
               </button>

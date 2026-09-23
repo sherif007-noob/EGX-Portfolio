@@ -432,3 +432,6 @@ open market value
 For daily timeframes the chart uses historical daily closes. For Today it uses 15-minute prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
 
 The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.
+
+
+<!-- deployment-trigger: cloudflare-preview-2026-09-23 -->

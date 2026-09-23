@@ -53,6 +53,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
     const query = searchQuery.toLowerCase();
     const matchesSearch =
       t.ticker.toLowerCase().includes(query) ||
+      t.isin?.toLowerCase().includes(query) ||
       t.nameEn.toLowerCase().includes(query) ||
       t.nameAr.toLowerCase().includes(query);
     const matchesSector = selectedSector === 'ALL' || t.sector === selectedSector;
@@ -161,7 +162,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by ticker (COMI, ESRS, ABUK), English or Arabic name..."
+            placeholder="Filter by ticker, ISIN, English or Arabic name..."
             className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/72 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-teal-500/60"
           />
         </div>

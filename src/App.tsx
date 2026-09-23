@@ -1021,8 +1021,8 @@ export default function App() {
 
         {activeTab === 'positions' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-white tracking-tight">
                   EGX Portfolio Positions
                 </h2>
@@ -1035,7 +1035,7 @@ export default function App() {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
                 }}
-                className="premium-action premium-action-primary premium-shimmer-border px-3.5 py-1.5 rounded-lg text-xs font-semibold"
+                className="premium-action premium-action-primary premium-shimmer-border w-full justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
               >
                 + Add Position
               </button>

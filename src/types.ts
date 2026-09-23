@@ -23,6 +23,9 @@ export type Sector =
   | 'Utilities & Logistics'
   | 'Utilities'
   | 'Commercial Services'
+  | 'Contracting & Construction'
+  | 'Paper & Packaging'
+  | 'Trade & Distributors'
   | 'Transport & Logistics'
   | 'Consumer Goods & Automobiles'
   | 'Tourism & Leisure'
@@ -56,6 +59,11 @@ export interface EGXTicker {
   lastUpdated: string;
   priceUpdatedAt?: string;
   logoUrl?: string;
+  /** Raw market classification returned by the live scanner. */
+  marketSector?: string;
+  industry?: string;
+  /** Distinguishes live scanner metadata from the offline fallback seed. */
+  metadataSource?: 'baseline' | 'tradingview';
 }
 
 export interface Position {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   FileSpreadsheet, 
   PlusCircle, 
@@ -7,21 +7,16 @@ import {
   BarChart3, 
   BookOpen, 
   ListOrdered,
-  LogOut,
-  User as UserIcon,
   Check,
   RefreshCw,
   Wallet,
   RotateCcw,
-  Sparkles,
   Zap,
   Database,
   AlertTriangle,
   Bell,
   BellRing,
-  LogIn,
 } from 'lucide-react';
-import { User } from 'firebase/auth';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
 
@@ -29,7 +24,6 @@ interface HeaderProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
   onOpenGoogleSheets: () => void;
-  onOpenSchemaSync?: () => void;
   onOpenAddTrade: () => void;
   onOpenBackupModal?: () => void;
   onOpenScreenshotModal?: () => void;
@@ -37,21 +31,15 @@ interface HeaderProps {
   unreadAlertCount?: number;
   isAlertsActive?: boolean;
   isSheetsConnected: boolean;
-  sheetsTitle?: string;
   isTokenExpired?: boolean;
-  authUser: User | null;
-  onLogin?: () => Promise<any>;
-  onLogout: () => void;
   onSyncLivePrices?: () => void;
   isSyncingPrices?: boolean;
-  forceSyncToFirestore?: () => Promise<boolean>;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
   onOpenGoogleSheets,
-  onOpenSchemaSync,
   onOpenAddTrade,
   onOpenBackupModal,
   onOpenScreenshotModal,
@@ -59,68 +47,21 @@ export const Header: React.FC<HeaderProps> = ({
   unreadAlertCount = 0,
   isAlertsActive = true,
   isSheetsConnected,
-  sheetsTitle,
   isTokenExpired = false,
-  authUser,
-  onLogin,
-  onLogout,
   onSyncLivePrices,
   isSyncingPrices = false,
-  forceSyncToFirestore,
 }) => {
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
-
-  const handleForceSync = async () => {
-    if (syncStatus === 'syncing' || !forceSyncToFirestore) return;
-
-    if (!authUser && onLogin) {
-      try {
-        setSyncStatus('syncing');
-        const loginRes = await onLogin();
-        if (loginRes?.user) {
-          const success = await forceSyncToFirestore();
-          setSyncStatus(success ? 'success' : 'error');
-          setTimeout(() => setSyncStatus('idle'), 3000);
-          return;
-        }
-      } catch (err) {
-        console.warn('Sign-in on force sync cancelled or failed:', err);
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 4000);
-        return;
-      }
-    }
-
-    setSyncStatus('syncing');
-    try {
-      const success = await forceSyncToFirestore();
-      if (success) {
-        setSyncStatus('success');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 4000);
-      }
-    } catch (err) {
-      console.error('Manual sync failed:', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 4000);
-    }
-  };
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
+    <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-3 gap-x-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
           
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/80 flex items-center justify-center p-1.5 shadow-md shadow-black/50 shrink-0">
+            <div className="premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
-              <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
+              <span className="absolute -bottom-1 -right-1 inline-flex h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.32)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -138,13 +79,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center flex-wrap justify-end gap-1.5 sm:gap-2.5 flex-1 min-w-[200px]">
+          <div className="premium-header-action-rail flex w-full min-w-0 items-center flex-nowrap justify-center gap-1.5 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none sm:w-auto sm:flex-1 sm:min-w-[200px] sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 sm:gap-2.5">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700 hover:bg-slate-800 hover:border-amber-500/50 transition group"
+                className="premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
@@ -154,9 +95,14 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
                 <span className="hidden lg:inline">Price Alerts</span>
                 {unreadAlertCount > 0 ? (
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
-                    {unreadAlertCount}
-                  </span>
+                  <>
+                    <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-slate-950 font-mono md:hidden">
+                      {unreadAlertCount}
+                    </span>
+                    <span className="hidden md:inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
+                      {unreadAlertCount}
+                    </span>
+                  </>
                 ) : isAlertsActive ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden sm:inline-block" title="Alerts active" />
                 ) : null}
@@ -169,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 transition hover:border-cyan-400 disabled:opacity-50"
+                className="premium-action premium-filter-active-cyan flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -181,68 +127,37 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+              className={`premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                 isTokenExpired
-                  ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50 animate-pulse'
+                  ? 'premium-action-warning'
                   : isSheetsConnected
-                  ? 'bg-emerald-950/40 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/40'
-                  : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                  ? 'premium-action-success'
+                  : ''
               }`}
               title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
             >
               {isTokenExpired ? (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
               ) : (
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
               )}
               <span className="hidden md:inline">
                 {isTokenExpired ? 'Reconnect Sheets' : isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
               </span>
-              {isSheetsConnected && !isTokenExpired && <Check className="w-3 h-3 text-emerald-400 ml-0.5" />}
+              {isSheetsConnected && !isTokenExpired && (
+                <>
+                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-400 md:hidden" title="Google Sheets connected" />
+                  <Check className="hidden md:block w-3 h-3 text-emerald-400 ml-0.5" />
+                </>
+              )}
             </button>
 
-            {/* Force Sync Firebase Button */}
-            {forceSyncToFirestore && (
-              <button
-                id="header-force-sync-btn"
-                onClick={handleForceSync}
-                disabled={syncStatus === 'syncing'}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition active:scale-95 ${
-                  syncStatus === 'syncing'
-                    ? 'bg-amber-950/60 text-amber-300 border-amber-500/50 cursor-wait'
-                    : syncStatus === 'success'
-                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/50'
-                    : syncStatus === 'error'
-                    ? 'bg-rose-950/60 text-rose-300 border-rose-500/50'
-                    : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
-                }`}
-                title="Force bidirectional sync with Firebase (pulls newest trades from phone & pushes local updates)"
-              >
-                {syncStatus === 'syncing' ? (
-                  <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                ) : syncStatus === 'success' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Database className="w-3.5 h-3.5 text-amber-400" />
-                )}
-                <span className="hidden sm:inline">
-                  {syncStatus === 'syncing'
-                    ? 'Syncing...'
-                    : syncStatus === 'success'
-                    ? 'Synced!'
-                    : syncStatus === 'error'
-                    ? 'Sync Failed'
-                    : 'Force Sync'}
-                </span>
-              </button>
-            )}
-
-            {/* Offline Backup & Ledger Reconcile Modal Trigger */}
+            {/* Backup & Ledger Reconcile Modal Trigger */}
             {onOpenBackupModal && (
               <button
                 id="header-backup-reconcile-btn"
                 onClick={onOpenBackupModal}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition"
+                className="premium-action flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
@@ -255,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-900/30 transition active:scale-95"
+                className="premium-action premium-action-success flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
@@ -267,68 +182,25 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
+              className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Add Trade</span>
             </button>
-
-            {/* User Profile / Auth */}
-            {authUser ? (
-              <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800 shrink-0">
-                <div 
-                  className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xs overflow-hidden ring-1 ring-emerald-500/40"
-                  title={`Signed in: ${authUser.email || 'User'} (Cloud Synced)`}
-                >
-                  {authUser.photoURL ? (
-                    <img src={authUser.photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserIcon className="w-3.5 h-3.5" />
-                  )}
-                </div>
-                <button
-                  id="logout-btn"
-                  onClick={onLogout}
-                  className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
-                  title="Sign out"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : onLogin ? (
-              <button
-                id="header-login-btn"
-                onClick={async () => {
-                  try {
-                    await onLogin();
-                    if (forceSyncToFirestore) {
-                      setTimeout(() => forceSyncToFirestore(), 800);
-                    }
-                  } catch (e) {
-                    console.error('Login error:', e);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/50 transition active:scale-95 shrink-0"
-                title="Sign in with Google to enable Firebase Cloud Sync across your devices"
-              >
-                <LogIn className="w-3.5 h-3.5 text-blue-400" />
-                <span>Sign In</span>
-              </button>
-            ) : null}
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60 overflow-x-auto scrollbar-none">
+      <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto overscroll-x-contain scrollbar-none">
         <nav className="flex space-x-1 sm:space-x-3 py-2 min-w-max">
           <button
             id="tab-overview"
             onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'overview'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -338,10 +210,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-positions"
             onClick={() => setActiveTab('positions')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'positions'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <Layers className="w-4 h-4 text-blue-400" />
@@ -351,10 +223,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-closed-cycles"
             onClick={() => setActiveTab('closed_cycles')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'closed_cycles'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <RotateCcw className="w-4 h-4 text-purple-400" />
@@ -364,10 +236,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-transactions"
             onClick={() => setActiveTab('journal')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'journal'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
@@ -377,10 +249,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-cash-ledger"
             onClick={() => setActiveTab('cash')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'cash'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <Wallet className="w-4 h-4 text-amber-400" />
@@ -390,10 +262,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-reports"
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'reports'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <BarChart3 className="w-4 h-4 text-purple-400" />
@@ -403,10 +275,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-directory"
             onClick={() => setActiveTab('directory')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'directory'
-                ? 'bg-slate-800 text-white font-semibold shadow-inner border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
             }`}
           >
             <ListOrdered className="w-4 h-4 text-teal-400" />

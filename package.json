@@ -15,7 +15,9 @@
     "sync:intraday": "tsx scripts/syncIntradayPrices.ts",
     "migrate:firestore:supabase": "tsx scripts/migrateFirestoreToSupabase.ts",
     "verify:firestore:supabase": "tsx scripts/verifyFirestoreSupabaseMigration.ts",
-    "verify:production-data": "tsx scripts/verifyProductionData.ts"
+    "verify:production-data": "tsx scripts/verifyProductionData.ts",
+    "build:cloudflare": "vite build",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
   },
   "dependencies": {
     "@ch99q/twc": "^0.1.4",
@@ -52,6 +54,8 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vitest": "^5.0.0"
-  }
+    "vitest": "^5.0.0",
+    "wrangler": "^4.0.0"
+  },
+  "packageManager": "npm@11.6.0"
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DropdownPresence } from '../PremiumMotion';
 import {
   Area,
   AreaChart,
   CartesianGrid,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -14,7 +14,13 @@ import {
 import { curveCardinal } from 'd3-shape';
 import { Check, ChevronDown } from 'lucide-react';
 import { SecondaryAnalyticsCharts } from './SecondaryAnalyticsCharts';
-import type { TradeTransaction } from '../../types';
+import {
+  createWeeklyAreaInterpolator,
+  createWeeklyLineInterpolator,
+  matchWeeklyPointByDate,
+  type WeeklyTransitionCurve,
+} from './weeklyTransitionInterpolation';
+import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
@@ -51,7 +57,9 @@ interface PerformanceTimeframeChartProps {
   transactions: TradeTransaction[];
   historicalPrices: HistoricalPriceSeries;
   capitalDeposits: number;
+  positions: Position[];
   historicalLoading?: boolean;
+  entranceReady?: boolean;
 }
 
 const TIMEFRAMES: Array<{ value: AnalyticsTimeframe; label: string }> = [
@@ -135,15 +143,22 @@ const TooltipMetric: React.FC<{
   </div>
 );
 
-export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps> = ({
+const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProps> = ({
   transactions,
   historicalPrices,
   capitalDeposits,
+  positions,
   historicalLoading = false,
+  entranceReady = true,
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
+  const [weeklyMorph, setWeeklyMorph] = useState<{
+    from: AnalyticsTimeframe;
+    to: AnalyticsTimeframe;
+  } | null>(null);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
@@ -157,13 +172,9 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
   }, [transactions, historicalPrices, timeframe, capitalDeposits]);
 
   useEffect(() => {
-    if (timeframe !== 'TODAY') return;
-
     let cancelled = false;
     setIntradayLoading(true);
     setIntradayError(null);
-    setIntradayResult(null);
-    setLoadedIntradayPrices({});
 
     const load = async () => {
       try {
@@ -203,6 +214,12 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
         sessionDate = sessionDate ?? requestedSessionDate;
 
+        const livePrices = Object.fromEntries(
+          positions
+            .map((position) => [normalizeIntradayTicker(position.ticker), Number(position.currentPrice)] as const)
+            .filter(([ticker, price]) => ticker && Number.isFinite(price) && price > 0),
+        );
+
         const result = buildIntradayAnalyticsResult(
           transactions,
           historicalPrices,
@@ -211,6 +228,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
             sessionDate,
             openingCapital: capitalDeposits,
             asOf: new Date(),
+            livePrices,
           },
         );
 
@@ -231,10 +249,44 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     return () => {
       cancelled = true;
     };
-  }, [timeframe, transactions, historicalPrices, capitalDeposits]);
+  }, [transactions, historicalPrices, capitalDeposits, positions]);
+
+  useEffect(() => {
+    const handleGlobalPress = (event: Event) => {
+      const target = event.target as Node | null;
+      if (target && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
+        setModeMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setModeMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handleGlobalPress, true);
+    document.addEventListener('touchstart', handleGlobalPress, true);
+    document.addEventListener('mousedown', handleGlobalPress, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', handleGlobalPress, true);
+      document.removeEventListener('touchstart', handleGlobalPress, true);
+      document.removeEventListener('mousedown', handleGlobalPress, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, []);
+
+  const handleTimeframeChange = (nextTimeframe: AnalyticsTimeframe) => {
+    if (nextTimeframe === timeframe) return;
+
+    setWeeklyMorph(
+      timeframe === '1W' || nextTimeframe === '1W'
+        ? { from: timeframe, to: nextTimeframe }
+        : null,
+    );
+    setTimeframe(nextTimeframe);
+  };
 
   const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
-  const loading = timeframe === 'TODAY' ? intradayLoading : historicalLoading;
+  const loading = timeframe === 'TODAY' ? intradayLoading && !intradayResult : historicalLoading;
   const definition = getAnalyticsModeDefinition(mode);
   const summary = analyticsModeSummary(result, mode);
   const points = analyticsModePoints(result, mode);
@@ -296,6 +348,39 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
     : summary.changeEgp;
   const positive = (toneValue ?? 0) >= 0;
   const toneClass = positive ? 'text-emerald-400' : 'text-rose-400';
+  const chartCurve = timeframe === 'TODAY' ? 'linear' : longRangeCurve;
+  const weeklySourceCurve: WeeklyTransitionCurve =
+    weeklyMorph?.from === 'TODAY' ? 'linear' : 'cardinal';
+  const weeklyTargetCurve: WeeklyTransitionCurve =
+    weeklyMorph?.to === 'TODAY' ? 'linear' : 'cardinal';
+
+  const weeklyAreaInterpolator = useMemo(
+    () =>
+      weeklyMorph
+        ? createWeeklyAreaInterpolator(weeklySourceCurve, weeklyTargetCurve)
+        : undefined,
+    [weeklyMorph, weeklySourceCurve, weeklyTargetCurve],
+  );
+
+  const weeklyLineInterpolator = useMemo(
+    () =>
+      weeklyMorph
+        ? createWeeklyLineInterpolator(weeklySourceCurve, weeklyTargetCurve)
+        : undefined,
+    [weeklyMorph, weeklySourceCurve, weeklyTargetCurve],
+  );
+  const todaySemanticStroke =
+    (toneValue ?? 0) > 0
+      ? ANALYTICS_CHART_THEME.emerald
+      : (toneValue ?? 0) < 0
+      ? ANALYTICS_CHART_THEME.rose
+      : ANALYTICS_CHART_THEME.amber;
+  const primaryStroke =
+    timeframe === 'TODAY'
+      ? todaySemanticStroke
+      : isPercentMode
+        ? ANALYTICS_CHART_THEME.cyan
+        : ANALYTICS_CHART_THEME.blue;
 
   const tooltip = (props: any) => {
     if (!props?.active || !props?.payload?.length) return null;
@@ -586,12 +671,12 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
     ) : null;
 
-  const renderPrimaryArea = () => (
+  const renderPrimaryArea = () => entranceReady ? (
     <Area
-      type={longRangeCurve}
+      type={chartCurve}
       dataKey={definition.primaryKey}
       name={definition.primaryLabel}
-      stroke={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
+      stroke={primaryStroke}
       strokeWidth={2.25}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -600,89 +685,75 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
       dot={false}
       activeDot={{
         r: 5,
-        fill: isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue,
+        fill: primaryStroke,
         stroke: '#020617',
         strokeWidth: 2,
       }}
+      isAnimationActive
+      animationDuration={520}
+      animationEasing="ease-out"
+      animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
+      animationInterpolateFn={weeklyAreaInterpolator}
+      onAnimationEnd={() => {
+        if (weeklyMorph) setWeeklyMorph(null);
+      }}
     />
-  );
+  ) : null;
 
-  const renderLinearLines = () => (
-    <>
+  const renderSecondaryLine = () =>
+    entranceReady && definition.secondaryKey ? (
       <Line
-        type="linear"
-        dataKey={definition.primaryKey}
-        name={definition.primaryLabel}
-        stroke={
-          isPercentMode
-            ? positive
-              ? ANALYTICS_CHART_THEME.emerald
-              : ANALYTICS_CHART_THEME.rose
-            : ANALYTICS_CHART_THEME.blue
-        }
-        strokeWidth={2.25}
+        type={chartCurve}
+        dataKey={definition.secondaryKey}
+        name={definition.secondaryLabel}
+        stroke={ANALYTICS_CHART_THEME.purple}
+        strokeWidth={1.8}
+        strokeDasharray="6 4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         dot={false}
         activeDot={{
-          r: 5,
-          fill:
-            isPercentMode
-              ? positive
-                ? ANALYTICS_CHART_THEME.emerald
-                : ANALYTICS_CHART_THEME.rose
-              : ANALYTICS_CHART_THEME.blue,
+          r: 4,
+          fill: ANALYTICS_CHART_THEME.purple,
           stroke: '#020617',
           strokeWidth: 2,
         }}
-        isAnimationActive={false}
+        isAnimationActive
+        animationDuration={520}
+        animationEasing="ease-out"
+        animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
+        animationInterpolateFn={weeklyLineInterpolator}
       />
-      {definition.secondaryKey && (
-        <Line
-          type="linear"
-          dataKey={definition.secondaryKey}
-          name={definition.secondaryLabel}
-          stroke={ANALYTICS_CHART_THEME.purple}
-          strokeWidth={1.8}
-          strokeDasharray="6 4"
-          dot={false}
-          activeDot={{
-            r: 4,
-            fill: ANALYTICS_CHART_THEME.purple,
-            stroke: '#020617',
-            strokeWidth: 2,
-          }}
-          isAnimationActive={false}
-        />
-      )}
-    </>
-  );
+    ) : null;
 
   return (
     <>
-      <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="relative min-w-0">
+          <div ref={modeMenuRef} className="relative min-w-0 z-20">
             <button
               type="button"
               onClick={() => setModeMenuOpen((value) => !value)}
-              className="group flex max-w-full items-center gap-1.5 text-left"
+              className="premium-accordion-trigger group flex max-w-full items-center gap-1.5 text-left"
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
             >
-              <h3 className="truncate text-sm font-bold text-white group-hover:text-cyan-200 transition">
+              <h3 className="truncate text-sm font-bold text-white group-hover:text-cyan-200">
                 {definition.label}
               </h3>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${modeMenuOpen ? 'rotate-180' : ''}`}
+                className={`premium-motion-chevron h-4 w-4 shrink-0 text-slate-500 ${modeMenuOpen ? 'rotate-180' : ''}`}
               />
             </button>
             <p className="text-xs text-slate-400 mt-1">{definition.description}</p>
 
-            {modeMenuOpen && (
-              <div
-                role="menu"
-                className="absolute left-0 top-9 z-30 w-[min(86vw,320px)] overflow-hidden rounded-xl border border-slate-700 bg-slate-950/98 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl"
-              >
+            <DropdownPresence
+              isOpen={modeMenuOpen}
+              role="menu"
+              className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
+            >
+              {modeMenuOpen && <>
                 {ANALYTICS_MODES.map((item) => {
                   const selected = item.mode === mode;
                   return (
@@ -696,7 +767,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                         setModeMenuOpen(false);
                       }}
                       className={[
-                        'flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition',
+                        'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
                         selected
                           ? 'bg-cyan-500/10 text-cyan-200'
                           : 'text-slate-300 hover:bg-slate-900 hover:text-white',
@@ -714,8 +785,8 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                     </button>
                   );
                 })}
-              </div>
-            )}
+              </>}
+            </DropdownPresence>
           </div>
 
           <div className="sm:text-right">
@@ -768,9 +839,9 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
                 key={item.value}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => setTimeframe(item.value)}
+                onClick={() => handleTimeframeChange(item.value)}
                 className={[
-                  'shrink-0 min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold transition',
+                  'premium-segment shrink-0 min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
                   selected
                     ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
@@ -785,7 +856,7 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
 
       {loading ? (
         <AnalyticsChartLoadingState />
-      ) : intradayError ? (
+      ) : intradayError && !intradayResult ? (
         <AnalyticsEmptyState>{intradayError}</AnalyticsEmptyState>
       ) : chartData.length < 2 ? (
         <AnalyticsEmptyState>
@@ -795,86 +866,45 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         </AnalyticsEmptyState>
       ) : (
         <div className="h-64 sm:h-72">
+          {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
-            {timeframe === 'TODAY' ? (
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis
-                  dataKey="axisLabel"
-                  {...analyticsXAxisProps}
-                  interval="preserveStartEnd"
-                  minTickGap={28}
-                />
-                {renderYAxis()}
-                {renderReferenceLine()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                {renderLinearLines()}
-              </LineChart>
-            ) : isDepositsMode ? (
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
-                {renderYAxis()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                <Line
-                  type={longRangeCurve}
-                  dataKey="equity"
-                  name="Portfolio"
-                  stroke={ANALYTICS_CHART_THEME.blue}
-                  strokeWidth={2.25}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: ANALYTICS_CHART_THEME.blue,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-                <Line
-                  type={longRangeCurve}
-                  dataKey="netDeposits"
-                  name="Net Deposits"
-                  stroke={ANALYTICS_CHART_THEME.purple}
-                  strokeWidth={1.8}
-                  strokeDasharray="6 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: ANALYTICS_CHART_THEME.purple,
-                    stroke: '#020617',
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            ) : (
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
-                      stopOpacity={0.28}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor={isPercentMode ? ANALYTICS_CHART_THEME.cyan : ANALYTICS_CHART_THEME.blue}
-                      stopOpacity={0.01}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid {...analyticsGridProps} />
-                <XAxis dataKey="axisLabel" {...analyticsXAxisProps} interval="preserveStartEnd" />
-                {renderYAxis()}
-                {renderReferenceLine()}
-                <Tooltip cursor={analyticsTooltipCursor} content={tooltip} />
-                {renderPrimaryArea()}
-              </AreaChart>
-            )}
+            <AreaChart
+              data={chartData}
+              syncId="portfolio-secondary-analytics"
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={primaryStroke}
+                    stopOpacity={timeframe === 'TODAY' ? 0.32 : 0.28}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={primaryStroke}
+                    stopOpacity={0.01}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...analyticsGridProps} />
+              <XAxis
+                dataKey="axisLabel"
+                {...analyticsXAxisProps}
+                interval="preserveStartEnd"
+                minTickGap={timeframe === 'TODAY' ? 28 : undefined}
+              />
+              {renderYAxis()}
+              {renderReferenceLine()}
+              <Tooltip
+                cursor={analyticsTooltipCursor}
+                content={tooltip}
+              />
+              {renderPrimaryArea()}
+              {renderSecondaryLine()}
+            </AreaChart>
           </ResponsiveContainer>
+          )}
         </div>
       )}
 
@@ -899,7 +929,10 @@ export const PerformanceTimeframeChart: React.FC<PerformanceTimeframeChartProps>
         historicalPrices={historicalPrices}
         intradayPrices={loadedIntradayPrices}
         result={result}
+        entranceReady={entranceReady}
       />
     </>
   );
 };
+
+export const PerformanceTimeframeChart = React.memo(PerformanceTimeframeChartComponent);

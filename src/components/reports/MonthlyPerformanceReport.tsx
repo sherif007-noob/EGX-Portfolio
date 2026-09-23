@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { runVisualTransition } from '../../utils/visualTransition';
+import { MotionSwap } from '../PremiumMotion';
 import { AnalyticsSelect } from '../AnalyticsSelect';
 import {
   Calendar,
@@ -25,8 +27,12 @@ interface MonthlyPerformanceReportProps {
 
 type StatusFilter = 'ALL' | 'LIQUIDATED' | 'HOLDINGS';
 
-const formatEgp = (val: number) =>
-  val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const EGP_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 interface MonthEndHolding {
   id: string;
@@ -45,12 +51,22 @@ interface MonthEndHolding {
   notes?: string;
 }
 
-export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> = ({
+const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps> = ({
   closedTrades,
   positions,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('ALL');
+
+  const changeSelectedMonth = (next: string) => {
+    if (next === selectedMonth) return;
+    runVisualTransition('monthly-filter', () => setSelectedMonth(next));
+  };
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+
+  const changeStatusFilter = (next: StatusFilter) => {
+    if (next === statusFilter) return;
+    runVisualTransition('monthly-filter', () => setStatusFilter(next));
+  };
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Collect all months with activity
@@ -252,7 +268,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
   };
 
   return (
-    <div id="report-monthly-performance" className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6 shadow-sm">
+    <div id="report-monthly-performance" className="premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -276,7 +292,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           <button
             type="button"
             onClick={() => handleExportCSV(selectedMonth)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Download CSV audit"
           >
             <Download className="w-3.5 h-3.5 text-purple-400" />
@@ -285,7 +301,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Print Monthly Report"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
@@ -295,17 +311,14 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
       </div>
 
       {/* Interactive Controls Bar: Month Tabs & Sub-filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+      <div className="premium-report-glass-soft flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-xl">
         {/* Month Selector Tabs */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="premium-selector-shell flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
-            onClick={() => setSelectedMonth('ALL')}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
-              selectedMonth === 'ALL'
-                ? 'bg-purple-600 text-white font-semibold shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-            }`}
+            aria-pressed={selectedMonth === 'ALL'}
+            onClick={() => changeSelectedMonth('ALL')}
+            className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
           >
             All Recorded Months
           </button>
@@ -313,15 +326,12 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
             <button
               key={m.monthKey}
               type="button"
-              onClick={() => setSelectedMonth(m.monthKey)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
-                selectedMonth === m.monthKey
-                  ? 'bg-purple-600 text-white font-semibold shadow-sm'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-              }`}
+              aria-pressed={selectedMonth === m.monthKey}
+              onClick={() => changeSelectedMonth(m.monthKey)}
+              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
             >
               <span>{m.monthLabel}</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono">
+              <span className="premium-chip px-1.5 py-0.2 rounded-full text-[10px] text-slate-300 font-mono">
                 {m.liquidatedTrades.length} trades
               </span>
             </button>
@@ -333,7 +343,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           {/* Status filter */}
           <AnalyticsSelect
             value={statusFilter}
-            onChange={(value) => setStatusFilter(value as StatusFilter)}
+            onChange={(value) => changeStatusFilter(value as StatusFilter)}
             compact
             accent="purple"
             ariaLabel="Filter monthly report records"
@@ -353,14 +363,14 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ticker..."
-              className="pl-8 pr-3 py-1 text-xs rounded-xl bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 w-32 sm:w-40"
+              className="premium-field pl-8 pr-3 py-1 text-xs rounded-xl bg-slate-950/45 border border-slate-700/70 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 w-32 sm:w-40"
             />
           </div>
         </div>
       </div>
 
       {/* Monthly Audit Statements */}
-      <div className="space-y-6">
+      <MotionSwap motionKey={`${selectedMonth}-${statusFilter}`} variant="state" className="premium-monthly-results space-y-6">
         {displayedMonths.map((m) => {
           // Filter items by search query and status
           const filteredLiquidated = m.liquidatedTrades.filter((t) => {
@@ -385,10 +395,18 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
           return (
             <div
               key={m.monthKey}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 overflow-hidden shadow-sm"
+              className={`premium-card premium-report-hero rounded-xl overflow-hidden ${
+                isNoExits
+                  ? 'border-slate-800'
+                  : isProfitable
+                  ? 'premium-state-win'
+                  : isDrawdown
+                  ? 'premium-state-loss'
+                  : 'premium-state-breakeven'
+              }`}
             >
               {/* Monthly Banner Ribbon */}
-              <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 font-display">
@@ -421,7 +439,15 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                 {/* Quick Monthly Metrics */}
                 <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                   {/* Monthly Net Realized */}
-                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                  <div className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
+                    isNoExits
+                      ? 'border-slate-800'
+                      : isProfitable
+                      ? 'premium-state-win'
+                      : isDrawdown
+                      ? 'premium-state-loss'
+                      : 'premium-state-breakeven'
+                  }`}>
                     <span className="text-[10px] text-slate-400 block uppercase font-mono">Realized P&amp;L</span>
                     <span
                       className={`font-mono font-bold text-sm ${
@@ -437,7 +463,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                   </div>
 
                   {/* Win Rate */}
-                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
                     <span className="text-[10px] text-slate-400 block uppercase font-mono">Win Rate</span>
                     <span className="font-mono font-bold text-sm text-slate-200">
                       {m.winRate !== null ? (
@@ -449,7 +475,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                   </div>
 
                   {/* Brokerage Fees */}
-                  <div className="bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
                     <span className="text-[10px] text-slate-400 block uppercase font-mono">Commissions</span>
                     <span className="font-mono font-bold text-sm text-amber-400">
                       {formatEgp(m.fees)} EGP
@@ -464,10 +490,10 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                   No records matching the filter criteria for {m.monthLabel}.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="premium-report-table overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-800/80 bg-slate-900/50 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                         <th className="py-2.5 px-4">Instrument</th>
                         <th className="py-2.5 px-4">Audit Status</th>
                         <th className="py-2.5 px-4 text-right">Shares</th>
@@ -482,7 +508,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                       {filteredLiquidated.map((trade) => {
                         const isWin = trade.outcome === 'WIN';
                         return (
-                          <tr key={`closed-${trade.id}`} className="hover:bg-slate-900/40 transition">
+                          <tr key={`closed-${trade.id}`} className="transition">
                             <td className="py-3 px-4">
                               <div className="font-bold text-white">{trade.ticker}</div>
                               <div className="text-[11px] text-slate-400 truncate max-w-xs">{trade.companyName}</div>
@@ -528,7 +554,7 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
                       {filteredHoldings.map((h) => {
                         const isGain = h.pnlEgp >= 0;
                         return (
-                          <tr key={h.id} className="hover:bg-slate-900/40 transition bg-slate-950/40">
+                          <tr key={h.id} className="transition bg-white/[0.01]">
                             <td className="py-3 px-4">
                               <div className="font-bold text-cyan-300">{h.ticker}</div>
                               <div className="text-[11px] text-slate-400 truncate max-w-xs">{h.companyName}</div>
@@ -578,7 +604,9 @@ export const MonthlyPerformanceReport: React.FC<MonthlyPerformanceReportProps> =
             </div>
           );
         })}
-      </div>
+      </MotionSwap>
     </div>
   );
 };
+
+export const MonthlyPerformanceReport = React.memo(MonthlyPerformanceReportComponent);

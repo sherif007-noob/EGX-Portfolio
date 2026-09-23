@@ -2,12 +2,36 @@ name: Historical Prices
 
 on:
   workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Optional comma-separated tickers to repair (blank = auto-detect all gaps)'
+        required: false
+        type: string
+      start_date:
+        description: 'Optional YYYY-MM-DD lower-bound override'
+        required: false
+        type: string
+      end_date:
+        description: 'Optional YYYY-MM-DD end-date override'
+        required: false
+        type: string
   schedule:
-    - cron: '30 12 * * 0-4'
+    # Gap-aware sync is cheap when coverage is healthy: it exits before opening
+    # a TradingView session. Run after/around the EGX close and through the
+    # evening so newly-added/backdated trades do not wait until the next day.
+    - cron: '17 12-22 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-historical-prices
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,9 +60,12 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Sync TradingView historical prices
+      - name: Repair TradingView historical price coverage
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
+          EGX_HISTORY_TICKERS: ${{ inputs.tickers }}
+          EGX_HISTORY_START: ${{ inputs.start_date }}
+          EGX_HISTORY_END: ${{ inputs.end_date }}
         run: npm run sync:historical

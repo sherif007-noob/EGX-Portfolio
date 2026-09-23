@@ -49,9 +49,30 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
+import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
+import { runVisualTransition } from './utils/visualTransition';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+  const [settledTab, setSettledTab] = useState<NavigationTab>('overview');
+
+  const handleTabChange = (nextTab: NavigationTab) => {
+    if (nextTab === activeTab) return;
+
+    const desktopMotionTarget =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches;
+
+    const update = () => runVisualTransition('tab', () => setActiveTab(nextTab));
+
+    if (desktopMotionTarget) {
+      React.startTransition(update);
+      return;
+    }
+
+    setSettledTab(nextTab);
+    update();
+  };
 
   // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
   const {
@@ -80,7 +101,6 @@ export default function App() {
     reconcileLedger,
     importBackup,
     updateTickers,
-    forceSync,
   } = usePortfolioState();
 
   // Google Sheets Sync Hook (Encapsulates OAuth, full sync, price sync, and token expiration)
@@ -92,7 +112,6 @@ export default function App() {
     syncToSheets,
     syncPricesOnlyToSheets,
     updateSheetsConfig,
-    handleLogin,
     handleLogout,
   } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
 
@@ -195,8 +214,6 @@ export default function App() {
   const historicalBackfillAttemptsRef = useRef(new Set<string>());
 
   useEffect(() => {
-    if (activeTab !== 'overview' && activeTab !== 'reports') return;
-
     let cancelled = false;
     setHistoricalDrawdown(null);
     setHistoricalPriceSeries({});
@@ -282,7 +299,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, transactions, capitalDeposits]);
+  }, [transactions, capitalDeposits]);
 
   const stats: PerformanceStats = useMemo(() => {
     const baseStats = calculatePerformanceStats(closedTrades, positions);
@@ -845,7 +862,7 @@ export default function App() {
   };
 
   // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)
-  const handleSyncPrices = async () => {
+  const handleSyncPrices = useCallback(async () => {
     const result = await syncLivePrices(true);
     if (result && result.success) {
       if (!sheetsConfig?.spreadsheetId) {
@@ -854,7 +871,7 @@ export default function App() {
     } else {
       showToast(result?.error || 'Failed updating market prices', 'error', 4000);
     }
-  };
+  }, [syncLivePrices, sheetsConfig?.spreadsheetId, showToast]);
 
   // Push prices to connected Google Sheet
   const handlePushPricesToSheetDirectly = async () => {
@@ -874,14 +891,25 @@ export default function App() {
     showToast(`Updated market quotes in Google Sheets (${res.updatedTabs?.join(' & ') || 'Directory & Positions'})`, 'success');
   };
 
+  const handleQuickAddCash = useCallback(() => {
+    setIsQuickCashModalOpen(true);
+  }, []);
+
+  const handleOverviewReconcile = useCallback(() => {
+    const report = reconcileLedger();
+    showToast(
+      `Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`,
+      'success',
+    );
+  }, [reconcileLedger, showToast]);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="premium-page min-h-screen text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* App Header & Navigation */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
-        onOpenSchemaSync={() => setIsSchemaModalOpen(true)}
         onOpenAddTrade={() => {
           setSelectedTickerForTrade(null);
           setIsAddTradeModalOpen(true);
@@ -893,45 +921,43 @@ export default function App() {
         isAlertsActive={alertSettings.enabled}
         isSheetsConnected={!!sheetsConfig}
         isTokenExpired={isSheetsTokenExpired}
-        sheetsTitle={sheetsConfig?.sheetName}
-        authUser={authUser}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
         onSyncLivePrices={handleSyncPrices}
         isSyncingPrices={isSyncingPrices}
-        forceSyncToFirestore={forceSync}
       />
 
       {/* Undo Toast Notification */}
-      {undoState && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl text-xs font-semibold flex items-center gap-3 text-slate-200">
-            <span>{undoState.message}</span>
+      <SurfacePresence isOpen={!!undoState} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-above-status fixed bottom-6 right-6 z-50">
+        {undoState && (
+        <div className="w-full">
+          <div className="premium-floating w-full px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
+            <span className="min-w-0 flex-1">{undoState.message}</span>
             <button
               onClick={executeUndo}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1 transition"
+              className="premium-action premium-action-success shrink-0 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Undo
             </button>
           </div>
         </div>
-      )}
+        )}
+      </SurfacePresence>
 
       {/* Price / Action Notification Toast */}
-      {toastNotification && (
-        <div className="fixed top-20 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+      <SurfacePresence isOpen={!!toastNotification} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-top-after-header fixed top-20 right-4 z-50">
+        {toastNotification && (
+        <div className="w-full">
           <div
-            className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
+            className={`w-full px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'
-                ? 'bg-slate-900/95 border-emerald-500/60 text-emerald-300'
+                ? 'premium-floating border-emerald-500/60 text-emerald-300'
                 : toastNotification.type === 'info'
-                ? 'bg-slate-900/95 border-blue-500/60 text-blue-300'
-                : 'bg-slate-900/95 border-rose-500/60 text-rose-300'
+                ? 'premium-floating border-blue-500/60 text-blue-300'
+                : 'premium-floating border-rose-500/60 text-rose-300'
             }`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 shrink-0 rounded-full ${
                 toastNotification.type === 'success'
                   ? 'bg-emerald-400'
                   : toastNotification.type === 'info'
@@ -939,23 +965,21 @@ export default function App() {
                   : 'bg-rose-400'
               }`}
             />
-            <span>{toastNotification.message}</span>
+            <span className="min-w-0 flex-1">{toastNotification.message}</span>
           </div>
         </div>
       )}
+      </SurfacePresence>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
         {/* Top Summary Banner */}
         <PortfolioSummary
           metrics={metrics}
           stats={stats}
-          onQuickAddCash={() => setIsQuickCashModalOpen(true)}
+          onQuickAddCash={handleQuickAddCash}
           onSyncLivePrices={handleSyncPrices}
-          onReconcileLedger={() => {
-            const report = reconcileLedger();
-            showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
-          }}
+          onReconcileLedger={handleOverviewReconcile}
           isSyncingPrices={isSyncingPrices}
           lastPriceSyncTime={lastPriceSyncTime}
           scheduleStatus={scheduleStatus}
@@ -963,7 +987,7 @@ export default function App() {
 
         {/* Ledger Reconciliation Alert if transactions exist but positions/closed cycles are empty */}
         {transactions.length > 0 && positions.length === 0 && (
-          <div className="p-4 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in">
+          <div className="premium-glass p-4 rounded-xl border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping shrink-0" />
               <span>
@@ -975,7 +999,7 @@ export default function App() {
                 const report = reconcileLedger();
                 showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs whitespace-nowrap shadow transition active:scale-95"
+              className="premium-action premium-action-primary px-3.5 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap"
             >
               ⚡ Reconcile Portfolio Now
             </button>
@@ -983,6 +1007,14 @@ export default function App() {
         )}
 
         {/* Tab Content Panels */}
+        <MotionSwap
+          motionKey={activeTab}
+          variant="tab"
+          className="premium-tab-stage"
+          onEnterComplete={(completedTab) => {
+            if (completedTab === activeTab) setSettledTab(activeTab);
+          }}
+        >
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="space-y-3">
@@ -991,8 +1023,8 @@ export default function App() {
                   Active Stock Positions ({positions.length})
                 </h2>
                 <button
-                  onClick={() => setActiveTab('positions')}
-                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition"
+                  onClick={() => handleTabChange('positions')}
+                  className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-xs font-semibold"
                 >
                   View Full Table →
                 </button>
@@ -1019,15 +1051,17 @@ export default function App() {
               transactions={transactions}
               historicalPrices={historicalPriceSeries}
               capitalDeposits={capitalDeposits}
+              positions={positions}
               historicalLoading={historicalAnalyticsLoading}
+              entranceReady={settledTab === activeTab}
             />
           </div>
         )}
 
         {activeTab === 'positions' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-white tracking-tight">
                   EGX Portfolio Positions
                 </h2>
@@ -1040,7 +1074,7 @@ export default function App() {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow transition"
+                className="premium-action premium-action-primary premium-shimmer-border hidden px-3.5 py-1.5 rounded-lg text-xs font-semibold sm:inline-flex"
               >
                 + Add Position
               </button>
@@ -1082,6 +1116,7 @@ export default function App() {
             transactions={transactions}
             historicalPrices={historicalPriceSeries}
             historicalLoading={historicalAnalyticsLoading}
+            chartsReady={settledTab === activeTab}
           />
         )}
 
@@ -1137,6 +1172,7 @@ export default function App() {
             isSheetsConnected={!!sheetsConfig?.spreadsheetId}
           />
         )}
+        </MotionSwap>
       </main>
 
       {/* Modals & Dialogs */}

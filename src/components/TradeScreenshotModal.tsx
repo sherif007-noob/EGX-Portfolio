@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
 import { EGXTicker, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -70,6 +72,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   onAddTransaction,
   onAddBatchTransactions,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
   const [batchTrades, setBatchTrades] = useState<ParsedTradeItem[]>([]);
@@ -79,8 +82,6 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   const [activeSingleIndex, setActiveSingleIndex] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!isOpen) return null;
 
   const resolveTickerData = (rawTicker: string, companyName?: string) => {
     const clean = (rawTicker || '').trim().toUpperCase();
@@ -261,7 +262,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     }
 
     resetModal();
-    onClose();
+    requestClose();
   };
 
   const resetModal = () => {
@@ -277,18 +278,24 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   }, 0);
 
   const totalFees = batchTrades.reduce((acc, t) => acc + (t.fees || 0), 0);
+  const scannerStage = isScanning ? 'scanning' : batchTrades.length > 0 ? 'review' : 'empty';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-frame rounded-2xl w-full max-w-3xl overflow-hidden my-0 sm:my-8 flex flex-col"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Trade screenshot scanner"
+    >
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80 shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="premium-modal-section px-4 sm:px-6 py-4 border-b border-slate-700/50 flex items-start justify-between gap-3 shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30">
               <Zap className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   Trade Screenshot Scanner
                 </h3>
@@ -308,17 +315,18 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           <button
             onClick={() => {
               resetModal();
-              onClose();
+              requestClose();
             }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
-          {errorMsg && (
+        <div className="premium-modal-scroll-body p-4 sm:p-6 space-y-5 flex-1">
+          <SurfacePresence isOpen={!!errorMsg}>
+            {errorMsg && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -327,13 +335,15 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               <button
                 type="button"
                 onClick={() => setErrorMsg(null)}
-                className="p-1 rounded-lg text-rose-400 hover:text-rose-200 transition"
+                className="premium-icon-action premium-icon-delete p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-          )}
+            )}
+          </SurfacePresence>
 
+          <MotionSwap motionKey={scannerStage} variant="state">
           {/* Dropzone for 1 or multiple screenshots */}
           {batchTrades.length === 0 && !isScanning && (
             <div
@@ -345,7 +355,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   handleFilesSelect(e.dataTransfer.files);
                 }
               }}
-              className="border-2 border-dashed border-slate-700 hover:border-emerald-500/60 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40 hover:bg-slate-800/20 transition group"
+              className="premium-inset-glass border-2 border-dashed border-slate-700/70 hover:border-emerald-500/60 rounded-2xl p-5 sm:p-8 text-center cursor-pointer transition group"
             >
               <input
                 ref={fileInputRef}
@@ -359,7 +369,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   }
                 }}
               />
-              <div className="w-14 h-14 rounded-2xl bg-slate-800/80 group-hover:bg-emerald-500/20 border border-slate-700 group-hover:border-emerald-500/40 text-slate-400 group-hover:text-emerald-400 flex items-center justify-center mx-auto mb-4 transition">
+              <div className="premium-inset-glass w-14 h-14 rounded-2xl group-hover:border-emerald-500/40 text-slate-400 group-hover:text-emerald-400 flex items-center justify-center mx-auto mb-4 transition">
                 <UploadCloud className="w-7 h-7" />
               </div>
               <h4 className="text-sm font-semibold text-white mb-1">
@@ -401,7 +411,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           {/* Batch Trades Review List */}
           {batchTrades.length > 0 && !isScanning && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex flex-col items-stretch gap-2 pb-2 border-b border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-bold text-white">
                     Parsed Transactions ({batchTrades.length})
@@ -411,11 +421,11 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                    className="premium-action premium-action-purple px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Upload More
@@ -424,7 +434,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   <button
                     type="button"
                     onClick={resetModal}
-                    className="text-xs font-semibold text-slate-400 hover:text-rose-400 transition"
+                    className="premium-action premium-action-danger px-2.5 py-1 rounded-lg text-xs font-semibold"
                   >
                     Clear All
                   </button>
@@ -440,11 +450,11 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   return (
                     <div
                       key={trade.id}
-                      className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition space-y-3"
+                      className="premium-inset-glass p-4 rounded-xl hover:border-slate-600/70 transition space-y-3"
                     >
                       {/* Top Row: Logo, Ticker, Type, Confidence & Delete */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
+                      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <StockLogo ticker={trade.ticker} size="sm" />
                           <div>
                             <div className="flex items-center gap-1.5">
@@ -452,7 +462,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                                 type="text"
                                 value={trade.ticker}
                                 onChange={(e) => updateTradeItem(idx, { ticker: e.target.value.toUpperCase() })}
-                                className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-xs font-black text-white uppercase focus:outline-none focus:border-indigo-500"
+                                className="premium-field w-20 rounded-lg px-2 py-0.5 text-xs font-black text-white uppercase focus:outline-none"
                               />
                               <span className="text-xs text-slate-400 font-medium truncate max-w-[150px] sm:max-w-[220px]">
                                 {trade.companyName}
@@ -466,28 +476,20 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           {/* Buy / Sell Toggle */}
-                          <div className="flex rounded-lg bg-slate-900 border border-slate-800 p-0.5">
+                          <div className="premium-inset-glass flex rounded-lg p-0.5">
                             <button
                               type="button"
                               onClick={() => updateTradeItem(idx, { type: 'BUY' })}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                                trade.type === 'BUY'
-                                  ? 'bg-emerald-500 text-white shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
+                              className={`premium-filter-pill px-2.5 py-1 rounded-md text-[11px] font-bold ${trade.type === 'BUY' ? 'premium-filter-active-emerald' : ''}`}
                             >
                               BUY
                             </button>
                             <button
                               type="button"
                               onClick={() => updateTradeItem(idx, { type: 'SELL' })}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                                trade.type === 'SELL'
-                                  ? 'bg-rose-500 text-white shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
+                              className={`premium-filter-pill px-2.5 py-1 rounded-md text-[11px] font-bold ${trade.type === 'SELL' ? 'premium-filter-active-rose' : ''}`}
                             >
                               SELL
                             </button>
@@ -497,7 +499,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           <button
                             type="button"
                             onClick={() => removeTradeItem(idx)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-900 transition"
+                            className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                             title="Remove transaction"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -517,7 +519,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                             value={trade.shares || ''}
                             onValueChange={(value) => updateTradeItem(idx, { shares: Number(value) })}
                             accent="indigo"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            className="premium-field w-full rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none"
                           />
                         </div>
 
@@ -531,7 +533,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                             value={trade.price || ''}
                             onValueChange={(value) => updateTradeItem(idx, { price: Number(value) })}
                             accent="indigo"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            className="premium-field w-full rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none"
                           />
                         </div>
 
@@ -555,13 +557,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                             value={trade.fees || ''}
                             onValueChange={(value) => updateTradeItem(idx, { fees: Number(value) })}
                             accent="amber"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                            className="premium-field w-full rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none"
                           />
                         </div>
                       </div>
 
                       {/* Total Net Value Banner */}
-                      <div className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-900/90 text-slate-400">
+                      <div className="premium-chip flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg text-slate-400">
                         <span>
                           {trade.type === 'BUY' ? 'Total Cost (incl. fees):' : 'Net Proceeds (after fees):'}
                         </span>
@@ -576,11 +578,13 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               </div>
             </div>
           )}
+          </MotionSwap>
         </div>
 
         {/* Modal Footer */}
-        {batchTrades.length > 0 && (
-          <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/95 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <SurfacePresence isOpen={batchTrades.length > 0 && !isScanning}>
+          {batchTrades.length > 0 && !isScanning && (
+          <div className="premium-modal-section p-4 sm:p-5 border-t border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
             <div className="text-xs text-slate-400 text-center sm:text-left">
               <span>Logging </span>
               <strong className="text-white">{batchTrades.length} transactions</strong>
@@ -596,21 +600,21 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <div className="grid w-full grid-cols-2 gap-2.5 sm:flex sm:w-auto sm:items-center sm:justify-end">
               <button
                 type="button"
                 onClick={() => {
                   resetModal();
-                  onClose();
+                  requestClose();
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAll}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-95"
+                className="premium-action premium-action-success premium-shimmer-border flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:w-auto"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
@@ -621,8 +625,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+          )}
+        </SurfacePresence>
+    </PremiumModalMotion>
   );
 };

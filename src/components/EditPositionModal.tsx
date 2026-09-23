@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
+import { PremiumModalMotion } from './PremiumMotion';
 import { Position } from '../types';
 import { X, Target, ShieldAlert, FileText, Save, CheckCircle2 } from 'lucide-react';
 
@@ -21,6 +23,11 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
   position,
   onSave,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const lastPositionRef = useRef<Position | null>(position);
+  if (position) lastPositionRef.current = position;
+  const displayPosition = position ?? lastPositionRef.current;
+
   const [targetPrice, setTargetPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -33,7 +40,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
     }
   }, [position]);
 
-  if (!isOpen || !position) return null;
+  if (!displayPosition) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,53 +48,58 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
     const slNum = stopLoss ? parseFloat(stopLoss) : undefined;
 
     onSave({
-      id: position.id,
+      id: displayPosition.id,
       targetPrice: tpNum && !isNaN(tpNum) && tpNum > 0 ? tpNum : undefined,
       stopLoss: slNum && !isNaN(slNum) && slNum > 0 ? slNum : undefined,
       notes: notes.trim() || undefined,
     });
-    onClose();
+    requestClose();
   };
 
-  const currentPrice = position.currentPrice || position.avgBuyPrice;
+  const currentPrice = displayPosition.currentPrice || displayPosition.avgBuyPrice;
   const targetProfitPct = targetPrice && parseFloat(targetPrice) > 0
-    ? ((parseFloat(targetPrice) - position.avgBuyPrice) / position.avgBuyPrice) * 100
+    ? ((parseFloat(targetPrice) - displayPosition.avgBuyPrice) / displayPosition.avgBuyPrice) * 100
     : null;
   const stopLossPct = stopLoss && parseFloat(stopLoss) > 0
-    ? ((parseFloat(stopLoss) - position.avgBuyPrice) / position.avgBuyPrice) * 100
+    ? ((parseFloat(stopLoss) - displayPosition.avgBuyPrice) / displayPosition.avgBuyPrice) * 100
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport w-full max-w-md rounded-2xl p-4 sm:p-6 space-y-5"
+      onBackdropClick={requestClose}
+      panelAriaLabel={`Edit ${displayPosition.ticker} position targets`}
+    >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3.5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Target className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
                 Edit Position Targets
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 font-mono text-emerald-400 border border-slate-700">
-                  {position.ticker}
+                <span className="premium-chip text-xs px-2 py-0.5 rounded-lg font-mono text-emerald-400">
+                  {displayPosition.ticker}
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                {position.companyName} • Avg Cost: {position.avgBuyPrice.toFixed(2)} EGP
+                {displayPosition.companyName} • Avg Cost: {displayPosition.avgBuyPrice.toFixed(2)} EGP
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            onClick={requestClose}
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Current Metrics Reference */}
-        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
+        <div className="premium-subpanel grid grid-cols-2 gap-3 p-3 rounded-xl text-xs">
           <div>
             <span className="text-slate-500 block">Current Market Price</span>
             <span className="font-mono font-bold text-white text-sm">
@@ -97,7 +109,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
           <div>
             <span className="text-slate-500 block">Shares Held</span>
             <span className="font-mono font-bold text-slate-200 text-sm">
-              {position.shares.toLocaleString()}
+              {displayPosition.shares.toLocaleString()}
             </span>
           </div>
         </div>
@@ -123,7 +135,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               onValueChange={setTargetPrice}
               accent="emerald"
               placeholder="e.g. 120.00"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500 text-sm"
+              className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none text-sm"
             />
           </div>
 
@@ -146,7 +158,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               onValueChange={setStopLoss}
               accent="rose"
               placeholder="e.g. 95.00"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-rose-500 text-sm"
+              className="premium-field w-full px-3 py-2 rounded-xl text-white font-mono focus:outline-none text-sm"
             />
           </div>
 
@@ -161,29 +173,28 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Thesis, catalyst, resistance levels, or risk limits..."
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-blue-500 resize-none"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white text-xs focus:outline-none focus:border-cyan-500/60 resize-none"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-2">
+          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+              onClick={requestClose}
+              className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-900/30 transition active:scale-95"
+              className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
             >
               <Save className="w-3.5 h-3.5" />
               Save Targets
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

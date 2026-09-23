@@ -7,6 +7,7 @@ import { calculatePortfolioValue } from '../services/portfolioAccounting';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
+import { MotionSwap } from './PremiumMotion';
 import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import {
@@ -25,11 +26,18 @@ interface PerformanceReportsProps {
   transactions: TradeTransaction[];
   historicalPrices: HistoricalPriceSeries;
   historicalLoading?: boolean;
+  chartsReady?: boolean;
 }
 
 const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
-export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
+const formatEgp = (value: number) => EGP_FORMATTER.format(value);
+
+const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   stats,
   closedTrades,
   positions,
@@ -39,21 +47,19 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
   transactions,
   historicalPrices,
   historicalLoading = false,
+  chartsReady = true,
 }) => {
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
-
-  const formatEgp = (value: number) => new Intl.NumberFormat('en-EG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
 
   const grossProfit = stats.totalRealizedGainEgp || 0;
   const grossLoss = stats.totalRealizedLossEgp || 0;
   const netRealizedPnl = grossProfit - grossLoss;
   const closedFees = stats.totalBrokerageFeesPaid || 0;
   const openFees = positions.reduce((sum, p) => sum + (p.totalFees || 0), 0);
+  const netRealizedGlow =
+    netRealizedPnl > 0 ? 'premium-state-win' : netRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven';
 
   const performanceBridge = useMemo(() => calculateEquityBridge(
     Number.isFinite(capitalDeposits) && capitalDeposits >= 0 ? capitalDeposits : 0,
@@ -139,22 +145,22 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="premium-glass p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-purple-400" />Trading Performance &amp; Analytical Reports</h2>
           <p className="text-xs text-slate-400 mt-1">All portfolio equity and P&amp;L bridge figures use the centralized accounting engine.</p>
         </div>
         <div className="flex gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">Closed Trades: {stats.totalTrades}</span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400">Win Rate: {stats.winRate.toFixed(1)}%</span>
+          <span className="premium-chip px-2.5 py-1 rounded-lg text-slate-300">Closed Trades: {stats.totalTrades}</span>
+          <span className="premium-chip px-2.5 py-1 rounded-lg text-emerald-400 border-emerald-500/30">Win Rate: {stats.winRate.toFixed(1)}%</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800"><div className="text-xs text-emerald-400 font-semibold">Realized Gains</div><div className="mt-2 text-2xl font-black font-mono text-emerald-400">+{formatEgp(grossProfit)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800"><div className="text-xs text-rose-400 font-semibold">Realized Losses</div><div className="mt-2 text-2xl font-black font-mono text-rose-400">-{formatEgp(grossLoss)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800"><div className="text-xs text-slate-300 font-semibold">Net Realized P&amp;L</div><div className={`mt-2 text-2xl font-black font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800"><div className="text-xs text-amber-400 font-semibold flex items-center gap-1"><Receipt className="w-4 h-4" /> Fees</div><div className="mt-2 text-2xl font-black font-mono text-amber-400">{formatEgp(closedFees + openFees)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-win p-4 rounded-2xl"><div className="text-xs text-emerald-400 font-semibold">Realized Gains</div><div className="mt-2 text-2xl font-black font-mono text-emerald-400">+{formatEgp(grossProfit)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-loss p-4 rounded-2xl"><div className="text-xs text-rose-400 font-semibold">Realized Losses</div><div className="mt-2 text-2xl font-black font-mono text-rose-400">-{formatEgp(grossLoss)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className={`premium-card ${netRealizedGlow} p-4 rounded-2xl`}><div className="text-xs text-slate-300 font-semibold">Net Realized P&amp;L</div><div className={`mt-2 text-2xl font-black font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-xs text-slate-400">EGP</span></div></div>
+        <div className="premium-card premium-state-breakeven p-4 rounded-2xl"><div className="text-xs text-amber-400 font-semibold flex items-center gap-1"><Receipt className="w-4 h-4" /> Fees</div><div className="mt-2 text-2xl font-black font-mono text-amber-400">{formatEgp(closedFees + openFees)} <span className="text-xs text-slate-400">EGP</span></div></div>
       </div>
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
@@ -163,15 +169,18 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         transactions={transactions}
         historicalPrices={historicalPrices}
         capitalDeposits={capitalDeposits}
+        positions={positions}
         historicalLoading={historicalLoading}
+        entranceReady={chartsReady}
       />
 
       <RealizedTrajectoryChart
         closedTrades={closedTrades}
         stats={stats}
+        entranceReady={chartsReady}
       />
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-4">
+      <div className="premium-report-glass premium-radial rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10">
@@ -186,14 +195,15 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950/70 p-1 text-xs">
+            <div className="premium-report-glass-soft flex items-center gap-1 rounded-xl p-1 text-xs">
               <button
                 type="button"
+                aria-pressed={allocationTab === 'sector'}
                 onClick={() => {
                   setAllocationTab('sector');
                   setActiveAllocationIndex(null);
                 }}
-                className={`rounded-lg px-3 py-1.5 font-semibold transition ${
+                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
                   allocationTab === 'sector'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
@@ -203,11 +213,12 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               </button>
               <button
                 type="button"
+                aria-pressed={allocationTab === 'stock'}
                 onClick={() => {
                   setAllocationTab('stock');
                   setActiveAllocationIndex(null);
                 }}
-                className={`rounded-lg px-3 py-1.5 font-semibold transition ${
+                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
                   allocationTab === 'stock'
                     ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
@@ -222,7 +233,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 type="button"
                 aria-pressed={includeCash}
                 onClick={() => setIncludeCash((current) => !current)}
-                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                className={`premium-segment rounded-xl border px-3 py-2 text-xs font-semibold ${
                   includeCash
                     ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
                     : 'border-slate-800 bg-slate-950/70 text-slate-500 hover:text-slate-300'
@@ -234,13 +245,14 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
           </div>
         </div>
 
+        <MotionSwap motionKey={`${allocationTab}-${includeCash}-${allocationData.length > 0 ? 'data' : 'empty'}`} variant="state">
         {allocationData.length === 0 ? (
-          <div className="flex h-64 items-center justify-center rounded-xl border border-slate-800 bg-slate-950/50 text-xs text-slate-500">
+          <div className="premium-report-glass-soft flex h-64 items-center justify-center rounded-xl text-xs text-slate-500">
             No allocation data.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="relative min-h-[285px] overflow-hidden rounded-xl border border-slate-800 bg-slate-950/55">
+            <div className="premium-report-glass-soft relative min-h-[285px] overflow-hidden rounded-xl">
               <div className="absolute left-4 top-4 z-10">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Allocated value</div>
                 <div className="mt-1 font-mono text-sm font-bold text-slate-200">
@@ -249,6 +261,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               </div>
 
               <div className="h-[285px]">
+                {chartsReady && (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -273,7 +286,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                               transformOrigin: 'center',
                               transform: active ? 'scale(1.055)' : 'scale(1)',
                               opacity: dimmed ? 0.48 : 1,
-                              transition: 'transform 180ms ease, opacity 160ms ease',
+                              transition: 'transform 320ms cubic-bezier(0.22, 0.8, 0.24, 1), opacity 280ms ease-out',
                               filter: active ? 'drop-shadow(0 8px 12px rgba(6, 182, 212, 0.18))' : 'none',
                             }}
                           >
@@ -353,9 +366,10 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                )}
               </div>
 
-              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center transition-opacity duration-150 ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
+              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center premium-motion-opacity ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="mt-5 text-center">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Largest</div>
                   <div className="mt-1 max-w-[110px] truncate text-sm font-bold text-white">
@@ -368,7 +382,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+            <div className="premium-report-glass-soft rounded-xl p-3">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <div className="text-xs font-semibold text-slate-200">Concentration breakdown</div>
@@ -376,7 +390,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                     Ranked by current market value
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 font-mono text-[10px] text-slate-400">
+                <div className="premium-report-glass-soft rounded-lg px-2 py-1 font-mono text-[10px] text-slate-400">
                   {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
                 </div>
               </div>
@@ -385,7 +399,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
                 {allocationData.map((row, index) => (
                   <div
                     key={row.name}
-                    className="rounded-lg border border-slate-800/90 bg-slate-950/65 px-3 py-2.5 transition hover:border-slate-700 hover:bg-slate-950"
+                    className="premium-subpanel px-3 py-2.5 rounded-xl hover:border-cyan-500/20 hover:bg-white/[0.025]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2.5">
@@ -422,26 +436,29 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
             </div>
           </div>
         )}
+        </MotionSwap>
       </div>
 
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="premium-report-glass p-5 rounded-2xl space-y-4">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><Layers className="w-4 h-4 text-blue-400" />Portfolio Equity Bridge</h3><p className="text-xs text-slate-400 mt-1">Ending equity = net capital contributed + realized P&amp;L + unrealized P&amp;L. Fees are already embedded in P&amp;L and are not deducted again.</p></div>
         {!bridgeBalanced && <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><div><strong>Accounting reconciliation difference:</strong> {formatEgp(performanceBridge.reconciliationDelta)} EGP. The report is showing the actual ledger/equity values instead of inventing a balancing capital figure.</div></div>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Net Capital Contributed</span><strong className="font-mono text-blue-300">{formatEgp(performanceBridge.netCapitalContributed)} EGP</strong></div>
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Realized P&amp;L</span><strong className={`font-mono ${performanceBridge.realizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.realizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.realizedPnl)} EGP</strong></div>
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Unrealized P&amp;L</span><strong className={`font-mono ${performanceBridge.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.unrealizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.unrealizedPnl)} EGP</strong></div>
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Ending Equity / NAV</span><strong className="font-mono text-purple-300">{formatEgp(performanceBridge.endingEquity)} EGP</strong></div>
+          <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Net Capital Contributed</span><strong className="font-mono text-blue-300">{formatEgp(performanceBridge.netCapitalContributed)} EGP</strong></div>
+          <div className={`premium-subpanel p-3 rounded-xl ${performanceBridge.realizedPnl > 0 ? 'premium-state-win' : performanceBridge.realizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}><span className="text-slate-400 block">Realized P&amp;L</span><strong className={`font-mono ${performanceBridge.realizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.realizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.realizedPnl)} EGP</strong></div>
+          <div className={`premium-subpanel p-3 rounded-xl ${performanceBridge.unrealizedPnl > 0 ? 'premium-state-win' : performanceBridge.unrealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}><span className="text-slate-400 block">Unrealized P&amp;L</span><strong className={`font-mono ${performanceBridge.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{performanceBridge.unrealizedPnl >= 0 ? '+' : ''}{formatEgp(performanceBridge.unrealizedPnl)} EGP</strong></div>
+          <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Ending Equity / NAV</span><strong className="font-mono text-purple-300">{formatEgp(performanceBridge.endingEquity)} EGP</strong></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          {waterfallSteps.map((step, index) => <div key={step.name} className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><div className="text-[10px] text-slate-400">Step {index + 1}</div><div className="text-xs font-semibold text-slate-200">{step.name}</div><div className={`font-mono font-bold mt-1 ${step.total ? 'text-purple-300' : step.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{step.total ? formatEgp(step.end) : `${step.delta >= 0 ? '+' : ''}${formatEgp(step.delta)}`} EGP</div></div>)}
+          {waterfallSteps.map((step, index) => <div key={step.name} className="premium-subpanel p-3 rounded-xl"><div className="text-[10px] text-slate-400">Step {index + 1}</div><div className="text-xs font-semibold text-slate-200">{step.name}</div><div className={`font-mono font-bold mt-1 ${step.total ? 'text-purple-300' : step.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{step.total ? formatEgp(step.end) : `${step.delta >= 0 ? '+' : ''}${formatEgp(step.delta)}`} EGP</div></div>)}
         </div>
         <div className="text-[11px] text-slate-500">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
       </div>
 
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800"><h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
+      <div className="premium-report-glass p-5 rounded-2xl"><h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
 
       <MonthlyPerformanceReport closedTrades={closedTrades} positions={positions} />
     </div>
   );
 };
+
+export const PerformanceReports = React.memo(PerformanceReportsComponent);

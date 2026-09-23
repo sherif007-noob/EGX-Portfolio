@@ -78,3 +78,2979 @@
   margin: 0;
   appearance: none;
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Premium visual system — presentation only                                  */
+/* -------------------------------------------------------------------------- */
+:root {
+  --premium-bg: #020617;
+  --premium-surface: rgba(15, 23, 42, 0.62);
+  --premium-surface-strong: rgba(15, 23, 42, 0.78);
+  --premium-glass: rgba(8, 15, 31, 0.52);
+  --premium-border: rgba(148, 163, 184, 0.2);
+  --premium-border-strong: rgba(165, 180, 252, 0.32);
+  --premium-highlight: rgba(255, 255, 255, 0.085);
+  --premium-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.32),
+    0 4px 14px rgba(0, 0, 0, 0.2);
+  --premium-shadow-soft:
+    0 14px 34px rgba(0, 0, 0, 0.24),
+    0 2px 8px rgba(0, 0, 0, 0.16);
+  --premium-cyan-glow: rgba(34, 211, 238, 0.24);
+  --premium-blue-glow: rgba(59, 130, 246, 0.2);
+  --premium-purple-glow: rgba(139, 92, 246, 0.18);
+  --premium-emerald-glow: rgba(16, 185, 129, 0.16);
+
+  /* Phase 5 effect primitives — preserve the accepted pre-Phase-5 appearance.
+   * New advanced effects must consume/extend these primitives instead of
+   * introducing component-local glow/shimmer/ambient recipes.
+   */
+  --premium-effect-ambient-blur: 76px;
+  --premium-effect-ambient-opacity: 0.74;
+
+  --premium-semantic-win-rgb: 16 185 129;
+  --premium-semantic-win-deep-rgb: 5 150 105;
+  --premium-semantic-loss-rgb: 244 63 94;
+  --premium-semantic-loss-deep-rgb: 225 29 72;
+  --premium-semantic-breakeven-rgb: 245 158 11;
+  --premium-semantic-breakeven-deep-rgb: 217 119 6;
+  --premium-semantic-buy-rgb: 59 130 246;
+  --premium-semantic-buy-deep-rgb: 37 99 235;
+  --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
+  --premium-effect-radial-hover-opacity: 0.62;
+  --premium-effect-aurora-blue: rgba(59, 130, 246, 0.28);
+  --premium-effect-aurora-cyan: rgba(34, 211, 238, 0.58);
+  --premium-effect-aurora-purple: rgba(139, 92, 246, 0.34);
+  --premium-effect-aurora-opacity: 0.68;
+  --premium-effect-aurora-cycle: 5.5s;
+  --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.16);
+  --premium-effect-refraction-purple: rgba(139, 92, 246, 0.11);
+  --premium-effect-refraction-cyan-soft: rgba(34, 211, 238, 0.045);
+  --premium-effect-refraction-purple-soft: rgba(139, 92, 246, 0.035);
+  --premium-effect-refraction-cyan-strong: rgba(186, 230, 253, 0.20);
+  --premium-effect-refraction-purple-strong: rgba(196, 181, 253, 0.15);
+
+  --premium-refraction-tier-secondary:
+    inset 1px 0 0 rgba(34, 211, 238, 0.10),
+    inset -1px 0 0 rgba(139, 92, 246, 0.07),
+    inset 6px 0 14px rgba(34, 211, 238, 0.025),
+    inset -6px 0 14px rgba(139, 92, 246, 0.02);
+  --premium-refraction-tier-primary:
+    inset 1px 0 0 var(--premium-effect-refraction-cyan),
+    inset -1px 0 0 var(--premium-effect-refraction-purple),
+    inset 8px 0 18px var(--premium-effect-refraction-cyan-soft),
+    inset -8px 0 18px var(--premium-effect-refraction-purple-soft);
+  --premium-refraction-tier-hero:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 1px 0 0 rgba(34, 211, 238, 0.18),
+    inset -1px 0 0 rgba(59, 130, 246, 0.12),
+    inset 10px 0 22px rgba(34, 211, 238, 0.055),
+    inset -10px 0 22px rgba(59, 130, 246, 0.04);
+  --premium-refraction-tier-overlay:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 1px 0 0 var(--premium-effect-refraction-cyan-strong),
+    inset -1px 0 0 var(--premium-effect-refraction-purple-strong),
+    inset 10px 0 22px rgba(34, 211, 238, 0.06),
+    inset -10px 0 22px rgba(139, 92, 246, 0.05);
+
+  --premium-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --premium-fast: 150ms;
+  --premium-medium: 220ms;
+  --premium-slow: 320ms;
+
+  /* Phase 6 responsive primitives. */
+  --premium-touch-target: 2.75rem; /* 44px */
+  --premium-mobile-gutter: 0.75rem;
+  --premium-modal-gutter: 0.75rem;
+  --premium-fixed-overlay-max: 28rem;
+}
+
+html {
+  background: var(--premium-bg);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% -8%, rgba(34, 211, 238, 0.13), transparent 34rem),
+    radial-gradient(circle at 92% 14%, rgba(139, 92, 246, 0.11), transparent 36rem),
+    radial-gradient(circle at 50% 110%, rgba(59, 130, 246, 0.095), transparent 42rem),
+    var(--premium-bg);
+  color: #e2e8f0;
+}
+
+.premium-page {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+.premium-page::before,
+.premium-page::after {
+  content: '';
+  position: fixed;
+  z-index: -2;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(var(--premium-effect-ambient-blur));
+  opacity: var(--premium-effect-ambient-opacity);
+  transform: translateZ(0);
+}
+
+.premium-page::before {
+  top: 5rem;
+  left: -8rem;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.19), rgba(59, 130, 246, 0.075) 48%, transparent 72%);
+}
+
+.premium-page::after {
+  top: 22rem;
+  right: -10rem;
+  width: 28rem;
+  height: 28rem;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.16), rgba(59, 130, 246, 0.065) 48%, transparent 72%);
+}
+
+.premium-surface,
+.premium-card,
+.premium-glass {
+  position: relative;
+  border: 1px solid var(--premium-border);
+  box-shadow:
+    inset 0 1px 0 var(--premium-highlight),
+    var(--premium-shadow-soft),
+    0 0 30px rgba(34, 211, 238, 0.075),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+.premium-surface {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 38%),
+    var(--premium-surface);
+}
+
+.premium-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008)),
+    var(--premium-glass);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+
+.premium-card {
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 38%),
+    rgba(15, 23, 42, 0.62);
+  transition:
+    transform var(--premium-medium) var(--premium-ease),
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    background var(--premium-medium) var(--premium-ease);
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 34%);
+  opacity: 0.38;
+  transition: opacity var(--premium-medium) var(--premium-ease);
+}
+
+.premium-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--premium-border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 24px 54px rgba(0, 0, 0, 0.34),
+    0 0 28px rgba(34, 211, 238, 0.12),
+    0 0 54px rgba(59, 130, 246, 0.07),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+.premium-card:hover::before {
+  opacity: 0.62;
+}
+
+.premium-hero-card {
+  background:
+    radial-gradient(circle at 18% -15%, rgba(16, 185, 129, 0.12), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.075), transparent 42%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.034), transparent 44%),
+    rgba(15, 23, 42, 0.66);
+  border-color: rgba(52, 211, 153, 0.16);
+}
+
+.premium-control {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 5px 14px rgba(0, 0, 0, 0.18);
+  transition:
+    transform var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    background-color var(--premium-fast) var(--premium-ease),
+    color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-control:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 9px 22px rgba(0, 0, 0, 0.23);
+}
+
+.premium-control:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.premium-nav {
+  position: relative;
+  transition:
+    color var(--premium-fast) var(--premium-ease),
+    background-color var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease),
+    transform var(--premium-fast) var(--premium-ease);
+}
+
+.premium-nav:hover {
+  transform: translateY(-1px);
+}
+
+.premium-nav-active {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(30, 41, 59, 0.76);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.premium-header {
+  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
+  background:
+    linear-gradient(180deg, rgba(8, 15, 31, 0.68), rgba(2, 6, 23, 0.5));
+  border-color: rgba(148, 163, 184, 0.13);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+}
+
+.premium-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.055), transparent 26rem),
+    radial-gradient(circle at 78% -30%, rgba(139, 92, 246, 0.045), transparent 26rem);
+}
+
+.premium-floating {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    rgba(2, 6, 23, 0.58);
+  border-color: rgba(165, 180, 252, 0.27);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 24px 70px rgba(0, 0, 0, 0.46),
+    0 0 32px rgba(34, 211, 238, 0.08),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+}
+
+/* Phase 5 shared floating status surface.
+ * Status banners reuse one glass/refraction recipe; semantic variants supply color.
+ */
+.premium-status-surface {
+  --premium-status-rgb: 245 158 11;
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+  position: relative;
+  border: 1px solid rgb(var(--premium-status-rgb) / 0.34);
+  background:
+    linear-gradient(180deg, rgb(var(--premium-status-rgb) / 0.10), transparent 44%),
+    rgba(8, 15, 31, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 52px rgba(0, 0, 0, 0.38),
+    0 0 28px rgb(var(--premium-status-rgb) / 0.10),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+
+.premium-status-warning {
+  --premium-status-rgb: 245 158 11;
+}
+
+.premium-section-enter {
+  animation: premium-section-in var(--premium-slow) var(--premium-ease) both;
+}
+
+@keyframes premium-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .premium-page::before {
+    animation: premium-aurora-a 22s ease-in-out infinite alternate;
+  }
+
+  .premium-page::after {
+    animation: premium-aurora-b 28s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes premium-aurora-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(1.6rem, 0.65rem, 0) scale(1.04); }
+}
+
+@keyframes premium-aurora-b {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-1.4rem, -0.6rem, 0) scale(1.035); }
+}
+
+@media (max-width: 767px) {
+  .premium-page::before,
+  .premium-page::after {
+    filter: blur(56px);
+    opacity: 0.72;
+  }
+
+  .premium-glass,
+  .premium-floating,
+  .premium-header {
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+  }
+
+  .premium-card:hover,
+  .premium-nav:hover,
+  .premium-control:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-card,
+  .premium-control,
+  .premium-nav,
+  .premium-section-enter {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .premium-page::before,
+  .premium-page::after {
+    animation: none !important;
+  }
+}
+
+
+/* Premium pass 2: working surfaces, tables, forms, modals */
+.premium-panel {
+  position: relative;
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  border: 1px solid var(--premium-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 30%),
+    rgba(15, 23, 42, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 18px 42px rgba(0, 0, 0, 0.28),
+    0 0 34px rgba(34, 211, 238, 0.09),
+    0 0 64px rgba(139, 92, 246, 0.035),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+.premium-subpanel {
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  backdrop-filter: blur(9px) saturate(125%);
+  border: 1px solid rgba(148, 163, 184, 0.11);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 48%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022);
+}
+
+.premium-table-shell {
+  border: 1px solid var(--premium-border);
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.premium-table-shell thead {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), transparent),
+    rgba(2, 6, 23, 0.58);
+}
+
+.premium-table-shell tbody tr {
+  transition:
+    background-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-table-shell tbody tr:hover {
+  background: rgba(30, 41, 59, 0.48);
+  box-shadow: inset 3px 0 0 rgba(56, 189, 248, 0.28);
+}
+
+.premium-field,
+.premium-field input,
+.premium-field textarea {
+  transition:
+    border-color var(--premium-fast) var(--premium-ease),
+    background-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-field:focus,
+.premium-field input:focus,
+.premium-field textarea:focus {
+  box-shadow:
+    0 0 0 3px rgba(56, 189, 248, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.premium-modal-backdrop {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.05), transparent 28rem),
+    rgba(2, 6, 23, 0.8);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  backdrop-filter: blur(10px) saturate(115%);
+}
+
+.premium-modal {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.19);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 36%),
+    rgba(8, 15, 31, 0.68);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 30px 90px rgba(0, 0, 0, 0.5),
+    0 0 44px rgba(34, 211, 238, 0.08),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* Phase 6 viewport helpers.
+ * These are opt-in contracts for component passes so existing desktop modal
+ * composition is not silently rewritten by the shared baseline.
+ */
+.premium-modal-viewport {
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.premium-modal-scroll-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.premium-modal-frame {
+  min-height: 0;
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+}
+
+.premium-modal-backdrop-panel-scroll {
+  overflow-y: auto;
+}
+
+.premium-fixed-overlay {
+  box-sizing: border-box;
+  max-width: min(
+    var(--premium-fixed-overlay-max),
+    calc(100vw - (var(--premium-mobile-gutter) * 2))
+  );
+  overflow-wrap: anywhere;
+}
+
+.premium-mobile-min-w-0 {
+  min-width: 0;
+}
+
+.premium-mobile-full {
+  min-width: 0;
+}
+
+.premium-modal::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.07), transparent 30%),
+    radial-gradient(circle at 90% 10%, rgba(139, 92, 246, 0.055), transparent 30%);
+}
+
+.premium-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-radial {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-radial::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 50%, var(--premium-effect-radial-color), transparent 36%);
+  transition: opacity var(--premium-medium) var(--premium-ease);
+}
+
+.premium-radial:hover::after {
+  opacity: var(--premium-effect-radial-hover-opacity);
+}
+
+/* Phase 5 static refraction primitive.
+ * It contributes only inset edge light through a custom-property shadow slot;
+ * no pseudo-element, blur, animation, or extra React wrapper is required.
+ */
+.premium-refraction {
+  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
+}
+
+.premium-refraction-hero {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+}
+
+.premium-refraction-overlay {
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+}
+
+/* Phase 5 effect-tier rollout. Shared surface roles own the refraction level;
+ * data-dense tables/rows/fields/chart plots intentionally remain Tier 0.
+ */
+.premium-surface,
+.premium-glass,
+.premium-card,
+.premium-panel,
+.premium-report-glass {
+  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
+}
+
+.premium-subpanel,
+.premium-inset-glass,
+.premium-report-glass-soft,
+.premium-form-section,
+.premium-modal-section {
+  --premium-refraction-shadow: var(--premium-refraction-tier-secondary);
+}
+
+.premium-hero-card,
+.premium-hero-metric,
+.premium-report-hero {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+}
+
+.premium-modal,
+.premium-dropdown,
+.premium-floating {
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+}
+
+/* Phase 5 CTA aurora border flow.
+ * User clarified that the approved original effect is not a light sweep: it is
+ * a continuously shifting iridescent/aurora gradient around the CTA perimeter.
+ * Keep it limited to the audited high-value CTA set; warning/danger/routine-save
+ * actions intentionally do not use this class.
+ */
+.premium-shimmer-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.premium-shimmer-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    var(--premium-effect-aurora-blue),
+    var(--premium-effect-aurora-cyan),
+    var(--premium-effect-aurora-purple),
+    var(--premium-effect-aurora-blue)
+  );
+  background-size: 220% 100%;
+  opacity: var(--premium-effect-aurora-opacity);
+  filter: blur(0.3px);
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .premium-shimmer-border::before {
+    animation: premium-cta-aurora-flow var(--premium-effect-aurora-cycle) linear infinite;
+  }
+}
+
+@keyframes premium-cta-aurora-flow {
+  from { background-position: 0% 50%; }
+  to { background-position: 220% 50%; }
+}
+
+@media (max-width: 767px) {
+  .premium-radial::after {
+    display: none;
+  }
+
+  .premium-modal-backdrop {
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    backdrop-filter: blur(12px) saturate(130%);
+  }
+
+  .premium-modal {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 22px 58px rgba(0, 0, 0, 0.44),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-shimmer-border::before {
+    animation: none !important;
+  }
+
+  .premium-radial::after {
+    transition: none !important;
+  }
+}
+
+
+/* Phase 6 Pass 0 — shared touch and viewport safety baseline. */
+.premium-modal-backdrop {
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 768px) {
+  .premium-fixed-overlay {
+    max-width: none;
+  }
+}
+
+
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-action,
+  .premium-nav,
+  .premium-filter-pill,
+  .premium-segment,
+  .premium-choice,
+  .premium-accordion-trigger,
+  .premium-select-trigger {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  .premium-action {
+    min-width: var(--premium-touch-target);
+  }
+
+  .premium-icon-action {
+    min-width: var(--premium-touch-target);
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  input.premium-field,
+  select.premium-field,
+  textarea.premium-field {
+    min-height: var(--premium-touch-target);
+  }
+
+  .premium-menu-item {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-modal-backdrop {
+    padding:
+      max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      max(var(--premium-modal-gutter), env(safe-area-inset-right))
+      max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+      max(var(--premium-modal-gutter), env(safe-area-inset-left));
+  }
+
+  .premium-modal-backdrop-panel-scroll {
+    align-items: flex-start !important;
+    overflow-y: hidden !important;
+  }
+
+  .premium-modal-backdrop-panel-scroll > .premium-modal-viewport {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  .premium-modal-viewport,
+  .premium-modal-frame {
+    width: 100%;
+    max-height: calc(
+      100dvh
+      - max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      - max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+    );
+  }
+
+  .premium-fixed-overlay {
+    max-width: calc(
+      100vw
+      - max(var(--premium-mobile-gutter), env(safe-area-inset-left))
+      - max(var(--premium-mobile-gutter), env(safe-area-inset-right))
+    );
+  }
+
+  .premium-fixed-mobile-span {
+    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
+    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
+    width: auto;
+    max-width: none;
+  }
+
+  .premium-fixed-bottom-safe {
+    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
+  }
+
+  .premium-fixed-bottom-above-status {
+    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
+  }
+
+  .premium-fixed-top-after-header {
+    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
+  }
+}
+
+
+/* Keep open glass dropdowns above following cards and tables. */
+.premium-glass:has([aria-expanded="true"]),
+.premium-panel:has([aria-expanded="true"]),
+.premium-surface:has([aria-expanded="true"]) {
+  z-index: 60;
+}
+
+
+/* Pass 3.1: make every app dropdown use the same frosted-glass recipe. */
+.premium-dropdown {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 28%, rgba(255, 255, 255, 0.006)),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.055), transparent 38%, rgba(139, 92, 246, 0.045)),
+    rgba(8, 15, 31, 0.68);
+  border-color: rgba(186, 230, 253, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(148, 163, 184, 0.05),
+    0 20px 58px rgba(0, 0, 0, 0.46),
+    0 0 30px rgba(34, 211, 238, 0.09),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(34px) saturate(175%) brightness(1.06);
+  backdrop-filter: blur(34px) saturate(175%) brightness(1.06);
+}
+
+.premium-dropdown::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(255, 255, 255, 0.12), transparent 34%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.025), transparent 38%);
+  opacity: 0.75;
+}
+
+.premium-dropdown > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 767px) {
+  .premium-dropdown {
+    max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));
+    max-height: min(70dvh, 24rem);
+    overscroll-behavior: contain;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.012) 32%),
+      linear-gradient(135deg, rgba(34, 211, 238, 0.05), transparent 40%, rgba(139, 92, 246, 0.04)),
+      rgba(8, 15, 31, 0.64);
+    -webkit-backdrop-filter: blur(26px) saturate(165%) brightness(1.05);
+    backdrop-filter: blur(26px) saturate(165%) brightness(1.05);
+  }
+
+  .premium-mobile-full {
+    width: 100%;
+  }
+}
+
+
+/* Phase 5 canonical semantic halo system.
+ * The semantic family supplies color; the surface hierarchy supplies intensity.
+ * Dense desktop rows stay edge-coded rather than receiving a card halo.
+ */
+.premium-glow-win,
+.premium-state-win {
+  --premium-semantic-rgb: var(--premium-semantic-win-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-win-deep-rgb);
+}
+
+.premium-glow-loss,
+.premium-state-loss {
+  --premium-semantic-rgb: var(--premium-semantic-loss-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-loss-deep-rgb);
+}
+
+.premium-glow-breakeven,
+.premium-state-breakeven {
+  --premium-semantic-rgb: var(--premium-semantic-breakeven-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-breakeven-deep-rgb);
+}
+
+.premium-glow-buy,
+.premium-state-buy {
+  --premium-semantic-rgb: var(--premium-semantic-buy-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-buy-deep-rgb);
+}
+
+/* Primary semantic cards. */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha, 0.44));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 38px rgba(0, 0, 0, 0.28),
+    0 0 30px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha, 0.18)),
+    0 0 var(--premium-semantic-far-radius, 68px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha, 0.075)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  transition:
+    transform var(--premium-medium) var(--premium-ease),
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    background var(--premium-medium) var(--premium-ease);
+}
+
+/* Hero semantic cards are intentionally the strongest financial-state halo. */
+.premium-hero-card {
+  --premium-semantic-border-alpha: 0.52;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.095;
+  --premium-semantic-far-radius: 72px;
+  --premium-semantic-hover-border-alpha: 0.70;
+  --premium-semantic-hover-near-alpha: 0.30;
+  --premium-semantic-hover-far-alpha: 0.135;
+  --premium-semantic-hover-far-radius: 86px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-glow-buy:hover,
+  .premium-card.premium-glow-win:hover,
+  .premium-card.premium-glow-loss:hover,
+  .premium-card.premium-glow-breakeven:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-hover-border-alpha, 0.62));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 22px 52px rgba(0, 0, 0, 0.32),
+      0 0 38px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-hover-near-alpha, 0.25)),
+      0 0 var(--premium-semantic-hover-far-radius, 84px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-hover-far-alpha, 0.11)),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+}
+
+/* Desktop table semantics remain edge-only and use the same semantic palette. */
+.premium-row-win {
+  --premium-row-semantic-rgb: var(--premium-semantic-win-rgb);
+}
+.premium-row-loss {
+  --premium-row-semantic-rgb: var(--premium-semantic-loss-rgb);
+}
+.premium-row-breakeven {
+  --premium-row-semantic-rgb: var(--premium-semantic-breakeven-rgb);
+}
+
+.premium-row-win,
+.premium-row-loss,
+.premium-row-breakeven {
+  box-shadow: inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.60);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-table-shell tbody tr.premium-row-win:hover,
+  .premium-table-shell tbody tr.premium-row-loss:hover,
+  .premium-table-shell tbody tr.premium-row-breakeven:hover {
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.80),
+      inset 14px 0 28px rgb(var(--premium-row-semantic-rgb) / 0.05);
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 4 — premium motion & micro-interaction system                         */
+                         */
+/* -------------------------------------------------------------------------- */
+:root {
+  --motion-instant: 110ms;
+  --motion-fast: 150ms;
+  --motion-control: 180ms;
+  --motion-popover: 200ms;
+  --motion-panel: 240ms;
+  --motion-modal: 270ms;
+  --motion-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-snappy: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* Floating surfaces should feel like they detach from the trigger. */
+.premium-dropdown {
+  transform-origin: top center;
+  animation: premium-popover-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.975);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Modal entrance: backdrop arrives first visually, panel follows with spring-like settle. */
+.premium-modal-backdrop {
+  animation: premium-backdrop-in var(--motion-panel) ease-out both;
+}
+
+.premium-modal {
+  transform-origin: 50% 42%;
+  animation: premium-modal-in var(--motion-modal) var(--motion-emphasized) both;
+}
+
+@keyframes premium-backdrop-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+    filter: blur(2px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.002);
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Controls: tactile press without exaggerated bounce. */
+.premium-control,
+.premium-nav,
+.premium-segment,
+.premium-accordion-trigger {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: translateY(0) scale(0.965);
+  transition-duration: var(--motion-instant);
+}
+
+.premium-control > svg,
+.premium-nav > svg,
+.premium-segment > svg,
+.premium-accordion-trigger > svg {
+  transition:
+    transform var(--motion-control) var(--motion-emphasized),
+    color var(--motion-control) ease-out,
+    filter var(--motion-control) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-control:hover:not(:disabled) > svg,
+  .premium-nav:hover > svg {
+    transform: translateY(-1px) scale(1.045);
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+/* Selected nav feels anchored without a moving layout indicator. */
+.premium-nav::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -0.3rem;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.85), transparent);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition:
+    opacity var(--motion-control) ease-out,
+    transform var(--motion-control) var(--motion-emphasized);
+  pointer-events: none;
+}
+
+.premium-nav-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Segmented controls/timeframes share one selected-state motion language. */
+.premium-segment {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--motion-control) var(--motion-standard),
+    color var(--motion-control) ease-out,
+    border-color var(--motion-control) ease-out,
+    background-color var(--motion-control) ease-out,
+    box-shadow var(--motion-control) var(--motion-standard);
+}
+
+.premium-segment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 120%, rgba(34, 211, 238, 0.22), transparent 62%);
+  transform: scale(0.72);
+  transition:
+    opacity var(--motion-control) ease-out,
+    transform var(--motion-control) var(--motion-emphasized);
+}
+
+.premium-segment[aria-pressed='true'] {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 7px 18px rgba(6, 182, 212, 0.10);
+}
+
+.premium-segment[aria-pressed='true']::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Expandable sections reveal as one coherent surface. */
+.premium-reveal {
+  transform-origin: top center;
+  animation: premium-reveal-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scaleY(0.975);
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Tooltip content appears crisply but does not lag behind the cursor. */
+.premium-tooltip-content {
+  transform-origin: 50% 100%;
+  animation: premium-tooltip-in var(--motion-fast) var(--motion-snappy) both;
+}
+
+@keyframes premium-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Refine page/tab entry so it feels like content continuity, not a full-page fade. */
+.premium-section-enter {
+  animation: premium-section-in var(--motion-panel) var(--motion-emphasized) both;
+}
+
+/* Small feedback for cards on touch; desktop hover remains the stronger affordance. */
+.premium-card {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.premium-card:active {
+  transform: scale(0.995);
+  transition-duration: var(--motion-instant);
+}
+
+/* Focus arrival should feel deliberate, especially with keyboard navigation on desktop. */
+.premium-control:focus-visible,
+.premium-nav:focus-visible,
+.premium-segment:focus-visible,
+.premium-accordion-trigger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.12),
+    0 0 0 1px rgba(103, 232, 249, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 767px) {
+  .premium-dropdown {
+    animation-duration: 175ms;
+  }
+
+  .premium-modal {
+    animation-duration: 235ms;
+  }
+
+  .premium-card:active {
+    transform: scale(0.992);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-dropdown,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-reveal,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+
+  .premium-control,
+  .premium-nav,
+  .premium-segment,
+  .premium-accordion-trigger,
+  .premium-card,
+  .premium-nav::after,
+  .premium-segment::before {
+    transition: none !important;
+  }
+}
+
+
+/* Shared menu-item and select-trigger motion */
+.premium-select-trigger[aria-expanded='true'] {
+  border-color: rgba(34, 211, 238, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.premium-select-trigger[aria-expanded='true'] > svg:last-child {
+  color: #67e8f9;
+  filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.35));
+}
+
+.premium-menu-item {
+  transition:
+    transform var(--motion-fast) var(--motion-emphasized),
+    background-color var(--motion-fast) ease-out,
+    color var(--motion-fast) ease-out,
+    box-shadow var(--motion-fast) ease-out;
+}
+
+.premium-menu-item:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-menu-item:hover {
+    transform: translateX(3px);
+  }
+}
+
+
+/* Compact semantic states use the same palette at lower intensity. */
+.premium-state-win,
+.premium-state-loss,
+.premium-state-breakeven,
+.premium-state-buy {
+  position: relative;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-state-border-alpha, 0.34)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgb(var(--premium-semantic-rgb) / var(--premium-state-near-alpha, 0.11)),
+    0 0 var(--premium-state-far-radius, 54px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha, 0.05)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  transition:
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    transform var(--premium-medium) var(--premium-ease);
+}
+
+/* Report/dashboard hero semantics align to the hero-card hierarchy. */
+.premium-hero-metric,
+.premium-report-hero {
+  --premium-state-border-alpha: 0.50;
+  --premium-state-near-alpha: 0.19;
+  --premium-state-far-alpha: 0.085;
+  --premium-state-far-radius: 66px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-state-win:hover,
+  .premium-state-loss:hover,
+  .premium-state-breakeven:hover,
+  .premium-state-buy:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Reports & Performance glass hierarchy */
+.premium-report-glass {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 34%, transparent 58%),
+    linear-gradient(135deg, rgba(34,211,238,0.025), transparent 38%, rgba(139,92,246,0.025)),
+    rgba(15, 23, 42, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 16px 42px rgba(0,0,0,0.26),
+    0 0 28px rgba(34,211,238,0.035);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+
+.premium-report-glass-soft {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 48%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 10px 26px rgba(0,0,0,0.18);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  backdrop-filter: blur(14px) saturate(132%);
+}
+
+.premium-report-table {
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.018), transparent 20%),
+    rgba(2, 6, 23, 0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 14px 34px rgba(0,0,0,0.22);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+.premium-report-table thead {
+  background: rgba(15, 23, 42, 0.54);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+.premium-report-table tbody tr {
+  background: transparent;
+}
+
+.premium-report-table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.34);
+}
+
+@media (max-width: 767px) {
+  .premium-report-glass {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.038), rgba(255,255,255,0.010) 36%, transparent 60%),
+      rgba(15, 23, 42, 0.58);
+    -webkit-backdrop-filter: blur(17px) saturate(138%);
+    backdrop-filter: blur(17px) saturate(138%);
+  }
+
+  .premium-report-glass-soft {
+    -webkit-backdrop-filter: blur(11px) saturate(124%);
+    backdrop-filter: blur(11px) saturate(124%);
+  }
+
+  .premium-report-table {
+    background: rgba(2, 6, 23, 0.68);
+    -webkit-backdrop-filter: blur(8px) saturate(115%);
+    backdrop-filter: blur(8px) saturate(115%);
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 4.1 — perceptible motion correction                                  */
+/* The first motion pass was too subtle in real use.                           */
+/* -------------------------------------------------------------------------- */
+:root {
+  --motion-instant: 120ms;
+  --motion-fast: 180ms;
+  --motion-control: 220ms;
+  --motion-popover: 280ms;
+  --motion-panel: 340ms;
+  --motion-modal: 360ms;
+}
+
+/* Every main tab now has one obvious, coherent entrance. */
+.premium-tab-stage {
+  transform-origin: 50% 0%;
+  animation: premium-tab-stage-in var(--motion-panel) var(--motion-emphasized) both;
+}
+
+.premium-tab-stage .premium-section-enter {
+  animation: none;
+}
+
+@keyframes premium-tab-stage-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(22px, 10px, 0) scale(0.982);
+    filter: blur(5px);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 0, 0) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Dropdowns visibly detach from their trigger with a short spring settle. */
+.premium-dropdown {
+  animation: premium-popover-strong-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-popover-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.93);
+    filter: blur(5px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.012);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Menu contents enter in sequence so opening a dropdown visibly reads as motion. */
+.premium-dropdown .premium-menu-item {
+  animation: premium-menu-item-in 240ms var(--motion-emphasized) both;
+}
+
+.premium-dropdown .premium-menu-item:nth-child(1) { animation-delay: 20ms; }
+.premium-dropdown .premium-menu-item:nth-child(2) { animation-delay: 38ms; }
+.premium-dropdown .premium-menu-item:nth-child(3) { animation-delay: 56ms; }
+.premium-dropdown .premium-menu-item:nth-child(4) { animation-delay: 74ms; }
+.premium-dropdown .premium-menu-item:nth-child(5) { animation-delay: 92ms; }
+.premium-dropdown .premium-menu-item:nth-child(6) { animation-delay: 110ms; }
+.premium-dropdown .premium-menu-item:nth-child(n+7) { animation-delay: 126ms; }
+
+@keyframes premium-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-9px) translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* Modals now have enough travel/scale to be visually obvious. */
+.premium-modal-backdrop {
+  animation: premium-backdrop-strong-in 280ms ease-out both;
+}
+
+.premium-modal {
+  animation: premium-modal-strong-in var(--motion-modal) var(--motion-emphasized) both;
+}
+
+@keyframes premium-backdrop-strong-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+    filter: blur(6px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Stronger tactile controls. */
+.premium-control:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: scale(0.94);
+  transition-duration: var(--motion-instant);
+}
+
+.premium-card:active {
+  transform: scale(0.982);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card:hover {
+    transform: translateY(-4px) scale(1.006);
+  }
+}
+
+/* Active nav/tab selection itself animates, not just its color. */
+.premium-nav-active {
+  animation: premium-nav-select 260ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-nav-select {
+  0% {
+    transform: translateY(2px) scale(0.94);
+  }
+  65% {
+    transform: translateY(-2px) scale(1.025);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Segmented controls visibly pop when selection changes. */
+.premium-segment[aria-pressed='true'] {
+  animation: premium-segment-select 280ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-segment-select {
+  0% {
+    transform: translateY(2px) scale(0.88);
+    filter: brightness(0.88);
+  }
+  62% {
+    transform: translateY(-2px) scale(1.045);
+    filter: brightness(1.12);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Accordion/reveal movement is now intentionally readable. */
+.premium-reveal {
+  animation: premium-reveal-strong-in 300ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-reveal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scaleY(0.91);
+    filter: blur(4px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scaleY(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Tooltips stay fast, but the arrival is now visible. */
+.premium-tooltip-content {
+  animation: premium-tooltip-strong-in 190ms var(--motion-snappy) both;
+}
+
+@keyframes premium-tooltip-strong-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-tab-stage {
+    animation-duration: 300ms;
+  }
+
+  .premium-dropdown {
+    animation-duration: 240ms;
+  }
+
+  .premium-modal {
+    animation-duration: 320ms;
+  }
+
+  .premium-control:active:not(:disabled),
+  .premium-nav:active:not(:disabled),
+  .premium-segment:active:not(:disabled),
+  .premium-accordion-trigger:active:not(:disabled) {
+    transform: scale(0.93);
+  }
+
+  .premium-card:active {
+    transform: scale(0.975);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-tab-stage,
+  .premium-dropdown,
+  .premium-dropdown .premium-menu-item,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-nav-active,
+  .premium-segment[aria-pressed='true'],
+  .premium-reveal,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+}
+
+
+/* Analytics plot visibly transitions when timeframe or mode changes. */
+.premium-chart-stage {
+  transform-origin: 50% 55%;
+  animation: premium-chart-stage-in 320ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-chart-stage-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+    filter: blur(4px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.008);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-chart-stage {
+    animation: none !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 3.3 completeness sweep — shared premium controls & inset surfaces     */
+/* -------------------------------------------------------------------------- */
+
+/* Inputs that still carry legacy bg-slate utility classes inherit the glass field. */
+.premium-field {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.028), transparent 46%),
+    rgba(2, 6, 23, 0.48) !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 8px 20px rgba(0,0,0,0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  backdrop-filter: blur(14px) saturate(132%);
+}
+
+.premium-field:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+.premium-field:focus,
+.premium-field:focus-visible {
+  border-color: rgba(56, 189, 248, 0.50) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), transparent 46%),
+    rgba(2, 6, 23, 0.56) !important;
+}
+
+/* Stronger secondary/inset cards for dense finance information. */
+.premium-inset-glass {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 46%),
+    linear-gradient(135deg, rgba(34,211,238,0.018), transparent 42%, rgba(139,92,246,0.015)),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 10px 24px rgba(0,0,0,0.14);
+  -webkit-backdrop-filter: blur(15px) saturate(132%);
+  backdrop-filter: blur(15px) saturate(132%);
+}
+
+.premium-subpanel {
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 48%),
+    rgba(2, 6, 23, 0.40);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 8px 20px rgba(0,0,0,0.10);
+  -webkit-backdrop-filter: blur(13px) saturate(130%);
+  backdrop-filter: blur(13px) saturate(130%);
+}
+
+/* Common action buttons. */
+.premium-action {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.012)),
+    rgba(15, 23, 42, 0.48);
+  color: rgb(226 232 240);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.065),
+    0 8px 20px rgba(0,0,0,0.18);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  transition:
+    transform var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    background var(--premium-fast) var(--premium-ease),
+    color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-action:hover:not(:disabled) {
+  border-color: rgba(186, 230, 253, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.018)),
+    rgba(15, 23, 42, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 10px 26px rgba(0,0,0,0.22);
+}
+
+.premium-action:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.premium-action:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.premium-action-primary {
+  border-color: rgba(59, 130, 246, 0.38);
+  background:
+    linear-gradient(180deg, rgba(96,165,250,0.20), rgba(37,99,235,0.08)),
+    rgba(8,15,31,0.54);
+  color: rgb(219 234 254);
+  box-shadow:
+    inset 0 1px 0 rgba(191,219,254,0.12),
+    0 10px 28px rgba(37,99,235,0.16),
+    0 0 24px rgba(59,130,246,0.09);
+}
+
+.premium-action-success {
+  border-color: rgba(16, 185, 129, 0.36);
+  background:
+    linear-gradient(180deg, rgba(52,211,153,0.18), rgba(5,150,105,0.07)),
+    rgba(8,15,31,0.54);
+  color: rgb(167 243 208);
+  box-shadow:
+    inset 0 1px 0 rgba(209,250,229,0.10),
+    0 10px 28px rgba(5,150,105,0.14),
+    0 0 24px rgba(16,185,129,0.08);
+}
+
+.premium-action-danger {
+  border-color: rgba(244, 63, 94, 0.38);
+  background:
+    linear-gradient(180deg, rgba(251,113,133,0.17), rgba(225,29,72,0.07)),
+    rgba(8,15,31,0.54);
+  color: rgb(254 205 211);
+  box-shadow:
+    inset 0 1px 0 rgba(255,228,230,0.10),
+    0 10px 28px rgba(225,29,72,0.14),
+    0 0 24px rgba(244,63,94,0.08);
+}
+
+.premium-action-warning {
+  border-color: rgba(245, 158, 11, 0.36);
+  background:
+    linear-gradient(180deg, rgba(251,191,36,0.17), rgba(217,119,6,0.07)),
+    rgba(8,15,31,0.54);
+  color: rgb(253 230 138);
+  box-shadow:
+    inset 0 1px 0 rgba(254,243,199,0.10),
+    0 10px 28px rgba(217,119,6,0.13),
+    0 0 24px rgba(245,158,11,0.075);
+}
+
+.premium-action-purple {
+  border-color: rgba(139, 92, 246, 0.36);
+  background:
+    linear-gradient(180deg, rgba(167,139,250,0.17), rgba(109,40,217,0.07)),
+    rgba(8,15,31,0.54);
+  color: rgb(221 214 254);
+  box-shadow:
+    inset 0 1px 0 rgba(237,233,254,0.10),
+    0 10px 28px rgba(109,40,217,0.13),
+    0 0 24px rgba(139,92,246,0.075);
+}
+
+/* Compact icon buttons used for Edit/Delete/Close and pagination. */
+.premium-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.17);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), transparent),
+    rgba(2, 6, 23, 0.44);
+  color: rgb(148 163 184);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.045);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  transition:
+    transform var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    color var(--premium-fast) var(--premium-ease),
+    background var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-icon-action:hover:not(:disabled) {
+  color: rgb(226 232 240);
+  border-color: rgba(186,230,253,0.28);
+  background: rgba(15,23,42,0.54);
+}
+
+.premium-icon-edit:hover:not(:disabled) {
+  color: rgb(147 197 253);
+  border-color: rgba(59,130,246,0.42);
+  box-shadow: 0 0 20px rgba(59,130,246,0.10);
+}
+
+.premium-icon-delete:hover:not(:disabled) {
+  color: rgb(253 164 175);
+  border-color: rgba(244,63,94,0.42);
+  box-shadow: 0 0 20px rgba(244,63,94,0.10);
+}
+
+/* Filters/toggles/selectable pills. */
+.premium-filter-pill {
+  border: 1px solid rgba(148,163,184,0.15);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), transparent),
+    rgba(2,6,23,0.40);
+  color: rgb(148 163 184);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  backdrop-filter: blur(14px) saturate(132%);
+  transition:
+    transform var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    background var(--premium-fast) var(--premium-ease),
+    color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-filter-pill:hover {
+  color: rgb(226 232 240);
+  border-color: rgba(148,163,184,0.28);
+  background: rgba(15,23,42,0.50);
+}
+
+.premium-filter-active-neutral {
+  color: rgb(241 245 249);
+  border-color: rgba(148,163,184,0.36);
+  background: rgba(51,65,85,0.40);
+  box-shadow: 0 0 20px rgba(148,163,184,0.07);
+}
+.premium-filter-active-blue {
+  color: rgb(191 219 254);
+  border-color: rgba(59,130,246,0.42);
+  background: rgba(59,130,246,0.13);
+  box-shadow: 0 0 22px rgba(59,130,246,0.10);
+}
+.premium-filter-active-emerald {
+  color: rgb(167 243 208);
+  border-color: rgba(16,185,129,0.40);
+  background: rgba(16,185,129,0.12);
+  box-shadow: 0 0 22px rgba(16,185,129,0.09);
+}
+.premium-filter-active-rose {
+  color: rgb(254 205 211);
+  border-color: rgba(244,63,94,0.40);
+  background: rgba(244,63,94,0.12);
+  box-shadow: 0 0 22px rgba(244,63,94,0.09);
+}
+.premium-filter-active-amber {
+  color: rgb(253 230 138);
+  border-color: rgba(245,158,11,0.40);
+  background: rgba(245,158,11,0.12);
+  box-shadow: 0 0 22px rgba(245,158,11,0.09);
+}
+.premium-filter-active-purple {
+  color: rgb(221 214 254);
+  border-color: rgba(139,92,246,0.40);
+  background: rgba(139,92,246,0.12);
+  box-shadow: 0 0 22px rgba(139,92,246,0.09);
+}
+.premium-filter-active-cyan {
+  color: rgb(165 243 252);
+  border-color: rgba(6,182,212,0.40);
+  background: rgba(6,182,212,0.12);
+  box-shadow: 0 0 22px rgba(6,182,212,0.09);
+}
+
+/* Modal sections and choice groups use the same glass language as the shell. */
+.premium-modal-section {
+  border: 1px solid rgba(148,163,184,0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 48%),
+    rgba(2,6,23,0.38);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  backdrop-filter: blur(14px) saturate(132%);
+}
+
+.premium-choice {
+  border: 1px solid rgba(148,163,184,0.16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.032), transparent),
+    rgba(2,6,23,0.42);
+  color: rgb(148 163 184);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+/* Tags/notes that used to be opaque slate blocks. */
+.premium-chip {
+  border: 1px solid rgba(148,163,184,0.13);
+  background: rgba(2,6,23,0.34);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  backdrop-filter: blur(10px) saturate(125%);
+}
+
+
+/* Phase 3.3 final consistency refinements */
+.premium-form-section {
+  border: 1px solid rgba(148,163,184,0.12);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 48%),
+    rgba(2,6,23,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 8px 20px rgba(0,0,0,0.10);
+  -webkit-backdrop-filter: blur(12px) saturate(128%);
+  backdrop-filter: blur(12px) saturate(128%);
+}
+
+.premium-choice {
+  transition:
+    transform var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    color var(--premium-fast) var(--premium-ease),
+    background var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+.premium-choice:hover:not(:disabled) {
+  color: rgb(226 232 240);
+  border-color: rgba(148,163,184,0.28);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), transparent),
+    rgba(15,23,42,0.48);
+}
+
+.premium-choice:active:not(:disabled),
+.premium-filter-pill:active:not(:disabled),
+.premium-icon-action:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.premium-checkbox {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(148,163,184,0.32);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), transparent),
+    rgba(2,6,23,0.52);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  transition:
+    background var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease),
+    transform var(--premium-fast) var(--premium-ease);
+}
+
+.premium-checkbox:checked {
+  border-color: rgba(59,130,246,0.58);
+  background:
+    linear-gradient(135deg, rgba(96,165,250,0.95), rgba(37,99,235,0.95));
+  box-shadow:
+    0 0 0 2px rgba(59,130,246,0.10),
+    0 0 18px rgba(59,130,246,0.18);
+}
+
+.premium-checkbox:checked::after {
+  content: '✓';
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 0.95rem;
+}
+
+.premium-checkbox:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,0.14),
+    0 0 0 1px rgba(96,165,250,0.7);
+}
+
+.premium-table-shell {
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+  backdrop-filter: blur(12px) saturate(125%);
+}
+
+/* Do not retain a transformed ancestor after tab entrance; fixed modals must stay viewport-fixed. */
+.premium-tab-stage {
+  transform: none;
+  filter: none;
+}
+
+@keyframes premium-tab-stage-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(22px, 10px, 0) scale(0.982);
+    filter: blur(5px);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 0, 0) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+
+/* Pass 3/3.2 continuation: full component sweep + visible motion */
+
+/*
+ * These overrides deliberately make the redesign legible on dense screens.
+ * Earlier passes supplied glass classes to most components, but many secondary
+ * surfaces still looked flat because they had no surface motion, little edge
+ * separation, and hover changes below the perceptual threshold.
+ */
+.premium-panel,
+.premium-subpanel,
+.premium-report-glass,
+.premium-report-glass-soft,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section,
+.premium-table-shell,
+.premium-report-table {
+  transition:
+    transform 210ms var(--premium-ease),
+    border-color 210ms var(--premium-ease),
+    background 210ms var(--premium-ease),
+    box-shadow 210ms var(--premium-ease),
+    filter 210ms var(--premium-ease);
+}
+
+/* Stronger frosted hierarchy for report/performance secondary surfaces. */
+.premium-report-glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.014) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.040), transparent 42%, rgba(139,92,246,0.035)),
+    rgba(10, 18, 36, 0.50);
+  border-color: rgba(186, 230, 253, 0.20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.085),
+    0 20px 48px rgba(0,0,0,0.28),
+    0 0 34px rgba(34,211,238,0.055),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+
+.premium-report-glass-soft,
+.premium-subpanel,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 42%, transparent 72%),
+    rgba(3, 9, 22, 0.36);
+  border-color: rgba(148,163,184,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 10px 26px rgba(0,0,0,0.15),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(17px) saturate(140%);
+  backdrop-filter: blur(17px) saturate(140%);
+}
+
+/* Make interaction motion unmistakable without turning the app into a toy. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-card:hover,
+  .premium-panel:hover,
+  .premium-report-glass:hover {
+    transform: translateY(-3px);
+  }
+
+  .premium-subpanel:hover,
+  .premium-report-glass-soft:hover,
+  .premium-inset-glass:hover,
+  .premium-form-section:hover,
+  .premium-modal-section:hover {
+    transform: translateY(-2px);
+    border-color: rgba(186,230,253,0.24);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.065),
+      0 15px 32px rgba(0,0,0,0.20),
+      0 0 24px rgba(34,211,238,0.045),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  .premium-action:hover:not(:disabled) > svg,
+  .premium-filter-pill:hover:not(:disabled) > svg,
+  .premium-choice:hover:not(:disabled) > svg,
+  .premium-icon-action:hover:not(:disabled) > svg {
+    transform: scale(1.09);
+    filter: drop-shadow(0 0 7px currentColor);
+  }
+
+  .premium-table-shell tbody tr:hover,
+  .premium-report-table tbody tr:hover {
+    transform: translateX(2px);
+  }
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  transition:
+    transform 170ms var(--premium-ease),
+    border-color 170ms var(--premium-ease),
+    background 170ms var(--premium-ease),
+    color 170ms var(--premium-ease),
+    box-shadow 170ms var(--premium-ease);
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg {
+  transition:
+    transform 180ms var(--premium-ease),
+    filter 180ms ease-out,
+    color 180ms ease-out;
+}
+
+/* Selected segmented controls should visibly settle into place. */
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"] {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 8px 22px rgba(0,0,0,0.22),
+    0 0 22px rgba(56,189,248,0.07);
+}
+
+/* Add a small reveal to dense collections so navigation feels alive. */
+@media (prefers-reduced-motion: no-preference) {
+  .premium-section-enter > .premium-panel,
+  .premium-section-enter > .premium-glass,
+  .premium-section-enter > .premium-report-glass,
+  .premium-section-enter > .premium-card {
+    animation: premium-surface-arrive 360ms var(--premium-ease) both;
+  }
+
+  .premium-section-enter > :nth-child(2) { animation-delay: 35ms; }
+  .premium-section-enter > :nth-child(3) { animation-delay: 70ms; }
+  .premium-section-enter > :nth-child(4) { animation-delay: 105ms; }
+
+  @keyframes premium-surface-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.992);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .premium-modal {
+    animation: premium-modal-arrive 230ms var(--premium-ease) both;
+  }
+
+  @keyframes premium-modal-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+/* Dense transaction/report rows: glass rather than opaque slate blocks. */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  background-color: rgba(2, 6, 23, 0.14);
+  transition:
+    transform 160ms var(--premium-ease),
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.premium-table-shell tbody tr:nth-child(even),
+.premium-report-table tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.18);
+}
+
+/* Legacy bg utilities inside upgraded form surfaces should not punch opaque holes. */
+.premium-modal .premium-field,
+.premium-panel .premium-field,
+.premium-report-glass .premium-field,
+.premium-form-section .premium-field {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent),
+    rgba(2,6,23,0.42) !important;
+  border-color: rgba(148,163,184,0.18) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+/* Consistent tactile Edit/Delete/Add/Filter controls across every screen. */
+.premium-icon-edit,
+.premium-action-primary,
+.premium-action-success,
+.premium-action-warning,
+.premium-action-danger {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 8px 20px rgba(0,0,0,0.18);
+}
+
+.premium-icon-delete:hover:not(:disabled),
+.premium-action-danger:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(244,63,94,0.14);
+}
+
+.premium-icon-edit:hover:not(:disabled),
+.premium-action-primary:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgba(59,130,246,0.14);
+}
+
+/* Preserve accessibility and battery-friendly behavior. */
+@media (prefers-reduced-motion: reduce) {
+  .premium-panel,
+  .premium-subpanel,
+  .premium-report-glass,
+  .premium-report-glass-soft,
+  .premium-inset-glass,
+  .premium-form-section,
+  .premium-modal-section,
+  .premium-table-shell,
+  .premium-report-table,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-modal {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+
+/* Phase 3/3.2 selector + modal consistency refinement */
+
+/* Selector language: inspired by Portfolio Allocation / trajectory segmented controls. */
+.premium-selector-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.026), transparent 55%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 8px 22px rgba(0,0,0,0.14);
+  -webkit-backdrop-filter: blur(15px) saturate(135%);
+  backdrop-filter: blur(15px) saturate(135%);
+}
+
+.premium-filter-pill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgb(148 163 184);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.premium-filter-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 120%, rgba(34, 211, 238, 0.18), transparent 64%);
+  transition: opacity 160ms ease-out;
+}
+
+.premium-filter-pill > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-filter-pill:hover:not(:disabled) {
+  color: rgb(226 232 240);
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.42);
+}
+
+/* Keep selected state visible under the pointer; hover must never mask it. */
+.premium-filter-pill[aria-pressed="true"]::before {
+  opacity: 1;
+}
+
+.premium-filter-active-neutral,
+.premium-filter-active-neutral:hover:not(:disabled) {
+  color: rgb(241 245 249);
+  border-color: rgba(148,163,184,0.30);
+  background: rgba(71,85,105,0.26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 16px rgba(0,0,0,0.16);
+}
+.premium-filter-active-blue,
+.premium-filter-active-blue:hover:not(:disabled) {
+  color: rgb(191 219 254);
+  border-color: rgba(59,130,246,0.34);
+  background: rgba(59,130,246,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(59,130,246,0.09);
+}
+.premium-filter-active-cyan,
+.premium-filter-active-cyan:hover:not(:disabled) {
+  color: rgb(165 243 252);
+  border-color: rgba(34,211,238,0.34);
+  background: rgba(34,211,238,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(34,211,238,0.09);
+}
+.premium-filter-active-emerald,
+.premium-filter-active-emerald:hover:not(:disabled) {
+  color: rgb(167 243 208);
+  border-color: rgba(16,185,129,0.34);
+  background: rgba(16,185,129,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(16,185,129,0.09);
+}
+.premium-filter-active-rose,
+.premium-filter-active-rose:hover:not(:disabled) {
+  color: rgb(254 205 211);
+  border-color: rgba(244,63,94,0.34);
+  background: rgba(244,63,94,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(244,63,94,0.09);
+}
+.premium-filter-active-purple,
+.premium-filter-active-purple:hover:not(:disabled) {
+  color: rgb(221 214 254);
+  border-color: rgba(139,92,246,0.34);
+  background: rgba(139,92,246,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(139,92,246,0.09);
+}
+.premium-filter-active-amber,
+.premium-filter-active-amber:hover:not(:disabled) {
+  color: rgb(253 230 138);
+  border-color: rgba(245,158,11,0.34);
+  background: rgba(245,158,11,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.065), 0 6px 18px rgba(245,158,11,0.08);
+}
+
+/* Semantic choices remain colored even when not selected in edit-cash modal. */
+.premium-choice-success {
+  color: rgb(167 243 208);
+  border-color: rgba(16,185,129,0.24);
+  background: rgba(16,185,129,0.07);
+}
+.premium-choice-danger {
+  color: rgb(254 205 211);
+  border-color: rgba(244,63,94,0.24);
+  background: rgba(244,63,94,0.07);
+}
+.premium-choice-success:hover:not(:disabled) {
+  color: rgb(209 250 229);
+  border-color: rgba(16,185,129,0.40);
+  background: rgba(16,185,129,0.13);
+}
+.premium-choice-danger:hover:not(:disabled) {
+  color: rgb(255 228 230);
+  border-color: rgba(244,63,94,0.40);
+  background: rgba(244,63,94,0.13);
+}
+
+/* Strong input outline where financial amount fields need explicit boundaries. */
+.premium-field-strong {
+  border-color: rgba(100,116,139,0.68) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 0 0 1px rgba(15,23,42,0.18);
+}
+.premium-field-strong:focus,
+.premium-field-strong:focus-visible {
+  border-color: rgba(56,189,248,0.60) !important;
+}
+
+/* Notes are readable above the surface rather than visually buried beneath blur. */
+.premium-textarea-surface {
+  position: relative;
+  z-index: 2;
+  background: rgba(7, 15, 30, 0.76) !important;
+  border-color: rgba(100,116,139,0.58) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: rgb(248 250 252) !important;
+}
+
+/* Native time-picker glyph should match the white custom date control. */
+.premium-time-input {
+  color-scheme: dark;
+}
+.premium-time-input::-webkit-calendar-picker-indicator {
+  opacity: 0.92;
+  filter: invert(1) brightness(1.55);
+  cursor: pointer;
+}
+
+/* Analytics dropdowns must float above report/month cards rather than below them. */
+.premium-report-glass:has([aria-expanded="true"]),
+.premium-report-glass-soft:has([aria-expanded="true"]),
+.premium-card:has([aria-expanded="true"]) {
+  z-index: 140;
+  overflow: visible;
+}
+
+/* Hero-level report metrics use the same hierarchy as the dashboard hero cards. */
+.premium-hero-metric,
+.premium-report-hero {
+  position: relative;
+  border: 1px solid rgba(148,163,184,0.20);
+  background:
+    radial-gradient(circle at 16% -20%, rgba(34,211,238,0.07), transparent 38%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), transparent 42%),
+    rgba(15,23,42,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.075),
+    0 18px 42px rgba(0,0,0,0.26),
+    0 0 30px rgba(34,211,238,0.045),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+
+.premium-report-hero {
+  overflow: hidden;
+}
+
+
+/* Phase 3/3.2 semantic control color revision */
+
+/* Neutral controls stay neutral; semantic controls provide their own accent. */
+.premium-action:hover:not(:disabled),
+.premium-icon-action:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.30);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.070), rgba(255,255,255,0.014)),
+    rgba(15, 23, 42, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.075),
+    0 10px 26px rgba(0,0,0,0.22);
+}
+
+/* Do not inherit a glow from an icon's own utility color. */
+.premium-action:hover:not(:disabled) > svg,
+.premium-filter-pill:hover:not(:disabled) > svg,
+.premium-choice:hover:not(:disabled) > svg,
+.premium-icon-action:hover:not(:disabled) > svg {
+  filter: none;
+}
+
+/* Semantic action hover states always match the button family. */
+.premium-action-primary:hover:not(:disabled) {
+  color: rgb(219 234 254);
+  border-color: rgba(96,165,250,0.52);
+  background:
+    linear-gradient(180deg, rgba(96,165,250,0.25), rgba(37,99,235,0.11)),
+    rgba(8,15,31,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(219,234,254,0.12),
+    0 10px 28px rgba(37,99,235,0.17),
+    0 0 24px rgba(59,130,246,0.13);
+}
+
+.premium-action-success:hover:not(:disabled) {
+  color: rgb(209 250 229);
+  border-color: rgba(52,211,153,0.50);
+  background:
+    linear-gradient(180deg, rgba(52,211,153,0.23), rgba(5,150,105,0.10)),
+    rgba(8,15,31,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(209,250,229,0.12),
+    0 10px 28px rgba(5,150,105,0.16),
+    0 0 24px rgba(16,185,129,0.13);
+}
+
+.premium-action-danger:hover:not(:disabled) {
+  color: rgb(255 228 230);
+  border-color: rgba(251,113,133,0.52);
+  background:
+    linear-gradient(180deg, rgba(251,113,133,0.22), rgba(225,29,72,0.10)),
+    rgba(8,15,31,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,228,230,0.12),
+    0 10px 28px rgba(225,29,72,0.16),
+    0 0 24px rgba(244,63,94,0.13);
+}
+
+.premium-action-warning:hover:not(:disabled) {
+  color: rgb(254 243 199);
+  border-color: rgba(251,191,36,0.50);
+  background:
+    linear-gradient(180deg, rgba(251,191,36,0.22), rgba(217,119,6,0.10)),
+    rgba(8,15,31,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(254,243,199,0.12),
+    0 10px 28px rgba(217,119,6,0.15),
+    0 0 24px rgba(245,158,11,0.12);
+}
+
+.premium-action-purple:hover:not(:disabled) {
+  color: rgb(237 233 254);
+  border-color: rgba(167,139,250,0.50);
+  background:
+    linear-gradient(180deg, rgba(167,139,250,0.22), rgba(109,40,217,0.10)),
+    rgba(8,15,31,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(237,233,254,0.12),
+    0 10px 28px rgba(109,40,217,0.15),
+    0 0 24px rgba(139,92,246,0.12);
+}
+
+/* Edit/Delete icon actions retain their own semantic hover families. */
+.premium-icon-edit:hover:not(:disabled) {
+  color: rgb(147 197 253);
+  border-color: rgba(96,165,250,0.50);
+  background: rgba(30,58,138,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(219,234,254,0.08),
+    0 8px 22px rgba(0,0,0,0.18),
+    0 0 20px rgba(59,130,246,0.12);
+}
+
+.premium-icon-delete:hover:not(:disabled) {
+  color: rgb(253 164 175);
+  border-color: rgba(251,113,133,0.50);
+  background: rgba(136,19,55,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,228,230,0.08),
+    0 8px 22px rgba(0,0,0,0.18),
+    0 0 20px rgba(244,63,94,0.12);
+}
+
+/* Selector glow is derived from the selected control's text/accent color. */
+.premium-filter-pill::before,
+.premium-segment::before {
+  background: radial-gradient(
+    circle at 50% 120%,
+    color-mix(in srgb, currentColor 22%, transparent),
+    transparent 64%
+  );
+}
+
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 7px 18px color-mix(in srgb, currentColor 18%, transparent);
+}
+
+/* Dropdown hover language: frosted accent wash, not a flat slate row. */
+.premium-dropdown[data-accent="cyan"]   { --menu-accent: 34 211 238; --menu-text: 165 243 252; }
+.premium-dropdown[data-accent="emerald"]{ --menu-accent: 16 185 129; --menu-text: 167 243 208; }
+.premium-dropdown[data-accent="purple"] { --menu-accent: 139 92 246; --menu-text: 221 214 254; }
+.premium-dropdown[data-accent="blue"]   { --menu-accent: 59 130 246; --menu-text: 191 219 254; }
+.premium-dropdown[data-accent="amber"]  { --menu-accent: 245 158 11; --menu-text: 253 230 138; }
+.premium-dropdown[data-accent="rose"]   { --menu-accent: 244 63 94; --menu-text: 254 205 211; }
+.premium-dropdown[data-accent="teal"]   { --menu-accent: 20 184 166; --menu-text: 153 246 228; }
+
+.premium-dropdown .premium-menu-item {
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-dropdown .premium-menu-item:not([aria-selected="true"]):hover {
+    color: rgb(var(--menu-text));
+    border-color: rgb(var(--menu-accent) / 0.22);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.035), transparent),
+      rgb(var(--menu-accent) / 0.075);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.045),
+      0 6px 16px rgb(var(--menu-accent) / 0.055);
+    transform: translateX(2px);
+  }
+}
+
+/* Time input keeps the native picker behavior but visually uses our DateInput icon treatment. */
+.premium-time-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.premium-time-input {
+  padding-right: 2.75rem !important;
+}
+
+.premium-time-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0.45rem;
+  width: 2rem;
+  height: 2rem;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.premium-time-trigger-visual {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgb(226 232 240);
+}
+
+
+/* Dropdown accent fallback + trigger accent parity */
+.premium-dropdown {
+  --menu-accent: 100 116 139;
+  --menu-text: 226 232 240;
+}
+
+.premium-select-trigger[data-accent="cyan"]   { --select-accent: 34 211 238; }
+.premium-select-trigger[data-accent="emerald"]{ --select-accent: 16 185 129; }
+.premium-select-trigger[data-accent="purple"] { --select-accent: 139 92 246; }
+.premium-select-trigger[data-accent="blue"]   { --select-accent: 59 130 246; }
+.premium-select-trigger[data-accent="amber"]  { --select-accent: 245 158 11; }
+.premium-select-trigger[data-accent="rose"]   { --select-accent: 244 63 94; }
+.premium-select-trigger[data-accent="teal"]   { --select-accent: 20 184 166; }
+
+.premium-select-trigger[aria-expanded="true"] > svg:last-child {
+  color: rgb(var(--select-accent, 148 163 184));
+  filter: drop-shadow(0 0 5px rgb(var(--select-accent, 148 163 184) / 0.24));
+}
+
+
+/* Phase 4 v3 — canonical motion tokens and CSS micro-interactions */
+/*
+ * Lifecycle ownership moved to Motion for React. CSS owns only tactile/control
+ * feedback plus chart/tooltip compatibility. All browser View Transition,
+ * timer-swap, modal snapshot, and duplicated lifecycle keyframes from earlier
+ * Phase 4 experiments are intentionally retired here.
+ */
+:root {
+  --motion-family-control: 260ms;
+  --motion-family-selector: 340ms;
+  --motion-family-overlay: 360ms;
+  --motion-family-modal: 420ms;
+  --motion-family-content: 360ms;
+  --motion-family-navigation: 440ms;
+  --motion-family-chart: 520ms;
+  --motion-family-tooltip: 200ms;
+  --motion-family-standard: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --motion-family-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Family 2 — controls remain CSS-driven and immediately responsive. */
+.premium-nav,
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment,
+.premium-control,
+.premium-accordion-trigger,
+.premium-select-trigger,
+.premium-field {
+  transition-duration: var(--motion-family-control);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  transition-property: transform, border-color, background-color, color, box-shadow, opacity;
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg,
+.premium-control > svg,
+.premium-nav > svg,
+.premium-segment > svg,
+.premium-accordion-trigger > svg {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    filter var(--motion-family-control) ease-out,
+    color var(--motion-family-control) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled),
+  .premium-control:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.006);
+  }
+}
+
+.premium-action:active:not(:disabled),
+.premium-filter-pill:active:not(:disabled),
+.premium-choice:active:not(:disabled),
+.premium-icon-action:active:not(:disabled),
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: translateY(0) scale(0.976);
+  transition-duration: 140ms;
+}
+
+/* Selected states settle through property interpolation, not replaying keyframes. */
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"],
+.premium-nav-active {
+  transition-duration: var(--motion-family-selector);
+}
+
+.premium-filter-pill::before {
+  transition-duration: var(--motion-family-selector);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-motion-chevron {
+  transition: transform var(--motion-family-control) var(--motion-family-standard);
+}
+
+.premium-motion-opacity {
+  transition: opacity var(--motion-family-control) ease-out;
+}
+
+.premium-motion-toggle {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    background-color var(--motion-family-control) ease-out,
+    border-color var(--motion-family-control) ease-out;
+}
+
+/* Dense financial rows only animate hover decoration; result replacement belongs
+ * to MotionSwap rather than every table row moving independently.
+ */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    background-color 220ms ease-out,
+    box-shadow 220ms ease-out,
+    border-color 220ms ease-out;
+}
+
+/* Family 5 — Recharts remains the sole owner of chart interpolation. */
+.premium-chart-stage {
+  animation: none !important;
+}
+
+/* Retired browser snapshot names are explicitly neutralized. */
+.premium-tab-stage,
+.premium-journal-results,
+.premium-trading-performance-results,
+.premium-monthly-results,
+.premium-cash-action-content,
+.premium-cash-history-results,
+.premium-closed-results,
+.premium-positions-results,
+.premium-directory-results,
+.premium-modal-backdrop {
+  view-transition-name: none !important;
+}
+
+/* Main page lifecycle is Motion-owned; never replay historical CSS tab entrances. */
+.premium-tab-stage {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-nav,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-control,
+  .premium-accordion-trigger,
+  .premium-select-trigger,
+  .premium-field,
+  .premium-motion-chevron,
+  .premium-motion-opacity,
+  .premium-motion-toggle,
+  .premium-table-shell tbody tr,
+  .premium-report-table tbody tr {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+
+/* Phase 4 v3 — Motion for React lifecycle ownership */
+/*
+ * Motion for React now owns lifecycle animation for elements carrying
+ * data-motion-owned="react". Legacy CSS keyframes remain only as compatibility
+ * for components not migrated yet and must not compete with Motion inline state.
+ */
+[data-motion-owned="react"].premium-motion-swap,
+[data-motion-owned="react"].premium-modal-backdrop,
+[data-motion-owned="react"].premium-modal,
+[data-motion-owned="react"].premium-dropdown,
+[data-motion-owned="react"].premium-expand-presence {
+  animation: none !important;
+}
+
+/* No legacy child entrance may replay during a Motion-owned result transition. */
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-panel,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-report-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-card,
+[data-motion-owned="react"].premium-motion-swap .premium-content-swap,
+[data-motion-owned="react"].premium-motion-swap .premium-reveal {
+  animation: none !important;
+}
+
+/* Motion itself promotes active transforms as needed. Do not keep giant content
+ * layers permanently promoted on idle pages.
+ */
+[data-motion-owned="react"].premium-motion-swap {
+  will-change: auto;
+  transform-origin: center top;
+}
+
+/* React Motion owns the menu lifecycle. Menu rows remain stable as one surface. */
+[data-motion-owned="react"].premium-dropdown .premium-menu-item {
+  animation: none !important;
+}
+
+
+/* Phase 4 desktop performance pass — preserve choreography, reduce render cost */
+.premium-motion-swap-shell {
+  /* Isolate layout/style invalidation without clipping glass shadows. */
+  contain: layout style;
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Desktop result surfaces can contain wide tables and dense reports.
+   * Their visible presence animation remains unchanged, but Motion layout
+   * projection is disabled in React to avoid measuring/projecting the full
+   * subtree every frame.
+   */
+  .premium-motion-swap-shell[data-motion-desktop="optimized"] {
+    transform: none;
+  }
+
+  /*
+   * Do not pre-promote dozens of controls/rows. Chrome can promote the active
+   * Motion wrapper when needed; persistent child layers increase GPU memory
+   * and compositor traffic during old/new page overlap.
+   */
+  .premium-control,
+  .premium-nav,
+  .premium-segment,
+  .premium-accordion-trigger,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action {
+    will-change: auto;
+  }
+
+}
+
+
+/* Desktop heavy-surface paint deferral */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Reports/position tabs can be several viewport-heights tall. Let Chrome
+   * skip raster/layout work for sections that are still off-screen while the
+   * incoming tab animation is running. "auto" keeps the remembered real size
+   * after first layout, avoiding scroll jumps on subsequent visits.
+   */
+  .premium-tab-stage .premium-table-shell,
+  .premium-tab-stage .premium-report-table {
+    content-visibility: auto;
+  }
+
+  .premium-tab-stage .premium-table-shell {
+    contain-intrinsic-size: auto 520px;
+    contain: layout style;
+  }
+
+  .premium-tab-stage .premium-report-table {
+    contain-intrinsic-size: auto 460px;
+    contain: layout style;
+  }
+
+}

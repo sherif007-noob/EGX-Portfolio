@@ -113,6 +113,17 @@ describe('EGX ticker directory canonicalization', () => {
     for (const current of ['QNBE', 'MASR', 'GBCO', 'OIH', 'UBEE', 'AIHC', 'ASPI', 'NARE', 'NAPR', 'KORA', 'ECAP']) {
       expect(symbols.has(current)).toBe(true);
     }
+
+    const migrated = mergeTickerDirectoryWithBaseline([
+      createEGXTickerRecord('ESRS', 100),
+      createEGXTickerRecord('EKHO', 30),
+      createEGXTickerRecord('QNBA', 55),
+    ]);
+    const migratedSymbols = new Set(migrated.map((ticker) => ticker.ticker));
+    expect(migratedSymbols.has('ESRS')).toBe(false);
+    expect(migratedSymbols.has('EKHO')).toBe(false);
+    expect(migratedSymbols.has('QNBA')).toBe(false);
+    expect(migratedSymbols.has('QNBE')).toBe(true);
   });
 
   it('contains corrected current identities for known stale baseline records', () => {

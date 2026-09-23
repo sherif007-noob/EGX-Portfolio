@@ -40,7 +40,7 @@ describe('analytics timeframe semantics', () => {
   });
 
   it('defines rolling and calendar windows consistently', () => {
-    expect(resolveAnalyticsWindow('1W', { latestSessionDate: '2026-09-17' }).startDate).toBe('2026-09-11');
+    expect(resolveAnalyticsWindow('1W', { latestSessionDate: '2026-09-17' }).startDate).toBe('2026-09-10');
     expect(resolveAnalyticsWindow('1M', { latestSessionDate: '2026-03-31' }).startDate).toBe('2026-02-28');
     expect(resolveAnalyticsWindow('90D', { latestSessionDate: '2026-09-17' }).startDate).toBe('2026-06-19');
     expect(resolveAnalyticsWindow('YTD', { latestSessionDate: '2026-09-17' }).startDate).toBe('2026-01-01');

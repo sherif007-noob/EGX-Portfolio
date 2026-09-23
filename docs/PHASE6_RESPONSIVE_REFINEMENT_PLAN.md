@@ -368,7 +368,7 @@ Quality Checks **#647** passed typecheck, tests, and production build on the cor
 
 ### Pass 3 — Modal and overlay family
 
-**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
+**Status: CORRECTIVE IMPLEMENTATION COMPLETE — awaiting CI and mobile re-validation.**
 
 Goal:
 - one consistent viewport behavior across all modal families without changing the accepted visual language.
@@ -384,6 +384,10 @@ Implemented:
 - **b586167** — replace Price Alerts' hard `90vh` cap with the shared frame contract; make header/permission/footer rows wrap safely; keep its tab strip horizontally reachable; scroll only the modal body.
 - **cd96b6a** — replace Screenshot Scanner's hard `90vh` cap with the shared frame contract; keep header/footer fixed, make review controls/cards stack on phone, reduce phone dropzone padding, and keep footer actions reachable.
 - **7f18d1d** — make the PWA install guide use the shared frame contract with a scrollable body and fixed header/footer.
+- User mobile validation found a nested-scroll failure in **Add Trade** and **Transaction Edit**: the top receipt/type controls could sit above the reachable viewport and iOS rubber-band scrolling snapped back before the user could reach them.
+- **24986ff / 9ade473 / 682deea** — introduce a panel-owned mobile scroll contract for those long forms. On phone the backdrop is top-anchored to the safe area and prevented from becoming a competing vertical scroller; the `premium-modal-viewport` panel exclusively owns vertical touch scrolling, eliminating the spring-back path while preserving desktop centering.
+- The same validation exposed ticker-master data debt outside the visual scope. **276cfb7 / 262ac1c / 0053738 / 5f07095 / 54f6a61 / de9557e** correct KORA, add NAPR, canonicalize TradingView ISIN-form symbols to known EGX tickers, merge saved/Supabase ticker directories with the current baseline, and rehydrate stale position/transaction identity metadata. This is an explicit data-correctness exception requested during Pass 3, not a visual redesign.
+- **f01dd96** adds regression coverage for NAPR ISIN canonicalization, KORA identity/sector correction, baseline merge behavior, and live-price metadata repair.
 
 Responsive rules preserved:
 - no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;

@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: PLAN COMPLETE — implementation has not started.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 0 responsive primitives and safety baseline.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -262,6 +262,8 @@ Every render file has an explicit Phase 6 disposition.
 ## 5. Planned implementation passes
 
 ### Pass 0 — Responsive primitives and safety baseline
+
+**Status: IN PROGRESS.**
 
 Goal:
 - solve repeated responsive problems once before screen-level rollout.

@@ -865,7 +865,8 @@ Implementation:
 - **e838494** — rehydrate refreshed ticker identity across positions, transactions and closed cycles.
 - **0c30598 / e0ffa88** — support ISIN search in Add Trade and the ticker directory.
 - **8f6df6b** — do not invent Arabic labels for newly discovered securities without a curated Arabic fallback.
-- **8bc4bdf** — add tests covering current aliases, retired rows, corrected baseline identities, live-metadata precedence and live-only discoveries.
+- **8bc4bdf / 8e44acd** — add tests covering current aliases, retired rows/cache cleanup, corrected baseline identities, live-metadata precedence and live-only discoveries.
+- **a359617** — remove stale non-migratable rows from previously persisted ticker directories while retaining historical ledger records, and prefer canonical/current live records when aliases collapse.
 
 Resulting contract: the app no longer needs a hand-maintained static row for every active EGX ticker. The static dictionary provides offline fallback/Arabic names/historical migration; the live scanner continuously supplies the current EGP market universe and authoritative market metadata.
 

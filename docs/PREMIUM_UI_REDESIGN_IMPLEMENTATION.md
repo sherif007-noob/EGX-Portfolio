@@ -825,12 +825,16 @@ Scope: Positions, Closed Cycles, Transactions/Journal, Cash Ledger, and Stocks &
 Implementation:
 - **c387712 / fb6d709** — make the Positions tab header responsive and hide its redundant phone-only + Add Position entry point while retaining the integrated Add Trade control.
 - **221b7d9 / 0f3639b** — make Positions search/filter controls shrink safely, tighten phone card padding, preserve the desktop/mobile split, and finalize the compact DCA/Sell/Edit/Delete row.
-- **3b769ab** — replace Closed Cycles fixed mobile search/sort widths with full-width responsive controls and a 2-column phone outcome grid.
+- **3b769ab** — remove Closed Cycles fixed mobile search/sort widths and make the surrounding controls responsive.
+- User validation caught a visual regression: Closed Cycles outcome filters no longer matched the accepted Transactions selector family.
+- **f5b9c7d** — restore the exact shared selector language used by Transactions: `premium-selector-shell`, `premium-filter-pill`, semantic active states, `aria-pressed`, and matching selected-state glow/motion. Phone layout is a horizontal selector rail, not a separate 2×2 visual design.
 - **94c533f / 795db90** — make Journal filters a deliberate horizontal rail, make sort/page-size controls two-column on phone, clamp delete toast width, and make both pagination control rows phone-safe.
-- **7243d37 / 830f2f3** — make Cash transfer/history selectors phone-safe and give the ledger table an explicit in-shell horizontal-scroll width rather than letting the page widen.
+- **7243d37 / 830f2f3 / 4dd7f71** — make Cash transfer/history selectors phone-safe while preserving the canonical selector-shell styling; give the ledger table an explicit in-shell horizontal-scroll width rather than letting the page widen.
 - **0b8af54** — make Directory utility actions, sector filtering, and card padding responsive without altering ticker-card information architecture.
 
 No Phase 2 implementation changed accounting, persistence, transaction semantics, or chart logic. Desktop minimum widths remain at larger breakpoints where they are useful.
+
+**Regression rule added:** Phase 6 owns responsive layout and reachability, not visual-language reinvention. Existing accepted selector/action primitives must be preserved; Transactions is the canonical dense semantic filter reference.
 
 ## Current validated visual rules
 

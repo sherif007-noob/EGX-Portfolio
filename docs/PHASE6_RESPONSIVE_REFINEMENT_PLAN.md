@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 2 implemented; awaiting CI/mobile validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 2 complete; Pass 3 modal/overlay family in progress.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -330,7 +330,7 @@ Validation target:
 
 ### Pass 2 — Core data tabs
 
-**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
+**Status: COMPLETE.**
 
 Scope:
 - Positions;
@@ -364,7 +364,11 @@ Checkpoint:
 - Journal filter/pagination controls remain reachable at 320px;
 - desktop layout remains materially unchanged.
 
+Quality Checks **#647** passed typecheck, tests, and production build on the corrected selector-style baseline. User validation moved the work to the next pass.
+
 ### Pass 3 — Modal and overlay family
+
+**Status: IN PROGRESS.**
 
 Goal:
 - one consistent viewport behavior across all modal families.

@@ -68,7 +68,7 @@ describe('historical coverage repair planning', () => {
     expect(isEgxTradingWeekday('2026-09-26')).toBe(false);
 
     const plans = buildHistoricalRepairPlans(
-      [{ ticker: 'ORHD', firstRequiredDate: '2026-09-20' }],
+      [{ ticker: 'ORHD', firstRequiredDate: '2026-09-23' }],
       [
         { ticker: 'ORHD', date: '2026-09-23' },
         { ticker: 'ORHD', date: '2026-09-24' },

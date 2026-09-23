@@ -823,8 +823,12 @@ body {
     bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
   }
 
+  .premium-fixed-bottom-above-status {
+    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
+  }
+
   .premium-fixed-top-after-header {
-    top: max(5rem, calc(env(safe-area-inset-top) + 4.25rem)) !important;
+    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
   }
 }
 

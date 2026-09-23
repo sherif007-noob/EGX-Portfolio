@@ -20,7 +20,7 @@ import {
   matchWeeklyPointByDate,
   type WeeklyTransitionCurve,
 } from './weeklyTransitionInterpolation';
-import type { TradeTransaction } from '../../types';
+import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
@@ -57,6 +57,7 @@ interface PerformanceTimeframeChartProps {
   transactions: TradeTransaction[];
   historicalPrices: HistoricalPriceSeries;
   capitalDeposits: number;
+  positions: Position[];
   historicalLoading?: boolean;
   entranceReady?: boolean;
 }
@@ -146,6 +147,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   transactions,
   historicalPrices,
   capitalDeposits,
+  positions,
   historicalLoading = false,
   entranceReady = true,
 }) => {
@@ -212,6 +214,12 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
         sessionDate = sessionDate ?? requestedSessionDate;
 
+        const livePrices = Object.fromEntries(
+          positions
+            .map((position) => [normalizeIntradayTicker(position.ticker), Number(position.currentPrice)] as const)
+            .filter(([ticker, price]) => ticker && Number.isFinite(price) && price > 0),
+        );
+
         const result = buildIntradayAnalyticsResult(
           transactions,
           historicalPrices,
@@ -220,6 +228,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             sessionDate,
             openingCapital: capitalDeposits,
             asOf: new Date(),
+            livePrices,
           },
         );
 
@@ -240,7 +249,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     return () => {
       cancelled = true;
     };
-  }, [transactions, historicalPrices, capitalDeposits]);
+  }, [transactions, historicalPrices, capitalDeposits, positions]);
 
   useEffect(() => {
     const handleGlobalPress = (event: Event) => {

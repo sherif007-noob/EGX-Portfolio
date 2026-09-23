@@ -588,6 +588,10 @@ body {
   max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
 }
 
+.premium-modal-backdrop-panel-scroll {
+  overflow-y: auto;
+}
+
 .premium-fixed-overlay {
   box-sizing: border-box;
   max-width: min(
@@ -809,6 +813,17 @@ body {
       max(var(--premium-modal-gutter), env(safe-area-inset-right))
       max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
       max(var(--premium-modal-gutter), env(safe-area-inset-left));
+  }
+
+  .premium-modal-backdrop-panel-scroll {
+    align-items: flex-start !important;
+    overflow-y: hidden !important;
+  }
+
+  .premium-modal-backdrop-panel-scroll > .premium-modal-viewport {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
 
   .premium-modal-viewport,

@@ -434,4 +434,5 @@ For daily timeframes the chart uses historical daily closes. For Today it uses 1
 The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.
 
 
-<!-- deployment-trigger: cloudflare-preview-2026-09-23 -->
+
+<!-- deployment-trigger: premium-cloudflare-2026-09-23-2331 -->

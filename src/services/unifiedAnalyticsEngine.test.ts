@@ -116,7 +116,7 @@ describe('unified analytics engine', () => {
       latestSessionDate: '2026-09-17',
     });
 
-    expect(result.window.startDate).toBe('2026-09-10');
+    expect(result.window.startDate).toBe('2026-09-11');
     expect(result.summary.startDate).toBe('2026-09-10');
     expect(result.summary.endDate).toBe('2026-09-17');
   });

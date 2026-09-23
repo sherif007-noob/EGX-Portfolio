@@ -346,7 +346,7 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
-**Status: IN PROGRESS — Pass 2 implemented; awaiting CI/mobile validation before Pass 3.**
+**Status: IN PROGRESS — Pass 2 responsive layout implemented; selector-style regression corrected; awaiting CI/mobile validation before Pass 3.**
 
 The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
 

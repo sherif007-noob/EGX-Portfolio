@@ -116,7 +116,9 @@ describe('unified analytics engine', () => {
       latestSessionDate: '2026-09-17',
     });
 
-    expect(result.window.startDate).toBe('2026-09-10');
+    expect(result.window.startDate).toBe('2026-09-11');
+    // Sep 10 remains the valuation anchor because it is the last complete
+    // valuation at or before the Sep 11 rolling-window boundary.
     expect(result.summary.startDate).toBe('2026-09-10');
     expect(result.summary.endDate).toBe('2026-09-17');
   });

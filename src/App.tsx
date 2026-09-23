@@ -47,7 +47,7 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
-import { getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
+import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 
 export default function App() {
@@ -192,6 +192,7 @@ export default function App() {
   } | null>(null);
   const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
+  const historicalBackfillAttemptsRef = useRef(new Set<string>());
 
   useEffect(() => {
     if (activeTab !== 'overview' && activeTab !== 'reports') return;
@@ -209,10 +210,47 @@ export default function App() {
       }
 
       try {
-        const historicalPrices = await getHistoricalPricesForTransactions(transactions);
-        const result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
+        let historicalPrices = await getHistoricalPricesForTransactions(transactions);
+        let result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
           openingCapital: capitalDeposits,
         });
+
+        const normalizeTicker = (ticker: string) =>
+          ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+
+        const repairTargets = result.dataQuality.missingTickers
+          .map((ticker) => normalizeTicker(ticker))
+          .filter((ticker) => ticker && !historicalBackfillAttemptsRef.current.has(ticker))
+          .map((ticker) => {
+            const startDate = transactions
+              .filter((tx) => normalizeTicker(tx.ticker) === ticker)
+              .map((tx) => String(tx.date || '').slice(0, 10))
+              .filter(Boolean)
+              .sort()[0];
+            return { ticker, startDate };
+          });
+
+        if (repairTargets.length) {
+          for (const target of repairTargets) historicalBackfillAttemptsRef.current.add(target.ticker);
+
+          try {
+            const repair = await ensureHistoricalPriceCoverage(repairTargets);
+            for (const failure of repair.failures) {
+              historicalBackfillAttemptsRef.current.delete(normalizeTicker(failure.ticker));
+            }
+
+            // Re-read the canonical store after the server-side ingestion pass.
+            // This also handles the case where scheduled ingestion filled the rows
+            // between our first read and the repair request.
+            historicalPrices = await getHistoricalPricesForTransactions(transactions);
+            result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
+              openingCapital: capitalDeposits,
+            });
+          } catch (backfillError) {
+            for (const target of repairTargets) historicalBackfillAttemptsRef.current.delete(target.ticker);
+            console.warn('Automatic historical-price backfill failed; keeping the existing trustworthy analytics range.', backfillError);
+          }
+        }
 
         if (!cancelled) {
           setHistoricalPriceSeries(historicalPrices);

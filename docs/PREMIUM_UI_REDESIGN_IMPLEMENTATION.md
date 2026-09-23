@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 1 implemented and CI-clean; awaiting mobile validation before Pass 2. |
+| 6 | **In progress** | Pass 1 complete; Pass 2 core data tabs in progress. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -790,7 +790,7 @@ User validation accepted the Pass 0 touch-sizing/mobile baseline. **Pass 0 is co
 
 ### Phase 6 Pass 1 — persistent shell and main app chrome
 
-**Status: implemented and CI-clean; awaiting mobile visual validation before Pass 2.**
+**Status: complete.**
 
 Scope: `App.tsx`, `Header.tsx`, `PortfolioSummary.tsx`, and `OfflineIndicator.tsx`.
 
@@ -814,7 +814,13 @@ Boundaries preserved:
 - no final Header redesign (Phase 9);
 - no business/data/motion/chart changes.
 
-Quality Checks **#620** passed typecheck, tests, and production build on the revised Pass 1 state.
+Quality Checks **#620** passed typecheck, tests, and production build on the revised Pass 1 state. User validation accepted Pass 1.
+
+### Phase 6 Pass 2 — core data tabs
+
+**Status: in progress.**
+
+Scope: Positions, Closed Cycles, Transactions/Journal, Cash Ledger, and Stocks & Prices. This pass owns mobile search/filter/select width pressure, filter/pagination wrapping, mobile card action density, and intentional in-shell horizontal table overflow. The existing Positions desktop/mobile dual-render architecture remains intact.
 
 ## Current validated visual rules
 

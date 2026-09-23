@@ -281,7 +281,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         tickers: importPreview.tickers || tickers,
       });
 
-      setSuccessMsg('Portfolio state restored and synced with Firebase successfully!');
+      setSuccessMsg('Portfolio state restored and synced to Supabase successfully!');
       setImportPreview(null);
       setTimeout(() => {
         setIsRestoring(false);
@@ -296,18 +296,18 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-      panelClassName="premium-modal relative w-full max-w-lg p-6 rounded-2xl space-y-5"
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-lg p-4 sm:p-6 rounded-2xl space-y-5"
       onBackdropClick={requestClose}
       panelAriaLabel="Backup, sync and integrity"
     >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
               <Database className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-bold text-white">Backup, Sync & Integrity</h3>
               <p className="text-xs text-slate-400">Manage data persistence, cloud sync & restore backups</p>
             </div>
@@ -332,14 +332,14 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
         {/* Option 1: Reconcile Ledger */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-cyan-400" />
               <span className="font-bold text-white text-xs">Reconcile Ledger & Portfolio Math</span>
             </div>
             <button
               onClick={onReconcileLedger}
-              className="premium-action premium-filter-active-cyan px-3 py-1.5 rounded-lg text-xs font-semibold"
+              className="premium-action premium-filter-active-cyan w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
             >
               Run Reconciliation
             </button>
@@ -351,14 +351,14 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
         {/* Option 2: Export JSON Backup */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <FileJson className="w-4 h-4 text-amber-400" />
               <span className="font-bold text-white text-xs">Export Full Portfolio Backup (JSON)</span>
             </div>
             <button
               onClick={handleExportJson}
-              className="premium-action premium-action-warning px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+              className="premium-action premium-action-warning w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:w-auto"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Backup</span>
@@ -371,15 +371,15 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
         {/* Option 3: Export to Excel Spreadsheets (CSV) */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
               <span className="font-bold text-white text-xs">Export to Excel Spreadsheets (CSV)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
               <button
                 onClick={() => handleExportCsv('positions')}
-                className="premium-action premium-action-success px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
+                className="premium-action premium-action-success justify-center px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                 title="Download Active Holdings for Excel"
               >
                 <Download className="w-3 h-3" />
@@ -402,14 +402,14 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
         {/* Option 3: Restore Backup */}
         <div className="premium-modal-section p-4 rounded-xl space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
               <span className="font-bold text-white text-xs">Restore Portfolio from Backup File</span>
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="premium-action px-2.5 py-1 rounded-lg text-xs font-semibold"
+              className="premium-action w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
             >
               Choose File
             </button>
@@ -452,7 +452,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
           {importPreview && (
             <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-300">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>Backup Verified & Ready to Restore</span>

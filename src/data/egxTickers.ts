@@ -270,8 +270,22 @@ export function mergeTickerDirectoryWithBaseline(existing: EGXTicker[]): EGXTick
   const byTicker = new Map<string, EGXTicker>();
 
   for (const ticker of existing || []) {
-    const canonical = canonicalizeEGXSymbol(ticker.ticker);
-    byTicker.set(canonical, { ...ticker, ticker: canonical });
+    const raw = ticker.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+    const canonical = canonicalizeEGXSymbol(raw);
+
+    // Remove stale non-migratable directory rows from old caches/Supabase. Historical
+    // ledger records are preserved separately; the directory itself represents active/fallback equities.
+    if (RETIRED_BASELINE_TICKERS.has(raw) && !LEGACY_TICKER_ALIASES[raw]) continue;
+
+    const candidate = { ...ticker, ticker: canonical };
+    const current = byTicker.get(canonical);
+    if (
+      !current ||
+      raw === canonical ||
+      (candidate.metadataSource === 'tradingview' && current.metadataSource !== 'tradingview')
+    ) {
+      byTicker.set(canonical, candidate);
+    }
   }
 
   for (const baseline of INITIAL_EGX_TICKERS) {

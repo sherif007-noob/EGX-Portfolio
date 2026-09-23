@@ -872,6 +872,15 @@ Resulting contract: the app no longer needs a hand-maintained static row for eve
 
 Quality Checks **#692** passed typecheck, the expanded ticker regression suite, and production build.
 
+Historical coverage repair:
+- Production data inspection after adding ACTF showed ACTF had **zero daily and zero intraday history rows**. This explained the chart's four excluded valuation dates; the analytics engine correctly refuses to substitute a current quote into historical NAV.
+- ACTF is intentionally left untouched as the end-to-end test fixture.
+- **90ba3fa / dc40c9b** — add deterministic historical coverage planning/tests for initial backfill, missing-head, internal-gap, stale-tail, weekend, and healthy coverage cases.
+- **03fcb0e** — make the server-side historical sync coverage-aware and self-healing. Required ranges come from transactions + open positions; repairs use canonical ticker resolution with ISIN fallback and write only the needed date range.
+- **e4310db** — schedule the gap-aware repair repeatedly through the post-close/evening window and expose optional manual workflow inputs for targeted repair validation.
+- **9d4593b / 1d2be35 / 5762cab** — fix the weekend test fixture and harden Supabase coverage paging for long portfolios with deterministic ordering.
+- Data-integrity boundary: no ACTF history has been manually inserted. The repair must populate ACTF only when the normal historical-repair workflow is deliberately run for validation.
+
 Regression boundary:
 - no Phase 3 modal visual styling was replaced;
 - no accepted selector/action/semantic/glow treatment was reinvented;

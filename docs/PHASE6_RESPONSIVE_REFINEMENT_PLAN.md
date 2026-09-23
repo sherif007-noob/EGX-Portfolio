@@ -388,6 +388,22 @@ Implemented:
 - **24986ff / 9ade473 / 682deea** — introduce a panel-owned mobile scroll contract for those long forms. On phone the backdrop is top-anchored to the safe area and prevented from becoming a competing vertical scroller; the `premium-modal-viewport` panel exclusively owns vertical touch scrolling, eliminating the spring-back path while preserving desktop centering.
 - The same validation exposed ticker-master data debt outside the visual scope. **276cfb7 / 262ac1c / 0053738 / 5f07095 / 54f6a61 / de9557e** correct KORA, add NAPR, canonicalize TradingView ISIN-form symbols to known EGX tickers, merge saved/Supabase ticker directories with the current baseline, and rehydrate stale position/transaction identity metadata. This is an explicit data-correctness exception requested during Pass 3, not a visual redesign.
 - **f01dd96** adds regression coverage for NAPR ISIN canonicalization, KORA identity/sector correction, baseline merge behavior, and live-price metadata repair.
+- User clarified that fixing only NAPR/KORA was insufficient and requested a full ticker-directory side quest.
+- **4c72efa / bb3c9a4 / b840b93 / 3651257** — convert the static dictionary into an offline/Arabic/legacy fallback instead of the authoritative live directory. Add current sector categories, central legacy aliases, retired-baseline filtering, current symbol/ISIN corrections, and market-sector/industry classification mapping.
+- Verified baseline corrections include current QNBE, SAUD (Al Baraka Bank Egypt), OBRI (El Ebour Real Estate), ECAP (El Ezz Porcelain/Gemma), AIHC, ASPI, NARE, ORAS, CIEB, HDBK, KORA, NAPR, RAYA, and MTIE identities/classifications. Legacy aliases such as QNBA/QNBF, MNHD, AUTO, OTMT, UBEG, AIH and PIOH migrate to their current symbols rather than appearing as duplicate active rows.
+- **1f5cc09 / 6755eb0** — expand the TradingView Egypt scanner payload to collect current `description`, `sector`, `industry`, `isin`, and `currency` for the entire discovered EGP equity universe (range 0–500). Live metadata now wins over static fallback metadata and is persisted through the existing market-price sync path. Non-EGP alternate share classes are excluded because the portfolio valuation UI is EGP-denominated.
+- **e838494** — propagate refreshed ticker identity metadata into open positions, transactions, and closed-cycle views so historical UI does not keep stale company names/sectors after the directory is corrected.
+- **0c30598 / e0ffa88** — make Add Trade and Stocks & Prices searchable by ISIN in addition to ticker and company name.
+- **8f6df6b** — stop fabricating Arabic company names for live-only scanner discoveries; unknown Arabic metadata remains blank rather than storing false text.
+- **8bc4bdf** — extend regression coverage for renamed-symbol migration, retired baseline rows, current known identities/ISINs, live-metadata precedence, classification, and live-only ticker behavior.
+
+Side-quest acceptance:
+- the static seed is no longer expected to enumerate the whole active EGX;
+- every EGP security returned by the live Egypt scanner with a usable quote is discovered/updated automatically;
+- current scanner name/ISIN/classification beats stale fallback data;
+- saved/Supabase directories retain prices while gaining newly discovered current securities;
+- historical aliases collapse to current symbols without duplicate active rows;
+- ticker and ISIN are both valid directory/search identifiers.
 
 Responsive rules preserved:
 - no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;

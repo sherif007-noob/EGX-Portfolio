@@ -154,6 +154,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
         .filter(
           (t) =>
             t.ticker.toLowerCase().includes(tickerInput.toLowerCase()) ||
+            t.isin?.toLowerCase().includes(tickerInput.toLowerCase()) ||
             t.nameEn.toLowerCase().includes(tickerInput.toLowerCase()) ||
             (t.nameAr && t.nameAr.includes(tickerInput))
         )

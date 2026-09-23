@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyLivePricesToPortfolio, getEGXSessionStatus } from './marketPriceSync';
-import { canonicalizeEGXSymbol, createEGXTickerRecord, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
+import { INITIAL_EGX_TICKERS, canonicalizeEGXSymbol, createEGXTickerRecord, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
 
 describe('EGX market session status', () => {
   it('treats Sunday 09:30 Cairo as pre-market and 10:00 as active', () => {
@@ -36,7 +36,7 @@ describe('EGX ticker directory canonicalization', () => {
     const ticker = createEGXTickerRecord('KORA', 6.5);
     expect(ticker.nameEn).toBe('Korra for Energy and Investment Projects');
     expect(ticker.nameAr).toBe('قرة لمشروعات الطاقة والاستثمار');
-    expect(ticker.sector).toBe('Utilities');
+    expect(ticker.sector).toBe('Contracting & Construction');
     expect(ticker.isin).toBe('EGS07911C018');
   });
 
@@ -53,7 +53,7 @@ describe('EGX ticker directory canonicalization', () => {
     const kora = merged.find((ticker) => ticker.ticker === 'KORA');
     expect(kora?.lastPrice).toBe(6.79);
     expect(kora?.nameEn).toBe('Korra for Energy and Investment Projects');
-    expect(kora?.sector).toBe('Utilities');
+    expect(kora?.sector).toBe('Contracting & Construction');
   });
 
   it('repairs stale KORA metadata on open positions during live-price merge', () => {
@@ -90,8 +90,99 @@ describe('EGX ticker directory canonicalization', () => {
     );
 
     expect(result.updatedPositions[0].companyName).toBe('Korra for Energy and Investment Projects');
-    expect(result.updatedPositions[0].sector).toBe('Utilities');
+    expect(result.updatedPositions[0].sector).toBe('Contracting & Construction');
     expect(result.updatedTickers[0].nameEn).toBe('Korra for Energy and Investment Projects');
-    expect(result.updatedTickers[0].sector).toBe('Utilities');
+    expect(result.updatedTickers[0].sector).toBe('Contracting & Construction');
   });
+
+  it('migrates renamed legacy symbols and does not seed them as duplicate active rows', () => {
+    expect(canonicalizeEGXSymbol('QNBA')).toBe('QNBE');
+    expect(canonicalizeEGXSymbol('QNBF')).toBe('QNBE');
+    expect(canonicalizeEGXSymbol('MNHD')).toBe('MASR');
+    expect(canonicalizeEGXSymbol('AUTO')).toBe('GBCO');
+    expect(canonicalizeEGXSymbol('OTMT')).toBe('OIH');
+    expect(canonicalizeEGXSymbol('UBEG')).toBe('UBEE');
+    expect(canonicalizeEGXSymbol('AIH')).toBe('AIHC');
+    expect(canonicalizeEGXSymbol('PIOH')).toBe('ASPI');
+    expect(canonicalizeEGXSymbol('REAC')).toBe('NARE');
+
+    const symbols = new Set(INITIAL_EGX_TICKERS.map((ticker) => ticker.ticker));
+    for (const legacy of ['QNBA', 'QNBF', 'MNHD', 'AUTO', 'OTMT', 'UBEG', 'AIH', 'PIOH', 'ESRS', 'EKHO', 'KRRE']) {
+      expect(symbols.has(legacy)).toBe(false);
+    }
+    for (const current of ['QNBE', 'MASR', 'GBCO', 'OIH', 'UBEE', 'AIHC', 'ASPI', 'NARE', 'NAPR', 'KORA', 'ECAP']) {
+      expect(symbols.has(current)).toBe(true);
+    }
+  });
+
+  it('contains corrected current identities for known stale baseline records', () => {
+    const bySymbol = new Map(INITIAL_EGX_TICKERS.map((ticker) => [ticker.ticker, ticker]));
+
+    expect(bySymbol.get('CIEB')?.isin).toBe('EGS60041C018');
+    expect(bySymbol.get('HDBK')?.isin).toBe('EGS60301C016');
+    expect(bySymbol.get('QNBE')?.isin).toBe('EGS60081C014');
+    expect(bySymbol.get('SAUD')?.nameEn).toBe('Al Baraka Bank Egypt');
+    expect(bySymbol.get('SAUD')?.isin).toBe('EGS60101C010');
+    expect(bySymbol.get('OBRI')?.nameEn).toBe('El Ebour Co. for Real Estate Investment');
+    expect(bySymbol.get('OBRI')?.isin).toBe('EGS65551C011');
+    expect(bySymbol.get('ORAS')?.isin).toBe('EGS95001C011');
+    expect(bySymbol.get('NAPR')?.sector).toBe('Paper & Packaging');
+    expect(bySymbol.get('KORA')?.sector).toBe('Contracting & Construction');
+  });
+
+  it('lets live scanner metadata override the offline fallback while retaining Arabic fallback', () => {
+    const live = createEGXTickerRecord(
+      'KORA',
+      6.91,
+      1.2,
+      123456,
+      7.0,
+      6.7,
+      8.2,
+      2.1,
+      55,
+      'KORRA Energy',
+      undefined,
+      0.08,
+      'Industrial Services',
+      'Engineering & Construction',
+      'EGS07911C018',
+    );
+    const merged = mergeTickerDirectoryWithBaseline([live]);
+    const kora = merged.find((ticker) => ticker.ticker === 'KORA');
+
+    expect(kora?.metadataSource).toBe('tradingview');
+    expect(kora?.nameEn).toBe('KORRA Energy');
+    expect(kora?.nameAr).toBe('قرة لمشروعات الطاقة والاستثمار');
+    expect(kora?.sector).toBe('Contracting & Construction');
+    expect(kora?.isin).toBe('EGS07911C018');
+    expect(kora?.industry).toBe('Engineering & Construction');
+  });
+
+  it('classifies live-only scanner records without inventing fake Arabic metadata', () => {
+    const live = createEGXTickerRecord(
+      'NEWX',
+      12.5,
+      0,
+      1000,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'Example Packaging Company',
+      undefined,
+      0,
+      'Process Industries',
+      'Containers / Packaging',
+      'EGS00000X000',
+    );
+
+    expect(live.nameEn).toBe('Example Packaging Company');
+    expect(live.nameAr).toBe('');
+    expect(live.sector).toBe('Paper & Packaging');
+    expect(live.isin).toBe('EGS00000X000');
+    expect(live.metadataSource).toBe('tradingview');
+  });
+
 });

@@ -87,19 +87,19 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
     <PremiumModalMotion
       isOpen={isOpen}
       backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
-      panelClassName="premium-modal rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+      panelClassName="premium-modal premium-modal-frame rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden"
       onBackdropClick={requestClose}
       panelAriaLabel="Price target and push alerts"
     >
         
         {/* Modal Header */}
-        <div className="premium-modal-section flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
-          <div className="flex items-center gap-3">
+        <div className="premium-modal-section flex items-start justify-between gap-3 px-4 sm:px-5 py-4 border-b border-slate-700/50 shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <BellRing className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex flex-wrap items-center gap-2">
                 Price Target &amp; Push Alerts
                 {permission === 'granted' && settings.enabled && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
@@ -141,7 +141,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
             {permission !== 'granted' && (
               <button
                 onClick={onRequestPermission}
@@ -171,7 +171,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </SurfacePresence>
 
         {/* Cairo Trading Hours Banner */}
-        <div className="premium-inset-glass px-5 py-2.5 border-b border-slate-700/50 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="premium-inset-glass px-4 sm:px-5 py-2.5 border-b border-slate-700/50 flex flex-col gap-1.5 text-[11px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span>Cairo Market Session:</span>
@@ -189,10 +189,10 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="premium-modal-section flex border-b border-slate-700/50 px-5 pt-2">
+        <div className="premium-modal-section flex overflow-x-auto overscroll-x-contain border-b border-slate-700/50 px-4 sm:px-5 pt-2 scrollbar-none">
           <button
             onClick={() => setActiveTab('watches')}
-            className={`premium-filter-pill pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
               activeTab === 'watches'
                 ? 'border-amber-400 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -203,7 +203,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`premium-filter-pill pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
               activeTab === 'settings'
                 ? 'border-amber-400 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -217,7 +217,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
               setActiveTab('history');
               onMarkAllRead();
             }}
-            className={`premium-filter-pill pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 rounded-t-lg ${
               activeTab === 'history'
                 ? 'border-amber-400 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -229,7 +229,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Modal Body Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
+        <div className="premium-modal-scroll-body flex-1 p-4 sm:p-5 space-y-4 scrollbar-thin">
           <MotionSwap motionKey={activeTab} variant="state">
           
           {/* TAB 1: WATCHES */}
@@ -599,7 +599,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="premium-modal-section px-5 py-3.5 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
+        <div className="premium-modal-section px-4 sm:px-5 py-3.5 border-t border-slate-700/50 flex flex-col items-stretch gap-2 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between shrink-0">
           <div className="flex items-center gap-1.5">
             <span
               className={`w-2 h-2 rounded-full ${
@@ -614,7 +614,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
           </div>
           <button
             onClick={requestClose}
-            className="premium-action px-4 py-1.5 rounded-lg font-semibold"
+            className="premium-action w-full justify-center px-4 py-1.5 rounded-lg font-semibold sm:w-auto"
           >
             Done
           </button>

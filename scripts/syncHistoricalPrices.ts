@@ -158,6 +158,7 @@ async function loadStoredHistoryDates(
       .select('ticker,trading_date')
       .in('ticker', tickers)
       .order('trading_date', { ascending: true })
+      .order('ticker', { ascending: true })
       .range(offset, offset + pageSize - 1);
 
     if (error) throw new Error(`Existing history coverage read failed: ${error.message}`);

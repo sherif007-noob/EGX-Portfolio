@@ -113,6 +113,39 @@ function sampleProfileY<T extends CartesianPoint>(
     : cardinalSample(values, u);
 }
 
+function sampleProfileYAtX<T extends CartesianPoint>(
+  profile: ReadonlyArray<T>,
+  x: number,
+  curve: WeeklyTransitionCurve,
+): number | undefined {
+  const clean = profile.filter(
+    (point): point is T & { x: number; y: number } =>
+      Number.isFinite(point.x) && Number.isFinite(point.y),
+  );
+  if (!clean.length) return undefined;
+  if (clean.length === 1) return clean[0].y;
+
+  const firstX = clean[0].x;
+  const lastX = clean.at(-1)!.x;
+  if (lastX <= firstX) return sampleProfileY(clean, 0, curve);
+
+  const u = Math.min(1, Math.max(0, (x - firstX) / (lastX - firstX)));
+  if (curve === 'linear') {
+    let right = clean.findIndex((point) => point.x >= x);
+    if (right <= 0) return clean[0].y;
+    if (right < 0) return clean.at(-1)!.y;
+    const left = right - 1;
+    const span = clean[right].x - clean[left].x;
+    const t = span > 0 ? (x - clean[left].x) / span : 0;
+    return interpolate(clean[left].y, clean[right].y, t);
+  }
+
+  // Cardinal rendering still uses the chart's real X coordinates. Sampling
+  // by elapsed X here prevents the weekly morph from reverting to equal-index
+  // (trading-session) spacing during the transition.
+  return sampleProfileY(clean, u, curve);
+}
+
 function createFullProfileInterpolator<T extends CartesianPoint>(
   sourceCurve: WeeklyTransitionCurve,
   targetCurve: WeeklyTransitionCurve,
@@ -144,8 +177,9 @@ function createFullProfileInterpolator<T extends CartesianPoint>(
 
     for (let index = 0; index < sampleCount; index += 1) {
       const u = sampleCount <= 1 ? 0 : index / (sampleCount - 1);
-      const sourceY = sampleProfileY(previous, u, sourceCurve);
-      const targetY = sampleProfileY(next, u, targetCurve);
+      const x = interpolate(firstX, lastX, u);
+      const sourceY = sampleProfileYAtX(previous, x, sourceCurve);
+      const targetY = sampleProfileYAtX(next, x, targetCurve);
 
       const nearestTargetIndex =
         next.length <= 1
@@ -158,7 +192,7 @@ function createFullProfileInterpolator<T extends CartesianPoint>(
 
       result.push({
         ...template,
-        x: interpolate(firstX, lastX, u),
+        x,
         y:
           sourceY == null
             ? targetY

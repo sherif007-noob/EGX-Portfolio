@@ -870,6 +870,8 @@ Implementation:
 
 Resulting contract: the app no longer needs a hand-maintained static row for every active EGX ticker. The static dictionary provides offline fallback/Arabic names/historical migration; the live scanner continuously supplies the current EGP market universe and authoritative market metadata.
 
+Quality Checks **#692** passed typecheck, the expanded ticker regression suite, and production build.
+
 Regression boundary:
 - no Phase 3 modal visual styling was replaced;
 - no accepted selector/action/semantic/glow treatment was reinvented;

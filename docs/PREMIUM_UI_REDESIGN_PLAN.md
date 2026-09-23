@@ -55,7 +55,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
 | 5 | Advanced effects | **Complete** |
-| 6 | Mobile / responsive refinement | **Plan complete — implementation not started** |
+| 6 | Mobile / responsive refinement | **In progress — Pass 0 responsive primitives** |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 has been fully audited and planned; implementation has not started.
+Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 implementation has started with Pass 0 responsive primitives.
 
 ## Phase 1 — Visual foundations & page shell
 
@@ -346,7 +346,7 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
-**Status: PLAN COMPLETE — implementation not started.**
+**Status: IN PROGRESS — Pass 0 responsive primitives and safety baseline.**
 
 The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
 

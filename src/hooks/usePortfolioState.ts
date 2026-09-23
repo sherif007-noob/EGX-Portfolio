@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector, CashTransaction } from '../types';
-import { INITIAL_EGX_TICKERS } from '../data/egxTickers';
+import { INITIAL_EGX_TICKERS, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
 import {
   INITIAL_POSITIONS,
   INITIAL_CLOSED_TRADES,
@@ -45,7 +45,7 @@ export function usePortfolioState() {
   const [tickers, setTickers] = useState<EGXTicker[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TICKERS);
-      return saved ? JSON.parse(saved) : INITIAL_EGX_TICKERS;
+      return saved ? mergeTickerDirectoryWithBaseline(JSON.parse(saved)) : INITIAL_EGX_TICKERS;
     } catch {
       return INITIAL_EGX_TICKERS;
     }
@@ -175,9 +175,11 @@ export function usePortfolioState() {
           const loadedCapital = typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0
             ? remoteData.capitalDeposits
             : capitalDeposits;
-          const loadedTickers = Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
-            ? remoteData.tickers
-            : tickers;
+          const loadedTickers = mergeTickerDirectoryWithBaseline(
+            Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
+              ? remoteData.tickers
+              : tickers,
+          );
 
           if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
             const report = reconcilePortfolioFromLedger(loadedTransactions, loadedTickers, loadedCapital, loadedPositions);
@@ -273,9 +275,17 @@ export function usePortfolioState() {
       const currentPrice = t.lastPrice > 0 ? t.lastPrice : p.currentPrice;
       const targetPrice = p.targetPrice ?? t.targetPrice;
       const stopLoss = p.stopLoss ?? t.stopLoss;
-      if (Math.abs((p.currentPrice || 0) - currentPrice) > 0.0001 || p.targetPrice !== targetPrice || p.stopLoss !== stopLoss) {
+      const companyName = t.nameEn || p.companyName || p.ticker;
+      const sector = t.sector !== 'Other' ? t.sector : (p.sector || 'Other');
+      if (
+        Math.abs((p.currentPrice || 0) - currentPrice) > 0.0001 ||
+        p.targetPrice !== targetPrice ||
+        p.stopLoss !== stopLoss ||
+        p.companyName !== companyName ||
+        p.sector !== sector
+      ) {
         hasChanges = true;
-        return { ...p, currentPrice, targetPrice, stopLoss, companyName: p.companyName || t.nameEn || p.ticker, sector: p.sector || t.sector || 'Other' };
+        return { ...p, currentPrice, targetPrice, stopLoss, companyName, sector };
       }
       return p;
     });

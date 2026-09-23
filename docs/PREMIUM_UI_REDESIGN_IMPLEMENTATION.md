@@ -840,7 +840,7 @@ Quality Checks **#647** passed typecheck, tests, and production build on the cor
 
 ### Phase 6 Pass 3 — modal and overlay family
 
-**Status: implemented; awaiting CI and mobile visual validation.**
+**Status: corrective implementation complete; awaiting CI and mobile re-validation.**
 
 Scope: Portfolio Backup, Edit Position, Quick Cash, Confirm Delete, Add Trade, Sell Position, Journal edit, Cash edit, Google Sheets, Schema Sync, Price Alerts, Trade Screenshot, and PWA install surfaces.
 
@@ -855,6 +855,10 @@ Implementation:
 - **b586167** — Price Alerts moves from hard `90vh` to the shared frame/body contract; header, permission controls, tab rail, and footer remain reachable.
 - **cd96b6a** — Screenshot Scanner moves from hard `90vh` to the shared frame/body contract with responsive review/footer action composition.
 - **7f18d1d** — PWA guide receives the same structured modal contract.
+- User testing on the deployed phone build found Add Trade and Transaction Edit had a nested-scroll ownership bug: the receipt shortcut / BUY-SELL selector could move above the reachable viewport and iOS overscroll would spring back.
+- **24986ff / 9ade473 / 682deea** — add a phone-only panel-owned scroll backdrop contract. The backdrop is safe-area top anchored and non-scrollable on mobile; the `premium-modal-viewport` panel becomes the sole vertical scroller. This targets the spring-back failure without changing modal styling.
+- User also reported ticker-master correctness issues. External verification confirmed NAPR is National Printing and KORA is Korra for Energy and Investment Projects. **276cfb7 / 262ac1c / 0053738 / 5f07095 / 54f6a61 / de9557e** add NAPR, correct KORA, canonicalize TradingView ISIN symbols back to known EGX tickers, merge saved/Supabase directories with the current master baseline, and repair stale position/transaction display metadata. This is a deliberate data-correctness exception to Phase 6's visual-only scope.
+- **f01dd96** adds regression tests for the ticker canonicalization/repair path.
 
 Regression boundary:
 - no Phase 3 modal visual styling was replaced;

@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 1 complete; Pass 2 core data tabs in progress.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 2 implemented; awaiting CI/mobile validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -330,7 +330,7 @@ Validation target:
 
 ### Pass 2 — Core data tabs
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
 
 Scope:
 - Positions;
@@ -339,16 +339,26 @@ Scope:
 - Cash;
 - Directory.
 
-Work:
-- selector/search min-width cleanup;
-- filters/pagination wrapping;
-- mobile card spacing/action rows;
-- intentional horizontal table overflow only where a table remains;
-- keep Positions desktop/mobile dual-render architecture.
+Implemented:
+- **c387712 / fb6d709** — make the Positions page heading/action responsive and hide the redundant page-level “+ Add Position” button on phone because the integrated Add Trade action already remains reachable.
+- **221b7d9 / 0f3639b** — remove Positions toolbar selector width pressure, preserve the desktop/mobile dual-render architecture, tighten phone card padding, harden identity/P&L shrink behavior, make the “Set Target & Stop-Loss” action responsive, and retain the user-approved one-row DCA/Sell/Edit/Delete layout.
+- **3b769ab** — remove Closed Cycles search/sort fixed-width pressure; use a 2x2 outcome-filter grid on phone; make sort and expand/collapse controls full-width on narrow screens.
+- **94c533f / 795db90** — convert Journal outcome filters into an intentional horizontal phone rail, place sort/page-size selectors in a two-column mobile grid, clamp the deletion toast, and make both pagination rows fit phone widths with icon-first controls.
+- **7243d37 / 830f2f3** — reduce Cash Ledger phone panel padding, make Deposit/Withdraw equal-width mobile segments, make history filters fit as three compact columns with counts deferred above `sm`, and give the cash table an explicit internal 720px scroll width so the page itself never needs to expand.
+- **0b8af54** — make Directory header utilities a mobile 2-column action layout with Sync spanning the first row, remove sector-select minimum-width pressure, and slightly reduce phone card/header padding.
+
+Design choices:
+- horizontal scrolling remains intentional only for Journal filter pills and genuinely wide tables;
+- desktop widths/minimums remain available from `sm`/`md` upward;
+- no data, accounting, transaction, or chart logic changed;
+- the early user-requested Positions action-row fix from Pass 1 is treated as part of the final Pass 2 state.
 
 Checkpoint:
 - no horizontal page overflow;
-- every primary action reachable without precision tapping.
+- every primary action reachable without precision tapping;
+- cash table scrolls within its own shell;
+- Journal filter/pagination controls remain reachable at 320px;
+- desktop layout remains materially unchanged.
 
 ### Pass 3 — Modal and overlay family
 

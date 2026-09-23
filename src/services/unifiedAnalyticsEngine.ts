@@ -251,7 +251,11 @@ function buildPoints(
     );
 
     const dailyExternalFlows = allExternalFlows.filter((flow) => {
-      if (index === 0) return dayKey(flow.date) === point.date;
+      if (index === 0) {
+        return initialBaseline
+          ? flowWithin(flow, periodStartingDate, point.date)
+          : dayKey(flow.date) === point.date;
+      }
       return flowWithin(flow, valuations[index - 1].date, point.date);
     });
     const externalFlow = sumPortfolioFlows(dailyExternalFlows);
@@ -276,11 +280,17 @@ function buildPoints(
     equityPeak = Math.max(equityPeak, point.equity);
     const equityDrawdownEgp = Math.max(0, equityPeak - point.equity);
 
-    const mwrrPercent = index === 0
-      ? initialBaseline
-        ? ((point.equity / initialBaseline) - 1) * 100
-        : 0
-      : calculatePeriodMWR(
+    const mwrrPercent = initialBaseline
+      ? calculatePeriodMWR(
+          periodStartingEquity,
+          periodStartingDate,
+          allExternalFlows,
+          point.equity,
+          point.date,
+        )
+      : index === 0
+        ? 0
+        : calculatePeriodMWR(
           periodStartingEquity,
           periodStartingDate,
           allExternalFlows,
@@ -290,15 +300,15 @@ function buildPoints(
 
     const periodFlows = allExternalFlows.filter((flow) => {
       const flowDay = dayKey(flow.date);
-      return flowDay > anchor.date && flowDay <= point.date;
+      return flowDay > periodStartingDate && flowDay <= point.date;
     });
-    const annualizedMwrrPercent = index === 0
-      ? 0
-      : calculateMWRR(
+    const annualizedMwrrPercent = initialBaseline || index > 0
+      ? calculateMWRR(
           [{ date: periodStartingDate, amount: -periodStartingEquity }, ...periodFlows],
           point.equity,
           point.date,
-        );
+        )
+      : 0;
 
     return {
       date: point.date,

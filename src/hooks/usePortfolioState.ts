@@ -41,6 +41,30 @@ const STORAGE_KEY_TICKERS = 'egx_pwa_tickers_directory_v3_reconciled';
 const STORAGE_KEY_TRANSACTIONS = 'egx_pwa_transactions_v3_reconciled';
 const STORAGE_KEY_CAPITAL = 'egx_pwa_capital_deposits_v1';
 
+function rehydrateTransactionMetadata(
+  transactionList: TradeTransaction[],
+  tickerList: EGXTicker[],
+): TradeTransaction[] {
+  if (!transactionList.length || !tickerList.length) return transactionList;
+  const tickerMap = new Map(tickerList.map((ticker) => [ticker.ticker.trim().toUpperCase(), ticker]));
+  let changed = false;
+
+  const next = transactionList.map((transaction) => {
+    if (transaction.ticker.trim().toUpperCase() === 'CASH') return transaction;
+    const ticker = tickerMap.get(transaction.ticker.trim().toUpperCase());
+    if (!ticker) return transaction;
+
+    const companyName = ticker.nameEn || transaction.companyName;
+    const sector = ticker.sector !== 'Other' ? ticker.sector : transaction.sector;
+    if (transaction.companyName === companyName && transaction.sector === sector) return transaction;
+
+    changed = true;
+    return { ...transaction, companyName, sector };
+  });
+
+  return changed ? next : transactionList;
+}
+
 export function usePortfolioState() {
   const [tickers, setTickers] = useState<EGXTicker[]>(() => {
     try {
@@ -65,8 +89,8 @@ export function usePortfolioState() {
       const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
       const parsed = saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
       return Array.isArray(parsed) && parsed.length > 0
-        ? parsed.map(normalizeTransaction)
-        : INITIAL_TRANSACTIONS;
+        ? rehydrateTransactionMetadata(parsed.map(normalizeTransaction), tickers)
+        : rehydrateTransactionMetadata(INITIAL_TRANSACTIONS, tickers);
     } catch {
       return INITIAL_TRANSACTIONS;
     }
@@ -165,7 +189,7 @@ export function usePortfolioState() {
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
 
-          const loadedTransactions = Array.isArray(remoteData.transactions)
+          let loadedTransactions = Array.isArray(remoteData.transactions)
             ? remoteData.transactions.map(normalizeTransaction).sort(
                 (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
               )
@@ -180,6 +204,7 @@ export function usePortfolioState() {
               ? remoteData.tickers
               : tickers,
           );
+          loadedTransactions = rehydrateTransactionMetadata(loadedTransactions, loadedTickers);
 
           if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
             const report = reconcilePortfolioFromLedger(loadedTransactions, loadedTickers, loadedCapital, loadedPositions);
@@ -219,9 +244,12 @@ export function usePortfolioState() {
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
-          const loadedTransactions = Array.isArray(remoteData.transactions)
-            ? remoteData.transactions.map(normalizeTransaction)
-            : [];
+          const loadedTransactions = rehydrateTransactionMetadata(
+            Array.isArray(remoteData.transactions)
+              ? remoteData.transactions.map(normalizeTransaction)
+              : [],
+            tickers,
+          );
 
           if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
             const report = reconcilePortfolioFromLedger(loadedTransactions, tickers, capitalDeposits, loadedPositions);

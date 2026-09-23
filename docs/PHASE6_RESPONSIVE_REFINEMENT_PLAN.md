@@ -342,13 +342,17 @@ Scope:
 Implemented:
 - **c387712 / fb6d709** — make the Positions page heading/action responsive and hide the redundant page-level “+ Add Position” button on phone because the integrated Add Trade action already remains reachable.
 - **221b7d9 / 0f3639b** — remove Positions toolbar selector width pressure, preserve the desktop/mobile dual-render architecture, tighten phone card padding, harden identity/P&L shrink behavior, make the “Set Target & Stop-Loss” action responsive, and retain the user-approved one-row DCA/Sell/Edit/Delete layout.
-- **3b769ab** — remove Closed Cycles search/sort fixed-width pressure; use a 2x2 outcome-filter grid on phone; make sort and expand/collapse controls full-width on narrow screens.
+- **3b769ab** — remove Closed Cycles search/sort fixed-width pressure and make sort/expand controls phone-safe.
+- User validation rejected the initial Closed Cycles selector treatment because the responsive pass had drifted from the already-approved Transactions selector visual system.
+- **f5b9c7d** — restore Closed Cycles to the canonical Transactions selector contract: `premium-selector-shell`, `premium-filter-pill`, semantic active classes, `aria-pressed`, matching 44px touch sizing, and the same selected-state glow/settle behavior. On phone it uses the same intentional horizontal selector rail rather than inventing a new 2×2 visual family.
 - **94c533f / 795db90** — convert Journal outcome filters into an intentional horizontal phone rail, place sort/page-size selectors in a two-column mobile grid, clamp the deletion toast, and make both pagination rows fit phone widths with icon-first controls.
-- **7243d37 / 830f2f3** — reduce Cash Ledger phone panel padding, make Deposit/Withdraw equal-width mobile segments, make history filters fit as three compact columns with counts deferred above `sm`, and give the cash table an explicit internal 720px scroll width so the page itself never needs to expand.
+- **7243d37 / 830f2f3 / 4dd7f71** — reduce Cash Ledger phone panel padding, keep Deposit/Withdraw and history filters inside the canonical selector-shell visual language with flexible phone widths, defer history counts above `sm`, and give the cash table an explicit internal 720px scroll width so the page itself never needs to expand.
 - **0b8af54** — make Directory header utilities a mobile 2-column action layout with Sync spanning the first row, remove sector-select minimum-width pressure, and slightly reduce phone card/header padding.
 
 Design choices:
-- horizontal scrolling remains intentional only for Journal filter pills and genuinely wide tables;
+- **Responsive passes may change layout/fit only; they must not invent a new button/selector visual family.** Existing accepted primitives from Phases 2–5 remain canonical.
+- Transactions is the canonical filter-selector reference for dense semantic filters: `premium-selector-shell` + `premium-filter-pill` + semantic active class + `aria-pressed`.
+- horizontal scrolling remains intentional for dense selector rails and genuinely wide tables;
 - desktop widths/minimums remain available from `sm`/`md` upward;
 - no data, accounting, transaction, or chart logic changed;
 - the early user-requested Positions action-row fix from Pass 1 is treated as part of the final Pass 2 state.

@@ -238,6 +238,28 @@ The result exposes:
 - whether the timeframe requires intraday reconstruction.
 
 
+### Automatic repair for newly introduced tickers
+
+A newly added portfolio ticker can exist in the transaction ledger before that symbol has any rows in `price_history`. In that state, every valuation from the first held day onward is incomplete because the engine cannot value the new holding. Those dates are intentionally excluded rather than valuing the security at zero, carrying the trade price forward, or substituting the current quote.
+
+This previously appeared in the UI as the performance graph suddenly stopping before the newest trades.
+
+The application now treats `dataQuality.missingTickers` as an ingestion signal:
+
+1. load the canonical historical-price store;
+2. build analytics without fabricating missing values;
+3. detect held tickers that make valuation dates incomplete;
+4. request an authenticated server-side historical backfill from that ticker's first transaction date;
+5. upsert only missing TradingView daily bars into `price_history`;
+6. reload the canonical store once and rebuild analytics.
+
+The request includes the in-memory first-transaction date as a hint so a just-added trade can be repaired even if asynchronous portfolio persistence is still completing. The server also checks the persisted ledger and uses the earlier valid date when both are available.
+
+The repair path is generic. It must never contain ticker-specific exceptions or manually seed a ticker merely to make the chart look complete. If TradingView cannot supply a trustworthy close, the affected valuation remains incomplete.
+
+Regression coverage lives in `src/services/unifiedAnalyticsEngine.test.ts` and verifies that a newly introduced ticker first appears in `missingTickers`, then restores the previously excluded valuation dates after history becomes available.
+
+
 
 ## Timeframe UI and intraday reconstruction
 

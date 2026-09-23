@@ -158,6 +158,12 @@
   --premium-fast: 150ms;
   --premium-medium: 220ms;
   --premium-slow: 320ms;
+
+  /* Phase 6 responsive primitives. */
+  --premium-touch-target: 2.75rem; /* 44px */
+  --premium-mobile-gutter: 0.75rem;
+  --premium-modal-gutter: 0.75rem;
+  --premium-fixed-overlay-max: 28rem;
 }
 
 html {
@@ -558,6 +564,41 @@ body {
     var(--premium-refraction-shadow, 0 0 0 transparent);
 }
 
+/* Phase 6 viewport helpers.
+ * These are opt-in contracts for component passes so existing desktop modal
+ * composition is not silently rewritten by the shared baseline.
+ */
+.premium-modal-viewport {
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.premium-modal-scroll-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.premium-fixed-overlay {
+  box-sizing: border-box;
+  max-width: min(
+    var(--premium-fixed-overlay-max),
+    calc(100vw - (var(--premium-mobile-gutter) * 2))
+  );
+  overflow-wrap: anywhere;
+}
+
+.premium-mobile-min-w-0 {
+  min-width: 0;
+}
+
+.premium-mobile-full {
+  min-width: 0;
+}
+
 .premium-modal::before {
   content: '';
   position: absolute;
@@ -709,6 +750,62 @@ body {
 }
 
 
+/* Phase 6 Pass 0 — shared touch and viewport safety baseline. */
+.premium-modal-backdrop {
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-action,
+  .premium-nav,
+  .premium-filter-pill,
+  .premium-segment,
+  .premium-choice,
+  .premium-accordion-trigger,
+  .premium-select-trigger {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  .premium-icon-action {
+    min-width: var(--premium-touch-target);
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  input.premium-field,
+  select.premium-field,
+  textarea.premium-field {
+    min-height: var(--premium-touch-target);
+  }
+
+  .premium-menu-item {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-modal-backdrop {
+    padding:
+      max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      max(var(--premium-modal-gutter), env(safe-area-inset-right))
+      max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+      max(var(--premium-modal-gutter), env(safe-area-inset-left));
+  }
+
+  .premium-modal-viewport {
+    width: 100%;
+    max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+    max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+  }
+
+  .premium-fixed-overlay {
+    max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));
+  }
+}
+
+
 /* Keep open glass dropdowns above following cards and tables. */
 .premium-glass:has([aria-expanded="true"]),
 .premium-panel:has([aria-expanded="true"]),
@@ -754,12 +851,19 @@ body {
 
 @media (max-width: 767px) {
   .premium-dropdown {
+    max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));
+    max-height: min(70dvh, 24rem);
+    overscroll-behavior: contain;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.012) 32%),
       linear-gradient(135deg, rgba(34, 211, 238, 0.05), transparent 40%, rgba(139, 92, 246, 0.04)),
       rgba(8, 15, 31, 0.64);
     -webkit-backdrop-filter: blur(26px) saturate(165%) brightness(1.05);
     backdrop-filter: blur(26px) saturate(165%) brightness(1.05);
+  }
+
+  .premium-mobile-full {
+    width: 100%;
   }
 }
 

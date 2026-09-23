@@ -419,6 +419,8 @@ Historical analytics repair side quest:
 - **1d2be35 / 5762cab** — page Supabase history coverage reads and make paging deterministic so repair planning remains correct as stored history grows beyond one API page.
 - Acceptance rule: missing history is repaired by the automation itself; the app must never fill historical valuation holes with today's price or a fabricated zero.
 
+Quality Checks **#702** passed typecheck, tests, and production build on the completed historical self-healing implementation. ACTF remains intentionally at **0** daily history rows pending the deliberate end-to-end workflow test.
+
 Responsive rules preserved:
 - no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;
 - accepted Phase 2–5 classes remain the source of truth;

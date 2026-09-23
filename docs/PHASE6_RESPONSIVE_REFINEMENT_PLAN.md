@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 1 implemented and CI-clean; awaiting mobile visual validation before Pass 2.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 1 complete; Pass 2 core data tabs in progress.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -318,7 +318,7 @@ Implemented:
 - Accepted design direction: **Backup/Reconcile is maintenance/recovery, not a primary header action.** Preserve the capability, but plan to remove it from the permanent Header and relocate it into a Data Management/Settings surface when the navigation/settings architecture is handled. Do not delete backup/export/restore/reconciliation functionality.
 - Cleanup debt: `PortfolioBackupModal` still contains legacy Firebase wording after restore; replace it with Supabase/cloud-neutral copy when that modal is touched in Pass 3.
 
-Quality Checks **#620** passed typecheck, tests, and production build on the revised Header/Positions state.
+Quality Checks **#620** passed typecheck, tests, and production build on the revised Header/Positions state. User validation accepted Pass 1 and requested moving to the next pass.
 
 Validation target:
 - 320 / 360 / 390 / 430 widths;
@@ -329,6 +329,8 @@ Validation target:
 - summary cards remain legible without page-level horizontal overflow.
 
 ### Pass 2 — Core data tabs
+
+**Status: IN PROGRESS.**
 
 Scope:
 - Positions;

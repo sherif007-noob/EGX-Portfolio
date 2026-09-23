@@ -107,16 +107,16 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
           {/* Sector filter */}
-          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
+          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <AnalyticsSelect
               value={selectedSector}
               onChange={(value) => changeSelectedSector(String(value))}
               compact
               ariaLabel="Filter positions by sector"
-              className="min-w-[170px]"
+              className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
               options={[
                 { value: 'ALL', label: `All Sectors (${positions.length})` },
                 ...sectors.map((sec) => ({ value: sec, label: sec })),
@@ -126,7 +126,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
           <button
             onClick={onAddNewTrade}
-            className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ml-auto"
+            className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold sm:ml-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add Trade</span>
@@ -377,7 +377,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className={`premium-card p-4 rounded-2xl space-y-3 ${
+              className={`premium-card p-3.5 sm:p-4 rounded-2xl space-y-3 ${
                 pnlEgp > 0
                   ? 'premium-glow-win'
                   : pnlEgp < 0

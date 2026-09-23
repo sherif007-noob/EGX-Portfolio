@@ -802,13 +802,17 @@ Implemented:
 - **132295e** — make Offline/Firestore banners span the safe mobile gutter with a reachable independent Sync action.
 - **3fd4190 / bf3cdd1** — place mobile notifications below the taller sticky Header and stack Undo above persistent status banners.
 - **bc9e7f7** — keep fixed-overlay width clamping mobile-only to protect the accepted desktop baseline.
+- User screenshot validation rejected the first mobile Header composition because several button contents were optically off-center and migration-era controls were still exposed.
+- **05f2316 / 2f1ed56 / 8019ca1** — remove the manual database Force Sync header action and standalone Google/Firebase Sign In/avatar/Sign Out controls. Supabase authentication gates the app; Supabase persistence/realtime sync owns portfolio storage; optional Google auth remains scoped to the Google Sheets modal. Center the remaining six phone actions and move mobile status/count decoration out of normal icon flow.
+- **5c44fdb** — remove the obsolete Firestore-quota banner branch from `OfflineIndicator`; the compatibility shim exposes no active Firestore quota behavior after migration.
+- **1928172** — apply the user-requested mobile Positions card action correction ahead of formal Pass 2: sector metadata moves into the identity line and DCA/Sell/Edit/Delete share one compact row, eliminating the lone Delete row and unnecessary card height.
 
 Boundaries preserved:
 - no navigation IA/active-state redesign (Phase 6.5);
 - no final Header redesign (Phase 9);
 - no business/data/motion/chart changes.
 
-Quality Checks **#614** passed typecheck, tests, and production build.
+Quality Checks **#614** passed the initial Pass 1 state. The user-driven Header/Positions revision requires a fresh Quality Check.
 
 ## Current validated visual rules
 

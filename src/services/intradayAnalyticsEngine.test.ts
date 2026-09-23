@@ -73,7 +73,7 @@ describe('intraday analytics engine', () => {
 
   it('appends the authoritative live NAV as the final active-session point', () => {
     const transactions: TradeTransaction[] = [
-      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-17' }),
+      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-16' }),
       tx({ id: 'hold', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
     ];
 
@@ -100,7 +100,7 @@ describe('intraday analytics engine', () => {
 
   it('does not append a mixed stale/live endpoint when a held ticker lacks a live quote', () => {
     const transactions: TradeTransaction[] = [
-      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-17' }),
+      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-16' }),
       tx({ id: 'a', type: 'BUY', ticker: 'AAA', shares: 2, price: 100, totalAmount: 200, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
       tx({ id: 'b', type: 'BUY', ticker: 'BBB', shares: 2, price: 100, totalAmount: 200, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
     ];

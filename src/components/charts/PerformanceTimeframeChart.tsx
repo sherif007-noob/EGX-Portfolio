@@ -299,6 +299,12 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
   const chartData = points.map((point) => ({
     ...point,
+    // Daily ranges use real elapsed calendar time on the X axis. This keeps
+    // weekend/holiday gaps proportional instead of treating every trading
+    // valuation as an equally spaced category.
+    axisTime: new Date(
+      timeframe === 'TODAY' ? point.date : `${point.date.slice(0, 10)}T12:00:00Z`,
+    ).getTime(),
     axisLabel: timeframe === 'TODAY' ? formatCairoTime(point.date) : formatDailyLabel(point.date),
   }));
 
@@ -889,10 +895,18 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               </defs>
               <CartesianGrid {...analyticsGridProps} />
               <XAxis
-                dataKey="axisLabel"
+                dataKey={timeframe === 'TODAY' ? 'axisLabel' : 'axisTime'}
                 {...analyticsXAxisProps}
+                type={timeframe === 'TODAY' ? 'category' : 'number'}
+                scale={timeframe === 'TODAY' ? 'auto' : 'time'}
+                domain={timeframe === 'TODAY' ? undefined : ['dataMin', 'dataMax']}
+                tickFormatter={
+                  timeframe === 'TODAY'
+                    ? undefined
+                    : (value: number) => formatDailyLabel(new Date(value).toISOString())
+                }
                 interval="preserveStartEnd"
-                minTickGap={timeframe === 'TODAY' ? 28 : undefined}
+                minTickGap={timeframe === 'TODAY' ? 28 : 24}
               />
               {renderYAxis()}
               {renderReferenceLine()}

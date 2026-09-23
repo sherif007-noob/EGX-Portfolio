@@ -412,28 +412,36 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         {/* Filters and Sorting */}
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
           {/* Outcome Filter Pills */}
-          <div className="premium-subpanel grid grid-cols-2 gap-1 p-1 rounded-xl sm:flex sm:items-center">
+          <div className="premium-selector-shell flex w-full items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:w-auto sm:flex-wrap sm:overflow-visible">
             <button
+              type="button"
+              aria-pressed={outcomeFilter === 'ALL'}
               onClick={() => changeOutcomeFilter('ALL')}
-              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
             <button
+              type="button"
+              aria-pressed={outcomeFilter === 'WIN'}
               onClick={() => changeOutcomeFilter('WIN')}
-              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
             <button
+              type="button"
+              aria-pressed={outcomeFilter === 'LOSS'}
               onClick={() => changeOutcomeFilter('LOSS')}
-              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
             <button
+              type="button"
+              aria-pressed={outcomeFilter === 'BREAKEVEN'}
               onClick={() => changeOutcomeFilter('BREAKEVEN')}
-              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>

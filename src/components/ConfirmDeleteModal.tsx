@@ -31,8 +31,8 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-      panelClassName="premium-modal relative w-full max-w-md p-6 rounded-2xl space-y-4"
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-md p-4 sm:p-6 rounded-2xl space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel={title}
     >
@@ -97,10 +97,10 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2.5 pt-2">
+        <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
           <button
             onClick={requestClose}
-            className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
+            className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
           >
             Cancel
           </button>
@@ -110,7 +110,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               onConfirm();
               requestClose();
             }}
-            className="premium-action premium-action-danger px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+            className="premium-action premium-action-danger flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Confirm & Delete</span>

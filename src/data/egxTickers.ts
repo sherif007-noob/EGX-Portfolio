@@ -86,7 +86,8 @@ export const EGX_STOCK_DICTIONARY: Record<
   MPCO: { nameEn: 'Mansoura Poultry', nameAr: 'المنصورة للدواجن', sector: 'Food, Beverage & Tobacco', isin: 'EGS30371C012' },
   UEGC: { nameEn: 'El-Saeed Contracting & Real Estate Investment Co. (SCCD)', nameAr: 'الصعيد العامة للمقاولات والاستثمار العقاري', sector: 'Real Estate & Construction', isin: 'EGS65511C015' },
   SCEM: { nameEn: 'Sinai Cement Co.', nameAr: 'أسمنت سيناء', sector: 'Building Materials & Cement', isin: 'EGS3C051C015' },
-  KORA: { nameEn: 'Egyptian Chemical Industries (KIMA / KORRA)', nameAr: 'الصناعات الكيماوية المصرية - كيما', sector: 'Petrochemicals & Fertilizers', isin: 'EGS38261C013' },
+  KORA: { nameEn: 'Korra for Energy and Investment Projects', nameAr: 'قرة لمشروعات الطاقة والاستثمار', sector: 'Utilities', isin: 'EGS07911C018' },
+  NAPR: { nameEn: 'National Printing', nameAr: 'الوطنية للطباعة', sector: 'Commercial Services', isin: 'EGS370O1C013' },
   CANA: { nameEn: 'Suez Canal Bank', nameAr: 'بنك قناة السويس', sector: 'Banking', isin: 'EGS60091C013' },
   ZMID: { nameEn: 'Zahraa Maadi Investment & Development', nameAr: 'زهراء المعادي للاستثمار والتعمير', sector: 'Real Estate & Construction', isin: 'EGS65101C016' },
   LUTS: { nameEn: 'Lotus For Agricultural Investments & Development', nameAr: 'لوتس للتنمية والاستثمار الزراعي', sector: 'Food, Beverage & Tobacco', isin: 'EGS07271C019' },
@@ -94,6 +95,16 @@ export const EGX_STOCK_DICTIONARY: Record<
   MCRO: { nameEn: 'Macro Group Pharmaceutical (Macro Capital)', nameAr: 'ماكرو جروب للمستحضرات الطبية - ماكرو كابيتال', sector: 'Healthcare & Pharmaceuticals', isin: 'EGS729R1C010' },
   BONY: { nameEn: 'Bonyan for Development and Trade', nameAr: 'بنيان للتنمية والتجارة', sector: 'Real Estate & Construction', isin: 'EGS65671C017' }
 };
+
+export function canonicalizeEGXSymbol(symbol: string): string {
+  const cleaned = symbol.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  if (EGX_STOCK_DICTIONARY[cleaned]) return cleaned;
+
+  const isinMatch = Object.entries(EGX_STOCK_DICTIONARY).find(
+    ([, metadata]) => metadata.isin?.toUpperCase() === cleaned,
+  );
+  return isinMatch?.[0] || cleaned;
+}
 
 /**
  * Creates an EGXTicker record from symbol, price, and metadata with sensible defaults.
@@ -112,7 +123,7 @@ export function createEGXTickerRecord(
   logoIdOrUrl?: string,
   changeAbs?: number
 ): EGXTicker {
-  const upper = ticker.trim().toUpperCase().replace('.CA', '').replace('EGX:', '');
+  const upper = canonicalizeEGXSymbol(ticker);
   const dict = EGX_STOCK_DICTIONARY[upper];
 
   const nameEn = dict?.nameEn || description || `${upper} Corp`;
@@ -178,3 +189,32 @@ export function createEGXTickerRecord(
 export const INITIAL_EGX_TICKERS: EGXTicker[] = Object.keys(EGX_STOCK_DICTIONARY).map((sym) => {
   return createEGXTickerRecord(sym, 0, 0, 0);
 });
+
+export function mergeTickerDirectoryWithBaseline(existing: EGXTicker[]): EGXTicker[] {
+  const byTicker = new Map<string, EGXTicker>();
+
+  for (const ticker of existing || []) {
+    const canonical = canonicalizeEGXSymbol(ticker.ticker);
+    byTicker.set(canonical, { ...ticker, ticker: canonical });
+  }
+
+  for (const baseline of INITIAL_EGX_TICKERS) {
+    const current = byTicker.get(baseline.ticker);
+    if (!current) {
+      byTicker.set(baseline.ticker, baseline);
+      continue;
+    }
+
+    byTicker.set(baseline.ticker, {
+      ...baseline,
+      ...current,
+      ticker: baseline.ticker,
+      nameEn: baseline.nameEn,
+      nameAr: baseline.nameAr,
+      sector: baseline.sector,
+      isin: baseline.isin || current.isin,
+    });
+  }
+
+  return Array.from(byTicker.values()).sort((a, b) => a.ticker.localeCompare(b.ticker));
+}

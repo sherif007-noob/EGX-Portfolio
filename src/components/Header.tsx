@@ -110,8 +110,8 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-3 gap-x-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
           
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3 shrink-0">
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center flex-wrap justify-end gap-1.5 sm:gap-2.5 flex-1 min-w-[200px]">
+          <div className="premium-header-action-rail flex w-full min-w-0 items-center flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none sm:w-auto sm:flex-1 sm:min-w-[200px] sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 sm:gap-2.5">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
               <button
@@ -317,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto scrollbar-none">
+      <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto overscroll-x-contain scrollbar-none">
         <nav className="flex space-x-1 sm:space-x-3 py-2 min-w-max">
           <button
             id="tab-overview"

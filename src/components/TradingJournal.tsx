@@ -1054,12 +1054,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         <PremiumModalMotion
           isOpen={!!editingTx}
           backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          panelClassName="premium-modal w-full max-w-lg my-6 rounded-2xl p-5 sm:p-6 text-slate-100 space-y-4"
+          panelClassName="premium-modal premium-modal-viewport w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
           onBackdropClick={requestCloseEdit}
           panelAriaLabel="Edit transaction"
         >
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-5 h-5" />
@@ -1090,12 +1090,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* Type Switcher */}
               <div className="space-y-1.5">
                 <label className="text-slate-300 font-semibold block">Transaction Type</label>
-                <div className="premium-selector-shell grid grid-cols-2 w-full">
+                <div className="premium-selector-shell flex w-full">
                   <button
                     type="button"
                     aria-pressed={editType === 'BUY'}
                     onClick={() => setEditType('BUY')}
-                    className={`premium-filter-pill py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
+                    className={`premium-filter-pill min-w-0 flex-1 py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'BUY' ? 'premium-filter-active-blue' : ''}`}
                   >
                     <PlusCircle className="w-4 h-4" />
                     BUY (Stock Entry / DCA)
@@ -1104,7 +1104,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     type="button"
                     aria-pressed={editType === 'SELL'}
                     onClick={() => setEditType('SELL')}
-                    className={`premium-filter-pill py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
+                    className={`premium-filter-pill min-w-0 flex-1 py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 ${editType === 'SELL' ? 'premium-filter-active-purple' : ''}`}
                   >
                     <ArrowUpDown className="w-4 h-4" />
                     SELL (Exit / Liquidation)
@@ -1311,7 +1311,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Calculated Preview */}
-              <div className="premium-inset-glass p-3 rounded-xl flex items-center justify-between text-xs">
+              <div className="premium-inset-glass p-3 rounded-xl flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-400">
                   {editType === 'BUY' ? 'Total Cash Outlay (Cost + Fees):' : 'Net Sales Proceeds (Gross - Fees):'}
                 </span>
@@ -1328,17 +1328,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800 sm:flex sm:items-center sm:justify-end">
                 <button
                   type="button"
                   onClick={requestCloseEdit}
-                  className="premium-action px-4 py-2 rounded-xl font-semibold"
+                  className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="premium-action premium-action-primary px-5 py-2 rounded-xl font-bold flex items-center gap-1.5"
+                  className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-5 py-2 rounded-xl font-bold sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   Save Changes

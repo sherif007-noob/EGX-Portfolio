@@ -773,9 +773,17 @@ No Phase 6 implementation code was changed during the audit/planning pass.
 
 ### Phase 6 Pass 0 — responsive primitives and safety baseline
 
-**Status: in progress.**
+**Status: implemented; awaiting CI/baseline validation.**
 
-Pass 0 establishes shared coarse-pointer touch sizing, modal viewport helpers, fixed-overlay viewport/safe-area helpers, and mobile dropdown/control containment before any screen-specific responsive rollout.
+- **db4bcc3** — add shared responsive safety primitives to `src/index.css`.
+- Phone/coarse-pointer shared action families now use a 44px minimum target without changing desktop density.
+- Icon actions receive a 44x44 minimum touch box; shared fields/menu rows receive matching mobile/coarse-pointer sizing.
+- `NumberStepperInput` is deliberately excluded from the generic control rule because its stacked +/- buttons need a dedicated Pass 5 treatment.
+- Add opt-in `dvh`-aware modal viewport/body-scroll helpers rather than globally forcing overflow behavior onto every existing modal.
+- Add fixed-overlay max-width and mobile width/min-width helper primitives for Passes 1–5.
+- Mobile modal backdrop padding now respects safe-area insets.
+- Mobile dropdowns are globally capped to viewport width/height and contain overscroll.
+- No screen-specific responsive component code changed in this pass.
 
 ## Current validated visual rules
 

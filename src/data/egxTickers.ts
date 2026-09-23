@@ -196,7 +196,7 @@ export function createEGXTickerRecord(
 
   const hasLiveMetadata = Boolean(description || marketSector || industry || scannerIsin);
   const nameEn = (hasLiveMetadata && description) || dict?.nameEn || description || `${upper} Corp`;
-  const nameAr = dict?.nameAr || `${upper} مصر`;
+  const nameAr = dict?.nameAr || (hasLiveMetadata ? '' : `${upper} مصر`);
   const sector = mapMarketClassificationToSector(
     marketSector,
     industry,

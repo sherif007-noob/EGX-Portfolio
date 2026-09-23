@@ -881,6 +881,8 @@ Historical coverage repair:
 - **9d4593b / 1d2be35 / 5762cab** — fix the weekend test fixture and harden Supabase coverage paging for long portfolios with deterministic ordering.
 - Data-integrity boundary: no ACTF history has been manually inserted. The repair must populate ACTF only when the normal historical-repair workflow is deliberately run for validation.
 
+Quality Checks **#702** passed typecheck, tests, and production build. A direct Supabase read after the implementation still shows **0 ACTF daily history rows**, preserving the requested test fixture.
+
 Regression boundary:
 - no Phase 3 modal visual styling was replaced;
 - no accepted selector/action/semantic/glow treatment was reinvented;

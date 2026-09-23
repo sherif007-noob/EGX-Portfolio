@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 2 complete; Pass 3 modal/overlay family in progress. |
+| 6 | **In progress** | Pass 3 implemented; awaiting CI/mobile validation before Pass 4. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -840,9 +840,27 @@ Quality Checks **#647** passed typecheck, tests, and production build on the cor
 
 ### Phase 6 Pass 3 — modal and overlay family
 
-**Status: in progress.**
+**Status: implemented; awaiting CI and mobile visual validation.**
 
-Scope: Portfolio Backup, Edit Position, Quick Cash, Confirm Delete, Add Trade, Sell Position, Journal edit, Google Sheets, Schema Sync, Price Alerts, Trade Screenshot, and PWA install surfaces. Pass 3 owns only viewport fit, `dvh` max-height, safe outer gutters, body/footer reachability, narrow-grid stacking, and dropdown containment. Accepted visual styling from Phases 2–5 remains frozen.
+Scope: Portfolio Backup, Edit Position, Quick Cash, Confirm Delete, Add Trade, Sell Position, Journal edit, Cash edit, Google Sheets, Schema Sync, Price Alerts, Trade Screenshot, and PWA install surfaces.
+
+Implementation:
+- **ff28126** — add `premium-modal-frame` alongside the existing `premium-modal-viewport` / `premium-modal-scroll-body` primitives, all bounded by mobile `dvh` and safe-area gutters.
+- **6c02593** — fix Portfolio Backup's long-phone/short-landscape clipping, mobile action stacking, and stale Firebase restore copy.
+- **0c848aa / 62fd38e / d69d0a7** — viewport-safe Edit Position, Quick Cash, and Confirm Delete.
+- **edce550 / 3e9081e** — viewport-safe Add/Sell forms with narrow form-grid collapse and reachable action rows.
+- **6803097 / e5630f3** — viewport-safe Journal Edit and Cash Edit while preserving existing selector/choice styling.
+- **c0f6844** — Google Sheets uses fixed header + shared scroll body inside `premium-modal-frame`; narrow account/URL/rebuild rows stack safely.
+- **18240f3** — Schema Sync is viewport-safe; sub-tabs become an internal horizontal rail and schema/reference grids collapse on phone.
+- **b586167** — Price Alerts moves from hard `90vh` to the shared frame/body contract; header, permission controls, tab rail, and footer remain reachable.
+- **cd96b6a** — Screenshot Scanner moves from hard `90vh` to the shared frame/body contract with responsive review/footer action composition.
+- **7f18d1d** — PWA guide receives the same structured modal contract.
+
+Regression boundary:
+- no Phase 3 modal visual styling was replaced;
+- no accepted selector/action/semantic/glow treatment was reinvented;
+- no accounting, persistence, OCR, Sheets, notification, or transaction behavior changed;
+- Pass 3 is responsive fit/reachability only.
 
 ## Current validated visual rules
 

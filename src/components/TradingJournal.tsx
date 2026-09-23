@@ -618,8 +618,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
 
           {/* Page Size Selector */}
-          <div className="premium-subpanel flex items-center gap-1.5 px-2.5 py-1 rounded-xl">
-            <span className="text-[11px] font-medium text-slate-400">Show:</span>
+          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-xl">
+            <span className="shrink-0 text-[11px] font-medium text-slate-400">Show:</span>
             <AnalyticsSelect
               value={pageSize}
               onChange={(value) => setPageSize(value === 'ALL' ? 'ALL' : Number(value))}

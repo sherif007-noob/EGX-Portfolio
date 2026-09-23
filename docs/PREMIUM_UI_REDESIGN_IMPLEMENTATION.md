@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 2 implemented; awaiting CI/mobile validation before Pass 3. |
+| 6 | **In progress** | Pass 2 complete; Pass 3 modal/overlay family in progress. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -818,7 +818,7 @@ Quality Checks **#620** passed typecheck, tests, and production build on the rev
 
 ### Phase 6 Pass 2 — core data tabs
 
-**Status: implemented; awaiting CI and mobile visual validation.**
+**Status: complete.**
 
 Scope: Positions, Closed Cycles, Transactions/Journal, Cash Ledger, and Stocks & Prices.
 
@@ -835,6 +835,14 @@ Implementation:
 No Phase 2 implementation changed accounting, persistence, transaction semantics, or chart logic. Desktop minimum widths remain at larger breakpoints where they are useful.
 
 **Regression rule added:** Phase 6 owns responsive layout and reachability, not visual-language reinvention. Existing accepted selector/action primitives must be preserved; Transactions is the canonical dense semantic filter reference.
+
+Quality Checks **#647** passed typecheck, tests, and production build on the corrected Pass 2 state.
+
+### Phase 6 Pass 3 — modal and overlay family
+
+**Status: in progress.**
+
+Scope: Portfolio Backup, Edit Position, Quick Cash, Confirm Delete, Add Trade, Sell Position, Journal edit, Google Sheets, Schema Sync, Price Alerts, Trade Screenshot, and PWA install surfaces. Pass 3 owns only viewport fit, `dvh` max-height, safe outer gutters, body/footer reachability, narrow-grid stacking, and dropdown containment. Accepted visual styling from Phases 2–5 remains frozen.
 
 ## Current validated visual rules
 

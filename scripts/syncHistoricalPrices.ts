@@ -149,15 +149,23 @@ async function loadStoredHistoryDates(
 ): Promise<StoredHistoryDate[]> {
   if (!tickers.length) return [];
 
-  const { data, error } = await sb
-    .from('price_history')
-    .select('ticker,trading_date')
-    .in('ticker', tickers)
-    .order('trading_date', { ascending: true });
+  const pageSize = 1000;
+  const rows: any[] = [];
 
-  if (error) throw new Error(`Existing history coverage read failed: ${error.message}`);
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from('price_history')
+      .select('ticker,trading_date')
+      .in('ticker', tickers)
+      .order('trading_date', { ascending: true })
+      .range(offset, offset + pageSize - 1);
 
-  return (data ?? []).map((row: any) => ({
+    if (error) throw new Error(`Existing history coverage read failed: ${error.message}`);
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows.map((row: any) => ({
     ticker: normalizeTicker(String(row.ticker || '')),
     date: String(row.trading_date || '').slice(0, 10),
   }));

@@ -114,15 +114,9 @@ function selectValuationWindow(
 
   if (!complete.length || window.requiresIntraday) return [];
 
-  const beforeOrAtStart = complete.filter((point) => point.date <= window.startDate);
-  const anchor = beforeOrAtStart.at(-1) ?? complete.find((point) => point.date >= window.startDate);
-  if (!anchor || anchor.date > window.endDate) return [];
-
-  const selected = complete.filter(
-    (point) => point.date >= anchor.date && point.date <= window.endDate,
+  return complete.filter(
+    (point) => point.date >= window.startDate && point.date <= window.endDate,
   );
-
-  return selected;
 }
 
 function periodicNpv(rate: number, flows: Array<{ date: string; amount: number }>, durationMs: number): number {
@@ -231,6 +225,7 @@ function buildPoints(
   valuations: PortfolioValuationPoint[],
   allExternalFlows: MWRRCashFlow[],
   initialBaselineEquity?: number,
+  initialBaselineDate?: string,
 ): UnifiedAnalyticsPoint[] {
   if (!valuations.length) return [];
 
@@ -240,7 +235,13 @@ function buildPoints(
       ? Number(initialBaselineEquity)
       : null;
   const periodStartingEquity = initialBaseline ?? anchor.equity;
-  let twrFactor = initialBaseline ? anchor.equity / initialBaseline : 1;
+  const periodStartingDate = initialBaselineDate ?? anchor.date;
+  const firstPointExternalFlow = initialBaseline
+    ? sumPortfolioFlows(allExternalFlows.filter((flow) => flowWithin(flow, periodStartingDate, anchor.date)))
+    : 0;
+  let twrFactor = initialBaseline
+    ? (anchor.equity - firstPointExternalFlow) / initialBaseline
+    : 1;
   let performancePeak = Math.max(100, 100 * twrFactor);
   let equityPeak = initialBaseline ?? anchor.equity;
 
@@ -281,7 +282,7 @@ function buildPoints(
         : 0
       : calculatePeriodMWR(
           periodStartingEquity,
-          anchor.date,
+          periodStartingDate,
           allExternalFlows,
           point.equity,
           point.date,
@@ -294,7 +295,7 @@ function buildPoints(
     const annualizedMwrrPercent = index === 0
       ? 0
       : calculateMWRR(
-          [{ date: anchor.date, amount: -periodStartingEquity }, ...periodFlows],
+          [{ date: periodStartingDate, amount: -periodStartingEquity }, ...periodFlows],
           point.equity,
           point.date,
         );
@@ -356,13 +357,24 @@ export function buildUnifiedAnalyticsResult(
   const openingCapital = Number.isFinite(options.openingCapital)
     ? Number(options.openingCapital)
     : 0;
-  const initialBaselineEquity =
+  const priorCompleteValuation = allValuations
+    .filter((point) => point.complete && point.date < window.startDate)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .at(-1);
+  const inceptionBaseline =
     openingCapital > 0 &&
     selectedValuations[0]?.date === firstTransactionDate &&
     !hasExplicitCapitalFlowTransaction(transactions)
       ? openingCapital
       : undefined;
-  const points = buildPoints(selectedValuations, allExternalFlows, initialBaselineEquity);
+  const initialBaselineEquity = priorCompleteValuation?.equity ?? inceptionBaseline;
+  const initialBaselineDate = priorCompleteValuation?.date;
+  const points = buildPoints(
+    selectedValuations,
+    allExternalFlows,
+    initialBaselineEquity,
+    initialBaselineDate,
+  );
 
   const incomplete = allValuations.filter(
     (point) => point.date >= window.startDate && point.date <= window.endDate && !point.complete,
@@ -372,8 +384,9 @@ export function buildUnifiedAnalyticsResult(
 
   const first = points[0];
   const last = points.at(-1);
-  const rangeFlows = first && last
-    ? allExternalFlows.filter((flow) => flowWithin(flow, first.date, last.date))
+  const summaryStartDate = initialBaselineDate ?? first?.date ?? null;
+  const rangeFlows = summaryStartDate && last
+    ? allExternalFlows.filter((flow) => flowWithin(flow, summaryStartDate, last.date))
     : [];
   const netExternalFlow = sumPortfolioFlows(rangeFlows);
   const effectiveStartEquity = initialBaselineEquity ?? first?.equity ?? null;
@@ -393,7 +406,7 @@ export function buildUnifiedAnalyticsResult(
     window,
     points,
     summary: {
-      startDate: first?.date ?? null,
+      startDate: summaryStartDate,
       endDate: last?.date ?? null,
       startEquity: effectiveStartEquity,
       endEquity: last?.equity ?? null,

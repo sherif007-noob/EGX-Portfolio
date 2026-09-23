@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 0 responsive primitives and safety baseline in progress. |
+| 6 | **In progress** | Pass 0 implemented and CI-clean; awaiting mobile baseline validation before Pass 1. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -773,7 +773,7 @@ No Phase 6 implementation code was changed during the audit/planning pass.
 
 ### Phase 6 Pass 0 — responsive primitives and safety baseline
 
-**Status: implemented; awaiting CI/baseline validation.**
+**Status: implemented and CI-clean; awaiting mobile baseline validation before Pass 1.**
 
 - **db4bcc3** — add shared responsive safety primitives to `src/index.css`.
 - Phone/coarse-pointer shared action families now use a 44px minimum target without changing desktop density.
@@ -784,6 +784,9 @@ No Phase 6 implementation code was changed during the audit/planning pass.
 - Mobile modal backdrop padding now respects safe-area insets.
 - Mobile dropdowns are globally capped to viewport width/height and contain overscroll.
 - No screen-specific responsive component code changed in this pass.
+- Quality Checks **#600** passed typecheck, tests, and production build.
+
+Pass 0 now requires visual confirmation that touch sizing feels comfortable without making mobile layouts excessively tall or causing new wrapping before Pass 1 begins.
 
 ## Current validated visual rules
 

@@ -269,6 +269,12 @@ A same-session transaction without an execution timestamp makes the 1D reconstru
 
 The Today chart uses a straight `linear` line rather than a smoothed curve so the UI does not imply market observations that did not occur.
 
+The stored 15-minute bars reconstruct the session path. During the active session, if every currently held ticker has a valid live quote, the engine appends one final as-of valuation using the same live position prices that drive the portfolio hero/current NAV. This makes the chart endpoint converge on the current portfolio value without rewriting the earlier 15-minute path. If even one held ticker lacks a trustworthy live quote, no mixed live/stale endpoint is appended.
+
+### Seven-day window semantics
+
+`1W` means seven calendar dates inclusive of the ending session date. For example, an ending session of Sep 23 resolves to a window start of Sep 17. The valuation selector may still use the most recent complete valuation at or before that boundary as its performance anchor when required, but the requested window itself is not eight calendar dates wide.
+
 ### Current-session versus completed-session behavior
 
 During an active session, the newest available partial 15-minute bar is valued only through the current time.
@@ -426,3 +432,6 @@ open market value
 For daily timeframes the chart uses historical daily closes. For Today it uses 15-minute prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
 
 The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.
+
+
+<!-- deployment-trigger: cloudflare-preview-2026-09-23 -->

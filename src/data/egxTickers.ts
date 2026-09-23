@@ -147,9 +147,9 @@ export function mapMarketClassificationToSector(
   if (/telecom|communication|media/.test(value)) return 'Telecommunications & Media';
   if (/shipping|transport|logistic|marine/.test(value)) return 'Transport & Logistics';
   if (/textile|apparel|carpet|consumer durable/.test(value)) return 'Textiles & Consumer Durables';
-  if (/retail|distribut|wholesale|trade/.test(value)) return 'Trade & Distributors';
   if (/oil|drilling|energy service/.test(value)) return 'Energy & Oil Services';
   if (/utilit/.test(value)) return 'Utilities';
+  if (/retail|distribut|wholesale|trade/.test(value)) return 'Trade & Distributors';
   if (/finance|financial|investment|insurance|leasing|broker/.test(value)) {
     return 'Non-Bank Financial Services & Fintech';
   }

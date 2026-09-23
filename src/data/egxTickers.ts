@@ -32,7 +32,7 @@ export const EGX_STOCK_DICTIONARY: Record<
   EFIH: { nameEn: 'e-finance for Digital & Financial Investments', nameAr: 'إي فاينانس للاستثمارات المالية والرقمية', sector: 'Non-Bank Financial Services & Fintech', isin: 'EGS745E1C019' },
   ADIB: { nameEn: 'Abu Dhabi Islamic Bank - Egypt', nameAr: 'مصرف أبو ظبي الإسلامي - مصر', sector: 'Banking', isin: 'EGS60061C016' },
   CIEB: { nameEn: 'Credit Agricole Egypt', nameAr: 'كريدي أجريكول مصر', sector: 'Banking', isin: 'EGS60041C018' },
-  HDBK: { nameEn: 'Housing & Development Bank', nameAr: 'بنك التعمير والإسكان', sector: 'Banking', isin: 'EGS60041C018' },
+  HDBK: { nameEn: 'Housing & Development Bank', nameAr: 'بنك التعمير والإسكان', sector: 'Banking', isin: 'EGS60301C016' },
   QNBE: { nameEn: 'Qatar National Bank', nameAr: 'بنك قطر الوطني', sector: 'Banking', isin: 'EGS60081C014' },
   QNBF: { nameEn: 'Qatar National Bank', nameAr: 'بنك قطر الوطني', sector: 'Banking', isin: 'EGS60081C014' },
   QNBA: { nameEn: 'Qatar National Bank', nameAr: 'بنك قطر الوطني', sector: 'Banking', isin: 'EGS60081C014' },

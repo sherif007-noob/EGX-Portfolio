@@ -394,8 +394,9 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     size="sm"
                   />
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <span className="font-bold text-white text-sm">{pos.ticker}</span>
+                      <span className="max-w-[120px] truncate text-[10px] text-slate-500">{pos.sector}</span>
                     </div>
                     <p className="text-xs text-slate-400 truncate max-w-[200px]">{pos.companyName}</p>
                   </div>
@@ -478,36 +479,38 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               )}
 
               {/* Action row */}
-              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                <span className="text-[11px] text-slate-400">{pos.sector}</span>
-                <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                  <button
-                    onClick={() => onBuyMore(pos)}
-                    className="premium-action premium-action-primary px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-blue-400" />
-                    Buy More (DCA)
-                  </button>
-                  <button
-                    onClick={() => onSellPosition(pos)}
-                    className="premium-action premium-action-warning px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
-                  >
-                    <DollarSign className="w-3.5 h-3.5" />
-                    Sell
-                  </button>
-                  <button
-                    onClick={() => onEditPosition(pos)}
-                    className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setPositionToDelete(pos)}
-                    className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)_2.75rem_2.75rem] items-center gap-1.5 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => onBuyMore(pos)}
+                  className="premium-action premium-action-primary min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                >
+                  <Layers className="w-3.5 h-3.5 shrink-0 text-blue-400" />
+                  <span className="sm:hidden">DCA</span>
+                  <span className="hidden sm:inline">Buy More (DCA)</span>
+                </button>
+                <button
+                  onClick={() => onSellPosition(pos)}
+                  className="premium-action premium-action-warning min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                >
+                  <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                  <span>Sell</span>
+                </button>
+                <button
+                  onClick={() => onEditPosition(pos)}
+                  className="premium-icon-action premium-icon-edit w-11 h-11 p-0 rounded-lg"
+                  aria-label={`Edit ${pos.ticker} position`}
+                  title="Edit position"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setPositionToDelete(pos)}
+                  className="premium-icon-action premium-icon-delete w-11 h-11 p-0 rounded-lg"
+                  aria-label={`Delete ${pos.ticker} position`}
+                  title="Delete position"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           );

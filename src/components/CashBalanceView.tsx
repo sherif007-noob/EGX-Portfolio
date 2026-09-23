@@ -909,7 +909,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               type="button"
               aria-pressed={historyFilter === 'DEPOSIT'}
               onClick={() => changeHistoryFilter('DEPOSIT')}
-              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
             >
               Deposits <span className="hidden sm:inline">({transactions.filter((t) => t.type === 'DEPOSIT').length})</span>
             </button>
@@ -917,7 +917,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               type="button"
               aria-pressed={historyFilter === 'WITHDRAWAL'}
               onClick={() => changeHistoryFilter('WITHDRAWAL')}
-              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
             >
               Withdrawals <span className="hidden sm:inline">({transactions.filter((t) => t.type === 'WITHDRAWAL').length})</span>
             </button>

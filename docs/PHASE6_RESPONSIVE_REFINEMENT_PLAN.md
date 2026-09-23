@@ -406,6 +406,8 @@ Side-quest acceptance:
 - historical aliases collapse to current symbols without duplicate active rows;
 - ticker and ISIN are both valid directory/search identifiers.
 
+Quality Checks **#692** passed typecheck, tests, and production build on the completed full-directory migration.
+
 Responsive rules preserved:
 - no modal, button, choice, selector, semantic state, glow, refraction, or motion visual language was redesigned;
 - accepted Phase 2–5 classes remain the source of truth;

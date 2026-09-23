@@ -1019,6 +1019,7 @@ export default function App() {
               transactions={transactions}
               historicalPrices={historicalPriceSeries}
               capitalDeposits={capitalDeposits}
+              positions={positions}
               historicalLoading={historicalAnalyticsLoading}
             />
           </div>

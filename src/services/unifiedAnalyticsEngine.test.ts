@@ -117,8 +117,43 @@ describe('unified analytics engine', () => {
     });
 
     expect(result.window.startDate).toBe('2026-09-10');
-    expect(result.summary.startDate).toBe('2026-09-10');
+    expect(result.points[0].date).toBe('2026-09-10');
+    // A period beginning on Sep 10 starts from the prior completed close (Sep 9).
+    // Sep 10 remains the first plotted valuation, while Sep 9 is the return baseline.
+    expect(result.summary.startDate).toBe('2026-09-09');
+    expect(result.summary.startEquity).toBe(1000);
     expect(result.summary.endDate).toBe('2026-09-17');
+    expect(result.summary.endEquity).toBe(1150);
+    expect(result.summary.pnlEgp).toBe(150);
+    expect(result.summary.twrPercent).toBeCloseTo(15, 8);
+  });
+
+  it('uses the prior close as the weekly baseline without adding it to the plotted window', () => {
+    const transactions = [
+      cash('dep', '2026-09-01', 70029, 'DEPOSIT'),
+      buy('buy', '2026-09-01', 1, 1),
+    ];
+    const history = {
+      TEST: [
+        { date: '2026-09-15', close: 1 },
+        { date: '2026-09-16', close: 1 },
+        { date: '2026-09-23', close: 1 },
+      ],
+    };
+
+    // Recreate the observed accounting boundary directly: Sep 15 close is the
+    // beginning-of-period valuation for a Sep 16 -> Sep 23 weekly chart.
+    transactions.push({
+      ...cash('wd', '2026-09-16', 1199.05, 'WITHDRAWAL'),
+    });
+
+    const result = buildUnifiedAnalyticsResult(transactions, history, '1W', {
+      latestSessionDate: '2026-09-23',
+    });
+
+    expect(result.window.startDate).toBe('2026-09-16');
+    expect(result.points[0].date).toBe('2026-09-16');
+    expect(result.summary.startDate).toBe('2026-09-15');
   });
 
   it('marks Today as requiring the intraday engine instead of fabricating a daily series', () => {

@@ -316,7 +316,7 @@ Implemented:
 - **5c44fdb** — remove the dead Firestore-quota status branch. The migration shim already reports no quota state and no-op retry behavior; `OfflineIndicator` now represents only the real browser offline state.
 - **1928172** — user-requested early Pass 2 correction: move mobile position sector metadata into the identity row and keep DCA, Sell, Edit, and Delete in one compact four-control row so Delete cannot create a standalone second row/card-height penalty.
 
-Quality Checks **#614** passed on the pre-revision Pass 1 state. The revised header/position-card state requires a fresh CI run before validation.
+Quality Checks **#620** passed typecheck, tests, and production build on the revised Header/Positions state.
 
 Validation target:
 - 320 / 360 / 390 / 430 widths;

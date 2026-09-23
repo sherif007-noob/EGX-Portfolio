@@ -311,8 +311,12 @@ Implemented:
 - **3a625d8** — tighten phone Portfolio Summary padding/gaps, keep the 2-column KPI layout, hide low-priority KPI annotations below `sm`, allow long P&L/footer content to wrap, and align live-feed actions cleanly.
 - **132295e** — clamp Offline/Firestore status surfaces to mobile safe gutters, allow status text to wrap, and keep the Sync action independently tappable.
 - **3fd4190 / bc9e7f7** — prevent fixed-toast/header/status collisions and keep fixed-overlay width clamping mobile-only so desktop sizing remains unchanged.
+- User screenshot validation found the initial mobile Header rail still visually noisy/off-center and highlighted redundant migration-era controls.
+- **05f2316 / 2f1ed56 / 8019ca1** — remove the obsolete manual database Force Sync header action and the standalone Google/Firebase Sign In/avatar/Sign Out controls. Supabase already gates the app and owns portfolio persistence; optional Google authentication remains inside the Google Sheets modal. The remaining six Header actions are Alerts, Live Prices, Google Sheets, Backup/Reconcile, Scan, and Add Trade. Mobile count/status decorations are taken out of normal icon flow so the icons remain centered.
+- **5c44fdb** — remove the dead Firestore-quota status branch. The migration shim already reports no quota state and no-op retry behavior; `OfflineIndicator` now represents only the real browser offline state.
+- **1928172** — user-requested early Pass 2 correction: move mobile position sector metadata into the identity row and keep DCA, Sell, Edit, and Delete in one compact four-control row so Delete cannot create a standalone second row/card-height penalty.
 
-Quality Checks **#614** passed typecheck, tests, and production build.
+Quality Checks **#614** passed on the pre-revision Pass 1 state. The revised header/position-card state requires a fresh CI run before validation.
 
 Validation target:
 - 320 / 360 / 390 / 430 widths;

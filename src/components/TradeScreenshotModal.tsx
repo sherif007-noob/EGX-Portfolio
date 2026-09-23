@@ -284,18 +284,18 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     <PremiumModalMotion
       isOpen={isOpen}
       backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal rounded-2xl w-full max-w-3xl overflow-hidden my-8 max-h-[90vh] flex flex-col"
+      panelClassName="premium-modal premium-modal-frame rounded-2xl w-full max-w-3xl overflow-hidden my-0 sm:my-8 flex flex-col"
       onBackdropClick={requestClose}
       panelAriaLabel="Trade screenshot scanner"
     >
         {/* Modal Header */}
-        <div className="premium-modal-section px-6 py-4 border-b border-slate-700/50 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="premium-modal-section px-4 sm:px-6 py-4 border-b border-slate-700/50 flex items-start justify-between gap-3 shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30">
               <Zap className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   Trade Screenshot Scanner
                 </h3>
@@ -324,7 +324,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+        <div className="premium-modal-scroll-body p-4 sm:p-6 space-y-5 flex-1">
           <SurfacePresence isOpen={!!errorMsg}>
             {errorMsg && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3">
@@ -355,7 +355,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   handleFilesSelect(e.dataTransfer.files);
                 }
               }}
-              className="premium-inset-glass border-2 border-dashed border-slate-700/70 hover:border-emerald-500/60 rounded-2xl p-8 text-center cursor-pointer transition group"
+              className="premium-inset-glass border-2 border-dashed border-slate-700/70 hover:border-emerald-500/60 rounded-2xl p-5 sm:p-8 text-center cursor-pointer transition group"
             >
               <input
                 ref={fileInputRef}
@@ -411,7 +411,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
           {/* Batch Trades Review List */}
           {batchTrades.length > 0 && !isScanning && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex flex-col items-stretch gap-2 pb-2 border-b border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-bold text-white">
                     Parsed Transactions ({batchTrades.length})
@@ -421,7 +421,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -453,8 +453,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                       className="premium-inset-glass p-4 rounded-xl hover:border-slate-600/70 transition space-y-3"
                     >
                       {/* Top Row: Logo, Ticker, Type, Confidence & Delete */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
+                      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <StockLogo ticker={trade.ticker} size="sm" />
                           <div>
                             <div className="flex items-center gap-1.5">
@@ -476,7 +476,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           {/* Buy / Sell Toggle */}
                           <div className="premium-inset-glass flex rounded-lg p-0.5">
                             <button
@@ -600,21 +600,21 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <div className="grid w-full grid-cols-2 gap-2.5 sm:flex sm:w-auto sm:items-center sm:justify-end">
               <button
                 type="button"
                 onClick={() => {
                   resetModal();
                   requestClose();
                 }}
-                className="premium-action px-4 py-2 rounded-xl text-xs font-semibold"
+                className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAll}
-                className="premium-action premium-action-success premium-shimmer-border px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                className="premium-action premium-action-success premium-shimmer-border flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:w-auto"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>

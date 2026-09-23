@@ -582,7 +582,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </SurfacePresence>
 
       {/* Main Operations Card: Deposit or Withdraw */}
-      <div className="premium-panel p-5 rounded-2xl space-y-5">
+      <div className="premium-panel p-4 sm:p-5 rounded-2xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
             <h3 className="text-base font-bold text-white">Record New Cash Transfer</h3>
@@ -591,12 +591,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </p>
           </div>
 
-          <div className="premium-selector-shell flex items-center gap-1.5">
+          <div className="premium-selector-shell grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:items-center">
             <button
               id="action-select-deposit"
               aria-pressed={activeAction === 'deposit'}
               onClick={() => changeActiveAction('deposit')}
-              className={`premium-filter-pill flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'deposit' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'deposit' ? 'premium-filter-active-emerald' : ''}`}
             >
               <ArrowDownLeft className="w-3.5 h-3.5" />
               Deposit Cash
@@ -605,7 +605,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               id="action-select-withdraw"
               aria-pressed={activeAction === 'withdraw'}
               onClick={() => changeActiveAction('withdraw')}
-              className={`premium-filter-pill flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'withdraw' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold ${activeAction === 'withdraw' ? 'premium-filter-active-rose' : ''}`}
             >
               <ArrowUpRight className="w-3.5 h-3.5" />
               Withdraw Cash
@@ -884,7 +884,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Cash Transaction History Ledger */}
-      <div className="premium-panel p-5 rounded-2xl space-y-4">
+      <div className="premium-panel p-4 sm:p-5 rounded-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -896,14 +896,14 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </p>
           </div>
 
-          <div className="premium-selector-shell flex items-center gap-1.5">
+          <div className="premium-selector-shell grid w-full grid-cols-3 gap-1 sm:flex sm:w-auto sm:items-center sm:gap-1.5">
             <button
               type="button"
               aria-pressed={historyFilter === 'ALL'}
               onClick={() => changeHistoryFilter('ALL')}
-              className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`premium-filter-pill justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
-              All ({transactions.length})
+              All <span className="hidden sm:inline">({transactions.length})</span>
             </button>
             <button
               type="button"
@@ -911,7 +911,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               onClick={() => changeHistoryFilter('DEPOSIT')}
               className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'DEPOSIT' ? 'premium-filter-active-emerald' : ''}`}
             >
-              Deposits ({transactions.filter((t) => t.type === 'DEPOSIT').length})
+              Deposits <span className="hidden sm:inline">({transactions.filter((t) => t.type === 'DEPOSIT').length})</span>
             </button>
             <button
               type="button"
@@ -919,15 +919,15 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               onClick={() => changeHistoryFilter('WITHDRAWAL')}
               className={`premium-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ${historyFilter === 'WITHDRAWAL' ? 'premium-filter-active-rose' : ''}`}
             >
-              Withdrawals ({transactions.filter((t) => t.type === 'WITHDRAWAL').length})
+              Withdrawals <span className="hidden sm:inline">({transactions.filter((t) => t.type === 'WITHDRAWAL').length})</span>
             </button>
           </div>
         </div>
 
         {/* Ledger Table */}
         <MotionSwap motionKey={historyFilter} variant="state" className="premium-cash-history-results">
-        <div className="premium-table-shell overflow-x-auto rounded-xl">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="premium-table-shell overflow-x-auto overscroll-x-contain rounded-xl">
+          <table className="w-full min-w-[720px] text-left text-xs border-collapse">
             <thead>
               <tr className="text-slate-400 border-b border-slate-800/70 font-semibold">
                 <th className="py-3 px-4">Date</th>

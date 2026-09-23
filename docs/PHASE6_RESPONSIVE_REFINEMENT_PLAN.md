@@ -296,7 +296,7 @@ Validation:
 
 ### Pass 1 — Persistent shell and main app chrome
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting CI and visual validation.**
 
 Scope:
 - `App.tsx`;
@@ -304,16 +304,21 @@ Scope:
 - `PortfolioSummary.tsx`;
 - `OfflineIndicator.tsx`.
 
-Work:
-- clamp toasts/status banners;
-- normalize mobile action targets;
-- verify header wrapping without redesigning nav architecture;
-- preserve horizontal nav access;
-- validate summary KPI density/action reachability.
+Implemented:
+- **ae08150** — extend the responsive baseline with mobile fixed-overlay safe-area/stacking helpers and ensure icon-only shared actions have a 44px minimum width on touch.
+- **24ac8d2 / bf3cdd1** — clamp App undo/notification toasts to mobile safe gutters, allow text wrapping, keep action buttons reachable, and stack Undo above persistent bottom status surfaces.
+- **dbe2a30** — convert the phone Header utility cluster into one horizontally scrollable action rail instead of a tall wrapping control block; keep the existing navigation rail horizontally scrollable and leave navigation architecture unchanged.
+- **3a625d8** — tighten phone Portfolio Summary padding/gaps, keep the 2-column KPI layout, hide low-priority KPI annotations below `sm`, allow long P&L/footer content to wrap, and align live-feed actions cleanly.
+- **132295e** — clamp Offline/Firestore status surfaces to mobile safe gutters, allow status text to wrap, and keep the Sync action independently tappable.
+- **3fd4190 / bc9e7f7** — prevent fixed-toast/header/status collisions and keep fixed-overlay width clamping mobile-only so desktop sizing remains unchanged.
 
-Checkpoint:
+Validation target:
 - 320 / 360 / 390 / 430 widths;
-- portrait + short landscape.
+- portrait + short landscape;
+- Header utility rail remains reachable without excessive vertical growth;
+- persistent nav remains horizontally accessible;
+- fixed toast/status layers do not collide;
+- summary cards remain legible without page-level horizontal overflow.
 
 ### Pass 2 — Core data tabs
 

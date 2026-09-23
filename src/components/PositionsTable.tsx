@@ -386,7 +386,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               }`}
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <StockLogo
                     ticker={pos.ticker}
                     companyName={pos.companyName}
@@ -402,7 +402,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <div
                     className={`font-mono font-bold text-sm ${
                       isProfit ? 'text-emerald-400' : 'text-rose-400'
@@ -471,7 +471,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 <div className="text-[11px] text-slate-500">
                   <button
                     onClick={() => onEditPosition(pos)}
-                    className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px]"
+                    className="premium-action premium-action-warning w-full justify-center px-2 py-1 rounded-lg text-[10px] sm:w-auto"
                   >
                     + Set Target &amp; Stop-Loss Alerts
                   </button>

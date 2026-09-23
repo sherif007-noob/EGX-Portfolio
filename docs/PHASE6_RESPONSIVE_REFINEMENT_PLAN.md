@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 0 responsive primitives and safety baseline.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 0 implemented and CI-clean; awaiting mobile baseline validation before Pass 1.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -263,7 +263,7 @@ Every render file has an explicit Phase 6 disposition.
 
 ### Pass 0 — Responsive primitives and safety baseline
 
-**Status: IMPLEMENTED — awaiting CI/baseline validation.**
+**Status: IMPLEMENTED — CI clean; awaiting mobile baseline validation before Pass 1.**
 
 Goal:
 - solve repeated responsive problems once before screen-level rollout.
@@ -286,6 +286,8 @@ Implemented:
 - Mobile dropdowns receive viewport max-width/max-height containment and overscroll containment.
 
 No component-specific layout was changed in Pass 0.
+
+Quality Checks **#600** passed typecheck, tests, and production build. Pass 0 remains open only for visual validation of the shared mobile/coarse-pointer baseline before the app-shell rollout begins.
 
 Validation:
 - desktop visual density materially unchanged;

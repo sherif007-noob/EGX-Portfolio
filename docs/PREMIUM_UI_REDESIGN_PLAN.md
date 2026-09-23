@@ -346,7 +346,7 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
-**Status: IN PROGRESS — Pass 3 modal/overlay corrections implemented; awaiting CI/mobile re-validation before Pass 4.**
+**Status: IN PROGRESS — Pass 3 corrections plus full EGX ticker-directory side quest implemented; awaiting CI/mobile re-validation before Pass 4.**
 
 The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
 

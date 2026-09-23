@@ -1053,7 +1053,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       {displayEditingTx && createPortal((
         <PremiumModalMotion
           isOpen={!!editingTx}
-          backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
           panelClassName="premium-modal premium-modal-viewport w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
           onBackdropClick={requestCloseEdit}
           panelAriaLabel="Edit transaction"

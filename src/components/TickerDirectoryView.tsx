@@ -95,7 +95,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
+      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />
@@ -106,13 +106,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
           {onSyncLivePrices && (
             <button
               id="sync-directory-prices-btn"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="premium-action premium-action-primary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+              className="premium-action premium-action-primary col-span-2 flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 sm:col-auto sm:w-auto"
               title="Sync latest prices directly from TradingView Egypt Scanner"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -125,7 +125,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               id="push-prices-to-sheet-btn"
               onClick={handlePushSheetClick}
               disabled={isPushingSheet}
-              className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+              className="premium-action premium-action-success flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 sm:w-auto"
               title="Push live quotes into ticker directory tab in Google Sheets"
             >
               <FileSpreadsheet className={`w-3.5 h-3.5 text-emerald-400 ${isPushingSheet ? 'animate-spin' : ''}`} />
@@ -136,7 +136,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           <button
             id="download-directory-json-btn"
             onClick={handleDownloadJson}
-            className="premium-action flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            className="premium-action flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
           >
             <Download className="w-3.5 h-3.5" />
             Export JSON
@@ -166,14 +166,14 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="w-full min-w-0 sm:w-auto">
           <AnalyticsSelect
             value={selectedSector}
             onChange={(value) => changeSelectedSector(String(value))}
             compact
             accent="teal"
             ariaLabel="Filter ticker directory by sector"
-            className="min-w-[170px]"
+            className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
             options={[
               { value: 'ALL', label: `All Sectors (${tickers.length})` },
               ...sectors.map((sector) => ({ value: sector, label: sector })),
@@ -190,7 +190,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           return (
             <div
               key={ticker.ticker}
-              className="premium-card premium-radial p-4 rounded-2xl space-y-3"
+              className="premium-card premium-radial p-3.5 sm:p-4 rounded-2xl space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">

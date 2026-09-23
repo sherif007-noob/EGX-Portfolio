@@ -790,9 +790,23 @@ User validation accepted the Pass 0 touch-sizing/mobile baseline. **Pass 0 is co
 
 ### Phase 6 Pass 1 — persistent shell and main app chrome
 
-**Status: in progress.**
+**Status: implemented; awaiting CI and visual validation.**
 
-Scope: `App.tsx`, `Header.tsx`, `PortfolioSummary.tsx`, and `OfflineIndicator.tsx`. Pass 1 owns fixed-overlay clamping, mobile Header utility-strip fit, persistent nav overflow safety, summary action/KPI density, and status-banner reachability without pulling forward Phase 6.5 navigation redesign or Phase 9 Header redesign.
+Scope: `App.tsx`, `Header.tsx`, `PortfolioSummary.tsx`, and `OfflineIndicator.tsx`.
+
+Implemented:
+- **ae08150** — add safe-area-aware mobile fixed-overlay positioning helpers and 44px minimum width for shared touch actions.
+- **24ac8d2** — make App undo/toast content viewport-clamped and wrap-safe.
+- **dbe2a30** — make the mobile Header utility strip horizontally scrollable instead of multi-row wrapping; persistent navigation remains the existing horizontal rail.
+- **3a625d8** — reduce phone summary padding/gap pressure, preserve the 2-column KPI grid, hide low-priority mobile annotations, and allow long semantic values/footer details to wrap.
+- **132295e** — make Offline/Firestore banners span the safe mobile gutter with a reachable independent Sync action.
+- **3fd4190 / bf3cdd1** — place mobile notifications below the taller sticky Header and stack Undo above persistent status banners.
+- **bc9e7f7** — keep fixed-overlay width clamping mobile-only to protect the accepted desktop baseline.
+
+Boundaries preserved:
+- no navigation IA/active-state redesign (Phase 6.5);
+- no final Header redesign (Phase 9);
+- no business/data/motion/chart changes.
 
 ## Current validated visual rules
 

@@ -253,7 +253,7 @@ The application now treats `dataQuality.missingTickers` as an ingestion signal:
 5. upsert only missing TradingView daily bars into `price_history`;
 6. reload the canonical store once and rebuild analytics.
 
-The request includes the in-memory first-transaction date as a hint so a just-added trade can be repaired even if asynchronous portfolio persistence is still completing. The server also checks the persisted ledger and uses the earlier valid date when both are available.
+The request includes the in-memory first-transaction date as a hint so a just-added trade can be repaired even if asynchronous portfolio persistence is still completing. When the ticker already exists in the persisted ledger, the persisted first-transaction date is authoritative; the client hint is only a fallback for the brief persistence race.
 
 The repair path is generic. It must never contain ticker-specific exceptions or manually seed a ticker merely to make the chart look complete. If TradingView cannot supply a trustworthy close, the affected valuation remains incomplete.
 

@@ -812,7 +812,7 @@ Boundaries preserved:
 - no final Header redesign (Phase 9);
 - no business/data/motion/chart changes.
 
-Quality Checks **#614** passed the initial Pass 1 state. The user-driven Header/Positions revision requires a fresh Quality Check.
+Quality Checks **#620** passed typecheck, tests, and production build on the revised Pass 1 state.
 
 ## Current validated visual rules
 

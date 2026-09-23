@@ -896,14 +896,14 @@ export default function App() {
       />
 
       {/* Undo Toast Notification */}
-      <SurfacePresence isOpen={!!undoState} className="fixed bottom-6 right-6 z-50">
+      <SurfacePresence isOpen={!!undoState} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-safe fixed bottom-6 right-6 z-50">
         {undoState && (
-        <div>
-          <div className="premium-floating px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
-            <span>{undoState.message}</span>
+        <div className="w-full">
+          <div className="premium-floating w-full px-4 py-3 rounded-xl border text-xs font-semibold flex items-center gap-3 text-slate-200">
+            <span className="min-w-0 flex-1">{undoState.message}</span>
             <button
               onClick={executeUndo}
-              className="premium-action premium-action-success px-2.5 py-1 rounded-lg font-bold flex items-center gap-1"
+              className="premium-action premium-action-success shrink-0 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Undo
@@ -914,11 +914,11 @@ export default function App() {
       </SurfacePresence>
 
       {/* Price / Action Notification Toast */}
-      <SurfacePresence isOpen={!!toastNotification} className="fixed top-20 right-4 z-50">
+      <SurfacePresence isOpen={!!toastNotification} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-top-after-header fixed top-20 right-4 z-50">
         {toastNotification && (
-        <div>
+        <div className="w-full">
           <div
-            className={`px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
+            className={`w-full px-4 py-2.5 rounded-lg shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastNotification.type === 'success'
                 ? 'premium-floating border-emerald-500/60 text-emerald-300'
                 : toastNotification.type === 'info'
@@ -927,7 +927,7 @@ export default function App() {
             }`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 shrink-0 rounded-full ${
                 toastNotification.type === 'success'
                   ? 'bg-emerald-400'
                   : toastNotification.type === 'info'
@@ -935,7 +935,7 @@ export default function App() {
                   : 'bg-rose-400'
               }`}
             />
-            <span>{toastNotification.message}</span>
+            <span className="min-w-0 flex-1">{toastNotification.message}</span>
           </div>
         </div>
       )}

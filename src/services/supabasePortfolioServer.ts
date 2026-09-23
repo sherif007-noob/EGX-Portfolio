@@ -314,7 +314,7 @@ export async function loadHistoricalPrices(uid: string, tickers: string[], start
  * identified as incomplete. The client may provide a first-transaction date
  * hint so a just-added trade can be repaired even if the accounting snapshot
  * is still finishing its async persistence. When the ledger already contains
- * the ticker, the earlier of the persisted date and hint is used.
+ * the ticker, the persisted first-transaction date is authoritative.
  *
  * This function only writes market-data rows. It never mutates portfolio
  * transactions, positions, cash, or closed trades.
@@ -360,9 +360,7 @@ export async function ensurePortfolioHistoricalPrices(
   const targets = [...requested.entries()]
     .map(([ticker, hintedDate]) => {
       const ledgerDate = firstLedgerDate.get(ticker);
-      const startDate = ledgerDate && hintedDate
-        ? (ledgerDate < hintedDate ? ledgerDate : hintedDate)
-        : ledgerDate ?? hintedDate;
+      const startDate = ledgerDate ?? hintedDate;
       return startDate && startDate <= today ? { ticker, startDate } : null;
     })
     .filter((target): target is { ticker: string; startDate: string } => Boolean(target));

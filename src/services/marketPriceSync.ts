@@ -44,7 +44,8 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       'sector',
       'RSI',
       'industry',
-      'isin'
+      'isin',
+      'currency'
     ],
     sort: { sortBy: 'name', sortOrder: 'asc' },
     range: [0, 500]
@@ -105,8 +106,11 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
       const rsi = item.d[12] !== null && item.d[12] !== undefined ? Number(item.d[12]) : undefined;
       const industry = typeof item.d[13] === 'string' ? String(item.d[13] || '').trim() : '';
       const scannerIsin = typeof item.d[14] === 'string' ? String(item.d[14] || '').trim().toUpperCase() : '';
+      const currency = typeof item.d[15] === 'string' ? String(item.d[15] || '').trim().toUpperCase() : '';
 
-      if (close > 0) {
+      // This portfolio is EGP-denominated. Ignore alternate USD share classes rather
+      // than silently labeling a USD quote as EGP in the directory and valuation UI.
+      if (close > 0 && (!currency || currency === 'EGP')) {
         const roundedPrice = Math.round(close * 100) / 100;
         const roundedChangePercent = Math.round(changePercent * 100) / 100;
         let calculatedChangeAbs = changeAbs;

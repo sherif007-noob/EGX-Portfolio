@@ -389,7 +389,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       {/* Search, Filter & Sort Controls */}
       <div className="premium-panel p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search Bar */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative w-full min-w-0 flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             id="search-closed-cycles"
@@ -410,30 +410,30 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Filters and Sorting */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
           {/* Outcome Filter Pills */}
-          <div className="premium-subpanel flex items-center gap-1 p-1 rounded-xl">
+          <div className="premium-subpanel grid grid-cols-2 gap-1 p-1 rounded-xl sm:flex sm:items-center">
             <button
               onClick={() => changeOutcomeFilter('ALL')}
-              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
             <button
               onClick={() => changeOutcomeFilter('WIN')}
-              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
             <button
               onClick={() => changeOutcomeFilter('LOSS')}
-              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
             <button
               onClick={() => changeOutcomeFilter('BREAKEVEN')}
-              className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
+              className={`premium-filter-pill justify-center px-2.5 py-1 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>
@@ -446,7 +446,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             compact
             accent="purple"
             ariaLabel="Sort closed cycles"
-            className="min-w-[205px]"
+            className="w-full min-w-0 sm:w-auto sm:min-w-[205px]"
             options={[
               { value: 'date', label: 'Sort: Exit Date (Newest)' },
               { value: 'pnl_desc', label: 'Sort: Highest P&L (EGP)' },
@@ -464,7 +464,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 filteredCycles.map((c) => c.id)
               )
             }
-            className="premium-action px-3 py-1.5 rounded-xl text-xs font-medium"
+            className="premium-action w-full justify-center px-3 py-1.5 rounded-xl text-xs font-medium sm:w-auto"
           >
             {expandedCycleIds.size < filteredCycles.length ? 'Expand All Phases' : 'Collapse All'}
           </button>

@@ -163,6 +163,7 @@ export const PerformanceReports: React.FC<PerformanceReportsProps> = ({
         transactions={transactions}
         historicalPrices={historicalPrices}
         capitalDeposits={capitalDeposits}
+        positions={positions}
         historicalLoading={historicalLoading}
       />
 

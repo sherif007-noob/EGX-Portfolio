@@ -203,6 +203,21 @@ The historical sync:
 - filters results to exact requested dates;
 - upserts historical rows without modifying accounting transactions.
 
+
+### On-demand repair for missing portfolio history
+
+The normal scheduled workflow remains the primary daily ingestion path. In addition, the application can repair a newly introduced ticker immediately when analytics detects that missing daily history is excluding valuation points.
+
+Authenticated route:
+
+```text
+POST /api/supabase/price-history/ensure
+```
+
+The request contains only missing ticker targets and their first-transaction date hints. The server verifies the Supabase access token, checks the authenticated portfolio ledger, fetches TradingView daily bars, and inserts only absent `price_history` rows.
+
+The endpoint is idempotent with respect to existing daily rows and does not mutate accounting state. It is intentionally triggered by analytics data-quality failures rather than on every chart render.
+
 ## Production audit
 
 Manual run:

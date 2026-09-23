@@ -1,4 +1,5 @@
 import { loadHistoricalPricesFromSupabase } from './supabasePersistence';
+import { getSupabaseBrowserClient } from './supabaseBrowser';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -48,4 +49,63 @@ export async function getHistoricalPricesForTransactions(transactions: Array<{ t
   const tickers = transactions.filter((tx) => normalizeTicker(tx.ticker) !== 'CASH').map((tx) => tx.ticker);
   const dates = transactions.map((tx) => String(tx.date).slice(0, 10)).filter(Boolean).sort();
   return getHistoricalPrices(tickers, dates[0], endDate);
+}
+
+export interface HistoricalBackfillTarget {
+  ticker: string;
+  startDate?: string;
+}
+
+export interface HistoricalBackfillResult {
+  requestedTickers: string[];
+  backfilledTickers: string[];
+  writtenRows: number;
+  failures: Array<{ ticker: string; error: string }>;
+}
+
+export async function ensureHistoricalPriceCoverage(
+  targets: HistoricalBackfillTarget[],
+): Promise<HistoricalBackfillResult> {
+  const normalizedTargets = targets
+    .map((target) => ({
+      ticker: normalizeTicker(target.ticker),
+      startDate: String(target.startDate || '').slice(0, 10) || undefined,
+    }))
+    .filter((target) => target.ticker && target.ticker !== 'CASH');
+
+  const uniqueTargets = [...new Map(
+    normalizedTargets.map((target) => [target.ticker, target]),
+  ).values()];
+
+  if (!uniqueTargets.length) {
+    return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Historical backfill requires an authenticated Supabase session.');
+
+  const response = await fetch('/api/supabase/price-history/ensure', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ targets: uniqueTargets }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.error || `Historical backfill request failed with HTTP ${response.status}.`);
+  }
+
+  return payload?.data ?? {
+    requestedTickers: uniqueTargets.map((target) => target.ticker),
+    backfilledTickers: [],
+    writtenRows: 0,
+    failures: [],
+  };
 }

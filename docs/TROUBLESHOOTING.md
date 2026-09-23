@@ -153,6 +153,28 @@ Check:
 
 Do not replace missing historical prices with current prices.
 
+## Performance graph stops before the newest trade
+
+A newly introduced ticker can make every valuation from its first held day onward incomplete when that symbol has no rows in `price_history`.
+
+Expected behavior:
+
+- the analytics engine reports the ticker in `dataQuality.missingTickers`;
+- the browser requests one authenticated server-side history repair;
+- the server backfills TradingView daily bars from the ticker's first transaction date;
+- the browser reloads `price_history` and rebuilds the chart;
+- no current-price or trade-price substitute is invented while history is missing.
+
+If the graph still stops early, check:
+
+- browser console for `Automatic historical-price backfill failed`;
+- server logs for `[Historical backfill] <TICKER> failed`;
+- TradingView can resolve the ticker on EGX;
+- `price_history` received rows for that ticker;
+- the authenticated session can reach `POST /api/supabase/price-history/ensure`.
+
+Do not manually seed the test ticker before verifying this path; doing so hides the regression the automatic repair is supposed to catch.
+
 ## Historical-price workflow finds no new rows
 
 Possible reasons:

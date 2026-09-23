@@ -156,4 +156,57 @@ describe('unified analytics engine', () => {
     expect(result.summary.maxDrawdownPercent).toBeCloseTo(-10, 6);
     expect(result.summary.maxEquityDrawdownEgp).toBe(0);
   });
+
+  it('reports a newly introduced ticker as missing until its history is backfilled', () => {
+    const transactions = [
+      cash('dep', '2026-01-01', 2000, 'DEPOSIT'),
+      buy('buy-base', '2026-01-01', 10, 50),
+      {
+        ...buy('buy-new', '2026-01-03', 5, 20),
+        ticker: 'NEWC',
+        companyName: 'New Company',
+      },
+    ];
+
+    const baseHistory = {
+      TEST: [
+        { date: '2026-01-01', close: 50 },
+        { date: '2026-01-02', close: 52 },
+        { date: '2026-01-03', close: 53 },
+        { date: '2026-01-04', close: 54 },
+      ],
+    };
+
+    const incomplete = buildUnifiedAnalyticsResult(transactions, baseHistory, 'ALL', {
+      latestSessionDate: '2026-01-04',
+    });
+
+    expect(incomplete.dataQuality.missingTickers).toEqual(['NEWC']);
+    expect(incomplete.points.map((point) => point.date)).toEqual([
+      '2026-01-01',
+      '2026-01-02',
+    ]);
+
+    const repaired = buildUnifiedAnalyticsResult(
+      transactions,
+      {
+        ...baseHistory,
+        NEWC: [
+          { date: '2026-01-03', close: 20 },
+          { date: '2026-01-04', close: 21 },
+        ],
+      },
+      'ALL',
+      { latestSessionDate: '2026-01-04' },
+    );
+
+    expect(repaired.dataQuality.missingTickers).toEqual([]);
+    expect(repaired.points.map((point) => point.date)).toEqual([
+      '2026-01-01',
+      '2026-01-02',
+      '2026-01-03',
+      '2026-01-04',
+    ]);
+  });
+
 });

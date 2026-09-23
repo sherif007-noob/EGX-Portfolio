@@ -392,7 +392,7 @@ export function buildIntradayAnalyticsResult(
   // the authoritative endpoint for the current active session. Append one
   // as-of point only when every currently held ticker has a trustworthy live
   // quote; never mix a partial live snapshot with stale bar closes.
-  if (options.livePrices && completePoints.length && sessionDate === cairoDateKey(asOfDate.toISOString())) {
+  if (options.livePrices && completePoints.length && sessionDate <= cairoDateKey(asOfDate.toISOString())) {
     while (
       txIndex < transactionsByTime.length &&
       parseMs(transactionsByTime[txIndex].executedAt) <= asOfMs
@@ -449,7 +449,14 @@ export function buildIntradayAnalyticsResult(
           : null;
         equityPeak = Math.max(equityPeak, liveEquity);
 
-        const timestamp = formatIso(asOfMs);
+        // A quote sync after midnight can still represent the latest completed
+        // EGX session. Keep that authoritative close attached to the session
+        // itself instead of timestamping it on the following calendar day.
+        const endpointMs =
+          sessionDate === cairoDateKey(asOfDate.toISOString())
+            ? asOfMs
+            : lastPointMs + 1;
+        const timestamp = formatIso(endpointMs);
         const netDeposits = openingNetDeposits + sessionExternalFlows
           .filter((flow) => parseMs(flow.date) <= asOfMs)
           .reduce((sum, flow) => sum + portfolioExternalFlow(flow), 0);

@@ -147,18 +147,18 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
     <PremiumModalMotion
       isOpen={isOpen}
       backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal w-full max-w-3xl my-6 rounded-2xl p-6 text-slate-100 space-y-4"
+      panelClassName="premium-modal premium-modal-viewport w-full max-w-3xl my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel="Python script and schema synchronization"
     >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
               <Code2 className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
                 Python Script &amp; Schema Synchronization Hub
               </h3>
               <p className="text-xs text-slate-400">
@@ -177,7 +177,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
             <span className="text-[11px] text-slate-400 block">Open API / JSON Schema Link:</span>
             <span className="font-mono text-xs text-indigo-300 select-all break-all">{schemaUrl}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
             <button
               onClick={handleCopyUrl}
               className="premium-action px-2.5 py-1 rounded-lg text-xs flex items-center gap-1"
@@ -198,10 +198,10 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
         </div>
 
         {/* Sub-tabs */}
-        <div className="flex border-b border-slate-800 text-xs">
+        <div className="flex overflow-x-auto overscroll-x-contain border-b border-slate-800 text-xs scrollbar-none">
           <button
             onClick={() => setActiveSubTab('script')}
-            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'script'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -211,7 +211,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           </button>
           <button
             onClick={() => setActiveSubTab('paste')}
-            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'paste'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -221,7 +221,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           </button>
           <button
             onClick={() => setActiveSubTab('schema')}
-            className={`premium-filter-pill pb-2.5 px-3 font-semibold rounded-t-lg ${
+            className={`premium-filter-pill shrink-0 pb-2.5 px-3 font-semibold rounded-t-lg ${
               activeSubTab === 'schema'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -235,11 +235,11 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
         {/* Tab 1: Python Script */}
         {activeSubTab === 'script' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex flex-col items-stretch gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
               <span className="text-slate-300">
                 Ready-to-use Python script with schema verification:
               </span>
-              <div className="flex items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                 <button
                   onClick={handleCopyScript}
                   className="premium-action premium-action-purple flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold"
@@ -277,7 +277,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
         {/* Tab 2: Payload Ingestion / Test */}
         {activeSubTab === 'paste' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-xs text-slate-300 font-medium">
                 Paste the JSON generated by your Python script:
               </span>
@@ -297,7 +297,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               className="premium-field w-full p-3 rounded-xl font-mono text-xs text-slate-200 focus:outline-none"
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
               <button
                 id="validate-payload-btn"
                 onClick={handleValidateAndApply}
@@ -344,7 +344,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
           <div className="space-y-3">
             <div className="premium-modal-section p-3 rounded-xl text-xs space-y-2">
               <span className="font-bold text-white">Required Ticker Directory Fields:</span>
-              <ul className="grid grid-cols-2 gap-2 text-slate-300 text-[11px]">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-300 text-[11px]">
                 <li><code className="text-indigo-300">ticker</code> (e.g. &quot;COMI&quot;)</li>
                 <li><code className="text-indigo-300">nameEn</code> (e.g. &quot;Commercial International Bank&quot;)</li>
                 <li><code className="text-indigo-300">sector</code> (e.g. &quot;Banking&quot;)</li>

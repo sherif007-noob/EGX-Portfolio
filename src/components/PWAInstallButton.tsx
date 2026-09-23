@@ -54,7 +54,7 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
           onClick={() => setShowIOSGuide(false)}
         >
           <div
-            className="premium-modal w-full max-w-md my-auto flex flex-col rounded-2xl text-slate-100 overflow-hidden"
+            className="premium-modal premium-modal-frame w-full max-w-md my-auto flex flex-col rounded-2xl text-slate-100 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between p-5 pb-3 border-b border-slate-800 shrink-0">
@@ -77,7 +77,7 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
               </button>
             </div>
 
-            <div className="p-5 space-y-3 text-xs sm:text-sm text-slate-300">
+            <div className="premium-modal-scroll-body p-4 sm:p-5 space-y-3 text-xs sm:text-sm text-slate-300">
               <div className="premium-modal-section flex items-start gap-3 p-3 rounded-xl">
                 <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400 shrink-0 mt-0.5">
                   <Share2 className="w-4 h-4" />

@@ -70,6 +70,34 @@ function rehydrateTransactionMetadata(
   return changed ? next : transactionList;
 }
 
+function rehydrateClosedTradeMetadata(
+  tradeList: ClosedTrade[],
+  tickerList: EGXTicker[],
+): ClosedTrade[] {
+  if (!tradeList.length || !tickerList.length) return tradeList;
+  const tickerMap = new Map(tickerList.map((ticker) => [ticker.ticker.trim().toUpperCase(), ticker]));
+  let changed = false;
+
+  const next = tradeList.map((trade) => {
+    const canonicalTicker = canonicalizeEGXSymbol(trade.ticker);
+    const ticker = tickerMap.get(canonicalTicker);
+    if (!ticker) return trade;
+
+    const companyName = ticker.nameEn || trade.companyName;
+    const sector = ticker.sector !== 'Other' ? ticker.sector : trade.sector;
+    if (
+      trade.ticker === canonicalTicker &&
+      trade.companyName === companyName &&
+      trade.sector === sector
+    ) return trade;
+
+    changed = true;
+    return { ...trade, ticker: canonicalTicker, companyName, sector };
+  });
+
+  return changed ? next : tradeList;
+}
+
 export function usePortfolioState() {
   const [tickers, setTickers] = useState<EGXTicker[]>(() => {
     try {
@@ -329,6 +357,8 @@ export function usePortfolioState() {
 
   useEffect(() => {
     setPositions((prev) => rehydratePositionsWithTickers(prev, tickers));
+    setTransactions((prev) => rehydrateTransactionMetadata(prev, tickers));
+    setClosedTrades((prev) => rehydrateClosedTradeMetadata(prev, tickers));
   }, [tickers, rehydratePositionsWithTickers]);
 
   const addTrade = useCallback((tradeInput: {

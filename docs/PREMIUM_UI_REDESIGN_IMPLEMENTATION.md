@@ -859,6 +859,15 @@ Implementation:
 - **24986ff / 9ade473 / 682deea** — add a phone-only panel-owned scroll backdrop contract. The backdrop is safe-area top anchored and non-scrollable on mobile; the `premium-modal-viewport` panel becomes the sole vertical scroller. This targets the spring-back failure without changing modal styling.
 - User also reported ticker-master correctness issues. External verification confirmed NAPR is National Printing and KORA is Korra for Energy and Investment Projects. **276cfb7 / 262ac1c / 0053738 / 5f07095 / 54f6a61 / de9557e** add NAPR, correct KORA, canonicalize TradingView ISIN symbols back to known EGX tickers, merge saved/Supabase directories with the current master baseline, and repair stale position/transaction display metadata. This is a deliberate data-correctness exception to Phase 6's visual-only scope.
 - **f01dd96** adds regression tests for the ticker canonicalization/repair path.
+- User clarified that the requirement is the whole ticker directory, not only NAPR/KORA. The directory architecture was therefore changed from a small static source of truth to **live-scanner authoritative + static fallback**.
+- **4c72efa / bb3c9a4 / b840b93 / 3651257** — add live metadata fields/sector categories, central historical aliases, retired fallback filtering, known current identity/ISIN corrections, and scanner sector/industry classification mapping.
+- **1f5cc09 / 6755eb0** — TradingView Egypt scanning now requests name/description, sector, industry, ISIN and currency for the full scanner range. Every returned EGP security with a usable quote can update/add its directory record; scanner metadata overrides stale fallback metadata. USD alternate share classes are excluded from this EGP-denominated portfolio.
+- **e838494** — rehydrate refreshed ticker identity across positions, transactions and closed cycles.
+- **0c30598 / e0ffa88** — support ISIN search in Add Trade and the ticker directory.
+- **8f6df6b** — do not invent Arabic labels for newly discovered securities without a curated Arabic fallback.
+- **8bc4bdf** — add tests covering current aliases, retired rows, corrected baseline identities, live-metadata precedence and live-only discoveries.
+
+Resulting contract: the app no longer needs a hand-maintained static row for every active EGX ticker. The static dictionary provides offline fallback/Arabic names/historical migration; the live scanner continuously supplies the current EGP market universe and authoritative market metadata.
 
 Regression boundary:
 - no Phase 3 modal visual styling was replaced;

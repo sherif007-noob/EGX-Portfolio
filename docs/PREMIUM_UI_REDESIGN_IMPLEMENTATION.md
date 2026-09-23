@@ -806,6 +806,8 @@ Implemented:
 - **05f2316 / 2f1ed56 / 8019ca1** — remove the manual database Force Sync header action and standalone Google/Firebase Sign In/avatar/Sign Out controls. Supabase authentication gates the app; Supabase persistence/realtime sync owns portfolio storage; optional Google auth remains scoped to the Google Sheets modal. Center the remaining six phone actions and move mobile status/count decoration out of normal icon flow.
 - **5c44fdb** — remove the obsolete Firestore-quota banner branch from `OfflineIndicator`; the compatibility shim exposes no active Firestore quota behavior after migration.
 - **1928172** — apply the user-requested mobile Positions card action correction ahead of formal Pass 2: sector metadata moves into the identity line and DCA/Sell/Edit/Delete share one compact row, eliminating the lone Delete row and unnecessary card height.
+- Accepted follow-up direction: treat Backup/Reconcile as a **maintenance/data-recovery utility**, not a permanent Header action. Keep the underlying export/restore/reconciliation tools, but relocate their entry point into a future Data Management/Settings surface rather than leaving them in the primary mobile header.
+- Track stale migration copy in `PortfolioBackupModal`: the restore success message still says Firebase and must be updated to Supabase/cloud-neutral wording when the modal is revised in Phase 6 Pass 3.
 
 Boundaries preserved:
 - no navigation IA/active-state redesign (Phase 6.5);

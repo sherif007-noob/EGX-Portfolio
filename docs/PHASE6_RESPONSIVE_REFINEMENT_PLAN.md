@@ -263,17 +263,29 @@ Every render file has an explicit Phase 6 disposition.
 
 ### Pass 0 — Responsive primitives and safety baseline
 
-**Status: IN PROGRESS.**
+**Status: IMPLEMENTED — awaiting CI/baseline validation.**
 
 Goal:
 - solve repeated responsive problems once before screen-level rollout.
 
-Work:
-- add coarse-pointer/mobile touch-target rules for actions, icon actions, filters, segments, nav controls, and shared inputs where safe;
-- add a reusable modal viewport contract using `dvh`/safe gutters;
-- add fixed-overlay width/safe-area helpers;
-- add shared mobile selector/dropdown containment rules;
-- define mobile spacing overrides only where they can safely be shared.
+Implemented:
+- **db4bcc3** — add Phase 6 shared responsive safety primitives in `src/index.css`.
+- Add canonical responsive tokens:
+  - `--premium-touch-target: 2.75rem` (44px);
+  - `--premium-mobile-gutter: 0.75rem`;
+  - `--premium-modal-gutter: 0.75rem`;
+  - fixed-overlay max width token.
+- On phone widths or coarse pointers, shared actions/nav/filter pills/segments/choices/accordion/select triggers now receive a 44px minimum target and `touch-action: manipulation`.
+- Shared icon actions receive a 44x44 minimum target.
+- Direct shared input/select/textarea fields receive a 44px minimum height.
+- Menu rows receive the same coarse-pointer minimum target.
+- `NumberStepperInput` is intentionally excluded from generic `.premium-control` sizing because its split vertical control requires a dedicated Pass 5 solution.
+- Add opt-in `.premium-modal-viewport` and `.premium-modal-scroll-body` helpers using `dvh`, overscroll containment, and stable scroll gutters.
+- Add `.premium-fixed-overlay`, `.premium-mobile-min-w-0`, and `.premium-mobile-full` helpers for later component rollout.
+- Mobile modal backdrops now use safe-area-aware padding.
+- Mobile dropdowns receive viewport max-width/max-height containment and overscroll containment.
+
+No component-specific layout was changed in Pass 0.
 
 Validation:
 - desktop visual density materially unchanged;

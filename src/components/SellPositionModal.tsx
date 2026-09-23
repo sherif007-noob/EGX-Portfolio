@@ -3,7 +3,7 @@ import { NumberStepperInput } from './NumberStepperInput';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
-import { combineExecutionDateTime } from '../utils/executionTime';
+import { cairoExecutionInputValues, combineExecutionDateTime, isCairoCurrentDate } from '../utils/executionTime';
 
 interface SellPositionModalProps {
   position: Position | null;
@@ -31,8 +31,10 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
 
   const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
   const [sellPrice, setSellPrice] = useState<number>(position.currentPrice || position.avgBuyPrice);
-  const [sellDate, setSellDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [executionTime, setExecutionTime] = useState<string>('');
+  const initialCairoExecution = cairoExecutionInputValues();
+  const [sellDate, setSellDate] = useState<string>(initialCairoExecution.date);
+  const [executionTime, setExecutionTime] = useState<string>(initialCairoExecution.time);
+  const [isAutoExecutionTime, setIsAutoExecutionTime] = useState<boolean>(true);
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
   const [isManualFee, setIsManualFee] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('Target reached / booked profits');
@@ -45,6 +47,19 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
       setIsManualFee(false);
     }
   }, [position]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isCairoCurrentDate(sellDate)) {
+      if (!executionTime || isAutoExecutionTime) {
+        setExecutionTime(cairoExecutionInputValues().time);
+        setIsAutoExecutionTime(true);
+      }
+    } else if (isAutoExecutionTime) {
+      setExecutionTime('');
+      setIsAutoExecutionTime(false);
+    }
+  }, [sellDate, isOpen]);
 
   // Default fee auto-calculation (0.25% standard broker commission)
   useEffect(() => {
@@ -71,9 +86,12 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   const isProfit = realizedPnlEgp >= 0;
   const remainingShares = Math.max(0, position.shares - sharesToSell);
 
+  const requiresExecutionTime = isCairoCurrentDate(sellDate);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (sharesToSell <= 0 || sharesToSell > position.shares || sellPrice <= 0) return;
+    if (requiresExecutionTime && !executionTime) return;
 
     onConfirmSell(
       position.id,
@@ -197,11 +215,17 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                   id="sell-execution-time"
                   type="time"
                   value={executionTime}
-                  onChange={(e) => setExecutionTime(e.target.value)}
+                  onChange={(e) => {
+                    setExecutionTime(e.target.value);
+                    setIsAutoExecutionTime(false);
+                  }}
+                  required={requiresExecutionTime}
                   className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
                 />
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  Optional, but recommended when matching broker receipts.
+                <span className={`text-[10px] block mt-0.5 ${requiresExecutionTime ? 'text-cyan-300' : 'text-slate-400'}`}>
+                  {requiresExecutionTime
+                    ? 'Required for today’s intraday analytics. Prefilled to current Cairo time; edit it if your broker execution differs.'
+                    : 'Optional for historical trades, but recommended when matching broker receipts.'}
                 </span>
               </div>
             </div>

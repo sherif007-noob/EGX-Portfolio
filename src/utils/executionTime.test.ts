@@ -4,6 +4,8 @@ import {
   executionDateInputValue,
   executionTimeInputValue,
   formatExecutionTime,
+  cairoExecutionInputValues,
+  isCairoCurrentDate,
 } from './executionTime';
 
 describe('execution timestamp helpers', () => {
@@ -23,5 +25,12 @@ describe('execution timestamp helpers', () => {
   it('formats a stored execution time for the journal', () => {
     const executedAt = combineExecutionDateTime('2026-09-17', '10:15');
     expect(formatExecutionTime(executedAt)).toMatch(/10:15/);
+  });
+
+  it('resolves the current trade date and time in Cairo', () => {
+    const now = new Date('2026-01-01T22:30:00.000Z');
+    expect(cairoExecutionInputValues(now)).toEqual({ date: '2026-01-02', time: '00:30' });
+    expect(isCairoCurrentDate('2026-01-02', now)).toBe(true);
+    expect(isCairoCurrentDate('2026-01-01', now)).toBe(false);
   });
 });

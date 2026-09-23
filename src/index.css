@@ -582,6 +582,12 @@ body {
   overscroll-behavior: contain;
 }
 
+.premium-modal-frame {
+  min-height: 0;
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+}
+
 .premium-fixed-overlay {
   box-sizing: border-box;
   max-width: min(
@@ -805,10 +811,14 @@ body {
       max(var(--premium-modal-gutter), env(safe-area-inset-left));
   }
 
-  .premium-modal-viewport {
+  .premium-modal-viewport,
+  .premium-modal-frame {
     width: 100%;
-    max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
-    max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+    max-height: calc(
+      100dvh
+      - max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      - max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+    );
   }
 
   .premium-fixed-overlay {

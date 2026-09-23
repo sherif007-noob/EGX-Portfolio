@@ -55,7 +55,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
 | 5 | Advanced effects | **Complete** |
-| 6 | Mobile / responsive refinement | **In progress — revised Pass 1 CI-clean; awaiting mobile validation** |
+| 6 | Mobile / responsive refinement | **In progress — Pass 2 core data tabs** |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
@@ -346,7 +346,7 @@ Acceptance:
 
 ## Phase 6 — Mobile / responsive refinement
 
-**Status: IN PROGRESS — revised Pass 1 implementation is CI-clean; awaiting mobile validation before Pass 2.**
+**Status: IN PROGRESS — Pass 1 complete; Pass 2 core data tabs in progress.**
 
 The detailed audited execution plan lives in **docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md**.
 

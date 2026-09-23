@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   FileSpreadsheet, 
   PlusCircle, 
@@ -7,21 +7,16 @@ import {
   BarChart3, 
   BookOpen, 
   ListOrdered,
-  LogOut,
-  User as UserIcon,
   Check,
   RefreshCw,
   Wallet,
   RotateCcw,
-  Sparkles,
   Zap,
   Database,
   AlertTriangle,
   Bell,
   BellRing,
-  LogIn,
 } from 'lucide-react';
-import { User } from 'firebase/auth';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
 
@@ -29,7 +24,6 @@ interface HeaderProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
   onOpenGoogleSheets: () => void;
-  onOpenSchemaSync?: () => void;
   onOpenAddTrade: () => void;
   onOpenBackupModal?: () => void;
   onOpenScreenshotModal?: () => void;
@@ -37,21 +31,15 @@ interface HeaderProps {
   unreadAlertCount?: number;
   isAlertsActive?: boolean;
   isSheetsConnected: boolean;
-  sheetsTitle?: string;
   isTokenExpired?: boolean;
-  authUser: User | null;
-  onLogin?: () => Promise<any>;
-  onLogout: () => void;
   onSyncLivePrices?: () => void;
   isSyncingPrices?: boolean;
-  forceSyncToFirestore?: () => Promise<boolean>;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
   onOpenGoogleSheets,
-  onOpenSchemaSync,
   onOpenAddTrade,
   onOpenBackupModal,
   onOpenScreenshotModal,
@@ -59,54 +47,10 @@ export const Header: React.FC<HeaderProps> = ({
   unreadAlertCount = 0,
   isAlertsActive = true,
   isSheetsConnected,
-  sheetsTitle,
   isTokenExpired = false,
-  authUser,
-  onLogin,
-  onLogout,
   onSyncLivePrices,
   isSyncingPrices = false,
-  forceSyncToFirestore,
 }) => {
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
-
-  const handleForceSync = async () => {
-    if (syncStatus === 'syncing' || !forceSyncToFirestore) return;
-
-    if (!authUser && onLogin) {
-      try {
-        setSyncStatus('syncing');
-        const loginRes = await onLogin();
-        if (loginRes?.user) {
-          const success = await forceSyncToFirestore();
-          setSyncStatus(success ? 'success' : 'error');
-          setTimeout(() => setSyncStatus('idle'), 3000);
-          return;
-        }
-      } catch (err) {
-        console.warn('Sign-in on force sync cancelled or failed:', err);
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 4000);
-        return;
-      }
-    }
-
-    setSyncStatus('syncing');
-    try {
-      const success = await forceSyncToFirestore();
-      if (success) {
-        setSyncStatus('success');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 4000);
-      }
-    } catch (err) {
-      console.error('Manual sync failed:', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 4000);
-    }
-  };
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
@@ -141,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="premium-action relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
+                className="premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
@@ -151,9 +95,14 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
                 <span className="hidden lg:inline">Price Alerts</span>
                 {unreadAlertCount > 0 ? (
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
-                    {unreadAlertCount}
-                  </span>
+                  <>
+                    <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-slate-950 font-mono md:hidden">
+                      {unreadAlertCount}
+                    </span>
+                    <span className="hidden md:inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
+                      {unreadAlertCount}
+                    </span>
+                  </>
                 ) : isAlertsActive ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden sm:inline-block" title="Alerts active" />
                 ) : null}
@@ -166,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="premium-action premium-filter-active-cyan flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+                className="premium-action premium-filter-active-cyan flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -178,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
-              className={`premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
+              className={`premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                 isTokenExpired
                   ? 'premium-action-warning'
                   : isSheetsConnected
@@ -195,51 +144,20 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden md:inline">
                 {isTokenExpired ? 'Reconnect Sheets' : isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
               </span>
-              {isSheetsConnected && !isTokenExpired && <Check className="w-3 h-3 text-emerald-400 ml-0.5" />}
+              {isSheetsConnected && !isTokenExpired && (
+                <>
+                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-400 md:hidden" title="Google Sheets connected" />
+                  <Check className="hidden md:block w-3 h-3 text-emerald-400 ml-0.5" />
+                </>
+              )}
             </button>
 
-            {/* Force Sync Firebase Button */}
-            {forceSyncToFirestore && (
-              <button
-                id="header-force-sync-btn"
-                onClick={handleForceSync}
-                disabled={syncStatus === 'syncing'}
-                className={`premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                  syncStatus === 'syncing'
-                    ? 'premium-action-warning cursor-wait'
-                    : syncStatus === 'success'
-                    ? 'premium-action-success'
-                    : syncStatus === 'error'
-                    ? 'premium-action-danger'
-                    : ''
-                }`}
-                title="Force bidirectional sync with Firebase (pulls newest trades from phone & pushes local updates)"
-              >
-                {syncStatus === 'syncing' ? (
-                  <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                ) : syncStatus === 'success' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Database className="w-3.5 h-3.5 text-amber-400" />
-                )}
-                <span className="hidden sm:inline">
-                  {syncStatus === 'syncing'
-                    ? 'Syncing...'
-                    : syncStatus === 'success'
-                    ? 'Synced!'
-                    : syncStatus === 'error'
-                    ? 'Sync Failed'
-                    : 'Force Sync'}
-                </span>
-              </button>
-            )}
-
-            {/* Offline Backup & Ledger Reconcile Modal Trigger */}
+            {/* Backup & Ledger Reconcile Modal Trigger */}
             {onOpenBackupModal && (
               <button
                 id="header-backup-reconcile-btn"
                 onClick={onOpenBackupModal}
-                className="premium-action flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
+                className="premium-action flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
@@ -252,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="premium-action premium-action-success flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                className="premium-action premium-action-success flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
@@ -264,54 +182,11 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
-              className="premium-action premium-action-primary premium-shimmer-border flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
+              className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Add Trade</span>
             </button>
-
-            {/* User Profile / Auth */}
-            {authUser ? (
-              <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800 shrink-0">
-                <div 
-                  className="premium-chip w-7 h-7 rounded-full flex items-center justify-center text-slate-300 text-xs overflow-hidden ring-1 ring-emerald-500/40"
-                  title={`Signed in: ${authUser.email || 'User'} (Cloud Synced)`}
-                >
-                  {authUser.photoURL ? (
-                    <img src={authUser.photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserIcon className="w-3.5 h-3.5" />
-                  )}
-                </div>
-                <button
-                  id="logout-btn"
-                  onClick={onLogout}
-                  className="premium-icon-action premium-icon-delete p-1.5 rounded-md"
-                  title="Sign out"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : onLogin ? (
-              <button
-                id="header-login-btn"
-                onClick={async () => {
-                  try {
-                    await onLogin();
-                    if (forceSyncToFirestore) {
-                      setTimeout(() => forceSyncToFirestore(), 800);
-                    }
-                  } catch (e) {
-                    console.error('Login error:', e);
-                  }
-                }}
-                className="premium-action premium-action-primary flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0"
-                title="Sign in with Google to enable Firebase Cloud Sync across your devices"
-              >
-                <LogIn className="w-3.5 h-3.5 text-blue-400" />
-                <span>Sign In</span>
-              </button>
-            ) : null}
           </div>
         </div>
       </div>

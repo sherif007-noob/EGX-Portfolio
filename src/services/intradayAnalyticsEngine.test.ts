@@ -70,4 +70,60 @@ describe('intraday analytics engine', () => {
     expect(result.dataQuality.hasUsableRange).toBe(false);
     expect(result.dataQuality.incompleteDays).toBeGreaterThan(0);
   });
+
+  it('appends the authoritative live NAV as the final active-session point', () => {
+    const transactions: TradeTransaction[] = [
+      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-17' }),
+      tx({ id: 'hold', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
+    ];
+
+    const result = buildIntradayAnalyticsResult(
+      transactions,
+      { TEST: [{ date: '2026-09-16', close: 100 }] },
+      {
+        TEST: [
+          { timestamp: '2026-09-17T07:00:00Z', intervalMinutes: 15, open: 100, high: 101, low: 99, close: 100 },
+          { timestamp: '2026-09-17T07:15:00Z', intervalMinutes: 15, open: 100, high: 101, low: 99, close: 100 },
+        ],
+      },
+      {
+        sessionDate: '2026-09-17',
+        asOf: '2026-09-17T07:37:00Z',
+        livePrices: { TEST: 102 },
+      },
+    );
+
+    expect(result.points.at(-1)?.date).toBe('2026-09-17T07:37:00.000Z');
+    expect(result.summary.endEquity).toBe(1010);
+    expect(result.summary.pnlEgp).toBe(10);
+  });
+
+  it('does not append a mixed stale/live endpoint when a held ticker lacks a live quote', () => {
+    const transactions: TradeTransaction[] = [
+      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-17' }),
+      tx({ id: 'a', type: 'BUY', ticker: 'AAA', shares: 2, price: 100, totalAmount: 200, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
+      tx({ id: 'b', type: 'BUY', ticker: 'BBB', shares: 2, price: 100, totalAmount: 200, date: '2026-09-17', executedAt: '2026-09-17T06:30:00Z' }),
+    ];
+
+    const result = buildIntradayAnalyticsResult(
+      transactions,
+      {
+        AAA: [{ date: '2026-09-16', close: 100 }],
+        BBB: [{ date: '2026-09-16', close: 100 }],
+      },
+      {
+        AAA: [{ timestamp: '2026-09-17T07:00:00Z', intervalMinutes: 15, open: 100, high: 101, low: 99, close: 100 }],
+        BBB: [{ timestamp: '2026-09-17T07:00:00Z', intervalMinutes: 15, open: 100, high: 101, low: 99, close: 100 }],
+      },
+      {
+        sessionDate: '2026-09-17',
+        asOf: '2026-09-17T07:37:00Z',
+        livePrices: { AAA: 102 },
+      },
+    );
+
+    expect(result.points.at(-1)?.date).toBe('2026-09-17T07:15:00.000Z');
+    expect(result.summary.endEquity).toBe(1000);
+  });
+
 });

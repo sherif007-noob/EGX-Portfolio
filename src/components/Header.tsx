@@ -79,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="premium-header-action-rail flex w-full min-w-0 items-center flex-nowrap justify-start gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none sm:w-auto sm:flex-1 sm:min-w-[200px] sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 sm:gap-2.5">
+          <div className="premium-header-action-rail flex w-full min-w-0 items-center flex-nowrap justify-center gap-1.5 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none sm:w-auto sm:flex-1 sm:min-w-[200px] sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 sm:gap-2.5">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
               <button

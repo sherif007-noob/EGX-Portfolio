@@ -126,4 +126,72 @@ describe('intraday analytics engine', () => {
     expect(result.summary.endEquity).toBe(1000);
   });
 
+
+  it('keeps accounting invariants stable across 15m, 5m and 1m while improving execution timing', () => {
+    const transactions: TradeTransaction[] = [
+      tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 2000, price: 1, totalAmount: 2000, cashFlowType: 'DEPOSIT', cashFlowAmount: 2000, date: '2026-09-16' }),
+      tx({ id: 'hold', type: 'BUY', ticker: 'OLD', shares: 10, price: 50, totalAmount: 500, date: '2026-09-16', executedAt: '2026-09-16T08:00:00Z' }),
+      tx({ id: 'new', type: 'BUY', ticker: 'NEW', shares: 5, price: 20, fees: 1, totalAmount: 101, date: '2026-09-17', executedAt: '2026-09-17T07:07:00Z' }),
+    ];
+
+    const historical = {
+      OLD: [{ date: '2026-09-16', close: 100 }],
+      NEW: [{ date: '2026-09-16', close: 20 }],
+    };
+
+    const buildSeries = (intervalMinutes: number) => {
+      const stepMs = intervalMinutes * 60_000;
+      const startMs = Date.parse('2026-09-17T07:00:00Z');
+      const endMs = Date.parse('2026-09-17T07:30:00Z');
+      const points = [];
+      for (let at = startMs; at < endMs; at += stepMs) {
+        points.push({
+          timestamp: new Date(at).toISOString(),
+          intervalMinutes,
+          open: 100,
+          high: 100,
+          low: 100,
+          close: 100,
+        });
+      }
+      const newPoints = points.map((point) => ({
+        ...point,
+        open: 20,
+        high: 20,
+        low: 20,
+        close: 20,
+      }));
+      return { OLD: points, NEW: newPoints };
+    };
+
+    const options = {
+      sessionDate: '2026-09-17',
+      asOf: '2026-09-17T07:30:00Z',
+      livePrices: { OLD: 100, NEW: 20 },
+    };
+
+    const one = buildIntradayAnalyticsResult(transactions, historical, buildSeries(1), options);
+    const five = buildIntradayAnalyticsResult(transactions, historical, buildSeries(5), options);
+    const fifteen = buildIntradayAnalyticsResult(transactions, historical, buildSeries(15), options);
+
+    for (const result of [five, fifteen]) {
+      expect(result.summary.startEquity).toBeCloseTo(one.summary.startEquity ?? 0, 8);
+      expect(result.summary.endEquity).toBeCloseTo(one.summary.endEquity ?? 0, 8);
+      expect(result.summary.pnlEgp).toBeCloseTo(one.summary.pnlEgp ?? 0, 8);
+      expect(result.summary.netExternalFlow).toBeCloseTo(one.summary.netExternalFlow, 8);
+      expect(result.summary.twrPercent).toBeCloseTo(one.summary.twrPercent ?? 0, 8);
+      expect(result.summary.mwrrPercent).toBeCloseTo(one.summary.mwrrPercent ?? 0, 8);
+    }
+
+    const onePostTrade = one.points.find((point) => point.date === '2026-09-17T07:08:00.000Z');
+    const fivePostTrade = five.points.find((point) => point.date === '2026-09-17T07:10:00.000Z');
+    const fifteenPostTrade = fifteen.points.find((point) => point.date === '2026-09-17T07:15:00.000Z');
+
+    expect(onePostTrade?.cash).toBe(1399);
+    expect(fivePostTrade?.cash).toBe(1399);
+    expect(fifteenPostTrade?.cash).toBe(1399);
+    expect(one.points.some((point) => point.date === '2026-09-17T07:08:00.000Z')).toBe(true);
+    expect(fifteen.points.some((point) => point.date === '2026-09-17T07:08:00.000Z')).toBe(false);
+  });
+
 });

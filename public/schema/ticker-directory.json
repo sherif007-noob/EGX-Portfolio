@@ -2,9 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "/schema/ticker-directory.json",
   "title": "EGXTickerDirectory",
-  "description": "Standard JSON Schema for Egyptian Exchange (EGX) ticker directory, market data, and quotes. Used by Python automation scripts for periodic synchronization.",
+  "description": "JSON Schema for the EGX ticker directory export. Identity may be service-managed by the Supabase ticker registry while quote/technical fields remain market snapshots.",
   "type": "object",
-  "required": ["version", "lastSync", "market", "currency", "count", "tickers"],
+  "required": [
+    "version",
+    "lastSync",
+    "market",
+    "currency",
+    "count",
+    "tickers"
+  ],
   "properties": {
     "version": {
       "type": "string",
@@ -42,7 +49,13 @@
   "definitions": {
     "TickerEntry": {
       "type": "object",
-      "required": ["ticker", "nameEn", "sector", "lastPrice", "changePercent"],
+      "required": [
+        "ticker",
+        "nameEn",
+        "sector",
+        "lastPrice",
+        "changePercent"
+      ],
       "properties": {
         "ticker": {
           "type": "string",
@@ -75,11 +88,26 @@
             "Petrochemicals & Fertilizers",
             "Non-Bank Financial Services & Fintech",
             "Telecommunications & Tech",
+            "Telecommunications & Media",
             "Food, Beverage & Agribusiness",
+            "Food, Beverage & Tobacco",
             "Healthcare & Pharmaceuticals",
             "Industrial Goods & Services",
+            "Building Materials & Cement",
             "Energy & Petrochemicals",
+            "Energy & Oil Services",
             "Utilities & Logistics",
+            "Utilities",
+            "Commercial Services",
+            "Contracting & Construction",
+            "Paper & Packaging",
+            "Trade & Distributors",
+            "Transport & Logistics",
+            "Consumer Goods & Automobiles",
+            "Tourism & Leisure",
+            "Textiles & Consumer Durables",
+            "Education & Services",
+            "Liquid Buying Power",
             "Other"
           ],
           "description": "EGX Sector classification"
@@ -88,7 +116,7 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "description": "Last traded closing or real-time price in Egyptian Pounds (EGP)",
-          "example": 88.50
+          "example": 88.5
         },
         "change": {
           "type": "number",
@@ -165,6 +193,45 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of the last ticker price/metric update"
+        },
+        "directoryStatus": {
+          "type": "string",
+          "enum": [
+            "active",
+            "inactive",
+            "retired",
+            "unresolved"
+          ],
+          "description": "Service-managed EGX directory lifecycle status"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Historical ticker, scanner-symbol, or ISIN aliases resolving to this canonical security"
+        },
+        "scannerSymbol": {
+          "type": "string",
+          "description": "Current raw TradingView Scanner symbol"
+        },
+        "historySymbol": {
+          "type": "string",
+          "description": "Verified TradingView symbol used for historical/intraday candles"
+        },
+        "historyResolutionMethod": {
+          "type": "string",
+          "description": "Resolver path that most recently verified historical data"
+        },
+        "historyVerifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last successful historical-symbol verification"
+        },
+        "registryUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last authoritative registry metadata update"
         }
       }
     }

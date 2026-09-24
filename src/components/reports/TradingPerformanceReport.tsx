@@ -44,49 +44,49 @@ const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : 'â
 
 const BENCHMARK_TONE_STYLES = {
   positive: {
-    surface: 'premium-benchmark-tone-positive',
+    surface: 'premium-report-tone-positive',
     value: 'text-emerald-300',
     icon: 'text-emerald-300 border-emerald-500/25 bg-emerald-500/10',
     chip: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
   },
   negative: {
-    surface: 'premium-benchmark-tone-negative',
+    surface: 'premium-report-tone-negative',
     value: 'text-rose-300',
     icon: 'text-rose-300 border-rose-500/25 bg-rose-500/10',
     chip: 'text-rose-300 border-rose-500/30 bg-rose-500/10',
   },
   warning: {
-    surface: 'premium-benchmark-tone-warning',
+    surface: 'premium-report-tone-warning',
     value: 'text-amber-300',
     icon: 'text-amber-300 border-amber-500/25 bg-amber-500/10',
     chip: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
   },
   blue: {
-    surface: 'premium-benchmark-tone-blue',
+    surface: 'premium-report-tone-blue',
     value: 'text-blue-300',
     icon: 'text-blue-300 border-blue-500/25 bg-blue-500/10',
     chip: 'text-blue-300 border-blue-500/30 bg-blue-500/10',
   },
   purple: {
-    surface: 'premium-benchmark-tone-purple',
+    surface: 'premium-report-tone-purple',
     value: 'text-purple-300',
     icon: 'text-purple-300 border-purple-500/25 bg-purple-500/10',
     chip: 'text-purple-300 border-purple-500/30 bg-purple-500/10',
   },
   cyan: {
-    surface: 'premium-benchmark-tone-cyan',
+    surface: 'premium-report-tone-cyan',
     value: 'text-cyan-300',
     icon: 'text-cyan-300 border-cyan-500/25 bg-cyan-500/10',
     chip: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10',
   },
   amber: {
-    surface: 'premium-benchmark-tone-amber',
+    surface: 'premium-report-tone-amber',
     value: 'text-amber-300',
     icon: 'text-amber-300 border-amber-500/25 bg-amber-500/10',
     chip: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
   },
   neutral: {
-    surface: 'premium-benchmark-tone-neutral',
+    surface: 'premium-report-tone-neutral',
     value: 'text-slate-100',
     icon: 'text-slate-300 border-slate-600/60 bg-slate-800/55',
     chip: 'text-slate-300 border-slate-600/60 bg-slate-800/55',
@@ -681,7 +681,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           return (
             <article
               key={item.title}
-              className={`premium-card premium-hero-metric premium-benchmark-card ${tone.surface} relative flex min-h-[196px] flex-col overflow-hidden rounded-2xl border p-4`}
+              className={`premium-card premium-hero-metric premium-report-hero-card ${tone.surface} relative flex min-h-[196px] flex-col overflow-hidden rounded-2xl border p-4`}
             >
               <div className="flex items-start gap-3">
                 <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${tone.icon}`}>

@@ -1,41 +1,27 @@
-name: Intraday Prices
+name: Legacy Intraday 5m Repair
 
 on:
   workflow_dispatch:
     inputs:
       tickers:
-        description: 'Optional comma-separated tickers for targeted repair (for example ACTF,NAPR)'
+        description: 'Optional comma-separated tickers for targeted legacy repair'
         required: false
         type: string
       bar_count:
-        description: 'Optional TradingView bar count override for targeted backfill'
+        description: 'Optional TradingView 5m bar count override'
         required: false
         type: string
-  push:
-    branches:
-      - main
-      - feature/premium-ui-redesign
-    paths:
-      - '.github/workflows/intraday-prices.yml'
-      - 'scripts/syncIntradayPrices.ts'
-  schedule:
-    # GitHub scheduled workflows execute from the repository default branch.
-    # Premium-branch pushes run this workflow too so 5-minute changes can be
-    # exercised before merge; the default-branch schedule remains authoritative.
-    # Broad UTC window covers the EGX session across Cairo DST changes.
-    # TradingView supplies the actual 5-minute bar timestamps; the cron time
-    # only determines how often we ingest newly completed/current bars.
-    - cron: '*/15 6-13 * * 0-4'
 
 permissions:
   contents: read
 
 concurrency:
-  group: egx-intraday-prices
+  group: egx-intraday-market-data
   cancel-in-progress: true
 
 jobs:
   sync:
+    name: Manual legacy TradingView 5m repair
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -66,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Sync TradingView 5-minute prices
+      - name: Run manual legacy 5-minute repair
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}

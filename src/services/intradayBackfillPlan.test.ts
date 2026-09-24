@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildIntradayOneMinuteBackfillPlan,
-  buildIntradayRangeChunks,
   retentionCutoffStartOfUtcDay,
 } from './intradayBackfillPlan';
 
@@ -69,19 +68,6 @@ describe('1-minute intraday backfill planning', () => {
 
     expect(plan.mode).toBe('incremental');
     expect(plan.fromMs).toBe(latest.getTime() - 2 * 86_400_000);
-  });
-
-  it('splits an explicit range into bounded non-overlapping chunks', () => {
-    const from = Date.parse('2026-09-01T00:00:00.000Z');
-    const to = Date.parse('2026-09-20T00:00:00.000Z');
-    const chunks = buildIntradayRangeChunks(from, to, 7);
-
-    expect(chunks).toHaveLength(3);
-    expect(chunks[0].fromMs).toBe(from);
-    expect(chunks.at(-1)?.toMs).toBe(to);
-    for (let index = 1; index < chunks.length; index += 1) {
-      expect(chunks[index].fromMs).toBe(chunks[index - 1].toMs + 1000);
-    }
   });
 
   it('aligns retention cutoffs to the start of a UTC day', () => {

@@ -23,6 +23,8 @@ import {
 import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
+import { INTRADAY_POLICY } from '../../services/intradayPolicy';
+import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
 import {
   buildUnifiedAnalyticsResult,
@@ -180,13 +182,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       try {
         const requestedWindow = resolveAnalyticsWindow('TODAY');
         const requestedSessionDate = requestedWindow.endDate;
-        const tickers = [...new Set(
-          transactions
-            .map((tx) => normalizeIntradayTicker(tx.ticker))
-            .filter((ticker) => ticker && ticker !== 'CASH'),
-        )];
+        const tickers = resolveIntradaySessionTickers(transactions, requestedSessionDate);
 
-        const loadWindow = async (startDate: string, intervalMinutes: 5 | 15) =>
+        const loadWindow = async (startDate: string, intervalMinutes: number) =>
           getIntradayPrices(
             tickers,
             `${startDate}T00:00:00.000Z`,
@@ -194,38 +192,37 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             intervalMinutes,
           );
 
-        // Prefer the new 5-minute store, but keep the already-populated
-        // 15-minute store as a real-data fallback until the Node ingestion
-        // workflow has established 5-minute coverage.
-        let intradayPrices = await loadWindow(requestedSessionDate, 5);
-        let sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
+        let intradayPrices: IntradayPriceSeries = {};
+        let sessionDate: string | null = null;
 
-        if (!sessionDate) {
-          const legacyIntradayPrices = await loadWindow(requestedSessionDate, 15);
-          const legacySessionDate = latestIntradaySessionDate(legacyIntradayPrices, requestedSessionDate);
-          if (legacySessionDate) {
-            intradayPrices = legacyIntradayPrices;
-            sessionDate = legacySessionDate;
+        // Prefer raw 1-minute observations, then locally-derived 5-minute
+        // history, then the legacy 15-minute store while migration is in
+        // progress. Never synthesize points to satisfy the chart.
+        for (const intervalMinutes of INTRADAY_POLICY.readIntervals) {
+          const candidate = await loadWindow(requestedSessionDate, intervalMinutes);
+          const candidateSessionDate = latestIntradaySessionDate(candidate, requestedSessionDate);
+          if (candidateSessionDate) {
+            intradayPrices = candidate;
+            sessionDate = candidateSessionDate;
+            break;
           }
         }
 
         // Normal sessions stay on a one-day query. Only fall back to a wider
-        // lookback when the requested weekday has no actual market bars
+        // lookback when the requested day has no actual market bars
         // (for example, after midnight, a weekend, or an exchange holiday).
         if (!sessionDate) {
           const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
           lookback.setUTCDate(lookback.getUTCDate() - 14);
           const lookbackDate = lookback.toISOString().slice(0, 10);
 
-          intradayPrices = await loadWindow(lookbackDate, 5);
-          sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
-
-          if (!sessionDate) {
-            const legacyIntradayPrices = await loadWindow(lookbackDate, 15);
-            const legacySessionDate = latestIntradaySessionDate(legacyIntradayPrices, requestedSessionDate);
-            if (legacySessionDate) {
-              intradayPrices = legacyIntradayPrices;
-              sessionDate = legacySessionDate;
+          for (const intervalMinutes of INTRADAY_POLICY.readIntervals) {
+            const candidate = await loadWindow(lookbackDate, intervalMinutes);
+            const candidateSessionDate = latestIntradaySessionDate(candidate, requestedSessionDate);
+            if (candidateSessionDate) {
+              intradayPrices = candidate;
+              sessionDate = candidateSessionDate;
+              break;
             }
           }
         }
@@ -885,7 +882,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       ) : chartData.length < 2 ? (
         <AnalyticsEmptyState>
           {timeframe === 'TODAY'
-            ? 'No complete 15-minute portfolio series is available for the latest EGX session yet.'
+            ? 'No complete intraday portfolio series is available for the latest EGX session yet.'
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
@@ -944,7 +941,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
           <span>
             {timeframe === 'TODAY'
-              ? '5-minute session reconstruction · execution-time aware'
+              ? 'Adaptive 1m → 5m → 15m session reconstruction · execution-time aware'
               : `${result.dataQuality.completeDays} complete valuation days`}
           </span>
           {result.dataQuality.incompleteDays > 0 && (

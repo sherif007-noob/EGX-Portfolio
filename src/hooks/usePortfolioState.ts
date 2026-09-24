@@ -278,15 +278,20 @@ export function usePortfolioState() {
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
+          const loadedTickers = mergeTickerDirectoryWithBaseline(
+            Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
+              ? remoteData.tickers
+              : tickers,
+          );
           const loadedTransactions = rehydrateTransactionMetadata(
             Array.isArray(remoteData.transactions)
               ? remoteData.transactions.map(normalizeTransaction)
               : [],
-            tickers,
+            loadedTickers,
           );
 
           if (loadedTransactions.length > 0 && (loadedPositions.length === 0 || loadedClosed.length === 0)) {
-            const report = reconcilePortfolioFromLedger(loadedTransactions, tickers, capitalDeposits, loadedPositions);
+            const report = reconcilePortfolioFromLedger(loadedTransactions, loadedTickers, capitalDeposits, loadedPositions);
             if (loadedPositions.length === 0) loadedPositions = report.reconciledPositions;
             if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
           }
@@ -294,6 +299,7 @@ export function usePortfolioState() {
           setPositions(loadedPositions);
           setClosedTrades(loadedClosed);
           setTransactions(loadedTransactions);
+          if (Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0) setTickers(loadedTickers);
           if (typeof remoteData.cashBalance === 'number' && Number.isFinite(remoteData.cashBalance)) setCashBalance(remoteData.cashBalance);
           if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
           setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);

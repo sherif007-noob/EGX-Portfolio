@@ -28,6 +28,7 @@ import { aggregateIntradayBars } from '../../services/intradayAggregation';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
 import { selectBestIntradayResolution } from '../../services/intradayResolution';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
+import { deriveCanonicalCapitalDeposits } from '../../services/portfolioReconciliation';
 import {
   buildUnifiedAnalyticsResult,
   type UnifiedAnalyticsResult,
@@ -182,12 +183,17 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [intradayError, setIntradayError] = useState<string | null>(null);
 
+  const canonicalCapitalDeposits = useMemo(
+    () => deriveCanonicalCapitalDeposits(transactions, currentCashBalance, capitalDeposits),
+    [transactions, currentCashBalance, capitalDeposits],
+  );
+
   const dailyResult = useMemo(() => {
     if (timeframe === 'TODAY') return null;
     return buildUnifiedAnalyticsResult(transactions, historicalPrices, timeframe, {
-      openingCapital: capitalDeposits,
+      openingCapital: canonicalCapitalDeposits,
     });
-  }, [transactions, historicalPrices, timeframe, capitalDeposits]);
+  }, [transactions, historicalPrices, timeframe, canonicalCapitalDeposits]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,7 +276,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
           intradayPrices,
           {
             sessionDate,
-            openingCapital: capitalDeposits,
+            openingCapital: canonicalCapitalDeposits,
             currentCashBalance,
             asOf: new Date(),
             livePrices,
@@ -295,7 +301,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     return () => {
       cancelled = true;
     };
-  }, [transactions, historicalPrices, capitalDeposits, currentCashBalance, positions, todayResolution]);
+  }, [transactions, historicalPrices, canonicalCapitalDeposits, currentCashBalance, positions, todayResolution]);
 
   useEffect(() => {
     const handleGlobalPress = (event: Event) => {

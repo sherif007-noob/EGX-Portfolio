@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { 
   FileSpreadsheet, 
   PlusCircle, 
@@ -51,6 +51,15 @@ export const Header: React.FC<HeaderProps> = ({
   onSyncLivePrices,
   isSyncingPrices = false,
 }) => {
+  const navScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = navScrollRef.current;
+    if (!container) return;
+    const active = container.querySelector<HTMLElement>('[aria-current="page"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [activeTab]);
+
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
@@ -192,10 +201,11 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto overscroll-x-contain scrollbar-none">
+      <div ref={navScrollRef} className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto overscroll-x-contain scrollbar-none">
         <nav className="flex space-x-1 sm:space-x-3 py-2 min-w-max">
           <button
             id="tab-overview"
+            aria-current={activeTab === 'overview' ? 'page' : undefined}
             onClick={() => setActiveTab('overview')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'overview'
@@ -204,11 +214,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
-            Overview
+            <span className="2xl:hidden">Overview</span><span className="hidden 2xl:inline">Overview</span>
           </button>
 
           <button
             id="tab-positions"
+            aria-current={activeTab === 'positions' ? 'page' : undefined}
             onClick={() => setActiveTab('positions')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'positions'
@@ -217,11 +228,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Layers className="w-4 h-4 text-blue-400" />
-            Open Positions
+            <span className="2xl:hidden">Positions</span><span className="hidden 2xl:inline">Open Positions</span>
           </button>
 
           <button
             id="tab-closed-cycles"
+            aria-current={activeTab === 'closed_cycles' ? 'page' : undefined}
             onClick={() => setActiveTab('closed_cycles')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'closed_cycles'
@@ -230,11 +242,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <RotateCcw className="w-4 h-4 text-purple-400" />
-            Closed Cycles
+            <span className="2xl:hidden">Cycles</span><span className="hidden 2xl:inline">Closed Cycles</span>
           </button>
 
           <button
             id="tab-transactions"
+            aria-current={activeTab === 'journal' ? 'page' : undefined}
             onClick={() => setActiveTab('journal')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'journal'
@@ -243,11 +256,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <BookOpen className="w-4 h-4 text-amber-400" />
-            Transactions
+            <span className="2xl:hidden">Transactions</span><span className="hidden 2xl:inline">Transactions</span>
           </button>
 
           <button
             id="tab-cash-ledger"
+            aria-current={activeTab === 'cash' ? 'page' : undefined}
             onClick={() => setActiveTab('cash')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'cash'
@@ -256,11 +270,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Wallet className="w-4 h-4 text-amber-400" />
-            Cash Ledger
+            <span className="2xl:hidden">Cash</span><span className="hidden 2xl:inline">Cash Ledger</span>
           </button>
 
           <button
             id="tab-reports"
+            aria-current={activeTab === 'reports' ? 'page' : undefined}
             onClick={() => setActiveTab('reports')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'reports'
@@ -269,11 +284,12 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <BarChart3 className="w-4 h-4 text-purple-400" />
-            Reports and performance
+            <span className="2xl:hidden">Reports</span><span className="hidden 2xl:inline">Reports & Performance</span>
           </button>
 
           <button
             id="tab-directory"
+            aria-current={activeTab === 'directory' ? 'page' : undefined}
             onClick={() => setActiveTab('directory')}
             className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
               activeTab === 'directory'
@@ -282,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <ListOrdered className="w-4 h-4 text-teal-400" />
-            Stocks &amp; Prices
+            <span className="2xl:hidden">Stocks</span><span className="hidden 2xl:inline">Stocks &amp; Prices</span>
           </button>
         </nav>
       </div>

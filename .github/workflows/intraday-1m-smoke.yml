@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: egx-intraday-1m-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   sync:

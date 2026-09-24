@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
+import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 
 type HistoryBar = [number, number, number, number, number, number?];
 
@@ -9,16 +10,6 @@ const DEFAULT_RETENTION_DAYS = 90;
 const DEFAULT_INCREMENTAL_BARS = 120;
 const MAX_INITIAL_BARS = 7500;
 const ESTIMATED_BARS_PER_SESSION = 66;
-
-const TICKER_ALIASES: Record<string, string> = {
-  QNBA: 'QNBF',
-  MNHD: 'MASR',
-  AUTO: 'GBCO',
-  OTMT: 'OIH',
-  UBEG: 'UBEE',
-  // TradingView keys National Printing by ISIN rather than the broker/EGX code NAPR.
-  NAPR: 'EGS370O1C013',
-};
 
 function normalizeTicker(ticker: string): string {
   return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
@@ -94,6 +85,18 @@ async function resolveTickerUniverse(
         .filter((ticker) => ticker && ticker !== 'CASH'),
     ),
   ].sort();
+}
+
+async function loadTickerMetadata(
+  sb: ReturnType<typeof supabase>,
+  ticker: string,
+): Promise<{ isin?: string; tradingviewSymbol?: string }> {
+  const { data, error } = await sb.from('tickers').select('*').eq('ticker', ticker).maybeSingle();
+  if (error) throw new Error(`Ticker metadata read failed for ${ticker}: ${error.message}`);
+  return {
+    isin: String(data?.isin || '').trim().toUpperCase() || undefined,
+    tradingviewSymbol: String(data?.tradingview_symbol || '').trim().toUpperCase() || undefined,
+  };
 }
 
 async function latestStoredTimestamp(
@@ -247,8 +250,13 @@ async function main() {
       try {
         const latest = await latestStoredTimestamp(sb, ticker);
         const requestedBars = barsToRequest(latest, now, retentionDays);
-        const resolved = await chart.resolve(TICKER_ALIASES[ticker] || ticker, 'EGX');
-        const series = await createSeries(session, chart, resolved, '5', requestedBars);
+        const tickerMeta = await loadTickerMetadata(sb, ticker);
+        const resolution = await resolveTradingViewInstrument(chart, {
+          ticker,
+          isin: tickerMeta.isin,
+          tradingviewSymbol: tickerMeta.tradingviewSymbol,
+        });
+        const series = await createSeries(session, chart, resolution.resolved, '5', requestedBars);
 
         try {
           const written = await writeBars(

@@ -10,7 +10,7 @@ on:
       - 'scripts/syncIntradayPrices.ts'
   schedule:
     # Broad UTC window covers the EGX session across Cairo DST changes.
-    # TradingView supplies the actual 15-minute bar timestamps; the cron time
+    # TradingView supplies the actual 5-minute bar timestamps; the cron time
     # only determines how often we ingest newly completed/current bars.
     - cron: '*/15 6-13 * * 0-4'
 
@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Sync TradingView 15-minute prices
+      - name: Sync TradingView 5-minute prices
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}

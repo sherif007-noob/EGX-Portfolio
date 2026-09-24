@@ -79,7 +79,7 @@ Acceptance criteria:
 
 ### Phase B — Prove TradingView 1m behavior
 
-Status: **started**
+Status: **validated**
 
 Before changing production ingestion, run a non-mutating Node diagnostic against representative names:
 
@@ -101,6 +101,20 @@ Measure:
 - whether count-only retrieval is sufficient or ranged/chunked retrieval is required.
 
 ACTF must not be manually seeded before this test.
+
+#### Diagnostic result — 2026-09-24
+
+A 5,000-bar read-only probe succeeded for all four test names:
+
+| Ticker | Resolver | Returned | First 1m bar | Last 1m bar | Median observed gap |
+| --- | --- | ---: | --- | --- | ---: |
+| ACTF | ticker `ACTF` | 5,000 | 2026-08-20 07:29Z | 2026-09-23 11:29Z | 60s |
+| NAPR | ISIN `EGS370O1C013` | 5,000 | 2026-06-09 09:07Z | 2026-09-23 11:29Z | 60s |
+| ORAS | ticker `ORAS` | 5,000 | 2026-08-25 10:57Z | 2026-09-23 11:27Z | 60s |
+| QNBA | canonical ticker `QNBE` | 5,000 | 2026-08-02 08:20Z | 2026-09-23 11:14Z | 60s |
+
+This proves the Node runtime, timeframe `"1"`, centralized ticker/ISIN resolution, and 1-minute cadence all work. It also proves a fixed count is not a reliable date-range guarantee because liquidity changes how much calendar history 5,000 observations cover. Therefore production backfill uses explicit time ranges split into bounded chunks instead of assuming a bar count equals a retention window.
+
 
 ### Phase C — Restrict the Today ticker universe
 
@@ -128,7 +142,7 @@ Acceptance criteria:
 
 ### Phase D — Chunked/gap-aware 1m ingestion
 
-Status: **planned**
+Status: **implemented for migration validation**
 
 Do not implement 1m by changing a single `5` constant to `1`.
 
@@ -152,7 +166,7 @@ The engine must distinguish:
 
 ### Phase E — Persist raw 1m bars
 
-Status: **planned**
+Status: **implemented for migration validation**
 
 Raw rows use:
 
@@ -167,7 +181,7 @@ Completed historical bars should be treated as immutable. Only a deliberately ha
 
 ### Phase F — Derive 5m locally
 
-Status: **started**
+Status: **implemented for migration validation**
 
 5m bars are aggregated from real 1m observations rather than fetched independently forever.
 
@@ -195,7 +209,7 @@ Acceptance criteria:
 
 ### Phase G — Retention jobs
 
-Status: **planned**
+Status: **implemented for migration validation**
 
 After ingestion/aggregation:
 
@@ -341,3 +355,38 @@ The first implementation pass has begun on `feature/premium-ui-redesign`:
 - No regression to Today live endpoint semantics.
 - No regression to verified 1W baseline semantics.
 - Premium work stays on `feature/premium-ui-redesign` unless explicitly requested otherwise.
+
+## Production schema prerequisite discovered during implementation
+
+The existing production table still had the original database check constraint:
+
+```text
+interval_minutes = 15
+```
+
+That would have rejected both 1-minute and 5-minute inserts even though application code had already begun reading those intervals. Migration `20260924_intraday_multi_resolution.sql` changes the allowed values to:
+
+```text
+interval_minutes IN (1, 5, 15)
+```
+
+The migration was applied to the current Supabase project and verified before enabling the write-capable migration workflow.
+
+## Migration sync implementation
+
+`scripts/syncIntradayOneMinute.ts` now implements the first write-capable migration path:
+
+- explicit ranged TradingView 1m retrieval in 7-day chunks;
+- full 90-day source retrieval when no derived 5m coverage exists;
+- raw 1m persistence only inside the 30-day raw retention window;
+- local 1m -> 5m derivation across the fetched window;
+- 5m persistence for the 90-day derived retention window;
+- 2-day overlap for ordinary incremental repair;
+- interval-specific pruning that leaves legacy 15m rows untouched;
+- raw 1m rows are inserted only when missing;
+- derived 5m rows are deterministic cache rows and may be refreshed from the raw source.
+
+The write-capable workflow is manual during migration validation:
+`.github/workflows/intraday-1m-sync.yml`.
+
+It must not be scheduled as the production job until ACTF/NAPR and portfolio-math validation are complete.

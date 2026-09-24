@@ -3129,70 +3129,70 @@ body {
  * so they deliberately use the same visual hierarchy as accepted hero metrics,
  * not the low-intensity report-glass-soft surface.
  */
-.premium-benchmark-card {
+.premium-report-hero-card {
   --premium-refraction-shadow: var(--premium-refraction-tier-hero);
-  --premium-benchmark-rgb: 56 189 248;
-  --premium-benchmark-deep-rgb: 37 99 235;
-  border-color: rgb(var(--premium-benchmark-rgb) / 0.52) !important;
+  --premium-report-hero-rgb: 56 189 248;
+  --premium-report-hero-deep-rgb: 37 99 235;
+  border-color: rgb(var(--premium-report-hero-rgb) / 0.52) !important;
   background:
-    radial-gradient(circle at 16% -18%, rgb(var(--premium-benchmark-rgb) / 0.19), transparent 38%),
-    radial-gradient(circle at 102% 0%, rgb(var(--premium-benchmark-deep-rgb) / 0.10), transparent 44%),
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-report-hero-rgb) / 0.19), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-report-hero-deep-rgb) / 0.10), transparent 44%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
     rgba(12, 20, 39, 0.66) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
     0 18px 44px rgba(0, 0, 0, 0.30),
-    0 0 34px rgb(var(--premium-benchmark-rgb) / 0.22),
-    0 0 76px rgb(var(--premium-benchmark-deep-rgb) / 0.10),
+    0 0 34px rgb(var(--premium-report-hero-rgb) / 0.22),
+    0 0 76px rgb(var(--premium-report-hero-deep-rgb) / 0.10),
     var(--premium-refraction-shadow, 0 0 0 transparent) !important;
   -webkit-backdrop-filter: blur(24px) saturate(158%) !important;
   backdrop-filter: blur(24px) saturate(158%) !important;
 }
 
-.premium-benchmark-tone-positive {
-  --premium-benchmark-rgb: 16 185 129;
-  --premium-benchmark-deep-rgb: 5 150 105;
+.premium-report-tone-positive {
+  --premium-report-hero-rgb: 16 185 129;
+  --premium-report-hero-deep-rgb: 5 150 105;
 }
 
-.premium-benchmark-tone-negative {
-  --premium-benchmark-rgb: 244 63 94;
-  --premium-benchmark-deep-rgb: 225 29 72;
+.premium-report-tone-negative {
+  --premium-report-hero-rgb: 244 63 94;
+  --premium-report-hero-deep-rgb: 225 29 72;
 }
 
-.premium-benchmark-tone-warning,
-.premium-benchmark-tone-amber {
-  --premium-benchmark-rgb: 245 158 11;
-  --premium-benchmark-deep-rgb: 217 119 6;
+.premium-report-tone-warning,
+.premium-report-tone-amber {
+  --premium-report-hero-rgb: 245 158 11;
+  --premium-report-hero-deep-rgb: 217 119 6;
 }
 
-.premium-benchmark-tone-blue {
-  --premium-benchmark-rgb: 59 130 246;
-  --premium-benchmark-deep-rgb: 37 99 235;
+.premium-report-tone-blue {
+  --premium-report-hero-rgb: 59 130 246;
+  --premium-report-hero-deep-rgb: 37 99 235;
 }
 
-.premium-benchmark-tone-purple {
-  --premium-benchmark-rgb: 168 85 247;
-  --premium-benchmark-deep-rgb: 126 34 206;
+.premium-report-tone-purple {
+  --premium-report-hero-rgb: 168 85 247;
+  --premium-report-hero-deep-rgb: 126 34 206;
 }
 
-.premium-benchmark-tone-cyan {
-  --premium-benchmark-rgb: 34 211 238;
-  --premium-benchmark-deep-rgb: 8 145 178;
+.premium-report-tone-cyan {
+  --premium-report-hero-rgb: 34 211 238;
+  --premium-report-hero-deep-rgb: 8 145 178;
 }
 
-.premium-benchmark-tone-neutral {
-  --premium-benchmark-rgb: 148 163 184;
-  --premium-benchmark-deep-rgb: 71 85 105;
+.premium-report-tone-neutral {
+  --premium-report-hero-rgb: 148 163 184;
+  --premium-report-hero-deep-rgb: 71 85 105;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .premium-benchmark-card:hover {
-    border-color: rgb(var(--premium-benchmark-rgb) / 0.70) !important;
+  .premium-report-hero-card:hover {
+    border-color: rgb(var(--premium-report-hero-rgb) / 0.70) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.11),
       0 24px 56px rgba(0, 0, 0, 0.34),
-      0 0 42px rgb(var(--premium-benchmark-rgb) / 0.30),
-      0 0 90px rgb(var(--premium-benchmark-deep-rgb) / 0.14),
+      0 0 42px rgb(var(--premium-report-hero-rgb) / 0.30),
+      0 0 90px rgb(var(--premium-report-hero-deep-rgb) / 0.14),
       var(--premium-refraction-shadow, 0 0 0 transparent) !important;
   }
 }

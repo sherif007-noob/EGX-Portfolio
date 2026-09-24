@@ -86,4 +86,24 @@ describe('intraday aggregation', () => {
       toTimestamp: '2026-09-24T11:29:59.999Z',
     });
   });
+
+  it('derives 1-hour OHLCV without synthesizing missing observations', () => {
+    const result = aggregateIntradayBars([
+      bar(0, { open: 10, high: 11, low: 9.5, close: 10.5, volume: 100 }),
+      bar(4, { open: 10.5, high: 12, low: 10, close: 11.5, volume: 200 }),
+      { ...bar(0, { open: 11.5, high: 13, low: 11, close: 12.5, volume: 50 }), timestamp: '2026-09-24T07:45:00.000Z' },
+    ], 60);
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        timestamp: '2026-09-24T07:00:00.000Z',
+        intervalMinutes: 60,
+        open: 10,
+        high: 13,
+        low: 9.5,
+        close: 12.5,
+        volume: 350,
+      }),
+    ]);
+  });
 });

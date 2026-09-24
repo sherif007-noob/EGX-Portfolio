@@ -61,10 +61,21 @@ async function resolvePortfolioId(sb: SupabaseClient): Promise<string> {
   return String(data[0].id);
 }
 
+function cairoDateKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: INTRADAY_POLICY.timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${read('year')}-${read('month')}-${read('day')}`;
+}
+
 async function resolveTickerUniverse(
   sb: SupabaseClient,
   portfolioId: string,
-  derivedCutoffDate: string,
+  sessionDate: string,
 ): Promise<string[]> {
   const explicit = process.env.EGX_INTRADAY_TICKERS
     ?.split(',')
@@ -78,7 +89,7 @@ async function resolveTickerUniverse(
         .from('transactions')
         .select('ticker,transaction_date')
         .eq('portfolio_id', portfolioId)
-        .gte('transaction_date', derivedCutoffDate),
+        .eq('transaction_date', sessionDate),
       sb
         .from('positions')
         .select('ticker')
@@ -356,7 +367,8 @@ async function main() {
 
   const sb = createSupabaseClient();
   const portfolioId = await resolvePortfolioId(sb);
-  const tickers = await resolveTickerUniverse(sb, portfolioId, derivedCutoffIso.slice(0, 10));
+  const sessionDate = cairoDateKey(now);
+  const tickers = await resolveTickerUniverse(sb, portfolioId, sessionDate);
 
   if (!tickers.length) {
     console.log('No portfolio-relevant security tickers found for 1-minute intraday sync.');
@@ -364,7 +376,7 @@ async function main() {
   }
 
   console.log(
-    `1m intraday sync starting: ${tickers.length} tickers; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; rangeChunk=${INTRADAY_POLICY.backfillChunkDays}d; forceFullRepair=${forceFullRepair}.`,
+    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; rangeChunk=${INTRADAY_POLICY.backfillChunkDays}d; forceFullRepair=${forceFullRepair}.`,
   );
 
   const session = await createSession();

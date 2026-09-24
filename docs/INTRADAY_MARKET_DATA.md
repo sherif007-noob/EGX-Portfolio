@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The intraday market-data layer stores 5-minute EGX bars for portfolio-relevant securities. It is the data foundation for future 1D portfolio analytics, including transaction-aware NAV, MWR, TWR, and Telda-style session charts.
+The intraday market-data layer is migrating to raw 1-minute EGX bars with locally derived 5-minute history for portfolio-relevant securities. It is the data foundation for future 1D portfolio analytics, including transaction-aware NAV, MWR, TWR, and Telda-style session charts.
 
 This layer does not change portfolio accounting and does not render charts by itself.
 
@@ -10,11 +10,13 @@ This layer does not change portfolio accounting and does not render charts by it
 
 - Source: TradingView through `@ch99q/twc`
 - Exchange: EGX
-- Target interval: 5 minutes
-- Legacy fallback interval: 15 minutes while 5-minute coverage is being established
+- Raw interval target: 1 minute
+- Derived interval target: 5 minutes
+- Legacy fallback interval: 15 minutes during migration
 - Storage timezone: UTC (`timestamptz`)
 - Display/analytics timezone: `Africa/Cairo`
-- Retention: 90 rolling calendar days by default
+- Raw 1-minute retention target: 30 rolling calendar days
+- Derived 5-minute retention target: 90 rolling calendar days
 
 TradingView supplies the actual bar timestamps. GitHub Actions scheduling controls ingestion frequency only; it does not manufacture bar boundaries.
 
@@ -37,7 +39,7 @@ Columns:
 | Column | Purpose |
 | --- | --- |
 | `ticker` | Normalized EGX ticker |
-| `interval_minutes` | Bar interval; target is 5, with legacy 15-minute rows retained as read fallback |
+| `interval_minutes` | Resolution: raw 1m, derived 5m, or legacy 15m fallback |
 | `bar_timestamp` | UTC bar timestamp |
 | `open` | Bar open |
 | `high` | Bar high |
@@ -74,29 +76,15 @@ For diagnostics or targeted backfills, `EGX_INTRADAY_TICKERS` can override the d
 
 ## Initial backfill and incremental sync
 
-The first successful sync detects that no bars are stored and requests enough recent 5-minute observations to cover approximately the configured retention period.
+During migration, the existing sync still maintains transitional 5-minute TradingView data. The 1-minute migration introduces a separate gap-aware raw ingestion path before switching the scheduled producer.
 
-Subsequent syncs inspect the newest stored timestamp per ticker and request only a bounded overlapping window. Only timestamps missing from Supabase are inserted. Existing observations are left untouched.
+The target 1-minute ingest will inspect existing coverage, retrieve only missing ranges, insert only absent timestamps, and then derive affected 5-minute buckets locally. Completed historical observations remain immutable.
 
-The sync intentionally overlaps recent bars. Correctness is preferred over trying to infer whether TradingView's newest bar is final.
+See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the staged rollout and acceptance criteria.
 
 ## Retention
 
-At the end of each successful run, the server-side sync removes rows older than the configured retention period.
-
-Default:
-
-```text
-90 days
-```
-
-Override:
-
-```env
-EGX_INTRADAY_RETENTION_DAYS=90
-```
-
-The accepted range is capped by the script to prevent accidental unbounded retention.
+The migration target is interval-specific retention: 1-minute rows for 30 calendar days and derived 5-minute rows for 90 calendar days. Legacy 15-minute rows are retained during rollout for fallback and rollback validation.
 
 ## Commands
 
@@ -156,7 +144,7 @@ The underlying Supabase reader paginates in batches of 1,000 rows so future anal
 - Keep timestamps as UTC in storage.
 - Convert to Cairo only when determining/displaying the trading session.
 - Do not mix intraday rows into the daily `price_history` table.
-- Prefer persisted 5-minute rows in Today analytics; if none exist for the requested/latest session, fall back to persisted 15-minute rows rather than returning an empty chart or synthesizing data.
+- Today analytics reads real data in the order 1m -> 5m -> legacy 15m. Coverage-quality gating will be added before 1m becomes the authoritative preferred source.
 - Do not use intraday bars to mutate accounting records.
 - A missing ticker/session must remain explicitly missing until a trusted source supplies it.
 

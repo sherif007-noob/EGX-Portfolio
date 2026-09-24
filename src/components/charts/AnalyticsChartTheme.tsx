@@ -81,8 +81,8 @@ export const ChartTooltipShell: React.FC<ChartTooltipShellProps> = ({
 }) => (
   <div
     className={[
-      'min-w-[150px] max-w-[min(78vw,320px)] rounded-xl border border-slate-700/90',
-      'bg-slate-950/95 px-3 py-2.5 text-xs shadow-2xl shadow-black/40 backdrop-blur-md',
+      'premium-floating premium-tooltip-content min-w-[150px] max-w-[min(78vw,320px)] rounded-xl border',
+      'px-3 py-2.5 text-xs',
       'text-slate-200',
       className,
     ].join(' ')}
@@ -190,7 +190,7 @@ interface AnalyticsEmptyStateProps {
 }
 
 export const AnalyticsEmptyState: React.FC<AnalyticsEmptyStateProps> = ({ children }) => (
-  <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-950/30 px-4 py-8 text-center text-xs text-slate-500">
+  <div className="premium-surface flex min-h-40 items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center text-xs text-slate-500">
     {children}
   </div>
 );

@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AnalyticsSelect } from '../AnalyticsSelect';
+import { runVisualTransition } from '../../utils/visualTransition';
+import { MotionSwap } from '../PremiumMotion';
 import {
   TrendingUp,
   TrendingDown,
@@ -31,17 +33,31 @@ interface TradingPerformanceReportProps {
 
 type TimeframeFilter = 'ALL' | 'YTD' | '90D' | '30D';
 
-const formatEgp = (val: number) =>
-  val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const EGP_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : '∞');
 
-export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> = ({
+const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps> = ({
   stats,
   closedTrades,
 }) => {
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('ALL');
   const [tradeTypeFilter, setTradeTypeFilter] = useState<'ALL' | 'Swing' | 'Day Trade' | 'Position'>('ALL');
+
+  const changeTimeframe = (next: TimeframeFilter) => {
+    if (next === timeframe) return;
+    runVisualTransition('performance-filter', () => setTimeframe(next));
+  };
+
+  const changeTradeTypeFilter = (next: typeof tradeTypeFilter) => {
+    if (next === tradeTypeFilter) return;
+    runVisualTransition('performance-filter', () => setTradeTypeFilter(next));
+  };
 
   // Filter trades based on user selections
   const filteredTrades = useMemo(() => {
@@ -194,7 +210,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
   };
 
   return (
-    <div id="report-trading-performance" className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6 shadow-sm">
+    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -216,17 +232,14 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
         {/* Action Controls: Filters & Export */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Timeframe selector */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="premium-selector-shell flex items-center">
             {(['ALL', 'YTD', '90D', '30D'] as TimeframeFilter[]).map((tf) => (
               <button
                 key={tf}
                 type="button"
-                onClick={() => setTimeframe(tf)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                  timeframe === tf
-                    ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                aria-pressed={timeframe === tf}
+                onClick={() => changeTimeframe(tf)}
+                className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
               >
                 {tf === 'ALL' ? 'All Time' : tf}
               </button>
@@ -236,7 +249,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           {/* Trade Type Filter */}
           <AnalyticsSelect
             value={tradeTypeFilter}
-            onChange={(value) => setTradeTypeFilter(value as typeof tradeTypeFilter)}
+            onChange={(value) => changeTradeTypeFilter(value as typeof tradeTypeFilter)}
             compact
             accent="blue"
             ariaLabel="Filter by trade type"
@@ -253,7 +266,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Download CSV report"
           >
             <Download className="w-3.5 h-3.5 text-blue-400" />
@@ -262,7 +275,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           <button
             type="button"
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
+            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
@@ -271,9 +284,10 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
         </div>
       </div>
 
+      <MotionSwap motionKey={`${timeframe}-${tradeTypeFilter}`} variant="state" className="space-y-6">
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -296,7 +310,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -317,7 +331,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -332,7 +346,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -352,10 +366,10 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
       </div>
 
       {/* Main Indicators Scorecard Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+      <div className="premium-report-table overflow-x-auto rounded-xl">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+            <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
               <th className="py-3 px-4">Performance Indicator</th>
               <th className="py-3 px-4 text-right">Measured Result</th>
               <th className="py-3 px-4">Institutional Benchmark / Target</th>
@@ -364,7 +378,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-sans">
             {/* 1. Win Rate */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Percent className="w-3.5 h-3.5 text-blue-400" />
@@ -393,7 +407,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 2. Profit Factor */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -443,7 +457,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 3. Payoff Ratio */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -474,7 +488,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 4. Mathematical Expectancy */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -510,7 +524,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 5. Total Closed Trades & Confidence */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5 text-slate-400" />
@@ -539,7 +553,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 6. Total Winning Trades */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -561,7 +575,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 7. Total Losing Trades */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -576,14 +590,14 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
                 Split: {indicators.totalClosed > 0 ? ((indicators.lossCount / indicators.totalClosed) * 100).toFixed(1) : 0}% of closed trades
               </td>
               <td className="py-3 px-4 text-right">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="premium-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-300">
                   <Info className="w-3 h-3" /> Controlled Risk Exits
                 </span>
               </td>
             </tr>
 
             {/* 8. Win / Loss Count Ratio */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
@@ -610,7 +624,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 9. Average Trade P&L */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Target className="w-3.5 h-3.5 text-teal-400" />
@@ -638,7 +652,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 10. Average Win */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -658,7 +672,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 11. Average Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -684,7 +698,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 12. Largest Win */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Award className="w-3.5 h-3.5 text-emerald-400" />
@@ -713,7 +727,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 13. Largest Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -742,7 +756,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 14. Gross Profit */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -762,7 +776,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 15. Gross Loss */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -782,7 +796,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 16. Net Realized P&L */}
-            <tr className="hover:bg-slate-900/50 transition bg-slate-900/40">
+            <tr className="transition bg-white/[0.012]">
               <td className="py-3 px-4">
                 <div className="font-bold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
@@ -811,7 +825,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 17. Max Drawdown */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -845,7 +859,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 18. Recovery Factor */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
@@ -874,7 +888,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 19. Average Holding Days */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-blue-400" />
@@ -894,7 +908,7 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
             </tr>
 
             {/* 20. Total Brokerage Fees */}
-            <tr className="hover:bg-slate-900/50 transition">
+            <tr className="transition">
               <td className="py-3 px-4">
                 <div className="font-semibold text-white flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-amber-400" />
@@ -921,6 +935,9 @@ export const TradingPerformanceReport: React.FC<TradingPerformanceReportProps> =
         <span>* All calculations account for buy/sell brokerage fees and real EGX settlement execution.</span>
         <span>Filter applied: {timeframe === 'ALL' ? 'Entire Trading History' : timeframe} ({indicators.totalClosed} closed trades)</span>
       </div>
+      </MotionSwap>
     </div>
   );
 };
+
+export const TradingPerformanceReport = React.memo(TradingPerformanceReportComponent);

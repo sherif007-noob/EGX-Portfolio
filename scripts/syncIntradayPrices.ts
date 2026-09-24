@@ -4,11 +4,11 @@ import { createChart, createSeries, createSession } from '@ch99q/twc';
 
 type HistoryBar = [number, number, number, number, number, number?];
 
-const INTERVAL_MINUTES = 15;
+const INTERVAL_MINUTES = 5;
 const DEFAULT_RETENTION_DAYS = 90;
-const DEFAULT_INCREMENTAL_BARS = 40;
-const MAX_INITIAL_BARS = 2500;
-const ESTIMATED_BARS_PER_SESSION = 22;
+const DEFAULT_INCREMENTAL_BARS = 120;
+const MAX_INITIAL_BARS = 7500;
+const ESTIMATED_BARS_PER_SESSION = 66;
 
 const TICKER_ALIASES: Record<string, string> = {
   QNBA: 'QNBF',
@@ -16,6 +16,8 @@ const TICKER_ALIASES: Record<string, string> = {
   AUTO: 'GBCO',
   OTMT: 'OIH',
   UBEG: 'UBEE',
+  // TradingView keys National Printing by ISIN rather than the broker/EGX code NAPR.
+  NAPR: 'EGS370O1C013',
 };
 
 function normalizeTicker(ticker: string): string {
@@ -246,7 +248,7 @@ async function main() {
         const latest = await latestStoredTimestamp(sb, ticker);
         const requestedBars = barsToRequest(latest, now, retentionDays);
         const resolved = await chart.resolve(TICKER_ALIASES[ticker] || ticker, 'EGX');
-        const series = await createSeries(session, chart, resolved, '15', requestedBars);
+        const series = await createSeries(session, chart, resolved, '5', requestedBars);
 
         try {
           const written = await writeBars(

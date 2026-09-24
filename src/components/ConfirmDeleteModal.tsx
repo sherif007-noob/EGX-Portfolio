@@ -1,4 +1,6 @@
 import React from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion } from './PremiumMotion';
 import { AlertTriangle, Trash2, X, ShieldAlert } from 'lucide-react';
 
 interface ConfirmDeleteModalProps {
@@ -24,15 +26,20 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   description,
   itemDetails,
 }) => {
-  if (!isOpen) return null;
+  const requestClose = () => runVisualTransition('modal-close', onClose);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-md p-4 sm:p-6 rounded-2xl space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel={title}
+    >
         {/* Close Button */}
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          onClick={requestClose}
+          className="premium-icon-action absolute top-4 right-4 p-1.5 rounded-lg"
         >
           <X className="w-4 h-4" />
         </button>
@@ -49,13 +56,13 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         </div>
 
         {/* Description */}
-        <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+        <p className="premium-modal-section text-xs text-slate-300 leading-relaxed p-3 rounded-xl">
           {description}
         </p>
 
         {/* Item Details Summary */}
         {itemDetails && (
-          <div className="p-3 rounded-xl bg-slate-950 border border-rose-500/20 text-xs space-y-1.5 font-mono">
+          <div className="premium-modal-section p-3 rounded-xl border-rose-500/20 text-xs space-y-1.5 font-mono">
             {itemDetails.ticker && (
               <div className="flex justify-between">
                 <span className="text-slate-400">Target Ticker:</span>
@@ -90,10 +97,10 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2.5 pt-2">
+        <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
           <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition"
+            onClick={requestClose}
+            className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
           >
             Cancel
           </button>
@@ -101,15 +108,14 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           <button
             onClick={() => {
               onConfirm();
-              onClose();
+              requestClose();
             }}
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-950/40 flex items-center gap-1.5 transition active:scale-95"
+            className="premium-action premium-action-danger flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Confirm & Delete</span>
           </button>
         </div>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

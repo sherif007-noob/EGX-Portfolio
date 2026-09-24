@@ -35,6 +35,7 @@ interface SecondaryAnalyticsChartsProps {
   historicalPrices: HistoricalPriceSeries;
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
+  entranceReady?: boolean;
 }
 
 function formatDailyLabel(value: string): string {
@@ -76,6 +77,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   historicalPrices,
   intradayPrices,
   result,
+  entranceReady = true,
 }) => {
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -113,7 +115,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-panel rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -142,6 +144,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for drawdown.</AnalyticsEmptyState>
           ) : (
             <div className="h-52 sm:h-56">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
@@ -184,15 +187,18 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-panel rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -212,6 +218,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for fee history.</AnalyticsEmptyState>
           ) : (
             <div className="h-52 sm:h-56">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>
@@ -249,15 +256,18 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       stroke: '#020617',
                       strokeWidth: 2,
                     }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div className="premium-panel xl:col-span-2 rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -288,6 +298,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <AnalyticsEmptyState>Not enough complete points for P&amp;L composition.</AnalyticsEmptyState>
           ) : (
             <div className="h-56 sm:h-64">
+              {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <LineChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...analyticsGridProps} />
@@ -314,7 +325,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                   <Line
                     type={lineType}
@@ -324,10 +337,13 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     strokeWidth={2.1}
                     dot={false}
                     activeDot={{ r: 4.5, fill: ANALYTICS_CHART_THEME.cyan, stroke: '#020617', strokeWidth: 2 }}
-                    isAnimationActive={!intraday}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>

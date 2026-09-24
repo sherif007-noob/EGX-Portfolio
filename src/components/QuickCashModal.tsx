@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
 import { X, Wallet, Plus, Minus } from 'lucide-react';
 
@@ -15,9 +17,8 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   currentCash,
   onUpdateCash,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [amount, setAmount] = useState<number>(currentCash);
-
-  if (!isOpen) return null;
 
   const handleAdjust = (delta: number) => {
     setAmount((prev) => Math.max(0, prev + delta));
@@ -26,25 +27,23 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateCash(amount);
-    onClose();
+    requestClose();
   };
 
   return (
-    <div
-      id="quick-cash-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-      onClick={onClose}
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport w-full max-w-sm rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Adjust cash reserve"
     >
-      <div
-        className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-emerald-400" />
             <h3 className="text-base font-bold text-white">Adjust Cash Reserve</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -60,7 +59,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
               value={amount}
               onValueChange={(value) => setAmount(parseFloat(value) || 0)}
               accent="emerald"
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 font-mono text-base font-bold text-white focus:outline-none focus:border-emerald-500"
+              className="premium-field w-full px-3 py-2.5 rounded-xl font-mono text-base font-bold text-white focus:outline-none"
             />
           </div>
 
@@ -68,28 +67,28 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             <button
               type="button"
               onClick={() => handleAdjust(10000)}
-              className="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               +10k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(50000)}
-              className="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               +50k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(-10000)}
-              className="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               -10k
             </button>
             <button
               type="button"
               onClick={() => handleAdjust(-50000)}
-              className="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-[11px]"
+              className="premium-action py-1.5 rounded-lg font-medium text-[11px]"
             >
               -50k
             </button>
@@ -97,12 +96,11 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow transition"
+            className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 rounded-xl font-bold text-sm"
           >
             Update Cash Balance
           </button>
         </form>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

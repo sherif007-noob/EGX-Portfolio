@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
+import { PremiumModalMotion } from './PremiumMotion';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
@@ -27,10 +29,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   onClose,
   onConfirmSell,
 }) => {
-  if (!isOpen || !position) return null;
+  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const lastPositionRef = useRef<Position | null>(position);
+  if (position) lastPositionRef.current = position;
+  const displayPosition = position ?? lastPositionRef.current;
 
-  const [sharesToSell, setSharesToSell] = useState<number>(position.shares);
-  const [sellPrice, setSellPrice] = useState<number>(position.currentPrice || position.avgBuyPrice);
+  const [sharesToSell, setSharesToSell] = useState<number>(position?.shares ?? 0);
+  const [sellPrice, setSellPrice] = useState<number>(position?.currentPrice || position?.avgBuyPrice || 0);
   const [sellDate, setSellDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [executionTime, setExecutionTime] = useState<string>('');
   const [brokerageFee, setBrokerageFee] = useState<number>(0);
@@ -55,28 +60,30 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
     }
   }, [sharesToSell, sellPrice, isManualFee]);
 
+  if (!displayPosition) return null;
+
   // Financial calculations
   const grossProceeds = sharesToSell * sellPrice;
   const netProceeds = Math.max(0, grossProceeds - (brokerageFee || 0));
 
   // Cost basis for sold shares
-  const costBasis = sharesToSell * position.avgBuyPrice;
+  const costBasis = sharesToSell * displayPosition.avgBuyPrice;
   // Allocated buy fees for sold shares
-  const allocatedBuyFees = position.totalFees ? (sharesToSell / position.shares) * position.totalFees : 0;
+  const allocatedBuyFees = displayPosition.totalFees ? (sharesToSell / displayPosition.shares) * displayPosition.totalFees : 0;
   const totalCostIncludingBuyFees = costBasis + allocatedBuyFees;
 
   // Realized Net P&L: Net proceeds from sale minus total cost basis (including buy fee + sell fee)
   const realizedPnlEgp = netProceeds - totalCostIncludingBuyFees;
   const realizedPnlPercent = totalCostIncludingBuyFees > 0 ? (realizedPnlEgp / totalCostIncludingBuyFees) * 100 : 0;
   const isProfit = realizedPnlEgp >= 0;
-  const remainingShares = Math.max(0, position.shares - sharesToSell);
+  const remainingShares = Math.max(0, displayPosition.shares - sharesToSell);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sharesToSell <= 0 || sharesToSell > position.shares || sellPrice <= 0) return;
+    if (sharesToSell <= 0 || sharesToSell > displayPosition.shares || sellPrice <= 0) return;
 
     onConfirmSell(
-      position.id,
+      displayPosition.id,
       sharesToSell,
       sellPrice,
       sellDate,
@@ -85,51 +92,49 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
       notes,
       remainingShares
     );
-    onClose();
+    requestClose();
   };
 
   return (
-    <div
-      id="sell-position-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto"
-      onClick={onClose}
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport w-full max-w-md my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
+      onBackdropClick={requestClose}
+      panelAriaLabel={`Sell ${displayPosition.ticker} position`}
     >
-      <div
-        className="w-full max-w-md my-6 rounded-2xl bg-slate-900 border border-slate-700 p-6 text-slate-100 shadow-2xl space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <DollarSign className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-bold text-white">Sell / Exit Position</h3>
               <p className="text-xs text-slate-400">
-                {position.ticker} • {position.companyName}
+                {displayPosition.ticker} • {displayPosition.companyName}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           {/* Summary Box */}
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex justify-between">
+          <div className="premium-subpanel p-3 rounded-xl flex justify-between">
             <div>
               <span className="text-slate-400 block text-[10px]">Held Shares</span>
-              <span className="font-mono font-bold text-white">{position.shares.toLocaleString()}</span>
+              <span className="font-mono font-bold text-white">{displayPosition.shares.toLocaleString()}</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Average Buy</span>
-              <span className="font-mono font-bold text-slate-200">{position.avgBuyPrice.toFixed(2)} EGP</span>
+              <span className="font-mono font-bold text-slate-200">{displayPosition.avgBuyPrice.toFixed(2)} EGP</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Current Quote</span>
               <span className="font-mono font-bold text-emerald-400">
-                {(position.currentPrice || position.avgBuyPrice).toFixed(2)} EGP
+                {(displayPosition.currentPrice || displayPosition.avgBuyPrice).toFixed(2)} EGP
               </span>
             </div>
           </div>
@@ -141,15 +146,15 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setSharesToSell(Math.floor(position.shares / 2))}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                  onClick={() => setSharesToSell(Math.floor(displayPosition.shares / 2))}
+                  className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   50%
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSharesToSell(position.shares)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium"
+                  onClick={() => setSharesToSell(displayPosition.shares)}
+                  className="premium-action px-2 py-1 rounded-lg text-[10px] font-medium"
                 >
                   100% (All)
                 </button>
@@ -157,18 +162,18 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </div>
             <NumberStepperInput
               min={1}
-              max={position.shares}
+              max={displayPosition.shares}
               step={1}
               value={sharesToSell || ''}
               onValueChange={(value) => setSharesToSell(Number(value))}
               accent="blue"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
               required
             />
           </div>
 
           {/* Sell Price & Date */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Sell Price (EGP)</label>
               <NumberStepperInput
@@ -177,7 +182,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                 value={sellPrice || ''}
                 onValueChange={(value) => setSellPrice(Number(value))}
                 accent="blue"
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
                 required
               />
             </div>
@@ -198,7 +203,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                   type="time"
                   value={executionTime}
                   onChange={(e) => setExecutionTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono"
+                  className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono"
                 />
                 <span className="text-[10px] text-slate-400 block mt-0.5">
                   Optional, but recommended when matching broker receipts.
@@ -208,8 +213,8 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* Brokerage Fees on Sale */}
-          <div className="p-3 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="premium-subpanel p-3 rounded-xl space-y-2">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
               <label className="font-semibold text-slate-200 flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                 Exit Brokerage Fees (EGP)
@@ -221,12 +226,12 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                   const gross = sharesToSell * sellPrice;
                   setBrokerageFee(Math.round(gross * 0.0025 * 100) / 100);
                 }}
-                className="text-[10px] text-amber-400 hover:text-amber-300 underline"
+                className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px]"
               >
                 Reset to 0.25%
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
               <div>
                 <NumberStepperInput
                   min={0}
@@ -237,7 +242,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
                     setBrokerageFee(Math.max(0, Number(value)));
                   }}
                   accent="amber"
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-amber-300 font-mono text-xs"
+                  className="premium-field w-full px-3 py-1.5 rounded-xl text-amber-300 font-mono text-xs"
                 />
               </div>
               <div className="text-[11px] text-slate-400">
@@ -247,7 +252,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* P&L Preview Ribbon */}
-          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+          <div className="premium-subpanel p-3.5 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Net Cash Inflow (After Sell Fee):</span>
               <span className="font-mono font-bold text-white text-sm">
@@ -290,28 +295,27 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
+              className="premium-field w-full px-3 py-2 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white text-xs"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-2">
+          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 font-semibold"
+              onClick={requestClose}
+              className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md shadow-amber-950/50"
+              className="premium-action premium-action-warning w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto"
             >
               Confirm Sale &amp; Book Net P&amp;L
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

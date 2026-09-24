@@ -23,29 +23,31 @@ import {
   analyticsYAxisProps,
 } from './charts/AnalyticsChartTheme';
 
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
+
 interface RealizedTrajectoryChartProps {
   closedTrades: ClosedTrade[];
   stats?: PerformanceStats;
   title?: string;
   subtitle?: string;
   className?: string;
+  entranceReady?: boolean;
 }
 
-export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = ({
+const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> = ({
   closedTrades,
   stats,
   title = 'Realized P&L Gain / Loss Trajectory',
   subtitle = 'Historical equity growth trajectory of closed trades over time (in EGP)',
   className = '',
+  entranceReady = true,
 }) => {
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
 
   // Prepare chronological trajectory points
   const trajectoryData = useMemo(() => {
@@ -101,7 +103,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       : 0);
 
   return (
-    <div className={`p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm space-y-4 ${className}`}>
+    <div className={`premium-report-glass premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -112,10 +114,11 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
           <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs self-start sm:self-auto">
+        <div className="premium-report-glass-soft flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
           <button
+            aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
+            className={`premium-segment px-3 py-1 rounded-md font-medium ${
               trajectoryMode === 'cumulative'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -124,8 +127,9 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
             Cumulative Curve
           </button>
           <button
+            aria-pressed={trajectoryMode === 'discrete'}
             onClick={() => setTrajectoryMode('discrete')}
-            className={`px-3 py-1 rounded-md font-medium transition ${
+            className={`premium-segment px-3 py-1 rounded-md font-medium ${
               trajectoryMode === 'discrete'
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -137,8 +141,14 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
       </div>
 
       {/* Trajectory Key Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
-        <div>
+      <div className="premium-report-glass-soft grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
+        <div className={`rounded-lg border p-2 ${
+          netRealizedPnl > 0
+            ? 'premium-state-win'
+            : netRealizedPnl < 0
+            ? 'premium-state-loss'
+            : 'premium-state-breakeven'
+        }`}>
           <span className="text-slate-400 block text-[10px]">Net Realized P&amp;L</span>
           <span className={`font-mono font-bold ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} EGP
@@ -187,6 +197,7 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
 
       {/* Chart Canvas */}
       <div className="h-64 sm:h-72 w-full pt-1">
+        {entranceReady && (
         <ResponsiveContainer width="100%" height="100%">
           {trajectoryMode === 'cumulative' ? (
             <AreaChart data={trajectoryData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }}>
@@ -369,7 +380,10 @@ export const RealizedTrajectoryChart: React.FC<RealizedTrajectoryChartProps> = (
             </BarChart>
           )}
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
 };
+
+export const RealizedTrajectoryChart = React.memo(RealizedTrajectoryChartComponent);

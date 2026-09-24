@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { ExpandPresence, MotionSwap } from './PremiumMotion';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
@@ -21,7 +23,6 @@ import {
   Receipt,
   Trash2,
   ChevronDown,
-  ChevronUp,
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
@@ -68,6 +69,16 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'pnl_desc' | 'pnl_asc' | 'pct_desc' | 'holding'>('date');
   const [expandedCycleIds, setExpandedCycleIds] = useState<Set<string>>(new Set());
+
+  const changeOutcomeFilter = (next: 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN') => {
+    if (next === outcomeFilter) return;
+    runVisualTransition('closed-filter', () => setOutcomeFilter(next));
+  };
+
+  const changeSortBy = (next: typeof sortBy) => {
+    if (next === sortBy) return;
+    runVisualTransition('closed-filter', () => setSortBy(next));
+  };
 
   const formatEgp = (val: number) => {
     return new Intl.NumberFormat('en-EG', {
@@ -262,7 +273,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
+      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
@@ -279,7 +290,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <div className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-2">
+          <div className="premium-chip px-3 py-1.5 rounded-lg text-slate-300 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
               <strong>{summary.multiPhaseCount}</strong> cycles with phased executions
@@ -291,7 +302,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Realized P&L */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Net Realized P&amp;L</span>
             <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -308,7 +319,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Win Rate */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Win Rate</span>
             <Percent className="w-3.5 h-3.5 text-blue-400" />
@@ -322,7 +333,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Profit Factor */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Profit Factor</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -334,7 +345,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Average Return per Cycle */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Avg Return / Cycle</span>
             <ArrowUpDown className="w-3.5 h-3.5 text-teal-400" />
@@ -351,7 +362,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Average Holding Days */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Avg Hold Duration</span>
             <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -363,7 +374,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Total Brokerage Fees */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Cycle Fees Paid</span>
             <Receipt className="w-3.5 h-3.5 text-rose-400" />
@@ -376,9 +387,9 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       </div>
 
       {/* Search, Filter & Sort Controls */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="premium-panel p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search Bar */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative w-full min-w-0 flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             id="search-closed-cycles"
@@ -386,12 +397,12 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             placeholder="Search by ticker, cycle tag (e.g. CANA, TAQA), company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-800 text-slate-100 placeholder-slate-400 text-xs border border-slate-700 focus:outline-none focus:border-purple-500"
+            className="premium-field w-full pl-9 pr-4 py-2 rounded-xl text-slate-100 placeholder-slate-400 text-xs focus:outline-none"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+              className="premium-action absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-[10px]"
             >
               Clear
             </button>
@@ -399,46 +410,38 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Filters and Sorting */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
           {/* Outcome Filter Pills */}
-          <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800">
+          <div className="premium-selector-shell flex w-full items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:w-auto sm:flex-wrap sm:overflow-visible">
             <button
-              onClick={() => setOutcomeFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'ALL'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              type="button"
+              aria-pressed={outcomeFilter === 'ALL'}
+              onClick={() => changeOutcomeFilter('ALL')}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
             <button
-              onClick={() => setOutcomeFilter('WIN')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'WIN'
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-emerald-400'
-              }`}
+              type="button"
+              aria-pressed={outcomeFilter === 'WIN'}
+              onClick={() => changeOutcomeFilter('WIN')}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
             <button
-              onClick={() => setOutcomeFilter('LOSS')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'LOSS'
-                  ? 'bg-rose-600 text-white'
-                  : 'text-slate-400 hover:text-rose-400'
-              }`}
+              type="button"
+              aria-pressed={outcomeFilter === 'LOSS'}
+              onClick={() => changeOutcomeFilter('LOSS')}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
             <button
-              onClick={() => setOutcomeFilter('BREAKEVEN')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                outcomeFilter === 'BREAKEVEN'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-400 hover:text-amber-400'
-              }`}
+              type="button"
+              aria-pressed={outcomeFilter === 'BREAKEVEN'}
+              onClick={() => changeOutcomeFilter('BREAKEVEN')}
+              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>
@@ -447,11 +450,11 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           {/* Sort Selector */}
           <AnalyticsSelect
             value={sortBy}
-            onChange={(value) => setSortBy(value as typeof sortBy)}
+            onChange={(value) => changeSortBy(value as typeof sortBy)}
             compact
             accent="purple"
             ariaLabel="Sort closed cycles"
-            className="min-w-[205px]"
+            className="w-full min-w-0 sm:w-auto sm:min-w-[205px]"
             options={[
               { value: 'date', label: 'Sort: Exit Date (Newest)' },
               { value: 'pnl_desc', label: 'Sort: Highest P&L (EGP)' },
@@ -469,7 +472,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 filteredCycles.map((c) => c.id)
               )
             }
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+            className="premium-action w-full justify-center px-3 py-1.5 rounded-xl text-xs font-medium sm:w-auto"
           >
             {expandedCycleIds.size < filteredCycles.length ? 'Expand All Phases' : 'Collapse All'}
           </button>
@@ -477,7 +480,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       </div>
 
       {/* Closed Cycles List */}
-      <div className="space-y-3.5">
+      <MotionSwap motionKey={`${outcomeFilter}-${sortBy}`} variant="state" className="premium-closed-results space-y-3.5">
         {filteredCycles.map((cycle) => {
           const isExpanded = expandedCycleIds.has(cycle.id);
           const isWin = cycle.outcome === 'WIN';
@@ -488,12 +491,12 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           return (
             <div
               key={cycle.id}
-              className={`p-4 sm:p-5 rounded-2xl bg-slate-900 border transition-all ${
+              className={`premium-card p-4 sm:p-5 rounded-2xl border ${
                 isWin
-                  ? 'border-emerald-500/20 hover:border-emerald-500/40'
+                  ? 'premium-glow-win'
                   : isLoss
-                  ? 'border-rose-500/20 hover:border-rose-500/40'
-                  : 'border-slate-800 hover:border-slate-700'
+                  ? 'premium-glow-loss'
+                  : 'premium-glow-breakeven'
               }`}
             >
               {/* Top Row: Header & Performance Badges */}
@@ -590,7 +593,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     <button
                       onClick={() => handleDelete(cycle)}
                       title="Delete this closed cycle"
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/40 transition"
+                      className="premium-icon-action premium-icon-delete p-2 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -601,7 +604,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               {/* Core Averaged Prices & Execution Metrics (User Requested Highlight) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 py-3.5 text-xs">
                 {/* Total Shares */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Total Cycle Shares</span>
                   <span className="font-mono text-white font-bold text-sm">
                     {cycle.shares.toLocaleString()}
@@ -610,7 +613,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Average Buying Price */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Avg. Buying Price</span>
                   <span className="font-mono text-blue-400 font-bold text-sm">
                     {formatEgp(cycle.weightedAvgBuyPrice)} EGP
@@ -621,7 +624,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Average Selling Price */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Avg. Selling Price</span>
                   <span className="font-mono text-purple-400 font-bold text-sm">
                     {formatEgp(cycle.weightedAvgSellPrice)} EGP
@@ -632,7 +635,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Capital Outlay */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Total Invested Outlay</span>
                   <span className="font-mono text-slate-200 font-semibold text-sm">
                     {formatEgp(cycle.netOutlay)} EGP
@@ -641,7 +644,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Total Net Proceeds */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Net Realized Proceeds</span>
                   <span className="font-mono text-emerald-400 font-semibold text-sm">
                     {formatEgp(cycle.netProceeds)} EGP
@@ -650,7 +653,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Cycle Duration & Dates */}
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="premium-subpanel p-2.5 rounded-xl">
                   <span className="text-[10px] text-slate-400 font-medium block">Cycle Duration</span>
                   <span className="font-mono text-amber-300 font-bold text-sm flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -666,9 +669,9 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
                 <button
                   onClick={() => toggleExpand(cycle.id)}
-                  className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition"
+                  className="premium-accordion-trigger flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold"
                 >
-                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <ChevronDown className={`premium-motion-chevron w-4 h-4 ${isExpanded ? 'rotate-180' : ''}`} />
                   <span>
                     {isExpanded ? 'Hide' : 'View'} Execution Phases &amp; Leg Breakdown (
                     {cycle.buyPhases.length} Buy / {cycle.sellPhases.length} Sell phases)
@@ -683,8 +686,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               </div>
 
               {/* Expanded Multi-Phase Execution Breakdown */}
-              {isExpanded && (
-                <div className="mt-3.5 p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-3 animate-in fade-in duration-150">
+              <ExpandPresence isOpen={isExpanded} className="mt-3.5">
+                <div className="premium-inset-glass p-3.5 rounded-xl space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
                     <span className="flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-purple-400" />
@@ -712,7 +715,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         {cycle.buyPhases.map((phase) => (
                           <div
                             key={phase.id}
-                            className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
+                            className="premium-inset-glass p-2 rounded-lg flex items-center justify-between gap-2"
                           >
                             <div>
                               <span className="text-blue-400 font-bold mr-2">Phase #{phase.phaseNumber}</span>
@@ -728,7 +731,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.buyPhases.length === 0 && (
-                          <div className="p-2 rounded-lg bg-slate-900 text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
                             Initial position entry: {cycle.shares} shares @ {formatEgp(cycle.buyPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.buyDate)}
                           </div>
@@ -749,7 +752,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         {cycle.sellPhases.map((phase) => (
                           <div
                             key={phase.id}
-                            className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
+                            className="premium-inset-glass p-2 rounded-lg flex items-center justify-between gap-2"
                           >
                             <div>
                               <span className="text-purple-400 font-bold mr-2">Phase #{phase.phaseNumber}</span>
@@ -765,7 +768,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.sellPhases.length === 0 && (
-                          <div className="p-2 rounded-lg bg-slate-900 text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
                             Single exit order: {cycle.shares} shares @ {formatEgp(cycle.sellPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.sellDate)}
                           </div>
@@ -774,13 +777,13 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     </div>
                   </div>
                 </div>
-              )}
+              </ExpandPresence>
             </div>
           );
         })}
 
         {filteredCycles.length === 0 && (
-          <div className="text-center py-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-xs text-slate-400 space-y-3">
+          <div className="premium-subpanel text-center py-12 rounded-2xl border-dashed text-xs text-slate-400 space-y-3">
             <RotateCcw className="w-8 h-8 text-slate-600 mx-auto mb-1" />
             <div>
               <p className="font-semibold text-slate-300">No closed cycles match your filters.</p>
@@ -793,9 +796,9 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 <button
                   onClick={() => {
                     setSearchQuery('');
-                    setOutcomeFilter('ALL');
+                    changeOutcomeFilter('ALL');
                   }}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition active:scale-95 shadow-md shadow-purple-900/30"
+                  className="premium-action premium-action-purple px-4 py-2 rounded-xl font-semibold text-xs"
                 >
                   Clear All Filters &amp; Show All ({enrichedCycles.length})
                 </button>
@@ -803,7 +806,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             )}
           </div>
         )}
-      </div>
+      </MotionSwap>
     </div>
   );
 };

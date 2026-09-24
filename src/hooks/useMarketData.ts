@@ -156,11 +156,16 @@ export function useMarketData(
     };
   }, [syncLivePrices]);
 
+  const syncLivePricesFromUi = useCallback(
+    (manual = true) => syncLivePrices(manual, false),
+    [syncLivePrices],
+  );
+
   return {
     isSyncingPrices,
     lastPriceSyncTime,
     syncError,
     scheduleStatus,
-    syncLivePrices: (manual = true) => syncLivePrices(manual, false),
+    syncLivePrices: syncLivePricesFromUi,
   };
 }

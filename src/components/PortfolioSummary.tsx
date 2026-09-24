@@ -16,6 +16,14 @@ import {
 } from 'lucide-react';
 import { EGXScheduleStatus } from '../services/marketPriceSync';
 
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  style: 'decimal',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatEgp = (val: number) => EGP_FORMATTER.format(val);
+
 interface PortfolioSummaryProps {
   metrics: PortfolioMetrics;
   stats: PerformanceStats;
@@ -27,7 +35,7 @@ interface PortfolioSummaryProps {
   scheduleStatus?: EGXScheduleStatus;
 }
 
-export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
+const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
   metrics,
   stats,
   onQuickAddCash,
@@ -40,21 +48,31 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   const isPositiveUnrealized = metrics.unrealizedPnlEgp >= 0;
   const isPositiveRealized = metrics.realizedPnlEgp >= 0;
   const isPositiveDay = metrics.dayChangeEgp >= 0;
+  const dayGlowClass =
+    metrics.dayChangeEgp > 0
+      ? 'premium-glow-win'
+      : metrics.dayChangeEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
+  const unrealizedGlowClass =
+    metrics.unrealizedPnlEgp > 0
+      ? 'premium-glow-win'
+      : metrics.unrealizedPnlEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
+  const realizedGlowClass =
+    metrics.realizedPnlEgp > 0
+      ? 'premium-glow-win'
+      : metrics.realizedPnlEgp < 0
+      ? 'premium-glow-loss'
+      : 'premium-glow-breakeven';
   const totalMarketVal = metrics.totalMarketValue !== undefined ? metrics.totalMarketValue : Math.max(0, metrics.totalValue - metrics.cashBalance);
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
 
   return (
     <div className="space-y-4">
       {/* Live Market Price Sync Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-800 shadow-sm">
-        <div className="flex flex-col gap-1">
+      <div className="premium-glass flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl">
+        <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs uppercase tracking-wider text-slate-300 font-bold flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5 text-cyan-400" />
@@ -62,7 +80,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
             </span>
             {scheduleStatus && (
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                className={`inline-flex max-w-full flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[11px] leading-tight font-medium border ${
                   scheduleStatus.isSessionActive
                     ? 'bg-emerald-950/60 text-emerald-400 border-emerald-700/60'
                     : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -92,12 +110,12 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-end gap-2 md:w-auto">
           {onReconcileLedger && (
             <button
               id="btn-reconcile-ledger-overview"
               onClick={onReconcileLedger}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-emerald-300 border border-slate-700/80 hover:border-emerald-500/40 rounded-lg text-xs font-semibold transition active:scale-95"
+              className="premium-action premium-action-success flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold"
               title="Re-audit transactions and compute positions and metrics"
             >
               <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
@@ -110,7 +128,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               id="btn-sync-live-prices-overview"
               onClick={onSyncLivePrices}
               disabled={isSyncingPrices}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-cyan-300 border border-slate-700/80 hover:border-cyan-500/40 rounded-lg text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+              className="premium-action premium-filter-active-cyan flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50"
               title="Sync live quotes for ~300 EGX stocks"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPrices ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
@@ -121,13 +139,13 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       </div>
 
       {/* Primary KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
         {/* Total Portfolio Value */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className={`premium-card premium-hero-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between ${dayGlowClass}`}>
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Portfolio Value</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+              <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
                 Equities + Cash
               </span>
             </div>
@@ -138,7 +156,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span className="text-[11px] font-semibold text-slate-400">EGP</span>
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-1.5 text-xs">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
             <span
               className={`inline-flex items-center gap-1 font-semibold ${
                 isPositiveDay ? 'text-emerald-400' : 'text-rose-400'
@@ -153,11 +171,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Total Market Value (Total Invested / Open Positions Value) */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-medium">Total Market Value</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/10 text-cyan-400 font-semibold border border-cyan-500/20">
+              <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/10 text-cyan-400 font-semibold border border-cyan-500/20">
                 {metrics.totalPositions} Holdings
               </span>
             </div>
@@ -175,11 +193,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Unrealized Gain */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className={`premium-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between ${unrealizedGlowClass}`}>
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Unrealized P&amp;L</span>
-              <span className="text-[10px] text-slate-500 font-normal">Net of Buy Fees</span>
+              <span className="hidden sm:inline text-[10px] text-slate-500 font-normal">Net of Buy Fees</span>
             </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span
@@ -192,7 +210,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span className="text-[11px] text-slate-400">EGP</span>
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between">
             <span
               className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                 isPositiveUnrealized
@@ -211,7 +229,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Realized Profit (Closed Trades) */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className={`premium-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between ${realizedGlowClass}`}>
           <div>
             <div className="text-xs text-slate-400 font-medium">Realized Gain (Booked)</div>
             <div className="mt-2 flex items-baseline gap-1.5">
@@ -232,13 +250,13 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Cash Balance */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Cash Available</span>
               <button
                 onClick={onQuickAddCash}
-                className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold underline"
+                className="premium-action premium-action-primary px-2 py-1 rounded-lg text-[10px] font-semibold"
               >
                 Adjust
               </button>
@@ -256,7 +274,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* Total Brokerage Fees Paid */}
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex flex-col justify-between">
+        <div className="premium-card p-3 sm:p-4 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
               <span>Brokerage Fees</span>
@@ -269,7 +287,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               <span className="text-[11px] text-slate-400">EGP</span>
             </div>
           </div>
-          <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-800/80 pt-1.5">
+          <div className="mt-2 text-[11px] text-slate-400 flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between border-t border-slate-800/80 pt-1.5">
             <span>Open: <span className="text-slate-300 font-mono">{formatEgp(metrics.openFeesPaid || 0)}</span></span>
             <span>Closed: <span className="text-slate-300 font-mono">{formatEgp(metrics.closedFeesPaid || 0)}</span></span>
           </div>
@@ -278,3 +296,5 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
     </div>
   );
 };
+
+export const PortfolioSummary = React.memo(PortfolioSummaryComponent);

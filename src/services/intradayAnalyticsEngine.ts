@@ -157,6 +157,7 @@ export function buildIntradayAnalyticsResult(
     sessionDate: string;
     openingCapital?: number;
     asOf?: string | Date;
+    livePrices?: Record<string, number>;
   },
 ): UnifiedAnalyticsResult {
   const sessionDate = options.sessionDate.slice(0, 10);
@@ -386,6 +387,105 @@ export function buildIntradayAnalyticsResult(
   }
 
   const completePoints = points.filter((point) => point.complete);
+
+  // The 15-minute store reconstructs the path, but the live quote snapshot is
+  // the authoritative endpoint for the current active session. Append one
+  // as-of point only when every currently held ticker has a trustworthy live
+  // quote; never mix a partial live snapshot with stale bar closes.
+  if (options.livePrices && completePoints.length && sessionDate <= cairoDateKey(asOfDate.toISOString())) {
+    while (
+      txIndex < transactionsByTime.length &&
+      parseMs(transactionsByTime[txIndex].executedAt) <= asOfMs
+    ) {
+      applyTransaction(transactionsByTime[txIndex], state);
+      txIndex += 1;
+    }
+
+    const normalizedLivePrices = new Map<string, number>();
+    for (const [rawTicker, rawPrice] of Object.entries(options.livePrices)) {
+      const ticker = normalizeIntradayTicker(rawTicker);
+      const price = Number(rawPrice);
+      if (ticker && Number.isFinite(price) && price > 0) normalizedLivePrices.set(ticker, price);
+    }
+
+    const missingLiveTickers: string[] = [];
+    let liveMarketValue = 0;
+    for (const [ticker, shares] of state.shares.entries()) {
+      if (shares <= EPSILON) continue;
+      const price = normalizedLivePrices.get(ticker);
+      if (price === undefined) {
+        missingLiveTickers.push(ticker);
+        continue;
+      }
+      liveMarketValue += shares * price;
+    }
+
+    if (!missingLiveTickers.length) {
+      const lastPoint = completePoints.at(-1)!;
+      const lastPointMs = parseMs(lastPoint.date);
+      if (asOfMs > lastPointMs) {
+        const liveEquity = state.cash + liveMarketValue;
+        const intervalExternalFlows = sessionExternalFlows.filter((flow) => {
+          const flowMs = parseMs(flow.date);
+          return flowMs > lastPointMs && flowMs <= asOfMs;
+        });
+        const externalFlow = intervalExternalFlows.reduce(
+          (sum, flow) => sum + portfolioExternalFlow(flow),
+          0,
+        );
+
+        if (previousEquity > EPSILON) {
+          const subperiodReturn = (liveEquity - externalFlow) / previousEquity - 1;
+          if (Number.isFinite(subperiodReturn) && subperiodReturn > -1) {
+            twrFactor *= 1 + subperiodReturn;
+          }
+        }
+
+        const twrPercent = (twrFactor - 1) * 100;
+        const performanceIndex = 100 * twrFactor;
+        performancePeak = Math.max(performancePeak, performanceIndex);
+        const drawdownPercent = performancePeak > 0
+          ? ((performanceIndex - performancePeak) / performancePeak) * 100
+          : null;
+        equityPeak = Math.max(equityPeak, liveEquity);
+
+        // A quote sync after midnight can still represent the latest completed
+        // EGX session. Keep that authoritative close attached to the session
+        // itself instead of timestamping it on the following calendar day.
+        const endpointMs =
+          sessionDate === cairoDateKey(asOfDate.toISOString())
+            ? asOfMs
+            : lastPointMs + 1;
+        const timestamp = formatIso(endpointMs);
+        const netDeposits = openingNetDeposits + sessionExternalFlows
+          .filter((flow) => parseMs(flow.date) <= asOfMs)
+          .reduce((sum, flow) => sum + portfolioExternalFlow(flow), 0);
+
+        completePoints.push({
+          date: timestamp,
+          equity: liveEquity,
+          cash: state.cash,
+          marketValue: liveMarketValue,
+          netDeposits,
+          externalFlow,
+          twrPercent,
+          mwrrPercent: calculatePeriodMWR(
+            baselineEquity,
+            formatIso(baselineMs),
+            sessionExternalFlows,
+            liveEquity,
+            timestamp,
+          ),
+          annualizedMwrrPercent: null,
+          performanceIndex,
+          drawdownPercent,
+          equityDrawdownEgp: Math.max(0, equityPeak - liveEquity),
+          complete: true,
+        });
+      }
+    }
+  }
+
   const first = completePoints[0];
   const last = completePoints.at(-1);
   const netExternalFlow = first && last

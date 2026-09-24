@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { MotionSwap } from './PremiumMotion';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -18,6 +20,32 @@ import {
   Layers,
   Plus,
 } from 'lucide-react';
+
+const DESKTOP_LAYOUT_QUERY = '(min-width: 1024px)';
+const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function useDesktopLayout(): boolean {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(DESKTOP_LAYOUT_QUERY).matches : true,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(DESKTOP_LAYOUT_QUERY);
+    const update = () => setIsDesktop(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  return isDesktop;
+}
+
+function formatEgp(val: number): string {
+  return EGP_FORMATTER.format(val);
+}
 
 interface PositionsTableProps {
   positions: Position[];
@@ -41,28 +69,31 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
+  const isDesktop = useDesktopLayout();
 
-  const filteredPositions = positions.filter((pos) => {
+  const changeSelectedSector = (next: string) => {
+    if (next === selectedSector) return;
+    runVisualTransition('positions-filter', () => setSelectedSector(next));
+  };
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredPositions = useMemo(() => positions.filter((pos) => {
     const matchesSearch =
-      pos.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pos.companyName.toLowerCase().includes(searchQuery.toLowerCase());
+      pos.ticker.toLowerCase().includes(normalizedSearch) ||
+      pos.companyName.toLowerCase().includes(normalizedSearch);
     const matchesSector = selectedSector === 'ALL' || pos.sector === selectedSector;
     return matchesSearch && matchesSector;
-  });
+  }), [positions, normalizedSearch, selectedSector]);
 
-  const sectors = Array.from(new Set(positions.map((p) => p.sector)));
-
-  const formatEgp = (val: number) => {
-    return new Intl.NumberFormat('en-EG', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(val);
-  };
+  const sectors = useMemo(
+    () => Array.from(new Set(positions.map((p) => p.sector))),
+    [positions],
+  );
 
   return (
     <div className="space-y-4">
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 p-3.5 sm:p-4 rounded-xl border border-slate-800 shadow-sm">
+      <div className="premium-glass relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -71,21 +102,21 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ticker (e.g. COMI) or company..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-800 text-slate-100 placeholder-slate-400 text-xs sm:text-sm border border-slate-700 focus:outline-none focus:border-blue-500"
+              className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
           {/* Sector filter */}
-          <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <AnalyticsSelect
               value={selectedSector}
-              onChange={(value) => setSelectedSector(String(value))}
+              onChange={(value) => changeSelectedSector(String(value))}
               compact
               ariaLabel="Filter positions by sector"
-              className="min-w-[170px]"
+              className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
               options={[
                 { value: 'ALL', label: `All Sectors (${positions.length})` },
                 ...sectors.map((sec) => ({ value: sec, label: sec })),
@@ -95,7 +126,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
           <button
             onClick={onAddNewTrade}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-blue-950/40 transition active:scale-95 ml-auto"
+            className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold sm:ml-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add Trade</span>
@@ -104,10 +135,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden lg:block rounded-xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-sm">
+      {isDesktop && (
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
+      <div className="premium-table-shell rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-medium">
+            <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
               <th className="py-3 px-4">Ticker &amp; Security</th>
               <th className="py-3 px-3">Sector</th>
               <th className="py-3 px-3 text-right">Shares</th>
@@ -133,7 +166,16 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               const isProfit = pnlEgp >= 0;
 
               return (
-                <tr key={pos.id} className="hover:bg-slate-800/40 transition">
+                <tr
+                  key={pos.id}
+                  className={`transition ${
+                    pnlEgp > 0
+                      ? 'premium-row-win'
+                      : pnlEgp < 0
+                      ? 'premium-row-loss'
+                      : 'premium-row-breakeven'
+                  }`}
+                >
                   {/* Ticker & Name */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2.5">
@@ -253,7 +295,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                           {!target && !stop && (
                             <button
                               onClick={() => onEditPosition(pos)}
-                              className="text-[10px] text-slate-500 hover:text-amber-400 font-sans transition"
+                              className="premium-action premium-action-warning px-2 py-1 rounded-lg text-[10px] font-sans"
                               title="Set target price or stop-loss alert"
                             >
                               + Set Alerts
@@ -271,7 +313,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onBuyMore(pos)}
                         title="Buy more shares of this stock (DCA / Accumulate)"
-                        className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                       >
                         <Layers className="w-3 h-3 text-blue-400" />
                         Buy More
@@ -281,7 +323,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onSellPosition(pos)}
                         title="Sell Shares / Book P&L"
-                        className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1 transition"
+                        className="premium-action premium-action-warning px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                       >
                         <DollarSign className="w-3 h-3" />
                         Sell
@@ -290,7 +332,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => onEditPosition(pos)}
                         title="Edit Position / Targets"
-                        className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                        className="premium-icon-action premium-icon-edit p-1.5 rounded-lg"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -298,7 +340,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       <button
                         onClick={() => setPositionToDelete(pos)}
                         title="Delete Position Record"
-                        className="p-1 rounded bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
+                        className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -319,9 +361,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           </tbody>
         </table>
       </div>
+      </MotionSwap>
+      )}
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-3">
+      {!isDesktop && (
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results lg:hidden space-y-3">
         {filteredPositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
           const currentValue = pos.shares * pos.currentPrice;
@@ -332,10 +377,16 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3"
+              className={`premium-card p-3.5 sm:p-4 rounded-2xl space-y-3 ${
+                pnlEgp > 0
+                  ? 'premium-glow-win'
+                  : pnlEgp < 0
+                  ? 'premium-glow-loss'
+                  : 'premium-glow-breakeven'
+              }`}
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <StockLogo
                     ticker={pos.ticker}
                     companyName={pos.companyName}
@@ -343,14 +394,15 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     size="sm"
                   />
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <span className="font-bold text-white text-sm">{pos.ticker}</span>
+                      <span className="max-w-[120px] truncate text-[10px] text-slate-500">{pos.sector}</span>
                     </div>
                     <p className="text-xs text-slate-400 truncate max-w-[200px]">{pos.companyName}</p>
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <div
                     className={`font-mono font-bold text-sm ${
                       isProfit ? 'text-emerald-400' : 'text-rose-400'
@@ -369,7 +421,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               </div>
 
               {/* Stats details */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-lg bg-slate-950/60 border border-slate-800">
+              <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-xl">
                 <div>
                   <span className="text-slate-500 text-[10px] block">Shares</span>
                   <span className="font-mono text-slate-200">{pos.shares.toLocaleString()}</span>
@@ -419,7 +471,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 <div className="text-[11px] text-slate-500">
                   <button
                     onClick={() => onEditPosition(pos)}
-                    className="hover:text-amber-400 transition"
+                    className="premium-action premium-action-warning w-full justify-center px-2 py-1 rounded-lg text-[10px] sm:w-auto"
                   >
                     + Set Target &amp; Stop-Loss Alerts
                   </button>
@@ -427,47 +479,50 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               )}
 
               {/* Action row */}
-              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                <span className="text-[11px] text-slate-400">{pos.sector}</span>
-                <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                  <button
-                    onClick={() => onBuyMore(pos)}
-                    className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-blue-400" />
-                    Buy More (DCA)
-                  </button>
-                  <button
-                    onClick={() => onSellPosition(pos)}
-                    className="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <DollarSign className="w-3.5 h-3.5" />
-                    Sell
-                  </button>
-                  <button
-                    onClick={() => onEditPosition(pos)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setPositionToDelete(pos)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)_2.75rem_2.75rem] items-center gap-1.5 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => onBuyMore(pos)}
+                  className="premium-action premium-action-primary min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                >
+                  <Layers className="w-3.5 h-3.5 shrink-0 text-blue-400" />
+                  <span className="sm:hidden">DCA</span>
+                  <span className="hidden sm:inline">Buy More (DCA)</span>
+                </button>
+                <button
+                  onClick={() => onSellPosition(pos)}
+                  className="premium-action premium-action-warning min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                >
+                  <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                  <span>Sell</span>
+                </button>
+                <button
+                  onClick={() => onEditPosition(pos)}
+                  className="premium-icon-action premium-icon-edit w-11 h-11 p-0 rounded-lg"
+                  aria-label={`Edit ${pos.ticker} position`}
+                  title="Edit position"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setPositionToDelete(pos)}
+                  className="premium-icon-action premium-icon-delete w-11 h-11 p-0 rounded-lg"
+                  aria-label={`Delete ${pos.ticker} position`}
+                  title="Delete position"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           );
         })}
 
         {filteredPositions.length === 0 && (
-          <div className="p-8 text-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-sm">
+          <div className="premium-inset-glass p-8 text-center rounded-xl text-slate-400 text-sm">
             No stock positions match your filters.
           </div>
         )}
-      </div>
+      </MotionSwap>
+      )}
 
       {/* Confirm Delete Position Modal */}
       <ConfirmDeleteModal

@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { runVisualTransition } from '../utils/visualTransition';
+import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -128,14 +130,13 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   onRestoreBackup,
   onReconcileLedger,
 }) => {
+  const requestClose = () => runVisualTransition('modal-close', onClose);
   const [importPreview, setImportPreview] = useState<ParsedBackupData | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!isOpen) return null;
 
   const handleExportJson = () => {
     const payload = {
@@ -280,11 +281,11 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         tickers: importPreview.tickers || tickers,
       });
 
-      setSuccessMsg('Portfolio state restored and synced with Firebase successfully!');
+      setSuccessMsg('Portfolio state restored and synced to Supabase successfully!');
       setImportPreview(null);
       setTimeout(() => {
         setIsRestoring(false);
-        onClose();
+        requestClose();
       }, 1400);
     } catch (err: any) {
       setIsRestoring(false);
@@ -293,45 +294,52 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl space-y-5">
+    <PremiumModalMotion
+      isOpen={isOpen}
+      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-lg p-4 sm:p-6 rounded-2xl space-y-5"
+      onBackdropClick={requestClose}
+      panelAriaLabel="Backup, sync and integrity"
+    >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
               <Database className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-bold text-white">Backup, Sync & Integrity</h3>
               <p className="text-xs text-slate-400">Manage data persistence, cloud sync & restore backups</p>
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            onClick={requestClose}
+            className="premium-icon-action p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Success Alert */}
-        {successMsg && (
+        <SurfacePresence isOpen={!!successMsg}>
+          {successMsg && (
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
-        )}
+          )}
+        </SurfacePresence>
 
         {/* Option 1: Reconcile Ledger */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-cyan-400" />
               <span className="font-bold text-white text-xs">Reconcile Ledger & Portfolio Math</span>
             </div>
             <button
               onClick={onReconcileLedger}
-              className="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition"
+              className="premium-action premium-filter-active-cyan w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
             >
               Run Reconciliation
             </button>
@@ -342,15 +350,15 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 2: Export JSON Backup */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <FileJson className="w-4 h-4 text-amber-400" />
               <span className="font-bold text-white text-xs">Export Full Portfolio Backup (JSON)</span>
             </div>
             <button
               onClick={handleExportJson}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition"
+              className="premium-action premium-action-warning w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:w-auto"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Backup</span>
@@ -362,16 +370,16 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 3: Export to Excel Spreadsheets (CSV) */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="premium-modal-section p-4 rounded-xl space-y-2">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
               <span className="font-bold text-white text-xs">Export to Excel Spreadsheets (CSV)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
               <button
                 onClick={() => handleExportCsv('positions')}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 transition"
+                className="premium-action premium-action-success justify-center px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                 title="Download Active Holdings for Excel"
               >
                 <Download className="w-3 h-3" />
@@ -379,7 +387,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
               </button>
               <button
                 onClick={() => handleExportCsv('transactions')}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 transition"
+                className="premium-action premium-action-success px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1"
                 title="Download Transaction Ledger for Excel"
               >
                 <Download className="w-3 h-3" />
@@ -393,15 +401,15 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         </div>
 
         {/* Option 3: Restore Backup */}
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="premium-modal-section p-4 rounded-xl space-y-3">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
               <span className="font-bold text-white text-xs">Restore Portfolio from Backup File</span>
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="premium-action w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
             >
               Choose File
             </button>
@@ -425,7 +433,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             className={`p-4 rounded-xl border border-dashed transition cursor-pointer flex flex-col items-center justify-center text-center gap-2 ${
               isDragging
                 ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
-                : 'border-slate-700 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-600 text-slate-400'
+                : 'premium-choice text-slate-400 hover:text-slate-200'
             }`}
           >
             <Upload className="w-5 h-5 text-slate-400" />
@@ -444,7 +452,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
 
           {importPreview && (
             <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-300">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>Backup Verified & Ready to Restore</span>
@@ -456,7 +464,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div className="premium-inset-glass grid grid-cols-2 gap-2 text-[11px] font-mono p-2.5 rounded-lg">
                 <div className="text-slate-300">
                   Positions: <span className="font-bold text-white">{importPreview.positions.length}</span>
                 </div>
@@ -479,7 +487,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
               <button
                 onClick={handleConfirmRestore}
                 disabled={isRestoring}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950 transition"
+                className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-40"
               >
                 {isRestoring ? (
                   <>
@@ -497,7 +505,6 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </PremiumModalMotion>
   );
 };

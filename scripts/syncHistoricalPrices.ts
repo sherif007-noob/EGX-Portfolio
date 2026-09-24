@@ -1,30 +1,61 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
+import { canonicalizeEGXSymbol } from '../src/data/egxTickers';
+import {
+  buildHistoricalRepairPlans,
+  type HistoryCoverageRequirement,
+  type StoredHistoryDate,
+} from '../src/services/historicalCoverage';
 
 type HistoryBar = [number, number, number, number, number, number?];
-const TICKER_ALIASES: Record<string, string> = { QNBA: 'QNBF', MNHD: 'MASR', AUTO: 'GBCO', OTMT: 'OIH', UBEG: 'UBEE' };
+
+type TickerMetadata = {
+  ticker: string;
+  isin: string;
+};
 
 function normalizeTicker(ticker: string): string {
-  return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  return canonicalizeEGXSymbol(
+    ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''),
+  );
 }
 
 function toDate(timestamp: number): string {
   return new Date(timestamp * 1000).toISOString().slice(0, 10);
 }
 
+function cairoDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function supabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url) throw new Error('Missing SUPABASE_URL.');
-  if (!key?.startsWith('sb_secret_')) throw new Error('Missing or invalid SUPABASE_SECRET_KEY; expected an sb_secret_ server key.');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  if (!key?.startsWith('sb_secret_')) {
+    throw new Error('Missing or invalid SUPABASE_SECRET_KEY; expected an sb_secret_ server key.');
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
 }
 
 async function resolvePortfolioId(sb: ReturnType<typeof supabase>): Promise<string> {
   const explicitPortfolioId = process.env.EGX_PORTFOLIO_ID?.trim();
   if (explicitPortfolioId) {
-    const { data, error } = await sb.from('portfolios').select('id').eq('id', explicitPortfolioId).maybeSingle();
+    const { data, error } = await sb
+      .from('portfolios')
+      .select('id')
+      .eq('id', explicitPortfolioId)
+      .maybeSingle();
     if (error) throw new Error(`Supabase portfolio lookup failed: ${error.message}`);
     if (!data) throw new Error(`Supabase portfolio ${explicitPortfolioId} does not exist.`);
     return String(data.id);
@@ -32,13 +63,21 @@ async function resolvePortfolioId(sb: ReturnType<typeof supabase>): Promise<stri
 
   const legacyOwnerUid = process.env.FIREBASE_ADMIN_OWNER_UID?.trim();
   if (legacyOwnerUid) {
-    const { data, error } = await sb.from('portfolios').select('id').eq('owner_key', legacyOwnerUid).maybeSingle();
+    const { data, error } = await sb
+      .from('portfolios')
+      .select('id')
+      .eq('owner_key', legacyOwnerUid)
+      .maybeSingle();
     if (error) throw new Error(`Supabase portfolio lookup failed: ${error.message}`);
     if (!data) throw new Error('No Supabase portfolio matches FIREBASE_ADMIN_OWNER_UID.');
     return String(data.id);
   }
 
-  const { data, error } = await sb.from('portfolios').select('id').order('created_at', { ascending: true }).limit(2);
+  const { data, error } = await sb
+    .from('portfolios')
+    .select('id')
+    .order('created_at', { ascending: true })
+    .limit(2);
   if (error) throw new Error(`Supabase portfolio discovery failed: ${error.message}`);
   if (!data?.length) throw new Error('No Supabase portfolio exists.');
   if (data.length > 1) {
@@ -47,105 +86,288 @@ async function resolvePortfolioId(sb: ReturnType<typeof supabase>): Promise<stri
   return String(data[0].id);
 }
 
-async function writeBars(sb: ReturnType<typeof supabase>, ticker: string, bars: HistoryBar[], startDate: string, endDate: string) {
-  const retrievedAt = new Date().toISOString();
-  const { data: existingRows, error: readError } = await sb.from('price_history').select('trading_date').eq('ticker', ticker);
-  if (readError) throw new Error(`Existing history read failed: ${readError.message}`);
-  const existingDates = new Set((existingRows ?? []).map((r: any) => String(r.trading_date).slice(0, 10)));
-  const filtered = bars.map((bar) => ({
-    ticker,
-    trading_date: toDate(Number(bar[0])),
-    open: Number(bar[1]),
-    high: Number(bar[2]),
-    low: Number(bar[3]),
-    close: Number(bar[4]),
-    volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : null,
-    source: 'tradingview',
-    retrieved_at: retrievedAt,
-  })).filter((bar) =>
-    bar.trading_date >= startDate &&
-    bar.trading_date <= endDate &&
-    Number.isFinite(bar.close) &&
-    bar.close > 0 &&
-    !existingDates.has(bar.trading_date)
-  );
+function setEarliestRequirement(
+  byTicker: Map<string, string>,
+  tickerInput: unknown,
+  dateInput: unknown,
+) {
+  const ticker = normalizeTicker(String(tickerInput || ''));
+  const date = String(dateInput || '').slice(0, 10);
+  if (!ticker || ticker === 'CASH' || !date) return;
 
-  for (let offset = 0; offset < filtered.length; offset += 500) {
-    const { error } = await sb.from('price_history').upsert(filtered.slice(offset, offset + 500), {
-      onConflict: 'ticker,trading_date',
-      ignoreDuplicates: true,
-    });
-    if (error) throw new Error(`History write failed: ${error.message}`);
+  const current = byTicker.get(ticker);
+  if (!current || date < current) byTicker.set(ticker, date);
+}
+
+async function loadCoverageRequirements(
+  sb: ReturnType<typeof supabase>,
+  portfolioId: string,
+): Promise<HistoryCoverageRequirement[]> {
+  const [{ data: transactions, error: txError }, { data: positions, error: positionError }] =
+    await Promise.all([
+      sb
+        .from('transactions')
+        .select('ticker,transaction_date')
+        .eq('portfolio_id', portfolioId),
+      sb
+        .from('positions')
+        .select('ticker,buy_date')
+        .eq('portfolio_id', portfolioId),
+    ]);
+
+  if (txError) throw new Error(`Supabase transaction lookup failed: ${txError.message}`);
+  if (positionError) throw new Error(`Supabase position lookup failed: ${positionError.message}`);
+
+  const byTicker = new Map<string, string>();
+  for (const row of transactions ?? []) {
+    setEarliestRequirement(byTicker, row.ticker, row.transaction_date);
   }
-  return { written: filtered.length, existing: existingDates.size };
+  for (const row of positions ?? []) {
+    setEarliestRequirement(byTicker, row.ticker, row.buy_date);
+  }
+
+  const explicitTickers = process.env.EGX_HISTORY_TICKERS
+    ?.split(',')
+    .map(normalizeTicker)
+    .filter(Boolean);
+  const explicitSet = explicitTickers?.length ? new Set(explicitTickers) : null;
+  const startOverride = process.env.EGX_HISTORY_START?.slice(0, 10);
+
+  return [...byTicker.entries()]
+    .filter(([ticker]) => !explicitSet || explicitSet.has(ticker))
+    .map(([ticker, firstRequiredDate]) => ({
+      ticker,
+      firstRequiredDate:
+        startOverride && startOverride < firstRequiredDate ? startOverride : firstRequiredDate,
+    }))
+    .sort((a, b) => a.ticker.localeCompare(b.ticker));
+}
+
+async function loadStoredHistoryDates(
+  sb: ReturnType<typeof supabase>,
+  tickers: string[],
+): Promise<StoredHistoryDate[]> {
+  if (!tickers.length) return [];
+
+  const pageSize = 1000;
+  const rows: any[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from('price_history')
+      .select('ticker,trading_date')
+      .in('ticker', tickers)
+      .order('trading_date', { ascending: true })
+      .order('ticker', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(`Existing history coverage read failed: ${error.message}`);
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows.map((row: any) => ({
+    ticker: normalizeTicker(String(row.ticker || '')),
+    date: String(row.trading_date || '').slice(0, 10),
+  }));
+}
+
+async function loadTickerMetadata(
+  sb: ReturnType<typeof supabase>,
+  tickers: string[],
+): Promise<Map<string, TickerMetadata>> {
+  const result = new Map<string, TickerMetadata>();
+  if (!tickers.length) return result;
+
+  const { data, error } = await sb
+    .from('tickers')
+    .select('ticker,isin')
+    .in('ticker', tickers);
+
+  if (error) throw new Error(`Ticker metadata read failed: ${error.message}`);
+
+  for (const row of data ?? []) {
+    const ticker = normalizeTicker(String(row.ticker || ''));
+    if (!ticker) continue;
+    result.set(ticker, {
+      ticker,
+      isin: String(row.isin || '').trim().toUpperCase(),
+    });
+  }
+  return result;
+}
+
+async function resolveTradingViewSymbol(
+  chart: Awaited<ReturnType<typeof createChart>>,
+  ticker: string,
+  isin?: string,
+) {
+  const candidates = [...new Set([ticker, isin].filter((value): value is string => Boolean(value)))];
+  let lastError: unknown = null;
+
+  for (const candidate of candidates) {
+    try {
+      return {
+        candidate,
+        resolved: await chart.resolve(candidate, 'EGX'),
+      };
+    } catch (error) {
+      lastError = error;
+      console.warn(`${ticker}: TradingView resolve failed for ${candidate}; trying fallback if available.`);
+    }
+  }
+
+  throw new Error(
+    `${ticker}: unable to resolve TradingView symbol using ticker/ISIN candidates. ${String(lastError || '')}`,
+  );
+}
+
+function requestedBarsForRange(startDate: string, endDate: string): number {
+  const startTimestamp = new Date(`${startDate}T00:00:00Z`).getTime();
+  const endTimestamp = new Date(`${endDate}T23:59:59Z`).getTime();
+  const calendarDays = Math.max(
+    1,
+    Math.ceil((endTimestamp - startTimestamp) / 86_400_000) + 1,
+  );
+  return Math.max(30, calendarDays + 30);
+}
+
+async function writeBars(
+  sb: ReturnType<typeof supabase>,
+  ticker: string,
+  bars: HistoryBar[],
+  startDate: string,
+  endDate: string,
+) {
+  const retrievedAt = new Date().toISOString();
+  const byDate = new Map<string, any>();
+
+  for (const bar of bars) {
+    const tradingDate = toDate(Number(bar[0]));
+    const close = Number(bar[4]);
+    if (
+      !tradingDate ||
+      tradingDate < startDate ||
+      tradingDate > endDate ||
+      !Number.isFinite(close) ||
+      close <= 0
+    ) {
+      continue;
+    }
+
+    byDate.set(tradingDate, {
+      ticker,
+      trading_date: tradingDate,
+      open: Number.isFinite(Number(bar[1])) ? Number(bar[1]) : null,
+      high: Number.isFinite(Number(bar[2])) ? Number(bar[2]) : null,
+      low: Number.isFinite(Number(bar[3])) ? Number(bar[3]) : null,
+      close,
+      volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : null,
+      source: 'tradingview',
+      retrieved_at: retrievedAt,
+    });
+  }
+
+  const rows = [...byDate.values()];
+  for (let offset = 0; offset < rows.length; offset += 500) {
+    const { error } = await sb
+      .from('price_history')
+      .upsert(rows.slice(offset, offset + 500), {
+        onConflict: 'ticker,trading_date',
+        ignoreDuplicates: false,
+      });
+    if (error) throw new Error(`History write failed for ${ticker}: ${error.message}`);
+  }
+
+  return rows;
 }
 
 async function main() {
-  const startOverride = process.env.EGX_HISTORY_START?.slice(0, 10);
-  const endDate = process.env.EGX_HISTORY_END?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  const endDate = process.env.EGX_HISTORY_END?.slice(0, 10) || cairoDate();
   const sb = supabase();
   const portfolioId = await resolvePortfolioId(sb);
+  const requirements = await loadCoverageRequirements(sb, portfolioId);
 
-  const { data: transactions, error: txError } = await sb
-    .from('transactions')
-    .select('ticker,transaction_date')
-    .eq('portfolio_id', portfolioId);
-  if (txError) throw new Error(`Supabase transaction lookup failed: ${txError.message}`);
-
-  const tickers = [...new Set(
-    (transactions ?? [])
-      .map((tx: any) => normalizeTicker(String(tx.ticker || '')))
-      .filter((ticker) => ticker && ticker !== 'CASH')
-  )];
-  const firstTransactionDate = (transactions ?? [])
-    .map((tx: any) => String(tx.transaction_date || '').slice(0, 10))
-    .filter(Boolean)
-    .sort()[0];
-  const startDate = startOverride || firstTransactionDate || endDate;
-
-  if (!tickers.length) {
-    console.log('No security tickers found in the portfolio ledger. Nothing to sync.');
+  if (!requirements.length) {
+    console.log('No portfolio security tickers require historical coverage.');
     return;
   }
 
-  const startTimestamp = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
-  const endTimestamp = Math.floor(new Date(`${endDate}T23:59:59Z`).getTime() / 1000);
-  if (!Number.isFinite(startTimestamp) || !Number.isFinite(endTimestamp) || startTimestamp > endTimestamp) {
-    throw new Error(`Invalid historical range: ${startDate} → ${endDate}`);
+  const tickers = requirements.map((item) => item.ticker);
+  const [storedRows, metadata] = await Promise.all([
+    loadStoredHistoryDates(sb, tickers),
+    loadTickerMetadata(sb, tickers),
+  ]);
+  const plans = buildHistoricalRepairPlans(requirements, storedRows, endDate);
+
+  if (!plans.length) {
+    console.log(
+      `Historical coverage healthy: ${tickers.length} portfolio tickers already cover their required ranges through ${endDate}.`,
+    );
+    return;
   }
 
-  // TradingView currently rejects the library's explicit [start, end] range form
-  // for daily series. Request enough recent bars to cover the calendar span,
-  // then let writeBars enforce the exact date boundaries.
-  const calendarDays = Math.max(1, Math.ceil((endTimestamp - startTimestamp) / 86_400) + 1);
-  const requestedBars = Math.max(30, calendarDays + 30);
+  console.log(
+    `Historical repair starting: ${plans.length}/${tickers.length} tickers need coverage repair through ${endDate}.`,
+  );
+  for (const plan of plans) {
+    console.log(
+      `${plan.ticker}: ${plan.startDate} → ${plan.endDate}; reasons=${plan.reasons.join(',')}` +
+      (plan.missingReferenceDates.length
+        ? `; reference gaps=${plan.missingReferenceDates.join(',')}`
+        : ''),
+    );
+  }
 
   const session = await createSession();
   let failures = 0;
+  let totalRows = 0;
+
   try {
     const chart = await createChart(session);
-    let totalRows = 0;
-    let totalExisting = 0;
 
-    for (const ticker of tickers) {
+    for (const plan of plans) {
       try {
-        const resolved = await chart.resolve(TICKER_ALIASES[ticker] || ticker, 'EGX');
+        const tickerMeta = metadata.get(plan.ticker);
+        const { candidate, resolved } = await resolveTradingViewSymbol(
+          chart,
+          plan.ticker,
+          tickerMeta?.isin,
+        );
+        const requestedBars = requestedBarsForRange(plan.startDate, plan.endDate);
         const series = await createSeries(session, chart, resolved, '1D', requestedBars);
+
         try {
-          const result = await writeBars(sb, ticker, ((series.history || []) as HistoryBar[]), startDate, endDate);
-          totalRows += result.written;
-          totalExisting += result.existing;
-          console.log(`${ticker}: ${result.written} new daily observations saved; ${result.existing} existing observations retained.`);
+          const rows = await writeBars(
+            sb,
+            plan.ticker,
+            (series.history || []) as HistoryBar[],
+            plan.startDate,
+            plan.endDate,
+          );
+          totalRows += rows.length;
+
+          if (!rows.length && plan.reasons.some((reason) => reason !== 'stale-tail')) {
+            throw new Error(
+              `${plan.ticker}: TradingView resolved via ${candidate} but returned no usable daily bars for required range ${plan.startDate} → ${plan.endDate}.`,
+            );
+          }
+
+          console.log(
+            `${plan.ticker}: upserted ${rows.length} daily observations via ${candidate}; requested ${requestedBars} bars.`,
+          );
         } finally {
           await series.close();
         }
       } catch (error) {
         failures += 1;
-        console.error(`${ticker}: historical sync failed`, error);
+        console.error(`${plan.ticker}: historical repair failed`, error);
       }
     }
 
-    console.log(`Historical sync complete: ${tickers.length} tickers, ${totalRows} new observations written, ${totalExisting} existing observations checked, ${failures} failures.`);
+    console.log(
+      `Historical repair complete: ${plans.length} planned tickers, ${totalRows} observations upserted, ${failures} failures.`,
+    );
     if (failures > 0) process.exitCode = 1;
   } finally {
     await session.close();

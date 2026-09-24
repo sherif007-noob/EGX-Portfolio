@@ -37,6 +37,22 @@ equity = cash + market value of open holdings
 
 The system should not use current prices as a substitute for unavailable historical prices.
 
+## Capital baseline authority
+
+Legacy portfolios may predate explicit deposit/withdrawal ledger rows. In that case, analytics must not blindly trust a cached `capitalDeposits` scalar as the opening-capital baseline.
+
+The canonical legacy baseline is derived from the authoritative current cash balance and the transaction ledger:
+
+```text
+opening capital
+  = current cash
+  - cumulative signed ledger cash impact
+```
+
+When explicit deposit/withdrawal rows exist, net contributed capital is derived directly from those external flows instead.
+
+This rule is shared across Today and the daily 1W/1M/90D/YTD/All analytics. It prevents a stale opening-capital cache from shifting the entire NAV curve by a constant amount while leaving period P&L apparently correct.
+
 ## Money-weighted return
 
 The Reports performance chart uses a money-weighted return approach based on dated external cash flows and portfolio value.

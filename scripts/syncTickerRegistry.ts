@@ -309,10 +309,18 @@ async function main() {
       }
     }
 
-    const sector = mapMarketClassificationToSector(
+    const curatedSector =
+      baseline?.sector && baseline.sector !== 'Other'
+        ? baseline.sector
+        : current?.metadata_source !== 'tradingview-scanner' &&
+            current?.sector &&
+            current.sector !== 'Other'
+          ? current.sector
+          : null;
+    const sector = curatedSector || mapMarketClassificationToSector(
       scan.marketSector,
       scan.industry,
-      (baseline?.sector || current?.sector || 'Other') as any,
+      'Other',
       scan.description,
     );
 

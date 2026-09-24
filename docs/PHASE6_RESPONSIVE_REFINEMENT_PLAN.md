@@ -466,6 +466,7 @@ Real-device validation findings and corrections:
 
 Validation:
 - final real-device correction Quality Checks passed typecheck, 27/27 test files, 170/170 tests, the production Vite build, and the bundled server build on implementation snapshot `db66d310c132dff8b262df77d420ae735cae077c`;
+- the responsive benchmark scorecard renderer passed a second full Quality gate on implementation snapshot `7644ee7790d8747bd5dc1461484a003e530f3be4`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - the earlier intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:

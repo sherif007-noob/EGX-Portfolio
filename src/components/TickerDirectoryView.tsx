@@ -47,15 +47,19 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
     runVisualTransition('directory-filter', () => setSelectedSector(next));
   };
 
-  const sectors = Array.from(new Set(tickers.map((t) => t.sector)));
+  const visibleTickers = tickers.filter(
+    (ticker) => ticker.directoryStatus !== 'inactive' && ticker.directoryStatus !== 'retired',
+  );
+  const sectors = Array.from(new Set(visibleTickers.map((t) => t.sector)));
 
-  const filteredTickers = tickers.filter((t) => {
+  const filteredTickers = visibleTickers.filter((t) => {
     const query = searchQuery.toLowerCase();
     const matchesSearch =
       t.ticker.toLowerCase().includes(query) ||
       t.isin?.toLowerCase().includes(query) ||
       t.nameEn.toLowerCase().includes(query) ||
-      t.nameAr.toLowerCase().includes(query);
+      t.nameAr.toLowerCase().includes(query) ||
+      (t.aliases || []).some((alias) => alias.toLowerCase().includes(query));
     const matchesSector = selectedSector === 'ALL' || t.sector === selectedSector;
     return matchesSearch && matchesSector;
   });
@@ -162,7 +166,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by ticker, ISIN, English or Arabic name..."
+            placeholder="Filter by ticker, old ticker, ISIN, English or Arabic name..."
             className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/72 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-teal-500/60"
           />
         </div>
@@ -176,7 +180,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             ariaLabel="Filter ticker directory by sector"
             className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
             options={[
-              { value: 'ALL', label: `All Sectors (${tickers.length})` },
+              { value: 'ALL', label: `All Sectors (${visibleTickers.length})` },
               ...sectors.map((sector) => ({ value: sector, label: sector })),
             ]}
           />
@@ -208,6 +212,17 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
                       <span className="premium-chip text-[10px] px-2 py-0.5 rounded-full text-slate-300 font-medium shrink-0">
                         {ticker.trendStatus}
                       </span>
+                      {ticker.metadataSource === 'registry' && (
+                        <span
+                          className="premium-chip text-[10px] px-2 py-0.5 rounded-full text-cyan-300 font-medium shrink-0"
+                          title={[
+                            ticker.historyResolutionMethod ? `History: ${ticker.historyResolutionMethod}` : '',
+                            ticker.aliases?.length ? `Aliases: ${ticker.aliases.join(', ')}` : '',
+                          ].filter(Boolean).join(' • ')}
+                        >
+                          Registry
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-xs text-slate-300 font-medium line-clamp-1" title={ticker.nameEn}>
                       {ticker.nameEn}

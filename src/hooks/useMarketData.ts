@@ -50,7 +50,7 @@ export function useMarketData(
     setSyncError(null);
 
     try {
-      const { quotes, discoveredTickers } = await fetchTradingViewEGXPrices();
+      const { quotes, discoveredTickers } = await fetchTradingViewEGXPrices(tickersRef.current);
       if (Object.keys(quotes).length === 0) throw new Error('No price quotes returned from TradingView.');
 
       const { updatedPositions, updatedTickers, hasChanges } = applyLivePricesToPortfolio(

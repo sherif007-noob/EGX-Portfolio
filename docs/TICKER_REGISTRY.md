@@ -14,14 +14,16 @@ This split prevents browser price persistence from corrupting security identity.
 
 ## Identity precedence
 
-For security identity, precedence is:
+For current security identity, precedence is:
 
 ```text
 live Supabase registry
-  -> TradingView Scanner metadata
+  -> TradingView Scanner discovery / current symbol
   -> persisted registry metadata
   -> static baseline fallback
 ```
+
+For EGX sector taxonomy, a known curated EGX classification outranks TradingView's generic global industry taxonomy. TradingView classification is a fallback only when the security has no known EGX-sector mapping.
 
 A symbol currently present in the live scanner universe is canonical for that reconciliation pass. A stale hardcoded alias must never override an active live symbol.
 
@@ -129,6 +131,7 @@ This means a future rename does not require a code deployment merely to translat
 ## Safety rules
 
 - Browser quote sync may update prices/technical values but registry identity wins over browser metadata.
+- Known EGX/curated sector classifications outrank TradingView's generic sector taxonomy; TradingView fills sector only when the EGX mapping is unknown.
 - Do not automatically merge two simultaneously active scanner symbols merely because they share a similar name.
 - ISIN-driven rename detection is only automatic when the scanner ISIN is unique in the active scanner universe.
 - Active scanner symbols are never deleted as aliases by static assumptions.

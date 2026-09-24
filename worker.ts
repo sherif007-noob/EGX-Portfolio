@@ -5,6 +5,8 @@ import {
   saveSupabasePortfolio,
   saveSupabasePriceTick,
   loadHistoricalPrices,
+  ensurePortfolioHistoricalPrices,
+  ensurePortfolioIntradayPrices,
 } from "./src/services/supabasePortfolioServer";
 
 interface Env {
@@ -115,6 +117,26 @@ async function handleApi(request: Request): Promise<Response> {
           url.searchParams.get("endDate") || undefined,
         ),
       };
+    });
+  }
+
+  if (path === "/api/supabase/price-history/ensure" && request.method === "POST") {
+    return withSupabaseUser(request, async (uid) => {
+      const body: any = await request.json();
+      const targets = Array.isArray(body?.targets) ? body.targets : [];
+      if (!targets.length) throw new Error("At least one historical backfill target is required.");
+      console.log("[History Repair] daily", targets.map((target: any) => target?.ticker).filter(Boolean));
+      return { data: await ensurePortfolioHistoricalPrices(uid, targets) };
+    });
+  }
+
+  if (path === "/api/supabase/intraday-history/ensure" && request.method === "POST") {
+    return withSupabaseUser(request, async (uid) => {
+      const body: any = await request.json();
+      const targets = Array.isArray(body?.targets) ? body.targets : [];
+      if (!targets.length) throw new Error("At least one intraday backfill target is required.");
+      console.log("[History Repair] intraday", targets.map((target: any) => target?.ticker).filter(Boolean));
+      return { data: await ensurePortfolioIntradayPrices(uid, targets) };
     });
   }
 

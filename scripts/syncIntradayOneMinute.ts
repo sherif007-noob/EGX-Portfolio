@@ -1,0 +1,451 @@
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
+import { createChart, createSeries, createSession } from '@ch99q/twc';
+import { aggregateIntradayBars } from '../src/services/intradayAggregation';
+import { buildIntradayOneMinuteBackfillPlan } from '../src/services/intradayBackfillPlan';
+import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
+import type { IntradayPricePoint } from '../src/services/intradayPriceStore';
+import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
+
+type HistoryBar = [number, number, number, number, number, number?];
+
+type SupabaseClient = ReturnType<typeof createSupabaseClient>;
+
+function normalizeTicker(value: string): string {
+  return value.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+}
+
+function readBoolean(name: string): boolean {
+  return /^(1|true|yes|on)$/i.test(String(process.env[name] || '').trim());
+}
+
+function createSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url) throw new Error('Missing SUPABASE_URL.');
+  if (!key?.startsWith('sb_secret_')) {
+    throw new Error('Missing or invalid SUPABASE_SECRET_KEY; expected an sb_secret_ server key.');
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
+async function resolvePortfolioId(sb: SupabaseClient): Promise<string> {
+  const explicitPortfolioId = process.env.EGX_PORTFOLIO_ID?.trim();
+  if (explicitPortfolioId) {
+    const { data, error } = await sb
+      .from('portfolios')
+      .select('id')
+      .eq('id', explicitPortfolioId)
+      .maybeSingle();
+    if (error) throw new Error(`Supabase portfolio lookup failed: ${error.message}`);
+    if (!data) throw new Error(`Supabase portfolio ${explicitPortfolioId} does not exist.`);
+    return String(data.id);
+  }
+
+  const { data, error } = await sb
+    .from('portfolios')
+    .select('id')
+    .order('created_at', { ascending: true })
+    .limit(2);
+  if (error) throw new Error(`Supabase portfolio discovery failed: ${error.message}`);
+  if (!data?.length) throw new Error('No Supabase portfolio exists.');
+  if (data.length > 1) {
+    throw new Error('Multiple portfolios exist. Set EGX_PORTFOLIO_ID explicitly for intraday sync.');
+  }
+  return String(data[0].id);
+}
+
+async function resolveTickerUniverse(
+  sb: SupabaseClient,
+  portfolioId: string,
+  derivedCutoffDate: string,
+): Promise<string[]> {
+  const explicit = process.env.EGX_INTRADAY_TICKERS
+    ?.split(',')
+    .map(normalizeTicker)
+    .filter(Boolean);
+  if (explicit?.length) return [...new Set(explicit)].sort();
+
+  const [{ data: transactions, error: txError }, { data: positions, error: positionError }] =
+    await Promise.all([
+      sb
+        .from('transactions')
+        .select('ticker,transaction_date')
+        .eq('portfolio_id', portfolioId)
+        .gte('transaction_date', derivedCutoffDate),
+      sb
+        .from('positions')
+        .select('ticker')
+        .eq('portfolio_id', portfolioId),
+    ]);
+
+  if (txError) throw new Error(`Supabase transaction lookup failed: ${txError.message}`);
+  if (positionError) throw new Error(`Supabase position lookup failed: ${positionError.message}`);
+
+  return [
+    ...new Set(
+      [...(transactions ?? []), ...(positions ?? [])]
+        .map((row: any) => normalizeTicker(String(row.ticker || '')))
+        .filter((ticker) => ticker && ticker !== 'CASH'),
+    ),
+  ].sort();
+}
+
+async function loadTickerMetadata(
+  sb: SupabaseClient,
+  portfolioId: string,
+  ticker: string,
+): Promise<{ isin?: string }> {
+  const { data, error } = await sb
+    .from('tickers')
+    .select('isin')
+    .eq('portfolio_id', portfolioId)
+    .eq('ticker', ticker)
+    .maybeSingle();
+
+  if (error) throw new Error(`Ticker metadata read failed for ${ticker}: ${error.message}`);
+  return { isin: String(data?.isin || '').trim().toUpperCase() || undefined };
+}
+
+async function coverageTimestamp(
+  sb: SupabaseClient,
+  ticker: string,
+  intervalMinutes: number,
+  direction: 'earliest' | 'latest',
+): Promise<string | null> {
+  const ascending = direction === 'earliest';
+  const { data, error } = await sb
+    .from('intraday_price_history')
+    .select('bar_timestamp')
+    .eq('ticker', ticker)
+    .eq('interval_minutes', intervalMinutes)
+    .order('bar_timestamp', { ascending })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`${direction} intraday coverage read failed for ${ticker}: ${error.message}`);
+  }
+  return data?.bar_timestamp ? String(data.bar_timestamp) : null;
+}
+
+function rawPointFromHistoryBar(
+  bar: HistoryBar,
+  retrievedAt: string,
+  derivedCutoffMs: number,
+  nowMs: number,
+): IntradayPricePoint | null {
+  const timestampSeconds = Number(bar[0]);
+  const open = Number(bar[1]);
+  const high = Number(bar[2]);
+  const low = Number(bar[3]);
+  const close = Number(bar[4]);
+  const volume = Number(bar[5]);
+  const timestampMs = timestampSeconds * 1000;
+
+  if (
+    !Number.isFinite(timestampSeconds) ||
+    !Number.isFinite(timestampMs) ||
+    timestampMs < derivedCutoffMs ||
+    timestampMs + 60_000 > nowMs ||
+    !Number.isFinite(open) ||
+    !Number.isFinite(high) ||
+    !Number.isFinite(low) ||
+    !Number.isFinite(close) ||
+    open <= 0 ||
+    high <= 0 ||
+    low <= 0 ||
+    close <= 0 ||
+    high < Math.max(open, close, low) ||
+    low > Math.min(open, close, high)
+  ) {
+    return null;
+  }
+
+  return {
+    timestamp: new Date(timestampMs).toISOString(),
+    intervalMinutes: INTRADAY_POLICY.rawIntervalMinutes,
+    open,
+    high,
+    low,
+    close,
+    volume: Number.isFinite(volume) && volume >= 0 ? volume : undefined,
+    source: 'tradingview',
+    retrievedAt,
+  };
+}
+
+function rawDbRow(ticker: string, point: IntradayPricePoint) {
+  return {
+    ticker,
+    interval_minutes: INTRADAY_POLICY.rawIntervalMinutes,
+    bar_timestamp: point.timestamp,
+    open: point.open,
+    high: point.high,
+    low: point.low,
+    close: point.close,
+    volume: point.volume ?? null,
+    source: 'tradingview',
+    retrieved_at: point.retrievedAt || new Date().toISOString(),
+  };
+}
+
+function derivedDbRow(ticker: string, point: IntradayPricePoint) {
+  return {
+    ticker,
+    interval_minutes: INTRADAY_POLICY.derivedIntervalMinutes,
+    bar_timestamp: point.timestamp,
+    open: point.open,
+    high: point.high,
+    low: point.low,
+    close: point.close,
+    volume: point.volume ?? null,
+    source: 'derived-1m',
+    retrieved_at: point.retrievedAt || new Date().toISOString(),
+  };
+}
+
+async function loadExistingTimestamps(
+  sb: SupabaseClient,
+  ticker: string,
+  intervalMinutes: number,
+  fromTimestamp: string,
+  toTimestamp: string,
+): Promise<Set<string>> {
+  const pageSize = 1000;
+  const timestamps = new Set<string>();
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from('intraday_price_history')
+      .select('bar_timestamp')
+      .eq('ticker', ticker)
+      .eq('interval_minutes', intervalMinutes)
+      .gte('bar_timestamp', fromTimestamp)
+      .lte('bar_timestamp', toTimestamp)
+      .order('bar_timestamp', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Existing intraday timestamps read failed for ${ticker}: ${error.message}`);
+    }
+
+    for (const row of data ?? []) timestamps.add(String(row.bar_timestamp));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return timestamps;
+}
+
+async function insertMissingRawRows(
+  sb: SupabaseClient,
+  ticker: string,
+  points: IntradayPricePoint[],
+): Promise<number> {
+  if (!points.length) return 0;
+  const sorted = [...points].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const existing = await loadExistingTimestamps(
+    sb,
+    ticker,
+    INTRADAY_POLICY.rawIntervalMinutes,
+    sorted[0].timestamp,
+    sorted[sorted.length - 1].timestamp,
+  );
+
+  const missingRows = sorted
+    .filter((point) => !existing.has(point.timestamp))
+    .map((point) => rawDbRow(ticker, point));
+
+  for (let offset = 0; offset < missingRows.length; offset += 500) {
+    const { error } = await sb
+      .from('intraday_price_history')
+      .insert(missingRows.slice(offset, offset + 500));
+    if (error) throw new Error(`1-minute history write failed for ${ticker}: ${error.message}`);
+  }
+
+  return missingRows.length;
+}
+
+async function upsertDerivedRows(
+  sb: SupabaseClient,
+  ticker: string,
+  points: IntradayPricePoint[],
+): Promise<number> {
+  if (!points.length) return 0;
+  const rows = points.map((point) => derivedDbRow(ticker, point));
+
+  for (let offset = 0; offset < rows.length; offset += 500) {
+    const { error } = await sb
+      .from('intraday_price_history')
+      .upsert(rows.slice(offset, offset + 500), {
+        onConflict: 'ticker,interval_minutes,bar_timestamp',
+        ignoreDuplicates: false,
+      });
+    if (error) throw new Error(`Derived 5-minute history write failed for ${ticker}: ${error.message}`);
+  }
+
+  return rows.length;
+}
+
+async function pruneInterval(
+  sb: SupabaseClient,
+  intervalMinutes: number,
+  cutoffIso: string,
+): Promise<number> {
+  const { count, error } = await sb
+    .from('intraday_price_history')
+    .delete({ count: 'exact' })
+    .eq('interval_minutes', intervalMinutes)
+    .lt('bar_timestamp', cutoffIso);
+
+  if (error) {
+    throw new Error(`${intervalMinutes}-minute retention cleanup failed: ${error.message}`);
+  }
+  return count ?? 0;
+}
+
+async function main() {
+  const now = new Date();
+  const nowMs = now.getTime();
+  const nowIso = now.toISOString();
+  const rawCutoffMs = nowMs - INTRADAY_POLICY.rawRetentionDays * 86_400_000;
+  const derivedCutoffMs = nowMs - INTRADAY_POLICY.derivedRetentionDays * 86_400_000;
+  const rawCutoffIso = new Date(rawCutoffMs).toISOString();
+  const derivedCutoffIso = new Date(derivedCutoffMs).toISOString();
+  const forceFullRepair = readBoolean('EGX_INTRADAY_FULL_REPAIR');
+
+  const sb = createSupabaseClient();
+  const portfolioId = await resolvePortfolioId(sb);
+  const tickers = await resolveTickerUniverse(sb, portfolioId, derivedCutoffIso.slice(0, 10));
+
+  if (!tickers.length) {
+    console.log('No portfolio-relevant security tickers found for 1-minute intraday sync.');
+    return;
+  }
+
+  console.log(
+    `1m intraday sync starting: ${tickers.length} tickers; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; forceFullRepair=${forceFullRepair}.`,
+  );
+
+  const session = await createSession();
+  let failures = 0;
+  let totalFetched = 0;
+  let totalRawInserted = 0;
+  let totalDerivedUpserted = 0;
+
+  try {
+    const chart = await createChart(session);
+
+    for (const ticker of tickers) {
+      try {
+        const [earliestDerivedTimestamp, latestRawTimestamp, metadata] = await Promise.all([
+          coverageTimestamp(sb, ticker, INTRADAY_POLICY.derivedIntervalMinutes, 'earliest'),
+          coverageTimestamp(sb, ticker, INTRADAY_POLICY.rawIntervalMinutes, 'latest'),
+          loadTickerMetadata(sb, portfolioId, ticker),
+        ]);
+
+        const plan = buildIntradayOneMinuteBackfillPlan({
+          now,
+          earliestDerivedTimestamp,
+          latestRawTimestamp,
+          forceFullRepair,
+        });
+
+        const resolution = await resolveTradingViewInstrument(chart, {
+          ticker,
+          isin: metadata.isin,
+        });
+
+        const byTimestamp = new Map<string, IntradayPricePoint>();
+
+        for (const range of plan.ranges) {
+          const series = await createSeries(
+            session,
+            chart,
+            resolution.resolved,
+            '1',
+            0,
+            [Math.floor(range.fromMs / 1000), Math.floor(range.toMs / 1000)],
+          );
+
+          try {
+            const retrievedAt = new Date().toISOString();
+            for (const rawBar of (series.history || []) as HistoryBar[]) {
+              const point = rawPointFromHistoryBar(rawBar, retrievedAt, derivedCutoffMs, nowMs);
+              if (point) byTimestamp.set(point.timestamp, point);
+            }
+          } finally {
+            await series.close();
+          }
+        }
+
+        const fetchedPoints = [...byTimestamp.values()].sort((a, b) =>
+          a.timestamp.localeCompare(b.timestamp),
+        );
+        totalFetched += fetchedPoints.length;
+
+        const rawPoints = fetchedPoints.filter(
+          (point) => new Date(point.timestamp).getTime() >= rawCutoffMs,
+        );
+        const rawInserted = await insertMissingRawRows(sb, ticker, rawPoints);
+        totalRawInserted += rawInserted;
+
+        const derivedPoints = aggregateIntradayBars(
+          fetchedPoints,
+          INTRADAY_POLICY.derivedIntervalMinutes,
+        ).filter((point) => {
+          const startMs = new Date(point.timestamp).getTime();
+          return (
+            Number.isFinite(startMs) &&
+            startMs >= derivedCutoffMs &&
+            startMs + INTRADAY_POLICY.derivedIntervalMinutes * 60_000 <= nowMs
+          );
+        });
+
+        const derivedUpserted = await upsertDerivedRows(sb, ticker, derivedPoints);
+        totalDerivedUpserted += derivedUpserted;
+
+        console.log(JSON.stringify({
+          ticker,
+          resolutionMethod: resolution.method,
+          resolvedSymbol: resolution.symbol,
+          mode: plan.mode,
+          ranges: plan.ranges.length,
+          fetched1m: fetchedPoints.length,
+          inserted1m: rawInserted,
+          upserted5m: derivedUpserted,
+          earliestFetched: fetchedPoints[0]?.timestamp ?? null,
+          latestFetched: fetchedPoints.at(-1)?.timestamp ?? null,
+          previousEarliest5m: earliestDerivedTimestamp,
+          previousLatest1m: latestRawTimestamp,
+        }));
+      } catch (error) {
+        failures += 1;
+        console.error(
+          `${ticker}: 1-minute intraday sync failed`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
+    const [prunedRaw, prunedDerived] = await Promise.all([
+      pruneInterval(sb, INTRADAY_POLICY.rawIntervalMinutes, rawCutoffIso),
+      pruneInterval(sb, INTRADAY_POLICY.derivedIntervalMinutes, derivedCutoffIso),
+    ]);
+
+    console.log(
+      `1m intraday sync complete: fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
+    );
+
+    if (failures > 0) process.exitCode = 1;
+  } finally {
+    await session.close();
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

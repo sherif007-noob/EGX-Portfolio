@@ -1,4 +1,4 @@
-name: Intraday 1m ACTF NAPR Smoke
+name: Intraday 1m Migration Smoke
 
 on:
   push:
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Validate and rebuild ACTF/NAPR
+    name: Validate ACTF/NAPR and established ORAS
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -74,6 +74,6 @@ jobs:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
-          EGX_INTRADAY_TICKERS: ACTF,NAPR
+          EGX_INTRADAY_TICKERS: ACTF,NAPR,ORAS
           EGX_INTRADAY_FULL_REPAIR: 'true'
         run: npm run sync:intraday:1m

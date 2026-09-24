@@ -49,7 +49,6 @@ import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
-import { ensureIntradayPriceCoverage } from './services/intradayPriceStore';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 
@@ -213,7 +212,6 @@ export default function App() {
   const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
   const historicalBackfillAttemptsRef = useRef(new Set<string>());
-  const intradayBackfillAttemptsRef = useRef(new Set<string>());
 
   useEffect(() => {
     let cancelled = false;
@@ -298,48 +296,6 @@ export default function App() {
     };
   }, [transactions, capitalDeposits]);
 
-  useEffect(() => {
-    const normalizeTicker = (ticker: string) =>
-      ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
-
-    const targets = [...new Set(
-      transactions
-        .map((tx) => normalizeTicker(tx.ticker))
-        .filter((ticker) => ticker && ticker !== 'CASH' && !intradayBackfillAttemptsRef.current.has(ticker)),
-    )].map((ticker) => ({
-      ticker,
-      startDate: transactions
-        .filter((tx) => normalizeTicker(tx.ticker) === ticker)
-        .map((tx) => String(tx.date || '').slice(0, 10))
-        .filter(Boolean)
-        .sort()[0],
-    }));
-
-    console.info('[Intraday Repair] trigger evaluation', {
-      transactionCount: transactions.length,
-      targets,
-      skippedAsAlreadyAttempted: [...intradayBackfillAttemptsRef.current],
-    });
-    if (!targets.length) {
-      console.info('[Intraday Repair] no eligible targets; POST will not be sent');
-      return;
-    }
-    for (const target of targets) intradayBackfillAttemptsRef.current.add(target.ticker);
-
-    console.info('[Intraday Repair] requesting coverage', { targets });
-    void ensureIntradayPriceCoverage(targets)
-      .then((result) => {
-        console.info('[Intraday Repair] request completed', result);
-        for (const failure of result.failures) {
-          intradayBackfillAttemptsRef.current.delete(normalizeTicker(failure.ticker));
-        }
-      })
-      .catch((error) => {
-        for (const target of targets) intradayBackfillAttemptsRef.current.delete(target.ticker);
-        console.error('[Intraday Repair] request failed before or during POST', error);
-        console.warn('Automatic intraday-price backfill failed; scheduled ingestion can retry later.', error);
-      });
-  }, [transactions]);
 
   const stats: PerformanceStats = useMemo(() => {
     const baseStats = calculatePerformanceStats(closedTrades, positions);

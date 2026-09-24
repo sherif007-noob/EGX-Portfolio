@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The intraday market-data layer stores 15-minute EGX bars for portfolio-relevant securities. It is the data foundation for future 1D portfolio analytics, including transaction-aware NAV, MWR, TWR, and Telda-style session charts.
+The intraday market-data layer stores 5-minute EGX bars for portfolio-relevant securities. It is the data foundation for future 1D portfolio analytics, including transaction-aware NAV, MWR, TWR, and Telda-style session charts.
 
 This layer does not change portfolio accounting and does not render charts by itself.
 
@@ -10,7 +10,8 @@ This layer does not change portfolio accounting and does not render charts by it
 
 - Source: TradingView through `@ch99q/twc`
 - Exchange: EGX
-- Interval: 15 minutes
+- Target interval: 5 minutes
+- Legacy fallback interval: 15 minutes while 5-minute coverage is being established
 - Storage timezone: UTC (`timestamptz`)
 - Display/analytics timezone: `Africa/Cairo`
 - Retention: 90 rolling calendar days by default
@@ -36,7 +37,7 @@ Columns:
 | Column | Purpose |
 | --- | --- |
 | `ticker` | Normalized EGX ticker |
-| `interval_minutes` | Bar interval; currently fixed at 15 |
+| `interval_minutes` | Bar interval; target is 5, with legacy 15-minute rows retained as read fallback |
 | `bar_timestamp` | UTC bar timestamp |
 | `open` | Bar open |
 | `high` | Bar high |
@@ -73,9 +74,9 @@ For diagnostics or targeted backfills, `EGX_INTRADAY_TICKERS` can override the d
 
 ## Initial backfill and incremental sync
 
-The first successful sync detects that no bars are stored and requests enough recent 15-minute observations to cover approximately the configured retention period.
+The first successful sync detects that no bars are stored and requests enough recent 5-minute observations to cover approximately the configured retention period.
 
-Subsequent syncs inspect the newest stored timestamp per ticker and request only a bounded overlapping window. Existing primary-key rows are upserted so the currently forming 15-minute bar can be refreshed safely.
+Subsequent syncs inspect the newest stored timestamp per ticker and request only a bounded overlapping window. Only timestamps missing from Supabase are inserted. Existing observations are left untouched.
 
 The sync intentionally overlaps recent bars. Correctness is preferred over trying to infer whether TradingView's newest bar is final.
 
@@ -135,11 +136,14 @@ EGX_INTRADAY_BAR_COUNT=200
 
 `.github/workflows/intraday-prices.yml` runs every 15 minutes during a broad Sunday-through-Thursday UTC window.
 
-The broad window intentionally covers Cairo daylight-saving changes. If a scheduled run occurs outside an active market period, TradingView simply returns the most recent bars and the database upsert remains idempotent.
+The broad window intentionally covers Cairo daylight-saving changes. If a scheduled run occurs outside an active market period, TradingView simply returns the most recent bars and the missing-row insert remains idempotent.
 
 Workflow concurrency allows only one active intraday ingestion run at a time.
 
 ## Browser reads
+
+Browser startup must not trigger TradingView ingestion. The browser reads persisted Supabase rows only; TradingView ingestion/backfill belongs to the Node workflow. A legacy Cloudflare intraday-repair route exists only as a successful no-op for stale cached clients during rollout.
+
 
 `src/services/intradayPriceStore.ts` provides normalized, timestamp-sorted intraday series.
 
@@ -151,7 +155,8 @@ The underlying Supabase reader paginates in batches of 1,000 rows so future anal
 - Reject malformed or non-positive OHLC data.
 - Keep timestamps as UTC in storage.
 - Convert to Cairo only when determining/displaying the trading session.
-- Do not mix 15-minute rows into the daily `price_history` table.
+- Do not mix intraday rows into the daily `price_history` table.
+- Prefer persisted 5-minute rows in Today analytics; if none exist for the requested/latest session, fall back to persisted 15-minute rows rather than returning an empty chart or synthesizing data.
 - Do not use intraday bars to mutate accounting records.
 - A missing ticker/session must remain explicitly missing until a trusted source supplies it.
 

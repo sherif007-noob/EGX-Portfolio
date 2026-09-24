@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TradeTransaction } from '../types';
-import {
-  alignIntradayEquityToAuthoritativeTotal,
-  buildIntradayAnalyticsResult,
-} from './intradayAnalyticsEngine';
+import { buildIntradayAnalyticsResult } from './intradayAnalyticsEngine';
 
 const tx = (input: Partial<TradeTransaction> & Pick<TradeTransaction, 'id' | 'type' | 'ticker' | 'shares' | 'price' | 'date'>): TradeTransaction => ({
   companyName: input.ticker,
@@ -229,39 +226,55 @@ describe('intraday analytics engine', () => {
     );
   });
 
-  it('aligns Today equity to the authoritative portfolio total without changing P&L or curve shape', () => {
+  it('reconstructs Today from authoritative current cash instead of a stale opening-capital baseline', () => {
+    const transactions: TradeTransaction[] = [
+      tx({
+        id: 'legacy-hold',
+        type: 'BUY',
+        ticker: 'TEST',
+        shares: 5,
+        price: 100,
+        totalAmount: 500,
+        date: '2026-09-23',
+        executedAt: '2026-09-23T08:00:00Z',
+      }),
+      tx({
+        id: 'session-buy',
+        type: 'BUY',
+        ticker: 'TEST',
+        shares: 1,
+        price: 100,
+        totalAmount: 100,
+        date: '2026-09-24',
+        executedAt: '2026-09-24T07:05:00Z',
+      }),
+    ];
+
     const result = buildIntradayAnalyticsResult(
-      [
-        tx({ id: 'dep-align', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-23' }),
-        tx({ id: 'hold-align', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-23', executedAt: '2026-09-23T08:00:00Z' }),
-      ],
+      transactions,
       { TEST: [{ date: '2026-09-23', close: 100 }] },
       {
         TEST: [
           { timestamp: '2026-09-24T07:00:00Z', intervalMinutes: 1, open: 100, high: 100, low: 100, close: 100 },
-          { timestamp: '2026-09-24T07:01:00Z', intervalMinutes: 1, open: 100, high: 101, low: 100, close: 101 },
+          { timestamp: '2026-09-24T07:05:00Z', intervalMinutes: 1, open: 100, high: 101, low: 100, close: 101 },
         ],
       },
       {
         sessionDate: '2026-09-24',
-        asOf: '2026-09-24T07:02:00Z',
+        openingCapital: 1600, // deliberately stale by +600
+        currentCashBalance: 400, // authoritative: 1000 initial - 500 old buy - 100 session buy
+        asOf: '2026-09-24T07:06:00Z',
         livePrices: { TEST: 102 },
       },
     );
 
-    const originalEquities = result.points.map((point) => point.equity);
-    const target = (result.summary.endEquity ?? 0) - 600;
-    const aligned = alignIntradayEquityToAuthoritativeTotal(result, target)!;
+    expect(result.summary.startEquity).toBeCloseTo(1000, 8);
+    expect(result.summary.endEquity).toBeCloseTo(1012, 8);
+    expect(result.summary.pnlEgp).toBeCloseTo(12, 8);
 
-    expect(aligned.summary.endEquity).toBeCloseTo(target, 8);
-    expect(aligned.summary.pnlEgp).toBeCloseTo(result.summary.pnlEgp ?? 0, 8);
-    expect(aligned.summary.twrPercent).toBe(result.summary.twrPercent);
-    expect(aligned.summary.mwrrPercent).toBe(result.summary.mwrrPercent);
-
-    const alignedEquities = aligned.points.map((point) => point.equity);
-    expect(alignedEquities).toHaveLength(originalEquities.length);
-    for (let index = 0; index < originalEquities.length; index += 1) {
-      expect(alignedEquities[index] - originalEquities[index]).toBeCloseTo(-600, 8);
-    }
+    const first = result.points[0];
+    const last = result.points.at(-1);
+    expect(first?.cash).toBeCloseTo(500, 8);
+    expect(last?.cash).toBeCloseTo(400, 8);
   });
 });

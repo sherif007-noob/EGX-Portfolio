@@ -68,6 +68,7 @@ jobs:
           src/services/intradayTickerUniverse.test.ts
           src/services/intradayResolution.test.ts
           src/services/tradingViewSymbolResolver.test.ts
+          src/services/tickerRegistry.test.ts
           src/services/intradayAnalyticsEngine.test.ts
           src/services/egxTradingSession.test.ts
 

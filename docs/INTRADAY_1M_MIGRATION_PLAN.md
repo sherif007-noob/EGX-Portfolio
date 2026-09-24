@@ -79,7 +79,7 @@ Acceptance criteria:
 
 ### Phase B — Prove TradingView 1m behavior
 
-Status: **next**
+Status: **started**
 
 Before changing production ingestion, run a non-mutating Node diagnostic against representative names:
 
@@ -88,6 +88,8 @@ Before changing production ingestion, run a non-mutating Node diagnostic against
 - a liquid ticker
 - an illiquid ticker
 - one legacy/canonical alias case such as QNBA/QNBE/QNBF
+
+A read-only diagnostic now exists at `scripts/diagnoseIntradayOneMinute.ts` and is exposed as `npm run diagnose:intraday:1m`. It does not write to Supabase.
 
 Measure:
 

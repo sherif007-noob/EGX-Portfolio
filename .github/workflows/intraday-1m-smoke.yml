@@ -1,4 +1,4 @@
-name: Intraday 1m ACTF NAPR Depth Probe
+name: Intraday 1m ACTF NAPR Smoke
 
 on:
   push:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Probe ACTF and NAPR at 20000 bars
+    name: Backfill ACTF and NAPR
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -48,8 +48,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Probe ACTF and NAPR at 20k one-minute bars
+      - name: Backfill ACTF and NAPR from TradingView 1m
         env:
-          EGX_1M_DIAGNOSTIC_TICKERS: ACTF,NAPR
-          EGX_1M_DIAGNOSTIC_BAR_COUNT: '20000'
-        run: npm run diagnose:intraday:1m
+          SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
+          EGX_INTRADAY_TICKERS: ACTF,NAPR
+          EGX_INTRADAY_FULL_REPAIR: 'true'
+        run: npm run sync:intraday:1m

@@ -27,4 +27,4 @@ describe('intraday policy', () => {
     expect(isSupportedIntradayInterval(15)).toBe(true);
     expect(isSupportedIntradayInterval(10)).toBe(false);
   });
-}
+});

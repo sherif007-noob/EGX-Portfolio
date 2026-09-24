@@ -1012,7 +1012,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
           <span>
             {timeframe === 'TODAY'
-              ? 'Adaptive 1m → 5m → 15m session reconstruction · execution-time aware'
+              ? todayResolution === 'AUTO'
+                ? 'Adaptive 1m → 5m → 15m session reconstruction · execution-time aware'
+                : `${todayResolution === 60 ? '1h' : `${todayResolution}m`} session reconstruction · execution-time aware`
               : `${result.dataQuality.completeDays} complete valuation days`}
           </span>
           {result.dataQuality.incompleteDays > 0 && (

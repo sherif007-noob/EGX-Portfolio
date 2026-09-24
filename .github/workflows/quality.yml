@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/1m-migration-final-gate]
   pull_request:
     branches: [main]
 

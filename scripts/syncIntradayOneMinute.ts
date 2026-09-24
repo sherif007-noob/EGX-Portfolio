@@ -95,13 +95,13 @@ async function resolveTickerUniverse(
 
 async function loadTickerMetadata(
   sb: SupabaseClient,
-  portfolioId: string,
   ticker: string,
 ): Promise<{ isin?: string }> {
+  // ticker metadata is global market data; the tickers table is not
+  // portfolio-scoped. Portfolio scoping belongs to transactions/positions.
   const { data, error } = await sb
     .from('tickers')
     .select('isin')
-    .eq('portfolio_id', portfolioId)
     .eq('ticker', ticker)
     .maybeSingle();
 
@@ -343,7 +343,7 @@ async function main() {
         const [earliestDerivedTimestamp, latestRawTimestamp, metadata] = await Promise.all([
           coverageTimestamp(sb, ticker, INTRADAY_POLICY.derivedIntervalMinutes, 'earliest'),
           coverageTimestamp(sb, ticker, INTRADAY_POLICY.rawIntervalMinutes, 'latest'),
-          loadTickerMetadata(sb, portfolioId, ticker),
+          loadTickerMetadata(sb, ticker),
         ]);
 
         const plan = buildIntradayOneMinuteBackfillPlan({

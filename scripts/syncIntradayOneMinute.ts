@@ -9,6 +9,7 @@ import {
   buildIntradayOneMinuteBackfillPlan,
   retentionCutoffStartOfUtcDay,
 } from '../src/services/intradayBackfillPlan';
+import { egxCairoSessionClock } from '../src/services/egxTradingSession';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
 import type { IntradayPricePoint } from '../src/services/intradayPriceStore';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
@@ -62,17 +63,6 @@ async function resolvePortfolioId(sb: SupabaseClient): Promise<string> {
     throw new Error('Multiple portfolios exist. Set EGX_PORTFOLIO_ID explicitly for intraday sync.');
   }
   return String(data[0].id);
-}
-
-function cairoDateKey(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: INTRADAY_POLICY.timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
-  return `${read('year')}-${read('month')}-${read('day')}`;
 }
 
 async function resolveTickerUniverse(
@@ -582,10 +572,19 @@ async function main() {
   const rawCutoffIso = new Date(rawCutoffMs).toISOString();
   const derivedCutoffIso = new Date(derivedCutoffMs).toISOString();
   const forceFullRepair = readBoolean('EGX_INTRADAY_FULL_REPAIR');
+  const scheduledRun = readBoolean('EGX_INTRADAY_SCHEDULED');
+  const sessionClock = egxCairoSessionClock(now);
+
+  if (scheduledRun && !sessionClock.isScheduledIngestionWindow) {
+    console.log(
+      `Scheduled 1m intraday sync skipped outside EGX Cairo ingestion window: ${sessionClock.dateKey} ${String(Math.floor(sessionClock.minuteOfDay / 60)).padStart(2, '0')}:${String(sessionClock.minuteOfDay % 60).padStart(2, '0')} ${sessionClock.weekday}.`,
+    );
+    return;
+  }
 
   const sb = createSupabaseClient();
   const portfolioId = await resolvePortfolioId(sb);
-  const sessionDate = cairoDateKey(now);
+  const sessionDate = sessionClock.dateKey;
   const tickers = await resolveTickerUniverse(sb, portfolioId, sessionDate);
 
   if (!tickers.length) {
@@ -594,7 +593,7 @@ async function main() {
   }
 
   console.log(
-    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}.`,
+    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}; scheduledRun=${scheduledRun}.`,
   );
 
   const session = await createSession();

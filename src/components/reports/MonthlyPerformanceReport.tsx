@@ -491,7 +491,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 </div>
               ) : (
                 <div className="premium-report-table overflow-x-auto overscroll-x-contain">
-                  <table className="min-w-[760px] w-full border-collapse text-left text-xs">
+                  <table className="report-monthly-table min-w-[1180px] w-full border-collapse text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                         <th className="py-2.5 px-4">Instrument</th>

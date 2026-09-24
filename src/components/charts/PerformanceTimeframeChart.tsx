@@ -186,30 +186,48 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             .filter((ticker) => ticker && ticker !== 'CASH'),
         )];
 
-        let intradayPrices = await getIntradayPrices(
-          tickers,
-          `${requestedSessionDate}T00:00:00.000Z`,
-          `${requestedSessionDate}T23:59:59.999Z`,
-          5,
-        );
+        const loadWindow = async (startDate: string, intervalMinutes: 5 | 15) =>
+          getIntradayPrices(
+            tickers,
+            `${startDate}T00:00:00.000Z`,
+            `${requestedSessionDate}T23:59:59.999Z`,
+            intervalMinutes,
+          );
 
+        // Prefer the new 5-minute store, but keep the already-populated
+        // 15-minute store as a real-data fallback until the Node ingestion
+        // workflow has established 5-minute coverage.
+        let intradayPrices = await loadWindow(requestedSessionDate, 5);
         let sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
+
+        if (!sessionDate) {
+          const legacyIntradayPrices = await loadWindow(requestedSessionDate, 15);
+          const legacySessionDate = latestIntradaySessionDate(legacyIntradayPrices, requestedSessionDate);
+          if (legacySessionDate) {
+            intradayPrices = legacyIntradayPrices;
+            sessionDate = legacySessionDate;
+          }
+        }
 
         // Normal sessions stay on a one-day query. Only fall back to a wider
         // lookback when the requested weekday has no actual market bars
-        // (for example, an exchange holiday).
+        // (for example, after midnight, a weekend, or an exchange holiday).
         if (!sessionDate) {
           const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
           lookback.setUTCDate(lookback.getUTCDate() - 14);
           const lookbackDate = lookback.toISOString().slice(0, 10);
 
-          intradayPrices = await getIntradayPrices(
-            tickers,
-            `${lookbackDate}T00:00:00.000Z`,
-            `${requestedSessionDate}T23:59:59.999Z`,
-          5,
-        );
+          intradayPrices = await loadWindow(lookbackDate, 5);
           sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
+
+          if (!sessionDate) {
+            const legacyIntradayPrices = await loadWindow(lookbackDate, 15);
+            const legacySessionDate = latestIntradaySessionDate(legacyIntradayPrices, requestedSessionDate);
+            if (legacySessionDate) {
+              intradayPrices = legacyIntradayPrices;
+              sessionDate = legacySessionDate;
+            }
+          }
         }
 
         sessionDate = sessionDate ?? requestedSessionDate;

@@ -272,7 +272,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
               REPORT 2 &bull; MONTHLY AUDIT
             </span>
@@ -288,7 +288,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
         </div>
 
         {/* Global Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={() => handleExportCSV(selectedMonth)}

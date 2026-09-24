@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase6-pass4-device-fix-gate]
   pull_request:
     branches: [main]
 

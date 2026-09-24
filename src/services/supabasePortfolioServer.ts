@@ -458,3 +458,126 @@ export async function ensurePortfolioHistoricalPrices(
     failures,
   };
 }
+
+
+export interface IntradayBackfillResult {
+  requestedTickers: string[];
+  backfilledTickers: string[];
+  writtenRows: number;
+  failures: Array<{ ticker: string; error: string }>;
+}
+
+export async function ensurePortfolioIntradayPrices(
+  uid: string,
+  requestedTargets: HistoricalBackfillTarget[],
+): Promise<IntradayBackfillResult> {
+  const { supabase, portfolio } = await requirePortfolio(uid);
+  if (!portfolio) throw new Error('No Supabase portfolio exists for this authenticated user.');
+
+  const intervalMinutes = 5;
+  const today = new Date().toISOString().slice(0, 10);
+  const retentionStart = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+  const requested = new Map<string, string | undefined>();
+  for (const target of requestedTargets.slice(0, 25)) {
+    const ticker = normalizeHistoryTicker(target?.ticker);
+    const hinted = String(target?.startDate || '').slice(0, 10);
+    if (!ticker || ticker === 'CASH') continue;
+    requested.set(ticker, /^\d{4}-\d{2}-\d{2}$/.test(hinted) ? hinted : undefined);
+  }
+  if (!requested.size) return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+
+  const { data: txRows, error: txError } = await supabase
+    .from('transactions')
+    .select('ticker,transaction_date')
+    .eq('portfolio_id', portfolio.id)
+    .in('ticker', [...requested.keys()]);
+  if (txError) throw new Error(`Supabase transaction lookup failed for intraday backfill: ${txError.message}`);
+
+  const firstLedgerDate = new Map<string, string>();
+  for (const row of txRows ?? []) {
+    const ticker = normalizeHistoryTicker(String(row.ticker || ''));
+    const date = String(row.transaction_date || '').slice(0, 10);
+    if (!ticker || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const previous = firstLedgerDate.get(ticker);
+    if (!previous || date < previous) firstLedgerDate.set(ticker, date);
+  }
+
+  const targets = [...requested.entries()].map(([ticker, hinted]) => ({
+    ticker,
+    startDate: [firstLedgerDate.get(ticker) ?? hinted ?? today, retentionStart].sort().at(-1)!,
+  }));
+
+  const session = await createSession();
+  const backfilledTickers: string[] = [];
+  const failures: Array<{ ticker: string; error: string }> = [];
+  let writtenRows = 0;
+
+  try {
+    const chart = await createChart(session);
+    for (const { ticker, startDate } of targets) {
+      try {
+        const startIso = `${startDate}T00:00:00.000Z`;
+        const { data: coverage, error: coverageError } = await supabase
+          .from('intraday_price_history')
+          .select('bar_timestamp')
+          .eq('ticker', ticker)
+          .eq('interval_minutes', intervalMinutes)
+          .gte('bar_timestamp', startIso)
+          .order('bar_timestamp', { ascending: true })
+          .limit(1);
+        if (coverageError) throw new Error(`Existing intraday history read failed: ${coverageError.message}`);
+
+        const firstStored = coverage?.[0]?.bar_timestamp ? String(coverage[0].bar_timestamp) : null;
+        const startMs = new Date(startIso).getTime();
+        const calendarDays = Math.max(1, Math.ceil((Date.now() - startMs) / 86_400_000) + 1);
+        const requestedBars = Math.min(7500, Math.max(256, Math.ceil(calendarDays * 5 / 7 + 5) * 66));
+
+        const resolved = await chart.resolve(HISTORICAL_TICKER_ALIASES[ticker] || ticker, 'EGX');
+        const series = await createSeries(session, chart, resolved, '5', requestedBars);
+        try {
+          const retrievedAt = new Date().toISOString();
+          const byTimestamp = new Map<string, any>();
+          for (const bar of (series.history || []) as HistoryBar[]) {
+            const timestamp = Number(bar[0]);
+            const close = Number(bar[4]);
+            if (!Number.isFinite(timestamp) || !Number.isFinite(close) || close <= 0) continue;
+            const barTimestamp = new Date(timestamp * 1000).toISOString();
+            if (barTimestamp < startIso || barTimestamp > new Date().toISOString()) continue;
+            byTimestamp.set(barTimestamp, {
+              ticker,
+              interval_minutes: intervalMinutes,
+              bar_timestamp: barTimestamp,
+              open: Number(bar[1]),
+              high: Number(bar[2]),
+              low: Number(bar[3]),
+              close,
+              volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : null,
+              source: 'tradingview',
+              retrieved_at: retrievedAt,
+            });
+          }
+          const rows = [...byTimestamp.values()];
+          for (let offset = 0; offset < rows.length; offset += 500) {
+            const { error } = await supabase.from('intraday_price_history').upsert(rows.slice(offset, offset + 500), {
+              onConflict: 'ticker,interval_minutes,bar_timestamp',
+              ignoreDuplicates: false,
+            });
+            if (error) throw new Error(`Intraday history write failed: ${error.message}`);
+          }
+          if (rows.length && !firstStored) backfilledTickers.push(ticker);
+          writtenRows += rows.length;
+        } finally {
+          await series.close();
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push({ ticker, error: message });
+        console.error(`[Intraday backfill] ${ticker} failed:`, error);
+      }
+    }
+  } finally {
+    await session.close();
+  }
+
+  return { requestedTickers: [...requested.keys()], backfilledTickers, writtenRows, failures };
+}

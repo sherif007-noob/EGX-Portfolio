@@ -319,7 +319,12 @@ async function main() {
     upserts.push({
       ticker: scan.ticker,
       name_en: scan.description || current?.name_en || baseline?.nameEn || scan.ticker,
-      name_ar: current?.name_ar || baseline?.nameAr || '',
+      name_ar:
+        (current?.name_ar && current.name_ar !== `${scan.ticker} مصر`
+          ? current.name_ar
+          : '') ||
+        baseline?.nameAr ||
+        '',
       isin: scan.isin || current?.isin || baseline?.isin || '',
       sector,
       market_sector: scan.marketSector || current?.market_sector || null,
@@ -427,7 +432,6 @@ async function main() {
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           const { error: updateError } = await sb.from('ticker_registry').update({
-            status: 'unresolved',
             verification_error: message,
             history_verified_at: nowIso,
             updated_at: nowIso,

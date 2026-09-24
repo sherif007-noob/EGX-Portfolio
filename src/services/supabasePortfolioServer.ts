@@ -541,27 +541,45 @@ export async function ensurePortfolioIntradayPrices(
     startDate: [firstLedgerDate.get(ticker) ?? hinted ?? today, retentionStart].sort().at(-1)!,
   }));
 
+  // Check coverage before opening TradingView. Most requests come from app startup,
+  // so already-covered tickers must not create WebSocket work.
+  const repairTargets: typeof targets = [];
+  const failures: Array<{ ticker: string; error: string }> = [];
+  for (const target of targets) {
+    const startIso = `${target.startDate}T00:00:00.000Z`;
+    const { data: coverage, error: coverageError } = await supabase
+      .from('intraday_price_history')
+      .select('bar_timestamp')
+      .eq('ticker', target.ticker)
+      .eq('interval_minutes', intervalMinutes)
+      .gte('bar_timestamp', startIso)
+      .order('bar_timestamp', { ascending: true })
+      .limit(1);
+    if (coverageError) {
+      failures.push({ ticker: target.ticker, error: `Existing intraday history read failed: ${coverageError.message}` });
+      continue;
+    }
+    const firstStored = coverage?.[0]?.bar_timestamp ? String(coverage[0].bar_timestamp) : null;
+    // A stored observation at/near the requested start means scheduled ingestion
+    // already established history for this ticker. Missing/new tickers continue.
+    if (firstStored && firstStored.slice(0, 10) <= target.startDate) continue;
+    repairTargets.push(target);
+  }
+
+  if (!repairTargets.length) {
+    return { requestedTickers: [...requested.keys()], backfilledTickers: [], writtenRows: 0, failures };
+  }
+
   const session = await createTradingViewSession();
   const backfilledTickers: string[] = [];
-  const failures: Array<{ ticker: string; error: string }> = [];
   let writtenRows = 0;
 
   try {
     const chart = await createChart(session);
-    for (const { ticker, startDate } of targets) {
+    for (const { ticker, startDate } of repairTargets) {
       try {
         const startIso = `${startDate}T00:00:00.000Z`;
-        const { data: coverage, error: coverageError } = await supabase
-          .from('intraday_price_history')
-          .select('bar_timestamp')
-          .eq('ticker', ticker)
-          .eq('interval_minutes', intervalMinutes)
-          .gte('bar_timestamp', startIso)
-          .order('bar_timestamp', { ascending: true })
-          .limit(1);
-        if (coverageError) throw new Error(`Existing intraday history read failed: ${coverageError.message}`);
-
-        const firstStored = coverage?.[0]?.bar_timestamp ? String(coverage[0].bar_timestamp) : null;
+        const firstStored: string | null = null;
         const startMs = new Date(startIso).getTime();
         const calendarDays = Math.max(1, Math.ceil((Date.now() - startMs) / 86_400_000) + 1);
         const requestedBars = Math.min(7500, Math.max(256, Math.ceil(calendarDays * 5 / 7 + 5) * 66));

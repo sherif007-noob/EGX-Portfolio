@@ -214,7 +214,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
               REPORT 1 &bull; INSTITUTIONAL BENCHMARK
             </span>
@@ -230,7 +230,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
         </div>
 
         {/* Action Controls: Filters & Export */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           {/* Timeframe selector */}
           <div className="premium-selector-shell col-span-2 -mx-1 flex max-w-[calc(100%+0.5rem)] items-center overflow-x-auto px-1 sm:col-auto sm:mx-0 sm:max-w-none sm:overflow-visible">
             {(['ALL', 'YTD', '90D', '30D'] as TimeframeFilter[]).map((tf) => (

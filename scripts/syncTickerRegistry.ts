@@ -293,6 +293,8 @@ async function main() {
           Boolean(old.last_seen_at);
         if (
           trustedHistoricalIdentity &&
+          !isinPattern.test(oldTicker) &&
+          oldTicker !== scan.scannerSymbol &&
           oldTicker !== scan.ticker &&
           !scannerTickers.has(oldTicker)
         ) {

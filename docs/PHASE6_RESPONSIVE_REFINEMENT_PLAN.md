@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 4 implemented; awaiting CI/mobile validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 4 CI-clean; awaiting mobile visual validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -437,7 +437,7 @@ Checkpoint:
 
 ### Pass 4 — Reports and chart shells
 
-**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
+**Status: IMPLEMENTED — Quality Checks passed; awaiting mobile visual validation.**
 
 Scope:
 - Performance Reports;
@@ -457,6 +457,10 @@ Implemented:
 - Trading Performance and Monthly Audit control bars now fit narrow screens with full-width selects/search, reachable export/print actions, and horizontally accessible selectors;
 - both dense report tables now preserve a deliberate minimum table width inside touch-scroll containers so columns remain readable instead of collapsing into unusable narrow cells;
 - report footers and dense report shells stack/wrap safely without changing their accepted visual hierarchy.
+
+Validation:
+- final Pass 4 Quality Checks passed typecheck, the full test suite, and the production build on the exact implementation snapshot;
+- intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:
 - no chart series, financial observations, interpolation, axis semantics, or Phase 7 visual redesign changed;

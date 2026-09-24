@@ -30,17 +30,18 @@ describe('1-minute intraday backfill planning', () => {
     expect(plan.fromMs).toBe(Date.parse('2026-06-26T00:00:00.000Z'));
   });
 
-  it('rebuilds the old 5m tier when legacy 5m predates the derived cache', () => {
+  it('uses incremental repair after a derived bootstrap exists, even while older legacy 5m ages out', () => {
     const now = new Date('2026-09-24T03:00:00.000Z');
+    const latest = '2026-09-24T02:30:00.000Z';
     const plan = buildIntradayOneMinuteBackfillPlan({
       now,
       earliestFiveMinuteTimestamp: '2026-06-28T07:00:00.000Z',
-      earliestDerivedTimestamp: '2026-08-25T10:45:00.000Z',
-      latestRawTimestamp: '2026-09-24T02:30:00.000Z',
+      earliestDerivedTimestamp: '2026-08-23T07:00:00.000Z',
+      latestRawTimestamp: latest,
     });
 
-    expect(plan.mode).toBe('full-derived-backfill');
-    expect(plan.fromMs).toBe(Date.parse('2026-06-26T00:00:00.000Z'));
+    expect(plan.mode).toBe('incremental');
+    expect(plan.fromMs).toBe(Date.parse(latest) - 2 * 86_400_000);
   });
 
   it('backfills only the raw tier when derived history exists but raw history does not', () => {

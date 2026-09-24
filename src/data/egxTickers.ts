@@ -190,8 +190,10 @@ export function createEGXTickerRecord(
   marketSector?: string,
   industry?: string,
   scannerIsin?: string,
+  preserveSymbol: boolean = false,
 ): EGXTicker {
-  const upper = canonicalizeEGXSymbol(ticker);
+  const cleaned = ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  const upper = preserveSymbol ? cleaned : canonicalizeEGXSymbol(cleaned);
   const dict = EGX_STOCK_DICTIONARY[upper];
 
   const hasLiveMetadata = Boolean(description || marketSector || industry || scannerIsin);

@@ -142,20 +142,34 @@ export async function ensureIntradayPriceCoverage(
       .filter((target) => target.ticker && target.ticker !== 'CASH')
       .map((target) => [target.ticker, target]),
   ).values()];
-  if (!uniqueTargets.length) return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+  console.info('[Intraday Repair] normalized targets', { uniqueTargets });
+  if (!uniqueTargets.length) {
+    console.info('[Intraday Repair] stopped before auth: no normalized targets');
+    return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+  }
 
   const supabase = getSupabaseBrowserClient();
+  console.info('[Intraday Repair] checking Supabase browser session');
   const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
+  if (error) {
+    console.error('[Intraday Repair] Supabase getSession failed', error);
+    throw error;
+  }
   const token = data.session?.access_token;
+  console.info('[Intraday Repair] session check complete', { authenticated: Boolean(token) });
   if (!token) throw new Error('Intraday backfill requires an authenticated Supabase session.');
 
+  console.info('[Intraday Repair] sending POST /api/supabase/intraday-history/ensure', {
+    targetCount: uniqueTargets.length,
+    tickers: uniqueTargets.map((target) => target.ticker),
+  });
   const response = await fetch('/api/supabase/intraday-history/ensure', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ targets: uniqueTargets }),
   });
   const payload = await response.json().catch(() => null);
+  console.info('[Intraday Repair] POST response', { status: response.status, ok: response.ok });
   if (!response.ok) throw new Error(payload?.error || `Intraday backfill request failed with HTTP ${response.status}.`);
   return payload?.data ?? { requestedTickers: uniqueTargets.map((target) => target.ticker), backfilledTickers: [], writtenRows: 0, failures: [] };
 }

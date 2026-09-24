@@ -195,6 +195,54 @@ Both intraday workflows use the same concurrency group so raw/derived migration 
 
 See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md).
 
+### EGX ticker registry
+
+Authoritative security identity is maintained separately from quote snapshots:
+
+```text
+public.ticker_registry
+public.ticker_aliases
+```
+
+The existing `public.tickers` table remains the price/technical snapshot table.
+
+Workflow:
+
+```text
+.github/workflows/ticker-registry.yml
+```
+
+Manual command:
+
+```bash
+npm run sync:ticker-registry
+```
+
+The reconciliation job:
+
+1. reads the TradingView Egypt Scanner universe;
+2. keeps current live scanner symbols canonical;
+3. normalizes ISIN-shaped scanner aliases back to a known ticker when evidence is unique;
+4. refreshes identity/classification metadata;
+5. detects renames only from previously scanner-verified identities sharing a unique ISIN;
+6. verifies historical TradingView resolution and persists the successful symbol/method;
+7. keeps inactive/retired identities for historical lookup;
+8. emits active, alias, verification and unresolved counts.
+
+Static aliases and the bundled dictionary are fallback/bootstrapping data only. They must not override a current registry identity.
+
+Default policy:
+
+```env
+EGX_TICKER_VERIFY_LIMIT=100
+EGX_TICKER_VERIFY_AFTER_DAYS=30
+EGX_TICKER_INACTIVE_AFTER_DAYS=14
+```
+
+The Premium branch stages a post-session Sunday-Thursday registry schedule. As with the 1m workflow, GitHub scheduled workflows execute from the default branch, so this schedule is not production-active until Premium is intentionally promoted.
+
+See [TICKER_REGISTRY.md](TICKER_REGISTRY.md).
+
 ### Production Data Audit
 
 File:

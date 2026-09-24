@@ -809,7 +809,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             <DropdownPresence
               isOpen={modeMenuOpen}
               role="menu"
-              className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(86vw,320px)] overflow-hidden rounded-xl border p-1.5"
+              className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(calc(100vw-2rem),320px)] overflow-hidden rounded-xl border p-1.5"
             >
               {modeMenuOpen && <>
                 {ANALYTICS_MODES.map((item) => {
@@ -890,8 +890,8 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </div>
 
         {timeframe === 'TODAY' && (
-          <div className="flex flex-wrap items-center gap-1.5 pb-2" role="group" aria-label="Today chart resolution">
-            <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="-mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-2" role="group" aria-label="Today chart resolution">
+            <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
               Resolution
             </span>
             {TODAY_RESOLUTIONS.map((item) => {
@@ -914,14 +914,14 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               );
             })}
             {effectiveTodayResolution != null && (
-              <span className="ml-1 text-[10px] text-slate-500">
+              <span className="ml-1 shrink-0 text-[10px] text-slate-500">
                 {todayResolution === 'AUTO' ? `Using ${effectiveTodayResolution}m` : ''}
               </span>
             )}
           </div>
         )}
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Analytics timeframe">
+        <div className="-mx-1 flex max-w-[calc(100%+0.5rem)] snap-x gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Analytics timeframe">
           {TIMEFRAMES.map((item) => {
             const selected = timeframe === item.value;
             return (
@@ -931,7 +931,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                 aria-pressed={selected}
                 onClick={() => handleTimeframeChange(item.value)}
                 className={[
-                  'premium-segment shrink-0 min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
+                  'premium-segment shrink-0 snap-start min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
                   selected
                     ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
@@ -955,7 +955,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div className="h-64 sm:h-72">
+        <div className="h-[232px] sm:h-72">
           {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
             <AreaChart

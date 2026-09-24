@@ -33,6 +33,7 @@ import {
 } from '../services/portfolioAccounting';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { applyCashLedgerEvent, changeCashLedgerEntry, rebuildAfterLedgerChange } from '../services/cashLedger';
+import { resolveTickerFromDirectory } from '../services/tickerRegistry';
 
 const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
 const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v3_reconciled';
@@ -51,7 +52,7 @@ function rehydrateTransactionMetadata(
 
   const next = transactionList.map((transaction) => {
     if (transaction.ticker.trim().toUpperCase() === 'CASH') return transaction;
-    const canonicalTicker = canonicalizeEGXSymbol(transaction.ticker);
+    const canonicalTicker = resolveTickerFromDirectory(transaction.ticker, tickerList);
     const ticker = tickerMap.get(canonicalTicker);
     if (!ticker) return transaction;
 
@@ -79,7 +80,7 @@ function rehydrateClosedTradeMetadata(
   let changed = false;
 
   const next = tradeList.map((trade) => {
-    const canonicalTicker = canonicalizeEGXSymbol(trade.ticker);
+    const canonicalTicker = resolveTickerFromDirectory(trade.ticker, tickerList);
     const ticker = tickerMap.get(canonicalTicker);
     if (!ticker) return trade;
 
@@ -331,7 +332,7 @@ export function usePortfolioState() {
     const tickerMap = new Map(tickerList.map((t) => [t.ticker.trim().toUpperCase(), t]));
     let hasChanges = false;
     const rehydrated = posList.map((p) => {
-      const canonicalTicker = canonicalizeEGXSymbol(p.ticker);
+      const canonicalTicker = resolveTickerFromDirectory(p.ticker, tickerList);
       const t = tickerMap.get(canonicalTicker);
       if (!t) return p;
       const currentPrice = t.lastPrice > 0 ? t.lastPrice : p.currentPrice;
@@ -376,7 +377,7 @@ export function usePortfolioState() {
     deductFromCash?: boolean;
     cycleTag?: string;
   }) => {
-    const tickerKey = tradeInput.ticker.trim().toUpperCase();
+    const tickerKey = resolveTickerFromDirectory(tradeInput.ticker, tickers);
     const { grossCost, fees, cashOutflow } = calculateBuyImpact(
       tradeInput.shares,
       tradeInput.price,

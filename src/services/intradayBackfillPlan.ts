@@ -10,11 +10,6 @@ export interface IntradayBackfillPlanInput {
   forceFullRepair?: boolean;
 }
 
-export interface IntradayRangeChunk {
-  fromMs: number;
-  toMs: number;
-}
-
 function parseMs(value?: string | null): number {
   if (!value) return Number.NaN;
   const parsed = new Date(value).getTime();
@@ -25,29 +20,6 @@ export function retentionCutoffStartOfUtcDay(nowMs: number, retentionDays: numbe
   const target = new Date(nowMs - retentionDays * DAY_MS);
   if (Number.isNaN(target.getTime())) throw new Error('A valid retention cutoff date is required.');
   return Date.parse(`${target.toISOString().slice(0, 10)}T00:00:00.000Z`);
-}
-
-export function buildIntradayRangeChunks(
-  fromMs: number,
-  toMs: number,
-  chunkDays = INTRADAY_POLICY.backfillChunkDays,
-): IntradayRangeChunk[] {
-  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs < fromMs) return [];
-  if (!Number.isFinite(chunkDays) || chunkDays <= 0) {
-    throw new Error('chunkDays must be a positive number.');
-  }
-
-  const chunkMs = Math.trunc(chunkDays * DAY_MS);
-  const chunks: IntradayRangeChunk[] = [];
-  let cursor = fromMs;
-
-  while (cursor <= toMs) {
-    const end = Math.min(toMs, cursor + chunkMs - 1_000);
-    chunks.push({ fromMs: cursor, toMs: end });
-    cursor = end + 1_000;
-  }
-
-  return chunks;
 }
 
 export function buildIntradayOneMinuteBackfillPlan(

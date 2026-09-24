@@ -461,7 +461,8 @@ Implemented:
 Real-device validation findings and corrections:
 - landscape/tablet navigation was keeping desktop-length labels too early, causing the rightmost tabs to clip; sub-2XL navigation now uses compact labels, retains horizontal fallback, and automatically keeps the active tab in view;
 - the institutional KPI ribbon entered four-column mode before each card had enough intrinsic width; four columns now require a 2XL viewport, with one/two-column layouts below that breakpoint;
-- benchmark and monthly-audit tables previously had generic minimum widths that still allowed semantic status columns to collapse; both tables now have explicit per-column width contracts and non-wrapping status pills, forcing horizontal access before text is crushed.
+- the benchmark detail section is no longer forced into a dense table on phone/tablet: the same indicator calculations now render as one-column phone / two-column tablet premium glass scorecards with semantic glow, measured-result hierarchy, institutional target, and assessment chip; the institutional table remains the 2XL desktop renderer;
+- the Monthly Audit remains a data table because its rows are transactional records rather than independent metrics; it keeps explicit column-width contracts and horizontal touch access instead of collapsing semantic columns.
 
 Validation:
 - final real-device correction Quality Checks passed typecheck, 27/27 test files, 170/170 tests, the production Vite build, and the bundled server build on implementation snapshot `db66d310c132dff8b262df77d420ae735cae077c`;

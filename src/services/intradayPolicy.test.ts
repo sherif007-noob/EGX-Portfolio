@@ -11,6 +11,8 @@ describe('intraday policy', () => {
     expect(INTRADAY_POLICY.rawIntervalMinutes).toBe(1);
     expect(INTRADAY_POLICY.derivedIntervalMinutes).toBe(5);
     expect(INTRADAY_POLICY.legacyFallbackIntervalMinutes).toBe(15);
+    expect(INTRADAY_POLICY.backfillChunkDays).toBe(7);
+    expect(INTRADAY_POLICY.incrementalOverlapDays).toBe(2);
   });
 
   it('keeps raw 1-minute data shorter than derived intraday history', () => {

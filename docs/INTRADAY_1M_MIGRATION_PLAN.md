@@ -390,3 +390,14 @@ The write-capable workflow is manual during migration validation:
 `.github/workflows/intraday-1m-sync.yml`.
 
 It must not be scheduled as the production job until ACTF/NAPR and portfolio-math validation are complete.
+
+
+## 2026-09-24 live-update incident
+
+Opening the app and recording a trade successfully updated the transaction ledger and live ticker snapshot, but intraday history remained stale at the prior session. Investigation found that the Premium 5-minute ingestion run had failed for every ticker because `loadTickerMetadata()` incorrectly filtered `public.tickers` by `portfolio_id`. The ticker directory is global market metadata and has no `portfolio_id` column; only transactions/positions are portfolio-scoped.
+
+The same invalid assumption existed in the new 1-minute migration script and was corrected there before the first write-capable 1m run.
+
+After the fix, the Premium 5-minute validation run succeeded with **0 ticker failures** and inserted **85,877 missing 5-minute observations** across 28 portfolio-relevant tickers. Supabase then showed current-session 5-minute coverage through approximately 09:30–09:35 UTC (12:30–12:35 Cairo) for representative names including ACTF, NAPR, and EGCH.
+
+This incident confirms that app-open/live scanner updates and historical intraday ingestion are separate pipelines: live ticker snapshots may be current even when persisted intraday bars are stale.

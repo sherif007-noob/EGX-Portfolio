@@ -377,8 +377,9 @@ async function insertMissingRawRows(
   sb: SupabaseClient,
   ticker: string,
   points: IntradayPricePoint[],
-): Promise<number> {
-  if (!points.length) return 0;
+  previousLatestRawTimestamp?: string | null,
+): Promise<{ inserted: number; repairedGaps: number; newBars: number }> {
+  if (!points.length) return { inserted: 0, repairedGaps: 0, newBars: 0 };
   const sorted = [...points].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const existing = await loadExistingTimestamps(
     sb,
@@ -388,9 +389,10 @@ async function insertMissingRawRows(
     sorted[sorted.length - 1].timestamp,
   );
 
-  const missingRows = sorted
-    .filter((point) => !existing.has(timestampIdentity(point.timestamp)))
-    .map((point) => rawDbRow(ticker, point));
+  const missingPoints = sorted.filter(
+    (point) => !existing.has(timestampIdentity(point.timestamp)),
+  );
+  const missingRows = missingPoints.map((point) => rawDbRow(ticker, point));
 
   for (let offset = 0; offset < missingRows.length; offset += 500) {
     const { error } = await sb
@@ -399,7 +401,20 @@ async function insertMissingRawRows(
     if (error) throw new Error(`1-minute history write failed for ${ticker}: ${error.message}`);
   }
 
-  return missingRows.length;
+  const previousLatestRawMs = previousLatestRawTimestamp
+    ? new Date(previousLatestRawTimestamp).getTime()
+    : Number.NaN;
+  const repairedGaps = Number.isFinite(previousLatestRawMs)
+    ? missingPoints.filter(
+        (point) => new Date(point.timestamp).getTime() <= previousLatestRawMs,
+      ).length
+    : 0;
+
+  return {
+    inserted: missingRows.length,
+    repairedGaps,
+    newBars: missingRows.length - repairedGaps,
+  };
 }
 
 async function upsertDerivedRows(
@@ -633,6 +648,8 @@ async function main() {
   let failures = 0;
   let totalFetched = 0;
   let totalRawInserted = 0;
+  let totalNewRawBars = 0;
+  let totalRepairedRawGaps = 0;
   let totalDerivedUpserted = 0;
   let totalAdditionalBatches = 0;
   let resolvedTickers = 0;
@@ -722,8 +739,15 @@ async function main() {
         const rawPoints = fetchedPoints.filter(
           (point) => new Date(point.timestamp).getTime() >= rawCutoffMs,
         );
-        const rawInserted = await insertMissingRawRows(sb, ticker, rawPoints);
-        totalRawInserted += rawInserted;
+        const rawWrite = await insertMissingRawRows(
+          sb,
+          ticker,
+          rawPoints,
+          latestRawTimestamp,
+        );
+        totalRawInserted += rawWrite.inserted;
+        totalNewRawBars += rawWrite.newBars;
+        totalRepairedRawGaps += rawWrite.repairedGaps;
 
         const persistedRawPoints = rawPoints.length
           ? await loadPersistedRawPoints(
@@ -812,7 +836,9 @@ async function main() {
           additionalBatches: paged.additionalBatches,
           sourceExhausted: paged.sourceExhausted,
           fetched1m: fetchedPoints.length,
-          inserted1m: rawInserted,
+          inserted1m: rawWrite.inserted,
+          new1m: rawWrite.newBars,
+          repaired1mGaps: rawWrite.repairedGaps,
           persistedRawForDerivation: persistedRawPoints.length,
           upserted5m: derivedUpserted,
           legacy5mBefore: legacyBefore,
@@ -841,7 +867,7 @@ async function main() {
     ]);
 
     console.log(
-      `1m intraday sync complete: sessionRelevant=${tickers.length}, resolved=${resolvedTickers}, additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, sourceExhaustedTickers=${sourceExhaustedTickers}, bootstrapLimitedTickers=${bootstrapLimitedTickers}, legacyBootstrapRows=${legacyBootstrapRows}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
+      `1m intraday sync complete: sessionRelevant=${tickers.length}, resolved=${resolvedTickers}, additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, new1m=${totalNewRawBars}, repaired1mGaps=${totalRepairedRawGaps}, upserted5m=${totalDerivedUpserted}, sourceExhaustedTickers=${sourceExhaustedTickers}, bootstrapLimitedTickers=${bootstrapLimitedTickers}, legacyBootstrapRows=${legacyBootstrapRows}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
     );
   } finally {
     await session.close();

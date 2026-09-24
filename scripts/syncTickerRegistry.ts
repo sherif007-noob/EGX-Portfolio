@@ -199,8 +199,21 @@ async function main() {
     existingByIsin.set(isin, list);
   }
 
+  // A symbol that exists in the current scanner universe is canonical by definition
+  // for this reconciliation pass. Never let a stale static alias override it.
+  if (scannerTickers.size) {
+    const { error: activeAliasDeleteError } = await sb
+      .from('ticker_aliases')
+      .delete()
+      .in('alias', [...scannerTickers]);
+    if (activeAliasDeleteError) {
+      throw new Error(`Active-symbol alias cleanup failed: ${activeAliasDeleteError.message}`);
+    }
+  }
+
   const aliasRows: Array<{ alias: string; canonical_ticker: string; alias_type: string; source: string }> = [];
   for (const [alias, canonical] of Object.entries(LEGACY_TICKER_ALIASES)) {
+    if (scannerTickers.has(normalize(alias))) continue;
     aliasRows.push({ alias, canonical_ticker: canonical, alias_type: 'legacy', source: 'baseline' });
   }
 

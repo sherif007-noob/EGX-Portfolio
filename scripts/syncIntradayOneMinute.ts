@@ -65,16 +65,31 @@ async function resolvePortfolioId(sb: SupabaseClient): Promise<string> {
   return String(data[0].id);
 }
 
+interface IntradayTickerUniverse {
+  tickers: string[];
+  positionTickers: string[];
+  sessionTransactionTickers: string[];
+  explicit: boolean;
+}
+
 async function resolveTickerUniverse(
   sb: SupabaseClient,
   portfolioId: string,
   sessionDate: string,
-): Promise<string[]> {
+): Promise<IntradayTickerUniverse> {
   const explicit = process.env.EGX_INTRADAY_TICKERS
     ?.split(',')
     .map(normalizeTicker)
     .filter(Boolean);
-  if (explicit?.length) return [...new Set(explicit)].sort();
+  if (explicit?.length) {
+    const tickers = [...new Set(explicit)].sort();
+    return {
+      tickers,
+      positionTickers: [],
+      sessionTransactionTickers: [],
+      explicit: true,
+    };
+  }
 
   const [{ data: transactions, error: txError }, { data: positions, error: positionError }] =
     await Promise.all([
@@ -92,13 +107,30 @@ async function resolveTickerUniverse(
   if (txError) throw new Error(`Supabase transaction lookup failed: ${txError.message}`);
   if (positionError) throw new Error(`Supabase position lookup failed: ${positionError.message}`);
 
-  return [
+  const positionTickers = [
     ...new Set(
-      [...(transactions ?? []), ...(positions ?? [])]
+      (positions ?? [])
         .map((row: any) => normalizeTicker(String(row.ticker || '')))
         .filter((ticker) => ticker && ticker !== 'CASH'),
     ),
   ].sort();
+  const sessionTransactionTickers = [
+    ...new Set(
+      (transactions ?? [])
+        .map((row: any) => normalizeTicker(String(row.ticker || '')))
+        .filter((ticker) => ticker && ticker !== 'CASH'),
+    ),
+  ].sort();
+  const tickers = [
+    ...new Set([...positionTickers, ...sessionTransactionTickers]),
+  ].sort();
+
+  return {
+    tickers,
+    positionTickers,
+    sessionTransactionTickers,
+    explicit: false,
+  };
 }
 
 async function loadTickerMetadata(
@@ -585,7 +617,8 @@ async function main() {
   const sb = createSupabaseClient();
   const portfolioId = await resolvePortfolioId(sb);
   const sessionDate = sessionClock.dateKey;
-  const tickers = await resolveTickerUniverse(sb, portfolioId, sessionDate);
+  const universe = await resolveTickerUniverse(sb, portfolioId, sessionDate);
+  const tickers = universe.tickers;
 
   if (!tickers.length) {
     console.log('No portfolio-relevant security tickers found for 1-minute intraday sync.');
@@ -593,7 +626,7 @@ async function main() {
   }
 
   console.log(
-    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}; scheduledRun=${scheduledRun}.`,
+    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; positions=${universe.positionTickers.length}; sessionTrades=${universe.sessionTransactionTickers.length}; explicitUniverse=${universe.explicit}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}; scheduledRun=${scheduledRun}.`,
   );
 
   const session = await createSession();
@@ -602,6 +635,10 @@ async function main() {
   let totalRawInserted = 0;
   let totalDerivedUpserted = 0;
   let totalAdditionalBatches = 0;
+  let resolvedTickers = 0;
+  let sourceExhaustedTickers = 0;
+  let bootstrapLimitedTickers = 0;
+  let legacyBootstrapRows = 0;
 
   try {
     const chart = await createChart(session);
@@ -747,6 +784,11 @@ async function main() {
           paged.sourceExhausted &&
           earliestFetchedMs > derivedCutoffMs;
 
+        resolvedTickers += 1;
+        if (paged.sourceExhausted) sourceExhaustedTickers += 1;
+        if (bootstrapLimitedByTradingView) bootstrapLimitedTickers += 1;
+        legacyBootstrapRows += legacyAfter;
+
         if (
           plan.mode === 'full-derived-backfill' &&
           legacyAfter > 0 &&
@@ -799,7 +841,7 @@ async function main() {
     ]);
 
     console.log(
-      `1m intraday sync complete: additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
+      `1m intraday sync complete: sessionRelevant=${tickers.length}, resolved=${resolvedTickers}, additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, sourceExhaustedTickers=${sourceExhaustedTickers}, bootstrapLimitedTickers=${bootstrapLimitedTickers}, legacyBootstrapRows=${legacyBootstrapRows}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
     );
   } finally {
     await session.close();

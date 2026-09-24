@@ -89,7 +89,7 @@ Before changing production ingestion, run a non-mutating Node diagnostic against
 - an illiquid ticker
 - one legacy/canonical alias case such as QNBA/QNBE/QNBF
 
-A read-only diagnostic now exists at `scripts/diagnoseIntradayOneMinute.ts` and is exposed as `npm run diagnose:intraday:1m`. It does not write to Supabase.
+A read-only diagnostic now exists at `scripts/diagnoseIntradayOneMinute.ts` and is exposed as `npm run diagnose:intraday:1m`. It does not write to Supabase. `.github/workflows/intraday-1m-diagnostic.yml` runs the same probe on the Premium branch / manual dispatch so TradingView 1m behavior can be measured in a real Node runner before production ingestion is switched.
 
 Measure:
 

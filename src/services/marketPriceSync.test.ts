@@ -196,4 +196,36 @@ describe('EGX ticker directory canonicalization', () => {
     expect(live.metadataSource).toBe('tradingview');
   });
 
+
+  it('keeps an active registry symbol canonical even when a static legacy alias disagrees', () => {
+    const registryTicker = {
+      ...createEGXTickerRecord('QNBA', 30, 0, 0, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true),
+      ticker: 'QNBA',
+      nameEn: 'QNB Alahli',
+      nameAr: 'بنك قطر الوطني الأهلي',
+      isin: 'EGS60131C017',
+      sector: 'Banking' as const,
+      metadataSource: 'registry' as const,
+      directoryStatus: 'active' as const,
+      aliases: [],
+    };
+    const discovered = {
+      ...createEGXTickerRecord('QNBA', 31.25, 1.5, 1000, undefined, undefined, undefined, undefined, undefined, 'Scanner Name', undefined, 0.46, 'Finance', 'Regional Banks', 'EGS60131C017', true),
+      ticker: 'QNBA',
+    };
+
+    const result = applyLivePricesToPortfolio(
+      [],
+      [registryTicker],
+      { QNBA: { ticker: 'QNBA', price: 31.25, change: 0.46, changePercent: 1.5, volume: 1000 } },
+      [discovered],
+    );
+
+    expect(result.updatedTickers[0].ticker).toBe('QNBA');
+    expect(result.updatedTickers[0].nameEn).toBe('QNB Alahli');
+    expect(result.updatedTickers[0].isin).toBe('EGS60131C017');
+    expect(result.updatedTickers[0].sector).toBe('Banking');
+    expect(result.updatedTickers[0].lastPrice).toBe(31.25);
+    expect(result.updatedTickers[0].metadataSource).toBe('registry');
+  });
 });

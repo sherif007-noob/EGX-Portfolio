@@ -156,14 +156,19 @@ async function countLegacyFiveMinuteRows(
   sb: SupabaseClient,
   ticker: string,
   cutoffIso: string,
+  fromIso?: string,
 ): Promise<number> {
-  const { count, error } = await sb
+  let query = sb
     .from('intraday_price_history')
     .select('bar_timestamp', { head: true, count: 'exact' })
     .eq('ticker', ticker)
     .eq('interval_minutes', INTRADAY_POLICY.derivedIntervalMinutes)
     .neq('source', 'derived-1m')
     .gte('bar_timestamp', cutoffIso);
+
+  if (fromIso) query = query.gte('bar_timestamp', fromIso);
+
+  const { count, error } = await query;
 
   if (error) throw new Error(`Legacy 5-minute coverage read failed for ${ticker}: ${error.message}`);
   return count ?? 0;
@@ -712,10 +717,44 @@ async function main() {
         const derivedUpserted = await upsertDerivedRows(sb, ticker, derivedPoints);
         totalDerivedUpserted += derivedUpserted;
 
-        const legacyAfter = await countLegacyFiveMinuteRows(sb, ticker, derivedCutoffIso);
-        if (plan.mode === 'full-derived-backfill' && legacyAfter > 0) {
+        const earliestFetchedMs = new Date(fetchedPoints[0].timestamp).getTime();
+        const earliestDerivedBucketMs =
+          Math.floor(
+            earliestFetchedMs /
+              (INTRADAY_POLICY.derivedIntervalMinutes * 60_000),
+          ) *
+          INTRADAY_POLICY.derivedIntervalMinutes *
+          60_000;
+        const earliestDerivedBucketIso = new Date(earliestDerivedBucketMs).toISOString();
+
+        const [legacyAfter, legacyInsideReconstructibleWindow] = await Promise.all([
+          countLegacyFiveMinuteRows(sb, ticker, derivedCutoffIso),
+          countLegacyFiveMinuteRows(
+            sb,
+            ticker,
+            derivedCutoffIso,
+            earliestDerivedBucketIso,
+          ),
+        ]);
+
+        if (legacyInsideReconstructibleWindow > 0) {
           throw new Error(
-            `Full derived rebuild incomplete: ${legacyAfter} legacy TradingView 5-minute rows remain inside the 90-day retention window.`,
+            `Derived replacement incomplete: ${legacyInsideReconstructibleWindow} legacy 5-minute rows remain inside reconstructible 1-minute coverage starting ${earliestDerivedBucketIso}.`,
+          );
+        }
+
+        const bootstrapLimitedByTradingView =
+          plan.mode === 'full-derived-backfill' &&
+          paged.sourceExhausted &&
+          earliestFetchedMs > derivedCutoffMs;
+
+        if (
+          plan.mode === 'full-derived-backfill' &&
+          legacyAfter > 0 &&
+          !bootstrapLimitedByTradingView
+        ) {
+          throw new Error(
+            `Full derived rebuild incomplete: ${legacyAfter} legacy TradingView 5-minute rows remain even though 1-minute source pagination did not report exhaustion.`,
           );
         }
 
@@ -737,6 +776,8 @@ async function main() {
           upserted5m: derivedUpserted,
           legacy5mBefore: legacyBefore,
           legacy5mAfter: legacyAfter,
+          legacy5mInsideReconstructibleWindow: legacyInsideReconstructibleWindow,
+          bootstrapLimitedByTradingView,
           earliestFetched: fetchedPoints[0]?.timestamp ?? null,
           latestFetched: fetchedPoints.at(-1)?.timestamp ?? null,
           previousEarliestDerived5m: earliestDerivedTimestamp,

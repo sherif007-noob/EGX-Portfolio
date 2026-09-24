@@ -283,6 +283,16 @@ export async function loadPortfolioFromSupabase(): Promise<SupabasePortfolioData
       registry.data ?? [],
       aliases.data ?? [],
     );
+    const registryUpdatedAt = (registry.data ?? [])
+      .map((row: any) => toIso(row.updated_at))
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
+    const portfolioUpdatedAt = toIso(portfolio.updated_at) || new Date(0).toISOString();
+    const effectiveUpdatedAt =
+      registryUpdatedAt && registryUpdatedAt > portfolioUpdatedAt
+        ? registryUpdatedAt
+        : portfolioUpdatedAt;
 
     return {
       positions: (positions.data ?? []).map(mapPosition),
@@ -291,7 +301,7 @@ export async function loadPortfolioFromSupabase(): Promise<SupabasePortfolioData
       cashBalance: Number(portfolio.cash_balance ?? 0),
       capitalDeposits: Number(portfolio.capital_deposits ?? 0),
       tickers: directoryTickers,
-      updatedAt: portfolio.updated_at,
+      updatedAt: effectiveUpdatedAt,
       schemaVersion: Number(portfolio.schema_version ?? 3),
       lastPriceWriteAt: portfolio.last_price_write_at ?? undefined,
     };

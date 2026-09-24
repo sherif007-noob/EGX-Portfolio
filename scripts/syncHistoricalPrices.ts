@@ -305,11 +305,11 @@ async function main() {
     for (const plan of plans) {
       try {
         const tickerMeta = metadata.get(plan.ticker);
-        const { candidate, resolved } = await resolveTradingViewSymbol(
-          chart,
-          plan.ticker,
-          tickerMeta?.isin,
-        );
+        const resolution = await resolveTradingViewInstrument(chart, {
+          ticker: plan.ticker,
+          isin: tickerMeta?.isin,
+        });
+        const { symbol: candidate, resolved } = resolution;
         const requestedBars = requestedBarsForRange(plan.startDate, plan.endDate);
         const series = await createSeries(session, chart, resolved, '1D', requestedBars);
 

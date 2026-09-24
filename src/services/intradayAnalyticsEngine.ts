@@ -151,6 +151,43 @@ function formatIso(ms: number): string {
   return new Date(ms).toISOString();
 }
 
+export function alignIntradayEquityToAuthoritativeTotal(
+  result: UnifiedAnalyticsResult | null,
+  authoritativeEndEquity: number | null | undefined,
+): UnifiedAnalyticsResult | null {
+  if (!result || !Number.isFinite(authoritativeEndEquity)) return result;
+
+  const currentEndEquity = result.summary.endEquity;
+  if (!Number.isFinite(currentEndEquity)) return result;
+
+  const target = Number(authoritativeEndEquity);
+  const delta = target - Number(currentEndEquity);
+  if (Math.abs(delta) <= EPSILON) return result;
+
+  return {
+    ...result,
+    points: result.points.map((point) => ({
+      ...point,
+      equity: point.equity + delta,
+      cash: point.cash + delta,
+      // A constant vertical shift does not change nominal peak-to-trough gaps.
+      equityDrawdownEgp: point.equityDrawdownEgp,
+    })),
+    summary: {
+      ...result.summary,
+      startEquity:
+        result.summary.startEquity == null
+          ? null
+          : result.summary.startEquity + delta,
+      endEquity: target,
+      // The same constant offset is applied to both endpoints, so selected-
+      // period P&L and return semantics remain unchanged.
+      pnlEgp: result.summary.pnlEgp,
+      maxEquityDrawdownEgp: result.summary.maxEquityDrawdownEgp,
+    },
+  };
+}
+
 export function buildIntradayAnalyticsResult(
   transactions: TradeTransaction[],
   historicalPrices: HistoricalPriceSeries,

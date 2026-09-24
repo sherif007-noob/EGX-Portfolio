@@ -126,7 +126,56 @@ EGX_PORTFOLIO_ID
 
 The workflow uses the server secret only inside GitHub Actions.
 
-### Intraday Prices
+### Intraday 1-minute market data
+
+Primary workflow:
+
+```text
+.github/workflows/intraday-1m-sync.yml
+```
+
+The Premium implementation stages a five-minute ingestion cadence:
+
+```text
+*/5 7-12 * * 0-4
+```
+
+The cron is deliberately a broad UTC envelope. `scripts/syncIntradayOneMinute.ts` converts the run time through `Africa/Cairo` and only executes scheduled ingestion on Sunday-Thursday from 10:00 through the configured 14:40 Cairo post-close grace window. This avoids hardcoding a UTC+2 or UTC+3 assumption.
+
+GitHub scheduled workflows execute from the repository default branch. Therefore the schedule in `feature/premium-ui-redesign` is staged until that work is intentionally promoted; do not treat a Premium-only cron edit as already active production scheduling.
+
+The job:
+
+1. discovers session-relevant portfolio tickers;
+2. resolves ticker/canonical/ISIN identity;
+3. retrieves missing/recent TradingView 1m observations in bounded batches;
+4. inserts only missing raw 1m timestamps;
+5. reloads persisted raw rows as the source of truth;
+6. derives deterministic 5m buckets;
+7. keeps only unreconstructible older legacy 5m bootstrap data;
+8. prunes raw 1m >30d and derived 5m >90d;
+9. emits per-ticker and final coverage diagnostics.
+
+Manual run:
+
+```bash
+npm run sync:intraday:1m
+```
+
+Optional targeted/full-repair variables:
+
+```env
+EGX_INTRADAY_TICKERS=ACTF,NAPR
+EGX_INTRADAY_FULL_REPAIR=true
+```
+
+Read-only diagnostic:
+
+```bash
+npm run diagnose:intraday:1m
+```
+
+### Legacy 5-minute repair
 
 File:
 
@@ -134,36 +183,17 @@ File:
 .github/workflows/intraday-prices.yml
 ```
 
-Schedule:
+This workflow is manual-only. It must not be reintroduced as a competing scheduled 5m producer while derived 5m is being generated from raw 1m.
 
-```text
-*/15 6-13 * * 0-4
-```
-
-The broad UTC window covers the EGX session across Cairo daylight-saving changes. TradingView supplies the actual 15-minute bar timestamps.
-
-The job:
-
-- runs with Node 22 and npm;
-- discovers current/recent portfolio tickers;
-- performs an initial retention-window backfill when needed;
-- incrementally upserts recent 15-minute bars afterward;
-- prunes bars older than the configured retention window;
-- uses workflow concurrency to prevent overlapping ingestion runs.
-
-Manual run:
+Manual command:
 
 ```bash
 npm run sync:intraday
 ```
 
-Default retention:
+Both intraday workflows use the same concurrency group so raw/derived migration and legacy repair cannot write concurrently.
 
-```env
-EGX_INTRADAY_RETENTION_DAYS=90
-```
-
-See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) for the full design.
+See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md).
 
 ### Production Data Audit
 

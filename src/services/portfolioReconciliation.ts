@@ -371,6 +371,56 @@ export function reconcilePortfolioFromLedger(
   };
 }
 
+export function deriveCanonicalCapitalDeposits(
+  transactions: TradeTransaction[],
+  currentCashBalance: number,
+  fallbackCapitalDeposits = 0,
+): number {
+  const fallback = Number.isFinite(fallbackCapitalDeposits) && fallbackCapitalDeposits >= 0
+    ? Number(fallbackCapitalDeposits)
+    : 0;
+  if (!Number.isFinite(currentCashBalance)) return Number(fallback.toFixed(2));
+
+  const normalized = Array.isArray(transactions) ? sortTransactions(transactions) : [];
+  const externalFlows = normalized.filter((tx) => {
+    const kind = cashFlowKind(tx);
+    const ticker = tx.ticker.trim().toUpperCase();
+    return (
+      kind === 'DEPOSIT' ||
+      kind === 'WITHDRAWAL' ||
+      (ticker === 'CASH' && !kind && (tx.type === 'BUY' || tx.type === 'SELL'))
+    );
+  });
+
+  if (externalFlows.length) {
+    const contributed = externalFlows.reduce((sum, tx) => {
+      const kind = cashFlowKind(tx);
+      const ticker = tx.ticker.trim().toUpperCase();
+      const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
+      if (!Number.isFinite(amount)) return sum;
+      const deposit = kind === 'DEPOSIT' || (ticker === 'CASH' && !kind && tx.type === 'BUY');
+      const withdrawal = kind === 'WITHDRAWAL' || (ticker === 'CASH' && !kind && tx.type === 'SELL');
+      if (deposit) return sum + amount;
+      if (withdrawal) return sum - amount;
+      return sum;
+    }, 0);
+    return Number(Math.max(0, contributed).toFixed(2));
+  }
+
+  // Legacy portfolios may have no explicit cash contribution rows. In that
+  // model, current cash = opening capital + the signed cash impact of every
+  // ledger transaction. Reconcile once from a zero opening balance to recover
+  // that cumulative ledger impact, then solve for the implied opening capital.
+  const zeroBaselineCash = reconcilePortfolioFromLedger(normalized, [], 0).reconciledCashBalance;
+  const impliedOpeningCapital = Number(currentCashBalance) - zeroBaselineCash;
+  return Number(
+    (Number.isFinite(impliedOpeningCapital) && impliedOpeningCapital >= 0
+      ? impliedOpeningCapital
+      : fallback
+    ).toFixed(2),
+  );
+}
+
 export function getOpenBuyTransactionIdsForTicker(transactions: TradeTransaction[], ticker: string): string[] {
   const targetSym = ticker.trim().toUpperCase();
   if (!Array.isArray(transactions) || transactions.length === 0) return [];

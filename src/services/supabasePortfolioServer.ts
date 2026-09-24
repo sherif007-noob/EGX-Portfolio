@@ -1,6 +1,40 @@
 import { createClient } from '@supabase/supabase-js';
+import { createChart, createSeries, createSession } from '@ch99q/twc';
 
 const SUPABASE_JWT_RETRY_DELAYS_MS = [300, 900, 1800];
+
+type HistoryBar = [number, number, number, number, number, number?];
+
+const HISTORICAL_TICKER_ALIASES: Record<string, string> = {
+  QNBA: 'QNBF',
+  MNHD: 'MASR',
+  AUTO: 'GBCO',
+  OTMT: 'OIH',
+  UBEG: 'UBEE',
+  NAPR: 'EGS370O1C013',
+};
+
+function normalizeHistoryTicker(ticker: string): string {
+  return String(ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+}
+
+function historyDateFromTimestamp(timestamp: number): string {
+  return new Date(timestamp * 1000).toISOString().slice(0, 10);
+}
+
+export interface HistoricalBackfillTarget {
+  ticker: string;
+  startDate?: string;
+}
+
+export interface HistoricalBackfillResult {
+  requestedTickers: string[];
+  backfilledTickers: string[];
+  writtenRows: number;
+  failures: Array<{ ticker: string; error: string }>;
+}
+
+
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -283,4 +317,144 @@ export async function loadHistoricalPrices(uid: string, tickers: string[], start
   const { data, error } = await query;
   if (error) throw new Error(`Supabase historical price read failed: ${error.message}`);
   return data ?? [];
+}
+
+
+export async function ensurePortfolioHistoricalPrices(
+  uid: string,
+  requestedTargets: HistoricalBackfillTarget[],
+): Promise<HistoricalBackfillResult> {
+  const { supabase, portfolio } = await requirePortfolio(uid);
+  if (!portfolio) throw new Error('No Supabase portfolio exists for this authenticated user.');
+
+  const requested = new Map<string, string | undefined>();
+  for (const target of requestedTargets.slice(0, 25)) {
+    const ticker = normalizeHistoryTicker(target?.ticker);
+    const startDate = String(target?.startDate || '').slice(0, 10);
+    if (!ticker || ticker === 'CASH') continue;
+    requested.set(ticker, /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? startDate : undefined);
+  }
+
+  if (!requested.size) {
+    return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+  }
+
+  const { data: transactions, error: transactionError } = await supabase
+    .from('transactions')
+    .select('ticker,transaction_date')
+    .eq('portfolio_id', portfolio.id)
+    .in('ticker', [...requested.keys()]);
+  if (transactionError) {
+    throw new Error(`Supabase transaction lookup failed for historical backfill: ${transactionError.message}`);
+  }
+
+  const firstLedgerDate = new Map<string, string>();
+  for (const row of transactions ?? []) {
+    const ticker = normalizeHistoryTicker(String(row.ticker || ''));
+    const date = String(row.transaction_date || '').slice(0, 10);
+    if (!ticker || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const previous = firstLedgerDate.get(ticker);
+    if (!previous || date < previous) firstLedgerDate.set(ticker, date);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const targets = [...requested.entries()]
+    .map(([ticker, hintedDate]) => {
+      const ledgerDate = firstLedgerDate.get(ticker);
+      const startDate = ledgerDate ?? hintedDate;
+      return startDate && startDate <= today ? { ticker, startDate } : null;
+    })
+    .filter((target): target is { ticker: string; startDate: string } => Boolean(target));
+
+  if (!targets.length) {
+    return {
+      requestedTickers: [...requested.keys()],
+      backfilledTickers: [],
+      writtenRows: 0,
+      failures: [],
+    };
+  }
+
+  const session = await createSession();
+  const backfilledTickers: string[] = [];
+  const failures: Array<{ ticker: string; error: string }> = [];
+  let writtenRows = 0;
+
+  try {
+    const chart = await createChart(session);
+
+    for (const { ticker, startDate } of targets) {
+      try {
+        const startTimestamp = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
+        const endTimestamp = Math.floor(new Date(`${today}T23:59:59Z`).getTime() / 1000);
+        const calendarDays = Math.max(1, Math.ceil((endTimestamp - startTimestamp) / 86_400) + 1);
+        const requestedBars = Math.max(30, calendarDays + 30);
+
+        const { data: existingRows, error: existingError } = await supabase
+          .from('price_history')
+          .select('trading_date')
+          .eq('ticker', ticker)
+          .gte('trading_date', startDate)
+          .lte('trading_date', today);
+        if (existingError) {
+          throw new Error(`Existing history read failed: ${existingError.message}`);
+        }
+        const existingDates = new Set(
+          (existingRows ?? []).map((row: any) => String(row.trading_date || '').slice(0, 10)),
+        );
+
+        const resolved = await chart.resolve(HISTORICAL_TICKER_ALIASES[ticker] || ticker, 'EGX');
+        const series = await createSeries(session, chart, resolved, '1D', requestedBars);
+        try {
+          const retrievedAt = new Date().toISOString();
+          const rows = ((series.history || []) as HistoryBar[])
+            .map((bar) => ({
+              ticker,
+              trading_date: historyDateFromTimestamp(Number(bar[0])),
+              open: Number(bar[1]),
+              high: Number(bar[2]),
+              low: Number(bar[3]),
+              close: Number(bar[4]),
+              volume: Number.isFinite(Number(bar[5])) ? Number(bar[5]) : null,
+              source: 'tradingview',
+              retrieved_at: retrievedAt,
+            }))
+            .filter((row) =>
+              row.trading_date >= startDate &&
+              row.trading_date <= today &&
+              Number.isFinite(row.close) &&
+              row.close > 0 &&
+              !existingDates.has(row.trading_date)
+            );
+
+          for (let offset = 0; offset < rows.length; offset += 500) {
+            const batch = rows.slice(offset, offset + 500);
+            const { error } = await supabase.from('price_history').upsert(batch, {
+              onConflict: 'ticker,trading_date',
+              ignoreDuplicates: true,
+            });
+            if (error) throw new Error(`History write failed: ${error.message}`);
+          }
+
+          if (rows.length) backfilledTickers.push(ticker);
+          writtenRows += rows.length;
+        } finally {
+          await series.close();
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push({ ticker, error: message });
+        console.error(`[Historical backfill] ${ticker} failed:`, error);
+      }
+    }
+  } finally {
+    await session.close();
+  }
+
+  return {
+    requestedTickers: [...requested.keys()],
+    backfilledTickers,
+    writtenRows,
+    failures,
+  };
 }

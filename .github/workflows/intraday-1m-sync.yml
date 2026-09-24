@@ -1,0 +1,64 @@
+name: Intraday 1m Migration Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Optional comma-separated tickers (blank = portfolio-relevant universe)'
+        required: false
+        type: string
+      full_repair:
+        description: 'Force full 90-day rebuild from TradingView 1m before 30d raw pruning'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-intraday-1m-migration
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync raw 1m and derived 5m
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate automation configuration
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SECRET_KEY" ]; then
+            echo "::error::SUPABASE_SECRET_KEY is not configured in repository Actions secrets."
+            exit 1
+          fi
+          case "$SUPABASE_SECRET_KEY" in
+            sb_secret_*) ;;
+            *)
+              echo "::error::SUPABASE_SECRET_KEY must be a current sb_secret_ server key."
+              exit 1
+              ;;
+          esac
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Sync TradingView 1-minute history and derive 5-minute history
+        env:
+          SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
+          EGX_INTRADAY_TICKERS: ${{ inputs.tickers }}
+          EGX_INTRADAY_FULL_REPAIR: ${{ inputs.full_repair }}
+        run: npm run sync:intraday:1m

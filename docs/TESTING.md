@@ -60,6 +60,52 @@ Covers equity bridges and fee-aware portfolio performance math.
 
 Covers summary metrics such as denominators used for day-change calculations.
 
+## Intraday migration regression suite
+
+The 1-minute migration is validated by the focused smoke workflow and the following service tests:
+
+- `intradayPolicy.test.ts` — canonical 1m/5m/15m intervals, retention and bounded backfill limits;
+- `egxTradingSession.test.ts` — Cairo summer/winter offsets, trading weekdays, regular session and post-close grace window;
+- `intradayBackfillPlan.test.ts` — full-derived bootstrap, raw-tier backfill and incremental overlap planning;
+- `intradayAggregation.test.ts` — deterministic 1m -> 5m OHLCV, sparse-minute behavior and persisted-raw precedence;
+- `intradayTickerUniverse.test.ts` — held/session-traded tickers, same-day round trips, normalization and CASH exclusion;
+- `intradayResolution.test.ts` — 1m/5m/15m fallback, incomplete 1m rejection, sparse illiquid acceptance, Cairo date handling, post-midnight and closed-session fallback;
+- `tradingViewSymbolResolver.test.ts` — ticker/canonical/ISIN resolution behavior;
+- `intradayAnalyticsEngine.test.ts` — transaction timing and 1m/5m/15m accounting invariants.
+
+Focused local run:
+
+```bash
+npx vitest run \
+  src/services/intradayPolicy.test.ts \
+  src/services/egxTradingSession.test.ts \
+  src/services/intradayBackfillPlan.test.ts \
+  src/services/intradayAggregation.test.ts \
+  src/services/intradayTickerUniverse.test.ts \
+  src/services/intradayResolution.test.ts \
+  src/services/tradingViewSymbolResolver.test.ts \
+  src/services/intradayAnalyticsEngine.test.ts
+```
+
+The Premium smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test.
+
+### Intraday acceptance checks
+
+Before calling the migration stable, verify directly against persisted data:
+
+1. no duplicate `(ticker, interval_minutes, bar_timestamp)` rows;
+2. raw 1m rows use `source=tradingview`;
+3. reconstructible 5m rows use `source=derived-1m`;
+4. every overlapping derived 5m bucket exactly matches aggregation of persisted raw 1m OHLCV;
+5. a ticker with incomplete 1m session coverage falls back to a healthier coarser resolution;
+6. a legitimately sparse/illiquid ticker is not rejected merely for missing minutes;
+7. same-session executions between old 15m boundaries enter the finer path at the correct time;
+8. opening equity, cash accounting, external flows, final authoritative NAV/P&L and TWR/MWR semantics remain stable across interval changes;
+9. after midnight/weekends/closed dates, the reader uses the latest real session and does not synthesize a new one;
+10. resolver logs preserve failed attempts, such as NAPR ticker failure followed by ISIN success.
+
+A reported `repaired1mGaps` sync metric is source-backed: it counts TradingView observations that were absent at or before the previously persisted latest raw timestamp. It must not interpret a no-trade minute as a gap.
+
 ## Manual financial regression checklist
 
 Automated tests are necessary but not sufficient for a portfolio application.

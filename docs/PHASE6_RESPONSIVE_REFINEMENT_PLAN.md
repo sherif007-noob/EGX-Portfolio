@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 4 CI-clean; awaiting mobile visual validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 4 real-device corrections implemented and CI-clean; awaiting final device re-validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -458,9 +458,14 @@ Implemented:
 - both dense report tables now preserve a deliberate minimum table width inside touch-scroll containers so columns remain readable instead of collapsing into unusable narrow cells;
 - report footers and dense report shells stack/wrap safely without changing their accepted visual hierarchy.
 
+Real-device validation findings and corrections:
+- landscape/tablet navigation was keeping desktop-length labels too early, causing the rightmost tabs to clip; sub-2XL navigation now uses compact labels, retains horizontal fallback, and automatically keeps the active tab in view;
+- the institutional KPI ribbon entered four-column mode before each card had enough intrinsic width; four columns now require a 2XL viewport, with one/two-column layouts below that breakpoint;
+- benchmark and monthly-audit tables previously had generic minimum widths that still allowed semantic status columns to collapse; both tables now have explicit per-column width contracts and non-wrapping status pills, forcing horizontal access before text is crushed.
+
 Validation:
-- final Pass 4 Quality Checks passed typecheck, the full test suite, and the production build on the exact implementation snapshot;
-- intraday smoke also passed after the main analytics shell changes.
+- final real-device correction Quality Checks passed typecheck, 27/27 test files, 170/170 tests, the production Vite build, and the bundled server build on implementation snapshot `db66d310c132dff8b262df77d420ae735cae077c`;
+- the earlier intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:
 - no chart series, financial observations, interpolation, axis semantics, or Phase 7 visual redesign changed;

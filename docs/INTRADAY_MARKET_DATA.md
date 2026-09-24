@@ -204,6 +204,20 @@ For each session-relevant ticker, the selector compares the observed session env
 
 If the requested calendar date has no market bars, such as after midnight, a weekend or an exchange-closed date, the reader may use the latest real session not after that date. It never invents a session.
 
+## Today chart resolution control
+
+The Today analytics chart exposes:
+
+```text
+Auto | 1m | 5m | 15m | 1h
+```
+
+`Auto` remains the default and preserves the coverage-aware `1m -> 5m -> 15m` selector.
+
+Manual `1m`, `5m`, and `15m` choices read the corresponding persisted interval for the selected session. The `1h` view is intentionally not another storage tier: it is derived client-side from the healthiest available persisted intraday source using the same observed-only OHLCV aggregation semantics. Missing observations are not synthesized.
+
+Changing the Today display resolution changes chart sampling only. It does not change transaction timing, portfolio accounting, live-price authority, ingestion cadence, retention, or the underlying stored market data.
+
 ## Live endpoint
 
 The TradingView Scanner HTTP snapshot remains separate from persisted intraday ingestion.

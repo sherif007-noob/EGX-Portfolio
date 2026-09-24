@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { TradeTransaction } from '../types';
-import { buildIntradayAnalyticsResult } from './intradayAnalyticsEngine';
+import {
+  alignIntradayEquityToAuthoritativeTotal,
+  buildIntradayAnalyticsResult,
+} from './intradayAnalyticsEngine';
 
 const tx = (input: Partial<TradeTransaction> & Pick<TradeTransaction, 'id' | 'type' | 'ticker' | 'shares' | 'price' | 'date'>): TradeTransaction => ({
   companyName: input.ticker,
@@ -224,5 +227,41 @@ describe('intraday analytics engine', () => {
       (result.summary.endEquity ?? 0) - (result.summary.startEquity ?? 0) - result.summary.netExternalFlow,
       8,
     );
+  });
+
+  it('aligns Today equity to the authoritative portfolio total without changing P&L or curve shape', () => {
+    const result = buildIntradayAnalyticsResult(
+      [
+        tx({ id: 'dep-align', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-23' }),
+        tx({ id: 'hold-align', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-23', executedAt: '2026-09-23T08:00:00Z' }),
+      ],
+      { TEST: [{ date: '2026-09-23', close: 100 }] },
+      {
+        TEST: [
+          { timestamp: '2026-09-24T07:00:00Z', intervalMinutes: 1, open: 100, high: 100, low: 100, close: 100 },
+          { timestamp: '2026-09-24T07:01:00Z', intervalMinutes: 1, open: 100, high: 101, low: 100, close: 101 },
+        ],
+      },
+      {
+        sessionDate: '2026-09-24',
+        asOf: '2026-09-24T07:02:00Z',
+        livePrices: { TEST: 102 },
+      },
+    );
+
+    const originalEquities = result.points.map((point) => point.equity);
+    const target = (result.summary.endEquity ?? 0) - 600;
+    const aligned = alignIntradayEquityToAuthoritativeTotal(result, target)!;
+
+    expect(aligned.summary.endEquity).toBeCloseTo(target, 8);
+    expect(aligned.summary.pnlEgp).toBeCloseTo(result.summary.pnlEgp ?? 0, 8);
+    expect(aligned.summary.twrPercent).toBe(result.summary.twrPercent);
+    expect(aligned.summary.mwrrPercent).toBe(result.summary.mwrrPercent);
+
+    const alignedEquities = aligned.points.map((point) => point.equity);
+    expect(alignedEquities).toHaveLength(originalEquities.length);
+    for (let index = 0; index < originalEquities.length; index += 1) {
+      expect(alignedEquities[index] - originalEquities[index]).toBeCloseTo(-600, 8);
+    }
   });
 });

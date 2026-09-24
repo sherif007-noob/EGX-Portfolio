@@ -371,7 +371,7 @@ The latest full smoke reported zero repaired gaps and zero failures.
 
 ## Phase 15 — Documentation and tests before calling it finished
 
-**Status: substantially complete; final rollout observation remains tied to Phase 12**
+**Status: implemented and branch-wide CI validated; final multi-session rollout observation remains tied to Phase 12**
 
 Updated documentation:
 
@@ -397,7 +397,19 @@ Regression coverage includes:
 - weekend/closed-session fallback;
 - portfolio accounting invariants across intervals.
 
-The focused smoke typechecks before tests and writes. Full repository CI/build remains the final branch-level gate.
+The focused smoke typechecks before tests and writes.
+
+The repository-wide Quality gate was then run against the exact Premium code snapshot through a CI-only branch. It passed:
+
+- TypeScript typecheck;
+- **26/26 test files**;
+- **158/158 tests**;
+- production Vite build;
+- bundled server build.
+
+That broad gate exposed one pre-existing analytics edge case before passing: same-boundary MWR with legacy `openingCapital` returned 0% on the inception date. The existing regression correctly expected the real simple holding-period return. `calculatePeriodMWR()` was fixed so same-boundary/no-flow inception valuation returns `ending / starting - 1` rather than zero.
+
+The CI-only validation commit differs from the Premium snapshot only by the Quality workflow trigger used to execute the gate.
 
 ---
 

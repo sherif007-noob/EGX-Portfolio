@@ -258,7 +258,8 @@ export function buildIntradayAnalyticsResult(
   // When the current cash account is available, derive the session-opening cash
   // by reversing only the session executions that occur at/after the first bar.
   // This makes the Today path independent of stale legacy opening-capital state.
-  if (Number.isFinite(options.currentCashBalance)) {
+  const hasLaterLedgerTransactions = ordered.some((tx) => dayKey(tx.date) > sessionDate);
+  if (Number.isFinite(options.currentCashBalance) && !hasLaterLedgerTransactions) {
     const futureSessionImpact = sessionTransactions
       .filter((tx) => {
         const executed = parseMs(tx.executedAt);

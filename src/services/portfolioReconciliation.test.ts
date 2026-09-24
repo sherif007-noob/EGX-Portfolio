@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { TradeTransaction } from '../types';
-import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
+import {
+  deriveCanonicalCapitalDeposits,
+  reconcilePortfolioFromLedger,
+} from './portfolioReconciliation';
 
 const tx = (overrides: Partial<TradeTransaction>): TradeTransaction => ({
   id: overrides.id || `tx-${Math.random()}`,
@@ -148,5 +151,24 @@ describe('portfolio reconciliation', () => {
     expect(afterDelete.reconciledPositions[0].shares).toBe(320);
     expect(afterDelete.reconciledCashBalance).toBeCloseTo(11996.2, 2);
     expect(afterDelete.reconciledCashBalance - withDuplicate.reconciledCashBalance).toBeCloseTo(8003.8, 2);
+  });
+
+  it('derives legacy opening capital from authoritative cash plus ledger impacts', () => {
+    const transactions = [
+      tx({ id: 'buy-capital', shares: 10, price: 50, fees: 0, totalAmount: 500 }),
+      tx({ id: 'sell-capital', type: 'SELL', shares: 4, price: 60, fees: 0, totalAmount: 240, date: '2026-01-02T10:00:00Z' }),
+    ];
+
+    // Cash from a real 1,000 EGP opening balance is 740 after these trades.
+    expect(deriveCanonicalCapitalDeposits(transactions, 740, 1600)).toBe(1000);
+  });
+
+  it('derives contributed capital from explicit deposits and withdrawals', () => {
+    const transactions = [
+      tx({ id: 'dep-capital', ticker: 'CASH', shares: 1500, price: 1, totalAmount: 1500, cashFlowType: 'DEPOSIT' }),
+      tx({ id: 'wd-capital', type: 'SELL', ticker: 'CASH', shares: 200, price: 1, totalAmount: 200, cashFlowType: 'WITHDRAWAL', date: '2026-01-02T10:00:00Z' }),
+    ];
+
+    expect(deriveCanonicalCapitalDeposits(transactions, 1300, 9999)).toBe(1300);
   });
 });

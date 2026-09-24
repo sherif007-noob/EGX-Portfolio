@@ -1,4 +1,5 @@
 import { loadIntradayPricesFromSupabase } from './supabasePersistence';
+import { getSupabaseBrowserClient } from './supabaseBrowser';
 
 export interface IntradayPricePoint {
   timestamp: string;
@@ -126,4 +127,35 @@ export async function getIntradayPrices(
   );
 
   return rowsToIntradayPriceSeries(normalized, rows);
+}
+
+
+export async function ensureIntradayPriceCoverage(
+  targets: Array<{ ticker: string; startDate?: string }>,
+): Promise<{ requestedTickers: string[]; backfilledTickers: string[]; writtenRows: number; failures: Array<{ ticker: string; error: string }> }> {
+  const uniqueTargets = [...new Map(
+    targets
+      .map((target) => ({
+        ticker: normalizeIntradayTicker(target.ticker),
+        startDate: String(target.startDate || '').slice(0, 10) || undefined,
+      }))
+      .filter((target) => target.ticker && target.ticker !== 'CASH')
+      .map((target) => [target.ticker, target]),
+  ).values()];
+  if (!uniqueTargets.length) return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
+
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Intraday backfill requires an authenticated Supabase session.');
+
+  const response = await fetch('/api/supabase/intraday-history/ensure', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targets: uniqueTargets }),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.error || `Intraday backfill request failed with HTTP ${response.status}.`);
+  return payload?.data ?? { requestedTickers: uniqueTargets.map((target) => target.ticker), backfilledTickers: [], writtenRows: 0, failures: [] };
 }

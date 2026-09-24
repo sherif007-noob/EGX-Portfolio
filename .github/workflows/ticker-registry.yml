@@ -1,6 +1,17 @@
 name: EGX Ticker Registry
 
 on:
+  push:
+    branches:
+      - feature/premium-ui-redesign
+    paths:
+      - '.github/workflows/ticker-registry.yml'
+      - 'scripts/syncTickerRegistry.ts'
+      - 'src/services/tickerRegistry.ts'
+      - 'src/services/tickerRegistry.test.ts'
+      - 'src/services/tradingViewSymbolResolver.ts'
+      - 'src/data/egxTickers.ts'
+      - 'supabase/migrations/20260924_ticker_registry.sql'
   workflow_dispatch:
     inputs:
       verify_limit:

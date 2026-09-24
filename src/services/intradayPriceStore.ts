@@ -1,5 +1,4 @@
 import { loadIntradayPricesFromSupabase } from './supabasePersistence';
-import { getSupabaseBrowserClient } from './supabaseBrowser';
 
 export interface IntradayPricePoint {
   timestamp: string;
@@ -127,49 +126,4 @@ export async function getIntradayPrices(
   );
 
   return rowsToIntradayPriceSeries(normalized, rows);
-}
-
-
-export async function ensureIntradayPriceCoverage(
-  targets: Array<{ ticker: string; startDate?: string }>,
-): Promise<{ requestedTickers: string[]; backfilledTickers: string[]; writtenRows: number; failures: Array<{ ticker: string; error: string }> }> {
-  const uniqueTargets = [...new Map(
-    targets
-      .map((target) => ({
-        ticker: normalizeIntradayTicker(target.ticker),
-        startDate: String(target.startDate || '').slice(0, 10) || undefined,
-      }))
-      .filter((target) => target.ticker && target.ticker !== 'CASH')
-      .map((target) => [target.ticker, target]),
-  ).values()];
-  console.info('[Intraday Repair] normalized targets', { uniqueTargets });
-  if (!uniqueTargets.length) {
-    console.info('[Intraday Repair] stopped before auth: no normalized targets');
-    return { requestedTickers: [], backfilledTickers: [], writtenRows: 0, failures: [] };
-  }
-
-  const supabase = getSupabaseBrowserClient();
-  console.info('[Intraday Repair] checking Supabase browser session');
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error('[Intraday Repair] Supabase getSession failed', error);
-    throw error;
-  }
-  const token = data.session?.access_token;
-  console.info('[Intraday Repair] session check complete', { authenticated: Boolean(token) });
-  if (!token) throw new Error('Intraday backfill requires an authenticated Supabase session.');
-
-  console.info('[Intraday Repair] sending POST /api/supabase/intraday-history/ensure', {
-    targetCount: uniqueTargets.length,
-    tickers: uniqueTargets.map((target) => target.ticker),
-  });
-  const response = await fetch('/api/supabase/intraday-history/ensure', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targets: uniqueTargets }),
-  });
-  const payload = await response.json().catch(() => null);
-  console.info('[Intraday Repair] POST response', { status: response.status, ok: response.ok });
-  if (!response.ok) throw new Error(payload?.error || `Intraday backfill request failed with HTTP ${response.status}.`);
-  return payload?.data ?? { requestedTickers: uniqueTargets.map((target) => target.ticker), backfilledTickers: [], writtenRows: 0, failures: [] };
 }

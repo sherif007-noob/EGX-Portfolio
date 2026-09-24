@@ -66,6 +66,37 @@ async function supabaseFetchWithJwtRetry(input: RequestInfo | URL, init?: Reques
 let configuredSupabaseUrl: string | undefined;
 let configuredSupabaseSecretKey: string | undefined;
 
+/**
+ * @ch99q/twc detects Node by checking globalThis.process and then passes a
+ * Node/ws options object as WebSocket's second constructor argument. Cloudflare
+ * Workers with nodejs_compat expose process while using the browser-standard
+ * WebSocket constructor, where argument #2 is a protocol list. That mismatch
+ * throws "The protocol header token is invalid".
+ *
+ * createSession() reaches its WebSocket constructor synchronously before its
+ * first await, so temporarily hiding the Node marker makes twc take its
+ * browser/Workers path (new WebSocket(url)) without affecting the async session.
+ */
+async function createTradingViewSession() {
+  const root = globalThis as any;
+  const originalProcess = root.process;
+  const hasStandardWebSocket = typeof root.WebSocket === 'function';
+  const looksNodeCompatible = Boolean(originalProcess?.versions?.node);
+
+  if (!hasStandardWebSocket || !looksNodeCompatible) {
+    return createSession();
+  }
+
+  let sessionPromise: ReturnType<typeof createSession>;
+  try {
+    root.process = undefined;
+    sessionPromise = createSession();
+  } finally {
+    root.process = originalProcess;
+  }
+  return sessionPromise;
+}
+
 export function configureSupabaseServer(url?: string, secretKey?: string) {
   configuredSupabaseUrl = url;
   configuredSupabaseSecretKey = secretKey;
@@ -367,7 +398,7 @@ export async function ensurePortfolioHistoricalPrices(
     };
   }
 
-  const session = await createSession();
+  const session = await createTradingViewSession();
   const backfilledTickers: string[] = [];
   const failures: Array<{ ticker: string; error: string }> = [];
   let writtenRows = 0;
@@ -510,7 +541,7 @@ export async function ensurePortfolioIntradayPrices(
     startDate: [firstLedgerDate.get(ticker) ?? hinted ?? today, retentionStart].sort().at(-1)!,
   }));
 
-  const session = await createSession();
+  const session = await createTradingViewSession();
   const backfilledTickers: string[] = [];
   const failures: Array<{ ticker: string; error: string }> = [];
   let writtenRows = 0;

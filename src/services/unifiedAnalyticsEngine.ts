@@ -193,7 +193,7 @@ export function calculatePeriodMWR(
   const startMs = dateMs(startingDate);
   const endMs = dateMs(endingDate);
   const durationMs = endMs - startMs;
-  if (!Number.isFinite(durationMs) || durationMs <= 0) return 0;
+  if (!Number.isFinite(durationMs) || durationMs < 0) return null;
 
   const dailyBoundary = startingDate.length <= 10 && endingDate.length <= 10;
   const relevantFlows = externalCashFlows
@@ -207,9 +207,15 @@ export function calculatePeriodMWR(
     })
     .sort((a, b) => dateMs(a.date) - dateMs(b.date));
 
+  // A same-boundary valuation can still have a real return when the baseline
+  // is legacy opening capital rather than a market valuation. With no
+  // intervening external flow, MWR is the simple holding-period return even
+  // when the two daily labels are identical.
   if (!relevantFlows.length) {
     return ((endingValue / startingValue) - 1) * 100;
   }
+
+  if (durationMs === 0) return null;
 
   const flows = [
     { date: startingDate, amount: -startingValue },

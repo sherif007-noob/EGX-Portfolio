@@ -7,6 +7,31 @@ function floorBucketStart(timestamp: string, bucketMinutes: number): number {
   return Math.floor(ms / bucketMs) * bucketMs;
 }
 
+export function intradayBucketRange(
+  firstTimestamp: string,
+  lastTimestamp: string,
+  bucketMinutes: number,
+): { fromTimestamp: string; toTimestamp: string } {
+  if (!Number.isFinite(bucketMinutes) || bucketMinutes <= 0) {
+    throw new Error('bucketMinutes must be a positive number.');
+  }
+
+  const firstMs = new Date(firstTimestamp).getTime();
+  const lastMs = new Date(lastTimestamp).getTime();
+  if (!Number.isFinite(firstMs) || !Number.isFinite(lastMs) || lastMs < firstMs) {
+    throw new Error('A valid ascending intraday timestamp range is required.');
+  }
+
+  const bucketMs = bucketMinutes * 60_000;
+  const fromMs = Math.floor(firstMs / bucketMs) * bucketMs;
+  const toMs = Math.floor(lastMs / bucketMs) * bucketMs + bucketMs - 1;
+
+  return {
+    fromTimestamp: new Date(fromMs).toISOString(),
+    toTimestamp: new Date(toMs).toISOString(),
+  };
+}
+
 export function mergeIntradayBarsByTimestamp(
   baseBars: IntradayPricePoint[],
   preferredBars: IntradayPricePoint[],

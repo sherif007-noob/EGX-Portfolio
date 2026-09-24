@@ -1,18 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
+import { resolveTradingViewInstrument } from './tradingViewSymbolResolver';
 
 const SUPABASE_JWT_RETRY_DELAYS_MS = [300, 900, 1800];
 
 type HistoryBar = [number, number, number, number, number, number?];
-
-const HISTORICAL_TICKER_ALIASES: Record<string, string> = {
-  QNBA: 'QNBF',
-  MNHD: 'MASR',
-  AUTO: 'GBCO',
-  OTMT: 'OIH',
-  UBEG: 'UBEE',
-  NAPR: 'EGS370O1C013',
-};
 
 function normalizeHistoryTicker(ticker: string): string {
   return String(ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
@@ -403,7 +395,7 @@ export async function ensurePortfolioHistoricalPrices(
           (existingRows ?? []).map((row: any) => String(row.trading_date || '').slice(0, 10)),
         );
 
-        const resolved = await chart.resolve(HISTORICAL_TICKER_ALIASES[ticker] || ticker, 'EGX');
+        const resolved = await resolveTradingViewInstrument(chart, { ticker, isin: tickerMeta?.isin }).then((item) => item.resolved);
         const series = await createSeries(session, chart, resolved, '1D', requestedBars);
         try {
           const retrievedAt = new Date().toISOString();
@@ -532,7 +524,7 @@ export async function ensurePortfolioIntradayPrices(
         const calendarDays = Math.max(1, Math.ceil((Date.now() - startMs) / 86_400_000) + 1);
         const requestedBars = Math.min(7500, Math.max(256, Math.ceil(calendarDays * 5 / 7 + 5) * 66));
 
-        const resolved = await chart.resolve(HISTORICAL_TICKER_ALIASES[ticker] || ticker, 'EGX');
+        const resolved = await resolveTradingViewInstrument(chart, { ticker, isin: tickerMeta?.isin }).then((item) => item.resolved);
         const series = await createSeries(session, chart, resolved, '5', requestedBars);
         try {
           const retrievedAt = new Date().toISOString();

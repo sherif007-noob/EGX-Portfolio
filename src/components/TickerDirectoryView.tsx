@@ -48,7 +48,10 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   };
 
   const visibleTickers = tickers.filter(
-    (ticker) => ticker.directoryStatus !== 'inactive' && ticker.directoryStatus !== 'retired',
+    (ticker) =>
+      ticker.directoryStatus !== 'inactive' &&
+      ticker.directoryStatus !== 'retired' &&
+      ticker.directoryStatus !== 'unresolved',
   );
   const sectors = Array.from(new Set(visibleTickers.map((t) => t.sector)));
 

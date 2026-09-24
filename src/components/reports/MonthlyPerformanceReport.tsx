@@ -736,6 +736,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </div>
           );

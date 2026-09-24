@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateIntradayBars, mergeIntradayBarsByTimestamp } from './intradayAggregation';
+import { aggregateIntradayBars, intradayBucketRange, mergeIntradayBarsByTimestamp } from './intradayAggregation';
 import type { IntradayPricePoint } from './intradayPriceStore';
 
 function bar(minute: number, values: Partial<IntradayPricePoint> = {}): IntradayPricePoint {
@@ -72,5 +72,18 @@ describe('intraday aggregation', () => {
     expect(canonical[0].volume).toBe(2015);
     expect(canonical[0].retrievedAt).toBe('2026-09-24T10:48:00.000Z');
     expect(aggregateIntradayBars(canonical, 5)[0].volume).toBe(4776);
+  });
+
+  it('expands a partial fetch window to complete derived bucket boundaries', () => {
+    expect(
+      intradayBucketRange(
+        '2026-09-22T11:28:00.000Z',
+        '2026-09-24T11:28:00.000Z',
+        5,
+      ),
+    ).toEqual({
+      fromTimestamp: '2026-09-22T11:25:00.000Z',
+      toTimestamp: '2026-09-24T11:29:59.999Z',
+    });
   });
 });

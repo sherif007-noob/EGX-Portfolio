@@ -268,11 +268,11 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
   };
 
   return (
-    <div id="report-monthly-performance" className="premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
+    <div id="report-monthly-performance" className="premium-report-glass rounded-2xl p-4 space-y-6 sm:p-6">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
               REPORT 2 &bull; MONTHLY AUDIT
             </span>
@@ -292,20 +292,20 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           <button
             type="button"
             onClick={() => handleExportCSV(selectedMonth)}
-            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Download CSV audit"
           >
             <Download className="w-3.5 h-3.5 text-purple-400" />
-            <span className="hidden sm:inline">Export Audit CSV</span>
+            <span className="whitespace-nowrap">Export CSV</span>
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Print Monthly Report"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Print Audit</span>
+            <span className="whitespace-nowrap">Print</span>
           </button>
         </div>
       </div>
@@ -313,12 +313,12 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
       {/* Interactive Controls Bar: Month Tabs & Sub-filters */}
       <div className="premium-report-glass-soft flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-xl">
         {/* Month Selector Tabs */}
-        <div className="premium-selector-shell flex items-center gap-1.5 flex-wrap">
+        <div className="premium-selector-shell -mx-1 flex w-[calc(100%+0.5rem)] max-w-[calc(100%+0.5rem)] flex-nowrap items-center gap-1.5 overflow-x-auto px-1 md:mx-0 md:w-auto md:max-w-none md:flex-wrap md:overflow-visible md:px-1">
           <button
             type="button"
             aria-pressed={selectedMonth === 'ALL'}
             onClick={() => changeSelectedMonth('ALL')}
-            className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
+            className={`premium-filter-pill shrink-0 px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
           >
             All Recorded Months
           </button>
@@ -328,7 +328,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
               type="button"
               aria-pressed={selectedMonth === m.monthKey}
               onClick={() => changeSelectedMonth(m.monthKey)}
-              className={`premium-filter-pill px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
+              className={`premium-filter-pill flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
             >
               <span>{m.monthLabel}</span>
               <span className="premium-chip px-1.5 py-0.2 rounded-full text-[10px] text-slate-300 font-mono">
@@ -339,7 +339,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
         </div>
 
         {/* Search & Status Filter */}
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:flex md:w-auto md:items-center">
           {/* Status filter */}
           <AnalyticsSelect
             value={statusFilter}
@@ -347,7 +347,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
             compact
             accent="purple"
             ariaLabel="Filter monthly report records"
-            className="min-w-[185px]"
+            className="w-full md:min-w-[185px] md:w-auto"
             options={[
               { value: 'ALL', label: 'All Records' },
               { value: 'LIQUIDATED', label: 'Liquidated Trades Only' },
@@ -356,14 +356,14 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           />
 
           {/* Search */}
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ticker..."
-              className="premium-field pl-8 pr-3 py-1 text-xs rounded-xl bg-slate-950/45 border border-slate-700/70 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 w-32 sm:w-40"
+              className="premium-field w-full rounded-xl border border-slate-700/70 bg-slate-950/45 py-1 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-500 focus:border-purple-500 focus:outline-none md:w-40"
             />
           </div>
         </div>
@@ -408,7 +408,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
               {/* Monthly Banner Ribbon */}
               <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 font-display">
                       <Calendar className="w-4 h-4 text-purple-400" />
                       {m.monthLabel}
@@ -437,7 +437,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 </div>
 
                 {/* Quick Monthly Metrics */}
-                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 md:w-auto md:gap-4">
                   {/* Monthly Net Realized */}
                   <div className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
                     isNoExits
@@ -490,8 +490,8 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   No records matching the filter criteria for {m.monthLabel}.
                 </div>
               ) : (
-                <div className="premium-report-table overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                <div className="premium-report-table overflow-x-auto overscroll-x-contain">
+                  <table className="min-w-[760px] w-full border-collapse text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                         <th className="py-2.5 px-4">Instrument</th>

@@ -17,7 +17,8 @@
     "verify:firestore:supabase": "tsx scripts/verifyFirestoreSupabaseMigration.ts",
     "verify:production-data": "tsx scripts/verifyProductionData.ts",
     "build:cloudflare": "vite build",
-    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
+    "diagnose:intraday:1m": "tsx scripts/diagnoseIntradayOneMinute.ts"
   },
   "dependencies": {
     "@ch99q/twc": "^0.1.4",

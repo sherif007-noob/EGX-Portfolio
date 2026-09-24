@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateIntradayBars } from './intradayAggregation';
+import { aggregateIntradayBars, mergeIntradayBarsByTimestamp } from './intradayAggregation';
 import type { IntradayPricePoint } from './intradayPriceStore';
 
 function bar(minute: number, values: Partial<IntradayPricePoint> = {}): IntradayPricePoint {
@@ -55,5 +55,22 @@ describe('intraday aggregation', () => {
       { ...bar(0), intervalMinutes: 15 },
     ], 5);
     expect(result).toEqual([]);
+  });
+
+  it('prefers persisted raw observations when a later source fetch revises the same minute', () => {
+    const fetched = [
+      bar(30, { volume: 2867, retrievedAt: '2026-09-24T12:00:00.000Z' }),
+      bar(31, { volume: 2761, retrievedAt: '2026-09-24T12:00:00.000Z' }),
+    ];
+    const persisted = [
+      bar(30, { volume: 2015, retrievedAt: '2026-09-24T10:48:00.000Z' }),
+    ];
+
+    const canonical = mergeIntradayBarsByTimestamp(fetched, persisted);
+
+    expect(canonical).toHaveLength(2);
+    expect(canonical[0].volume).toBe(2015);
+    expect(canonical[0].retrievedAt).toBe('2026-09-24T10:48:00.000Z');
+    expect(aggregateIntradayBars(canonical, 5)[0].volume).toBe(4776);
   });
 });

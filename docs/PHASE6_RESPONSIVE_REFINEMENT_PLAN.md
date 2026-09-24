@@ -470,6 +470,7 @@ Validation:
 - final real-device correction Quality Checks passed typecheck, 27/27 test files, 170/170 tests, the production Vite build, and the bundled server build on implementation snapshot `db66d310c132dff8b262df77d420ae735cae077c`;
 - the responsive benchmark scorecard renderer passed a second full Quality gate on implementation snapshot `7644ee7790d8747bd5dc1461484a003e530f3be4`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - real-device feedback showed the first card renderer still used the low-intensity `premium-report-glass-soft` surface and therefore did not visually match the accepted hero cards; that surface was removed and replaced with `premium-hero-metric` + dedicated hero-tier semantic glass/halo classes on snapshot `742e97f72d05552e52bd18a006f453128642b515`; the correction passed 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
+- Monthly Audit's normalized one-record-per-row card renderer passed the full Quality gate on implementation snapshot `2f4a920bd055d6c13e06e0da352f39a4bf4e4147`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - the earlier intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:

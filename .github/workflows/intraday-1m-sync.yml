@@ -1,30 +1,36 @@
-name: Intraday 1m Migration Sync
+name: Intraday 1m Sync
 
 on:
   workflow_dispatch:
     inputs:
       tickers:
-        description: 'Optional comma-separated tickers (blank = portfolio-relevant universe)'
+        description: 'Optional comma-separated tickers (blank = session-relevant portfolio universe)'
         required: false
         type: string
       full_repair:
-        description: 'Force full 90-day rebuild from TradingView 1m before 30d raw pruning'
+        description: 'Force the deepest available 1m bootstrap and rebuild reconstructible derived 5m history'
         required: false
         default: false
         type: boolean
+  schedule:
+    # GitHub cron is UTC and scheduled workflows run from the default branch.
+    # 07:00-12:59 UTC covers Cairo's 10:00-14:30 EGX session across DST
+    # changes. The Node script applies the authoritative Africa/Cairo session
+    # gate and allows a short post-close grace window for final completed bars.
+    - cron: '*/5 7-12 * * 0-4'
 
 permissions:
   contents: read
 
 concurrency:
-  group: egx-intraday-1m-migration
-  cancel-in-progress: false
+  group: egx-intraday-market-data
+  cancel-in-progress: true
 
 jobs:
   sync:
     name: Sync raw 1m and derived 5m
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -61,4 +67,5 @@ jobs:
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
           EGX_INTRADAY_TICKERS: ${{ inputs.tickers }}
           EGX_INTRADAY_FULL_REPAIR: ${{ inputs.full_repair }}
+          EGX_INTRADAY_SCHEDULED: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
         run: npm run sync:intraday:1m

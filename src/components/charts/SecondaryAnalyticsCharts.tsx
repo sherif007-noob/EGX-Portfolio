@@ -116,7 +116,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className="premium-panel rounded-2xl p-4 sm:p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
                 <TrendingDown className="h-4 w-4 text-rose-400" />
@@ -126,7 +126,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                 Decline from the selected-period TWR performance peak.
               </p>
             </div>
-            <div className="text-right">
+            <div className="self-start sm:text-right">
               <div className="font-mono text-lg font-black text-rose-400">
                 {secondary.summary.maxDrawdownPercent == null
                   ? '—'
@@ -143,7 +143,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for drawdown.</AnalyticsEmptyState>
           ) : (
-            <div className="h-52 sm:h-56">
+            <div className="h-48 sm:h-56">
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -199,7 +199,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
         </div>
 
         <div className="premium-panel rounded-2xl p-4 sm:p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div>
               <h4 className="flex items-center gap-2 text-sm font-bold text-white">
                 <Receipt className="h-4 w-4 text-amber-400" />
@@ -209,7 +209,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                 Brokerage and explicit fee cash flows inside the visible timeframe.
               </p>
             </div>
-            <div className="font-mono text-lg font-black text-amber-400">
+            <div className="self-start font-mono text-lg font-black text-amber-400 sm:text-right">
               {formatAnalyticsEgp(secondary.summary.feesInPeriodEgp)}
             </div>
           </div>
@@ -217,7 +217,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for fee history.</AnalyticsEmptyState>
           ) : (
-            <div className="h-52 sm:h-56">
+            <div className="h-48 sm:h-56">
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -278,7 +278,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                 Fee-aware cumulative realized trade P&amp;L and open-position unrealized P&amp;L.
               </p>
             </div>
-            <div className="flex gap-4 text-right text-[11px]">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] sm:justify-end sm:text-right">
               <div>
                 <div className="text-slate-500">Realized</div>
                 <div className={`font-mono font-bold ${(secondary.summary.realizedPnlEgp ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -297,7 +297,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for P&amp;L composition.</AnalyticsEmptyState>
           ) : (
-            <div className="h-56 sm:h-64">
+            <div className="h-52 sm:h-64">
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <LineChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

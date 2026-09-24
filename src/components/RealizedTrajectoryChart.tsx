@@ -114,11 +114,11 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
           <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
         </div>
 
-        <div className="premium-report-glass-soft flex items-center gap-1.5 p-1 rounded-xl text-xs self-start sm:self-auto">
+        <div className="premium-report-glass-soft grid w-full grid-cols-2 gap-1.5 rounded-xl p-1 text-xs sm:flex sm:w-auto sm:items-center sm:self-auto">
           <button
             aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
-            className={`premium-segment px-3 py-1 rounded-md font-medium ${
+            className={`premium-segment min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
               trajectoryMode === 'cumulative'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -129,7 +129,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
           <button
             aria-pressed={trajectoryMode === 'discrete'}
             onClick={() => setTrajectoryMode('discrete')}
-            className={`premium-segment px-3 py-1 rounded-md font-medium ${
+            className={`premium-segment min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
               trajectoryMode === 'discrete'
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -141,7 +141,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       </div>
 
       {/* Trajectory Key Stats Summary */}
-      <div className="premium-report-glass-soft grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl text-xs">
+      <div className="premium-report-glass-soft grid grid-cols-2 gap-2.5 rounded-xl p-3 text-xs sm:grid-cols-4">
         <div className={`rounded-lg border p-2 ${
           netRealizedPnl > 0
             ? 'premium-state-win'
@@ -196,7 +196,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       )}
 
       {/* Chart Canvas */}
-      <div className="h-64 sm:h-72 w-full pt-1">
+      <div className="h-56 w-full pt-1 sm:h-72">
         {entranceReady && (
         <ResponsiveContainer width="100%" height="100%">
           {trajectoryMode === 'cumulative' ? (

@@ -1,3 +1,4 @@
+import { INTRADAY_POLICY } from './intradayPolicy';
 import { loadIntradayPricesFromSupabase } from './supabasePersistence';
 
 export interface IntradayPricePoint {
@@ -23,7 +24,7 @@ export function cairoDateKey(timestamp: string): string {
   if (Number.isNaN(date.getTime())) return '';
 
   const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Africa/Cairo',
+    timeZone: INTRADAY_POLICY.timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

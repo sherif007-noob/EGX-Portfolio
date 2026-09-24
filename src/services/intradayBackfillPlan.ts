@@ -1,12 +1,18 @@
 import { INTRADAY_POLICY } from './intradayPolicy';
 
 const DAY_MS = 86_400_000;
-const DEFAULT_INCREMENTAL_OVERLAP_DAYS = 2;
 
 export interface IntradayBackfillPlanInput {
   now: Date;
+  earliestDerivedTimestamp?: string | null;
+  earliestFiveMinuteTimestamp?: string | null;
   latestRawTimestamp?: string | null;
   forceFullRepair?: boolean;
+}
+
+export interface IntradayRangeChunk {
+  fromMs: number;
+  toMs: number;
 }
 
 function parseMs(value?: string | null): number {
@@ -21,10 +27,33 @@ export function retentionCutoffStartOfUtcDay(nowMs: number, retentionDays: numbe
   return Date.parse(`${target.toISOString().slice(0, 10)}T00:00:00.000Z`);
 }
 
+export function buildIntradayRangeChunks(
+  fromMs: number,
+  toMs: number,
+  chunkDays = INTRADAY_POLICY.backfillChunkDays,
+): IntradayRangeChunk[] {
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs < fromMs) return [];
+  if (!Number.isFinite(chunkDays) || chunkDays <= 0) {
+    throw new Error('chunkDays must be a positive number.');
+  }
+
+  const chunkMs = Math.trunc(chunkDays * DAY_MS);
+  const chunks: IntradayRangeChunk[] = [];
+  let cursor = fromMs;
+
+  while (cursor <= toMs) {
+    const end = Math.min(toMs, cursor + chunkMs - 1_000);
+    chunks.push({ fromMs: cursor, toMs: end });
+    cursor = end + 1_000;
+  }
+
+  return chunks;
+}
+
 export function buildIntradayOneMinuteBackfillPlan(
   input: IntradayBackfillPlanInput,
 ): {
-  mode: 'full-raw-backfill' | 'raw-backfill' | 'incremental';
+  mode: 'full-derived-backfill' | 'raw-backfill' | 'incremental';
   fromMs: number;
   toMs: number;
   rawCutoffMs: number;
@@ -33,9 +62,6 @@ export function buildIntradayOneMinuteBackfillPlan(
   const nowMs = input.now.getTime();
   if (!Number.isFinite(nowMs)) throw new Error('A valid now date is required.');
 
-  // Raw 1m data is intentionally a recent tier. Keep the cutoff at a whole
-  // UTC day boundary so the first retained EGX session is not truncated
-  // mid-bucket. The 5m tier may remain for 90 days independently.
   const rawCutoffMs = retentionCutoffStartOfUtcDay(
     nowMs,
     INTRADAY_POLICY.rawRetentionDays,
@@ -44,28 +70,46 @@ export function buildIntradayOneMinuteBackfillPlan(
     nowMs,
     INTRADAY_POLICY.derivedRetentionDays,
   );
+
+  const earliestDerivedMs = parseMs(input.earliestDerivedTimestamp);
+  const earliestFiveMinuteMs = parseMs(input.earliestFiveMinuteTimestamp);
   const latestRawMs = parseMs(input.latestRawTimestamp);
 
-  let mode: 'full-raw-backfill' | 'raw-backfill' | 'incremental';
-  let fromMs: number;
+  const legacyFiveMinuteTierNeedsReplacement =
+    Number.isFinite(earliestFiveMinuteMs) &&
+    earliestFiveMinuteMs < rawCutoffMs &&
+    (!Number.isFinite(earliestDerivedMs) || earliestDerivedMs >= rawCutoffMs);
 
-  if (input.forceFullRepair) {
-    mode = 'full-raw-backfill';
-    fromMs = rawCutoffMs;
-  } else if (!Number.isFinite(latestRawMs)) {
-    mode = 'raw-backfill';
-    fromMs = rawCutoffMs;
-  } else {
-    mode = 'incremental';
-    fromMs = Math.max(
+  if (
+    input.forceFullRepair ||
+    !Number.isFinite(earliestDerivedMs) ||
+    legacyFiveMinuteTierNeedsReplacement
+  ) {
+    return {
+      mode: 'full-derived-backfill',
+      fromMs: derivedCutoffMs,
+      toMs: nowMs,
       rawCutoffMs,
-      latestRawMs - DEFAULT_INCREMENTAL_OVERLAP_DAYS * DAY_MS,
-    );
+      derivedCutoffMs,
+    };
+  }
+
+  if (!Number.isFinite(latestRawMs)) {
+    return {
+      mode: 'raw-backfill',
+      fromMs: rawCutoffMs,
+      toMs: nowMs,
+      rawCutoffMs,
+      derivedCutoffMs,
+    };
   }
 
   return {
-    mode,
-    fromMs,
+    mode: 'incremental',
+    fromMs: Math.max(
+      rawCutoffMs,
+      latestRawMs - INTRADAY_POLICY.incrementalOverlapDays * DAY_MS,
+    ),
     toMs: nowMs,
     rawCutoffMs,
     derivedCutoffMs,

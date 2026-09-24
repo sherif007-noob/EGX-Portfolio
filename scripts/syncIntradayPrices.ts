@@ -2,11 +2,12 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
+import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
 
 type HistoryBar = [number, number, number, number, number, number?];
 
-const INTERVAL_MINUTES = 5;
-const DEFAULT_RETENTION_DAYS = 90;
+const INTERVAL_MINUTES = INTRADAY_POLICY.derivedIntervalMinutes;
+const DEFAULT_RETENTION_DAYS = INTRADAY_POLICY.derivedRetentionDays;
 const DEFAULT_INCREMENTAL_BARS = 120;
 const MAX_INITIAL_BARS = 7500;
 const ESTIMATED_BARS_PER_SESSION = 66;

@@ -1048,6 +1048,7 @@ export default function App() {
               historicalPrices={historicalPriceSeries}
               capitalDeposits={capitalDeposits}
               positions={positions}
+              currentPortfolioValue={metrics.totalValue}
               historicalLoading={historicalAnalyticsLoading}
               entranceReady={settledTab === activeTab}
             />

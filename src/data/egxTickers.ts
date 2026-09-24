@@ -271,11 +271,16 @@ export function mergeTickerDirectoryWithBaseline(existing: EGXTicker[]): EGXTick
 
   for (const ticker of existing || []) {
     const raw = ticker.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
-    const canonical = canonicalizeEGXSymbol(raw);
+    const registryAuthoritative = ticker.metadataSource === 'registry';
+    const canonical = registryAuthoritative ? raw : canonicalizeEGXSymbol(raw);
 
-    // Remove stale non-migratable directory rows from old caches/Supabase. Historical
-    // ledger records are preserved separately; the directory itself represents active/fallback equities.
-    if (RETIRED_BASELINE_TICKERS.has(raw) && !LEGACY_TICKER_ALIASES[raw]) continue;
+    // A live registry identity outranks static retirement/rename assumptions. Static
+    // filters are only for legacy caches and baseline-only rows.
+    if (
+      !registryAuthoritative &&
+      RETIRED_BASELINE_TICKERS.has(raw) &&
+      !LEGACY_TICKER_ALIASES[raw]
+    ) continue;
 
     const candidate = { ...ticker, ticker: canonical };
     const current = byTicker.get(canonical);

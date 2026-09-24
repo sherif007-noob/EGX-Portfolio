@@ -193,18 +193,29 @@ async function writeBars(
   }
 
   const rows = [...byTimestamp.values()].filter((row): row is NonNullable<typeof row> => !!row);
-  for (let offset = 0; offset < rows.length; offset += 500) {
+  if (!rows.length) return 0;
+
+  const { data: existing, error: existingError } = await sb
+    .from('intraday_price_history')
+    .select('bar_timestamp')
+    .eq('ticker', ticker)
+    .eq('interval_minutes', INTERVAL_MINUTES)
+    .gte('bar_timestamp', rows[0].bar_timestamp)
+    .lte('bar_timestamp', rows[rows.length - 1].bar_timestamp);
+  if (existingError) throw new Error(`Existing intraday history read failed for ${ticker}: ${existingError.message}`);
+
+  const existingTimestamps = new Set((existing ?? []).map((row: any) => String(row.bar_timestamp)));
+  const missingRows = rows.filter((row) => !existingTimestamps.has(row.bar_timestamp));
+
+  for (let offset = 0; offset < missingRows.length; offset += 500) {
     const { error } = await sb
       .from('intraday_price_history')
-      .upsert(rows.slice(offset, offset + 500), {
-        onConflict: 'ticker,interval_minutes,bar_timestamp',
-        ignoreDuplicates: false,
-      });
+      .insert(missingRows.slice(offset, offset + 500));
 
     if (error) throw new Error(`Intraday history write failed for ${ticker}: ${error.message}`);
   }
 
-  return rows.length;
+  return missingRows.length;
 }
 
 async function pruneExpiredRows(
@@ -269,7 +280,7 @@ async function main() {
           );
           totalRows += written;
           console.log(
-            `${ticker}: upserted ${written} intraday observations from ${requestedBars} requested bars${latest ? `; latest stored ${latest}` : '; initial backfill'}.`,
+            `${ticker}: inserted ${written} missing intraday observations from ${requestedBars} requested bars${latest ? `; latest stored ${latest}` : '; initial backfill'}.`,
           );
         } finally {
           await series.close();
@@ -282,7 +293,7 @@ async function main() {
 
     const pruned = await pruneExpiredRows(sb, cutoffIso);
     console.log(
-      `Intraday sync complete: ${totalRows} observations upserted, ${pruned} expired observations pruned, ${failures} ticker failures.`,
+      `Intraday sync complete: ${totalRows} missing observations inserted, ${pruned} expired observations pruned, ${failures} ticker failures.`,
     );
 
     if (failures > 0) process.exitCode = 1;

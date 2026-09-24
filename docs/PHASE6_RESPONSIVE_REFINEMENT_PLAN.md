@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 3 implemented; awaiting CI/mobile validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 4 implemented; awaiting CI/mobile validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -437,6 +437,8 @@ Checkpoint:
 
 ### Pass 4 — Reports and chart shells
 
+**Status: IMPLEMENTED — awaiting CI and mobile visual validation.**
+
 Scope:
 - Performance Reports;
 - main analytics shell;
@@ -445,16 +447,21 @@ Scope:
 - Monthly/Trading reports;
 - shared chart tooltip shell.
 
-Work:
-- mobile chart heights;
-- tooltip width clamp;
-- timeframe/selector touch targets;
-- allocation selector/action wrapping;
-- report export/search/select fit;
-- horizontal table access.
+Implemented:
+- shared analytics tooltips now clamp to the actual mobile viewport instead of carrying a conflicting fixed minimum width;
+- the primary analytics chart uses a shorter phone canvas while retaining the accepted desktop height and all existing series/interpolation behavior;
+- Today-resolution and timeframe selectors remain the accepted premium control family but now use bounded horizontal access on narrow screens instead of wrapping into unstable multi-row layouts;
+- Risk & Cost chart headers stack their headline metrics safely on phones and use reduced phone-only chart heights;
+- the realized P&L trajectory mode switcher becomes a two-column phone control while retaining the accepted desktop segmented layout;
+- Portfolio Allocation controls become full-width/mobile-safe, the allocation canvas shortens on phones, and its custom tooltip no longer overrides the shared viewport clamp;
+- Trading Performance and Monthly Audit control bars now fit narrow screens with full-width selects/search, reachable export/print actions, and horizontally accessible selectors;
+- both dense report tables now preserve a deliberate minimum table width inside touch-scroll containers so columns remain readable instead of collapsing into unusable narrow cells;
+- report footers and dense report shells stack/wrap safely without changing their accepted visual hierarchy.
 
-Hard boundary:
-- no chart series/interpolation/axis visual redesign.
+Hard boundary preserved:
+- no chart series, financial observations, interpolation, axis semantics, or Phase 7 visual redesign changed;
+- no accounting, persistence, or market-data behavior changed;
+- existing Phase 2–5 control/surface styling remains the source of truth.
 
 ### Pass 5 — Shared controls and rare states
 

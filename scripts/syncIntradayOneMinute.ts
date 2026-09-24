@@ -242,6 +242,11 @@ function derivedDbRow(ticker: string, point: IntradayPricePoint) {
   };
 }
 
+function timestampIdentity(value: string): string {
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? String(ms) : value;
+}
+
 async function loadExistingTimestamps(
   sb: SupabaseClient,
   ticker: string,
@@ -267,7 +272,9 @@ async function loadExistingTimestamps(
       throw new Error(`Existing intraday timestamps read failed for ${ticker}: ${error.message}`);
     }
 
-    for (const row of data ?? []) timestamps.add(String(row.bar_timestamp));
+    for (const row of data ?? []) {
+      timestamps.add(timestampIdentity(String(row.bar_timestamp)));
+    }
     if (!data || data.length < pageSize) break;
   }
 
@@ -290,7 +297,7 @@ async function insertMissingRawRows(
   );
 
   const missingRows = sorted
-    .filter((point) => !existing.has(point.timestamp))
+    .filter((point) => !existing.has(timestampIdentity(point.timestamp)))
     .map((point) => rawDbRow(ticker, point));
 
   for (let offset = 0; offset < missingRows.length; offset += 500) {

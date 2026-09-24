@@ -313,7 +313,20 @@ async function handleApi(request: Request): Promise<Response> {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    configureSupabaseServer(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY);
+    const supabaseUrlPresent = typeof env.SUPABASE_URL === "string" && env.SUPABASE_URL.trim().length > 0;
+    const supabaseSecretPresent = typeof env.SUPABASE_SECRET_KEY === "string" && env.SUPABASE_SECRET_KEY.trim().length > 0;
+    const supabaseSecretPrefixValid = supabaseSecretPresent && env.SUPABASE_SECRET_KEY.trim().startsWith("sb_secret_");
+    if (!supabaseUrlPresent || !supabaseSecretPresent || !supabaseSecretPrefixValid) {
+      console.error("[Worker Config] Supabase binding validation", {
+        supabaseUrlPresent,
+        supabaseSecretPresent,
+        supabaseSecretPrefixValid,
+      });
+    }
+    configureSupabaseServer(
+      supabaseUrlPresent ? env.SUPABASE_URL.trim() : undefined,
+      supabaseSecretPresent ? env.SUPABASE_SECRET_KEY.trim() : undefined,
+    );
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) return handleApi(request);
     return env.ASSETS.fetch(request);

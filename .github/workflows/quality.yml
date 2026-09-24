@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/benchmark-hero-card-glow-gate]
   pull_request:
     branches: [main]
 

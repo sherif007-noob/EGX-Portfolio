@@ -2,78 +2,163 @@
 
 ## Why this work exists
 
-This work started as the Premium UI visual overhaul. Chart comparison against Telda then exposed correctness and data-density issues that were not purely visual. This document records that scope expansion so the architecture and accounting decisions are explicit.
+This work began inside the Premium visual overhaul, but chart comparison exposed data and accounting requirements that could not be solved with presentation changes alone.
+
+The market-data path therefore evolved from a legacy 15-minute Today curve, through a transitional direct-TradingView 5-minute layer, to the current Premium 1-minute architecture.
 
 ## Scope progression
 
-1. **Premium visual overhaul** — frosted surfaces, controls, modals, motion, chart presentation and transitions.
-2. **Chart presentation parity** — fixed weekly morph behavior and changed non-Today chart X spacing to calendar time.
-3. **Headline-number parity** — corrected the Today live endpoint after midnight and the 1W return baseline. The weekly visible range may start on one session while its return baseline is the previous completed close.
-4. **Missing historical points** — newly traded securities could be absent from the portfolio curve when daily history was missing. Daily history repair was added; ACTF was intentionally left unseeded to test that path.
-5. **TradingView identity resolution** — NAPR exposed inconsistent symbol handling. TradingView resolution is centralized in `tradingViewSymbolResolver.ts` and tries the canonical ticker/legacy mapping and ISIN rather than adding one-off NAPR logic.
-6. **Intraday density** — Telda-style Today curves need real intraday observations rather than fabricated interpolation. The ingestion target was changed from 15-minute to 5-minute bars.
-7. **Runtime boundary correction** — `@ch99q/twc` requires a Node-compatible TradingView WebSocket path. Cloudflare Workers are the production app/API runtime and must not perform TradingView WebSocket ingestion. The existing GitHub Actions Node workflow is the authoritative TradingView intraday ingestion/backfill runtime.
+1. **Premium visual overhaul** — frosted surfaces, controls, modals, motion and chart presentation.
+2. **Chart presentation parity** — weekly morph behavior and calendar-time spacing were corrected.
+3. **Headline-number parity** — Today live endpoint and 1W previous-close baseline semantics were corrected.
+4. **Historical coverage repair** — newly traded securities exposed missing daily-history behavior.
+5. **Centralized TradingView identity** — NAPR exposed symbol instability, leading to ticker/canonical/ISIN resolution instead of one-off aliases.
+6. **Intraday density** — direct 15m was first supplemented with transitional 5m TradingView data.
+7. **Runtime boundary correction** — TradingView WebSocket ingestion was removed from Cloudflare/browser repair paths and kept in GitHub Actions / Node.
+8. **1-minute source architecture** — raw 1m became the recent source of truth and 5m became a deterministic locally-derived cache.
+9. **Coverage-aware reads** — Today now evaluates the quality of 1m/5m/15m candidates rather than selecting a resolution just because any row exists.
+10. **Migration hardening** — retention boundaries, TradingView source exhaustion, raw immutability and derived-cache reconstruction were validated against ACTF/NAPR.
 
 ## Current authoritative architecture
 
-- **Cloudflare Worker:** serves the application and normal HTTP API. It does not open TradingView WebSockets.
-- **Supabase:** authoritative persisted portfolio ledger, ticker metadata, daily price history and intraday price history.
-- **GitHub Actions / Node:** runs `scripts/syncIntradayPrices.ts` and communicates with TradingView through `@ch99q/twc`.
-- **Browser:** reads persisted Supabase history. It does not request an on-demand TradingView intraday repair during app startup.
-- **TradingView resolver:** one shared resolver supplies ticker/canonical/ISIN fallback behavior to Node ingestion and server-side historical code.
+- **Cloudflare Worker / application runtime:** serves the application and normal HTTP API. It does not open TradingView WebSockets.
+- **Supabase:** authoritative persisted portfolio ledger, ticker metadata, daily history and intraday history.
+- **GitHub Actions / Node:** authoritative TradingView intraday ingestion runtime.
+- **Browser:** reads persisted Supabase history and never triggers TradingView history repair.
+- **TradingView Scanner HTTP:** latest/live quote snapshot only.
+- **TradingView resolver:** one shared resolver handles ticker/canonical/ISIN attempts and records the full attempt path.
 
-## Intraday policy
+## Current intraday policy
 
-- Target interval: **5 minutes**.
-- Retention target: **90 days**.
-- Scheduled ingestion remains the normal update mechanism.
-- Manual workflow dispatch supports optional ticker targeting and bar-count override for repair/testing.
-- The sync writes **only timestamps missing from Supabase**; it does not rewrite already persisted observations.
-- No synthetic interpolation is used to pretend that missing market observations exist.
+Canonical constants live in `src/services/intradayPolicy.ts`.
 
-## ACTF / NAPR test history
+- raw interval: **1 minute**;
+- derived interval: **5 minutes**;
+- legacy fallback: **15 minutes**;
+- raw retention: **30 calendar days**;
+- derived retention: **90 calendar days**;
+- timezone: **Africa/Cairo**;
+- regular EGX window used by the scheduler: **10:00-14:30 Cairo**, Sunday-Thursday;
+- post-close ingestion grace: through **14:40 Cairo**;
+- target ingestion cadence: about **5 minutes**;
+- browser read order: **sufficient 1m -> sufficient 5m -> legacy 15m**.
 
-ACTF and NAPR were deliberately useful test cases because they were added after the older intraday dataset had already been produced. ACTF was specifically not manually backfilled so automatic repair behavior could be tested. NAPR has ISIN `EGS370O1C013`; its failure led to the centralized resolver rather than a permanent hardcoded NAPR alias.
+The Cairo clock is date-aware and therefore follows DST changes instead of assuming a fixed UTC offset.
 
-As of the 2026-09-24 investigation, Supabase still contained only the legacy **15-minute** dataset for 26 tickers (roughly 1,036–1,098 observations each, 2026-06-28 through 2026-09-23). There were **no 5-minute rows at all**, and ACTF/NAPR had no intraday rows. Therefore a 5-minute chart reader could not become denser until the Node ingestion workflow actually populated the 5-minute dataset.
+## Raw 1m and derived 5m semantics
 
-## Cloudflare failure sequence
+Completed persisted 1-minute observations are treated as historical source truth and are not rewritten during ordinary sync.
 
-The browser previously POSTed every transaction ticker to `/api/supabase/intraday-history/ensure` on startup. Initial Worker attempts failed because `@ch99q/twc` treated the Worker as Node and passed WebSocket options as protocols. A compatibility patch moved past that constructor error but the TradingView WebSocket handshake still failed in the Worker runtime.
+The derived 5-minute cache is built from actual stored 1-minute observations:
 
-That was an architectural mismatch, not a Supabase-data problem. The Worker endpoint was then intentionally changed to return 503 rather than continuing an impossible synchronous repair. The browser-triggered intraday repair has now been removed, so this 503 should no longer be generated by normal app startup.
+- first open;
+- maximum high;
+- minimum low;
+- last close;
+- sum of observed volume.
+
+No missing minute is synthesized.
+
+A 2026-09-24 validation exposed an important edge case: TradingView later returned revised historical volume for a minute that was already persisted. The sync initially rebuilt the 5m cache from the newer fetch, which made the 5m row disagree with the immutable raw source.
+
+The fix now reloads persisted 1m rows and gives them precedence before 5m derivation. The resulting ACTF/NAPR overlap check reports zero OHLCV mismatches.
+
+## TradingView history depth and legacy bootstrap
+
+TradingView 1m history depth depends on the instrument and available observations.
+
+NAPR currently exposes enough 1m history to rebuild the full targeted derived window. ACTF reports source exhaustion around late August 2026 when walking backwards through 1m history.
+
+Therefore ACTF retains older direct-TradingView 5m rows **only before reconstructible 1m history begins**. These rows are a temporary migration bootstrap. The system does not invent older 1m data merely to replace them.
+
+Inside reconstructible 1m coverage, legacy direct-5m rows are not allowed to survive.
+
+## ACTF / NAPR migration validation
+
+The successful migration smoke on 2026-09-24 validated:
+
+- ACTF resolves directly by ticker;
+- NAPR logs `ticker NAPR -> invalid symbol -> ISIN EGS370O1C013 -> success`;
+- raw 1m rows are present;
+- derived 5m rows are present;
+- duplicate timestamps are zero;
+- 1,830 overlapping retained raw/derived buckets were checked;
+- overlapping persisted 1m -> derived 5m OHLCV mismatches are zero;
+- ACTF older legacy 5m rows are outside reconstructible 1m coverage;
+- the focused typecheck/regression suite passes before the smoke writes.
+
+An established ticker is also included in the migration smoke so the validation does not only exercise the two new/missing-history cases.
+
+## Today resolution selection
+
+`PerformanceTimeframeChart.tsx` loads configured interval candidates and calls `selectBestIntradayResolution()`.
+
+The selector compares:
+
+- latest real session not after the requested date;
+- ticker breadth;
+- per-ticker observed session envelope.
+
+A fine-resolution sample cannot win simply because it contains one row for every ticker. At the same time, an illiquid security is not required to have a candle for every minute.
+
+The reader also handles after-midnight/weekend/closed-session cases by using the latest real market session rather than creating synthetic points.
+
+## Portfolio mathematics
+
+The intraday analytics regression suite compares 1m, 5m and 15m paths with a transaction between old 15-minute boundaries.
+
+Higher resolution is allowed to change path timing and shape. It is not allowed to arbitrarily change:
+
+- opening equity;
+- cash accounting;
+- external deposits/withdrawals;
+- final authoritative NAV;
+- final P&L;
+- TWR/MWR semantics;
+- previous-close baseline.
+
+The finer path applies the transaction earlier, which is the intended improvement.
+
+## Scheduling migration
+
+The staged Premium scheduler is:
+
+```text
+.github/workflows/intraday-1m-sync.yml
+```
+
+with a broad UTC cron every five minutes. The Node script applies the Cairo-local trading-session gate.
+
+The previous direct-TradingView 5m workflow is now manual-only and shares the same concurrency group. This prevents the transitional producer from competing with the new derived-5m pipeline.
+
+GitHub schedules execute from the repository default branch, so the Premium schedule is not active production scheduling until the branch is intentionally promoted.
+
+## Observability evolution
+
+Per-ticker output records resolution attempts, mode, request depth, source exhaustion, fetch/write counts, derived buckets, legacy bootstrap state and coverage boundaries.
+
+The current gap metric is deliberately source-backed: a repaired gap is a TradingView observation that is missing at or before the previously persisted latest raw timestamp. A no-trade minute is not counted as a gap.
+
+This distinction is required for sparse EGX securities.
+
+## Stale-client / browser-repair incident
+
+Earlier browser code POSTed transaction tickers to a Worker repair route. `@ch99q/twc` requires the Node-compatible TradingView WebSocket path; attempting synchronous Worker ingestion was an architectural mismatch.
+
+The browser-triggered repair was removed. A compatibility no-op remains for stale cached clients, and PWA cache cleanup prevents an old bundle from repeatedly producing repair errors.
+
+This remains a non-negotiable boundary: TradingView WebSocket ingestion belongs in Node automation, not Cloudflare Workers or browser startup.
 
 ## Important invariants
 
-- Do not regress the verified 1W baseline semantics or the Today live endpoint behavior.
-- Do not fabricate intraday points merely to make the chart resemble another app.
-- Do not move TradingView WebSocket ingestion back into Cloudflare Worker code without a proven Worker-native transport.
-- Do not add ticker-specific aliases when canonical ticker/ISIN resolution can solve the identity generically.
-- Do not merge CI-only branches/PRs into `main`.
-- Premium work remains on `feature/premium-ui-redesign` unless explicitly requested otherwise.
+- Do not fabricate intraday observations.
+- Do not overwrite completed raw 1m history during ordinary sync.
+- Derived reconstructible 5m must match persisted raw 1m.
+- Do not regress the verified Today live endpoint or 1W previous-close baseline.
+- Do not reintroduce browser/Cloudflare TradingView WebSocket repair.
+- Do not add ticker-specific aliases where centralized resolution can solve identity.
+- Do not delete the 15m fallback before multi-session rollout observation.
+- Do not merge CI-only validation branches into `main`.
+- Premium implementation remains on `feature/premium-ui-redesign` unless explicitly requested otherwise.
 
-## Remaining verification
-
-- Run the Node intraday workflow against the Premium branch and verify real 5-minute TradingView retrieval.
-- Verify ACTF and NAPR resolve and receive persisted 5-minute rows.
-- Verify representative legacy/canonical aliases such as QNBA/QNBE/QNBF.
-- Verify the chart consumes the resulting 5-minute rows.
-- Add/finish regression coverage for the post-midnight Today endpoint, active-session behavior, and weekend/holiday behavior.
-
-
-## 2026-09-24 stale-client 503 root cause
-
-After the browser-triggered intraday repair effect was removed from `App.tsx`, production logs still showed POSTs to `/api/supabase/intraday-history/ensure`. The current branch no longer contained an active caller, while the request body size and endpoint matched the previous startup repair path. The remaining requests therefore came from an already-loaded / PWA-cached older frontend bundle, not from the current source.
-
-The repair is intentionally defensive at both ends:
-
-- the obsolete browser repair function was removed from `intradayPriceStore.ts`;
-- Workbox now cleans outdated caches, activates the new service worker immediately, and claims clients;
-- the legacy intraday repair endpoint returns a successful no-op so an already-open old client cannot create a 503/error loop during rollout;
-- Today analytics prefers real 5-minute rows but falls back to the existing real 15-minute store while 5-minute ingestion is not yet populated.
-
-The temporary Worker WebSocket compatibility shim was also removed from the Node repair service. Node TradingView code now uses `@ch99q/twc`'s native Node WebSocket path; Cloudflare does not invoke it.
-
-### 5-minute ingestion deployment note
-
-At the time of this investigation Supabase still had no 5-minute intraday rows. The Premium workflow was updated so pushes affecting the intraday workflow/script on `feature/premium-ui-redesign` are eligible to exercise the Node ingestion before merge. GitHub scheduled workflows still execute from the repository default branch, so the default-branch schedule remains the long-term production scheduler. Until that scheduler runs the 5-minute implementation, the chart's 15-minute fallback prevents an empty Today series.
+See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the canonical 15-phase roadmap and `docs/INTRADAY_MARKET_DATA.md` for operational data semantics.

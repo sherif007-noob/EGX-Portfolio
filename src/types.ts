@@ -62,8 +62,16 @@ export interface EGXTicker {
   /** Raw market classification returned by the live scanner. */
   marketSector?: string;
   industry?: string;
-  /** Distinguishes live scanner metadata from the offline fallback seed. */
-  metadataSource?: 'baseline' | 'tradingview';
+  /** Distinguishes authoritative registry identity from live scanner and offline fallback metadata. */
+  metadataSource?: 'baseline' | 'tradingview' | 'registry';
+  /** Service-managed directory lifecycle and resolver metadata. */
+  directoryStatus?: 'active' | 'inactive' | 'retired' | 'unresolved';
+  aliases?: string[];
+  scannerSymbol?: string;
+  historySymbol?: string;
+  historyResolutionMethod?: string;
+  historyVerifiedAt?: string;
+  registryUpdatedAt?: string;
 }
 
 export interface Position {

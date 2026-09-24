@@ -263,7 +263,7 @@ describe('intraday analytics engine', () => {
         sessionDate: '2026-09-24',
         openingCapital: 1600, // deliberately stale by +600
         currentCashBalance: 400, // authoritative: 1000 initial - 500 old buy - 100 session buy
-        asOf: '2026-09-24T07:06:00Z',
+        asOf: '2026-09-24T07:07:00Z',
         livePrices: { TEST: 102 },
       },
     );

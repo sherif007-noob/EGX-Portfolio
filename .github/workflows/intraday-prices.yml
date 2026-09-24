@@ -2,6 +2,15 @@ name: Intraday Prices
 
 on:
   workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Optional comma-separated tickers for targeted repair (for example ACTF,NAPR)'
+        required: false
+        type: string
+      bar_count:
+        description: 'Optional TradingView bar count override for targeted backfill'
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -59,4 +68,6 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
           EGX_INTRADAY_RETENTION_DAYS: '90'
+          EGX_INTRADAY_TICKERS: ${{ inputs.tickers }}
+          EGX_INTRADAY_BAR_COUNT: ${{ inputs.bar_count }}
         run: npm run sync:intraday

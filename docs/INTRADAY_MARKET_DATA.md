@@ -218,6 +218,15 @@ Manual `1m`, `5m`, and `15m` choices read the corresponding persisted interval f
 
 Changing the Today display resolution changes chart sampling only. It does not change transaction timing, portfolio accounting, live-price authority, ingestion cadence, retention, or the underlying stored market data.
 
+## Today endpoint and authoritative portfolio alignment
+
+The Today chart uses persisted intraday observations to reconstruct the session path, but two display rules keep the chart consistent with the rest of the portfolio UI:
+
+1. **Post-close timestamp pinning.** During the live EGX session, a complete live quote snapshot may be appended at its real as-of time. After the regular 14:30 Cairo close, the live endpoint is pinned immediately after the final observed market point instead of using the later phone/browser wall-clock time. This prevents a 23:xx refresh from making the Today axis appear to extend into the night.
+2. **Authoritative absolute portfolio value.** The main application portfolio total is the authority for the current absolute equity level. If the ledger-reconstructed Today series differs by a constant cash/baseline offset, the Today display series is shifted by that constant amount so its final equity equals the authoritative portfolio total. The shift is applied uniformly to the session equity/cash path, so the curve shape, selected-period P&L, TWR/MWR semantics and nominal drawdown gaps are not changed.
+
+This alignment is a display-level reconciliation of absolute portfolio level; it does not rewrite persisted market bars or transaction history.
+
 ## Live endpoint
 
 The TradingView Scanner HTTP snapshot remains separate from persisted intraday ingestion.

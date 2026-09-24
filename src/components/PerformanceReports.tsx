@@ -150,7 +150,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
           <h2 className="text-lg font-bold text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-purple-400" />Trading Performance &amp; Analytical Reports</h2>
           <p className="text-xs text-slate-400 mt-1">All portfolio equity and P&amp;L bridge figures use the centralized accounting engine.</p>
         </div>
-        <div className="flex gap-2 text-xs">
+        <div className="flex flex-wrap gap-2 text-xs">
           <span className="premium-chip px-2.5 py-1 rounded-lg text-slate-300">Closed Trades: {stats.totalTrades}</span>
           <span className="premium-chip px-2.5 py-1 rounded-lg text-emerald-400 border-emerald-500/30">Win Rate: {stats.winRate.toFixed(1)}%</span>
         </div>
@@ -195,8 +195,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="premium-report-glass-soft flex items-center gap-1 rounded-xl p-1 text-xs">
+          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+            <div className="premium-report-glass-soft grid grid-cols-2 gap-1 rounded-xl p-1 text-xs sm:flex sm:items-center">
               <button
                 type="button"
                 aria-pressed={allocationTab === 'sector'}
@@ -234,7 +234,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 type="button"
                 aria-pressed={includeCash}
                 onClick={() => setIncludeCash((current) => !current)}
-                className={`premium-segment rounded-xl border px-3 py-2 text-xs font-semibold ${
+                className={`premium-segment w-full justify-center rounded-xl border px-3 py-2 text-xs font-semibold sm:w-auto ${
                   includeCash
                     ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
                     : 'border-slate-800 bg-slate-950/70 text-slate-500 hover:text-slate-300'
@@ -253,7 +253,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="premium-report-glass-soft relative min-h-[285px] overflow-hidden rounded-xl">
+            <div className="premium-report-glass-soft relative min-h-[250px] overflow-hidden rounded-xl sm:min-h-[285px]">
               <div className="absolute left-4 top-4 z-10">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Allocated value</div>
                 <div className="mt-1 font-mono text-sm font-bold text-slate-200">
@@ -261,7 +261,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 </div>
               </div>
 
-              <div className="h-[285px]">
+              <div className="h-[250px] sm:h-[285px]">
                 {chartsReady && (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -310,7 +310,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                         const remaining = Math.max(0, 100 - Number(row.percentage || 0));
 
                         return (
-                          <ChartTooltipShell className="min-w-[235px]">
+                          <ChartTooltipShell className="min-w-0 sm:min-w-[235px]">
                             <div className="mb-2 border-b border-slate-800 pb-2">
                               <div className="flex items-center justify-between gap-3">
                                 <span className="font-semibold text-slate-100">{row.name}</span>
@@ -440,7 +440,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </MotionSwap>
       </div>
 
-      <div className="premium-report-glass p-5 rounded-2xl space-y-4">
+      <div className="premium-report-glass rounded-2xl p-4 space-y-4 sm:p-5">
         <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><Layers className="w-4 h-4 text-blue-400" />Portfolio Equity Bridge</h3><p className="text-xs text-slate-400 mt-1">Ending equity = net capital contributed + realized P&amp;L + unrealized P&amp;L. Fees are already embedded in P&amp;L and are not deducted again.</p></div>
         {!bridgeBalanced && <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><div><strong>Accounting reconciliation difference:</strong> {formatEgp(performanceBridge.reconciliationDelta)} EGP. The report is showing the actual ledger/equity values instead of inventing a balancing capital figure.</div></div>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
@@ -455,7 +455,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         <div className="text-[11px] text-slate-500">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
       </div>
 
-      <div className="premium-report-glass p-5 rounded-2xl"><h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
+      <div className="premium-report-glass rounded-2xl p-4 sm:p-5"><h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
 
       <MonthlyPerformanceReport closedTrades={closedTrades} positions={positions} />
     </div>

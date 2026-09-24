@@ -166,6 +166,240 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
     };
   }, [filteredTrades, timeframe, tradeTypeFilter, stats.maxDrawdownEgp, stats.maxDrawdownPercent]);
 
+  const benchmarkCards = useMemo(() => {
+    type CardTone = 'positive' | 'negative' | 'warning' | 'blue' | 'purple' | 'cyan' | 'amber' | 'neutral';
+    type CardItem = {
+      title: string;
+      description: string;
+      measured: React.ReactNode;
+      benchmark: React.ReactNode;
+      assessment: string;
+      tone: CardTone;
+      icon: React.ReactNode;
+      valueClass?: string;
+    };
+
+    const winSplit = indicators.totalClosed > 0 ? ((indicators.winCount / indicators.totalClosed) * 100).toFixed(1) : '0.0';
+    const lossSplit = indicators.totalClosed > 0 ? ((indicators.lossCount / indicators.totalClosed) * 100).toFixed(1) : '0.0';
+
+    const items: CardItem[] = [
+      {
+        title: 'Win Rate %',
+        description: 'Winning trades as a percentage of total closed trades',
+        measured: `${indicators.winRate.toFixed(1)}%`,
+        benchmark: 'Target: > 50.0%',
+        assessment: indicators.winRate >= 50 ? 'Target Met (>50%)' : 'Below Target',
+        tone: indicators.winRate >= 50 ? 'positive' : 'negative',
+        icon: <Percent className="h-4 w-4" />,
+      },
+      {
+        title: 'Profit Factor',
+        description: 'Gross Realized Profit divided by Gross Realized Loss',
+        measured: formatRatio(indicators.profitFactor),
+        benchmark: 'Target: > 1.50 · Breakeven = 1.00',
+        assessment:
+          indicators.profitFactor >= 1.5
+            ? 'Outperforming Benchmark'
+            : indicators.profitFactor >= 1.0
+              ? 'Moderate Profitability'
+              : 'Unprofitable Factor',
+        tone: indicators.profitFactor >= 1.5 ? 'positive' : indicators.profitFactor >= 1.0 ? 'warning' : 'negative',
+        icon: <Sparkles className="h-4 w-4" />,
+      },
+      {
+        title: 'Payoff Ratio',
+        description: 'Average Winning Trade divided by Average Losing Trade',
+        measured: `${formatRatio(indicators.payoffRatio)} : 1`,
+        benchmark: 'Target: > 1.50 : 1',
+        assessment:
+          indicators.payoffRatio >= 2
+            ? 'Strong Asymmetry (>2.0x)'
+            : indicators.payoffRatio >= 1.5
+              ? 'Target Met (>1.5x)'
+              : 'Moderate Risk / Reward',
+        tone: indicators.payoffRatio >= 1.5 ? 'purple' : 'neutral',
+        icon: <TrendingUp className="h-4 w-4" />,
+      },
+      {
+        title: 'Mathematical Trade Expectancy',
+        description: 'Expected statistical return per trade execution',
+        measured: `${indicators.expectancy >= 0 ? '+' : ''}${formatEgp(indicators.expectancy)} EGP`,
+        benchmark: 'Target: > 0.00 EGP per execution',
+        assessment: indicators.expectancy > 0 ? 'Positive Statistical Edge' : 'Negative Expectancy',
+        tone: indicators.expectancy > 0 ? 'positive' : 'negative',
+        icon: <DollarSign className="h-4 w-4" />,
+      },
+      {
+        title: 'Total Closed Trades Sample Size',
+        description: 'Completed roundtrip trades in the filtered sample',
+        measured: `${indicators.totalClosed} Trades`,
+        benchmark: 'Confidence threshold: ≥ 20 executions',
+        assessment: indicators.totalClosed >= 20 ? 'Statistically Confident Sample' : 'Preliminary Sample (<20)',
+        tone: indicators.totalClosed >= 20 ? 'blue' : 'warning',
+        icon: <Layers className="h-4 w-4" />,
+      },
+      {
+        title: 'Total Winning Trades',
+        description: 'Liquidated trades with positive realized return',
+        measured: `${indicators.winCount} Positions`,
+        benchmark: `Split: ${winSplit}% of closed trades`,
+        assessment: 'Profitable Realizations',
+        tone: 'positive',
+        icon: <TrendingUp className="h-4 w-4" />,
+      },
+      {
+        title: 'Total Losing Trades',
+        description: 'Liquidated trades with net realized loss',
+        measured: `${indicators.lossCount} Positions`,
+        benchmark: `Split: ${lossSplit}% of closed trades`,
+        assessment: 'Controlled Risk Exits',
+        tone: 'neutral',
+        icon: <TrendingDown className="h-4 w-4" />,
+        valueClass: 'text-rose-400',
+      },
+      {
+        title: 'Win / Loss Count Ratio',
+        description: 'Winning-position count divided by losing-position count',
+        measured: `${formatRatio(indicators.winLossRatio)} : 1`,
+        benchmark: 'Target: > 1.00 : 1',
+        assessment: indicators.winLossRatio >= 1 ? 'Favorable (>1.0:1)' : 'Unfavorable (<1.0:1)',
+        tone: indicators.winLossRatio >= 1 ? 'positive' : 'negative',
+        icon: <BarChart3 className="h-4 w-4" />,
+      },
+      {
+        title: 'Average Trade P&L',
+        description: 'Net Realized P&L divided by Total Closed Trades',
+        measured: `${indicators.avgTradePnl >= 0 ? '+' : ''}${formatEgp(indicators.avgTradePnl)} EGP`,
+        benchmark: 'Target: > 0.00 EGP',
+        assessment: indicators.avgTradePnl >= 0 ? 'Positive Expectancy' : 'Negative Average',
+        tone: indicators.avgTradePnl >= 0 ? 'positive' : 'negative',
+        icon: <Target className="h-4 w-4" />,
+      },
+      {
+        title: 'Average Win',
+        description: 'Mean realized gain per profitable position',
+        measured: `+${formatEgp(indicators.avgWin)} EGP`,
+        benchmark: 'Baseline gain magnitude',
+        assessment: 'Target Met',
+        tone: 'positive',
+        icon: <TrendingUp className="h-4 w-4" />,
+      },
+      {
+        title: 'Average Loss',
+        description: 'Mean realized loss per unprofitable position',
+        measured: `-${formatEgp(indicators.avgLoss)} EGP`,
+        benchmark: 'Loss containment: keep below Avg Win',
+        assessment: indicators.avgLoss <= indicators.avgWin ? 'Controlled (< Avg Win)' : 'Exceeds Avg Win',
+        tone: indicators.avgLoss <= indicators.avgWin ? 'neutral' : 'negative',
+        icon: <TrendingDown className="h-4 w-4" />,
+        valueClass: 'text-rose-400',
+      },
+      {
+        title: 'Largest Win',
+        description: 'Single highest realized profit transaction',
+        measured: `+${formatEgp(indicators.largestWin)} EGP`,
+        benchmark: indicators.largestWinTrade
+          ? `${indicators.largestWinTrade.ticker} · +${indicators.largestWinTrade.realizedPnlPercent.toFixed(1)}%`
+          : 'No closed wins',
+        assessment: 'Peak Winner',
+        tone: 'positive',
+        icon: <Award className="h-4 w-4" />,
+      },
+      {
+        title: 'Largest Loss',
+        description: 'Single largest realized loss transaction',
+        measured: `-${formatEgp(indicators.largestLoss)} EGP`,
+        benchmark: indicators.largestLossTrade
+          ? `${indicators.largestLossTrade.ticker} · ${indicators.largestLossTrade.realizedPnlPercent.toFixed(1)}%`
+          : 'No closed losses',
+        assessment: 'Max Drawdown Trade',
+        tone: 'negative',
+        icon: <ShieldAlert className="h-4 w-4" />,
+      },
+      {
+        title: 'Gross Realized Profit',
+        description: 'Sum total of all winning transactions',
+        measured: `+${formatEgp(indicators.grossProfit)} EGP`,
+        benchmark: 'All positive realizations',
+        assessment: 'Gross Gains',
+        tone: 'positive',
+        icon: <TrendingUp className="h-4 w-4" />,
+      },
+      {
+        title: 'Gross Realized Loss',
+        description: 'Sum total of all losing transactions',
+        measured: `-${formatEgp(indicators.grossLoss)} EGP`,
+        benchmark: 'All negative realizations',
+        assessment: 'Gross Losses',
+        tone: 'negative',
+        icon: <TrendingDown className="h-4 w-4" />,
+      },
+      {
+        title: 'Net Realized P&L',
+        description: 'Gross Profit minus Gross Loss, net of trade fees',
+        measured: `${indicators.netRealized >= 0 ? '+' : ''}${formatEgp(indicators.netRealized)} EGP`,
+        benchmark: 'Bottom-line trading gain',
+        assessment: indicators.netRealized >= 0 ? 'Net Profitable Portfolio' : 'Net Loss Recorded',
+        tone: indicators.netRealized >= 0 ? 'positive' : 'negative',
+        icon: <DollarSign className="h-4 w-4" />,
+      },
+      {
+        title: 'Peak-to-Trough Max Drawdown',
+        description: 'Maximum cumulative equity drop from historical peak',
+        measured: indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A',
+        benchmark: indicators.drawdownAvailable
+          ? `Nominal gap: -${formatEgp(indicators.maxDrawdownEgp!)} EGP · Target ≤ 10.0%`
+          : 'Historical equity data unavailable',
+        assessment: !indicators.drawdownAvailable
+          ? 'Awaiting Historical Equity'
+          : indicators.maxDrawdownPercent! <= 10
+            ? 'Risk Contained (≤10%)'
+            : 'High Drawdown (>10%)',
+        tone: !indicators.drawdownAvailable
+          ? 'neutral'
+          : indicators.maxDrawdownPercent! <= 5
+            ? 'positive'
+            : indicators.maxDrawdownPercent! <= 10
+              ? 'warning'
+              : 'negative',
+        icon: <ShieldAlert className="h-4 w-4" />,
+      },
+      {
+        title: 'Recovery Factor',
+        description: 'Net P&L generated relative to max drawdown depth',
+        measured: indicators.recoveryFactor === null ? 'N/A' : `${formatRatio(indicators.recoveryFactor)}x`,
+        benchmark: 'Target: > 2.0x',
+        assessment: indicators.recoveryFactor === null
+          ? 'Awaiting Historical Equity'
+          : indicators.recoveryFactor >= 2
+            ? 'Resilient Edge (>2.0x)'
+            : 'Moderate Resilience',
+        tone: indicators.recoveryFactor !== null && indicators.recoveryFactor >= 2 ? 'cyan' : 'neutral',
+        icon: <Sparkles className="h-4 w-4" />,
+      },
+      {
+        title: 'Average Holding Duration',
+        description: 'Mean calendar duration from purchase to sale',
+        measured: `${indicators.avgHoldDays} Days`,
+        benchmark: 'Swing strategy: 1–14 days',
+        assessment: 'Short-Term Swing Cycle',
+        tone: 'blue',
+        icon: <Clock className="h-4 w-4" />,
+      },
+      {
+        title: 'Total Brokerage Commissions Paid',
+        description: 'Execution friction and exchange levies on completed trades',
+        measured: `${formatEgp(indicators.totalFees)} EGP`,
+        benchmark: 'Friction rate: ~0.15% per leg',
+        assessment: 'Fully Accounted',
+        tone: 'amber',
+        icon: <DollarSign className="h-4 w-4" />,
+      },
+    ];
+
+    return items;
+  }, [indicators]);
+
   // Export Report to CSV
   const handleExportCSV = () => {
     const rows = [

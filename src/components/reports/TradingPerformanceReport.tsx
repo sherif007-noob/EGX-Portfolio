@@ -286,17 +286,17 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
 
       <MotionSwap motionKey={`${timeframe}-${tradeTypeFilter}`} variant="state" className="space-y-6">
       {/* Primary KPI Ribbon */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1.5">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {indicators.winRate.toFixed(1)}%
             </span>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
               ({indicators.winCount}W / {indicators.lossCount}L)
             </span>
           </div>
@@ -315,11 +315,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1.5">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.profitFactor >= 1.5 ? 'text-emerald-400' : indicators.profitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'}`}>
               {formatRatio(indicators.profitFactor)}
             </span>
-            <span className="text-[11px] text-slate-500 font-mono">Gross Gain/Loss</span>
+            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">Gross Gain/Loss</span>
           </div>
           <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
             <span>Benchmark: &gt; 1.50</span>
@@ -336,7 +336,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1.5">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.payoffRatio >= 1.5 ? 'text-purple-300' : 'text-slate-200'}`}>
               {formatRatio(indicators.payoffRatio)} : 1
             </span>
@@ -351,11 +351,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1.5">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className={`text-xl sm:text-2xl font-bold font-mono ${!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent! <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
               {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
             </span>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
               {indicators.drawdownAvailable ? `(nominal gap ${formatEgp(indicators.maxDrawdownEgp!)} EGP)` : '(historical analytics unavailable)'}
             </span>
           </div>
@@ -367,7 +367,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
 
       {/* Main Indicators Scorecard Table */}
       <div className="premium-report-table overflow-x-auto overscroll-x-contain rounded-xl">
-        <table className="min-w-[860px] w-full border-collapse text-left text-xs font-sans">
+        <table className="report-benchmark-table min-w-[1120px] w-full border-collapse text-left text-xs font-sans">
           <thead>
             <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
               <th className="py-3 px-4">Performance Indicator</th>

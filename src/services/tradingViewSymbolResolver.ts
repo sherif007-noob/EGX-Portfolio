@@ -7,10 +7,20 @@ export interface TradingViewTickerMetadata {
   tradingviewSymbol?: string | null;
 }
 
+export type TradingViewResolutionMethod = 'persisted' | 'ticker' | 'legacy-alias' | 'isin';
+
+export interface TradingViewResolutionAttempt {
+  symbol: string;
+  method: TradingViewResolutionMethod;
+  ok: boolean;
+  error?: string;
+}
+
 export interface TradingViewResolution {
   ticker: string;
   symbol: string;
-  method: 'persisted' | 'ticker' | 'legacy-alias' | 'isin';
+  method: TradingViewResolutionMethod;
+  attempts: TradingViewResolutionAttempt[];
   resolved: Awaited<ReturnType<Awaited<ReturnType<typeof createChart>>['resolve']>>;
 }
 
@@ -18,11 +28,11 @@ function clean(value: unknown): string {
   return String(value || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
 }
 
-export function tradingViewCandidates(input: TradingViewTickerMetadata): Array<{ symbol: string; method: TradingViewResolution['method'] }> {
+export function tradingViewCandidates(input: TradingViewTickerMetadata): Array<{ symbol: string; method: TradingViewResolutionMethod }> {
   const ticker = canonicalizeEGXSymbol(clean(input.ticker));
   const dictionaryIsin = EGX_STOCK_DICTIONARY[ticker]?.isin;
   const legacy = LEGACY_TICKER_ALIASES[clean(input.ticker)];
-  const ordered: Array<{ symbol: string; method: TradingViewResolution['method'] }> = [
+  const ordered: Array<{ symbol: string; method: TradingViewResolutionMethod }> = [
     { symbol: clean(input.tradingviewSymbol), method: 'persisted' },
     { symbol: ticker, method: 'ticker' },
     { symbol: clean(legacy), method: 'legacy-alias' },
@@ -37,18 +47,33 @@ export async function resolveTradingViewInstrument(
   input: TradingViewTickerMetadata,
 ): Promise<TradingViewResolution> {
   const ticker = canonicalizeEGXSymbol(clean(input.ticker));
-  let lastError: unknown = null;
+  const attempts: TradingViewResolutionAttempt[] = [];
 
   for (const candidate of tradingViewCandidates(input)) {
     try {
       const resolved = await chart.resolve(candidate.symbol, 'EGX');
-      return { ticker, symbol: candidate.symbol, method: candidate.method, resolved };
+      attempts.push({ ...candidate, ok: true });
+      return {
+        ticker,
+        symbol: candidate.symbol,
+        method: candidate.method,
+        attempts,
+        resolved,
+      };
     } catch (error) {
-      lastError = error;
+      attempts.push({
+        ...candidate,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
+  const path = attempts
+    .map((attempt) => `${attempt.method}:${attempt.symbol}=${attempt.ok ? 'ok' : 'failed'}`)
+    .join(' -> ');
+
   throw new Error(
-    `${ticker}: TradingView resolution failed for ticker, legacy alias and ISIN candidates. ${lastError instanceof Error ? lastError.message : String(lastError || '')}`,
+    `${ticker}: TradingView resolution failed. attempts=[${path}]`,
   );
 }

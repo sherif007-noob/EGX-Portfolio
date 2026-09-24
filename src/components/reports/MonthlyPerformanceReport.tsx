@@ -387,7 +387,68 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
             return h.ticker.toLowerCase().includes(q) || h.companyName.toLowerCase().includes(q);
           });
 
-          const hasActivity = filteredLiquidated.length > 0 || filteredHoldings.length > 0;
+          const auditRecords = [
+            ...filteredLiquidated.map((trade) => {
+              const isWin = trade.outcome === 'WIN';
+              const totalFees =
+                typeof trade.totalFees === 'number' && trade.totalFees > 0
+                  ? trade.totalFees
+                  : (trade.buyFees || 0) + (trade.sellFees || 0);
+              return {
+                key: `closed-${trade.id}`,
+                kind: 'LIQUIDATED' as const,
+                ticker: trade.ticker,
+                companyName: trade.companyName,
+                sector: trade.sector,
+                shares: trade.shares,
+                buyPrice: trade.buyPrice,
+                buyDate: trade.buyDate,
+                exitPrice: trade.sellPrice,
+                exitLabel: 'Exit Price',
+                exitDate: trade.sellDate,
+                pnlEgp: trade.realizedPnlEgp,
+                pnlPercent: trade.realizedPnlPercent,
+                fees: totalFees,
+                notes: trade.notes || '',
+                statusLabel: `Closed ${trade.outcome}`,
+                statusDetail: trade.sellDate,
+                tone: isWin ? 'positive' as const : 'negative' as const,
+                isPositive: isWin,
+              };
+            }),
+            ...filteredHoldings.map((holding) => ({
+              key: holding.id,
+              kind: 'HOLDING' as const,
+              ticker: holding.ticker,
+              companyName: holding.companyName,
+              sector: holding.sector,
+              shares: holding.shares,
+              buyPrice: holding.buyPrice,
+              buyDate: holding.buyDate,
+              exitPrice: holding.marketPrice,
+              exitLabel: holding.type === 'CURRENT_OPEN' ? 'Market Price' : 'Recorded Exit Price',
+              exitDate: holding.exitDate,
+              pnlEgp: holding.pnlEgp,
+              pnlPercent: holding.pnlPercent,
+              fees: holding.fees,
+              notes: holding.notes || '',
+              statusLabel:
+                holding.type === 'CURRENT_OPEN'
+                  ? 'Active Holding'
+                  : 'Held at Month-End',
+              statusDetail:
+                holding.type === 'CURRENT_OPEN'
+                  ? 'Open at reporting date'
+                  : `Exited ${holding.exitDate || 'later'}`,
+              tone:
+                holding.type === 'CURRENT_OPEN'
+                  ? 'blue' as const
+                  : 'purple' as const,
+              isPositive: holding.pnlEgp >= 0,
+            })),
+          ];
+
+          const hasActivity = auditRecords.length > 0;
           const isProfitable = m.netRealized > 0;
           const isDrawdown = m.netRealized < 0;
           const isNoExits = m.liquidatedTrades.length === 0;
@@ -484,14 +545,130 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 </div>
               </div>
 
-              {/* Monthly Records Table */}
+              {/* Monthly Audit Records */}
               {!hasActivity ? (
                 <div className="p-8 text-center text-slate-500 text-xs">
                   No records matching the filter criteria for {m.monthLabel}.
                 </div>
               ) : (
-                <div className="premium-report-table overflow-x-auto overscroll-x-contain">
-                  <table className="report-monthly-table min-w-[1180px] w-full border-collapse text-left text-xs">
+                <>
+                  {/* One audit record per card on phone/tablet */}
+                  <section
+                    className="grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-2 2xl:hidden"
+                    aria-label={`${m.monthLabel} audit records`}
+                  >
+                    {auditRecords.map((record) => {
+                      const toneClass =
+                        record.tone === 'positive'
+                          ? 'premium-report-tone-positive'
+                          : record.tone === 'negative'
+                            ? 'premium-report-tone-negative'
+                            : record.tone === 'blue'
+                              ? 'premium-report-tone-blue'
+                              : 'premium-report-tone-purple';
+                      const pnlClass = record.isPositive ? 'text-emerald-300' : 'text-rose-300';
+                      const statusClass =
+                        record.tone === 'positive'
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                          : record.tone === 'negative'
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                            : record.tone === 'blue'
+                              ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                              : 'border-purple-500/30 bg-purple-500/10 text-purple-300';
+
+                      return (
+                        <article
+                          key={record.key}
+                          className={`premium-card premium-hero-metric premium-report-hero-card ${toneClass} relative overflow-hidden rounded-2xl border p-4`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-display text-lg font-black tracking-tight text-white">
+                                  {record.ticker}
+                                </span>
+                                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
+                                  {record.kind === 'LIQUIDATED' ? (
+                                    record.isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />
+                                  ) : record.tone === 'blue' ? (
+                                    <Clock className="h-3 w-3" />
+                                  ) : (
+                                    <Briefcase className="h-3 w-3" />
+                                  )}
+                                  {record.statusLabel}
+                                </span>
+                              </div>
+                              <p className="mt-1 truncate text-xs text-slate-400">{record.companyName}</p>
+                              <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-500">{record.sector}</p>
+                            </div>
+
+                            <div className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${statusClass}`}>
+                              {record.kind === 'LIQUIDATED' ? (
+                                record.isPositive ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />
+                              ) : (
+                                <ShieldCheck className="h-4 w-4" />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              Performance
+                            </div>
+                            <div className={`mt-1 font-mono text-2xl font-black leading-none ${pnlClass}`}>
+                              {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)} EGP
+                            </div>
+                            <div className={`mt-1 font-mono text-xs font-bold ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid grid-cols-2 gap-2">
+                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
+                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Shares</span>
+                              <span className="mt-1 block font-mono text-sm font-bold text-slate-100">
+                                {record.shares.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
+                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Commissions</span>
+                              <span className="mt-1 block font-mono text-sm font-bold text-amber-300">
+                                {formatEgp(record.fees)} EGP
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
+                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Entry</span>
+                              <span className="mt-1 block font-mono text-sm font-bold text-slate-200">
+                                {formatEgp(record.buyPrice)} EGP
+                              </span>
+                              <span className="mt-0.5 block text-[10px] text-slate-500">{record.buyDate}</span>
+                            </div>
+                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
+                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">{record.exitLabel}</span>
+                              <span className="mt-1 block font-mono text-sm font-bold text-slate-100">
+                                {formatEgp(record.exitPrice)} EGP
+                              </span>
+                              <span className="mt-0.5 block text-[10px] text-slate-500">{record.statusDetail}</span>
+                            </div>
+                          </div>
+
+                          {record.notes && (
+                            <div className="mt-3 border-t border-slate-700/45 pt-3 text-[11px] leading-relaxed text-slate-400">
+                              <span className="mr-1 font-semibold uppercase tracking-[0.12em] text-slate-500">Notes</span>
+                              {record.notes}
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </section>
+
+                  {/* Full institutional audit table on true desktop */}
+                  <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain 2xl:block">
+                    <table className="report-monthly-table min-w-[1180px] w-full border-collapse text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                         <th className="py-2.5 px-4">Instrument</th>
@@ -504,95 +681,54 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40">
-                      {/* 1. Liquidated Trades in Month */}
-                      {filteredLiquidated.map((trade) => {
-                        const isWin = trade.outcome === 'WIN';
+                      {auditRecords.map((record) => {
+                        const statusClass =
+                          record.tone === 'positive'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : record.tone === 'negative'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              : record.tone === 'blue'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                                : 'bg-purple-500/10 text-purple-300 border border-purple-500/30';
                         return (
-                          <tr key={`closed-${trade.id}`} className="transition">
+                          <tr key={record.key} className={`transition ${record.kind === 'HOLDING' ? 'bg-white/[0.01]' : ''}`}>
                             <td className="py-3 px-4">
-                              <div className="font-bold text-white">{trade.ticker}</div>
-                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{trade.companyName}</div>
+                              <div className={`font-bold ${record.kind === 'HOLDING' ? 'text-cyan-300' : 'text-white'}`}>
+                                {record.ticker}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{record.companyName}</div>
                             </td>
                             <td className="py-3 px-4">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  isWin
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                                }`}
-                              >
-                                {isWin ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                                Closed {trade.outcome} ({trade.sellDate})
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
+                                {record.kind === 'LIQUIDATED' ? (
+                                  record.isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />
+                                ) : (
+                                  <Clock className="w-3 h-3" />
+                                )}
+                                {record.statusLabel}
+                                {record.statusDetail ? ` (${record.statusDetail})` : ''}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-right text-slate-200 font-mono">
-                              {trade.shares.toLocaleString()}
+                              {record.shares.toLocaleString()}
                             </td>
                             <td className="py-3 px-4 text-right text-slate-300 font-mono">
-                              {formatEgp(trade.buyPrice)}{' '}
-                              <span className="text-[10px] text-slate-500 font-sans">({trade.buyDate})</span>
+                              {formatEgp(record.buyPrice)}{' '}
+                              <span className="text-[10px] text-slate-500 font-sans">({record.buyDate})</span>
                             </td>
-                            <td className="py-3 px-4 text-right font-bold text-white font-mono">
-                              {formatEgp(trade.sellPrice)}
+                            <td className="py-3 px-4 text-right font-bold text-slate-100 font-mono">
+                              {formatEgp(record.exitPrice)}
                             </td>
                             <td className="py-3 px-4 text-right font-mono">
-                              <div className={`font-bold text-sm ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {isWin ? '+' : ''}{formatEgp(trade.realizedPnlEgp)} EGP
+                              <div className={`font-bold text-sm ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)} EGP
                               </div>
-                              <div className={`text-[10px] font-semibold ${isWin ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                {isWin ? '+' : ''}{trade.realizedPnlPercent.toFixed(2)}%
+                              <div className={`text-[10px] font-semibold ${record.isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
                               </div>
                             </td>
                             <td className="py-3 px-4 text-right text-amber-400 font-mono">
-                              {trade.totalFees ? `${formatEgp(trade.totalFees)}` : '0.00'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-
-                      {/* 2. Month-End Active Holdings */}
-                      {filteredHoldings.map((h) => {
-                        const isGain = h.pnlEgp >= 0;
-                        return (
-                          <tr key={h.id} className="transition bg-white/[0.01]">
-                            <td className="py-3 px-4">
-                              <div className="font-bold text-cyan-300">{h.ticker}</div>
-                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{h.companyName}</div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  h.type === 'CURRENT_OPEN'
-                                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30'
-                                }`}
-                              >
-                                <Clock className="w-3 h-3" />
-                                {h.type === 'CURRENT_OPEN'
-                                  ? 'Active Holding'
-                                  : `Held at Month-End (Exited ${h.exitDate})`}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right text-slate-200 font-mono">
-                              {h.shares.toLocaleString()}
-                            </td>
-                            <td className="py-3 px-4 text-right text-slate-300 font-mono">
-                              {formatEgp(h.buyPrice)}{' '}
-                              <span className="text-[10px] text-slate-500 font-sans">({h.buyDate})</span>
-                            </td>
-                            <td className="py-3 px-4 text-right font-bold text-slate-200 font-mono">
-                              {formatEgp(h.marketPrice)}
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono">
-                              <div className={`font-bold text-sm ${isGain ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {isGain ? '+' : ''}{formatEgp(h.pnlEgp)} EGP
-                              </div>
-                              <div className={`text-[10px] font-semibold ${isGain ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                {isGain ? '+' : ''}{h.pnlPercent.toFixed(2)}%
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-right text-amber-400 font-mono">
-                              {h.fees > 0 ? `${formatEgp(h.fees)}` : '0.00'}
+                              {record.fees > 0 ? formatEgp(record.fees) : '0.00'}
                             </td>
                           </tr>
                         );

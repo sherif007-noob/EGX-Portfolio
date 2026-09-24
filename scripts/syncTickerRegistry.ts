@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { createChart, createSession } from '@ch99q/twc';
 import {
   EGX_STOCK_DICTIONARY,
-  LEGACY_TICKER_ALIASES,
   RETIRED_BASELINE_TICKERS,
   mapMarketClassificationToSector,
 } from '../src/data/egxTickers';

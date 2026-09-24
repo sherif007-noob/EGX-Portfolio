@@ -29,7 +29,10 @@ function clean(value: unknown): string {
 }
 
 export function tradingViewCandidates(input: TradingViewTickerMetadata): Array<{ symbol: string; method: TradingViewResolutionMethod }> {
-  const ticker = canonicalizeEGXSymbol(clean(input.ticker));
+  const rawTicker = clean(input.ticker);
+  const ticker = clean(input.tradingviewSymbol)
+    ? rawTicker
+    : canonicalizeEGXSymbol(rawTicker);
   const dictionaryIsin = EGX_STOCK_DICTIONARY[ticker]?.isin;
   const legacy = LEGACY_TICKER_ALIASES[clean(input.ticker)];
   const ordered: Array<{ symbol: string; method: TradingViewResolutionMethod }> = [
@@ -46,7 +49,10 @@ export async function resolveTradingViewInstrument(
   chart: Awaited<ReturnType<typeof createChart>>,
   input: TradingViewTickerMetadata,
 ): Promise<TradingViewResolution> {
-  const ticker = canonicalizeEGXSymbol(clean(input.ticker));
+  const rawTicker = clean(input.ticker);
+  const ticker = clean(input.tradingviewSymbol)
+    ? rawTicker
+    : canonicalizeEGXSymbol(rawTicker);
   const attempts: TradingViewResolutionAttempt[] = [];
 
   for (const candidate of tradingViewCandidates(input)) {

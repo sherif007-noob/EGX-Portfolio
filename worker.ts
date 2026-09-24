@@ -89,7 +89,7 @@ async function googleJson(url: string, token: string, init: RequestInit = {}): P
   return json(body);
 }
 
-async function handleApi(request: Request): Promise<Response> {
+async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -337,7 +337,7 @@ export default {
       supabaseSecretPresent ? env.SUPABASE_SECRET_KEY.trim() : undefined,
     );
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) return handleApi(request);
+    if (url.pathname.startsWith("/api/")) return handleApi(request, env);
     return env.ASSETS.fetch(request);
   },
 };

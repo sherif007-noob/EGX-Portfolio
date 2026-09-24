@@ -348,11 +348,28 @@ async function pruneInterval(
   return count ?? 0;
 }
 
-function earliestHistoryTimestampMs(history: HistoryBar[]): number {
+function earliestUsableHistoryTimestampMs(history: HistoryBar[]): number {
   let earliest = Number.POSITIVE_INFINITY;
   for (const bar of history) {
     const seconds = Number(bar?.[0]);
-    if (!Number.isFinite(seconds)) continue;
+    const open = Number(bar?.[1]);
+    const high = Number(bar?.[2]);
+    const low = Number(bar?.[3]);
+    const close = Number(bar?.[4]);
+    if (
+      !Number.isFinite(seconds) ||
+      seconds <= 0 ||
+      !Number.isFinite(open) ||
+      !Number.isFinite(high) ||
+      !Number.isFinite(low) ||
+      !Number.isFinite(close) ||
+      open <= 0 ||
+      high <= 0 ||
+      low <= 0 ||
+      close <= 0
+    ) {
+      continue;
+    }
     earliest = Math.min(earliest, seconds * 1000);
   }
   return earliest;
@@ -436,11 +453,11 @@ async function fetchOneMinuteHistoryPaged(
     let sourceExhausted = false;
 
     while (
-      earliestHistoryTimestampMs((series.history || []) as HistoryBar[]) > targetStartMs &&
+      earliestUsableHistoryTimestampMs((series.history || []) as HistoryBar[]) > targetStartMs &&
       additionalBatches < INTRADAY_POLICY.maxBackfillBatches
     ) {
       const beforeLength = series.history.length;
-      const beforeFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+      const beforeFirst = earliestUsableHistoryTimestampMs((series.history || []) as HistoryBar[]);
 
       await requestMoreOneMinuteData(
         session,
@@ -451,7 +468,7 @@ async function fetchOneMinuteHistoryPaged(
       additionalBatches += 1;
 
       const afterLength = series.history.length;
-      const afterFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+      const afterFirst = earliestUsableHistoryTimestampMs((series.history || []) as HistoryBar[]);
 
       if (afterLength <= beforeLength || afterFirst >= beforeFirst) {
         sourceExhausted = true;
@@ -459,7 +476,7 @@ async function fetchOneMinuteHistoryPaged(
       }
     }
 
-    const earliestMs = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+    const earliestMs = earliestUsableHistoryTimestampMs((series.history || []) as HistoryBar[]);
     if (
       Number.isFinite(earliestMs) &&
       earliestMs > targetStartMs &&

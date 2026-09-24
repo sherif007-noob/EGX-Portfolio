@@ -27,7 +27,10 @@ import { INTRADAY_POLICY } from '../../services/intradayPolicy';
 import { aggregateIntradayBars } from '../../services/intradayAggregation';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
 import { selectBestIntradayResolution } from '../../services/intradayResolution';
-import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
+import {
+  alignIntradayEquityToAuthoritativeTotal,
+  buildIntradayAnalyticsResult,
+} from '../../services/intradayAnalyticsEngine';
 import {
   buildUnifiedAnalyticsResult,
   type UnifiedAnalyticsResult,
@@ -62,6 +65,7 @@ interface PerformanceTimeframeChartProps {
   historicalPrices: HistoricalPriceSeries;
   capitalDeposits: number;
   positions: Position[];
+  currentPortfolioValue?: number;
   historicalLoading?: boolean;
   entranceReady?: boolean;
 }
@@ -162,6 +166,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   historicalPrices,
   capitalDeposits,
   positions,
+  currentPortfolioValue,
   historicalLoading = false,
   entranceReady = true,
 }) => {
@@ -328,7 +333,13 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     setTimeframe(nextTimeframe);
   };
 
-  const result = timeframe === 'TODAY' ? intradayResult : dailyResult;
+  const result = useMemo(
+    () =>
+      timeframe === 'TODAY'
+        ? alignIntradayEquityToAuthoritativeTotal(intradayResult, currentPortfolioValue)
+        : dailyResult,
+    [timeframe, intradayResult, currentPortfolioValue, dailyResult],
+  );
   const loading = timeframe === 'TODAY' ? intradayLoading && !intradayResult : historicalLoading;
   const definition = getAnalyticsModeDefinition(mode);
   const summary = analyticsModeSummary(result, mode);

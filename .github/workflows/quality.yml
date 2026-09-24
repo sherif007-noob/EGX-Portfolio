@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/monthly-audit-card-renderer-gate]
   pull_request:
     branches: [main]
 

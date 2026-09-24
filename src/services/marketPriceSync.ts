@@ -24,7 +24,9 @@ export interface TradingViewScanResult {
  * Queries TradingView Egypt market scanner API for delayed market data and closing-price data.
  * Uses the backend server proxy (/api/egx/scan) to guarantee reliable requests without CORS blocks.
  */
-export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult> {
+export async function fetchTradingViewEGXPrices(
+  directory: EGXTicker[] = [],
+): Promise<TradingViewScanResult> {
   const payload = {
     filter: [],
     options: { lang: 'en' },
@@ -91,7 +93,24 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
     if (Array.isArray(item.d) && item.d.length >= 2) {
       const rawSymbol = String(item.d[0] || '').trim().toUpperCase();
       const scannerSymbol = rawSymbol.replace(/^EGX:/, '').replace(/\.CA$/, '');
-      const cleanTicker = canonicalizeEGXSymbol(scannerSymbol);
+      const directRegistry = directory.find(
+        (ticker) =>
+          ticker.metadataSource === 'registry' &&
+          ticker.directoryStatus !== 'inactive' &&
+          ticker.directoryStatus !== 'retired' &&
+          ticker.ticker.trim().toUpperCase() === scannerSymbol,
+      );
+      const aliasRegistry = directory.find(
+        (ticker) =>
+          ticker.metadataSource === 'registry' &&
+          ticker.directoryStatus !== 'inactive' &&
+          ticker.directoryStatus !== 'retired' &&
+          (ticker.aliases || []).some((alias) => alias.trim().toUpperCase() === scannerSymbol),
+      );
+      const cleanTicker =
+        directRegistry?.ticker.trim().toUpperCase() ||
+        aliasRegistry?.ticker.trim().toUpperCase() ||
+        canonicalizeEGXSymbol(scannerSymbol);
       const description = typeof item.d[1] === 'string' ? String(item.d[1] || '').trim() : '';
       const logoId = typeof item.d[2] === 'string' ? String(item.d[2] || '').trim() : '';
       const close = Number(item.d[3] || 0);
@@ -154,6 +173,7 @@ export async function fetchTradingViewEGXPrices(): Promise<TradingViewScanResult
           marketSector,
           industry,
           scannerIsin,
+          true,
         );
         discoveredTickers.push(tickerObj);
       }
@@ -180,28 +200,57 @@ export function applyLivePricesToPortfolio(
 
   const tickerMap = new Map<string, EGXTicker>();
   tickers.forEach((ticker) => {
-    const canonical = canonicalizeEGXSymbol(ticker.ticker);
+    const raw = ticker.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+    const canonical = ticker.metadataSource === 'registry'
+      ? raw
+      : canonicalizeEGXSymbol(raw);
     tickerMap.set(canonical, { ...ticker, ticker: canonical });
   });
 
   discoveredTickers.forEach((dt) => {
-    const key = canonicalizeEGXSymbol(dt.ticker);
+    const rawKey = dt.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+    const aliasedExisting = [...tickerMap.values()].find(
+      (ticker) => (ticker.aliases || []).some((alias) => alias.trim().toUpperCase() === rawKey),
+    );
+    const key = tickerMap.has(rawKey)
+      ? rawKey
+      : aliasedExisting?.ticker || canonicalizeEGXSymbol(rawKey);
     const existing = tickerMap.get(key);
     const fallback = EGX_STOCK_DICTIONARY[key];
+    const registryIdentity = existing?.metadataSource === 'registry';
 
     const merged: EGXTicker = {
       ...(existing || dt),
       ...dt,
       ticker: key,
-      nameEn: dt.nameEn || existing?.nameEn || fallback?.nameEn || key,
-      nameAr: fallback?.nameAr || existing?.nameAr || dt.nameAr || `${key} مصر`,
-      sector: dt.sector !== 'Other'
-        ? dt.sector
-        : (existing?.sector || fallback?.sector || 'Other'),
-      isin: dt.isin || existing?.isin || fallback?.isin || '',
-      marketSector: dt.marketSector || existing?.marketSector,
-      industry: dt.industry || existing?.industry,
-      metadataSource: 'tradingview',
+      nameEn: registryIdentity
+        ? existing.nameEn
+        : (dt.nameEn || existing?.nameEn || fallback?.nameEn || key),
+      nameAr: registryIdentity
+        ? existing.nameAr
+        : (fallback?.nameAr || existing?.nameAr || dt.nameAr || `${key} مصر`),
+      sector: registryIdentity
+        ? existing.sector
+        : (dt.sector !== 'Other'
+          ? dt.sector
+          : (existing?.sector || fallback?.sector || 'Other')),
+      isin: registryIdentity
+        ? existing.isin
+        : (dt.isin || existing?.isin || fallback?.isin || ''),
+      marketSector: registryIdentity
+        ? existing.marketSector
+        : (dt.marketSector || existing?.marketSector),
+      industry: registryIdentity
+        ? existing.industry
+        : (dt.industry || existing?.industry),
+      metadataSource: registryIdentity ? 'registry' : 'tradingview',
+      directoryStatus: existing?.directoryStatus,
+      aliases: existing?.aliases,
+      scannerSymbol: existing?.scannerSymbol,
+      historySymbol: existing?.historySymbol,
+      historyResolutionMethod: existing?.historyResolutionMethod,
+      historyVerifiedAt: existing?.historyVerifiedAt,
+      registryUpdatedAt: existing?.registryUpdatedAt,
       lastUpdated: nowIso,
       priceUpdatedAt: nowIso,
     };
@@ -275,7 +324,11 @@ export function applyLivePricesToPortfolio(
   let positionsChanged = false;
   const updatedPositions = positions.map(p => {
     const cleanSym = p.ticker.trim().toUpperCase();
-    const symbol = resolveTickerSymbol(cleanSym);
+    const symbol = tickerMap.has(cleanSym)
+      ? cleanSym
+      : ([...tickerMap.values()].find(
+          (ticker) => (ticker.aliases || []).some((alias) => alias.trim().toUpperCase() === cleanSym),
+        )?.ticker || resolveTickerSymbol(cleanSym));
     
     let newPrice = p.currentPrice;
     let newDayChange = p.dayChange;

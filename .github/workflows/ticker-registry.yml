@@ -66,6 +66,13 @@ jobs:
       - name: Typecheck
         run: npm run lint
 
+      - name: Run ticker registry regressions
+        run: >-
+          npx vitest run
+          src/services/tickerRegistry.test.ts
+          src/services/tradingViewSymbolResolver.test.ts
+          src/services/marketPriceSync.test.ts
+
       - name: Reconcile directory and resolver identities
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co

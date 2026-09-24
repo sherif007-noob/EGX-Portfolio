@@ -59,3 +59,21 @@ That was an architectural mismatch, not a Supabase-data problem. The Worker endp
 - Verify representative legacy/canonical aliases such as QNBA/QNBE/QNBF.
 - Verify the chart consumes the resulting 5-minute rows.
 - Add/finish regression coverage for the post-midnight Today endpoint, active-session behavior, and weekend/holiday behavior.
+
+
+## 2026-09-24 stale-client 503 root cause
+
+After the browser-triggered intraday repair effect was removed from `App.tsx`, production logs still showed POSTs to `/api/supabase/intraday-history/ensure`. The current branch no longer contained an active caller, while the request body size and endpoint matched the previous startup repair path. The remaining requests therefore came from an already-loaded / PWA-cached older frontend bundle, not from the current source.
+
+The repair is intentionally defensive at both ends:
+
+- the obsolete browser repair function was removed from `intradayPriceStore.ts`;
+- Workbox now cleans outdated caches, activates the new service worker immediately, and claims clients;
+- the legacy intraday repair endpoint returns a successful no-op so an already-open old client cannot create a 503/error loop during rollout;
+- Today analytics prefers real 5-minute rows but falls back to the existing real 15-minute store while 5-minute ingestion is not yet populated.
+
+The temporary Worker WebSocket compatibility shim was also removed from the Node repair service. Node TradingView code now uses `@ch99q/twc`'s native Node WebSocket path; Cloudflare does not invoke it.
+
+### 5-minute ingestion deployment note
+
+At the time of this investigation Supabase still had no 5-minute intraday rows. The Premium workflow was updated so pushes affecting the intraday workflow/script on `feature/premium-ui-redesign` are eligible to exercise the Node ingestion before merge. GitHub scheduled workflows still execute from the repository default branch, so the default-branch schedule remains the long-term production scheduler. Until that scheduler runs the 5-minute implementation, the chart's 15-minute fallback prevents an empty Today series.

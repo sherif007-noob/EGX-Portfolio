@@ -113,12 +113,21 @@ export function resolveTickerFromDirectory(
   const normalized = normalize(input);
   if (!normalized) return '';
 
+  const exact = (tickers || []).find((ticker) => normalize(ticker.ticker) === normalized);
+  if (
+    exact &&
+    exact.directoryStatus !== 'inactive' &&
+    exact.directoryStatus !== 'retired'
+  ) {
+    return normalize(exact.ticker);
+  }
+
   for (const ticker of tickers || []) {
+    if (ticker.directoryStatus === 'inactive' || ticker.directoryStatus === 'retired') continue;
     const canonical = normalize(ticker.ticker);
-    if (canonical === normalized) return canonical;
     if ((ticker.aliases || []).some((alias) => normalize(alias) === normalized)) return canonical;
     if (normalize(ticker.isin) === normalized) return canonical;
   }
 
-  return normalized;
+  return exact ? normalize(exact.ticker) : normalized;
 }

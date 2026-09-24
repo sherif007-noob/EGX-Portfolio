@@ -126,4 +126,59 @@ describe('intraday resolution selection', () => {
       ),
     ).toEqual(['ACTF']);
   });
+
+  it('rejects a tiny 1m sample even when it contains every session ticker', () => {
+    const partial1m: IntradayPriceSeries = {
+      ACTF: [{ timestamp: '2026-09-24T10:30:00.000Z', intervalMinutes: 1, open: 10, high: 10, low: 10, close: 10 }],
+      ETEL: [{ timestamp: '2026-09-24T10:30:00.000Z', intervalMinutes: 1, open: 20, high: 20, low: 20, close: 20 }],
+    };
+    const healthy5m: IntradayPriceSeries = {
+      ACTF: [
+        { timestamp: '2026-09-24T07:00:00.000Z', intervalMinutes: 5, open: 10, high: 10, low: 10, close: 10 },
+        { timestamp: '2026-09-24T10:25:00.000Z', intervalMinutes: 5, open: 10, high: 10, low: 10, close: 10 },
+      ],
+      ETEL: [
+        { timestamp: '2026-09-24T07:00:00.000Z', intervalMinutes: 5, open: 20, high: 20, low: 20, close: 20 },
+        { timestamp: '2026-09-24T10:25:00.000Z', intervalMinutes: 5, open: 20, high: 20, low: 20, close: 20 },
+      ],
+    };
+
+    const selected = selectBestIntradayResolution(
+      [
+        { intervalMinutes: 1, series: partial1m },
+        { intervalMinutes: 5, series: healthy5m },
+      ],
+      ['ACTF', 'ETEL'],
+      '2026-09-24',
+    );
+
+    expect(selected?.intervalMinutes).toBe(5);
+  });
+
+  it('still prefers sparse 1m observations when their session envelope matches 5m', () => {
+    const sparse1m: IntradayPriceSeries = {
+      ILLIQ: [
+        { timestamp: '2026-09-24T07:01:00.000Z', intervalMinutes: 1, open: 10, high: 10, low: 10, close: 10 },
+        { timestamp: '2026-09-24T10:29:00.000Z', intervalMinutes: 1, open: 11, high: 11, low: 11, close: 11 },
+      ],
+    };
+    const coarse5m: IntradayPriceSeries = {
+      ILLIQ: [
+        { timestamp: '2026-09-24T07:00:00.000Z', intervalMinutes: 5, open: 10, high: 10, low: 10, close: 10 },
+        { timestamp: '2026-09-24T10:25:00.000Z', intervalMinutes: 5, open: 11, high: 11, low: 11, close: 11 },
+      ],
+    };
+
+    const selected = selectBestIntradayResolution(
+      [
+        { intervalMinutes: 1, series: sparse1m },
+        { intervalMinutes: 5, series: coarse5m },
+      ],
+      ['ILLIQ'],
+      '2026-09-24',
+    );
+
+    expect(selected?.intervalMinutes).toBe(1);
+  });
+
 });

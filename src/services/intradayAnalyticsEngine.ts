@@ -3,6 +3,7 @@ import type { HistoricalPriceSeries } from './historicalPriceStore';
 import type { IntradayPricePoint, IntradayPriceSeries } from './intradayPriceStore';
 import { cairoDateKey, normalizeIntradayTicker } from './intradayPriceStore';
 import { resolveAnalyticsWindow } from './analyticsTimeframes';
+import { egxCairoSessionClock } from './egxTradingSession';
 import {
   buildExternalCashFlows,
   sortPerformanceTransactions,
@@ -449,11 +450,19 @@ export function buildIntradayAnalyticsResult(
           : null;
         equityPeak = Math.max(equityPeak, liveEquity);
 
-        // A quote sync after midnight can still represent the latest completed
-        // EGX session. Keep that authoritative close attached to the session
-        // itself instead of timestamping it on the following calendar day.
+        // A live quote sync can happen long after the regular EGX session
+        // has closed. Never stretch the Today chart to the wall-clock sync time:
+        // after 14:30 Cairo, pin the authoritative endpoint immediately after
+        // the final observed market point. During an active session, keep the
+        // actual as-of timestamp. A later-calendar-day quote is likewise kept
+        // attached to the latest completed session.
+        const cairoClock = egxCairoSessionClock(asOfDate);
+        const sameSessionDate = sessionDate === cairoClock.dateKey;
+        const afterRegularClose =
+          sameSessionDate &&
+          cairoClock.minuteOfDay >= 14 * 60 + 30;
         const endpointMs =
-          sessionDate === cairoDateKey(asOfDate.toISOString())
+          sameSessionDate && !afterRegularClose
             ? asOfMs
             : lastPointMs + 1;
         const timestamp = formatIso(endpointMs);

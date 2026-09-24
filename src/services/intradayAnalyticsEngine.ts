@@ -4,6 +4,7 @@ import type { IntradayPricePoint, IntradayPriceSeries } from './intradayPriceSto
 import { cairoDateKey, normalizeIntradayTicker } from './intradayPriceStore';
 import { resolveAnalyticsWindow } from './analyticsTimeframes';
 import { egxCairoSessionClock } from './egxTradingSession';
+import { INTRADAY_POLICY } from './intradayPolicy';
 import {
   buildExternalCashFlows,
   sortPerformanceTransactions,
@@ -460,7 +461,7 @@ export function buildIntradayAnalyticsResult(
         const sameSessionDate = sessionDate === cairoClock.dateKey;
         const afterRegularClose =
           sameSessionDate &&
-          cairoClock.minuteOfDay >= 14 * 60 + 30;
+          cairoClock.minuteOfDay >= INTRADAY_POLICY.sessionEndMinutes;
         const endpointMs =
           sameSessionDate && !afterRegularClose
             ? asOfMs

@@ -651,7 +651,22 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </div>
 
       {/* Responsive benchmark scorecards: phone + tablet */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:hidden">
+      <section className="space-y-3 2xl:hidden" aria-label="Detailed performance benchmark scorecards">
+        <div className="flex items-end justify-between gap-3 px-0.5">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-purple-300/80">
+              Detailed Benchmark Scorecard
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Measured result, institutional target, and assessment for every tracked indicator.
+            </p>
+          </div>
+          <span className="premium-chip hidden shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold text-slate-300 sm:inline-flex">
+            {benchmarkCards.length} indicators
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {benchmarkCards.map((item) => {
           const tone = BENCHMARK_TONE_STYLES[item.tone];
           const assessmentIcon =
@@ -707,7 +722,8 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             </article>
           );
         })}
-      </div>
+        </div>
+      </section>
 
       {/* Main Indicators Scorecard Table — true desktop only */}
       <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain rounded-xl 2xl:block">

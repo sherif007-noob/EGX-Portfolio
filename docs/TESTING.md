@@ -71,7 +71,7 @@ The 1-minute migration is validated by the focused smoke workflow and the follow
 - `intradayTickerUniverse.test.ts` — held/session-traded tickers, same-day round trips, normalization and CASH exclusion;
 - `intradayResolution.test.ts` — 1m/5m/15m fallback, incomplete 1m rejection, sparse illiquid acceptance, Cairo date handling, post-midnight and closed-session fallback;
 - `tradingViewSymbolResolver.test.ts` — ticker/canonical/ISIN resolution behavior;
-- `intradayAnalyticsEngine.test.ts` — transaction timing and 1m/5m/15m accounting invariants.
+- `intradayAnalyticsEngine.test.ts` — transaction timing, post-close endpoint pinning, authoritative session-cash reconstruction, stale-opening-capital regression, and 1m/5m/15m accounting invariants.
 
 Focused local run:
 

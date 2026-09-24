@@ -7,7 +7,7 @@ import {
   handlePutSheetValues, handleAppendSheetValues, handleBatchUpdate, handleListDriveSpreadsheets,
 } from "./src/services/googleSheetsServer";
 import { runFirestoreSupabaseMigration } from "./src/services/firestoreSupabaseMigrationServer";
-import { verifySupabaseBearerToken, loadSupabasePortfolio, saveSupabasePortfolio, saveSupabasePriceTick, loadHistoricalPrices, ensurePortfolioHistoricalPrices } from "./src/services/supabasePortfolioServer";
+import { verifySupabaseBearerToken, loadSupabasePortfolio, saveSupabasePortfolio, saveSupabasePriceTick, loadHistoricalPrices, ensurePortfolioHistoricalPrices, ensurePortfolioIntradayPrices } from "./src/services/supabasePortfolioServer";
 
 async function startServer() {
   const app = express();
@@ -52,6 +52,11 @@ async function startServer() {
     const targets = Array.isArray(req.body?.targets) ? req.body.targets : [];
     if (!targets.length) throw new Error("At least one historical backfill target is required.");
     return { data: await ensurePortfolioHistoricalPrices(uid, targets) };
+  }));
+  app.post("/api/supabase/intraday-history/ensure", (req, res) => withSupabaseUser(req, res, async (uid) => {
+    const targets = Array.isArray(req.body?.targets) ? req.body.targets : [];
+    if (!targets.length) throw new Error("At least one intraday backfill target is required.");
+    return { data: await ensurePortfolioIntradayPrices(uid, targets) };
   }));
 
   app.post("/api/migration/firestore-to-supabase", async (req, res) => {

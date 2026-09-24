@@ -218,14 +218,15 @@ Manual `1m`, `5m`, and `15m` choices read the corresponding persisted interval f
 
 Changing the Today display resolution changes chart sampling only. It does not change transaction timing, portfolio accounting, live-price authority, ingestion cadence, retention, or the underlying stored market data.
 
-## Today endpoint and authoritative portfolio alignment
+## Today session boundary and endpoint
 
-The Today chart uses persisted intraday observations to reconstruct the session path, but two display rules keep the chart consistent with the rest of the portfolio UI:
+The Today chart reconstructs the current EGX session from a session boundary rather than rebuilding current cash from inception.
 
-1. **Post-close timestamp pinning.** During the live EGX session, a complete live quote snapshot may be appended at its real as-of time. After the regular 14:30 Cairo close, the live endpoint is pinned immediately after the final observed market point instead of using the later phone/browser wall-clock time. This prevents a 23:xx refresh from making the Today axis appear to extend into the night.
-2. **Authoritative absolute portfolio value.** The main application portfolio total is the authority for the current absolute equity level. If the ledger-reconstructed Today series differs by a constant cash/baseline offset, the Today display series is shifted by that constant amount so its final equity equals the authoritative portfolio total. The shift is applied uniformly to the session equity/cash path, so the curve shape, selected-period P&L, TWR/MWR semantics and nominal drawdown gaps are not changed.
+1. **Authoritative session-opening cash.** When the current portfolio cash balance is available, Today derives the cash balance at the first market bar by reversing the signed cash impact of session executions that occur at or after that first bar. It then replays those executions forward against real intraday market observations. This makes Today independent of stale legacy `capitalDeposits` / inception-opening-capital state while preserving auditable transaction effects.
+2. **Historical fallback.** If no current cash boundary is available, the engine may still reconstruct from the historical opening-capital model for offline/tests/legacy callers.
+3. **Post-close timestamp pinning.** During the live EGX session, a complete live quote snapshot may be appended at its real as-of time. After the regular 14:30 Cairo close, the live endpoint is pinned immediately after the final observed market point instead of using the later phone/browser wall-clock time. This prevents a 23:xx refresh from making the Today axis appear to extend into the night.
 
-This alignment is a display-level reconciliation of absolute portfolio level; it does not rewrite persisted market bars or transaction history.
+The Today engine does not vertically shift a finished equity curve to force a target total. Cash, shares, prices and transaction impacts must reconcile at their source.
 
 ## Live endpoint
 

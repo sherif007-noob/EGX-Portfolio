@@ -66,35 +66,11 @@ async function supabaseFetchWithJwtRetry(input: RequestInfo | URL, init?: Reques
 let configuredSupabaseUrl: string | undefined;
 let configuredSupabaseSecretKey: string | undefined;
 
-/**
- * @ch99q/twc detects Node by checking globalThis.process and then passes a
- * Node/ws options object as WebSocket's second constructor argument. Cloudflare
- * Workers with nodejs_compat expose process while using the browser-standard
- * WebSocket constructor, where argument #2 is a protocol list. That mismatch
- * throws "The protocol header token is invalid".
- *
- * createSession() reaches its WebSocket constructor synchronously before its
- * first await, so temporarily hiding the Node marker makes twc take its
- * browser/Workers path (new WebSocket(url)) without affecting the async session.
- */
 async function createTradingViewSession() {
-  const root = globalThis as any;
-  const originalProcess = root.process;
-  const hasStandardWebSocket = typeof root.WebSocket === 'function';
-  const looksNodeCompatible = Boolean(originalProcess?.versions?.node);
-
-  if (!hasStandardWebSocket || !looksNodeCompatible) {
-    return createSession();
-  }
-
-  let sessionPromise: ReturnType<typeof createSession>;
-  try {
-    root.process = undefined;
-    sessionPromise = createSession();
-  } finally {
-    root.process = originalProcess;
-  }
-  return sessionPromise;
+  // These TradingView repair functions are Node-only. Cloudflare no longer
+  // calls them, so keep @ch99q/twc on its native Node WebSocket path with
+  // the custom handshake headers TradingView expects.
+  return createSession();
 }
 
 export function configureSupabaseServer(url?: string, secretKey?: string) {

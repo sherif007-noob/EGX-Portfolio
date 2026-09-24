@@ -13,6 +13,8 @@ on:
       - 'src/services/egxTradingSession.ts'
       - 'src/services/egxTradingSession.test.ts'
       - 'src/services/tickerRegistry.ts'
+      - 'src/components/charts/PerformanceTimeframeChart.tsx'
+      - 'src/App.tsx'
       - 'supabase/migrations/20260924_ticker_registry*.sql'
   workflow_dispatch:
 

@@ -40,24 +40,21 @@ function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
   });
 }
 
-function applyTransaction(
-  tx: TradeTransaction,
-  state: { cash: number; shares: Map<string, number>; executionPrices: Map<string, number> },
-) {
+function transactionCashImpact(tx: TradeTransaction): number {
   const ticker = normalizeIntradayTicker(tx.ticker);
 
   if (ticker === 'CASH') {
     const kind = cashFlowKind(tx);
-    const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
-    if (!Number.isFinite(amount)) return;
-
-    if (kind === 'DIVIDEND' || kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) state.cash += amount;
-    else if (kind === 'FEE' || kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) state.cash -= amount;
-    else if (kind === 'CASH_ADJUSTMENT') {
+    if (kind === 'CASH_ADJUSTMENT') {
       const signed = Number(tx.cashFlowAmount ?? tx.totalAmount);
-      if (Number.isFinite(signed)) state.cash += signed;
+      return Number.isFinite(signed) ? signed : 0;
     }
-    return;
+
+    const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
+    if (!Number.isFinite(amount)) return 0;
+    if (kind === 'DIVIDEND' || kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) return amount;
+    if (kind === 'FEE' || kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) return -amount;
+    return 0;
   }
 
   const shares = Number(tx.shares);
@@ -66,24 +63,48 @@ function applyTransaction(
   const gross = Number.isFinite(tx.grossTradeValue)
     ? Number(tx.grossTradeValue)
     : shares * price;
-
-  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return;
+  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return 0;
 
   if (tx.type === 'BUY') {
-    state.cash -= Number.isFinite(tx.totalAmount) && tx.totalAmount > 0
+    if (Number.isFinite(tx.netCashImpact) && Number(tx.netCashImpact) < 0) {
+      return Number(tx.netCashImpact);
+    }
+    return -(Number.isFinite(tx.totalAmount) && tx.totalAmount > 0
       ? Number(tx.totalAmount)
-      : gross + fees;
-    state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
-    state.executionPrices.set(ticker, price);
-  } else {
-    state.cash += Number.isFinite(tx.totalAmount) && tx.totalAmount > 0
-      ? Number(tx.totalAmount)
-      : Number.isFinite(tx.netCashImpact)
-        ? Number(tx.netCashImpact)
-        : gross - fees;
-    state.shares.set(ticker, Math.max(0, (state.shares.get(ticker) || 0) - shares));
-    state.executionPrices.set(ticker, price);
+      : gross + fees);
   }
+
+  if (Number.isFinite(tx.netCashImpact) && Number(tx.netCashImpact) > 0) {
+    return Number(tx.netCashImpact);
+  }
+  return Number.isFinite(tx.totalAmount) && tx.totalAmount > 0
+    ? Number(tx.totalAmount)
+    : gross - fees;
+}
+
+function applyTransaction(
+  tx: TradeTransaction,
+  state: { cash: number; shares: Map<string, number>; executionPrices: Map<string, number> },
+) {
+  const ticker = normalizeIntradayTicker(tx.ticker);
+  const cashImpact = transactionCashImpact(tx);
+
+  if (ticker === 'CASH') {
+    state.cash += cashImpact;
+    return;
+  }
+
+  const shares = Number(tx.shares);
+  const price = Number(tx.price);
+  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return;
+
+  state.cash += cashImpact;
+  if (tx.type === 'BUY') {
+    state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
+  } else {
+    state.shares.set(ticker, Math.max(0, (state.shares.get(ticker) || 0) - shares));
+  }
+  state.executionPrices.set(ticker, price);
 }
 
 function previousClose(
@@ -151,43 +172,6 @@ function formatIso(ms: number): string {
   return new Date(ms).toISOString();
 }
 
-export function alignIntradayEquityToAuthoritativeTotal(
-  result: UnifiedAnalyticsResult | null,
-  authoritativeEndEquity: number | null | undefined,
-): UnifiedAnalyticsResult | null {
-  if (!result || !Number.isFinite(authoritativeEndEquity)) return result;
-
-  const currentEndEquity = result.summary.endEquity;
-  if (!Number.isFinite(currentEndEquity)) return result;
-
-  const target = Number(authoritativeEndEquity);
-  const delta = target - Number(currentEndEquity);
-  if (Math.abs(delta) <= EPSILON) return result;
-
-  return {
-    ...result,
-    points: result.points.map((point) => ({
-      ...point,
-      equity: point.equity + delta,
-      cash: point.cash + delta,
-      // A constant vertical shift does not change nominal peak-to-trough gaps.
-      equityDrawdownEgp: point.equityDrawdownEgp,
-    })),
-    summary: {
-      ...result.summary,
-      startEquity:
-        result.summary.startEquity == null
-          ? null
-          : result.summary.startEquity + delta,
-      endEquity: target,
-      // The same constant offset is applied to both endpoints, so selected-
-      // period P&L and return semantics remain unchanged.
-      pnlEgp: result.summary.pnlEgp,
-      maxEquityDrawdownEgp: result.summary.maxEquityDrawdownEgp,
-    },
-  };
-}
-
 export function buildIntradayAnalyticsResult(
   transactions: TradeTransaction[],
   historicalPrices: HistoricalPriceSeries,
@@ -195,6 +179,7 @@ export function buildIntradayAnalyticsResult(
   options: {
     sessionDate: string;
     openingCapital?: number;
+    currentCashBalance?: number;
     asOf?: string | Date;
     livePrices?: Record<string, number>;
   },
@@ -267,6 +252,20 @@ export function buildIntradayAnalyticsResult(
     }
     if (executed < baselineMs) applyTransaction(tx, state);
     else sessionTransactions.push(tx);
+  }
+
+  // Today is a session reconstruction, not an inception reconstruction.
+  // When the current cash account is available, derive the session-opening cash
+  // by reversing only the session executions that occur at/after the first bar.
+  // This makes the Today path independent of stale legacy opening-capital state.
+  if (Number.isFinite(options.currentCashBalance)) {
+    const futureSessionImpact = sessionTransactions
+      .filter((tx) => {
+        const executed = parseMs(tx.executedAt);
+        return Number.isFinite(executed) && executed <= asOfMs;
+      })
+      .reduce((sum, tx) => sum + transactionCashImpact(tx), 0);
+    state.cash = Number(options.currentCashBalance) - futureSessionImpact;
   }
 
   const previousCloses = new Map<string, number>();

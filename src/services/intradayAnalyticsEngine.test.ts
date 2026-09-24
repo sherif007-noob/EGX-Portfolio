@@ -200,7 +200,7 @@ describe('intraday analytics engine', () => {
 
   it('pins a same-day post-close live endpoint to the final EGX market point', () => {
     const transactions: TradeTransaction[] = [
-      tx({ id: 'dep-close', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-24' }),
+      tx({ id: 'dep-close', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-23' }),
       tx({ id: 'hold-close', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-23', executedAt: '2026-09-23T08:00:00Z' }),
     ];
 

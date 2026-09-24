@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Backfill ACTF and NAPR
+    name: Validate and rebuild ACTF/NAPR
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -48,7 +48,21 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Backfill ACTF and NAPR from TradingView 1m
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Run intraday migration regression tests
+        run: >-
+          npx vitest run
+          src/services/intradayPolicy.test.ts
+          src/services/intradayBackfillPlan.test.ts
+          src/services/intradayAggregation.test.ts
+          src/services/intradayTickerUniverse.test.ts
+          src/services/intradayResolution.test.ts
+          src/services/tradingViewSymbolResolver.test.ts
+          src/services/intradayAnalyticsEngine.test.ts
+
+      - name: Rebuild ACTF and NAPR from TradingView 1m
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}

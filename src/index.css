@@ -3054,3 +3054,71 @@ body {
   }
 
 }
+
+
+/* Phase 6 Pass 4 real-device table contracts.
+ * Dense financial reports must scroll horizontally before their semantic columns
+ * collapse into vertical word stacks.
+ */
+.report-benchmark-table th:nth-child(1),
+.report-benchmark-table td:nth-child(1) {
+  min-width: 19rem;
+}
+
+.report-benchmark-table th:nth-child(2),
+.report-benchmark-table td:nth-child(2) {
+  min-width: 10.5rem;
+}
+
+.report-benchmark-table th:nth-child(3),
+.report-benchmark-table td:nth-child(3) {
+  min-width: 16rem;
+}
+
+.report-benchmark-table th:nth-child(4),
+.report-benchmark-table td:nth-child(4) {
+  min-width: 18rem;
+}
+
+.report-benchmark-table td:nth-child(4) > span {
+  white-space: nowrap;
+}
+
+.report-monthly-table th:nth-child(1),
+.report-monthly-table td:nth-child(1) {
+  min-width: 13rem;
+}
+
+.report-monthly-table th:nth-child(2),
+.report-monthly-table td:nth-child(2) {
+  min-width: 15rem;
+}
+
+.report-monthly-table th:nth-child(3),
+.report-monthly-table td:nth-child(3) {
+  min-width: 6rem;
+}
+
+.report-monthly-table th:nth-child(4),
+.report-monthly-table td:nth-child(4) {
+  min-width: 12rem;
+}
+
+.report-monthly-table th:nth-child(5),
+.report-monthly-table td:nth-child(5) {
+  min-width: 10rem;
+}
+
+.report-monthly-table th:nth-child(6),
+.report-monthly-table td:nth-child(6) {
+  min-width: 13rem;
+}
+
+.report-monthly-table th:nth-child(7),
+.report-monthly-table td:nth-child(7) {
+  min-width: 8rem;
+}
+
+.report-monthly-table td:nth-child(2) > span {
+  white-space: nowrap;
+}

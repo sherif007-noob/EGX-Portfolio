@@ -7,6 +7,28 @@ function floorBucketStart(timestamp: string, bucketMinutes: number): number {
   return Math.floor(ms / bucketMs) * bucketMs;
 }
 
+export function mergeIntradayBarsByTimestamp(
+  baseBars: IntradayPricePoint[],
+  preferredBars: IntradayPricePoint[],
+): IntradayPricePoint[] {
+  const byTimestamp = new Map<string, IntradayPricePoint>();
+
+  const apply = (bars: IntradayPricePoint[]) => {
+    for (const bar of bars) {
+      const ms = new Date(bar.timestamp).getTime();
+      if (!Number.isFinite(ms)) continue;
+      byTimestamp.set(String(ms), bar);
+    }
+  };
+
+  apply(baseBars);
+  apply(preferredBars);
+
+  return [...byTimestamp.values()].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
+}
+
 export function aggregateIntradayBars(
   bars: IntradayPricePoint[],
   targetIntervalMinutes: number,

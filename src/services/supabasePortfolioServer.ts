@@ -395,7 +395,18 @@ export async function ensurePortfolioHistoricalPrices(
           (existingRows ?? []).map((row: any) => String(row.trading_date || '').slice(0, 10)),
         );
 
-        const resolved = await resolveTradingViewInstrument(chart, { ticker, isin: tickerMeta?.isin }).then((item) => item.resolved);
+        const { data: tickerMetaRow, error: tickerMetaError } = await supabase
+          .from('tickers')
+          .select('isin')
+          .eq('portfolio_id', portfolio.id)
+          .eq('ticker', ticker)
+          .maybeSingle();
+        if (tickerMetaError) throw new Error(`Ticker metadata read failed for ${ticker}: ${tickerMetaError.message}`);
+        const resolution = await resolveTradingViewInstrument(chart, {
+          ticker,
+          isin: String(tickerMetaRow?.isin || '').trim().toUpperCase() || undefined,
+        });
+        const resolved = resolution.resolved;
         const series = await createSeries(session, chart, resolved, '1D', requestedBars);
         try {
           const retrievedAt = new Date().toISOString();
@@ -524,7 +535,18 @@ export async function ensurePortfolioIntradayPrices(
         const calendarDays = Math.max(1, Math.ceil((Date.now() - startMs) / 86_400_000) + 1);
         const requestedBars = Math.min(7500, Math.max(256, Math.ceil(calendarDays * 5 / 7 + 5) * 66));
 
-        const resolved = await resolveTradingViewInstrument(chart, { ticker, isin: tickerMeta?.isin }).then((item) => item.resolved);
+        const { data: tickerMetaRow, error: tickerMetaError } = await supabase
+          .from('tickers')
+          .select('isin')
+          .eq('portfolio_id', portfolio.id)
+          .eq('ticker', ticker)
+          .maybeSingle();
+        if (tickerMetaError) throw new Error(`Ticker metadata read failed for ${ticker}: ${tickerMetaError.message}`);
+        const resolution = await resolveTradingViewInstrument(chart, {
+          ticker,
+          isin: String(tickerMetaRow?.isin || '').trim().toUpperCase() || undefined,
+        });
+        const resolved = resolution.resolved;
         const series = await createSeries(session, chart, resolved, '5', requestedBars);
         try {
           const retrievedAt = new Date().toISOString();

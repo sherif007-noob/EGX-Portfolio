@@ -1,0 +1,49 @@
+name: Intraday 1m Diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Comma-separated EGX tickers to probe'
+        required: false
+        default: 'ACTF,NAPR,ORAS,QNBA'
+        type: string
+      bar_count:
+        description: 'TradingView 1-minute bars requested per ticker'
+        required: false
+        default: '5000'
+        type: string
+  push:
+    branches:
+      - feature/premium-ui-redesign
+    paths:
+      - '.github/workflows/intraday-1m-diagnostic.yml'
+      - 'scripts/diagnoseIntradayOneMinute.ts'
+      - 'src/services/tradingViewSymbolResolver.ts'
+      - 'src/services/intradayPolicy.ts'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe TradingView 1m
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Probe one-minute TradingView history
+        env:
+          EGX_1M_DIAGNOSTIC_TICKERS: ${{ inputs.tickers || 'ACTF,NAPR,ORAS,QNBA' }}
+          EGX_1M_DIAGNOSTIC_BAR_COUNT: ${{ inputs.bar_count || '5000' }}
+        run: npm run diagnose:intraday:1m

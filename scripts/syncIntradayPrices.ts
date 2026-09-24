@@ -90,10 +90,11 @@ async function resolveTickerUniverse(
 
 async function loadTickerMetadata(
   sb: ReturnType<typeof supabase>,
-  portfolioId: string,
   ticker: string,
 ): Promise<{ isin?: string; tradingviewSymbol?: string }> {
-  const { data, error } = await sb.from('tickers').select('*').eq('portfolio_id', portfolioId).eq('ticker', ticker).maybeSingle();
+  // ticker metadata is global market data; the tickers table is not
+  // portfolio-scoped. Portfolio scoping belongs to transactions/positions.
+  const { data, error } = await sb.from('tickers').select('isin').eq('ticker', ticker).maybeSingle();
   if (error) throw new Error(`Ticker metadata read failed for ${ticker}: ${error.message}`);
   return {
     isin: String(data?.isin || '').trim().toUpperCase() || undefined,
@@ -263,7 +264,7 @@ async function main() {
       try {
         const latest = await latestStoredTimestamp(sb, ticker);
         const requestedBars = barsToRequest(latest, now, retentionDays);
-        const tickerMeta = await loadTickerMetadata(sb, portfolioId, ticker);
+        const tickerMeta = await loadTickerMetadata(sb, ticker);
         const resolution = await resolveTradingViewInstrument(chart, {
           ticker,
           isin: tickerMeta.isin,

@@ -313,6 +313,7 @@ async function main() {
       scan.marketSector,
       scan.industry,
       (baseline?.sector || current?.sector || 'Other') as any,
+      scan.description,
     );
 
     upserts.push({

@@ -1,403 +1,325 @@
-# 1-Minute Intraday Migration Plan
+# 1-Minute Intraday Migration Plan — Canonical 15-Phase Roadmap
 
-## Objective
+This document is the canonical implementation roadmap for the EGX 1-minute intraday migration on `feature/premium-ui-redesign`.
 
-Upgrade the EGX intraday data layer from the current legacy 15-minute / transitional 5-minute setup to a tiered architecture built around real TradingView 1-minute data:
-
-- **1-minute raw history:** recent high-resolution source of truth.
-- **5-minute derived history:** medium-term intraday archive generated locally from 1-minute bars.
-- **Daily history:** permanent long-term analytics source.
-- **15-minute history:** temporary fallback only during migration.
-
-The goal is to improve Today-chart fidelity and transaction-time accuracy without fabricating market observations, overloading the browser, or reintroducing TradingView WebSocket work into Cloudflare Workers.
-
-## Target architecture
+The target architecture is:
 
 ```text
 TradingView 1m
-    |
-    v
-GitHub Actions / Node
-    |
-    +--> raw 1m rows (30d)
-    |
-    +--> deterministic 1m -> 5m aggregation
-             |
-             v
-        derived 5m rows (90d)
-
-Supabase
-    |
-    +--> browser reads 1m -> 5m -> legacy 15m fallback
-    |
-    +--> daily history remains permanent
+  -> GitHub Actions / Node
+      -> raw 1m (30 calendar days)
+      -> deterministic local 1m -> 5m
+      -> derived 5m (90 calendar days)
+  -> Supabase
+      -> Today reader: 1m -> 5m -> legacy 15m
+      -> daily history remains permanent
 
 TradingView Scanner HTTP
-    |
-    +--> latest/live endpoint only
+  -> authoritative latest/live endpoint
 ```
 
-Cloudflare remains the application/API runtime and does not open TradingView WebSockets.
+Cloudflare Workers must not open TradingView WebSockets.
 
-## Data policy
+## Phase 1 — Lock down the data contract
 
-The canonical policy lives in `src/services/intradayPolicy.ts`.
+**Status: in progress, substantially implemented**
 
-Initial target values:
+Canonical policy: `src/services/intradayPolicy.ts`.
 
-| Setting | Value |
-| --- | --- |
-| Raw interval | 1 minute |
-| Derived interval | 5 minutes |
-| Legacy fallback | 15 minutes |
-| Raw retention | 30 calendar days |
-| Derived retention | 90 calendar days |
-| Ingestion cadence target | ~5 minutes during EGX session |
-| Display/analytics timezone | Africa/Cairo |
+Current policy:
 
-The database primary key already supports multiple resolutions:
+- raw interval = 1 minute;
+- derived interval = 5 minutes;
+- legacy fallback = 15 minutes;
+- raw retention = 30 calendar days;
+- derived retention = 90 calendar days;
+- timezone = `Africa/Cairo`;
+- ingestion cadence target = about 5 minutes;
+- explicit backfill chunk = 7 days;
+- incremental overlap = 2 days;
+- read fallback order = 1m -> 5m -> 15m.
 
-```text
-(ticker, interval_minutes, bar_timestamp)
-```
+TradingView resolution now records the complete attempt path rather than only the final result, so cases such as NAPR can be diagnosed as ticker failure followed by ISIN success.
 
-No separate table is required for 1m versus 5m history.
+Remaining: formalize exchange-session expectations without hardcoding a fixed UTC offset; Cairo DST must remain date-aware.
 
-## Implementation phases
+Acceptance: no chart/service independently invents the active intraday interval, retention, or backfill policy.
 
-### Phase A — Centralize interval policy
+## Phase 2 — Prove TradingView 1-minute behavior first
 
-Status: **started**
+**Status: validated**
 
-Create one authoritative interval/retention policy and remove scattered assumptions from chart/ingestion code.
+Read-only Node diagnostic: `scripts/diagnoseIntradayOneMinute.ts`.
 
-Acceptance criteria:
+Validated on 2026-09-24:
 
-- 1m, 5m, 15m fallback order is declared once.
-- 30d/90d retention is declared once.
-- services import policy rather than inventing their own interval constants.
-
-### Phase B — Prove TradingView 1m behavior
-
-Status: **validated**
-
-Before changing production ingestion, run a non-mutating Node diagnostic against representative names:
-
-- ACTF
-- NAPR
-- a liquid ticker
-- an illiquid ticker
-- one legacy/canonical alias case such as QNBA/QNBE/QNBF
-
-A read-only diagnostic now exists at `scripts/diagnoseIntradayOneMinute.ts` and is exposed as `npm run diagnose:intraday:1m`. It does not write to Supabase. `.github/workflows/intraday-1m-diagnostic.yml` runs the same probe on the Premium branch / manual dispatch so TradingView 1m behavior can be measured in a real Node runner before production ingestion is switched.
-
-Measure:
-
-- ticker resolution path;
-- whether timeframe `"1"` returns usable data;
-- maximum practical bar count;
-- earliest/latest timestamps;
-- sparse-minute behavior;
-- whether count-only retrieval is sufficient or ranged/chunked retrieval is required.
-
-ACTF must not be manually seeded before this test.
-
-#### Diagnostic result — 2026-09-24
-
-A 5,000-bar read-only probe succeeded for all four test names:
-
-| Ticker | Resolver | Returned | First 1m bar | Last 1m bar | Median observed gap |
+| Ticker | Resolver | Bars | First | Last | Median observed gap |
 | --- | --- | ---: | --- | --- | ---: |
 | ACTF | ticker `ACTF` | 5,000 | 2026-08-20 07:29Z | 2026-09-23 11:29Z | 60s |
 | NAPR | ISIN `EGS370O1C013` | 5,000 | 2026-06-09 09:07Z | 2026-09-23 11:29Z | 60s |
 | ORAS | ticker `ORAS` | 5,000 | 2026-08-25 10:57Z | 2026-09-23 11:27Z | 60s |
 | QNBA | canonical ticker `QNBE` | 5,000 | 2026-08-02 08:20Z | 2026-09-23 11:14Z | 60s |
 
-This proves the Node runtime, timeframe `"1"`, centralized ticker/ISIN resolution, and 1-minute cadence all work. It also proves a fixed count is not a reliable date-range guarantee because liquidity changes how much calendar history 5,000 observations cover. Therefore production backfill uses explicit time ranges split into bounded chunks instead of assuming a bar count equals a retention window.
+Result: timeframe `"1"` works in Node, but fixed-count retrieval does not guarantee a calendar range. Production migration therefore uses explicit ranged requests.
 
+ACTF was not manually seeded before this validation.
 
-### Phase C — Restrict the Today ticker universe
+## Phase 3 — Restrict the Today universe
 
-Status: **started**
+**Status: implemented, validation continuing**
 
-Today analytics should query only:
+Browser helper: `resolveIntradaySessionTickers(transactions, sessionDate)`.
 
-1. securities held entering the requested session;
-2. securities bought or sold during that session.
+Today analytics includes:
 
-Historical tickers unrelated to the session must not be fetched just because they appear somewhere in the ledger.
+- securities held entering the session;
+- securities bought during the session;
+- securities sold during the session;
+- same-day round trips;
+- excludes CASH and unrelated closed historical positions.
 
-Canonical helper:
+The automatic Node sync now uses current positions plus transactions on the current Cairo session date instead of every ticker touched during the previous 90 days. Explicit targeted tickers still override discovery.
 
-```text
-resolveIntradaySessionTickers(transactions, sessionDate)
-```
+Acceptance: Today ingestion/analytics does not load historical 1m data for irrelevant old positions.
 
-Acceptance criteria:
+## Phase 4 — Build proper chunked 1m backfill
 
-- closed historical positions are excluded;
-- same-day round trips are included;
-- ticker variants normalize consistently;
-- CASH is excluded.
+**Status: implemented, live revalidation in progress**
 
-### Phase D — Chunked/gap-aware 1m ingestion
+`src/services/intradayBackfillPlan.ts` now distinguishes:
 
-Status: **implemented for migration validation**
+- `full-derived-backfill`: explicit 90-day source retrieval;
+- `raw-backfill`: 30-day raw-tier fill when derived history already exists;
+- `incremental`: two-day overlap repair.
 
-Do not implement 1m by changing a single `5` constant to `1`.
+`scripts/syncIntradayOneMinute.ts` now uses explicit TradingView date ranges split into bounded 7-day chunks rather than relying on one huge bar count plus `request_more_data`.
 
-For each ticker:
+The planner also detects the migration state where old TradingView 5m history predates the locally-derived 5m cache and forces a 90-day rebuild.
 
-1. determine required 1m start date, capped at the 30-day retention boundary;
-2. read existing 1m coverage;
-3. identify missing ranges;
-4. split missing history into safe TradingView retrieval chunks;
-5. resolve ticker/canonical/ISIN through the centralized resolver;
-6. fetch 1m bars in Node;
-7. validate timestamps and OHLC;
-8. insert only missing timestamps;
-9. continue until coverage is complete.
+Acceptance: an empty/new ticker can reach required coverage through bounded date ranges rather than a single huge request.
 
-The engine must distinguish:
+## Phase 5 — Store 1m as the raw truth
 
-- initial backfill;
-- gap repair;
-- normal incremental sync.
+**Status: implemented**
 
-### Phase E — Persist raw 1m bars
+Raw rows:
 
-Status: **implemented for migration validation**
+- `interval_minutes = 1`;
+- `source = tradingview`;
+- TradingView timestamps;
+- real OHLCV;
+- UTC storage;
+- Cairo interpretation;
+- insert only missing timestamps.
 
-Raw rows use:
+Completed historical raw candles are not overwritten by ordinary sync.
 
-- `interval_minutes = 1`
-- `source = tradingview`
-- TradingView timestamps
-- OHLCV as supplied
-- UTC storage
-- Cairo session interpretation
+Production schema accepts `interval_minutes IN (1,5,15)`.
 
-Completed historical bars should be treated as immutable. Only a deliberately handled currently-forming bar may be refreshed later if required.
+## Phase 6 — Derive 5m ourselves
 
-### Phase F — Derive 5m locally
+**Status: implemented, migration cleanup validation in progress**
 
-Status: **implemented for migration validation**
-
-5m bars are aggregated from real 1m observations rather than fetched independently forever.
-
-For each five-minute bucket:
+`aggregateIntradayBars()` derives 5m locally:
 
 - open = first observed 1m open;
 - high = maximum observed 1m high;
 - low = minimum observed 1m low;
 - close = last observed 1m close;
-- volume = sum of observed 1m volumes.
+- volume = sum of observed volumes;
+- no missing minute is synthesized.
 
-No missing minute is synthesized.
+Derived rows use `source = derived-1m`.
 
-Derived rows use:
+2026-09-24 validation found ACTF still contained older direct-TradingView 5m rows outside the original 30-day 1m pull. The planner was corrected so that this migration state triggers a full 90-day 1m source rebuild and replaces the old 5m tier with deterministic `derived-1m` rows.
 
-```text
-source = derived-1m
-```
+## Phase 7 — Two retention jobs
 
-Acceptance criteria:
+**Status: implemented, live revalidation in progress**
 
-- deterministic aggregation;
-- sparse/illiquid buckets remain valid without invented minutes;
-- repeated aggregation produces the same 5m result.
+After sync:
 
-### Phase G — Retention jobs
+- raw 1m older than 30 calendar days is pruned;
+- derived 5m older than 90 calendar days is pruned;
+- daily remains permanent;
+- legacy 15m remains untouched during migration.
 
-Status: **implemented for migration validation**
+A validation defect was found where the sync pruned at an exact `now - 30d` instant while the planner used a day boundary, leaving the first retained 5m bucket only partially reconstructible from retained 1m. Pruning now uses the same day-aligned retention cutoff as planning.
 
-After ingestion/aggregation:
+## Phase 8 — Make chart resolution adaptive
 
-- prune raw 1m rows older than 30 calendar days;
-- prune derived 5m rows older than 90 calendar days;
-- leave daily history permanent;
-- retain legacy 15m data during migration for rollback/fallback.
+**Status: implemented**
 
-### Phase H — Adaptive chart reads
-
-Status: **started**
-
-Today analytics uses the following real-data fallback order:
+Today loads all configured candidates and intentionally chooses:
 
 ```text
 1m -> 5m -> legacy 15m
 ```
 
-The live TradingView scanner quote remains the authoritative latest endpoint when a complete live snapshot exists.
+The live scanner snapshot remains the authoritative latest endpoint when every currently-held ticker has a trustworthy live quote.
 
-The chart must never synthesize points just to appear smoother.
+No synthetic chart points are generated.
 
-A later coverage-quality check will prevent a tiny/incomplete 1m sample from winning over a healthier 5m session.
+## Phase 9 — Define sufficient coverage
 
-### Phase I — Define sufficient coverage
+**Status: implemented, CI validation in progress**
 
-Status: **planned**
+The reader now checks more than ticker breadth.
 
-The reader must distinguish:
+For each ticker it compares the observed session envelope across available resolutions. A tiny late/early 1m sample cannot displace a healthier 5m session merely because it contains one row for every ticker.
 
-- sparse trading because an EGX security did not trade every minute;
-- ingestion gaps caused by failed collection.
+The rule deliberately compares observed envelopes rather than requiring a candle every minute, so legitimate illiquidity remains valid.
 
-Potential coverage checks:
+Regression coverage includes:
 
-- usable previous close exists;
-- first expected session area has data where appropriate;
-- latest expected session area is covered;
-- unexplained large ingestion gaps are detected;
-- currently held tickers have a usable valuation path.
+- partial 1m breadth versus healthy 5m;
+- tiny 1m sample with all tickers;
+- sparse/illiquid 1m whose observed session envelope still matches 5m;
+- Cairo session-date handling.
 
-The final rule must accommodate legitimate illiquidity.
+## Phase 10 — Validate portfolio mathematics at 1m
 
-### Phase J — Validate portfolio mathematics
+**Status: regression implementation added, CI validation in progress**
 
-Status: **planned**
+The intraday test suite now includes an execution at 10:07-equivalent UTC timing and compares 1m, 5m and 15m results.
 
-Moving from 15m -> 5m -> 1m may change path shape and timing, but must not arbitrarily change:
+The intended invariant is:
 
-- opening equity;
-- cash accounting;
-- external deposits/withdrawals;
-- final authoritative NAV;
-- final P&L;
-- final TWR/MWR semantics;
-- previous-close baseline.
+- path timing may improve at finer resolution;
+- opening equity must remain stable;
+- cash accounting must remain stable;
+- deposits/withdrawals must remain stable;
+- final authoritative NAV must remain stable;
+- final P&L must remain stable;
+- TWR/MWR semantics must remain stable;
+- previous-close baseline must remain stable.
 
-Add regression cases with executions between coarse bar boundaries, for example a trade at 10:07 Cairo.
+The regression also proves the trade enters the 1m path earlier than the old 15m path.
 
-### Phase K — ACTF / NAPR live migration test
+## Phase 11 — ACTF / NAPR migration test
 
-Status: **planned**
+**Status: in progress**
 
-Use ACTF and NAPR as genuine missing/new-ticker cases.
+First write-capable migration run successfully populated:
 
-Verify directly in Supabase:
+- ACTF raw 1m: 4,532 rows, 22 sessions;
+- NAPR raw 1m: 2,284 rows, 22 sessions;
+- ACTF derived/legacy 5m total: 3,189 rows;
+- NAPR derived 5m: 1,886 rows.
 
-- resolver method used;
-- 1m rows inserted;
-- earliest/latest timestamps;
-- no duplicate timestamps;
-- derived 5m rows produced;
-- derived OHLCV matches source 1m bars;
-- chart consumes the new rows.
+Direct Supabase validation found:
 
-Do not manually seed ACTF before this test.
+- zero duplicate ACTF/NAPR 1m or 5m timestamps;
+- raw source is `tradingview`;
+- derived source is `derived-1m` where migrated;
+- 1,751 overlapping raw->derived 5m buckets checked;
+- one ACTF first-retention-boundary mismatch, traced to the retention-cutoff defect fixed in Phase 7;
+- ACTF also retained older direct-TradingView 5m rows, traced to incomplete 90-day derived migration and fixed in Phases 4/6.
 
-### Phase L — Workflow cadence and observability
+The smoke workflow now typechecks and runs the intraday regression suite before any ACTF/NAPR write. If validation fails, the database write is skipped.
 
-Status: **planned**
+Remaining Phase 11 acceptance:
 
-The source resolution will be 1m, but GitHub Actions does not need to run every minute.
+- rerun the corrected ACTF/NAPR rebuild;
+- verify resolver attempt path from logs;
+- verify 90-day 5m source is fully `derived-1m`;
+- verify zero duplicate timestamps;
+- verify overlapping retained 1m -> 5m OHLCV exactly matches;
+- verify chart consumes the new rows;
+- spot-check established tickers as well as ACTF/NAPR.
 
-Target cadence:
+## Phase 12 — Migration without breaking Today
 
-- approximately every 5 minutes during the EGX session;
-- one run may fetch several newly completed 1m candles.
+**Status: staged, not complete**
 
-Each run should report:
-
-- portfolio tickers discovered;
-- session-relevant tickers;
-- resolver method per repaired ticker;
-- new 1m bars;
-- derived 5m buckets;
-- gaps detected;
-- rows pruned;
-- failures.
-
-### Phase M — Legacy retirement
-
-Status: **planned**
-
-Migration order:
+Current rollout order remains:
 
 ```text
 legacy 15m
   -> add raw 1m
   -> derive 5m
   -> validate
-  -> prefer 1m
-  -> observe across several sessions
+  -> prefer sufficient 1m
+  -> retain 15m rollback fallback
+  -> observe across multiple sessions
   -> retire 15m dependency
 ```
 
-Do not delete the existing 15m dataset until the new pipeline has been observed working reliably.
+Do not delete legacy 15m yet.
 
-## Changes already implemented
+## Phase 13 — Workflow scheduling
 
-The first implementation pass has begun on `feature/premium-ui-redesign`:
+**Status: planned**
 
-- `src/services/intradayPolicy.ts`
-  - canonical 1m / 5m / 15m policy;
-  - 30d raw and 90d derived retention.
-- `src/services/intradayTickerUniverse.ts`
-  - resolves session-relevant tickers only.
-- `src/services/intradayAggregation.ts`
-  - deterministic local 1m -> 5m aggregation.
-- `PerformanceTimeframeChart.tsx`
-  - uses session-relevant tickers;
-  - read order is now 1m -> 5m -> 15m.
-- `scripts/syncIntradayPrices.ts`
-  - transitional 5m sync now imports the centralized policy instead of hardcoding its interval/retention.
-- regression tests added for policy, ticker-universe selection and aggregation.
+After Phases 9–12 pass:
+
+- source resolution remains 1m;
+- scheduled ingestion target becomes about every 5 minutes during the EGX session;
+- live quote refresh remains a separate concept.
+
+The migration workflow remains manual/smoke-gated until validation is complete.
+
+## Phase 14 — Observability
+
+**Status: partially implemented**
+
+Per-ticker logs now include:
+
+- ticker;
+- resolved symbol;
+- final resolution method;
+- complete resolution attempt path;
+- migration mode;
+- ranged request count;
+- fetched 1m count;
+- inserted 1m count;
+- upserted 5m count;
+- earliest/latest fetched timestamps;
+- previous raw and derived coverage.
+
+Final summary currently includes:
+
+- total range requests;
+- fetched bars;
+- inserted 1m rows;
+- upserted 5m rows;
+- pruned 1m/5m rows;
+- failure count.
+
+Remaining: robust gap diagnostics that do not mistake legitimate illiquidity for ingestion failure.
+
+## Phase 15 — Documentation and tests before calling it finished
+
+**Status: in progress**
+
+Required documentation:
+
+- `docs/INTRADAY_MARKET_DATA.md`;
+- `docs/ANALYTICS_MARKET_DATA_EVOLUTION.md`;
+- operational documentation;
+- testing documentation.
+
+Required regression areas:
+
+- 1m -> 5m aggregation;
+- sparse-minute data;
+- market-session boundaries;
+- Cairo DST/time handling;
+- same-day trade execution timing;
+- 1m/5m/15m fallback selection;
+- incomplete 1m coverage;
+- ACTF/NAPR resolver behavior;
+- legacy ticker aliases;
+- post-midnight endpoint behavior;
+- weekends/holidays.
 
 ## Non-negotiable invariants
 
 - No fabricated market points.
 - No TradingView WebSocket ingestion in Cloudflare Workers.
 - No browser-triggered history repair.
-- No ticker-specific hacks where ticker/canonical/ISIN resolution can solve identity generically.
+- No ticker-specific hacks where centralized ticker/canonical/ISIN resolution can solve identity.
 - No manual ACTF intraday seed before migration verification.
 - No regression to Today live endpoint semantics.
-- No regression to verified 1W baseline semantics.
+- No regression to the verified 1W baseline semantics.
 - Premium work stays on `feature/premium-ui-redesign` unless explicitly requested otherwise.
-
-## Production schema prerequisite discovered during implementation
-
-The existing production table still had the original database check constraint:
-
-```text
-interval_minutes = 15
-```
-
-That would have rejected both 1-minute and 5-minute inserts even though application code had already begun reading those intervals. Migration `20260924_intraday_multi_resolution.sql` changes the allowed values to:
-
-```text
-interval_minutes IN (1, 5, 15)
-```
-
-The migration was applied to the current Supabase project and verified before enabling the write-capable migration workflow.
-
-## Migration sync implementation
-
-`scripts/syncIntradayOneMinute.ts` now implements the first write-capable migration path:
-
-- explicit ranged TradingView 1m retrieval in 7-day chunks;
-- full 90-day source retrieval when no derived 5m coverage exists;
-- raw 1m persistence only inside the 30-day raw retention window;
-- local 1m -> 5m derivation across the fetched window;
-- 5m persistence for the 90-day derived retention window;
-- 2-day overlap for ordinary incremental repair;
-- interval-specific pruning that leaves legacy 15m rows untouched;
-- raw 1m rows are inserted only when missing;
-- derived 5m rows are deterministic cache rows and may be refreshed from the raw source.
-
-The write-capable workflow is manual during migration validation:
-`.github/workflows/intraday-1m-sync.yml`.
-
-It must not be scheduled as the production job until ACTF/NAPR and portfolio-math validation are complete.
-
-
-## 2026-09-24 live-update incident
-
-Opening the app and recording a trade successfully updated the transaction ledger and live ticker snapshot, but intraday history remained stale at the prior session. Investigation found that the Premium 5-minute ingestion run had failed for every ticker because `loadTickerMetadata()` incorrectly filtered `public.tickers` by `portfolio_id`. The ticker directory is global market metadata and has no `portfolio_id` column; only transactions/positions are portfolio-scoped.
-
-The same invalid assumption existed in the new 1-minute migration script and was corrected there before the first write-capable 1m run.
-
-After the fix, the Premium 5-minute validation run succeeded with **0 ticker failures** and inserted **85,877 missing 5-minute observations** across 28 portfolio-relevant tickers. Supabase then showed current-session 5-minute coverage through approximately 09:30–09:35 UTC (12:30–12:35 Cairo) for representative names including ACTF, NAPR, and EGCH.
-
-This incident confirms that app-open/live scanner updates and historical intraday ingestion are separate pipelines: live ticker snapshots may be current even when persisted intraday bars are stale.

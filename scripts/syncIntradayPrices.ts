@@ -95,7 +95,7 @@ async function loadTickerMetadata(
   if (error) throw new Error(`Ticker metadata read failed for ${ticker}: ${error.message}`);
   return {
     isin: String(data?.isin || '').trim().toUpperCase() || undefined,
-    tradingviewSymbol: String(data?.tradingview_symbol || '').trim().toUpperCase() || undefined,
+    tradingviewSymbol: undefined,
   };
 }
 

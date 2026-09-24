@@ -461,12 +461,13 @@ Implemented:
 Real-device validation findings and corrections:
 - landscape/tablet navigation was keeping desktop-length labels too early, causing the rightmost tabs to clip; sub-2XL navigation now uses compact labels, retains horizontal fallback, and automatically keeps the active tab in view;
 - the institutional KPI ribbon entered four-column mode before each card had enough intrinsic width; four columns now require a 2XL viewport, with one/two-column layouts below that breakpoint;
-- the benchmark detail section is no longer forced into a dense table on phone/tablet: the same indicator calculations now render as one-column phone / two-column tablet premium glass scorecards with semantic glow, measured-result hierarchy, institutional target, and assessment chip; the institutional table remains the 2XL desktop renderer;
+- the benchmark detail section is no longer forced into a dense table on phone/tablet: the same indicator calculations now render as one-column phone / two-column tablet **hero-tier** scorecards using the accepted hero-card frosted glass, refraction depth, semantic edge/halo glow, measured-result hierarchy, institutional target, and assessment chip; the institutional table remains the 2XL desktop renderer;
 - the Monthly Audit remains a data table because its rows are transactional records rather than independent metrics; it keeps explicit column-width contracts and horizontal touch access instead of collapsing semantic columns.
 
 Validation:
 - final real-device correction Quality Checks passed typecheck, 27/27 test files, 170/170 tests, the production Vite build, and the bundled server build on implementation snapshot `db66d310c132dff8b262df77d420ae735cae077c`;
 - the responsive benchmark scorecard renderer passed a second full Quality gate on implementation snapshot `7644ee7790d8747bd5dc1461484a003e530f3be4`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
+- real-device feedback showed the first card renderer still used the low-intensity `premium-report-glass-soft` surface and therefore did not visually match the accepted hero cards; that surface was removed and replaced with `premium-hero-metric` + dedicated hero-tier semantic glass/halo classes on snapshot `742e97f72d05552e52bd18a006f453128642b515`; the correction passed 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - the earlier intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:

@@ -78,10 +78,20 @@ async function resolveTickerUniverse(
   portfolioId: string,
   sessionDate: string,
 ): Promise<IntradayTickerUniverse> {
-  const { data: aliasRows, error: aliasError } = await sb
-    .from('ticker_aliases')
-    .select('alias,canonical_ticker');
+  const [
+    { data: aliasRows, error: aliasError },
+    { data: activeRegistryRows, error: activeRegistryError },
+  ] = await Promise.all([
+    sb.from('ticker_aliases').select('alias,canonical_ticker'),
+    sb.from('ticker_registry').select('ticker').eq('status', 'active'),
+  ]);
   if (aliasError) throw new Error(`Ticker alias lookup failed: ${aliasError.message}`);
+  if (activeRegistryError) {
+    throw new Error(`Ticker registry lookup failed: ${activeRegistryError.message}`);
+  }
+  const activeRegistryTickers = new Set(
+    (activeRegistryRows ?? []).map((row: any) => normalizeTicker(row.ticker)),
+  );
   const aliasMap = new Map(
     (aliasRows ?? []).map((row: any) => [
       normalizeTicker(row.alias),
@@ -90,6 +100,7 @@ async function resolveTickerUniverse(
   );
   const canonicalize = (value: string) => {
     const normalized = normalizeTicker(value);
+    if (activeRegistryTickers.has(normalized)) return normalized;
     return aliasMap.get(normalized) || normalized;
   };
 

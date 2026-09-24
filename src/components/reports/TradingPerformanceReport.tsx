@@ -210,11 +210,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
   };
 
   return (
-    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-glass p-5 sm:p-6 rounded-2xl space-y-6">
+    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-glass rounded-2xl p-4 space-y-6 sm:p-6">
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
               REPORT 1 &bull; INSTITUTIONAL BENCHMARK
             </span>
@@ -232,14 +232,14 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
         {/* Action Controls: Filters & Export */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Timeframe selector */}
-          <div className="premium-selector-shell flex items-center">
+          <div className="premium-selector-shell col-span-2 -mx-1 flex max-w-[calc(100%+0.5rem)] items-center overflow-x-auto px-1 sm:col-auto sm:mx-0 sm:max-w-none sm:overflow-visible">
             {(['ALL', 'YTD', '90D', '30D'] as TimeframeFilter[]).map((tf) => (
               <button
                 key={tf}
                 type="button"
                 aria-pressed={timeframe === tf}
                 onClick={() => changeTimeframe(tf)}
-                className={`premium-filter-pill px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
+                className={`premium-filter-pill shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
               >
                 {tf === 'ALL' ? 'All Time' : tf}
               </button>
@@ -253,7 +253,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             compact
             accent="blue"
             ariaLabel="Filter by trade type"
-            className="min-w-[165px]"
+            className="col-span-2 w-full sm:col-auto sm:min-w-[165px] sm:w-auto"
             options={[
               { value: 'ALL', label: 'All Trade Types' },
               { value: 'Swing', label: 'Swing Only' },
@@ -266,20 +266,20 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           <button
             type="button"
             onClick={handleExportCSV}
-            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Download CSV report"
           >
             <Download className="w-3.5 h-3.5 text-blue-400" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="whitespace-nowrap">Export CSV</span>
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            className="premium-action premium-report-glass-soft flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white text-xs font-medium"
+            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Print</span>
+            <span className="whitespace-nowrap">Print</span>
           </button>
         </div>
       </div>
@@ -366,8 +366,8 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </div>
 
       {/* Main Indicators Scorecard Table */}
-      <div className="premium-report-table overflow-x-auto rounded-xl">
-        <table className="w-full text-left text-xs border-collapse font-sans">
+      <div className="premium-report-table overflow-x-auto overscroll-x-contain rounded-xl">
+        <table className="min-w-[860px] w-full border-collapse text-left text-xs font-sans">
           <thead>
             <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
               <th className="py-3 px-4">Performance Indicator</th>
@@ -931,7 +931,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </div>
 
       {/* Summary Footer Note */}
-      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800 font-sans">
+      <div className="flex flex-col gap-1 border-t border-slate-800 pt-2 text-[11px] text-slate-500 font-sans sm:flex-row sm:items-center sm:justify-between">
         <span>* All calculations account for buy/sell brokerage fees and real EGX settlement execution.</span>
         <span>Filter applied: {timeframe === 'ALL' ? 'Entire Trading History' : timeframe} ({indicators.totalClosed} closed trades)</span>
       </div>

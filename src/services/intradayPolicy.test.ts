@@ -11,7 +11,13 @@ describe('intraday policy', () => {
     expect(INTRADAY_POLICY.rawIntervalMinutes).toBe(1);
     expect(INTRADAY_POLICY.derivedIntervalMinutes).toBe(5);
     expect(INTRADAY_POLICY.legacyFallbackIntervalMinutes).toBe(15);
-    expect(INTRADAY_POLICY.backfillChunkDays).toBe(7);
+  });
+
+  it('bounds backfill into manageable TradingView requests', () => {
+    expect(INTRADAY_POLICY.initialBackfillBars).toBe(5000);
+    expect(INTRADAY_POLICY.backfillBatchBars).toBe(5000);
+    expect(INTRADAY_POLICY.maxBackfillBatches).toBe(10);
+    expect(INTRADAY_POLICY.incrementalBars).toBe(1200);
     expect(INTRADAY_POLICY.incrementalOverlapDays).toBe(2);
   });
 

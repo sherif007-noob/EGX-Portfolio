@@ -42,6 +42,57 @@ const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 const formatRatio = (val: number) => (Number.isFinite(val) ? val.toFixed(2) : '∞');
 
+const BENCHMARK_TONE_STYLES = {
+  positive: {
+    state: 'premium-state-win',
+    value: 'text-emerald-300',
+    icon: 'text-emerald-300 border-emerald-500/25 bg-emerald-500/10',
+    chip: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
+  },
+  negative: {
+    state: 'premium-state-loss',
+    value: 'text-rose-300',
+    icon: 'text-rose-300 border-rose-500/25 bg-rose-500/10',
+    chip: 'text-rose-300 border-rose-500/30 bg-rose-500/10',
+  },
+  warning: {
+    state: 'premium-state-breakeven',
+    value: 'text-amber-300',
+    icon: 'text-amber-300 border-amber-500/25 bg-amber-500/10',
+    chip: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
+  },
+  blue: {
+    state: '',
+    value: 'text-blue-300',
+    icon: 'text-blue-300 border-blue-500/25 bg-blue-500/10',
+    chip: 'text-blue-300 border-blue-500/30 bg-blue-500/10',
+  },
+  purple: {
+    state: '',
+    value: 'text-purple-300',
+    icon: 'text-purple-300 border-purple-500/25 bg-purple-500/10',
+    chip: 'text-purple-300 border-purple-500/30 bg-purple-500/10',
+  },
+  cyan: {
+    state: '',
+    value: 'text-cyan-300',
+    icon: 'text-cyan-300 border-cyan-500/25 bg-cyan-500/10',
+    chip: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10',
+  },
+  amber: {
+    state: '',
+    value: 'text-amber-300',
+    icon: 'text-amber-300 border-amber-500/25 bg-amber-500/10',
+    chip: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
+  },
+  neutral: {
+    state: '',
+    value: 'text-slate-100',
+    icon: 'text-slate-300 border-slate-600/60 bg-slate-800/55',
+    chip: 'text-slate-300 border-slate-600/60 bg-slate-800/55',
+  },
+} as const;
+
 const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps> = ({
   stats,
   closedTrades,
@@ -599,8 +650,67 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
         </div>
       </div>
 
-      {/* Main Indicators Scorecard Table */}
-      <div className="premium-report-table overflow-x-auto overscroll-x-contain rounded-xl">
+      {/* Responsive benchmark scorecards: phone + tablet */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:hidden">
+        {benchmarkCards.map((item) => {
+          const tone = BENCHMARK_TONE_STYLES[item.tone];
+          const assessmentIcon =
+            item.tone === 'negative' ? (
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            ) : item.tone === 'warning' || item.tone === 'neutral' || item.tone === 'amber' ? (
+              <Info className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            );
+
+          return (
+            <article
+              key={item.title}
+              className={`premium-card premium-report-glass-soft ${tone.state} relative flex min-h-[196px] flex-col overflow-hidden rounded-2xl border p-4`}
+            >
+              <div className="flex items-start gap-3">
+                <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${tone.icon}`}>
+                  {item.icon}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold leading-snug text-white">{item.title}</h3>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{item.description}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex-1">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Measured Result
+                </div>
+                <div
+                  className={`mt-1 break-words font-mono text-xl font-black leading-tight sm:text-2xl ${item.valueClass || tone.value}`}
+                >
+                  {item.measured}
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-slate-700/45 pt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Institutional Benchmark
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-slate-300">{item.benchmark}</div>
+
+                <div className="mt-3">
+                  <span
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold leading-tight ${tone.chip}`}
+                  >
+                    {assessmentIcon}
+                    <span className="min-w-0 break-words">{item.assessment}</span>
+                  </span>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {/* Main Indicators Scorecard Table — true desktop only */}
+      <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain rounded-xl 2xl:block">
         <table className="report-benchmark-table min-w-[1120px] w-full border-collapse text-left text-xs font-sans">
           <thead>
             <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">

@@ -388,7 +388,7 @@ export function buildIntradayAnalyticsResult(
 
   const completePoints = points.filter((point) => point.complete);
 
-  // The 15-minute store reconstructs the path, but the live quote snapshot is
+  // Persisted intraday bars reconstruct the path, but the live quote snapshot is
   // the authoritative endpoint for the current active session. Append one
   // as-of point only when every currently held ticker has a trustworthy live
   // quote; never mix a partial live snapshot with stale bar closes.

@@ -22,9 +22,10 @@ import {
 } from './weeklyTransitionInterpolation';
 import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
-import { getIntradayPrices, latestIntradaySessionDate, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
+import { getIntradayPrices, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { INTRADAY_POLICY } from '../../services/intradayPolicy';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
+import { selectBestIntradayResolution } from '../../services/intradayResolution';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
 import {
   buildUnifiedAnalyticsResult,
@@ -192,42 +193,37 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             intervalMinutes,
           );
 
-        let intradayPrices: IntradayPriceSeries = {};
-        let sessionDate: string | null = null;
+        const loadResolutionCandidates = async (startDate: string) =>
+          Promise.all(
+            INTRADAY_POLICY.readIntervals.map(async (intervalMinutes) => ({
+              intervalMinutes,
+              series: await loadWindow(startDate, intervalMinutes),
+            })),
+          );
 
-        // Prefer raw 1-minute observations, then locally-derived 5-minute
-        // history, then the legacy 15-minute store while migration is in
-        // progress. Never synthesize points to satisfy the chart.
-        for (const intervalMinutes of INTRADAY_POLICY.readIntervals) {
-          const candidate = await loadWindow(requestedSessionDate, intervalMinutes);
-          const candidateSessionDate = latestIntradaySessionDate(candidate, requestedSessionDate);
-          if (candidateSessionDate) {
-            intradayPrices = candidate;
-            sessionDate = candidateSessionDate;
-            break;
-          }
-        }
+        let selection = selectBestIntradayResolution(
+          await loadResolutionCandidates(requestedSessionDate),
+          tickers,
+          requestedSessionDate,
+        );
 
         // Normal sessions stay on a one-day query. Only fall back to a wider
         // lookback when the requested day has no actual market bars
         // (for example, after midnight, a weekend, or an exchange holiday).
-        if (!sessionDate) {
+        if (!selection) {
           const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
           lookback.setUTCDate(lookback.getUTCDate() - 14);
           const lookbackDate = lookback.toISOString().slice(0, 10);
 
-          for (const intervalMinutes of INTRADAY_POLICY.readIntervals) {
-            const candidate = await loadWindow(lookbackDate, intervalMinutes);
-            const candidateSessionDate = latestIntradaySessionDate(candidate, requestedSessionDate);
-            if (candidateSessionDate) {
-              intradayPrices = candidate;
-              sessionDate = candidateSessionDate;
-              break;
-            }
-          }
+          selection = selectBestIntradayResolution(
+            await loadResolutionCandidates(lookbackDate),
+            tickers,
+            requestedSessionDate,
+          );
         }
 
-        sessionDate = sessionDate ?? requestedSessionDate;
+        const intradayPrices: IntradayPriceSeries = selection?.series ?? {};
+        const sessionDate = selection?.sessionDate ?? requestedSessionDate;
 
         const livePrices = Object.fromEntries(
           positions

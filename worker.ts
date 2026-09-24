@@ -11,7 +11,6 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SECRET_KEY: string;
   ASSETS: { fetch(request: Request): Promise<Response> };
-  HISTORY_REPAIR_ORIGIN?: string;
 }
 
 const json = (data: unknown, status = 200) =>
@@ -22,26 +21,6 @@ const json = (data: unknown, status = 200) =>
 
 const errorJson = (error: unknown, status = 500) =>
   json({ error: error instanceof Error ? error.message : String(error) }, status);
-
-const DEFAULT_HISTORY_REPAIR_ORIGIN = "https://egx-portfolio.onrender.com";
-
-async function proxyHistoryRepair(request: Request, env: Env, path: string): Promise<Response> {
-  const origin = (env.HISTORY_REPAIR_ORIGIN || DEFAULT_HISTORY_REPAIR_ORIGIN).replace(/\/$/, "");
-  const body = await request.text();
-  const response = await fetch(`${origin}${path}`, {
-    method: "POST",
-    headers: {
-      "authorization": request.headers.get("authorization") || "",
-      "content-type": "application/json",
-    },
-    body,
-  });
-  const responseBody = await response.text();
-  return new Response(responseBody, {
-    status: response.status,
-    headers: { "content-type": response.headers.get("content-type") || "application/json; charset=utf-8" },
-  });
-}
 
 async function withSupabaseUser(
   request: Request,
@@ -89,7 +68,7 @@ async function googleJson(url: string, token: string, init: RequestInit = {}): P
   return json(body);
 }
 
-async function handleApi(request: Request, env: Env): Promise<Response> {
+async function handleApi(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -139,14 +118,14 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  if (path === "/api/supabase/price-history/ensure" && request.method === "POST") {
-    console.log("[History Repair] proxy daily repair to Node runtime");
-    return proxyHistoryRepair(request, env, path);
-  }
-
-  if (path === "/api/supabase/intraday-history/ensure" && request.method === "POST") {
-    console.log("[History Repair] proxy intraday repair to Node runtime");
-    return proxyHistoryRepair(request, env, path);
+  if (
+    (path === "/api/supabase/price-history/ensure" || path === "/api/supabase/intraday-history/ensure") &&
+    request.method === "POST"
+  ) {
+    return json({
+      error: "On-demand TradingView history repair is not executed in the Cloudflare Worker. History is maintained by the Node-based scheduled ingestion workflow.",
+      retryable: true,
+    }, 503);
   }
 
   if (path === "/api/egx/scan" && request.method === "POST") {
@@ -337,7 +316,7 @@ export default {
       supabaseSecretPresent ? env.SUPABASE_SECRET_KEY.trim() : undefined,
     );
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) return handleApi(request, env);
+    if (url.pathname.startsWith("/api/")) return handleApi(request);
     return env.ASSETS.fetch(request);
   },
 };

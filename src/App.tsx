@@ -45,7 +45,10 @@ import {
   syncStockPricesToSheet,
 } from './services/googleSheets';
 import { RotateCcw } from 'lucide-react';
-import { reconcilePortfolioFromLedger } from './services/portfolioReconciliation';
+import {
+  deriveCanonicalCapitalDeposits,
+  reconcilePortfolioFromLedger,
+} from './services/portfolioReconciliation';
 import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
@@ -205,6 +208,11 @@ export default function App() {
     return calculatePortfolioMetrics(positions, cashBalance, closedTrades, tickers, transactions);
   }, [positions, cashBalance, closedTrades, tickers, transactions]);
 
+  const analyticsCapitalDeposits = useMemo(
+    () => deriveCanonicalCapitalDeposits(transactions, cashBalance, capitalDeposits),
+    [transactions, cashBalance, capitalDeposits],
+  );
+
   const [historicalDrawdown, setHistoricalDrawdown] = useState<{
     maxDrawdownEgp: number;
     maxDrawdownPercent: number;
@@ -229,7 +237,7 @@ export default function App() {
       try {
         let historicalPrices = await getHistoricalPricesForTransactions(transactions);
         let result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
-          openingCapital: capitalDeposits,
+          openingCapital: analyticsCapitalDeposits,
         });
 
         const normalizeHistoryTicker = (ticker: string) =>
@@ -256,7 +264,7 @@ export default function App() {
             }
             historicalPrices = await getHistoricalPricesForTransactions(transactions);
             result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
-              openingCapital: capitalDeposits,
+              openingCapital: analyticsCapitalDeposits,
             });
           } catch (backfillError) {
             for (const target of repairTargets) historicalBackfillAttemptsRef.current.delete(target.ticker);
@@ -294,7 +302,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [transactions, capitalDeposits]);
+  }, [transactions, analyticsCapitalDeposits]);
 
 
   const stats: PerformanceStats = useMemo(() => {
@@ -1046,7 +1054,7 @@ export default function App() {
             <PerformanceTimeframeChart
               transactions={transactions}
               historicalPrices={historicalPriceSeries}
-              capitalDeposits={capitalDeposits}
+              capitalDeposits={analyticsCapitalDeposits}
               positions={positions}
               currentCashBalance={cashBalance}
               historicalLoading={historicalAnalyticsLoading}
@@ -1109,7 +1117,7 @@ export default function App() {
             positions={positions}
             metrics={metrics}
             cashBalance={cashBalance}
-            capitalDeposits={capitalDeposits}
+            capitalDeposits={analyticsCapitalDeposits}
             transactions={transactions}
             historicalPrices={historicalPriceSeries}
             historicalLoading={historicalAnalyticsLoading}

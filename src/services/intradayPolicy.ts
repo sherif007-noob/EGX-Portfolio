@@ -6,7 +6,10 @@ export const INTRADAY_POLICY = {
   rawRetentionDays: 30,
   derivedRetentionDays: 90,
   ingestionCadenceMinutes: 5,
-  backfillChunkDays: 7,
+  initialBackfillBars: 5000,
+  backfillBatchBars: 5000,
+  maxBackfillBatches: 10,
+  incrementalBars: 1200,
   incrementalOverlapDays: 2,
   readIntervals: [1, 5, 15] as const,
 } as const;

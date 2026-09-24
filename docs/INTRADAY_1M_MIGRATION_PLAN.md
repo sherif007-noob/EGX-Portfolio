@@ -280,12 +280,23 @@ Successful smoke output on 2026-09-24:
 
 ### Cross-ticker database acceptance
 
-- duplicate timestamps: **0**;
-- overlapping persisted raw->derived buckets: **2,985**;
+The targeted ACTF/NAPR/ORAS smoke was followed by a discovery-driven sync of the actual current session-relevant portfolio universe, without hardcoding portfolio ticker names into the workflow.
+
+That portfolio-wide pass validated **7 session-relevant tickers** and inserted **25,068** missing raw 1m observations for previously unmigrated names.
+
+A boundary defect was then caught by direct database comparison: the first 5-minute bucket of an incremental fetch could start mid-bucket and overwrite a previously correct derived volume with a partial-bucket aggregate. The sync now expands its persisted-raw reload to the complete first/last 5-minute bucket boundaries before derivation.
+
+After the fix and rerun:
+
+- all 7 session-relevant tickers have real 1m observations through the 2026-09-24 close;
+- duplicate 1m/5m timestamps: **0**;
+- overlapping persisted raw->derived buckets checked: **7,719**;
 - OHLCV mismatches: **0**;
 - smoke typecheck: passed;
 - focused intraday regression suite: passed;
-- write-capable smoke: passed with **0 failures**.
+- targeted migration smoke: passed;
+- discovery-driven portfolio-universe smoke: passed;
+- sync failures: **0**.
 
 The chart code is wired to load these rows through the adaptive resolution selector. Actual multi-session/live-app observation remains part of rollout Phase 12.
 
@@ -310,7 +321,9 @@ legacy 15m
 
 Do not delete the legacy 15m dataset yet.
 
-One-session migration and regression acceptance are green. The remaining requirement is observation over multiple real trading sessions before legacy retirement.
+The first full current-universe real-session migration is green: every session-relevant ticker had 1m coverage through the close and the persisted raw/derived integrity audit was clean.
+
+The remaining requirement is observation over multiple real trading sessions before legacy retirement.
 
 ---
 
@@ -403,13 +416,15 @@ The repository-wide Quality gate was then run against the exact Premium code sna
 
 - TypeScript typecheck;
 - **26/26 test files**;
-- **158/158 tests**;
+- **159/159 tests**;
 - production Vite build;
 - bundled server build.
 
 That broad gate exposed one pre-existing analytics edge case before passing: same-boundary MWR with legacy `openingCapital` returned 0% on the inception date. The existing regression correctly expected the real simple holding-period return. `calculatePeriodMWR()` was fixed so same-boundary/no-flow inception valuation returns `ending / starting - 1` rather than zero.
 
-The CI-only validation commit differs from the Premium snapshot only by the Quality workflow trigger used to execute the gate.
+A second repository-wide Quality gate was run after the incremental bucket-boundary fix. It also passed typecheck, **26/26 test files**, **159/159 tests**, the production Vite build, and the bundled server build.
+
+The CI-only validation commits differ from their Premium snapshots only by the Quality workflow trigger used to execute each gate.
 
 ---
 

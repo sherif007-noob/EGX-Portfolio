@@ -2,18 +2,16 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { aggregateIntradayBars } from '../src/services/intradayAggregation';
-import { buildIntradayOneMinuteBackfillPlan } from '../src/services/intradayBackfillPlan';
+import {
+  buildIntradayOneMinuteBackfillPlan,
+  buildIntradayRangeChunks,
+  retentionCutoffStartOfUtcDay,
+} from '../src/services/intradayBackfillPlan';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
 import type { IntradayPricePoint } from '../src/services/intradayPriceStore';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 
 type HistoryBar = [number, number, number, number, number, number?];
-
-const INITIAL_BACKFILL_BARS = 5000;
-const INCREMENTAL_BARS = 1200;
-const MORE_DATA_BARS = 5000;
-const MAX_MORE_DATA_REQUESTS = 8;
-const MORE_DATA_TIMEOUT_MS = 20_000;
 
 type SupabaseClient = ReturnType<typeof createSupabaseClient>;
 
@@ -103,8 +101,6 @@ async function loadTickerMetadata(
   sb: SupabaseClient,
   ticker: string,
 ): Promise<{ isin?: string }> {
-  // ticker metadata is global market data; the tickers table is not
-  // portfolio-scoped. Portfolio scoping belongs to transactions/positions.
   const { data, error } = await sb
     .from('tickers')
     .select('isin')
@@ -120,13 +116,18 @@ async function coverageTimestamp(
   ticker: string,
   intervalMinutes: number,
   direction: 'earliest' | 'latest',
+  source?: string,
 ): Promise<string | null> {
   const ascending = direction === 'earliest';
-  const { data, error } = await sb
+  let query = sb
     .from('intraday_price_history')
     .select('bar_timestamp')
     .eq('ticker', ticker)
-    .eq('interval_minutes', intervalMinutes)
+    .eq('interval_minutes', intervalMinutes);
+
+  if (source) query = query.eq('source', source);
+
+  const { data, error } = await query
     .order('bar_timestamp', { ascending })
     .limit(1)
     .maybeSingle();
@@ -312,131 +313,43 @@ async function pruneInterval(
   return count ?? 0;
 }
 
-function earliestHistoryTimestampMs(history: HistoryBar[]): number {
-  if (!history.length) return Number.POSITIVE_INFINITY;
-  const first = [...history]
-    .filter((bar) => Number.isFinite(Number(bar?.[0])))
-    .sort((a, b) => Number(a[0]) - Number(b[0]))[0];
-  return first ? Number(first[0]) * 1000 : Number.POSITIVE_INFINITY;
-}
-
-async function requestMoreOneMinuteData(
-  session: Awaited<ReturnType<typeof createSession>>,
-  chart: Awaited<ReturnType<typeof createChart>>,
-  series: Awaited<ReturnType<typeof createSeries>>,
-  count: number,
-): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    let settled = false;
-
-    const cleanup = () => {
-      clearTimeout(timeout);
-      session.removeListener('series_completed', onCompleted);
-      session.removeListener('error', onError);
-    };
-
-    const finish = (error?: Error) => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      if (error) reject(error);
-      else resolve();
-    };
-
-    const onCompleted = (payload: unknown[]) => {
-      if (!Array.isArray(payload) || payload[0] !== chart.id || payload[1] !== series.id) return;
-      finish();
-    };
-
-    const onError = (...args: unknown[]) => {
-      const [event, payload] = args;
-      if (
-        event === 'series_error' &&
-        Array.isArray(payload) &&
-        payload[0] === chart.id &&
-        payload[1] === series.id
-      ) {
-        finish(new Error(`TradingView request_more_data failed: ${String(payload[2] || 'series_error')}`));
-      }
-    };
-
-    const timeout = setTimeout(
-      () => finish(new Error(`TradingView request_more_data timed out after ${MORE_DATA_TIMEOUT_MS}ms.`)),
-      MORE_DATA_TIMEOUT_MS,
-    );
-
-    session.on('series_completed', onCompleted);
-    session.on('error', onError);
-
-    session
-      .send('request_more_data', [chart.id, series.id, count])
-      .catch((error) =>
-        finish(error instanceof Error ? error : new Error(String(error))),
-      );
-  });
-}
-
-async function fetchOneMinuteHistory(
+async function fetchOneMinuteHistoryByRange(
   session: Awaited<ReturnType<typeof createSession>>,
   chart: Awaited<ReturnType<typeof createChart>>,
   resolved: Parameters<typeof createSeries>[2],
-  targetStartMs: number,
-  mode: 'full-derived-backfill' | 'raw-backfill' | 'incremental',
-): Promise<{ history: HistoryBar[]; moreDataRequests: number; sourceExhausted: boolean }> {
-  const initialCount = mode === 'incremental' ? INCREMENTAL_BARS : INITIAL_BACKFILL_BARS;
-  const series = await createSeries(session, chart, resolved, '1', initialCount);
+  fromMs: number,
+  toMs: number,
+): Promise<{ history: HistoryBar[]; rangeRequests: number }> {
+  const chunks = buildIntradayRangeChunks(fromMs, toMs);
+  const history: HistoryBar[] = [];
 
-  try {
-    let moreDataRequests = 0;
-    let sourceExhausted = false;
-
-    while (
-      earliestHistoryTimestampMs((series.history || []) as HistoryBar[]) > targetStartMs &&
-      moreDataRequests < MAX_MORE_DATA_REQUESTS
-    ) {
-      const beforeLength = series.history.length;
-      const beforeFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
-
-      await requestMoreOneMinuteData(session, chart, series, MORE_DATA_BARS);
-      moreDataRequests += 1;
-
-      const afterLength = series.history.length;
-      const afterFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
-
-      if (afterLength <= beforeLength || afterFirst >= beforeFirst) {
-        sourceExhausted = true;
-        break;
-      }
+  for (const chunk of chunks) {
+    const range: [number, number] = [
+      Math.floor(chunk.fromMs / 1000),
+      Math.floor(chunk.toMs / 1000),
+    ];
+    const series = await createSeries(session, chart, resolved, '1', 0, range);
+    try {
+      history.push(...((series.history || []) as HistoryBar[]));
+    } finally {
+      await series.close();
     }
-
-    const earliestMs = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
-    if (
-      Number.isFinite(earliestMs) &&
-      earliestMs > targetStartMs &&
-      !sourceExhausted &&
-      moreDataRequests >= MAX_MORE_DATA_REQUESTS
-    ) {
-      throw new Error(
-        `1-minute history pagination limit reached before target coverage: earliest=${new Date(earliestMs).toISOString()} target=${new Date(targetStartMs).toISOString()}`,
-      );
-    }
-
-    return {
-      history: [...((series.history || []) as HistoryBar[])],
-      moreDataRequests,
-      sourceExhausted,
-    };
-  } finally {
-    await series.close();
   }
+
+  return { history, rangeRequests: chunks.length };
 }
 
 async function main() {
   const now = new Date();
   const nowMs = now.getTime();
-  const nowIso = now.toISOString();
-  const rawCutoffMs = nowMs - INTRADAY_POLICY.rawRetentionDays * 86_400_000;
-  const derivedCutoffMs = nowMs - INTRADAY_POLICY.derivedRetentionDays * 86_400_000;
+  const rawCutoffMs = retentionCutoffStartOfUtcDay(
+    nowMs,
+    INTRADAY_POLICY.rawRetentionDays,
+  );
+  const derivedCutoffMs = retentionCutoffStartOfUtcDay(
+    nowMs,
+    INTRADAY_POLICY.derivedRetentionDays,
+  );
   const rawCutoffIso = new Date(rawCutoffMs).toISOString();
   const derivedCutoffIso = new Date(derivedCutoffMs).toISOString();
   const forceFullRepair = readBoolean('EGX_INTRADAY_FULL_REPAIR');
@@ -451,7 +364,7 @@ async function main() {
   }
 
   console.log(
-    `1m intraday sync starting: ${tickers.length} tickers; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; forceFullRepair=${forceFullRepair}.`,
+    `1m intraday sync starting: ${tickers.length} tickers; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; rangeChunk=${INTRADAY_POLICY.backfillChunkDays}d; forceFullRepair=${forceFullRepair}.`,
   );
 
   const session = await createSession();
@@ -459,21 +372,45 @@ async function main() {
   let totalFetched = 0;
   let totalRawInserted = 0;
   let totalDerivedUpserted = 0;
+  let totalRangeRequests = 0;
 
   try {
     const chart = await createChart(session);
 
     for (const ticker of tickers) {
       try {
-        const [earliestDerivedTimestamp, latestRawTimestamp, metadata] = await Promise.all([
-          coverageTimestamp(sb, ticker, INTRADAY_POLICY.derivedIntervalMinutes, 'earliest'),
-          coverageTimestamp(sb, ticker, INTRADAY_POLICY.rawIntervalMinutes, 'latest'),
+        const [
+          earliestDerivedTimestamp,
+          earliestFiveMinuteTimestamp,
+          latestRawTimestamp,
+          metadata,
+        ] = await Promise.all([
+          coverageTimestamp(
+            sb,
+            ticker,
+            INTRADAY_POLICY.derivedIntervalMinutes,
+            'earliest',
+            'derived-1m',
+          ),
+          coverageTimestamp(
+            sb,
+            ticker,
+            INTRADAY_POLICY.derivedIntervalMinutes,
+            'earliest',
+          ),
+          coverageTimestamp(
+            sb,
+            ticker,
+            INTRADAY_POLICY.rawIntervalMinutes,
+            'latest',
+          ),
           loadTickerMetadata(sb, ticker),
         ]);
 
         const plan = buildIntradayOneMinuteBackfillPlan({
           now,
           earliestDerivedTimestamp,
+          earliestFiveMinuteTimestamp,
           latestRawTimestamp,
           forceFullRepair,
         });
@@ -483,17 +420,18 @@ async function main() {
           isin: metadata.isin,
         });
 
-        const pagination = await fetchOneMinuteHistory(
+        const ranged = await fetchOneMinuteHistoryByRange(
           session,
           chart,
           resolution.resolved,
           plan.fromMs,
-          plan.mode,
+          plan.toMs,
         );
+        totalRangeRequests += ranged.rangeRequests;
 
         const byTimestamp = new Map<string, IntradayPricePoint>();
         const retrievedAt = new Date().toISOString();
-        for (const rawBar of pagination.history) {
+        for (const rawBar of ranged.history) {
           const point = rawPointFromHistoryBar(rawBar, retrievedAt, derivedCutoffMs, nowMs);
           if (point) byTimestamp.set(point.timestamp, point);
         }
@@ -528,15 +466,16 @@ async function main() {
           ticker,
           resolutionMethod: resolution.method,
           resolvedSymbol: resolution.symbol,
+          resolutionAttempts: resolution.attempts,
           mode: plan.mode,
-          moreDataRequests: pagination.moreDataRequests,
-          sourceExhausted: pagination.sourceExhausted,
+          rangeRequests: ranged.rangeRequests,
           fetched1m: fetchedPoints.length,
           inserted1m: rawInserted,
           upserted5m: derivedUpserted,
           earliestFetched: fetchedPoints[0]?.timestamp ?? null,
           latestFetched: fetchedPoints.at(-1)?.timestamp ?? null,
-          previousEarliest5m: earliestDerivedTimestamp,
+          previousEarliestDerived5m: earliestDerivedTimestamp,
+          previousEarliestAny5m: earliestFiveMinuteTimestamp,
           previousLatest1m: latestRawTimestamp,
         }));
       } catch (error) {
@@ -554,7 +493,7 @@ async function main() {
     ]);
 
     console.log(
-      `1m intraday sync complete: fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
+      `1m intraday sync complete: rangeRequests=${totalRangeRequests}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
     );
 
     if (failures > 0) process.exitCode = 1;

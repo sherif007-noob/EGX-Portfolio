@@ -14,10 +14,14 @@ on:
   push:
     branches:
       - main
+      - feature/premium-ui-redesign
     paths:
       - '.github/workflows/intraday-prices.yml'
       - 'scripts/syncIntradayPrices.ts'
   schedule:
+    # GitHub scheduled workflows execute from the repository default branch.
+    # Premium-branch pushes run this workflow too so 5-minute changes can be
+    # exercised before merge; the default-branch schedule remains authoritative.
     # Broad UTC window covers the EGX session across Cairo DST changes.
     # TradingView supplies the actual 5-minute bar timestamps; the cron time
     # only determines how often we ingest newly completed/current bars.

@@ -44,19 +44,9 @@ export function buildIntradayOneMinuteBackfillPlan(
   );
 
   const earliestDerivedMs = parseMs(input.earliestDerivedTimestamp);
-  const earliestFiveMinuteMs = parseMs(input.earliestFiveMinuteTimestamp);
   const latestRawMs = parseMs(input.latestRawTimestamp);
 
-  const legacyFiveMinuteTierNeedsReplacement =
-    Number.isFinite(earliestFiveMinuteMs) &&
-    earliestFiveMinuteMs < rawCutoffMs &&
-    (!Number.isFinite(earliestDerivedMs) || earliestDerivedMs >= rawCutoffMs);
-
-  if (
-    input.forceFullRepair ||
-    !Number.isFinite(earliestDerivedMs) ||
-    legacyFiveMinuteTierNeedsReplacement
-  ) {
+  if (input.forceFullRepair || !Number.isFinite(earliestDerivedMs)) {
     return {
       mode: 'full-derived-backfill',
       fromMs: derivedCutoffMs,

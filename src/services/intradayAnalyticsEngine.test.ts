@@ -194,4 +194,35 @@ describe('intraday analytics engine', () => {
     expect(fifteen.points.some((point) => point.date === '2026-09-17T07:08:00.000Z')).toBe(false);
   });
 
+
+  it('pins a same-day post-close live endpoint to the final EGX market point', () => {
+    const transactions: TradeTransaction[] = [
+      tx({ id: 'dep-close', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-24' }),
+      tx({ id: 'hold-close', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-23', executedAt: '2026-09-23T08:00:00Z' }),
+    ];
+
+    const result = buildIntradayAnalyticsResult(
+      transactions,
+      { TEST: [{ date: '2026-09-23', close: 100 }] },
+      {
+        TEST: [
+          { timestamp: '2026-09-24T11:14:00Z', intervalMinutes: 1, open: 100, high: 101, low: 99, close: 100 },
+          { timestamp: '2026-09-24T11:29:00Z', intervalMinutes: 1, open: 100, high: 102, low: 99, close: 101 },
+        ],
+      },
+      {
+        sessionDate: '2026-09-24',
+        asOf: '2026-09-24T20:43:00Z',
+        livePrices: { TEST: 102 },
+      },
+    );
+
+    const last = result.points.at(-1);
+    expect(last?.date).toBe('2026-09-24T11:30:00.001Z');
+    expect(result.summary.endEquity).toBe(last?.equity);
+    expect(result.summary.pnlEgp).toBeCloseTo(
+      (result.summary.endEquity ?? 0) - (result.summary.startEquity ?? 0) - result.summary.netExternalFlow,
+      8,
+    );
+  });
 });

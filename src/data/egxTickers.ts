@@ -130,11 +130,12 @@ export function mapMarketClassificationToSector(
   marketSector?: string,
   industry?: string,
   fallback: Sector = 'Other',
+  description?: string,
 ): Sector {
-  const value = `${marketSector || ''} ${industry || ''}`.toLowerCase();
+  const value = `${marketSector || ''} ${industry || ''} ${description || ''}`.toLowerCase();
 
   if (/bank/.test(value)) return 'Banking';
-  if (/real estate|property/.test(value)) return 'Real Estate & Construction';
+  if (/real estate|property|homebuild|housing|urbanization/.test(value)) return 'Real Estate & Construction';
   if (/engineering|construction|contracting/.test(value)) return 'Contracting & Construction';
   if (/paper|packag|printing/.test(value)) return 'Paper & Packaging';
   if (/cement|ceramic|porcelain|building material/.test(value)) return 'Building Materials & Cement';
@@ -143,8 +144,9 @@ export function mapMarketClassificationToSector(
   if (/pharma|health|hospital|medical/.test(value)) return 'Healthcare & Pharmaceuticals';
   if (/food|beverage|tobacco|poultry|flour|agri/.test(value)) return 'Food, Beverage & Tobacco';
   if (/education|school/.test(value)) return 'Education & Services';
-  if (/hotel|tourism|leisure|resort/.test(value)) return 'Tourism & Leisure';
-  if (/telecom|communication|media/.test(value)) return 'Telecommunications & Media';
+  if (/commercial service/.test(value)) return 'Commercial Services';
+  if (/hotel|tourism|leisure|resort|fitness/.test(value)) return 'Tourism & Leisure';
+  if (/telecom|communication|media|movie|entertainment|publishing|internet software|information technology/.test(value)) return 'Telecommunications & Media';
   if (/shipping|transport|logistic|marine/.test(value)) return 'Transport & Logistics';
   if (/textile|apparel|carpet|consumer durable/.test(value)) return 'Textiles & Consumer Durables';
   if (/oil|drilling|energy service/.test(value)) return 'Energy & Oil Services';
@@ -153,7 +155,7 @@ export function mapMarketClassificationToSector(
   if (/finance|financial|investment|insurance|leasing|broker/.test(value)) {
     return 'Non-Bank Financial Services & Fintech';
   }
-  if (/industrial|manufactur|electrical|automobile|auto /.test(value)) return 'Industrial Goods & Services';
+  if (/industrial|manufactur|electrical|electronic component|automobile|auto /.test(value)) return 'Industrial Goods & Services';
 
   return fallback;
 }
@@ -203,6 +205,7 @@ export function createEGXTickerRecord(
     marketSector,
     industry,
     dict?.sector || 'Other',
+    description,
   );
   const isin = scannerIsin || dict?.isin || '';
   const logoUrl = getTradingViewLogoUrl(upper, logoIdOrUrl);

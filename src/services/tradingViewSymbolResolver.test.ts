@@ -20,6 +20,10 @@ describe('tradingViewSymbolResolver', () => {
     expect(resolve.mock.calls.map(([symbol]) => symbol)).toEqual(['NAPR', 'EGS370O1C013']);
     expect(result.symbol).toBe('EGS370O1C013');
     expect(result.method).toBe('isin');
+    expect(result.attempts).toEqual([
+      { symbol: 'NAPR', method: 'ticker', ok: false, error: 'unknown symbol' },
+      { symbol: 'EGS370O1C013', method: 'isin', ok: true },
+    ]);
   });
 
   it('uses a legacy rename before ISIN when one is known', () => {

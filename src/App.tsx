@@ -315,17 +315,28 @@ export default function App() {
         .sort()[0],
     }));
 
-    if (!targets.length) return;
+    console.info('[Intraday Repair] trigger evaluation', {
+      transactionCount: transactions.length,
+      targets,
+      skippedAsAlreadyAttempted: [...intradayBackfillAttemptsRef.current],
+    });
+    if (!targets.length) {
+      console.info('[Intraday Repair] no eligible targets; POST will not be sent');
+      return;
+    }
     for (const target of targets) intradayBackfillAttemptsRef.current.add(target.ticker);
 
+    console.info('[Intraday Repair] requesting coverage', { targets });
     void ensureIntradayPriceCoverage(targets)
       .then((result) => {
+        console.info('[Intraday Repair] request completed', result);
         for (const failure of result.failures) {
           intradayBackfillAttemptsRef.current.delete(normalizeTicker(failure.ticker));
         }
       })
       .catch((error) => {
         for (const target of targets) intradayBackfillAttemptsRef.current.delete(target.ticker);
+        console.error('[Intraday Repair] request failed before or during POST', error);
         console.warn('Automatic intraday-price backfill failed; scheduled ingestion can retry later.', error);
       });
   }, [transactions]);

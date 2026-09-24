@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { canonicalizeEGXSymbol } from '../src/data/egxTickers';
+import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 import {
   buildHistoricalRepairPlans,
   type HistoryCoverageRequirement,
@@ -195,31 +196,6 @@ async function loadTickerMetadata(
     });
   }
   return result;
-}
-
-async function resolveTradingViewSymbol(
-  chart: Awaited<ReturnType<typeof createChart>>,
-  ticker: string,
-  isin?: string,
-) {
-  const candidates = [...new Set([ticker, isin].filter((value): value is string => Boolean(value)))];
-  let lastError: unknown = null;
-
-  for (const candidate of candidates) {
-    try {
-      return {
-        candidate,
-        resolved: await chart.resolve(candidate, 'EGX'),
-      };
-    } catch (error) {
-      lastError = error;
-      console.warn(`${ticker}: TradingView resolve failed for ${candidate}; trying fallback if available.`);
-    }
-  }
-
-  throw new Error(
-    `${ticker}: unable to resolve TradingView symbol using ticker/ISIN candidates. ${String(lastError || '')}`,
-  );
 }
 
 function requestedBarsForRange(startDate: string, endDate: string): number {

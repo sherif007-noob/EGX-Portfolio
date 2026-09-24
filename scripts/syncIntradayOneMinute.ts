@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import {
   aggregateIntradayBars,
+  intradayBucketRange,
   mergeIntradayBarsByTimestamp,
 } from '../src/services/intradayAggregation';
 import {
@@ -749,12 +750,19 @@ async function main() {
         totalNewRawBars += rawWrite.newBars;
         totalRepairedRawGaps += rawWrite.repairedGaps;
 
-        const persistedRawPoints = rawPoints.length
+        const persistedRawRange = rawPoints.length
+          ? intradayBucketRange(
+              rawPoints[0].timestamp,
+              rawPoints.at(-1)!.timestamp,
+              INTRADAY_POLICY.derivedIntervalMinutes,
+            )
+          : null;
+        const persistedRawPoints = persistedRawRange
           ? await loadPersistedRawPoints(
               sb,
               ticker,
-              rawPoints[0].timestamp,
-              rawPoints.at(-1)!.timestamp,
+              persistedRawRange.fromTimestamp,
+              persistedRawRange.toTimestamp,
             )
           : [];
         const canonicalDerivedSource = mergeIntradayBarsByTimestamp(
@@ -840,6 +848,7 @@ async function main() {
           new1m: rawWrite.newBars,
           repaired1mGaps: rawWrite.repairedGaps,
           persistedRawForDerivation: persistedRawPoints.length,
+          persistedRawDerivationRange: persistedRawRange,
           upserted5m: derivedUpserted,
           legacy5mBefore: legacyBefore,
           legacy5mAfter: legacyAfter,

@@ -1,7 +1,10 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
-import { aggregateIntradayBars } from '../src/services/intradayAggregation';
+import {
+  aggregateIntradayBars,
+  mergeIntradayBarsByTimestamp,
+} from '../src/services/intradayAggregation';
 import {
   buildIntradayOneMinuteBackfillPlan,
   retentionCutoffStartOfUtcDay,
@@ -279,6 +282,68 @@ async function loadExistingTimestamps(
   }
 
   return timestamps;
+}
+
+async function loadPersistedRawPoints(
+  sb: SupabaseClient,
+  ticker: string,
+  fromTimestamp: string,
+  toTimestamp: string,
+): Promise<IntradayPricePoint[]> {
+  const pageSize = 1000;
+  const points: IntradayPricePoint[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await sb
+      .from('intraday_price_history')
+      .select('bar_timestamp,open,high,low,close,volume,retrieved_at')
+      .eq('ticker', ticker)
+      .eq('interval_minutes', INTRADAY_POLICY.rawIntervalMinutes)
+      .gte('bar_timestamp', fromTimestamp)
+      .lte('bar_timestamp', toTimestamp)
+      .order('bar_timestamp', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Persisted 1-minute source read failed for ${ticker}: ${error.message}`);
+    }
+
+    for (const row of data ?? []) {
+      const timestamp = String(row.bar_timestamp ?? '');
+      const open = Number(row.open);
+      const high = Number(row.high);
+      const low = Number(row.low);
+      const close = Number(row.close);
+      const volume = row.volume == null ? undefined : Number(row.volume);
+      if (
+        !timestamp ||
+        !Number.isFinite(new Date(timestamp).getTime()) ||
+        !Number.isFinite(open) ||
+        !Number.isFinite(high) ||
+        !Number.isFinite(low) ||
+        !Number.isFinite(close) ||
+        open <= 0 || high <= 0 || low <= 0 || close <= 0
+      ) {
+        continue;
+      }
+
+      points.push({
+        timestamp,
+        intervalMinutes: INTRADAY_POLICY.rawIntervalMinutes,
+        open,
+        high,
+        low,
+        close,
+        volume: Number.isFinite(volume) ? volume : undefined,
+        source: 'tradingview',
+        retrievedAt: row.retrieved_at == null ? undefined : String(row.retrieved_at),
+      });
+    }
+
+    if (!data || data.length < pageSize) break;
+  }
+
+  return points;
 }
 
 async function insertMissingRawRows(
@@ -619,8 +684,21 @@ async function main() {
         const rawInserted = await insertMissingRawRows(sb, ticker, rawPoints);
         totalRawInserted += rawInserted;
 
-        const derivedPoints = aggregateIntradayBars(
+        const persistedRawPoints = rawPoints.length
+          ? await loadPersistedRawPoints(
+              sb,
+              ticker,
+              rawPoints[0].timestamp,
+              rawPoints.at(-1)!.timestamp,
+            )
+          : [];
+        const canonicalDerivedSource = mergeIntradayBarsByTimestamp(
           fetchedPoints,
+          persistedRawPoints,
+        );
+
+        const derivedPoints = aggregateIntradayBars(
+          canonicalDerivedSource,
           INTRADAY_POLICY.derivedIntervalMinutes,
         ).filter((point) => {
           const startMs = new Date(point.timestamp).getTime();
@@ -655,6 +733,7 @@ async function main() {
           sourceExhausted: paged.sourceExhausted,
           fetched1m: fetchedPoints.length,
           inserted1m: rawInserted,
+          persistedRawForDerivation: persistedRawPoints.length,
           upserted5m: derivedUpserted,
           legacy5mBefore: legacyBefore,
           legacy5mAfter: legacyAfter,

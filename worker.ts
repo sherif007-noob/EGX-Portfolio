@@ -118,12 +118,25 @@ async function handleApi(request: Request): Promise<Response> {
     });
   }
 
-  if (
-    (path === "/api/supabase/price-history/ensure" || path === "/api/supabase/intraday-history/ensure") &&
-    request.method === "POST"
-  ) {
+  if (path === "/api/supabase/intraday-history/ensure" && request.method === "POST") {
+    // Backward compatibility for an older PWA bundle that requested repair on
+    // app startup. The current client no longer calls this route. Returning a
+    // successful no-op prevents already-open/cached clients from generating
+    // error loops while TradingView ingestion stays in the Node workflow.
     return json({
-      error: "On-demand TradingView history repair is not executed in the Cloudflare Worker. History is maintained by the Node-based scheduled ingestion workflow.",
+      data: {
+        requestedTickers: [],
+        backfilledTickers: [],
+        writtenRows: 0,
+        failures: [],
+      },
+      deprecated: true,
+    });
+  }
+
+  if (path === "/api/supabase/price-history/ensure" && request.method === "POST") {
+    return json({
+      error: "On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.",
       retryable: true,
     }, 503);
   }

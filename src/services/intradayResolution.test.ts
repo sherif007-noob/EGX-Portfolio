@@ -181,4 +181,44 @@ describe('intraday resolution selection', () => {
     expect(selected?.intervalMinutes).toBe(1);
   });
 
+
+  it('keeps the latest completed EGX session after midnight when the new calendar day has no bars', () => {
+    const selected = selectBestIntradayResolution(
+      [
+        {
+          intervalMinutes: 1,
+          series: series([['ACTF', '2026-09-24T11:25:00.000Z']]),
+        },
+        {
+          intervalMinutes: 5,
+          series: series([['ACTF', '2026-09-24T11:25:00.000Z']]),
+        },
+      ],
+      ['ACTF'],
+      '2026-09-25',
+    );
+
+    expect(selected?.sessionDate).toBe('2026-09-24');
+    expect(selected?.intervalMinutes).toBe(1);
+  });
+
+  it('falls back across a weekend or exchange-closed date without inventing intraday points', () => {
+    const selected = selectBestIntradayResolution(
+      [
+        {
+          intervalMinutes: 1,
+          series: series([['ACTF', '2026-09-24T10:30:00.000Z']]),
+        },
+        {
+          intervalMinutes: 5,
+          series: series([['ACTF', '2026-09-24T10:30:00.000Z']]),
+        },
+      ],
+      ['ACTF'],
+      '2026-09-27',
+    );
+
+    expect(selected?.sessionDate).toBe('2026-09-24');
+    expect(selected?.series.ACTF).toHaveLength(1);
+  });
 });

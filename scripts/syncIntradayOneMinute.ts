@@ -9,6 +9,12 @@ import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolR
 
 type HistoryBar = [number, number, number, number, number, number?];
 
+const INITIAL_BACKFILL_BARS = 5000;
+const INCREMENTAL_BARS = 1200;
+const MORE_DATA_BARS = 5000;
+const MAX_MORE_DATA_REQUESTS = 8;
+const MORE_DATA_TIMEOUT_MS = 20_000;
+
 type SupabaseClient = ReturnType<typeof createSupabaseClient>;
 
 function normalizeTicker(value: string): string {
@@ -306,6 +312,125 @@ async function pruneInterval(
   return count ?? 0;
 }
 
+function earliestHistoryTimestampMs(history: HistoryBar[]): number {
+  if (!history.length) return Number.POSITIVE_INFINITY;
+  const first = [...history]
+    .filter((bar) => Number.isFinite(Number(bar?.[0])))
+    .sort((a, b) => Number(a[0]) - Number(b[0]))[0];
+  return first ? Number(first[0]) * 1000 : Number.POSITIVE_INFINITY;
+}
+
+async function requestMoreOneMinuteData(
+  session: Awaited<ReturnType<typeof createSession>>,
+  chart: Awaited<ReturnType<typeof createChart>>,
+  series: Awaited<ReturnType<typeof createSeries>>,
+  count: number,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      session.removeListener('series_completed', onCompleted);
+      session.removeListener('error', onError);
+    };
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+
+    const onCompleted = (payload: unknown[]) => {
+      if (!Array.isArray(payload) || payload[0] !== chart.id || payload[1] !== series.id) return;
+      finish();
+    };
+
+    const onError = (...args: unknown[]) => {
+      const [event, payload] = args;
+      if (
+        event === 'series_error' &&
+        Array.isArray(payload) &&
+        payload[0] === chart.id &&
+        payload[1] === series.id
+      ) {
+        finish(new Error(`TradingView request_more_data failed: ${String(payload[2] || 'series_error')}`));
+      }
+    };
+
+    const timeout = setTimeout(
+      () => finish(new Error(`TradingView request_more_data timed out after ${MORE_DATA_TIMEOUT_MS}ms.`)),
+      MORE_DATA_TIMEOUT_MS,
+    );
+
+    session.on('series_completed', onCompleted);
+    session.on('error', onError);
+
+    session
+      .send('request_more_data', [chart.id, series.id, count])
+      .catch((error) =>
+        finish(error instanceof Error ? error : new Error(String(error))),
+      );
+  });
+}
+
+async function fetchOneMinuteHistory(
+  session: Awaited<ReturnType<typeof createSession>>,
+  chart: Awaited<ReturnType<typeof createChart>>,
+  resolved: Parameters<typeof createSeries>[2],
+  targetStartMs: number,
+  mode: 'full-derived-backfill' | 'raw-backfill' | 'incremental',
+): Promise<{ history: HistoryBar[]; moreDataRequests: number; sourceExhausted: boolean }> {
+  const initialCount = mode === 'incremental' ? INCREMENTAL_BARS : INITIAL_BACKFILL_BARS;
+  const series = await createSeries(session, chart, resolved, '1', initialCount);
+
+  try {
+    let moreDataRequests = 0;
+    let sourceExhausted = false;
+
+    while (
+      earliestHistoryTimestampMs((series.history || []) as HistoryBar[]) > targetStartMs &&
+      moreDataRequests < MAX_MORE_DATA_REQUESTS
+    ) {
+      const beforeLength = series.history.length;
+      const beforeFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+
+      await requestMoreOneMinuteData(session, chart, series, MORE_DATA_BARS);
+      moreDataRequests += 1;
+
+      const afterLength = series.history.length;
+      const afterFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+
+      if (afterLength <= beforeLength || afterFirst >= beforeFirst) {
+        sourceExhausted = true;
+        break;
+      }
+    }
+
+    const earliestMs = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+    if (
+      Number.isFinite(earliestMs) &&
+      earliestMs > targetStartMs &&
+      !sourceExhausted &&
+      moreDataRequests >= MAX_MORE_DATA_REQUESTS
+    ) {
+      throw new Error(
+        `1-minute history pagination limit reached before target coverage: earliest=${new Date(earliestMs).toISOString()} target=${new Date(targetStartMs).toISOString()}`,
+      );
+    }
+
+    return {
+      history: [...((series.history || []) as HistoryBar[])],
+      moreDataRequests,
+      sourceExhausted,
+    };
+  } finally {
+    await series.close();
+  }
+}
+
 async function main() {
   const now = new Date();
   const nowMs = now.getTime();
@@ -358,27 +483,19 @@ async function main() {
           isin: metadata.isin,
         });
 
+        const pagination = await fetchOneMinuteHistory(
+          session,
+          chart,
+          resolution.resolved,
+          plan.fromMs,
+          plan.mode,
+        );
+
         const byTimestamp = new Map<string, IntradayPricePoint>();
-
-        for (const range of plan.ranges) {
-          const series = await createSeries(
-            session,
-            chart,
-            resolution.resolved,
-            '1',
-            0,
-            [Math.floor(range.fromMs / 1000), Math.floor(range.toMs / 1000)],
-          );
-
-          try {
-            const retrievedAt = new Date().toISOString();
-            for (const rawBar of (series.history || []) as HistoryBar[]) {
-              const point = rawPointFromHistoryBar(rawBar, retrievedAt, derivedCutoffMs, nowMs);
-              if (point) byTimestamp.set(point.timestamp, point);
-            }
-          } finally {
-            await series.close();
-          }
+        const retrievedAt = new Date().toISOString();
+        for (const rawBar of pagination.history) {
+          const point = rawPointFromHistoryBar(rawBar, retrievedAt, derivedCutoffMs, nowMs);
+          if (point) byTimestamp.set(point.timestamp, point);
         }
 
         const fetchedPoints = [...byTimestamp.values()].sort((a, b) =>
@@ -412,7 +529,8 @@ async function main() {
           resolutionMethod: resolution.method,
           resolvedSymbol: resolution.symbol,
           mode: plan.mode,
-          ranges: plan.ranges.length,
+          moreDataRequests: pagination.moreDataRequests,
+          sourceExhausted: pagination.sourceExhausted,
           fetched1m: fetchedPoints.length,
           inserted1m: rawInserted,
           upserted5m: derivedUpserted,

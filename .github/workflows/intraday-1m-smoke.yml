@@ -12,6 +12,8 @@ on:
       - 'src/services/tradingViewSymbolResolver.test.ts'
       - 'src/services/egxTradingSession.ts'
       - 'src/services/egxTradingSession.test.ts'
+      - 'src/services/tickerRegistry.ts'
+      - 'supabase/migrations/20260924_ticker_registry*.sql'
   workflow_dispatch:
 
 permissions:

@@ -4,7 +4,6 @@ import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { aggregateIntradayBars } from '../src/services/intradayAggregation';
 import {
   buildIntradayOneMinuteBackfillPlan,
-  buildIntradayRangeChunks,
   retentionCutoffStartOfUtcDay,
 } from '../src/services/intradayBackfillPlan';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
@@ -12,8 +11,9 @@ import type { IntradayPricePoint } from '../src/services/intradayPriceStore';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 
 type HistoryBar = [number, number, number, number, number, number?];
-
 type SupabaseClient = ReturnType<typeof createSupabaseClient>;
+
+const MORE_DATA_TIMEOUT_MS = 20_000;
 
 function normalizeTicker(value: string): string {
   return value.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
@@ -147,6 +147,23 @@ async function coverageTimestamp(
     throw new Error(`${direction} intraday coverage read failed for ${ticker}: ${error.message}`);
   }
   return data?.bar_timestamp ? String(data.bar_timestamp) : null;
+}
+
+async function countLegacyFiveMinuteRows(
+  sb: SupabaseClient,
+  ticker: string,
+  cutoffIso: string,
+): Promise<number> {
+  const { count, error } = await sb
+    .from('intraday_price_history')
+    .select('bar_timestamp', { head: true, count: 'exact' })
+    .eq('ticker', ticker)
+    .eq('interval_minutes', INTRADAY_POLICY.derivedIntervalMinutes)
+    .neq('source', 'derived-1m')
+    .gte('bar_timestamp', cutoffIso);
+
+  if (error) throw new Error(`Legacy 5-minute coverage read failed for ${ticker}: ${error.message}`);
+  return count ?? 0;
 }
 
 function rawPointFromHistoryBar(
@@ -324,30 +341,137 @@ async function pruneInterval(
   return count ?? 0;
 }
 
-async function fetchOneMinuteHistoryByRange(
+function earliestHistoryTimestampMs(history: HistoryBar[]): number {
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const bar of history) {
+    const seconds = Number(bar?.[0]);
+    if (!Number.isFinite(seconds)) continue;
+    earliest = Math.min(earliest, seconds * 1000);
+  }
+  return earliest;
+}
+
+async function requestMoreOneMinuteData(
+  session: Awaited<ReturnType<typeof createSession>>,
+  chart: Awaited<ReturnType<typeof createChart>>,
+  series: Awaited<ReturnType<typeof createSeries>>,
+  count: number,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      session.removeListener('series_completed', onCompleted);
+      session.removeListener('error', onError);
+    };
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+
+    const onCompleted = (payload: unknown[]) => {
+      if (!Array.isArray(payload) || payload[0] !== chart.id || payload[1] !== series.id) return;
+      finish();
+    };
+
+    const onError = (...args: unknown[]) => {
+      const [event, payload] = args;
+      if (
+        event === 'series_error' &&
+        Array.isArray(payload) &&
+        payload[0] === chart.id &&
+        payload[1] === series.id
+      ) {
+        finish(new Error(`TradingView request_more_data failed: ${String(payload[2] || 'series_error')}`));
+      }
+    };
+
+    const timeout = setTimeout(
+      () => finish(new Error(`TradingView request_more_data timed out after ${MORE_DATA_TIMEOUT_MS}ms.`)),
+      MORE_DATA_TIMEOUT_MS,
+    );
+
+    session.on('series_completed', onCompleted);
+    session.on('error', onError);
+
+    session
+      .send('request_more_data', [chart.id, series.id, count])
+      .catch((error) =>
+        finish(error instanceof Error ? error : new Error(String(error))),
+      );
+  });
+}
+
+async function fetchOneMinuteHistoryPaged(
   session: Awaited<ReturnType<typeof createSession>>,
   chart: Awaited<ReturnType<typeof createChart>>,
   resolved: Parameters<typeof createSeries>[2],
-  fromMs: number,
-  toMs: number,
-): Promise<{ history: HistoryBar[]; rangeRequests: number }> {
-  const chunks = buildIntradayRangeChunks(fromMs, toMs);
-  const history: HistoryBar[] = [];
+  targetStartMs: number,
+  mode: 'full-derived-backfill' | 'raw-backfill' | 'incremental',
+): Promise<{
+  history: HistoryBar[];
+  additionalBatches: number;
+  sourceExhausted: boolean;
+}> {
+  const initialCount =
+    mode === 'incremental'
+      ? INTRADAY_POLICY.incrementalBars
+      : INTRADAY_POLICY.initialBackfillBars;
+  const series = await createSeries(session, chart, resolved, '1', initialCount);
 
-  for (const chunk of chunks) {
-    const range: [number, number] = [
-      Math.floor(chunk.fromMs / 1000),
-      Math.floor(chunk.toMs / 1000),
-    ];
-    const series = await createSeries(session, chart, resolved, '1', 0, range);
-    try {
-      history.push(...((series.history || []) as HistoryBar[]));
-    } finally {
-      await series.close();
+  try {
+    let additionalBatches = 0;
+    let sourceExhausted = false;
+
+    while (
+      earliestHistoryTimestampMs((series.history || []) as HistoryBar[]) > targetStartMs &&
+      additionalBatches < INTRADAY_POLICY.maxBackfillBatches
+    ) {
+      const beforeLength = series.history.length;
+      const beforeFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+
+      await requestMoreOneMinuteData(
+        session,
+        chart,
+        series,
+        INTRADAY_POLICY.backfillBatchBars,
+      );
+      additionalBatches += 1;
+
+      const afterLength = series.history.length;
+      const afterFirst = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+
+      if (afterLength <= beforeLength || afterFirst >= beforeFirst) {
+        sourceExhausted = true;
+        break;
+      }
     }
-  }
 
-  return { history, rangeRequests: chunks.length };
+    const earliestMs = earliestHistoryTimestampMs((series.history || []) as HistoryBar[]);
+    if (
+      Number.isFinite(earliestMs) &&
+      earliestMs > targetStartMs &&
+      !sourceExhausted &&
+      additionalBatches >= INTRADAY_POLICY.maxBackfillBatches
+    ) {
+      throw new Error(
+        `1-minute pagination limit reached before target coverage: earliest=${new Date(earliestMs).toISOString()} target=${new Date(targetStartMs).toISOString()}`,
+      );
+    }
+
+    return {
+      history: [...((series.history || []) as HistoryBar[])],
+      additionalBatches,
+      sourceExhausted,
+    };
+  } finally {
+    await series.close();
+  }
 }
 
 async function main() {
@@ -376,7 +500,7 @@ async function main() {
   }
 
   console.log(
-    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; rangeChunk=${INTRADAY_POLICY.backfillChunkDays}d; forceFullRepair=${forceFullRepair}.`,
+    `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}.`,
   );
 
   const session = await createSession();
@@ -384,7 +508,7 @@ async function main() {
   let totalFetched = 0;
   let totalRawInserted = 0;
   let totalDerivedUpserted = 0;
-  let totalRangeRequests = 0;
+  let totalAdditionalBatches = 0;
 
   try {
     const chart = await createChart(session);
@@ -396,6 +520,7 @@ async function main() {
           earliestFiveMinuteTimestamp,
           latestRawTimestamp,
           metadata,
+          legacyBefore,
         ] = await Promise.all([
           coverageTimestamp(
             sb,
@@ -417,6 +542,7 @@ async function main() {
             'latest',
           ),
           loadTickerMetadata(sb, ticker),
+          countLegacyFiveMinuteRows(sb, ticker, derivedCutoffIso),
         ]);
 
         const plan = buildIntradayOneMinuteBackfillPlan({
@@ -432,25 +558,35 @@ async function main() {
           isin: metadata.isin,
         });
 
-        const ranged = await fetchOneMinuteHistoryByRange(
+        const paged = await fetchOneMinuteHistoryPaged(
           session,
           chart,
           resolution.resolved,
           plan.fromMs,
-          plan.toMs,
+          plan.mode,
         );
-        totalRangeRequests += ranged.rangeRequests;
+        totalAdditionalBatches += paged.additionalBatches;
 
         const byTimestamp = new Map<string, IntradayPricePoint>();
         const retrievedAt = new Date().toISOString();
-        for (const rawBar of ranged.history) {
+        for (const rawBar of paged.history) {
           const point = rawPointFromHistoryBar(rawBar, retrievedAt, derivedCutoffMs, nowMs);
-          if (point) byTimestamp.set(point.timestamp, point);
+          if (!point) continue;
+          const pointMs = new Date(point.timestamp).getTime();
+          if (pointMs < plan.fromMs || pointMs > plan.toMs) continue;
+          byTimestamp.set(point.timestamp, point);
         }
 
         const fetchedPoints = [...byTimestamp.values()].sort((a, b) =>
           a.timestamp.localeCompare(b.timestamp),
         );
+
+        if (!fetchedPoints.length) {
+          throw new Error(
+            `TradingView returned no usable 1-minute bars for requested ${plan.mode} window.`,
+          );
+        }
+
         totalFetched += fetchedPoints.length;
 
         const rawPoints = fetchedPoints.filter(
@@ -474,16 +610,30 @@ async function main() {
         const derivedUpserted = await upsertDerivedRows(sb, ticker, derivedPoints);
         totalDerivedUpserted += derivedUpserted;
 
+        const legacyAfter = await countLegacyFiveMinuteRows(sb, ticker, derivedCutoffIso);
+        if (plan.mode === 'full-derived-backfill' && legacyAfter > 0) {
+          throw new Error(
+            `Full derived rebuild incomplete: ${legacyAfter} legacy TradingView 5-minute rows remain inside the 90-day retention window.`,
+          );
+        }
+
         console.log(JSON.stringify({
           ticker,
           resolutionMethod: resolution.method,
           resolvedSymbol: resolution.symbol,
           resolutionAttempts: resolution.attempts,
           mode: plan.mode,
-          rangeRequests: ranged.rangeRequests,
+          initialBars:
+            plan.mode === 'incremental'
+              ? INTRADAY_POLICY.incrementalBars
+              : INTRADAY_POLICY.initialBackfillBars,
+          additionalBatches: paged.additionalBatches,
+          sourceExhausted: paged.sourceExhausted,
           fetched1m: fetchedPoints.length,
           inserted1m: rawInserted,
           upserted5m: derivedUpserted,
+          legacy5mBefore: legacyBefore,
+          legacy5mAfter: legacyAfter,
           earliestFetched: fetchedPoints[0]?.timestamp ?? null,
           latestFetched: fetchedPoints.at(-1)?.timestamp ?? null,
           previousEarliestDerived5m: earliestDerivedTimestamp,
@@ -492,6 +642,7 @@ async function main() {
         }));
       } catch (error) {
         failures += 1;
+        process.exitCode = 1;
         console.error(
           `${ticker}: 1-minute intraday sync failed`,
           error instanceof Error ? error.message : error,
@@ -505,10 +656,8 @@ async function main() {
     ]);
 
     console.log(
-      `1m intraday sync complete: rangeRequests=${totalRangeRequests}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
+      `1m intraday sync complete: additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, upserted5m=${totalDerivedUpserted}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
     );
-
-    if (failures > 0) process.exitCode = 1;
   } finally {
     await session.close();
   }

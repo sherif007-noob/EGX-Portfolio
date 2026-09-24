@@ -24,6 +24,7 @@ import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import { getIntradayPrices, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { INTRADAY_POLICY } from '../../services/intradayPolicy';
+import { aggregateIntradayBars } from '../../services/intradayAggregation';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
 import { selectBestIntradayResolution } from '../../services/intradayResolution';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
@@ -64,6 +65,16 @@ interface PerformanceTimeframeChartProps {
   historicalLoading?: boolean;
   entranceReady?: boolean;
 }
+
+type TodayResolution = 'AUTO' | 1 | 5 | 15 | 60;
+
+const TODAY_RESOLUTIONS: Array<{ value: TodayResolution; label: string }> = [
+  { value: 'AUTO', label: 'Auto' },
+  { value: 1, label: '1m' },
+  { value: 5, label: '5m' },
+  { value: 15, label: '15m' },
+  { value: 60, label: '1h' },
+];
 
 const TIMEFRAMES: Array<{ value: AnalyticsTimeframe; label: string }> = [
   { value: 'TODAY', label: 'Today' },
@@ -156,6 +167,8 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
+  const [todayResolution, setTodayResolution] = useState<TodayResolution>('AUTO');
+  const [effectiveTodayResolution, setEffectiveTodayResolution] = useState<number | null>(null);
   const [weeklyMorph, setWeeklyMorph] = useState<{
     from: AnalyticsTimeframe;
     to: AnalyticsTimeframe;
@@ -201,11 +214,22 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             })),
           );
 
-        let selection = selectBestIntradayResolution(
-          await loadResolutionCandidates(requestedSessionDate),
-          tickers,
-          requestedSessionDate,
-        );
+        const chooseResolution = (
+          candidates: Awaited<ReturnType<typeof loadResolutionCandidates>>,
+        ) => {
+          if (todayResolution === 'AUTO' || todayResolution === 60) {
+            return selectBestIntradayResolution(candidates, tickers, requestedSessionDate);
+          }
+          const requested = candidates.find(
+            (candidate) => candidate.intervalMinutes === todayResolution,
+          );
+          return requested
+            ? selectBestIntradayResolution([requested], tickers, requestedSessionDate)
+            : null;
+        };
+
+        let candidates = await loadResolutionCandidates(requestedSessionDate);
+        let selection = chooseResolution(candidates);
 
         // Normal sessions stay on a one-day query. Only fall back to a wider
         // lookback when the requested day has no actual market bars
@@ -215,14 +239,21 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
           lookback.setUTCDate(lookback.getUTCDate() - 14);
           const lookbackDate = lookback.toISOString().slice(0, 10);
 
-          selection = selectBestIntradayResolution(
-            await loadResolutionCandidates(lookbackDate),
-            tickers,
-            requestedSessionDate,
-          );
+          candidates = await loadResolutionCandidates(lookbackDate);
+          selection = chooseResolution(candidates);
         }
 
-        const intradayPrices: IntradayPriceSeries = selection?.series ?? {};
+        let intradayPrices: IntradayPriceSeries = selection?.series ?? {};
+        let effectiveResolution = selection?.intervalMinutes ?? null;
+        if (todayResolution === 60 && selection) {
+          intradayPrices = Object.fromEntries(
+            Object.entries(selection.series).map(([ticker, bars]) => [
+              ticker,
+              aggregateIntradayBars(bars, 60),
+            ]),
+          );
+          effectiveResolution = 60;
+        }
         const sessionDate = selection?.sessionDate ?? requestedSessionDate;
 
         const livePrices = Object.fromEntries(
@@ -245,6 +276,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
         if (!cancelled) {
           setLoadedIntradayPrices(intradayPrices);
+          setEffectiveTodayResolution(effectiveResolution);
           setIntradayResult(result);
         }
       } catch (error) {
@@ -260,7 +292,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     return () => {
       cancelled = true;
     };
-  }, [transactions, historicalPrices, capitalDeposits, positions]);
+  }, [transactions, historicalPrices, capitalDeposits, positions, todayResolution]);
 
   useEffect(() => {
     const handleGlobalPress = (event: Event) => {
@@ -847,6 +879,38 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             )}
           </div>
         </div>
+
+        {timeframe === 'TODAY' && (
+          <div className="flex flex-wrap items-center gap-1.5 pb-2" role="group" aria-label="Today chart resolution">
+            <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Resolution
+            </span>
+            {TODAY_RESOLUTIONS.map((item) => {
+              const selected = todayResolution === item.value;
+              return (
+                <button
+                  key={String(item.value)}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setTodayResolution(item.value)}
+                  className={[
+                    'premium-segment shrink-0 min-w-[44px] rounded-lg border px-2.5 py-1 text-[11px] font-semibold',
+                    selected
+                      ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
+                  ].join(' ')}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+            {effectiveTodayResolution != null && (
+              <span className="ml-1 text-[10px] text-slate-500">
+                {todayResolution === 'AUTO' ? `Using ${effectiveTodayResolution}m` : ''}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Analytics timeframe">
           {TIMEFRAMES.map((item) => {

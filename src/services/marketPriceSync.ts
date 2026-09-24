@@ -224,24 +224,24 @@ export function applyLivePricesToPortfolio(
       ...dt,
       ticker: key,
       nameEn: registryIdentity
-        ? existing.nameEn
+        ? existing!.nameEn
         : (dt.nameEn || existing?.nameEn || fallback?.nameEn || key),
       nameAr: registryIdentity
-        ? existing.nameAr
+        ? existing!.nameAr
         : (fallback?.nameAr || existing?.nameAr || dt.nameAr || `${key} مصر`),
       sector: registryIdentity
-        ? existing.sector
+        ? existing!.sector
         : (dt.sector !== 'Other'
           ? dt.sector
           : (existing?.sector || fallback?.sector || 'Other')),
       isin: registryIdentity
-        ? existing.isin
+        ? existing!.isin
         : (dt.isin || existing?.isin || fallback?.isin || ''),
       marketSector: registryIdentity
-        ? existing.marketSector
+        ? existing!.marketSector
         : (dt.marketSector || existing?.marketSector),
       industry: registryIdentity
-        ? existing.industry
+        ? existing!.industry
         : (dt.industry || existing?.industry),
       metadataSource: registryIdentity ? 'registry' : 'tradingview',
       directoryStatus: existing?.directoryStatus,

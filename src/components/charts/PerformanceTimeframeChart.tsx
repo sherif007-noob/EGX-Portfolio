@@ -190,7 +190,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
           tickers,
           `${requestedSessionDate}T00:00:00.000Z`,
           `${requestedSessionDate}T23:59:59.999Z`,
-          15,
+          5,
         );
 
         let sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
@@ -207,8 +207,8 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             tickers,
             `${lookbackDate}T00:00:00.000Z`,
             `${requestedSessionDate}T23:59:59.999Z`,
-            15,
-          );
+          5,
+        );
           sessionDate = latestIntradaySessionDate(intradayPrices, requestedSessionDate);
         }
 
@@ -926,7 +926,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
           <span>
             {timeframe === 'TODAY'
-              ? '15-minute session reconstruction · execution-time aware'
+              ? '5-minute session reconstruction · execution-time aware'
               : `${result.dataQuality.completeDays} complete valuation days`}
           </span>
           {result.dataQuality.incompleteDays > 0 && (

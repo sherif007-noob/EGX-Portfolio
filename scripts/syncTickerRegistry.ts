@@ -14,6 +14,7 @@ type SupabaseClient = ReturnType<typeof createSupabase>;
 
 interface ScannerSecurity {
   ticker: string;
+  scannerSymbol: string;
   description: string;
   logoId: string;
   marketSector: string;
@@ -109,6 +110,7 @@ async function fetchScannerUniverse(): Promise<ScannerSecurity[]> {
     seen.add(ticker);
     rows.push({
       ticker,
+      scannerSymbol: ticker,
       description: String(item.d[1] || '').trim(),
       logoId: String(item.d[2] || '').trim(),
       marketSector: String(item.d[11] || '').trim(),
@@ -178,18 +180,12 @@ async function main() {
   const verifyAfterDays = Math.max(1, Number(process.env.EGX_TICKER_VERIFY_AFTER_DAYS || 30));
   const inactiveAfterDays = Math.max(1, Number(process.env.EGX_TICKER_INACTIVE_AFTER_DAYS || 14));
 
-  const [scannerRows, existing] = await Promise.all([
+  const [rawScannerRows, existing] = await Promise.all([
     fetchScannerUniverse(),
     loadRegistry(sb),
   ]);
 
   const existingByTicker = new Map(existing.map((row) => [normalize(row.ticker), row]));
-  const scannerTickers = new Set(scannerRows.map((row) => row.ticker));
-  const scannerIsinCounts = new Map<string, number>();
-  for (const row of scannerRows) {
-    if (row.isin) scannerIsinCounts.set(row.isin, (scannerIsinCounts.get(row.isin) ?? 0) + 1);
-  }
-
   const existingByIsin = new Map<string, RegistryRow[]>();
   for (const row of existing) {
     const isin = normalize(row.isin);
@@ -199,8 +195,61 @@ async function main() {
     existingByIsin.set(isin, list);
   }
 
-  // A symbol that exists in the current scanner universe is canonical by definition
-  // for this reconciliation pass. Never let a stale static alias override it.
+  const baselineByIsin = new Map<string, string[]>();
+  for (const [ticker, metadata] of Object.entries(EGX_STOCK_DICTIONARY)) {
+    const isin = normalize(metadata.isin);
+    if (!isin || RETIRED_BASELINE_TICKERS.has(ticker)) continue;
+    const list = baselineByIsin.get(isin) ?? [];
+    list.push(ticker);
+    baselineByIsin.set(isin, list);
+  }
+
+  const isinPattern = /^EGS[0-9A-Z]{9}$/;
+  const canonicalScanner = new Map<string, ScannerSecurity>();
+  for (const raw of rawScannerRows) {
+    let ticker = raw.ticker;
+    if (isinPattern.test(raw.scannerSymbol)) {
+      const trustedExisting = (existingByIsin.get(raw.isin) ?? []).filter(
+        (row) =>
+          row.metadata_source === 'tradingview-scanner' &&
+          !isinPattern.test(normalize(row.ticker)),
+      );
+      const baselineMatches = baselineByIsin.get(raw.isin) ?? [];
+      const legacyExisting = (existingByIsin.get(raw.isin) ?? []).filter(
+        (row) => !isinPattern.test(normalize(row.ticker)),
+      );
+
+      if (trustedExisting.length === 1) ticker = normalize(trustedExisting[0].ticker);
+      else if (baselineMatches.length === 1) ticker = normalize(baselineMatches[0]);
+      else if (legacyExisting.length === 1) ticker = normalize(legacyExisting[0].ticker);
+    }
+
+    const candidate = { ...raw, ticker };
+    const current = canonicalScanner.get(ticker);
+    // Prefer a normal exchange ticker over an ISIN-shaped scanner alias.
+    if (!current || isinPattern.test(current.scannerSymbol) && !isinPattern.test(raw.scannerSymbol)) {
+      canonicalScanner.set(ticker, candidate);
+    }
+  }
+  const scannerRows = [...canonicalScanner.values()];
+
+  const scannerTickers = new Set(scannerRows.map((row) => row.ticker));
+  const scannerIsinCounts = new Map<string, number>();
+  for (const row of scannerRows) {
+    if (row.isin) scannerIsinCounts.set(row.isin, (scannerIsinCounts.get(row.isin) ?? 0) + 1);
+  }
+
+  // Rebuild evidence-derived aliases every run. Baseline aliases are fallback code,
+  // not authoritative registry facts, and stale first-pass rename guesses must not persist.
+  const { error: evidenceAliasDeleteError } = await sb
+    .from('ticker_aliases')
+    .delete()
+    .in('source', ['baseline', 'isin-reconciliation']);
+  if (evidenceAliasDeleteError) {
+    throw new Error(`Evidence alias cleanup failed: ${evidenceAliasDeleteError.message}`);
+  }
+
+  // A symbol that exists in the current canonical scanner universe is canonical by definition.
   if (scannerTickers.size) {
     const { error: activeAliasDeleteError } = await sb
       .from('ticker_aliases')
@@ -212,10 +261,6 @@ async function main() {
   }
 
   const aliasRows: Array<{ alias: string; canonical_ticker: string; alias_type: string; source: string }> = [];
-  for (const [alias, canonical] of Object.entries(LEGACY_TICKER_ALIASES)) {
-    if (scannerTickers.has(normalize(alias))) continue;
-    aliasRows.push({ alias, canonical_ticker: canonical, alias_type: 'legacy', source: 'baseline' });
-  }
 
   const upserts: any[] = [];
   const renamedOldTickers = new Set<string>();
@@ -225,7 +270,16 @@ async function main() {
     const current = existingByTicker.get(scan.ticker);
     const sameIsin = scan.isin ? (existingByIsin.get(scan.isin) ?? []) : [];
 
-    if (scan.isin && scannerIsinCounts.get(scan.isin) === 1) {
+    if (scan.scannerSymbol !== scan.ticker) {
+      aliasRows.push({
+        alias: scan.scannerSymbol,
+        canonical_ticker: scan.ticker,
+        alias_type: isinPattern.test(scan.scannerSymbol) ? 'isin' : 'scanner',
+        source: 'tradingview-scanner',
+      });
+    }
+
+    if (scan.isin && scannerIsinCounts.get(scan.isin) === 1 && scan.isin !== scan.ticker) {
       aliasRows.push({
         alias: scan.isin,
         canonical_ticker: scan.ticker,
@@ -235,7 +289,14 @@ async function main() {
 
       for (const old of sameIsin) {
         const oldTicker = normalize(old.ticker);
-        if (oldTicker !== scan.ticker && !scannerTickers.has(oldTicker)) {
+        const trustedHistoricalIdentity =
+          old.metadata_source === 'tradingview-scanner' &&
+          Boolean(old.last_seen_at);
+        if (
+          trustedHistoricalIdentity &&
+          oldTicker !== scan.ticker &&
+          !scannerTickers.has(oldTicker)
+        ) {
           renamedOldTickers.add(oldTicker);
           aliasRows.push({
             alias: oldTicker,
@@ -264,7 +325,7 @@ async function main() {
       logo_url: getTradingViewLogoUrl(scan.ticker, scan.logoId) || current?.logo_url || null,
       currency: scan.currency || 'EGP',
       status: 'active',
-      scanner_symbol: scan.ticker,
+      scanner_symbol: scan.scannerSymbol,
       history_symbol: current?.history_symbol || null,
       history_resolution_method: current?.history_resolution_method || null,
       resolution_attempts: current?.resolution_attempts || [],
@@ -384,7 +445,7 @@ async function main() {
     .eq('status', 'active');
 
   console.log(
-    `Ticker registry sync complete: scanner=${scannerRows.length}, active=${activeCount ?? 0}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
+    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
   );
 }
 

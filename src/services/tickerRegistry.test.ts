@@ -62,4 +62,30 @@ describe('ticker registry', () => {
     expect(index.get('MNHD')).toBe('MASR');
     expect(index.get('QNBA')).toBe('QNBE');
   });
+
+  it('lets a verified rename alias outrank a retired exact historical row', () => {
+    const tickers = mergeTickerDirectoryWithRegistry(
+      [],
+      [
+        { ticker: 'OLDX', name_en: 'Old Security', status: 'retired', sector: 'Other' },
+        { ticker: 'NEWX', name_en: 'Current Security', status: 'active', sector: 'Other' },
+      ],
+      [{ alias: 'OLDX', canonical_ticker: 'NEWX', alias_type: 'renamed' }],
+    );
+
+    expect(resolveTickerFromDirectory('OLDX', tickers)).toBe('NEWX');
+  });
+
+  it('keeps an active exact registry symbol above an alias collision', () => {
+    const tickers = mergeTickerDirectoryWithRegistry(
+      [],
+      [
+        { ticker: 'LIVE', name_en: 'Live Security', status: 'active', sector: 'Other' },
+        { ticker: 'OTHER', name_en: 'Other Security', status: 'active', sector: 'Other' },
+      ],
+      [{ alias: 'LIVE', canonical_ticker: 'OTHER', alias_type: 'legacy' }],
+    );
+
+    expect(resolveTickerFromDirectory('LIVE', tickers)).toBe('LIVE');
+  });
 });

@@ -170,6 +170,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         historicalPrices={historicalPrices}
         capitalDeposits={capitalDeposits}
         positions={positions}
+        currentCashBalance={cashBalance}
         historicalLoading={historicalLoading}
         entranceReady={chartsReady}
       />

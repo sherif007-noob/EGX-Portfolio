@@ -8,7 +8,7 @@ export interface IntradayPricePoint {
   low: number;
   close: number;
   volume?: number;
-  source?: 'tradingview' | 'yahoo' | 'other';
+  source?: 'tradingview' | 'derived-1m' | 'yahoo' | 'other';
   retrievedAt?: string;
 }
 
@@ -95,7 +95,7 @@ export function rowsToIntradayPriceSeries(
       close,
       volume: Number.isFinite(volume) ? volume : undefined,
       source:
-        row.source === 'tradingview' || row.source === 'yahoo' || row.source === 'other'
+        row.source === 'tradingview' || row.source === 'derived-1m' || row.source === 'yahoo' || row.source === 'other'
           ? row.source
           : undefined,
       retrievedAt: row.retrieved_at == null ? undefined : String(row.retrieved_at),

@@ -78,9 +78,24 @@ async function resolveTickerUniverse(
   portfolioId: string,
   sessionDate: string,
 ): Promise<IntradayTickerUniverse> {
+  const { data: aliasRows, error: aliasError } = await sb
+    .from('ticker_aliases')
+    .select('alias,canonical_ticker');
+  if (aliasError) throw new Error(`Ticker alias lookup failed: ${aliasError.message}`);
+  const aliasMap = new Map(
+    (aliasRows ?? []).map((row: any) => [
+      normalizeTicker(row.alias),
+      normalizeTicker(row.canonical_ticker),
+    ]),
+  );
+  const canonicalize = (value: string) => {
+    const normalized = normalizeTicker(value);
+    return aliasMap.get(normalized) || normalized;
+  };
+
   const explicit = process.env.EGX_INTRADAY_TICKERS
     ?.split(',')
-    .map(normalizeTicker)
+    .map(canonicalize)
     .filter(Boolean);
   if (explicit?.length) {
     const tickers = [...new Set(explicit)].sort();
@@ -111,14 +126,14 @@ async function resolveTickerUniverse(
   const positionTickers = [
     ...new Set(
       (positions ?? [])
-        .map((row: any) => normalizeTicker(String(row.ticker || '')))
+        .map((row: any) => canonicalize(String(row.ticker || '')))
         .filter((ticker) => ticker && ticker !== 'CASH'),
     ),
   ].sort();
   const sessionTransactionTickers = [
     ...new Set(
       (transactions ?? [])
-        .map((row: any) => normalizeTicker(String(row.ticker || '')))
+        .map((row: any) => canonicalize(String(row.ticker || '')))
         .filter((ticker) => ticker && ticker !== 'CASH'),
     ),
   ].sort();
@@ -137,7 +152,24 @@ async function resolveTickerUniverse(
 async function loadTickerMetadata(
   sb: SupabaseClient,
   ticker: string,
-): Promise<{ isin?: string }> {
+): Promise<{ isin?: string; tradingviewSymbol?: string }> {
+  const { data: registry, error: registryError } = await sb
+    .from('ticker_registry')
+    .select('isin,history_symbol,scanner_symbol')
+    .eq('ticker', ticker)
+    .maybeSingle();
+  if (registryError) {
+    throw new Error(`Ticker registry metadata read failed for ${ticker}: ${registryError.message}`);
+  }
+
+  if (registry) {
+    return {
+      isin: String(registry.isin || '').trim().toUpperCase() || undefined,
+      tradingviewSymbol:
+        String(registry.history_symbol || registry.scanner_symbol || '').trim().toUpperCase() || undefined,
+    };
+  }
+
   const { data, error } = await sb
     .from('tickers')
     .select('isin')
@@ -704,6 +736,7 @@ async function main() {
         const resolution = await resolveTradingViewInstrument(chart, {
           ticker,
           isin: metadata.isin,
+          tradingviewSymbol: metadata.tradingviewSymbol,
         });
 
         const paged = await fetchOneMinuteHistoryPaged(

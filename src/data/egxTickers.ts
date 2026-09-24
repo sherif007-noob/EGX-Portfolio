@@ -282,7 +282,8 @@ export function mergeTickerDirectoryWithBaseline(existing: EGXTicker[]): EGXTick
     if (
       !current ||
       raw === canonical ||
-      (candidate.metadataSource === 'tradingview' && current.metadataSource !== 'tradingview')
+      ((candidate.metadataSource === 'tradingview' || candidate.metadataSource === 'registry') &&
+        current.metadataSource !== 'registry')
     ) {
       byTicker.set(canonical, candidate);
     }
@@ -295,18 +296,23 @@ export function mergeTickerDirectoryWithBaseline(existing: EGXTicker[]): EGXTick
       continue;
     }
 
-    const liveMetadata = current.metadataSource === 'tradingview';
+    const authoritativeMetadata =
+      current.metadataSource === 'tradingview' || current.metadataSource === 'registry';
     byTicker.set(baseline.ticker, {
       ...baseline,
       ...current,
       ticker: baseline.ticker,
-      nameEn: liveMetadata ? current.nameEn : baseline.nameEn,
-      nameAr: baseline.nameAr || current.nameAr,
-      sector: liveMetadata ? current.sector : baseline.sector,
-      isin: liveMetadata ? (current.isin || baseline.isin) : (baseline.isin || current.isin),
+      nameEn: authoritativeMetadata ? current.nameEn : baseline.nameEn,
+      nameAr: current.nameAr || baseline.nameAr,
+      sector: authoritativeMetadata ? current.sector : baseline.sector,
+      isin: authoritativeMetadata ? (current.isin || baseline.isin) : (baseline.isin || current.isin),
       marketSector: current.marketSector,
       industry: current.industry,
-      metadataSource: liveMetadata ? 'tradingview' : 'baseline',
+      metadataSource: current.metadataSource === 'registry'
+        ? 'registry'
+        : authoritativeMetadata
+          ? 'tradingview'
+          : 'baseline',
     });
   }
 

@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
+import { mergeTickerDirectoryWithRegistry } from './tickerRegistry';
 
 export interface SupabasePortfolioData {
   positions: Position[];
@@ -263,16 +264,25 @@ function toDbTicker(row: EGXTicker) {
 export async function loadPortfolioFromSupabase(): Promise<SupabasePortfolioData | null> {
   try {
     const { supabase, portfolio } = await requireAuthenticatedPortfolio();
-    const [positions, transactions, closedTrades, tickers] = await Promise.all([
+    const [positions, transactions, closedTrades, tickers, registry, aliases] = await Promise.all([
       supabase.from('positions').select('*').eq('portfolio_id', portfolio.id),
       supabase.from('transactions').select('*').eq('portfolio_id', portfolio.id).order('transaction_date', { ascending: true }),
       supabase.from('closed_trades').select('*').eq('portfolio_id', portfolio.id).order('sell_date', { ascending: true }),
       supabase.from('tickers').select('*').order('ticker', { ascending: true }),
+      supabase.from('ticker_registry').select('*').order('ticker', { ascending: true }),
+      supabase.from('ticker_aliases').select('*').order('alias', { ascending: true }),
     ]);
 
-    for (const result of [positions, transactions, closedTrades, tickers]) {
+    for (const result of [positions, transactions, closedTrades, tickers, registry, aliases]) {
       if (result.error) throw result.error;
     }
+
+    const quoteTickers = (tickers.data ?? []).map(mapTicker);
+    const directoryTickers = mergeTickerDirectoryWithRegistry(
+      quoteTickers,
+      registry.data ?? [],
+      aliases.data ?? [],
+    );
 
     return {
       positions: (positions.data ?? []).map(mapPosition),
@@ -280,7 +290,7 @@ export async function loadPortfolioFromSupabase(): Promise<SupabasePortfolioData
       transactions: (transactions.data ?? []).map(mapTransaction),
       cashBalance: Number(portfolio.cash_balance ?? 0),
       capitalDeposits: Number(portfolio.capital_deposits ?? 0),
-      tickers: (tickers.data ?? []).map(mapTicker),
+      tickers: directoryTickers,
       updatedAt: portfolio.updated_at,
       schemaVersion: Number(portfolio.schema_version ?? 3),
       lastPriceWriteAt: portfolio.last_price_write_at ?? undefined,

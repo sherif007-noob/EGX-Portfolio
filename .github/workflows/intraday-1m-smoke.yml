@@ -6,6 +6,10 @@ on:
       - feature/premium-ui-redesign
     paths:
       - '.github/workflows/intraday-1m-smoke.yml'
+      - 'scripts/syncIntradayOneMinute.ts'
+      - 'src/services/intraday*.ts'
+      - 'src/services/tradingViewSymbolResolver.ts'
+      - 'src/services/tradingViewSymbolResolver.test.ts'
   workflow_dispatch:
 
 permissions:

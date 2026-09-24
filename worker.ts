@@ -5,14 +5,13 @@ import {
   saveSupabasePortfolio,
   saveSupabasePriceTick,
   loadHistoricalPrices,
-  ensurePortfolioHistoricalPrices,
-  ensurePortfolioIntradayPrices,
 } from "./src/services/supabasePortfolioServer";
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SECRET_KEY: string;
   ASSETS: { fetch(request: Request): Promise<Response> };
+  HISTORY_REPAIR_ORIGIN?: string;
 }
 
 const json = (data: unknown, status = 200) =>
@@ -23,6 +22,26 @@ const json = (data: unknown, status = 200) =>
 
 const errorJson = (error: unknown, status = 500) =>
   json({ error: error instanceof Error ? error.message : String(error) }, status);
+
+const DEFAULT_HISTORY_REPAIR_ORIGIN = "https://egx-portfolio.onrender.com";
+
+async function proxyHistoryRepair(request: Request, env: Env, path: string): Promise<Response> {
+  const origin = (env.HISTORY_REPAIR_ORIGIN || DEFAULT_HISTORY_REPAIR_ORIGIN).replace(/\/$/, "");
+  const body = await request.text();
+  const response = await fetch(`${origin}${path}`, {
+    method: "POST",
+    headers: {
+      "authorization": request.headers.get("authorization") || "",
+      "content-type": "application/json",
+    },
+    body,
+  });
+  const responseBody = await response.text();
+  return new Response(responseBody, {
+    status: response.status,
+    headers: { "content-type": response.headers.get("content-type") || "application/json; charset=utf-8" },
+  });
+}
 
 async function withSupabaseUser(
   request: Request,
@@ -121,23 +140,13 @@ async function handleApi(request: Request): Promise<Response> {
   }
 
   if (path === "/api/supabase/price-history/ensure" && request.method === "POST") {
-    return withSupabaseUser(request, async (uid) => {
-      const body: any = await request.json();
-      const targets = Array.isArray(body?.targets) ? body.targets : [];
-      if (!targets.length) throw new Error("At least one historical backfill target is required.");
-      console.log("[History Repair] daily", targets.map((target: any) => target?.ticker).filter(Boolean));
-      return { data: await ensurePortfolioHistoricalPrices(uid, targets) };
-    });
+    console.log("[History Repair] proxy daily repair to Node runtime");
+    return proxyHistoryRepair(request, env, path);
   }
 
   if (path === "/api/supabase/intraday-history/ensure" && request.method === "POST") {
-    return withSupabaseUser(request, async (uid) => {
-      const body: any = await request.json();
-      const targets = Array.isArray(body?.targets) ? body.targets : [];
-      if (!targets.length) throw new Error("At least one intraday backfill target is required.");
-      console.log("[History Repair] intraday", targets.map((target: any) => target?.ticker).filter(Boolean));
-      return { data: await ensurePortfolioIntradayPrices(uid, targets) };
-    });
+    console.log("[History Repair] proxy intraday repair to Node runtime");
+    return proxyHistoryRepair(request, env, path);
   }
 
   if (path === "/api/egx/scan" && request.method === "POST") {

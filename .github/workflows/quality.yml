@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase7-pass3-trajectory-gate]
   pull_request:
     branches: [main]
 

@@ -15,6 +15,7 @@ import {
   AnalyticsEmptyState,
   ChartPlotSurface,
   ChartTooltipShell,
+  analyticsHexToRgbChannels,
   formatAnalyticsEgp,
   getAnalyticsAllocationColor,
 } from './charts/AnalyticsChartTheme';
@@ -246,18 +247,23 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
             {allocationTab === 'stock' && (
               <button
                 type="button"
-                aria-pressed={includeCash}
+                role="switch"
+                aria-checked={includeCash}
                 onClick={() => {
                   setIncludeCash((current) => !current);
                   setActiveAllocationIndex(null);
                 }}
-                className={`premium-segment w-full justify-center rounded-xl border px-3 py-2 text-xs font-semibold sm:w-auto ${
-                  includeCash
-                    ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
-                    : 'border-slate-800 bg-slate-950/70 text-slate-500 hover:text-slate-300'
-                }`}
+                className="premium-cash-toggle flex w-full items-center justify-between gap-4 rounded-xl border px-3.5 py-2.5 text-left sm:w-auto sm:min-w-[178px]"
               >
-                {includeCash ? 'Cash included' : 'Cash excluded'}
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-slate-200">Include cash</span>
+                  <span className="mt-0.5 block text-[10px] text-slate-500">
+                    Available balance in allocation
+                  </span>
+                </span>
+                <span className="premium-cash-switch-track relative h-6 w-11 shrink-0 rounded-full" aria-hidden="true">
+                  <span className="premium-cash-switch-knob absolute left-[3px] top-[3px] h-[18px] w-[18px] rounded-full" />
+                </span>
               </button>
             )}
           </div>
@@ -292,6 +298,34 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                   {chartsReady && (
                     <ResponsiveContainer width="100%" height="100%" debounce={80}>
                       <PieChart>
+                        <defs>
+                          {allocationData.map((row, index) => (
+                            <filter
+                              key={`allocation-glow-${row.name}`}
+                              id={`allocationActiveGlow-${index}`}
+                              x="-110%"
+                              y="-110%"
+                              width="320%"
+                              height="320%"
+                              colorInterpolationFilters="sRGB"
+                            >
+                              <feDropShadow
+                                dx="0"
+                                dy="0"
+                                stdDeviation="3.4"
+                                floodColor={row.color}
+                                floodOpacity="0.95"
+                              />
+                              <feDropShadow
+                                dx="0"
+                                dy="0"
+                                stdDeviation="7"
+                                floodColor={row.color}
+                                floodOpacity="0.42"
+                              />
+                            </filter>
+                          ))}
+                        </defs>
                         <Pie
                           data={allocationData}
                           dataKey="value"
@@ -330,8 +364,11 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                                 <Sector
                                   {...shapeProps}
                                   fill={color}
-                                  stroke={active ? '#e2e8f0' : '#020617'}
-                                  strokeWidth={active ? 2.2 : 1.5}
+                                  fillOpacity={active ? 1 : 0.94}
+                                  stroke={active ? color : '#020617'}
+                                  strokeOpacity={active ? 1 : 0.92}
+                                  strokeWidth={active ? 3.2 : 1.5}
+                                  filter={active ? `url(#allocationActiveGlow-${index})` : undefined}
                                 />
                               </g>
                             );
@@ -497,11 +534,13 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                         }
                         className={[
                           'premium-subpanel premium-allocation-row w-full rounded-xl px-3 py-2.5 text-left',
-                          active ? 'premium-allocation-row-active' : '',
+                          active ? 'premium-allocation-row-active premium-semantic-selection' : '',
                           dimmed ? 'premium-allocation-row-dimmed' : '',
                         ].join(' ')}
                         style={{
                           '--allocation-row-color': row.color,
+                          '--premium-semantic-rgb': analyticsHexToRgbChannels(row.color),
+                          '--premium-semantic-deep-rgb': analyticsHexToRgbChannels(row.color),
                         } as React.CSSProperties}
                       >
                         <div className="flex items-center justify-between gap-3">

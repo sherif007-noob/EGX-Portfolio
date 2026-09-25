@@ -7,6 +7,7 @@ import {
   formatAnalyticsEgp,
   formatAnalyticsPercent,
   formatAnalyticsPercentAxis,
+  getAnalyticsAllocationColor,
   getAnalyticsToneColor,
   getAnalyticsTradeMarkerStyle,
 } from './AnalyticsChartTheme';
@@ -76,5 +77,17 @@ describe('analytics chart visual contracts', () => {
   it('provides enough stable allocation colors for dense portfolios', () => {
     expect(ANALYTICS_ALLOCATION_PALETTE.length).toBeGreaterThanOrEqual(10);
     expect(new Set(ANALYTICS_ALLOCATION_PALETTE).size).toBe(ANALYTICS_ALLOCATION_PALETTE.length);
+  });
+
+  it('keeps allocation colors stable by identity instead of rank', () => {
+    const napr = getAnalyticsAllocationColor('NAPR');
+    expect(getAnalyticsAllocationColor('NAPR')).toBe(napr);
+    expect(getAnalyticsAllocationColor(' napr ')).toBe(napr);
+    expect(ANALYTICS_ALLOCATION_PALETTE).toContain(napr);
+  });
+
+  it('reserves the comparison purple for cash allocation', () => {
+    expect(getAnalyticsAllocationColor('CASH', { cash: true }))
+      .toBe(ANALYTICS_CHART_THEME.purple);
   });
 });

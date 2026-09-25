@@ -99,7 +99,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         </button>
       </div>
 
-      <div className="premium-number-stepper-touch-controls pointer-events-none absolute inset-[1px] items-stretch justify-between overflow-hidden rounded-[calc(0.75rem-1px)]">
+      <div className="premium-number-stepper-touch-controls pointer-events-none absolute inset-0 items-stretch justify-between overflow-hidden rounded-xl">
         <button
           type="button"
           disabled={disabled}

@@ -816,7 +816,17 @@ body {
 }
 
 .premium-nav-divider {
-  background: linear-gradient(180deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+  width: 2px;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(148, 163, 184, 0.16) 14%,
+      rgba(148, 163, 184, 0.58) 50%,
+      rgba(148, 163, 184, 0.16) 86%,
+      transparent 100%
+    );
+  box-shadow: 0 0 9px rgba(148, 163, 184, 0.13);
 }
 
 .premium-nav-item {

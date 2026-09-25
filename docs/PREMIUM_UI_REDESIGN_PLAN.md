@@ -58,7 +58,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 6 | Mobile / responsive refinement | **Complete — code audit, Quality Checks #745, and real-device smoke accepted** |
 | 6.5 | Navigation refinement | **Complete — grouped responsive navigation + Quality Checks #748 clean; desktop visual regression deferred to Phase 11** |
 | 7 | Charts | **Complete — device accepted; Quality Checks #767 clean (31/31 files, 190/190 tests, build 6.01s)** |
-| 8 | Visual hierarchy | **Planning complete — detailed Pass 8.0–8.7 plan ready; implementation next** |
+| 8 | Visual hierarchy | **In progress — 8.0 hierarchy primitives/audit map implemented; validation pending** |
 | 9 | Header | Not started |
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |

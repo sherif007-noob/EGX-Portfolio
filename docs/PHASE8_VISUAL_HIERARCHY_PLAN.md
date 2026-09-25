@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 8.0 hierarchy primitives and audit map implemented; validation pending.**
+**IN PROGRESS — Pass 8.0 complete; Pass 8.1 Overview hierarchy implemented, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -165,7 +165,7 @@ Desktop should use extra space to strengthen grouping and hierarchy, not simply 
 
 ## Pass 8.0 — Hierarchy primitives and audit map
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: COMPLETE — Quality Checks #768 passed.**
 
 Implemented:
 - add reusable H0–H5 structural surface recipes in `src/index.css`;
@@ -225,6 +225,20 @@ Define reusable hierarchy primitives before changing individual screens.
 ---
 
 ## Pass 8.1 — Overview information hierarchy
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- move the EGX Live Market Feed below the KPI summary so portfolio information owns the first visual read;
+- replace the six-peer KPI grid with a three-tier composition;
+- Total Portfolio Value is the sole H1 hero and now integrates Today EGP/% performance inside the hero surface;
+- Unrealized P&L and Total Market Value are H2 primary support surfaces;
+- Realized Gain, Cash Available, and Brokerage Fees are quieter H3 support surfaces;
+- retain semantic win/loss color while hierarchy-specific semantic intensity prevents H2/H3 state from overpowering H1;
+- reduce sync/reconcile controls to utility-priority treatment without changing behavior;
+- keep phone density controlled: H1 spans the phone width, H2 metrics stay paired, and the third H3 metric becomes a compact full-width row only below 640px;
+- add Overview-specific metric scales and a subdued H4 market-feed treatment;
+- add server-render regression coverage for H1/H2/H3/H4 counts, KPI-before-utility reading order, and utility action priority.
 
 ### Goal
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { 
   FileSpreadsheet, 
   PlusCircle, 
@@ -19,6 +19,41 @@ import {
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
+
+const NAV_GROUPS = [
+  {
+    label: 'Portfolio',
+    items: [
+      { tab: 'overview', id: 'tab-overview', label: 'Overview', compactLabel: 'Overview', icon: TrendingUp, accent: '16 185 129' },
+      { tab: 'positions', id: 'tab-positions', label: 'Open Positions', compactLabel: 'Positions', icon: Layers, accent: '59 130 246' },
+      { tab: 'closed_cycles', id: 'tab-closed-cycles', label: 'Closed Cycles', compactLabel: 'Cycles', icon: RotateCcw, accent: '168 85 247' },
+    ],
+  },
+  {
+    label: 'Activity',
+    items: [
+      { tab: 'journal', id: 'tab-transactions', label: 'Transactions', compactLabel: 'Transactions', icon: BookOpen, accent: '245 158 11' },
+      { tab: 'cash', id: 'tab-cash-ledger', label: 'Cash Ledger', compactLabel: 'Cash', icon: Wallet, accent: '245 158 11' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { tab: 'reports', id: 'tab-reports', label: 'Reports & Performance', compactLabel: 'Reports', icon: BarChart3, accent: '168 85 247' },
+      { tab: 'directory', id: 'tab-directory', label: 'Stocks & Prices', compactLabel: 'Stocks', icon: ListOrdered, accent: '20 184 166' },
+    ],
+  },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  items: ReadonlyArray<{
+    tab: NavigationTab;
+    id: string;
+    label: string;
+    compactLabel: string;
+    icon: React.ComponentType<{ className?: string }>;
+    accent: string;
+  }>;
+}>;
 
 interface HeaderProps {
   activeTab: NavigationTab;
@@ -52,13 +87,43 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncingPrices = false,
 }) => {
   const navScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
+  const [canScrollNavRight, setCanScrollNavRight] = useState(false);
+
+  const updateNavOverflow = useCallback(() => {
+    const container = navScrollRef.current;
+    if (!container) return;
+    const tolerance = 2;
+    setCanScrollNavLeft(container.scrollLeft > tolerance);
+    setCanScrollNavRight(
+      container.scrollLeft + container.clientWidth < container.scrollWidth - tolerance,
+    );
+  }, []);
+
+  useEffect(() => {
+    const container = navScrollRef.current;
+    if (!container) return;
+
+    updateNavOverflow();
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updateNavOverflow)
+      : null;
+    observer?.observe(container);
+    window.addEventListener('resize', updateNavOverflow);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updateNavOverflow);
+    };
+  }, [updateNavOverflow]);
 
   useEffect(() => {
     const container = navScrollRef.current;
     if (!container) return;
     const active = container.querySelector<HTMLElement>('[aria-current="page"]');
     active?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-  }, [activeTab]);
+    window.requestAnimationFrame(updateNavOverflow);
+  }, [activeTab, updateNavOverflow]);
 
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
@@ -201,106 +266,67 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div ref={navScrollRef} className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-t border-slate-700/40 bg-slate-950/15 overflow-x-auto overscroll-x-contain scrollbar-none">
-        <nav className="flex space-x-1 sm:space-x-3 py-2 min-w-max">
-          <button
-            id="tab-overview"
-            aria-current={activeTab === 'overview' ? 'page' : undefined}
-            onClick={() => setActiveTab('overview')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'overview'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
-            }`}
+      <div className="premium-nav-shell relative border-t border-slate-700/40 bg-slate-950/15">
+        <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div
+            ref={navScrollRef}
+            onScroll={updateNavOverflow}
+            className="premium-nav-scroller overflow-x-auto overscroll-x-contain scrollbar-none"
           >
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <span className="2xl:hidden">Overview</span><span className="hidden 2xl:inline">Overview</span>
-          </button>
+            <nav className="flex min-w-max items-center py-2" aria-label="Portfolio navigation">
+              {NAV_GROUPS.map((group, groupIndex) => (
+                <React.Fragment key={group.label}>
+                  {groupIndex > 0 && (
+                    <span
+                      className="premium-nav-divider mx-1.5 h-6 w-px shrink-0 sm:mx-2.5"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="flex items-center gap-1 sm:gap-1.5" aria-label={group.label}>
+                    <span className="premium-nav-group-label hidden xl:inline-flex px-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                      {group.label}
+                    </span>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.tab;
+                      return (
+                        <button
+                          key={item.tab}
+                          id={item.id}
+                          aria-current={active ? 'page' : undefined}
+                          onClick={() => setActiveTab(item.tab)}
+                          className={`premium-nav premium-nav-item flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium sm:text-sm ${
+                            active
+                              ? 'premium-nav-active text-white font-semibold'
+                              : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
+                          }`}
+                          style={{ '--premium-nav-accent': item.accent } as React.CSSProperties}
+                        >
+                          <Icon className="premium-nav-icon h-4 w-4" />
+                          <span className="2xl:hidden">{item.compactLabel}</span>
+                          <span className="hidden 2xl:inline">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </React.Fragment>
+              ))}
+            </nav>
+          </div>
 
-          <button
-            id="tab-positions"
-            aria-current={activeTab === 'positions' ? 'page' : undefined}
-            onClick={() => setActiveTab('positions')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'positions'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
+          <div
+            className={`premium-nav-edge premium-nav-edge-left pointer-events-none absolute inset-y-0 left-0 w-10 transition-opacity duration-200 ${
+              canScrollNavLeft ? 'opacity-100' : 'opacity-0'
             }`}
-          >
-            <Layers className="w-4 h-4 text-blue-400" />
-            <span className="2xl:hidden">Positions</span><span className="hidden 2xl:inline">Open Positions</span>
-          </button>
-
-          <button
-            id="tab-closed-cycles"
-            aria-current={activeTab === 'closed_cycles' ? 'page' : undefined}
-            onClick={() => setActiveTab('closed_cycles')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'closed_cycles'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
+            aria-hidden="true"
+          />
+          <div
+            className={`premium-nav-edge premium-nav-edge-right pointer-events-none absolute inset-y-0 right-0 w-10 transition-opacity duration-200 ${
+              canScrollNavRight ? 'opacity-100' : 'opacity-0'
             }`}
-          >
-            <RotateCcw className="w-4 h-4 text-purple-400" />
-            <span className="2xl:hidden">Cycles</span><span className="hidden 2xl:inline">Closed Cycles</span>
-          </button>
-
-          <button
-            id="tab-transactions"
-            aria-current={activeTab === 'journal' ? 'page' : undefined}
-            onClick={() => setActiveTab('journal')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'journal'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-amber-400" />
-            <span className="2xl:hidden">Transactions</span><span className="hidden 2xl:inline">Transactions</span>
-          </button>
-
-          <button
-            id="tab-cash-ledger"
-            aria-current={activeTab === 'cash' ? 'page' : undefined}
-            onClick={() => setActiveTab('cash')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'cash'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
-            }`}
-          >
-            <Wallet className="w-4 h-4 text-amber-400" />
-            <span className="2xl:hidden">Cash</span><span className="hidden 2xl:inline">Cash Ledger</span>
-          </button>
-
-          <button
-            id="tab-reports"
-            aria-current={activeTab === 'reports' ? 'page' : undefined}
-            onClick={() => setActiveTab('reports')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'reports'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4 text-purple-400" />
-            <span className="2xl:hidden">Reports</span><span className="hidden 2xl:inline">Reports & Performance</span>
-          </button>
-
-          <button
-            id="tab-directory"
-            aria-current={activeTab === 'directory' ? 'page' : undefined}
-            onClick={() => setActiveTab('directory')}
-            className={`premium-nav flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium border ${
-              activeTab === 'directory'
-                ? 'premium-nav-active text-white font-semibold border-slate-600/60'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
-            }`}
-          >
-            <ListOrdered className="w-4 h-4 text-teal-400" />
-            <span className="2xl:hidden">Stocks</span><span className="hidden 2xl:inline">Stocks &amp; Prices</span>
-          </button>
-        </nav>
+            aria-hidden="true"
+          />
+        </div>
       </div>
     </header>
   );

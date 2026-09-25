@@ -29,8 +29,9 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **Implementation complete / validating** | Pass 6 34-file code audit and Quality Checks #745 passed; final real-device smoke pending. |
-| 6.5–11 | Not started | See plan. |
+| 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
+| 6.5 | **In progress** | Navigation hierarchy, active location, grouping, and mobile/desktop consistency. |
+| 7–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
 
@@ -734,7 +735,7 @@ The Phase 5 detailed plan is now historical. Phase 6 — Mobile / responsive ref
 
 ## Phase 6 — Responsive audit and planning
 
-**Status: implementation complete; Pass 6 code audit and CI gate are clean, with only the final real-device responsive smoke remaining before Phase 6 closes.**
+**Status: complete. Pass 6 code audit, Quality Checks #745, and final real-device responsive smoke are accepted.**
 
 Detailed plan:
 - **8662376** — add `docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md`.
@@ -947,7 +948,7 @@ Validation:
 - tests: **28/28 files, 173/173 tests passed**;
 - production Vite build: passed in **6.23s**.
 
-Phase 6 is not marked complete until the final real-device matrix is accepted.
+Final real-device responsive validation was accepted on 2026-09-25. Phase 6 is complete.
 
 ## Current validated visual rules
 

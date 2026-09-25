@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DropdownPresence } from '../PremiumMotion';
 import {
   Area,
@@ -187,6 +187,29 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [intradayError, setIntradayError] = useState<string | null>(null);
+  const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
+
+  const enableChartTooltips = useCallback(() => {
+    setChartTooltipsEnabled(true);
+  }, []);
+
+  useEffect(() => {
+    const dismissChartTooltips = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-analytics-chart-interactive="true"]')
+      ) {
+        return;
+      }
+      setChartTooltipsEnabled(false);
+    };
+
+    document.addEventListener('pointerdown', dismissChartTooltips, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissChartTooltips, true);
+    };
+  }, []);
 
   const canonicalCapitalDeposits = useMemo(
     () => deriveCanonicalCapitalDeposits(transactions, currentCashBalance, capitalDeposits),
@@ -980,6 +1003,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <ChartPlotSurface
           className="h-[232px] sm:h-72"
           ariaLabel={`${definition.label} chart`}
+          data-analytics-chart-interactive="true"
+          onPointerDownCapture={enableChartTooltips}
+          onPointerMoveCapture={enableChartTooltips}
         >
           {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
@@ -1020,6 +1046,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               {renderYAxis()}
               {renderReferenceLine()}
               <Tooltip
+                active={chartTooltipsEnabled ? undefined : false}
                 cursor={analyticsTooltipCursor}
                 content={tooltip}
               />
@@ -1055,6 +1082,8 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         intradayPrices={loadedIntradayPrices}
         result={result}
         entranceReady={entranceReady}
+        tooltipsEnabled={chartTooltipsEnabled}
+        onChartInteraction={enableChartTooltips}
       />
     </>
   );

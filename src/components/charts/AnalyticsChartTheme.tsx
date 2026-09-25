@@ -40,6 +40,24 @@ export const ANALYTICS_ALLOCATION_PALETTE = [
   '#84cc16',
 ] as const;
 
+export function getAnalyticsAllocationColor(
+  key: string,
+  options: { cash?: boolean } = {},
+): string {
+  if (options.cash) return ANALYTICS_CHART_THEME.purple;
+
+  const normalized = String(key || '').trim().toUpperCase();
+  let hash = 2166136261;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash ^= normalized.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return ANALYTICS_ALLOCATION_PALETTE[
+    Math.abs(hash) % ANALYTICS_ALLOCATION_PALETTE.length
+  ];
+}
+
 export const ANALYTICS_CHART_MARGINS = {
   primary: { top: 8, right: 8, left: 0, bottom: 0 },
   compact: { top: 8, right: 8, left: 0, bottom: 0 },

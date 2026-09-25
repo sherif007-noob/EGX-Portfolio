@@ -16,6 +16,7 @@ import {
   ChartPlotSurface,
   ChartTooltipShell,
   analyticsHexToRgbChannels,
+  analyticsTooltipWrapperStyle,
   formatAnalyticsEgp,
   getAnalyticsAllocationColor,
 } from './charts/AnalyticsChartTheme';
@@ -277,6 +278,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
               <ChartPlotSurface
                 className="premium-allocation-plot relative min-h-[270px] overflow-hidden sm:min-h-[300px]"
                 ariaLabel={`Portfolio allocation by ${allocationTab === 'sector' ? 'sector' : 'holding'}`}
+                ariaDescription={`${allocationData.length} allocation buckets totaling ${formatAnalyticsEgp(allocationTotal)}. Largest allocation is ${leadingAllocation?.name ?? 'unavailable'} at ${leadingAllocation ? `${leadingAllocation.percentage.toFixed(1)}%` : 'unavailable'}. The ranked controls below provide keyboard-accessible selection.`}
                 style={{
                   '--chart-plot-accent-rgb': '6 182 212',
                   '--allocation-highlight': highlightedAllocation?.color ?? ANALYTICS_CHART_THEME.cyan,
@@ -381,7 +383,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
 
                         <Tooltip
                           cursor={false}
-                          wrapperStyle={{ zIndex: 40, pointerEvents: 'none' }}
+                          wrapperStyle={analyticsTooltipWrapperStyle}
+                          allowEscapeViewBox={{ x: false, y: false }}
+                          offset={8}
                           content={(props: any) => {
                             if (!props?.active || !props?.payload?.length) return null;
                             const row = props.payload[0]?.payload as any;
@@ -478,7 +482,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 </div>
 
                 <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
-                  <div className="mt-6 max-w-[128px] text-center">
+                  <div className="mt-6 max-w-[128px] text-center" aria-live="polite">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {activeAllocation ? 'Selected' : 'Largest'}
                     </div>

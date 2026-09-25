@@ -57,7 +57,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 5 | Advanced effects | **Complete** |
 | 6 | Mobile / responsive refinement | **Complete — code audit, Quality Checks #745, and real-device smoke accepted** |
 | 6.5 | Navigation refinement | **Complete — grouped responsive navigation + Quality Checks #748 clean; desktop visual regression deferred to Phase 11** |
-| 7 | Charts | Not started |
+| 7 | Charts | **Planning complete — 7-chart audit + staged visual-system plan ready; implementation not started** |
 | 8 | Visual hierarchy | Not started |
 | 9 | Header | Not started |
 | 10 | Full consistency sweep | Not started |
@@ -398,7 +398,11 @@ Acceptance:
 
 ## Phase 7 — Charts
 
+**Status: planning complete; implementation not started.**
+
 Goal: bring every chart into the final premium system without changing underlying observations/calculations.
+
+Detailed execution plan: **docs/PHASE7_CHARTS_PLAN.md**.
 
 Scope:
 - Chart frames, plot surfaces, grids, axes, legends, tooltips, crosshairs, active points, selectors, loading/empty states.

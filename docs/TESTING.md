@@ -209,3 +209,15 @@ The job uses Node 22 and currently installs dependencies with npm.
 - Tests should assert accounting invariants, not only component rendering.
 - Missing data should be tested explicitly.
 - Do not rewrite expected values merely to make a changed formula pass; validate the intended accounting semantics first.
+
+
+## Monthly Audit summary regression coverage
+
+`src/services/monthlyAuditSummary.test.ts` verifies the report-summary contract independently from rendering:
+
+- All Records combines visible liquidated-trade P&L and holding P&L instead of reusing the legacy closed-only monthly aggregate.
+- The same helper naturally follows Liquidated-only, Holdings-only, and search-filtered record sets because it summarizes the visible `auditRecords` input.
+- Closed-trade win rate excludes breakeven trades from the denominator, matching canonical portfolio accounting.
+- Visible commissions are summed from the same records being summarized.
+
+The Monthly Audit component also uses `calculatePositionUnrealizedPnl` for current open holdings so entry fees are included consistently with the rest of the portfolio.

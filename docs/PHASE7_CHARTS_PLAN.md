@@ -399,7 +399,7 @@ Implemented during Phase 7:
 
 ### Pass 5 — Responsive, interaction, and accessibility chart sweep
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: IMPLEMENTED / DEVICE VALIDATION PENDING — Quality Checks #763 passed (29/29 test files, 185/185 tests, build 4.96s).**
 
 Implemented:
 - shared tooltip wrappers now clamp to phone viewport width and stay inside the chart view box;

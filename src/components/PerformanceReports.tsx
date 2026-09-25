@@ -262,7 +262,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                   </span>
                 </span>
                 <span className="premium-cash-switch-track relative h-6 w-11 shrink-0 rounded-full" aria-hidden="true">
-                  <span className="premium-cash-switch-knob absolute left-[3px] top-[3px] h-[18px] w-[18px] rounded-full" />
+                  <span className="premium-cash-switch-knob absolute h-[18px] w-[18px] rounded-full" />
                 </span>
               </button>
             )}

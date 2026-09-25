@@ -109,6 +109,12 @@ export const analyticsTooltipCursor = {
   opacity: 0.72,
 } as const;
 
+export const analyticsTooltipWrapperStyle: React.CSSProperties = {
+  zIndex: 40,
+  pointerEvents: 'none',
+  maxWidth: 'calc(100vw - 1.5rem)',
+};
+
 export const analyticsZeroLineProps = {
   stroke: ANALYTICS_CHART_THEME.zeroLine,
   strokeWidth: 1,
@@ -241,19 +247,24 @@ interface ChartPlotSurfaceProps
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
+  ariaDescription?: string;
 }
 
 export const ChartPlotSurface: React.FC<ChartPlotSurfaceProps> = ({
   children,
   className = '',
   ariaLabel,
+  ariaDescription,
+  role,
   ...divProps
 }) => (
   <div
     {...divProps}
+    role={role ?? (ariaLabel ? 'img' : undefined)}
     className={['premium-chart-plot relative min-w-0 rounded-xl border', className].join(' ')}
     aria-label={ariaLabel}
   >
+    {ariaDescription && <span className="sr-only">{ariaDescription}</span>}
     {children}
   </div>
 );
@@ -281,7 +292,7 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
     className={['premium-chart-legend flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] text-slate-400', className].join(' ')}
   >
     {items.map((item) => (
-      <div role="listitem" key={item.label} className="flex min-w-0 items-center gap-1.5">
+      <div role="listitem" key={item.label} className="flex max-w-full min-w-0 items-center gap-1.5">
         {item.kind === 'dot' ? (
           <span
             className="h-2 w-2 shrink-0 rounded-full"
@@ -301,7 +312,7 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
             aria-hidden="true"
           />
         )}
-        <span className="truncate">{item.label}</span>
+        <span className="whitespace-nowrap">{item.label}</span>
       </div>
     ))}
   </div>
@@ -318,7 +329,7 @@ export const ChartTooltipShell: React.FC<ChartTooltipShellProps> = ({
 }) => (
   <div
     className={[
-      'premium-floating premium-tooltip-content premium-chart-tooltip w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border sm:min-w-[150px] sm:max-w-[320px]',
+      'premium-floating premium-tooltip-content premium-chart-tooltip w-max max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border sm:min-w-[150px] sm:max-w-[320px]',
       'px-3 py-2.5 text-xs break-words',
       'text-slate-200',
       className,

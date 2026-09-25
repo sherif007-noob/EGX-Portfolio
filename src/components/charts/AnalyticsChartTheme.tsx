@@ -256,7 +256,7 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
           <span
             className="h-px w-4 shrink-0"
             style={{
-              backgroundColor: item.color,
+              backgroundColor: item.kind === 'dashed' ? 'transparent' : item.color,
               backgroundImage:
                 item.kind === 'dashed'
                   ? `repeating-linear-gradient(90deg, ${item.color} 0 5px, transparent 5px 8px)`

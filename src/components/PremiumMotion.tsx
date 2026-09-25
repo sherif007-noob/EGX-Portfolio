@@ -33,12 +33,12 @@ function useDesktopMotionPerformanceMode(): boolean {
 
 const SWAP_MOTION = {
   tab: {
-    initial: { opacity: 0, x: 22, y: 5, scale: 0.996 },
+    initial: { opacity: 0, x: 30, y: 7, scale: 0.994 },
     animate: { opacity: 1, x: 0, y: 0, scale: 1 },
-    exit: { opacity: 0, x: -18, y: -3, scale: 0.998 },
-    enterDuration: 0.44,
-    exitDuration: 0.28,
-    enterDelay: 0.055,
+    exit: { opacity: 0, x: -24, y: -4, scale: 0.997 },
+    enterDuration: 0.56,
+    exitDuration: 0.36,
+    enterDelay: 0.075,
   },
   state: {
     initial: { opacity: 0, y: 10 },

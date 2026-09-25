@@ -77,6 +77,38 @@
   min-width: 0;
 }
 
+.premium-chart-rail {
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: 0.25rem;
+  touch-action: pan-x;
+}
+
+.premium-chart-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.premium-chart-control {
+  min-height: 34px;
+}
+
+.premium-chart-plot {
+  touch-action: pan-y pinch-zoom;
+}
+
+.premium-chart-tooltip {
+  max-width: min(20rem, calc(100vw - 1.5rem));
+  overflow-wrap: anywhere;
+}
+
+.premium-chart-control:focus-visible,
+.premium-allocation-row:focus-visible,
+.premium-cash-toggle:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.72);
+  outline-offset: 2px;
+}
+
 .premium-chart-active-dot {
   filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.22));
 }
@@ -316,6 +348,44 @@
 @keyframes premium-chart-skeleton-shift {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
+}
+
+@media (pointer: coarse) {
+  .premium-chart-control {
+    min-height: 44px;
+  }
+
+  .premium-allocation-row,
+  .premium-cash-toggle {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 359px) {
+  .premium-chart-tooltip {
+    max-width: calc(100vw - 1rem);
+    padding: 0.625rem 0.6875rem;
+    font-size: 0.6875rem;
+  }
+
+  .premium-chart-plot .recharts-cartesian-axis-tick-value {
+    font-size: 9px;
+  }
+
+  .premium-chart-legend {
+    column-gap: 0.625rem;
+    row-gap: 0.375rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .premium-chart-plot {
+    max-height: 240px;
+  }
+
+  .premium-allocation-plot {
+    min-height: 220px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

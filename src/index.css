@@ -92,6 +92,18 @@
   filter: drop-shadow(0 0 8px var(--trajectory-marker-glow, rgba(56, 189, 248, 0.28)));
 }
 
+.premium-trajectory-semantic-curve {
+  filter:
+    drop-shadow(0 0 3px var(--trajectory-curve-glow, rgba(16, 185, 129, 0.42)))
+    drop-shadow(0 0 8px var(--trajectory-curve-glow, rgba(16, 185, 129, 0.22)));
+}
+
+.premium-trajectory-trade-bar {
+  filter:
+    drop-shadow(0 0 3px var(--trajectory-bar-glow, rgba(56, 189, 248, 0.24)))
+    drop-shadow(0 0 7px var(--trajectory-bar-glow, rgba(56, 189, 248, 0.16)));
+}
+
 .premium-chart-skeleton {
   background:
     linear-gradient(
@@ -115,7 +127,9 @@
   }
 
   .premium-chart-active-dot,
-  .premium-trajectory-trade-marker {
+  .premium-trajectory-trade-marker,
+  .premium-trajectory-semantic-curve,
+  .premium-trajectory-trade-bar {
     filter: none;
   }
 

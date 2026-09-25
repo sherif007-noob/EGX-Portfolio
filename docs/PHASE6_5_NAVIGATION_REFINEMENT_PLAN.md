@@ -1,6 +1,6 @@
 # Phase 6.5 — Navigation Refinement Plan
 
-**Status: IN PROGRESS — Pass 2 mobile/desktop handoff implemented; validation pending.**
+**Status: COMPLETE — phone validation accepted; Pass 3 hardening + Quality Checks #748 clean. Desktop visual regression remains scheduled for Phase 11.**
 
 Phase 6.5 refines navigation only. It preserves the accepted premium glass/glow system and the Phase 4 motion language while making location, grouping, and overflow behavior clearer across desktop and mobile.
 
@@ -50,10 +50,23 @@ Validation targets:
 
 ## Pass 3 — Validation and closure
 
-- Real-device phone smoke.
-- Desktop/tablet regression.
-- Typecheck, tests, production build.
-- Update roadmap/implementation log and close Phase 6.5 only after acceptance.
+**Status: COMPLETE.**
+
+Completed:
+- **b830803** — replace generic `scrollIntoView` with rail-local geometry scrolling so active-tab visibility cannot move the page itself; preserve reduced-motion behavior.
+- Keep every navigation destination in the normal keyboard tab order while retaining Left/Right/Home/End shortcuts.
+- Add explicit navigation-group semantics without changing routing behavior.
+- Phone validation: active-state hierarchy accepted; strengthened group separator accepted; horizontal navigation behavior retained.
+- Static breakpoint audit: compact labels below 2XL, full labels/group labels at 2XL, geometry-driven overflow fades at every breakpoint.
+- Temporary CI gate: `ci/phase6-5-nav-pass3-gate`.
+- **Quality Checks #748 passed**:
+  - typecheck passed;
+  - **28/28 test files, 173/173 tests** passed;
+  - production build passed in **6.18s**.
+
+Closure notes:
+- Current phone tab/page transition timing remains intentionally **non-final** and is recorded as deferred motion debt for later refinement.
+- A dedicated physical desktop/tablet visual smoke was not available during this closure; final desktop/browser visual regression remains part of Phase 11 rather than blocking navigation architecture completion.
 
 ## Acceptance
 
@@ -61,5 +74,5 @@ Validation targets:
 - Inactive destinations remain discoverable without competing with the active page.
 - Navigation grouping is understandable without visual clutter.
 - Mobile horizontal overflow advertises itself and never hides the selected destination.
-- No collisions or page-level overflow at supported sizes.
+- No navigation-driven page-level horizontal movement; final physical desktop/tablet collision smoke remains in Phase 11.
 - Existing tab routing behavior remains unchanged; transition timing currently carries documented deferred motion debt.

@@ -31,7 +31,8 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
-| 7–11 | Not started | See plan. |
+| 7 | **Planning complete** | Seven chart visualizations audited; detailed Phase 7 execution plan added. Implementation not started. |
+| 8–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
 
@@ -976,6 +977,18 @@ Pass 1:
 - **b830803** — final Pass 3 hardening: active-tab visibility now scrolls only the navigation rail, every destination remains normally keyboard-tab-accessible, group semantics are explicit, and arrow/Home/End shortcuts remain available.
 - Quality Checks **#748 passed**: typecheck, **28/28 test files / 173/173 tests**, and production build (**6.18s**).
 - Phase 6.5 closes with the accepted phone navigation state. The current tab/page transition timing remains documented deferred motion debt; physical desktop/tablet visual smoke rolls into Phase 11 final regression rather than blocking navigation architecture completion.
+
+## Phase 7 — Charts
+
+**Status: planning complete / implementation not started.**
+
+- **2440ffd** — add `docs/PHASE7_CHARTS_PLAN.md`.
+- Audit confirms **7 chart visualizations** across `PerformanceTimeframeChart`, `SecondaryAnalyticsCharts`, `RealizedTrajectoryChart`, and the allocation chart in `PerformanceReports`.
+- Phase 7 is explicitly visual-only: analytics calculations, Today resolution/fallback logic, timeframe semantics, chart observations, 1W interpolation matching, Today linear paths, longer-range smoothing, synchronized chart behavior, and current series timing are protected.
+- Planned order: shared chart primitives → primary analytics → secondary analytics → realized trajectory → allocation → responsive/accessibility sweep → full regression closure.
+- Portfolio Equity Bridge remains an analytical card surface, not a Phase 7 chart; its broader hierarchy remains for later phases.
+- Existing `AnalyticsChartTheme.tsx` is the foundation to extend rather than replace.
+- Phone tab/page transition timing remains separate deferred motion debt and is not folded into the chart phase.
 
 ## Current validated visual rules
 

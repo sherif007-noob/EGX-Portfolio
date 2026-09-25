@@ -31,7 +31,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
-| 7 | **Planning complete** | Seven chart visualizations audited; detailed Phase 7 execution plan added. Implementation not started. |
+| 7 | **In progress** | 7.1 Main Analytics, 7.2 Secondary Analytics, and 7.3 Realized Trajectory device-accepted; 7.4 Portfolio Allocation implemented and validating. |
 | 8–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -1002,6 +1002,9 @@ Pass 1:
 - **cba299b / 2f6bddd** — phone screenshot correction for trajectory visuals: remove the unintended gray BarChart tooltip cursor slab; add a visibly stronger semantic curve halo tied to the selected period's net realized P&L; add outcome-colored glow to Trade-by-Trade bars. Reduced-motion mode strips these extra filters.
 - **039feeb / db90bd1** — follow-up device correction after user feedback: removing the slab exposed a selection-cue regression. Trade-by-Trade now highlights the actual active bar itself with its own semantic fill, bright outline, and stronger SVG-native halo. Regular bars also use SVG-native glow instead of CSS-only drop-shadow, avoiding the iPhone/Recharts rendering issue.
 - **00d0a3a** — correct reduced-motion handling: static semantic chart glow remains visible; reduced-motion now suppresses movement/transition rather than erasing financial-state styling.
+- User device validation accepted **Passes 7.1, 7.2, and 7.3**; those passes are now closed.
+- **60460fc / ac124fc** — start Pass 7.4 with deterministic allocation identity colors and tests; the same holding/sector keeps its color across rank changes, while cash uses the reserved purple family.
+- **905c850 / d8ae6e5 / a633d2a** — migrate Portfolio Allocation to the Phase 7 system: linked donut/list selection, always-visible center summary, segment-specific tooltip semantics, active segment outline/glow, stable colored list dots/progress bars, touch/keyboard row interaction, and reduced-motion-safe transitions. Allocation math, sector/holding tabs, and cash inclusion behavior are unchanged.
 - Quality Checks **#753 passed** for the trajectory device correction.
 - **cb08cd9 / bd33174** — resume **Pass 7.2 Secondary Analytics**: Drawdown, Cumulative Fees, and Realized vs Unrealized now use the shared inset plot system, semantic card/plot accents, stronger luminous series, shared active-point/reference-line/margin formatting, and explicit Realized vs Unrealized legend hierarchy. Drawdown remains rose/risk, Fees remains amber/cost, and P&L composition uses sign-aware semantic colors with solid Realized vs dashed Unrealized identity. Data, syncId, Today/daily curve rules, fee stepAfter behavior, tooltip synchronization, and 520ms timing are unchanged. Quality Checks **#754 passed**: typecheck, **29/29 test files / 182/182 tests**, production build **4.85s**. Device visual validation remains pending.
 - **ab8aa8a** — fix Realized vs Unrealized tooltip labels after phone validation: Recharts already provides the explicit Line names (`Realized` / `Unrealized`); remove the incorrect formatter that compared those names against raw data keys and therefore mislabeled both rows as Unrealized.

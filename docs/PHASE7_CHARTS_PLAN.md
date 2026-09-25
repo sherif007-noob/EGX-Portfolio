@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: IN PROGRESS — Passes 7.1–7.5 implemented; Pass 7.6 full regression/closure in progress.**
+**Status: COMPLETE — device accepted; Quality Checks #767 passed (31/31 test files, 190/190 tests, production build 6.01s).**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -446,7 +446,7 @@ Important:
 
 ### Pass 6 — Full chart regression and closure
 
-**Status: IN PROGRESS.**
+**Status: COMPLETE — Quality Checks #767 passed; device verification accepted.**
 
 Closure work added:
 - lock the historical 1W transition regression with a deterministic interpolation test that verifies the first frame spans the full plot rather than starting in the last quarter;
@@ -454,6 +454,7 @@ Closure work added:
 - add a viewport safety regression test requiring `viewport-fit=cover` and safe-area-aware header/main padding after the iPhone landscape gutter bug;
 - audit chart render paths for accidental default-white Recharts styling; primary, secondary, trajectory, and allocation renderers all use explicit Phase 7 theme/tooltip primitives;
 - run the complete existing analytics/accounting/intraday suite plus production build before Phase 7 closure.
+- final closure result: **31/31 test files, 190/190 tests, production build 6.01s** on Quality Checks **#767**.
 
 Latest landscape correction:
 - add `viewport-fit=cover` so the application surface can paint into iPhone landscape safe areas;
@@ -529,3 +530,22 @@ Each meaningful pass:
 **7.0 Shared system → 7.1 Primary → 7.2 Secondary → 7.3 Realized trajectory → 7.4 Allocation → 7.5 responsive/accessibility sweep → 7.6 regression/closure.**
 
 This ordering deliberately establishes the shared primitives and primary reference chart first, then migrates the simpler/specialized charts onto the same system.
+
+
+## Phase 7 closure
+
+Phase 7 is formally closed.
+
+Accepted outcomes:
+- shared premium chart visual system;
+- main analytics migration;
+- secondary Drawdown / Fees / Realized-vs-Unrealized migration;
+- Realized P&L Trajectory redesign with persistent trade markers and All / 1D / 1W / 1M / 90D / YTD filters;
+- Portfolio Allocation redesign with linked donut/list interaction and stable semantic identity colors;
+- consistent mobile tooltip dismissal and responsive chart behavior;
+- unified selector language;
+- iPhone portrait/landscape safe-area handling;
+- reduced-motion behavior tied to the user's actual preference;
+- deterministic regression guards for the historical 1W transition and viewport-safe layout.
+
+Device verification is accepted. Any future chart change should be treated as regression/polish unless explicitly reopened by the user.

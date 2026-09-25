@@ -3905,6 +3905,12 @@ body {
  * retains the same visual gutters using env(safe-area-inset-*).
  */
 @supports (padding-left: max(0px)) {
+  @media (orientation: portrait) {
+    .premium-header-safe-top {
+      padding-top: calc(env(safe-area-inset-top) + 0.5rem) !important;
+    }
+  }
+
   .premium-safe-inline-header {
     padding-left: max(0.75rem, env(safe-area-inset-left)) !important;
     padding-right: max(0.75rem, env(safe-area-inset-right)) !important;

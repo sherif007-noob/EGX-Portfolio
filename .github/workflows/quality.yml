@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase7-pass2-secondary-charts-gate]
   pull_request:
     branches: [main]
 

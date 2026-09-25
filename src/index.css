@@ -806,6 +806,86 @@ body {
   }
 }
 
+/* Phase 6.5 Pass 1 — navigation hierarchy and overflow affordance. */
+.premium-nav-shell {
+  isolation: isolate;
+}
+
+.premium-nav-scroller {
+  scroll-padding-inline: 1rem;
+}
+
+.premium-nav-divider {
+  background: linear-gradient(180deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+}
+
+.premium-nav-item {
+  --premium-nav-accent: 34 211 238;
+}
+
+.premium-nav-item .premium-nav-icon {
+  color: rgb(var(--premium-nav-accent));
+  opacity: 0.76;
+  transition:
+    opacity var(--motion-control) ease-out,
+    filter var(--motion-control) ease-out,
+    transform var(--motion-control) var(--motion-emphasized);
+}
+
+.premium-nav-item.premium-nav-active {
+  border-color: rgb(var(--premium-nav-accent) / 0.34);
+  background:
+    linear-gradient(180deg, rgb(var(--premium-nav-accent) / 0.105), transparent 92%),
+    rgba(30, 41, 59, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 8px 22px rgba(0, 0, 0, 0.2),
+    0 0 22px rgb(var(--premium-nav-accent) / 0.09);
+}
+
+.premium-nav-item.premium-nav-active .premium-nav-icon {
+  opacity: 1;
+  filter: drop-shadow(0 0 7px rgb(var(--premium-nav-accent) / 0.45));
+}
+
+.premium-nav-item.premium-nav-active::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--premium-nav-accent) / 0.92),
+    transparent
+  );
+}
+
+.premium-nav-group-label {
+  user-select: none;
+}
+
+.premium-nav-edge {
+  z-index: 2;
+}
+
+.premium-nav-edge-left {
+  background: linear-gradient(90deg, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0));
+}
+
+.premium-nav-edge-right {
+  background: linear-gradient(270deg, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0));
+}
+
+@media (min-width: 1280px) {
+  .premium-nav-edge {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-nav-edge,
+  .premium-nav-item .premium-nav-icon {
+    transition: none !important;
+  }
+}
+
 /* Phase 6 Pass 5 — shared control ergonomics. */
 .premium-select-dropdown {
   max-width: var(--premium-select-menu-max, calc(100vw - (var(--premium-mobile-gutter) * 2)));

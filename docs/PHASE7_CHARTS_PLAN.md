@@ -363,6 +363,9 @@ Implemented:
 - tooltip dot/percentage now use the actual segment color instead of generic cyan;
 - ranked rows, dots, and progress bars carry the same stable segment color;
 - cash inclusion/exclusion behavior and allocation calculations remain unchanged;
+- device feedback correction: selected donut slices no longer use a white outline; selection now uses the slice's own stable allocation color for its border + native SVG halo;
+- matching ranked rows now consume the shared semantic RGB halo variables so border/background/near/far glow all follow that same allocation color;
+- replace the full-width Cash included/excluded selector with a compact glass `role="switch"` control labeled **Include cash**, using a purple semantic track/halo when enabled;
 - reduced-motion disables allocation transitions while preserving static state styling.
 
 Scope:

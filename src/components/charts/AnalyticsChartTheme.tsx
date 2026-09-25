@@ -203,7 +203,8 @@ export function formatAnalyticsCompactEgp(value: number): string {
   return `${sign}${absolute.toFixed(0)}`;
 }
 
-interface ChartPlotSurfaceProps {
+interface ChartPlotSurfaceProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'aria-label'> {
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
@@ -213,8 +214,10 @@ export const ChartPlotSurface: React.FC<ChartPlotSurfaceProps> = ({
   children,
   className = '',
   ariaLabel,
+  ...divProps
 }) => (
   <div
+    {...divProps}
     className={['premium-chart-plot relative min-w-0 rounded-xl border', className].join(' ')}
     aria-label={ariaLabel}
   >

@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 4 real-device corrections implemented and CI-clean; awaiting final device re-validation.**
+**Status: IMPLEMENTATION IN PROGRESS — Pass 5 shared controls/rare states implemented; awaiting Pass 6 full responsive validation.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -485,18 +485,27 @@ Hard boundary preserved:
 
 ### Pass 5 — Shared controls and rare states
 
+**Status: IMPLEMENTED — awaiting inclusion in the final Pass 6 device/CI validation gate.**
+
 Scope:
 - AnalyticsSelect;
 - DateInput;
 - NumberStepperInput;
 - auth/error/PWA/status edge cases.
 
-Work:
-- solve coarse-pointer stepper behavior;
-- date-picker target size;
-- dropdown edge clamping;
-- keyboard + mobile viewport review for auth;
-- rare status/empty/error surface fit.
+Implemented:
+- **f324da6 / 8eb025d** — make `AnalyticsSelect` choose its opening edge from actual trigger geometry and calculate a per-open viewport width cap, including resize/orientation updates while open. The shared dropdown remains an overlay and retains the accepted premium selector styling.
+- **c3baaf9** — enlarge the native `DateInput` calendar hit area to a true 44px target while preserving the existing visual icon treatment and native browser picker.
+- **073336b / 7a66b** — replace the unusably small stacked +/- stepper buttons on coarse pointers with full-height 44px left/right decrement/increment controls; desktop retains the compact vertical stepper rail.
+- **87c15d4 / 8f60c35** — add the shared Pass 5 CSS contracts for coarse-pointer steppers and geometry-clamped select menus without changing desktop control density.
+- **1ee4146** — make the Supabase auth gate `dvh`/keyboard safe, keep the form scroll-reachable on short viewports, and use 16px phone input text to avoid mobile browser focus zoom.
+- **2ed96ca** — make the Error Boundary recovery state `dvh`/scroll safe and allow long runtime errors to wrap inside the diagnostic surface.
+- **eb11566** — harden the PWA install guide for narrow widths: shrink-safe header/instruction content, reachable close/confirm actions, and no horizontal body overflow.
+- Offline/fixed status behavior remains owned by the already-completed Pass 1 contract; Pass 5 introduces no competing status presentation.
+
+Validation notes:
+- component-level source review confirms the shared controls preserve existing value/change behavior; this pass changes hit geometry, viewport containment, and responsive layout only;
+- PR **#27** remains open against `main`; final repository typecheck/tests/build are reserved for the consolidated Pass 6 validation gate together with the full device matrix.
 
 ### Pass 6 — Full 34-file responsive validation
 

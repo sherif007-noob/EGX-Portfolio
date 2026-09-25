@@ -346,6 +346,10 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#pnlGrowthGradReusable)"
+                className="premium-trajectory-semantic-curve"
+                style={{
+                  '--trajectory-curve-glow': `${trajectoryStroke}8f`,
+                } as React.CSSProperties}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
                   const outcome = payload.outcome as AnalyticsTradeMarkerOutcome;
@@ -402,7 +406,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               />
               <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
-                cursor={analyticsTooltipCursor}
+                cursor={false}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
@@ -445,12 +449,21 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <Bar dataKey="tradePnl" radius={[4, 4, 0, 0]}>
                 {trajectoryData
                   .filter((d) => d.index > 0)
-                  .map((entry) => (
-                    <Cell
-                      key={`bar-${entry.index}-${entry.ticker}`}
-                      fill={getAnalyticsTradeMarkerStyle(entry.outcome as AnalyticsTradeMarkerOutcome).fill}
-                    />
-                  ))}
+                  .map((entry) => {
+                    const marker = getAnalyticsTradeMarkerStyle(
+                      entry.outcome as AnalyticsTradeMarkerOutcome,
+                    );
+                    return (
+                      <Cell
+                        key={`bar-${entry.index}-${entry.ticker}`}
+                        fill={marker.fill}
+                        className="premium-trajectory-trade-bar"
+                        style={{
+                          '--trajectory-bar-glow': marker.glow,
+                        } as React.CSSProperties}
+                      />
+                    );
+                  })}
               </Bar>
             </BarChart>
           )}

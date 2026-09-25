@@ -3898,3 +3898,36 @@ body {
     height: 1.25rem !important;
   }
 }
+
+
+/* iPhone landscape edge-to-edge viewport.
+ * The document paints beneath the display cutout/safe areas while app content
+ * retains the same visual gutters using env(safe-area-inset-*).
+ */
+@supports (padding-left: max(0px)) {
+  .premium-safe-inline-header {
+    padding-left: max(0.75rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.75rem, env(safe-area-inset-right)) !important;
+  }
+
+  .premium-safe-inline-main {
+    padding-left: max(1rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
+  }
+
+  @media (min-width: 640px) {
+    .premium-safe-inline-header,
+    .premium-safe-inline-main {
+      padding-left: max(1.5rem, env(safe-area-inset-left)) !important;
+      padding-right: max(1.5rem, env(safe-area-inset-right)) !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .premium-safe-inline-header,
+    .premium-safe-inline-main {
+      padding-left: max(2rem, env(safe-area-inset-left)) !important;
+      padding-right: max(2rem, env(safe-area-inset-right)) !important;
+    }
+  }
+}

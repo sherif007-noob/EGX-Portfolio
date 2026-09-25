@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: IN PROGRESS — Passes 7.1, 7.2, and 7.3 device-accepted; Pass 7.4 Portfolio Allocation implemented, validation pending.**
+**Status: IN PROGRESS — Passes 7.1–7.4 device-accepted; Pass 7.5 responsive/interaction/accessibility sweep implemented, validation pending.**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -349,7 +349,7 @@ Acceptance:
 
 ### Pass 4 — Portfolio Allocation
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: COMPLETE / DEVICE ACCEPTED.**
 
 Implemented:
 - replace rank/index-based donut colors with stable identity-based colors so the same sector/holding keeps its color when values reorder or cash is toggled;
@@ -398,6 +398,26 @@ Implemented during Phase 7:
 - synchronization through `syncId="portfolio-secondary-analytics"` is preserved.
 
 ### Pass 5 — Responsive, interaction, and accessibility chart sweep
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- shared tooltip wrappers now clamp to phone viewport width and stay inside the chart view box;
+- primary rich tooltip drops its fixed minimum width on narrow phones and long values can wrap instead of forcing overflow;
+- chart control rails use touch-friendly horizontal scrolling with hidden scrollbars and contained overscroll;
+- chart timeframe/resolution/trajectory controls receive larger touch targets only on coarse-pointer devices, preserving compact desktop density;
+- every plot surface now exposes a concise accessible chart description in addition to its visible label;
+- primary and all secondary charts describe the selected period and headline/summary values to assistive technology;
+- trajectory accessibility explicitly states that each point/bar represents a closed trade;
+- allocation describes total buckets, total value, largest allocation, and points keyboard users to the linked ranked controls;
+- allocation center selection updates are announced politely;
+- chart legends wrap without truncating individual legend labels;
+- narrow 320–359px layouts reduce tooltip padding/text density and axis-label size;
+- short phone landscape caps plot height to avoid graphs consuming the full viewport;
+- shared chart surfaces use touch-action rules that preserve vertical page scrolling while keeping chart inspection usable;
+- explicit focus-visible treatment added for chart controls, allocation rows, and the cash switch;
+- Recharts series now honor `prefers-reduced-motion`: normal devices keep the accepted 520ms chart motion, while users who explicitly enable reduced motion get static series transitions;
+- the special 1W morph is skipped when reduced motion is requested so no stale interpolation state remains.
 
 Scope across all 7 charts:
 - 320/360/390/430 phone widths;

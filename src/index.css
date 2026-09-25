@@ -807,11 +807,19 @@ body {
 }
 
 /* Phase 6 Pass 5 — shared control ergonomics. */
+.premium-select-dropdown {
+  max-width: var(--premium-select-menu-max, calc(100vw - (var(--premium-mobile-gutter) * 2)));
+}
+
 .premium-number-stepper-touch-controls {
   display: none;
 }
 
 @media (max-width: 767px), (pointer: coarse) {
+  .premium-select-dropdown {
+    min-width: min(100%, var(--premium-select-menu-max, calc(100vw - (var(--premium-mobile-gutter) * 2))));
+  }
+
   .premium-number-stepper-desktop-controls {
     display: none;
   }

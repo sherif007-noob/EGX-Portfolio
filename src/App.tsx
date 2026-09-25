@@ -976,7 +976,7 @@ export default function App() {
       </SurfacePresence>
 
       {/* Main Container */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+      <main className="premium-safe-inline-main relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
         {/* Top Summary Banner */}
         <PortfolioSummary
           metrics={metrics}

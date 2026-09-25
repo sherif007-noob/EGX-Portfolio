@@ -117,6 +117,33 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [updateNavOverflow]);
 
+  const scrollNavItemIntoView = useCallback((
+    item: HTMLElement | null,
+    behavior: ScrollBehavior,
+  ) => {
+    const container = navScrollRef.current;
+    if (!container || !item) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    const edgePadding = 24;
+    let nextLeft = container.scrollLeft;
+
+    if (itemRect.left < containerRect.left + edgePadding) {
+      nextLeft += itemRect.left - containerRect.left - edgePadding;
+    } else if (itemRect.right > containerRect.right - edgePadding) {
+      nextLeft += itemRect.right - containerRect.right + edgePadding;
+    } else {
+      return;
+    }
+
+    const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+    container.scrollTo({
+      left: Math.min(maxLeft, Math.max(0, nextLeft)),
+      behavior,
+    });
+  }, []);
+
   useEffect(() => {
     const container = navScrollRef.current;
     if (!container) return;
@@ -125,13 +152,9 @@ export const Header: React.FC<HeaderProps> = ({
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    active?.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
-      behavior: reduceMotion ? 'auto' : 'smooth',
-    });
+    scrollNavItemIntoView(active, reduceMotion ? 'auto' : 'smooth');
     window.requestAnimationFrame(updateNavOverflow);
-  }, [activeTab, updateNavOverflow]);
+  }, [activeTab, scrollNavItemIntoView, updateNavOverflow]);
 
   const handleNavKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -150,12 +173,9 @@ export const Header: React.FC<HeaderProps> = ({
     if (event.key === 'Home') nextIndex = 0;
     if (event.key === 'End') nextIndex = tabs.length - 1;
 
-    tabs[nextIndex]?.focus();
-    tabs[nextIndex]?.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
-      behavior: 'auto',
-    });
+    const nextTab = tabs[nextIndex];
+    nextTab?.focus();
+    scrollNavItemIntoView(nextTab ?? null, 'auto');
   };
 
   return (
@@ -319,7 +339,11 @@ export const Header: React.FC<HeaderProps> = ({
                       aria-hidden="true"
                     />
                   )}
-                  <div className="flex items-center gap-1 sm:gap-1.5" aria-label={group.label}>
+                  <div
+                    className="flex items-center gap-1 sm:gap-1.5"
+                    role="group"
+                    aria-label={group.label}
+                  >
                     <span className="premium-nav-group-label hidden 2xl:inline-flex px-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
                       {group.label}
                     </span>
@@ -333,7 +357,6 @@ export const Header: React.FC<HeaderProps> = ({
                           aria-current={active ? 'page' : undefined}
                           aria-label={item.label}
                           data-nav-tab="true"
-                          tabIndex={active ? 0 : -1}
                           onClick={() => setActiveTab(item.tab)}
                           className={`premium-nav premium-nav-item flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm ${
                             active

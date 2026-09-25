@@ -995,6 +995,9 @@ Pass 1:
 - Planned order remains: shared chart primitives → primary analytics → secondary analytics → realized trajectory → allocation → responsive/accessibility sweep → full regression closure.
 - Portfolio Equity Bridge remains an analytical card surface, not a Phase 7 chart; its broader hierarchy remains for later phases.
 - Phone tab/page transition timing remains separate deferred motion debt and is not folded into the chart phase.
+- User requested jumping directly to **Pass 7.3 Realized P&L Trajectory** before 7.2; 7.2 remains pending.
+- **26a2661 / 4aaa426 / 2bc5dcc** — migrate both trajectory modes onto the Phase 7 chart system while preserving all trade observations. Cumulative markers are persistent data-bearing points using START/WIN/LOSS/BREAKEVEN semantics; active markers preserve the selected trade's outcome; breakeven uses amber; overall trajectory stroke reflects net realized state; shared plot/axis/zero-line/tooltip/formatting primitives are applied; reduced-motion-safe marker emphasis added.
+- Trajectory marker rule remains non-negotiable: one visible cumulative marker per inception/trade observation; no sampling, thinning, or markerless cumulative rendering.
 
 ## Current validated visual rules
 

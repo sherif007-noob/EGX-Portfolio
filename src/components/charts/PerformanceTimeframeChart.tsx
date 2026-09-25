@@ -923,57 +923,53 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </div>
 
         {timeframe === 'TODAY' && (
-          <div className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-2" role="group" aria-label="Today chart resolution">
-            <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="flex min-w-0 items-center gap-2" role="group" aria-label="Today chart resolution">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
               Resolution
             </span>
-            {TODAY_RESOLUTIONS.map((item) => {
-              const selected = todayResolution === item.value;
-              return (
-                <button
-                  key={String(item.value)}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setTodayResolution(item.value)}
-                  className={[
-                    'premium-segment premium-chart-control shrink-0 min-w-[44px] rounded-lg border px-2.5 py-1 text-[11px] font-semibold',
-                    selected
-                      ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
-                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
-                  ].join(' ')}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-            {effectiveTodayResolution != null && (
-              <span className="ml-1 shrink-0 text-[10px] text-slate-500">
-                {todayResolution === 'AUTO' ? `Using ${effectiveTodayResolution}m` : ''}
+            <div className="premium-chart-selector-viewport min-w-0 flex-1 overflow-x-auto">
+              <div className="premium-selector-shell w-max">
+                {TODAY_RESOLUTIONS.map((item) => {
+                  const selected = todayResolution === item.value;
+                  return (
+                    <button
+                      key={String(item.value)}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setTodayResolution(item.value)}
+                      className={`premium-filter-pill premium-compact-selector shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold ${selected ? 'premium-filter-active-cyan' : ''}`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {effectiveTodayResolution != null && todayResolution === 'AUTO' && (
+              <span className="hidden shrink-0 text-[10px] text-slate-500 sm:inline">
+                Using {effectiveTodayResolution}m
               </span>
             )}
           </div>
         )}
 
-        <div className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] snap-x gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Analytics timeframe">
-          {TIMEFRAMES.map((item) => {
-            const selected = timeframe === item.value;
-            return (
-              <button
-                key={item.value}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => handleTimeframeChange(item.value)}
-                className={[
-                  'premium-segment premium-chart-control shrink-0 snap-start min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
-                  selected
-                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
-                ].join(' ')}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+        <div className="premium-chart-selector-viewport min-w-0 overflow-x-auto" role="group" aria-label="Analytics timeframe">
+          <div className="premium-selector-shell w-max">
+            {TIMEFRAMES.map((item) => {
+              const selected = timeframe === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => handleTimeframeChange(item.value)}
+                  className={`premium-filter-pill premium-compact-selector shrink-0 rounded-lg px-3 py-1 text-xs font-semibold ${selected ? 'premium-filter-active-cyan' : ''}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

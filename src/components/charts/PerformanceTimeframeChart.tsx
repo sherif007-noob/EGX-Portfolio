@@ -809,7 +809,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
           stroke: '#020617',
           strokeWidth: 2,
         }}
-        isAnimationActive
+        isAnimationActive={!reducedMotion}
         animationDuration={520}
         animationEasing="ease-out"
         animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
@@ -826,7 +826,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             <button
               type="button"
               onClick={() => setModeMenuOpen((value) => !value)}
-              className="premium-accordion-trigger group flex max-w-full items-center gap-1.5 text-left"
+              className="premium-accordion-trigger premium-chart-control group flex max-w-full items-center gap-1.5 text-left"
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
             >
@@ -858,7 +858,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                         setModeMenuOpen(false);
                       }}
                       className={[
-                        'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
+                        'premium-menu-item premium-chart-control flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
                         selected
                           ? 'bg-cyan-500/10 text-cyan-200'
                           : 'text-slate-300 hover:bg-slate-900 hover:text-white',

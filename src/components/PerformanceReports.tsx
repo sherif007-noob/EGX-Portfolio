@@ -11,9 +11,12 @@ import { MotionSwap } from './PremiumMotion';
 import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import {
-  AnalyticsChartTooltip,
+  ANALYTICS_CHART_THEME,
+  AnalyticsEmptyState,
+  ChartPlotSurface,
   ChartTooltipShell,
   formatAnalyticsEgp,
+  getAnalyticsAllocationColor,
 } from './charts/AnalyticsChartTheme';
 
 interface PerformanceReportsProps {
@@ -29,7 +32,6 @@ interface PerformanceReportsProps {
   chartsReady?: boolean;
 }
 
-const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#84cc16'];
 const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -117,9 +119,21 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
       .sort((a, b) => b.value - a.value);
   }, [positions, cashBalance, includeCash]);
 
-  const allocationData = allocationTab === 'sector' ? sectorData : stockData;
+  const allocationData = useMemo(
+    () =>
+      (allocationTab === 'sector' ? sectorData : stockData).map((row) => ({
+        ...row,
+        color: getAnalyticsAllocationColor(row.name, {
+          cash: row.kind === 'cash',
+        }),
+      })),
+    [allocationTab, sectorData, stockData],
+  );
   const allocationTotal = allocationData.reduce((sum, row) => sum + row.value, 0);
   const leadingAllocation = allocationData[0] ?? null;
+  const activeAllocation =
+    activeAllocationIndex == null ? null : allocationData[activeAllocationIndex] ?? null;
+  const highlightedAllocation = activeAllocation ?? leadingAllocation;
 
   const waterfallSteps = useMemo(() => {
     const steps = [

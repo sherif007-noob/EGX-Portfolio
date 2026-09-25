@@ -980,14 +980,18 @@ Pass 1:
 
 ## Phase 7 — Charts
 
-**Status: planning complete / implementation not started.**
+**Status: IN PROGRESS — Pass 7.0 shared chart system implemented; validation running.**
 
 - **2440ffd** — add `docs/PHASE7_CHARTS_PLAN.md`.
 - Audit confirms **7 chart visualizations** across `PerformanceTimeframeChart`, `SecondaryAnalyticsCharts`, `RealizedTrajectoryChart`, and the allocation chart in `PerformanceReports`.
 - Phase 7 is explicitly visual-only: analytics calculations, Today resolution/fallback logic, timeframe semantics, chart observations, 1W interpolation matching, Today linear paths, longer-range smoothing, synchronized chart behavior, and current series timing are protected.
-- Planned order: shared chart primitives → primary analytics → secondary analytics → realized trajectory → allocation → responsive/accessibility sweep → full regression closure.
+- User clarification: cumulative Realized P&L trajectory points are **trade observations**, not decorative dots. Every trade marker must remain visible/inspectable and retain START/WIN/LOSS/BREAKEVEN identity.
+- **ec35858** — encode the persistent trade-marker requirement into the Phase 7 plan.
+- **6937a36 / 575b15a** — expand `AnalyticsChartTheme.tsx` into the Phase 7 shared visual layer: semantic chart tones, stable allocation palette, chart margins, zero-line recipe, active-point recipe, persistent trade-marker contract, plot surface, legend primitive, tooltip shell, and shared loading/empty treatment.
+- **2942904** — add shared premium plot, tooltip, active-point, and loading-skeleton CSS with reduced-motion handling.
+- **886eae1** — extend chart-theme tests to cover semantic colors, active-point separation, percentage-axis formatting, allocation palette stability, and all four persistent trajectory marker identities.
+- Planned order remains: shared chart primitives → primary analytics → secondary analytics → realized trajectory → allocation → responsive/accessibility sweep → full regression closure.
 - Portfolio Equity Bridge remains an analytical card surface, not a Phase 7 chart; its broader hierarchy remains for later phases.
-- Existing `AnalyticsChartTheme.tsx` is the foundation to extend rather than replace.
 - Phone tab/page transition timing remains separate deferred motion debt and is not folded into the chart phase.
 
 ## Current validated visual rules

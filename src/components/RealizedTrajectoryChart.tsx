@@ -37,6 +37,7 @@ import {
   formatAnalyticsEgp,
   formatAnalyticsPercent,
   getAnalyticsTradeMarkerStyle,
+  useAnalyticsReducedMotion,
   type AnalyticsTradeMarkerOutcome,
 } from './charts/AnalyticsChartTheme';
 
@@ -70,6 +71,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   className = '',
   entranceReady = true,
 }) => {
+  const reducedMotion = useAnalyticsReducedMotion();
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
   const [trajectoryTimeframe, setTrajectoryTimeframe] = useState<RealizedTrajectoryTimeframe>('ALL');
 
@@ -350,6 +352,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <Area
                 type="monotone"
                 dataKey="cumulativePnl"
+                isAnimationActive={!reducedMotion}
+                animationDuration={520}
+                animationEasing="ease-out"
                 stroke={trajectoryStroke}
                 strokeWidth={2.5}
                 fillOpacity={1}
@@ -496,6 +501,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <Bar
                 dataKey="tradePnl"
                 radius={[4, 4, 0, 0]}
+                isAnimationActive={!reducedMotion}
+                animationDuration={520}
+                animationEasing="ease-out"
                 activeBar={(props: any) => (
                   <Rectangle
                     {...props}

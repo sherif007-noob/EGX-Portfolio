@@ -306,7 +306,10 @@ Implemented so far:
 - breakeven trades use amber in markers, badges, tooltips, and bars;
 - cumulative trajectory stroke/area reflects overall net realized state while per-trade markers continue to represent each trade outcome independently;
 - add an explicit “Each point is one closed trade” legend and empty state;
-- add reduced-motion-safe marker emphasis.
+- add reduced-motion-safe marker emphasis;
+- add **All / 1D / 1W / 1M / 90D / YTD** trajectory filters using the same EGX session/calendar windows as the analytics system;
+- filtered trajectory summaries, cumulative curve, persistent markers, and trade-by-trade bars all use the same filtered closed-trade set;
+- retain every trade that falls inside the selected period—no sampling or marker thinning.
 
 Pass 7.2 Secondary Analytics is intentionally still pending and will be resumed later.
 
@@ -353,6 +356,14 @@ Acceptance:
 - donut + ranked breakdown reads as one visualization;
 - segment identity remains stable and understandable;
 - tooltip never escapes phone viewport.
+
+### Interaction correction — mobile tooltip dismissal
+
+Implemented during Phase 7:
+- main analytics and all three synchronized secondary charts now share one tooltip-interaction state;
+- pressing anywhere outside the interactive chart surfaces forces all analytics tooltips closed;
+- interacting with any chart re-enables normal hover/touch tooltip behavior;
+- synchronization through `syncId="portfolio-secondary-analytics"` is preserved.
 
 ### Pass 5 — Responsive, interaction, and accessibility chart sweep
 

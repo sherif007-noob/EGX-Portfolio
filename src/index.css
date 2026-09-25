@@ -143,9 +143,11 @@
 }
 
 .premium-trajectory-trade-bar {
-  filter:
-    drop-shadow(0 0 3px var(--trajectory-bar-glow, rgba(56, 189, 248, 0.24)))
-    drop-shadow(0 0 7px var(--trajectory-bar-glow, rgba(56, 189, 248, 0.16)));
+  opacity: 0.98;
+}
+
+.premium-trajectory-active-bar {
+  pointer-events: none;
 }
 
 .premium-chart-skeleton {
@@ -174,8 +176,9 @@
   .premium-secondary-chart-series,
   .premium-trajectory-trade-marker,
   .premium-trajectory-semantic-curve,
-  .premium-trajectory-trade-bar {
-    filter: none;
+  .premium-trajectory-trade-bar,
+  .premium-trajectory-active-bar {
+    filter: none !important;
   }
 
   .premium-trajectory-trade-marker {

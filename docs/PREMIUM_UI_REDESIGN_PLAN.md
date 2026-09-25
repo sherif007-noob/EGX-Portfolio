@@ -57,7 +57,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 5 | Advanced effects | **Complete** |
 | 6 | Mobile / responsive refinement | **Complete — code audit, Quality Checks #745, and real-device smoke accepted** |
 | 6.5 | Navigation refinement | **Complete — grouped responsive navigation + Quality Checks #748 clean; desktop visual regression deferred to Phase 11** |
-| 7 | Charts | **In progress — 7.1–7.4 device-accepted; 7.5 responsive/accessibility sweep implemented, validation pending** |
+| 7 | Charts | **In progress — 7.1–7.4 device-accepted; 7.5 CI-clean, device validation pending; 7.6 closure next** |
 | 8 | Visual hierarchy | Not started |
 | 9 | Header | Not started |
 | 10 | Full consistency sweep | Not started |

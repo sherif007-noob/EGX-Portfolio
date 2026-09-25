@@ -307,6 +307,7 @@ Implemented so far:
 - cumulative trajectory stroke/area reflects overall net realized state while per-trade markers continue to represent each trade outcome independently;
 - add an explicit “Each point is one closed trade” legend and empty state;
 - add reduced-motion-safe marker emphasis;
+- device correction: remove the unintended gray Recharts category cursor from Trade-by-Trade, strengthen the net-semantic cumulative curve halo, and add visible WIN/LOSS/BREAKEVEN bar glow;
 - add **All / 1D / 1W / 1M / 90D / YTD** trajectory filters using the same EGX session/calendar windows as the analytics system;
 - filtered trajectory summaries, cumulative curve, persistent markers, and trade-by-trade bars all use the same filtered closed-trade set;
 - retain every trade that falls inside the selected period—no sampling or marker thinning.

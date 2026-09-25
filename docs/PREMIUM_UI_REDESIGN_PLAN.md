@@ -55,7 +55,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
 | 5 | Advanced effects | **Complete** |
-| 6 | Mobile / responsive refinement | **In progress — Pass 4 device corrections CI-clean; awaiting final device re-validation** |
+| 6 | Mobile / responsive refinement | **In progress — Pass 5 implemented; awaiting Pass 6 full responsive validation** |
 | 6.5 | Navigation refinement | Not started |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
@@ -63,7 +63,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 implementation has started with Pass 0 responsive primitives.
+Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 has completed implementation through Pass 5; the remaining Phase 6 work is the consolidated Pass 6 responsive/device regression gate.
 
 ## Phase 1 — Visual foundations & page shell
 

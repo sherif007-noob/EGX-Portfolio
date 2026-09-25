@@ -17,7 +17,8 @@ import {
   Tooltip,
   CartesianGrid,
   ReferenceLine,
-  Cell
+  Cell,
+  Rectangle,
 } from 'recharts';
 import {
   ANALYTICS_CHART_MARGINS,
@@ -393,6 +394,42 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               data={trajectoryData.filter((d) => d.index > 0)}
               margin={ANALYTICS_CHART_MARGINS.trajectory}
             >
+              <defs>
+                <filter
+                  id="trajectoryTradeBarGlow"
+                  x="-70%"
+                  y="-70%"
+                  width="240%"
+                  height="240%"
+                  colorInterpolationFilters="sRGB"
+                >
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="barGlowBlur" />
+                  <feComponentTransfer in="barGlowBlur" result="barGlowSoft">
+                    <feFuncA type="linear" slope="0.78" />
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode in="barGlowSoft" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <filter
+                  id="trajectoryTradeBarActiveGlow"
+                  x="-95%"
+                  y="-95%"
+                  width="290%"
+                  height="290%"
+                  colorInterpolationFilters="sRGB"
+                >
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="3.4" result="activeBarGlowBlur" />
+                  <feComponentTransfer in="activeBarGlowBlur" result="activeBarGlowSoft">
+                    <feFuncA type="linear" slope="1.05" />
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode in="activeBarGlowSoft" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
               <CartesianGrid {...analyticsGridProps} />
               <XAxis
                 dataKey="tradeLabel"
@@ -446,7 +483,22 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                   return null;
                 }}
               />
-              <Bar dataKey="tradePnl" radius={[4, 4, 0, 0]}>
+              <Bar
+                dataKey="tradePnl"
+                radius={[4, 4, 0, 0]}
+                activeBar={(props: any) => (
+                  <Rectangle
+                    {...props}
+                    fill={props.fill ?? ANALYTICS_CHART_THEME.cyan}
+                    fillOpacity={1}
+                    stroke="#e2e8f0"
+                    strokeWidth={1.5}
+                    radius={[4, 4, 0, 0]}
+                    filter="url(#trajectoryTradeBarActiveGlow)"
+                    className="premium-trajectory-active-bar"
+                  />
+                )}
+              >
                 {trajectoryData
                   .filter((d) => d.index > 0)
                   .map((entry) => {
@@ -457,10 +509,8 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                       <Cell
                         key={`bar-${entry.index}-${entry.ticker}`}
                         fill={marker.fill}
+                        filter="url(#trajectoryTradeBarGlow)"
                         className="premium-trajectory-trade-bar"
-                        style={{
-                          '--trajectory-bar-glow': marker.glow,
-                        } as React.CSSProperties}
                       />
                     );
                   })}

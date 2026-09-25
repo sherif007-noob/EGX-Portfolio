@@ -121,6 +121,83 @@
     drop-shadow(0 0 8px var(--secondary-series-glow, rgba(56, 189, 248, 0.18)));
 }
 
+.premium-allocation-icon {
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+    rgba(6, 182, 212, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 18px rgba(6, 182, 212, 0.10);
+}
+
+.premium-allocation-plot {
+  background:
+    radial-gradient(
+      circle at 50% 56%,
+      color-mix(in srgb, var(--allocation-highlight, #06b6d4) 8%, transparent),
+      transparent 32%
+    ),
+    radial-gradient(circle at 14% 0%, rgba(34, 211, 238, 0.06), transparent 34%),
+    rgba(2, 6, 23, 0.36);
+}
+
+.premium-allocation-segment {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.8, 0.24, 1),
+    opacity 260ms ease-out,
+    filter 280ms ease-out;
+}
+
+.premium-allocation-segment-active {
+  transform: scale(1.055);
+  filter:
+    drop-shadow(0 0 4px var(--allocation-segment-color, #06b6d4))
+    drop-shadow(0 0 10px color-mix(in srgb, var(--allocation-segment-color, #06b6d4) 68%, transparent));
+}
+
+.premium-allocation-segment-dimmed {
+  opacity: 0.38;
+}
+
+.premium-allocation-row {
+  border-color: rgba(100, 116, 139, 0.18);
+  transition:
+    border-color 260ms ease-out,
+    background 260ms ease-out,
+    box-shadow 260ms ease-out,
+    opacity 220ms ease-out;
+}
+
+.premium-allocation-row-active {
+  border-color: color-mix(in srgb, var(--allocation-row-color, #06b6d4) 58%, transparent);
+  background:
+    linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--allocation-row-color, #06b6d4) 9%, transparent),
+      rgba(2, 6, 23, 0.22) 58%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 0 18px color-mix(in srgb, var(--allocation-row-color, #06b6d4) 12%, transparent);
+}
+
+.premium-allocation-row-dimmed {
+  opacity: 0.54;
+}
+
+.premium-allocation-dot {
+  box-shadow:
+    0 0 7px color-mix(in srgb, var(--allocation-dot-color, #06b6d4) 70%, transparent);
+}
+
+.premium-allocation-progress {
+  box-shadow:
+    0 0 7px color-mix(in srgb, var(--allocation-progress-color, #06b6d4) 46%, transparent);
+}
+
 .premium-trajectory-trade-marker {
   transform-box: fill-box;
   transform-origin: center;
@@ -177,6 +254,15 @@
    * Keep chart/marker/bar glows visible so financial state does not disappear
    * when the OS accessibility setting is enabled.
    */
+  .premium-allocation-segment,
+  .premium-allocation-row {
+    transition: none !important;
+  }
+
+  .premium-allocation-segment-active {
+    transform: scale(1.025);
+  }
+
   .premium-trajectory-trade-marker {
     transition: none !important;
   }

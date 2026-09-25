@@ -3,6 +3,7 @@ import {
   ANALYTICS_ALLOCATION_PALETTE,
   ANALYTICS_CHART_THEME,
   analyticsActiveDotProps,
+  analyticsHexToRgbChannels,
   formatAnalyticsCompactEgp,
   formatAnalyticsEgp,
   formatAnalyticsPercent,
@@ -89,5 +90,11 @@ describe('analytics chart visual contracts', () => {
   it('reserves the comparison purple for cash allocation', () => {
     expect(getAnalyticsAllocationColor('CASH', { cash: true }))
       .toBe(ANALYTICS_CHART_THEME.purple);
+  });
+
+  it('converts chart hex colors into semantic RGB channels', () => {
+    expect(analyticsHexToRgbChannels('#10b981')).toBe('16 185 129');
+    expect(analyticsHexToRgbChannels('#f43f5e')).toBe('244 63 94');
+    expect(analyticsHexToRgbChannels('fff')).toBe('255 255 255');
   });
 });

@@ -45,17 +45,22 @@ import {
   type AnalyticsChartMode,
 } from '../../services/analyticsModes';
 import {
+  ANALYTICS_CHART_MARGINS,
   ANALYTICS_CHART_THEME,
   AnalyticsChartLoadingState,
   AnalyticsEmptyState,
+  ChartLegend,
+  ChartPlotSurface,
   ChartTooltipShell,
   analyticsGridProps,
   analyticsTooltipCursor,
   analyticsXAxisProps,
   analyticsYAxisProps,
+  analyticsZeroLineProps,
   formatAnalyticsCompactEgp,
   formatAnalyticsEgp,
   formatAnalyticsPercent,
+  formatAnalyticsPercentAxis,
 } from './AnalyticsChartTheme';
 
 interface PerformanceTimeframeChartProps {
@@ -719,14 +724,16 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       {...analyticsYAxisProps}
       domain={yDomain}
       tickFormatter={(value: number) =>
-        isPercentMode ? `${value.toFixed(timeframe === 'TODAY' ? 2 : 1)}%` : formatAnalyticsCompactEgp(value)
+        isPercentMode
+          ? formatAnalyticsPercentAxis(value, timeframe === 'TODAY' ? 2 : 1)
+          : formatAnalyticsCompactEgp(value)
       }
     />
   );
 
   const renderReferenceLine = () =>
     isPercentMode ? (
-      <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+      <ReferenceLine y={0} {...analyticsZeroLineProps} />
     ) : null;
 
   const renderPrimaryArea = () => entranceReady ? (
@@ -944,6 +951,21 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </div>
       </div>
 
+      {definition.secondaryKey && chartData.length >= 2 && !loading && (
+        <ChartLegend
+          ariaLabel={`${definition.label} series`}
+          items={[
+            { label: definition.primaryLabel, color: primaryStroke, kind: 'solid' },
+            {
+              label: definition.secondaryLabel ?? 'Comparison',
+              color: ANALYTICS_CHART_THEME.purple,
+              kind: 'dashed',
+            },
+          ]}
+          className="px-1"
+        />
+      )}
+
       {loading ? (
         <AnalyticsChartLoadingState />
       ) : intradayError && !intradayResult ? (
@@ -955,13 +977,16 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             : 'Not enough complete valuation points are available for this timeframe.'}
         </AnalyticsEmptyState>
       ) : (
-        <div className="h-[232px] sm:h-72">
+        <ChartPlotSurface
+          className="h-[232px] sm:h-72"
+          ariaLabel={`${definition.label} chart`}
+        >
           {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
             <AreaChart
               data={chartData}
               syncId="portfolio-secondary-analytics"
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              margin={ANALYTICS_CHART_MARGINS.primary}
             >
               <defs>
                 <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1003,7 +1028,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             </AreaChart>
           </ResponsiveContainer>
           )}
-        </div>
+        </ChartPlotSurface>
       )}
 
       {result && (

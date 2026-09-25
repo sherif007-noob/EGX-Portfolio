@@ -57,13 +57,13 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 5 | Advanced effects | **Complete** |
 | 6 | Mobile / responsive refinement | **Complete — code audit, Quality Checks #745, and real-device smoke accepted** |
 | 6.5 | Navigation refinement | **Complete — grouped responsive navigation + Quality Checks #748 clean; desktop visual regression deferred to Phase 11** |
-| 7 | Charts | **In progress — 7.1–7.5 implemented; 7.6 full regression/closure in progress** |
-| 8 | Visual hierarchy | Not started |
+| 7 | Charts | **Complete — device accepted; Quality Checks #767 clean (31/31 files, 190/190 tests, build 6.01s)** |
+| 8 | Visual hierarchy | **Planning complete — detailed Pass 8.0–8.7 plan ready; implementation next** |
 | 9 | Header | Not started |
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phases 4, 5, 6, and 6.5 are complete. **5 planned stages remain**: 7, 8, 9, 10, and 11. Phase 6.5 closed after phone validation, navigation hardening, and Quality Checks #748; its remaining transition-timing polish and final physical desktop/browser smoke are tracked as later QA/motion debt.
+Phases 4, 5, 6, 6.5, and 7 are complete. **4 planned stages remain**: 8, 9, 10, and 11. Phase 6.5 closed after phone validation, navigation hardening, and Quality Checks #748; its remaining transition-timing polish and final physical desktop/browser smoke are tracked as later QA/motion debt.
 
 ## Phase 1 — Visual foundations & page shell
 

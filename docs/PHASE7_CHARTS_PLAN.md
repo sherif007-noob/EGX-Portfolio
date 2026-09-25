@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: PLANNING COMPLETE / IMPLEMENTATION NOT STARTED.**
+**Status: IMPLEMENTATION STARTED — Pass 7.0 shared chart primitives in progress.**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -45,7 +45,8 @@ Do **not** change:
 - the accepted longer-range smoothing behavior;
 - the special 1W transition interpolation/matching implementation;
 - primary/secondary `syncId` behavior;
-- current series entrance/morph timing unless a regression requires restoration.
+- current series entrance/morph timing unless a regression requires restoration;
+- **Realized trajectory trade markers are data-bearing observations, not decoration:** every closed trade point must remain visibly represented in cumulative trajectory mode. Phase 7 must not hide, sample, thin, or replace those trade markers with a generic markerless line. WIN / LOSS / BREAKEVEN identity and the inception marker remain explicit and individually inspectable.
 
 The current phone tab/page transition debt belongs to later motion/QA work and is not part of Phase 7.
 
@@ -125,7 +126,7 @@ Phase 7 should evolve these foundations instead of replacing them with another p
 ### Realized trajectory
 - Cumulative and Trade-by-Trade modes share a card but use separate hand-built tooltip/axis conventions.
 - EGP formatting is duplicated instead of consistently consuming the chart formatting layer.
-- Trade outcome markers are useful and should become a deliberate win/loss/breakeven chart primitive.
+- Trade outcome markers are **required data-bearing points** and should become a deliberate win/loss/breakeven chart primitive. One visible marker must remain for every trajectory trade observation; marker reduction/sampling is not allowed.
 - Axis compact-format behavior should match the rest of analytics.
 
 ### Allocation donut
@@ -168,6 +169,7 @@ Every Cartesian chart gets a shared inner plot treatment:
 
 ### Active point / crosshair
 - one active-point grammar: colored core, dark separation ring, restrained glow;
+- trajectory trade markers are a separate persistent-marker grammar: every trade stays visible even when it is not the active point;
 - crosshair remains thin/dashed cyan;
 - synchronized charts keep aligned crosshair behavior;
 - inactive series must not visually compete with the active series.
@@ -208,6 +210,7 @@ Planned work:
 - formalize named semantic chart colors/palette;
 - add shared plot-surface classes/primitives;
 - centralize active-dot/reference-line recipes;
+- define the persistent trajectory trade-marker contract (START/WIN/LOSS/BREAKEVEN) before the trajectory component is migrated;
 - centralize chart margins where practical;
 - strengthen tooltip variants without removing chart-specific content;
 - add legend primitives;

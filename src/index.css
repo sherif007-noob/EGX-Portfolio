@@ -4180,3 +4180,129 @@ body {
     --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
   }
 }
+
+
+/* Phase 8.1 — Overview hierarchy application. */
+.premium-hierarchy-h1 {
+  --premium-semantic-hover-border-alpha: 0.56;
+  --premium-semantic-hover-near-alpha: 0.19;
+  --premium-semantic-hover-far-alpha: 0.075;
+  --premium-semantic-hover-far-radius: 76px;
+}
+
+.premium-hierarchy-h2 {
+  --premium-semantic-hover-border-alpha: 0.44;
+  --premium-semantic-hover-near-alpha: 0.145;
+  --premium-semantic-hover-far-alpha: 0.055;
+  --premium-semantic-hover-far-radius: 62px;
+}
+
+.premium-hierarchy-h3 {
+  --premium-semantic-hover-border-alpha: 0.32;
+  --premium-semantic-hover-near-alpha: 0.09;
+  --premium-semantic-hover-far-alpha: 0.032;
+  --premium-semantic-hover-far-radius: 48px;
+}
+
+.premium-overview-hero {
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 10.25rem;
+  background:
+    radial-gradient(
+      circle at 92% 4%,
+      rgb(var(--premium-semantic-rgb, 34 211 238) / 0.09),
+      transparent 34%
+    ),
+    radial-gradient(circle at 10% -12%, rgba(56, 189, 248, 0.10), transparent 40%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.045), transparent 44%),
+    rgba(15, 23, 42, 0.70);
+}
+
+.premium-overview-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -12% -52% 22%;
+  height: 76%;
+  pointer-events: none;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse,
+    rgb(var(--premium-semantic-rgb, 34 211 238) / 0.075),
+    transparent 66%
+  );
+  filter: blur(16px);
+  z-index: 0;
+}
+
+.premium-overview-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-overview-hero-value {
+  font-size: clamp(1.8rem, 1.35rem + 1.5vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-overview-primary-value {
+  font-size: clamp(1.3rem, 1.05rem + 0.7vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-overview-secondary-value {
+  font-size: clamp(1.15rem, 1rem + 0.45vw, 1.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-overview-today {
+  border: 1px solid rgb(var(--premium-semantic-rgb, 34 211 238) / 0.18);
+  background:
+    linear-gradient(
+      110deg,
+      rgb(var(--premium-semantic-rgb, 34 211 238) / 0.075),
+      rgba(2, 6, 23, 0.30) 58%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 3px 0 0 rgb(var(--premium-semantic-rgb, 34 211 238) / 0.30);
+}
+
+.premium-overview-market-strip {
+  color: #94a3b8;
+  -webkit-backdrop-filter: blur(9px) saturate(118%);
+  backdrop-filter: blur(9px) saturate(118%);
+}
+
+.premium-overview-market-strip .premium-action-priority-utility {
+  color: #94a3b8;
+  border-color: rgba(100, 116, 139, 0.20);
+  background: rgba(15, 23, 42, 0.32);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-overview-market-strip .premium-action-priority-utility:hover {
+    border-color: rgba(100, 116, 139, 0.34);
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .premium-card.premium-hierarchy-h3:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .premium-overview-hero {
+    min-height: 9.25rem;
+  }
+
+  .premium-overview-fees {
+    min-height: auto;
+  }
+}

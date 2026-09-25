@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: IN PROGRESS — Passes 7.1–7.4 device-accepted; Pass 7.5 responsive/interaction/accessibility sweep implemented, validation pending.**
+**Status: IN PROGRESS — Passes 7.1–7.5 implemented; Pass 7.6 full regression/closure in progress.**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -445,6 +445,19 @@ Important:
 - chart series timing changes only if needed to restore accessibility/performance, not for stylistic experimentation.
 
 ### Pass 6 — Full chart regression and closure
+
+**Status: IN PROGRESS.**
+
+Closure work added:
+- lock the historical 1W transition regression with a deterministic interpolation test that verifies the first frame spans the full plot rather than starting in the last quarter;
+- verify both Line and Area weekly interpolators land on the exact target geometry at animation completion;
+- add a viewport safety regression test requiring `viewport-fit=cover` and safe-area-aware header/main padding after the iPhone landscape gutter bug;
+- audit chart render paths for accidental default-white Recharts styling; primary, secondary, trajectory, and allocation renderers all use explicit Phase 7 theme/tooltip primitives;
+- run the complete existing analytics/accounting/intraday suite plus production build before Phase 7 closure.
+
+Latest landscape correction:
+- add `viewport-fit=cover` so the application surface can paint into iPhone landscape safe areas;
+- keep header/nav/main content safely inset using `env(safe-area-inset-left/right)`, so only the background/glass surface extends edge-to-edge.
 
 Validation matrix:
 - primary chart: every mode × every timeframe;

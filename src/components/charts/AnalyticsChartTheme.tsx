@@ -272,17 +272,28 @@ export const ChartPlotSurface: React.FC<ChartPlotSurfaceProps> = ({
   ariaDescription,
   role,
   ...divProps
-}) => (
-  <div
-    {...divProps}
-    role={role ?? (ariaLabel ? 'img' : undefined)}
-    className={['premium-chart-plot relative min-w-0 rounded-xl border', className].join(' ')}
-    aria-label={ariaLabel}
-  >
-    {ariaDescription && <span className="sr-only">{ariaDescription}</span>}
-    {children}
-  </div>
-);
+}) => {
+  const descriptionId = React.useId();
+
+  return (
+    <div
+      {...divProps}
+      role={role ?? (ariaLabel ? 'img' : undefined)}
+      className={['premium-chart-plot relative min-w-0 rounded-xl border', className].join(' ')}
+      aria-label={ariaLabel}
+      aria-describedby={
+        ariaDescription ? descriptionId : divProps['aria-describedby']
+      }
+    >
+      {ariaDescription && (
+        <span id={descriptionId} className="sr-only">
+          {ariaDescription}
+        </span>
+      )}
+      {children}
+    </div>
+  );
+};
 
 export interface ChartLegendItem {
   label: string;

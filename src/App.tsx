@@ -908,7 +908,7 @@ export default function App() {
   }, [reconcileLedger, showToast]);
 
   return (
-    <div className="premium-page min-h-screen text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="premium-page min-h-[100dvh] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* App Header & Navigation */}
       <Header
         activeTab={activeTab}

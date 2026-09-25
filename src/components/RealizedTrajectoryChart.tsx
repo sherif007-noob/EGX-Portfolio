@@ -110,6 +110,12 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   }, [closedTrades]);
 
   const netRealizedPnl = closedTrades.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
+  const trajectoryStroke =
+    netRealizedPnl > 0
+      ? ANALYTICS_CHART_THEME.emerald
+      : netRealizedPnl < 0
+        ? ANALYTICS_CHART_THEME.rose
+        : ANALYTICS_CHART_THEME.amber;
   const peakHighWaterMark = Math.max(...trajectoryData.map((d) => d.cumulativePnl), 0);
   const winCount = closedTrades.filter((t) => t.outcome === 'WIN').length;
   const lossCount = closedTrades.filter((t) => t.outcome === 'LOSS').length;
@@ -168,13 +174,13 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         }`}>
           <span className="text-slate-400 block text-[10px]">Net Realized P&amp;L</span>
           <span className={`font-mono font-bold ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {netRealizedPnl >= 0 ? '+' : ''}{formatAnalyticsEgp(netRealizedPnl).replace(' EGP', '')} EGP
+            {formatAnalyticsEgp(netRealizedPnl, true)}
           </span>
         </div>
         <div>
           <span className="text-slate-400 block text-[10px]">Peak High-Water Mark</span>
           <span className="font-mono font-bold text-cyan-400">
-            +{formatAnalyticsEgp(peakHighWaterMark).replace(' EGP', '')} EGP
+            {formatAnalyticsEgp(peakHighWaterMark, true)}
           </span>
         </div>
         <div>
@@ -225,8 +231,8 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             <AreaChart data={trajectoryData} margin={ANALYTICS_CHART_MARGINS.trajectory}>
               <defs>
                 <linearGradient id="pnlGrowthGradReusable" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.32} />
-                  <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={trajectoryStroke} stopOpacity={0.32} />
+                  <stop offset="95%" stopColor={trajectoryStroke} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...analyticsGridProps} />
@@ -287,7 +293,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <Area
                 type="monotone"
                 dataKey="cumulativePnl"
-                stroke={ANALYTICS_CHART_THEME.emerald}
+                stroke={trajectoryStroke}
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#pnlGrowthGradReusable)"

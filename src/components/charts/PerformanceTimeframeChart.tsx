@@ -62,6 +62,7 @@ import {
   formatAnalyticsEgp,
   formatAnalyticsPercent,
   formatAnalyticsPercentAxis,
+  useAnalyticsReducedMotion,
 } from './AnalyticsChartTheme';
 
 interface PerformanceTimeframeChartProps {
@@ -189,6 +190,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [intradayError, setIntradayError] = useState<string | null>(null);
   const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
+  const reducedMotion = useAnalyticsReducedMotion();
 
   const enableChartTooltips = useCallback(() => {
     setChartTooltipsEnabled(true);
@@ -359,7 +361,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     if (nextTimeframe === timeframe) return;
 
     setWeeklyMorph(
-      timeframe === '1W' || nextTimeframe === '1W'
+      !reducedMotion && (timeframe === '1W' || nextTimeframe === '1W')
         ? { from: timeframe, to: nextTimeframe }
         : null,
     );
@@ -778,7 +780,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         stroke: '#020617',
         strokeWidth: 2,
       }}
-      isAnimationActive
+      isAnimationActive={!reducedMotion}
       animationDuration={520}
       animationEasing="ease-out"
       animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}

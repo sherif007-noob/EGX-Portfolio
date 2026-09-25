@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase8-pass0-hierarchy-foundation-gate]
   pull_request:
     branches: [main]
 

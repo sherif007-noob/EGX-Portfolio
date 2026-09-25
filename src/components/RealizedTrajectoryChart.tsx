@@ -173,15 +173,13 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
           <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
         </div>
 
-        <div className="premium-report-glass-soft grid w-full grid-cols-2 gap-1.5 rounded-xl p-1 text-xs sm:flex sm:w-auto sm:items-center sm:self-auto">
+        <div className="premium-selector-shell grid w-full grid-cols-2 text-xs sm:flex sm:w-auto sm:items-center sm:self-auto">
           <button
             type="button"
             aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
-            className={`premium-segment premium-chart-control min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
-              trajectoryMode === 'cumulative'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+            className={`premium-filter-pill premium-compact-selector min-w-0 rounded-lg px-2.5 py-1 font-medium sm:px-3 ${
+              trajectoryMode === 'cumulative' ? 'premium-filter-active-emerald' : ''
             }`}
           >
             Cumulative Curve
@@ -190,10 +188,8 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             type="button"
             aria-pressed={trajectoryMode === 'discrete'}
             onClick={() => setTrajectoryMode('discrete')}
-            className={`premium-segment premium-chart-control min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
-              trajectoryMode === 'discrete'
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+            className={`premium-filter-pill premium-compact-selector min-w-0 rounded-lg px-2.5 py-1 font-medium sm:px-3 ${
+              trajectoryMode === 'discrete' ? 'premium-filter-active-blue' : ''
             }`}
           >
             Trade-by-Trade
@@ -201,34 +197,29 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         </div>
       </div>
 
-      <div
-        className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-1"
-        role="group"
-        aria-label="Realized trajectory timeframe"
-      >
-        <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+      <div className="flex min-w-0 items-center gap-2" role="group" aria-label="Realized trajectory timeframe">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
           Period
         </span>
-        {REALIZED_TRAJECTORY_TIMEFRAMES.map((item) => {
-          const selected = trajectoryTimeframe === item.value;
-          return (
-            <button
-              key={item.value}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => setTrajectoryTimeframe(item.value)}
-              className={[
-                'premium-segment premium-chart-control min-w-[48px] shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold',
-                selected
-                  ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300'
-                  : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700 hover:text-slate-200',
-              ].join(' ')}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-        <span className="ml-1 shrink-0 font-mono text-[10px] text-slate-500">
+        <div className="premium-chart-selector-viewport min-w-0 flex-1 overflow-x-auto">
+          <div className="premium-selector-shell w-max">
+            {REALIZED_TRAJECTORY_TIMEFRAMES.map((item) => {
+              const selected = trajectoryTimeframe === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setTrajectoryTimeframe(item.value)}
+                  className={`premium-filter-pill premium-compact-selector min-w-[44px] shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold ${selected ? 'premium-filter-active-cyan' : ''}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <span className="hidden shrink-0 font-mono text-[10px] text-slate-500 sm:inline">
           {filteredClosedTrades.length}/{closedTrades.length} trades
         </span>
       </div>

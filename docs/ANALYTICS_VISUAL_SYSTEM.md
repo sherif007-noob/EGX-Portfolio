@@ -4,6 +4,8 @@
 
 The analytics visual system defines how every portfolio chart should look and behave inside EGX Portfolio.
 
+Phase 7 implementation is governed by **docs/PHASE7_CHARTS_PLAN.md**, which audits the current seven chart visualizations and defines the staged migration/validation order.
+
 External apps such as Telda are references for useful interactions and information hierarchy. They are **not** the visual design source. Charts must continue to look like native EGX Portfolio components.
 
 ## Design rules

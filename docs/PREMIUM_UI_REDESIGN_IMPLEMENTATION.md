@@ -966,6 +966,9 @@ Pass 1:
 - Desktop 2XL retains full destination labels; compact labels remain below 2XL.
 - **a8deafc** — add shared Phase 6.5 navigation hierarchy, divider, semantic active-state, overflow-fade, and reduced-motion CSS.
 - Phase 9 still owns final Header utility composition; this pass does not relocate or redesign Header utilities.
+- User device review accepted the active-tab treatment but found group separators too subtle and phone tab transitions effectively imperceptible.
+- **b69e01e** — retune canonical tab presence to a more readable 560ms entrance / 360ms exit with slightly stronger travel; reduced-motion behavior remains unchanged.
+- **c1fa298** — strengthen task-group dividers to a 2px centered luminous separator while keeping them subordinate to active navigation.
 
 ## Current validated visual rules
 

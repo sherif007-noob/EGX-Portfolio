@@ -15,20 +15,23 @@ import {
   Cell
 } from 'recharts';
 import {
+  ANALYTICS_CHART_MARGINS,
   ANALYTICS_CHART_THEME,
+  AnalyticsEmptyState,
+  ChartLegend,
+  ChartPlotSurface,
   ChartTooltipShell,
   analyticsGridProps,
   analyticsTooltipCursor,
   analyticsXAxisProps,
   analyticsYAxisProps,
+  analyticsZeroLineProps,
+  formatAnalyticsCompactEgp,
+  formatAnalyticsEgp,
+  formatAnalyticsPercent,
+  getAnalyticsTradeMarkerStyle,
+  type AnalyticsTradeMarkerOutcome,
 } from './charts/AnalyticsChartTheme';
-
-const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const formatEgp = (val: number) => EGP_FORMATTER.format(val);
 
 interface RealizedTrajectoryChartProps {
   closedTrades: ClosedTrade[];
@@ -37,6 +40,20 @@ interface RealizedTrajectoryChartProps {
   subtitle?: string;
   className?: string;
   entranceReady?: boolean;
+}
+
+function outcomeTextClass(outcome: AnalyticsTradeMarkerOutcome): string {
+  if (outcome === 'WIN') return 'text-emerald-400';
+  if (outcome === 'LOSS') return 'text-rose-400';
+  if (outcome === 'BREAKEVEN') return 'text-amber-400';
+  return 'text-slate-300';
+}
+
+function outcomeBadgeClass(outcome: AnalyticsTradeMarkerOutcome): string {
+  if (outcome === 'WIN') return 'bg-emerald-500/20 text-emerald-400';
+  if (outcome === 'LOSS') return 'bg-rose-500/20 text-rose-400';
+  if (outcome === 'BREAKEVEN') return 'bg-amber-500/20 text-amber-400';
+  return 'bg-slate-700 text-slate-300';
 }
 
 const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> = ({
@@ -151,13 +168,13 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         }`}>
           <span className="text-slate-400 block text-[10px]">Net Realized P&amp;L</span>
           <span className={`font-mono font-bold ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} EGP
+            {netRealizedPnl >= 0 ? '+' : ''}{formatAnalyticsEgp(netRealizedPnl).replace(' EGP', '')} EGP
           </span>
         </div>
         <div>
           <span className="text-slate-400 block text-[10px]">Peak High-Water Mark</span>
           <span className="font-mono font-bold text-cyan-400">
-            +{formatEgp(peakHighWaterMark)} EGP
+            +{formatAnalyticsEgp(peakHighWaterMark).replace(' EGP', '')} EGP
           </span>
         </div>
         <div>
@@ -176,31 +193,36 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
 
       {/* Trajectory Plot Points Guide (for Cumulative Growth Mode) */}
       {trajectoryMode === 'cumulative' && (
-        <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-slate-400 px-1">
-          <span className="text-slate-500">Milestone points on chronological growth trajectory:</span>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-900" />
-              <span className="text-slate-300 font-medium">Winning Trade</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 border border-slate-900" />
-              <span className="text-slate-300 font-medium">Losing Trade</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-400 border border-slate-900" />
-              <span className="text-slate-400 font-medium">Inception</span>
-            </span>
+        <div className="space-y-2 px-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Each point is one closed trade
           </div>
+          <ChartLegend
+            ariaLabel="Realized trajectory trade outcomes"
+            items={[
+              { label: 'Winning trade', color: ANALYTICS_CHART_THEME.emerald, kind: 'dot' },
+              { label: 'Losing trade', color: ANALYTICS_CHART_THEME.rose, kind: 'dot' },
+              ...(closedTrades.some((trade) => trade.outcome === 'BREAKEVEN')
+                ? [{ label: 'Breakeven trade', color: ANALYTICS_CHART_THEME.amber, kind: 'dot' as const }]
+                : []),
+              { label: 'Inception', color: ANALYTICS_CHART_THEME.neutral, kind: 'dot' },
+            ]}
+          />
         </div>
       )}
 
       {/* Chart Canvas */}
-      <div className="h-56 w-full pt-1 sm:h-72">
-        {entranceReady && (
-        <ResponsiveContainer width="100%" height="100%">
-          {trajectoryMode === 'cumulative' ? (
-            <AreaChart data={trajectoryData} margin={{ top: 10, right: 15, left: 10, bottom: 5 }}>
+      {closedTrades.length === 0 ? (
+        <AnalyticsEmptyState>No closed trades are available for the realized P&amp;L trajectory yet.</AnalyticsEmptyState>
+      ) : (
+        <ChartPlotSurface
+          className="h-56 w-full sm:h-72"
+          ariaLabel={trajectoryMode === 'cumulative' ? 'Cumulative realized P&L trajectory' : 'Trade-by-trade realized P&L'}
+        >
+          {entranceReady && (
+          <ResponsiveContainer width="100%" height="100%" debounce={80}>
+            {trajectoryMode === 'cumulative' ? (
+            <AreaChart data={trajectoryData} margin={ANALYTICS_CHART_MARGINS.trajectory}>
               <defs>
                 <linearGradient id="pnlGrowthGradReusable" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.emerald} stopOpacity={0.32} />
@@ -216,27 +238,21 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <YAxis
                 {...analyticsYAxisProps}
                 fontSize={11}
-                tickFormatter={(val) => `${val >= 0 ? '+' : ''}${(val / 1000).toFixed(0)}k`}
+                tickFormatter={formatAnalyticsCompactEgp}
               />
-              <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+              <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
                 cursor={analyticsTooltipCursor}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
-                    const isWin = data.tradePnl >= 0;
+                    const outcome = data.outcome as AnalyticsTradeMarkerOutcome;
                     return (
                       <ChartTooltipShell className="space-y-1">
                         <div className="flex items-center justify-between gap-4 border-b border-slate-800 pb-1 font-semibold text-white">
                           <span>{data.ticker}</span>
                           <span
-                            className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
-                              data.outcome === 'WIN'
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : data.outcome === 'LOSS'
-                                ? 'bg-rose-500/20 text-rose-400'
-                                : 'bg-slate-700 text-slate-300'
-                            }`}
+                            className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${outcomeBadgeClass(outcome)}`}
                           >
                             {data.outcome}
                           </span>
@@ -250,15 +266,15 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                           {data.index > 0 && (
                             <div className="flex justify-between gap-3 text-slate-400">
                               <span>Trade P&amp;L:</span>
-                              <span className={isWin ? 'text-emerald-400' : 'text-rose-400'}>
-                                {isWin ? '+' : ''}{formatEgp(data.tradePnl)} EGP ({data.tradePercent >= 0 ? '+' : ''}{data.tradePercent.toFixed(1)}%)
+                              <span className={outcomeTextClass(outcome)}>
+                                {formatAnalyticsEgp(data.tradePnl, true)} ({formatAnalyticsPercent(data.tradePercent, true)})
                               </span>
                             </div>
                           )}
                           <div className="flex justify-between gap-3 border-t border-slate-800 pt-1 text-slate-300 font-bold">
                             <span>Cumulative Level:</span>
                             <span className={data.cumulativePnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                              {data.cumulativePnl >= 0 ? '+' : ''}{formatEgp(data.cumulativePnl)} EGP
+                              {formatAnalyticsEgp(data.cumulativePnl, true)}
                             </span>
                           </div>
                         </div>
@@ -277,40 +293,46 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                 fill="url(#pnlGrowthGradReusable)"
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  if (payload.outcome === 'START') {
-                    return (
-                      <circle
-                        key={`pt-start-${payload.index}`}
-                        cx={cx}
-                        cy={cy}
-                        r={4}
-                        fill="#94a3b8"
-                        stroke="#0f172a"
-                        strokeWidth={2}
-                      />
-                    );
-                  }
-                  const isWin = payload.outcome === 'WIN';
+                  const outcome = payload.outcome as AnalyticsTradeMarkerOutcome;
+                  const marker = getAnalyticsTradeMarkerStyle(outcome);
                   return (
                     <circle
                       key={`pt-trade-${payload.index}-${payload.ticker}`}
                       cx={cx}
                       cy={cy}
-                      r={5}
-                      fill={isWin ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose}
-                      stroke="#0f172a"
-                      strokeWidth={2}
-                      className="cursor-pointer transition-transform hover:scale-125"
+                      r={marker.radius}
+                      fill={marker.fill}
+                      stroke={marker.stroke}
+                      strokeWidth={marker.strokeWidth}
+                      className="premium-trajectory-trade-marker cursor-pointer"
+                      style={{ '--trajectory-marker-glow': marker.glow } as React.CSSProperties}
                     />
                   );
                 }}
-                activeDot={{ r: 7, fill: ANALYTICS_CHART_THEME.emerald, stroke: '#020617', strokeWidth: 2 }}
+                activeDot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  const marker = getAnalyticsTradeMarkerStyle(
+                    payload.outcome as AnalyticsTradeMarkerOutcome,
+                  );
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={marker.activeRadius}
+                      fill={marker.fill}
+                      stroke={marker.stroke}
+                      strokeWidth={marker.strokeWidth}
+                      className="premium-trajectory-trade-marker premium-trajectory-trade-marker-active"
+                      style={{ '--trajectory-marker-glow': marker.glow } as React.CSSProperties}
+                    />
+                  );
+                }}
               />
             </AreaChart>
           ) : (
             <BarChart
               data={trajectoryData.filter((d) => d.index > 0)}
-              margin={{ top: 10, right: 15, left: 10, bottom: 5 }}
+              margin={ANALYTICS_CHART_MARGINS.trajectory}
             >
               <CartesianGrid {...analyticsGridProps} />
               <XAxis
@@ -321,23 +343,21 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <YAxis
                 {...analyticsYAxisProps}
                 fontSize={11}
-                tickFormatter={(val) => `${val >= 0 ? '+' : ''}${(val / 1000).toFixed(0)}k`}
+                tickFormatter={formatAnalyticsCompactEgp}
               />
-              <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
+              <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
                 cursor={analyticsTooltipCursor}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
-                    const isWin = data.tradePnl >= 0;
+                    const outcome = data.outcome as AnalyticsTradeMarkerOutcome;
                     return (
                       <ChartTooltipShell className="space-y-1">
                         <div className="flex items-center justify-between gap-4 border-b border-slate-800 pb-1 font-semibold text-white">
                           <span>{data.ticker}</span>
                           <span
-                            className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
-                              isWin ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                            }`}
+                            className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${outcomeBadgeClass(outcome)}`}
                           >
                             {data.outcome}
                           </span>
@@ -350,14 +370,14 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                           </div>
                           <div className="flex justify-between gap-3">
                             <span>Trade P&amp;L:</span>
-                            <span className={`font-bold ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {isWin ? '+' : ''}{formatEgp(data.tradePnl)} EGP ({data.tradePercent >= 0 ? '+' : ''}{data.tradePercent.toFixed(1)}%)
+                            <span className={`font-bold ${outcomeTextClass(outcome)}`}>
+                              {formatAnalyticsEgp(data.tradePnl, true)} ({formatAnalyticsPercent(data.tradePercent, true)})
                             </span>
                           </div>
                           {data.fees > 0 && (
                             <div className="flex justify-between gap-3 text-slate-400">
                               <span>Commissions:</span>
-                              <span className="text-amber-400">{formatEgp(data.fees)} EGP</span>
+                              <span className="text-amber-400">{formatAnalyticsEgp(data.fees)}</span>
                             </div>
                           )}
                         </div>
@@ -373,7 +393,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                   .map((entry) => (
                     <Cell
                       key={`bar-${entry.index}-${entry.ticker}`}
-                      fill={entry.tradePnl >= 0 ? ANALYTICS_CHART_THEME.emerald : ANALYTICS_CHART_THEME.rose}
+                      fill={getAnalyticsTradeMarkerStyle(entry.outcome as AnalyticsTradeMarkerOutcome).fill}
                     />
                   ))}
               </Bar>
@@ -381,7 +401,8 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
           )}
         </ResponsiveContainer>
         )}
-      </div>
+      </ChartPlotSurface>
+      )}
     </div>
   );
 };

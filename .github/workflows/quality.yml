@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/monthly-static-shell-scroll-gate]
   pull_request:
     branches: [main]
 

@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION COMPLETE / VALIDATION PENDING — Pass 6 code audit and Quality Checks are clean; awaiting final real-device responsive smoke before Phase 6 closes.**
+**Status: COMPLETE — Pass 6 code audit, Quality Checks #745, and final real-device responsive smoke accepted.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -509,7 +509,7 @@ Validation notes:
 
 ### Pass 6 — Full 34-file responsive validation
 
-**Status: CODE AUDIT + CI COMPLETE — final real-device smoke still required before Phase 6 is marked complete.**
+**Status: COMPLETE — code audit, CI, and final real-device smoke accepted.**
 
 Completed:
 - audited `src/App.tsx` plus all **33 non-test TSX component files** for remaining fixed-width, viewport-height, modal, overlay, touch-target, and tooltip risks;
@@ -539,7 +539,7 @@ Real-device closure matrix still required:
 - desktop remains unchanged unless explicitly intended;
 - reduced-motion remains functional.
 
-Only after the real-device smoke is accepted should Phase 6 be marked complete.
+Final real-device smoke was accepted on 2026-09-25. Phase 6 is complete; navigation architecture is now owned by Phase 6.5.
 
 ---
 

@@ -54,6 +54,7 @@ import {
   ChartTooltipShell,
   analyticsGridProps,
   analyticsTooltipCursor,
+  analyticsTooltipWrapperStyle,
   analyticsXAxisProps,
   analyticsYAxisProps,
   analyticsZeroLineProps,
@@ -588,7 +589,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         : formatFullDailyDate(pointDate);
 
     return (
-      <ChartTooltipShell className="min-w-[260px]">
+      <ChartTooltipShell className="min-w-0 sm:min-w-[260px]">
         <div className="mb-2 border-b border-slate-800 pb-2">
           <div className="font-semibold text-slate-100">{definition.label}</div>
           <div className="font-mono text-[10px] text-slate-400">{titleDate}</div>
@@ -920,7 +921,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </div>
 
         {timeframe === 'TODAY' && (
-          <div className="-mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-2" role="group" aria-label="Today chart resolution">
+          <div className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-2" role="group" aria-label="Today chart resolution">
             <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
               Resolution
             </span>
@@ -933,7 +934,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                   aria-pressed={selected}
                   onClick={() => setTodayResolution(item.value)}
                   className={[
-                    'premium-segment shrink-0 min-w-[44px] rounded-lg border px-2.5 py-1 text-[11px] font-semibold',
+                    'premium-segment premium-chart-control shrink-0 min-w-[44px] rounded-lg border px-2.5 py-1 text-[11px] font-semibold',
                     selected
                       ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
@@ -951,7 +952,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
           </div>
         )}
 
-        <div className="-mx-1 flex max-w-[calc(100%+0.5rem)] snap-x gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Analytics timeframe">
+        <div className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] snap-x gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Analytics timeframe">
           {TIMEFRAMES.map((item) => {
             const selected = timeframe === item.value;
             return (
@@ -961,7 +962,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                 aria-pressed={selected}
                 onClick={() => handleTimeframeChange(item.value)}
                 className={[
-                  'premium-segment shrink-0 snap-start min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
+                  'premium-segment premium-chart-control shrink-0 snap-start min-w-[54px] px-3 py-1.5 rounded-lg border text-xs font-semibold',
                   selected
                     ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700',
@@ -1003,6 +1004,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <ChartPlotSurface
           className="h-[232px] sm:h-72"
           ariaLabel={`${definition.label} chart`}
+          ariaDescription={`${selectedLabel}. ${headline}. Touch or hover the chart to inspect individual valuation points.`}
           data-analytics-chart-interactive="true"
           onPointerDownCapture={enableChartTooltips}
           onPointerMoveCapture={enableChartTooltips}
@@ -1049,6 +1051,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                 active={chartTooltipsEnabled ? undefined : false}
                 cursor={analyticsTooltipCursor}
                 content={tooltip}
+                wrapperStyle={analyticsTooltipWrapperStyle}
+                allowEscapeViewBox={{ x: false, y: false }}
+                offset={8}
               />
               {renderPrimaryArea()}
               {renderSecondaryLine()}

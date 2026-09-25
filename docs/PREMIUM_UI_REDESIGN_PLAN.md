@@ -55,15 +55,15 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 3.3 | Semantic polish & report consistency | Complete; validation ongoing |
 | 4 | Motion & micro-interactions | **Complete — validated; minor desktop smoothness debt deferred to Phase 11** |
 | 5 | Advanced effects | **Complete** |
-| 6 | Mobile / responsive refinement | **Implementation complete / validating — Pass 6 code audit + Quality Checks #745 clean; final device smoke pending** |
-| 6.5 | Navigation refinement | Not started |
+| 6 | Mobile / responsive refinement | **Complete — code audit, Quality Checks #745, and real-device smoke accepted** |
+| 6.5 | Navigation refinement | **In progress — navigation architecture and active-location refinement started** |
 | 7 | Charts | Not started |
 | 8 | Visual hierarchy | Not started |
 | 9 | Header | Not started |
 | 10 | Full consistency sweep | Not started |
 | 11 | Performance, accessibility & regression QA | Not started |
 
-Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 implementation and code-level Pass 6 regression audit are complete. Quality Checks #745 passed; only the final real-device responsive smoke remains before Phase 6 can be closed and Phase 6.5 begins.
+Phases 4 and 5 are complete. **7 planned stages remain**: 6, 6.5, 7, 8, 9, 10, and 11. Phase 6 is complete after the final real-device responsive smoke passed. **6 planned stages remain**: 6.5, 7, 8, 9, 10, and 11. Phase 6.5 Navigation Refinement is now active.
 
 ## Phase 1 — Visual foundations & page shell
 

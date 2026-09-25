@@ -1,6 +1,6 @@
 # Phase 6 — Mobile / Responsive Refinement Plan
 
-**Status: IMPLEMENTATION IN PROGRESS — Pass 5 shared controls/rare states implemented; awaiting Pass 6 full responsive validation.**
+**Status: IMPLEMENTATION COMPLETE / VALIDATION PENDING — Pass 6 code audit and Quality Checks are clean; awaiting final real-device responsive smoke before Phase 6 closes.**
 
 This is the detailed execution plan for Phase 6 of the premium UI redesign.
 
@@ -509,9 +509,24 @@ Validation notes:
 
 ### Pass 6 — Full 34-file responsive validation
 
-Re-run the complete matrix.
+**Status: CODE AUDIT + CI COMPLETE — final real-device smoke still required before Phase 6 is marked complete.**
 
-Required checks:
+Completed:
+- audited `src/App.tsx` plus all **33 non-test TSX component files** for remaining fixed-width, viewport-height, modal, overlay, touch-target, and tooltip risks;
+- confirmed surviving fixed minimum widths are either gated to `sm/md+` or belong to deliberate horizontally scrollable dense tables;
+- confirmed compact modal close controls inherit the shared 44px coarse-pointer contract rather than remaining precision targets;
+- confirmed report/table minimum widths remain inside dedicated overflow shells;
+- confirmed the 260px primary chart tooltip minimum still fits the supported 320px floor under the shared viewport cap;
+- **d87ecfc** — replace the final app-root `min-h-screen` viewport primitive with `min-h-[100dvh]` so the main shell follows the same dynamic mobile viewport contract as auth/error/modal states.
+
+CI validation:
+- temporary validation branch: `ci/phase6-pass6-responsive-audit-gate`;
+- Quality Checks **#745** passed;
+- typecheck passed;
+- **28/28 test files, 173/173 tests** passed;
+- production Vite build passed in **6.23s**.
+
+Real-device closure matrix still required:
 - 320 / 360 / 390 / 430px portrait;
 - 768px boundary;
 - short phone landscape;
@@ -522,10 +537,9 @@ Required checks:
 - tables intentionally scroll rather than clip;
 - chart tooltips stay inside usable viewport;
 - desktop remains unchanged unless explicitly intended;
-- reduced-motion remains functional;
-- typecheck/tests/build pass.
+- reduced-motion remains functional.
 
-Only then mark Phase 6 complete.
+Only after the real-device smoke is accepted should Phase 6 be marked complete.
 
 ---
 

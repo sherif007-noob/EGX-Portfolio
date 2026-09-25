@@ -29,7 +29,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 3.3 | Complete / validating | Semantic glows, report hierarchy, control-color consistency. |
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
-| 6 | **In progress** | Pass 4 device corrections CI-clean; awaiting final device re-validation before Pass 5. |
+| 6 | **In progress** | Pass 5 implemented; awaiting Pass 6 full responsive/device regression validation. |
 | 6.5–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -734,7 +734,7 @@ The Phase 5 detailed plan is now historical. Phase 6 — Mobile / responsive ref
 
 ## Phase 6 — Responsive audit and planning
 
-**Status: implementation in progress; Pass 0 responsive primitives and safety baseline.**
+**Status: implementation in progress; implementation complete through Pass 5, with the final Pass 6 responsive/device regression gate remaining.**
 
 Detailed plan:
 - **8662376** — add `docs/PHASE6_RESPONSIVE_REFINEMENT_PLAN.md`.
@@ -888,6 +888,46 @@ Regression boundary:
 - no accepted selector/action/semantic/glow treatment was reinvented;
 - no accounting, persistence, OCR, Sheets, notification, or transaction behavior changed;
 - Pass 3 is responsive fit/reachability only.
+
+### Phase 6 Pass 4 — reports and chart shells
+
+**Status: implemented with real-device corrections; full pass logic/UI state documented in the dedicated Phase 6 plan.**
+
+Implemented:
+- make shared analytics tooltips, chart shells, selectors, report action bars, and dense report tables fit phone/tablet widths without changing chart observations/interpolation;
+- delay four-column institutional KPI layouts until 2XL and keep compact navigation labels below that breakpoint;
+- replace dense phone/tablet benchmark rows with hero-tier responsive scorecards while preserving the desktop institutional table;
+- render Monthly Audit rows as one-record-per-card on phone/tablet and retain the full table on 2XL desktop;
+- keep the Monthly Audit outer month shell neutral and structurally non-interactive so semantic glow belongs to its individual win/loss/holding records rather than conflicting with nested cards;
+- correct touch scrolling so the structural Monthly Audit shell never competes with inner cards for hover/lift behavior;
+- fix the discovered Monthly Audit summary mismatch so All = visible closed + holdings, Liquidated = closed only, Holdings = holdings only, search filtering is reflected, open-position P&L uses canonical fee-inclusive accounting, and closed win rate excludes breakevens.
+
+Representative commits:
+- **db66d31 / 7644ee7 / 742e97f** — report/chart responsive corrections and hero-tier benchmark cards;
+- **41cee6a / 2f4a920 / 67eabe2** — one-record-per-card Monthly Audit renderer and reusable responsive report hero-card surface;
+- **5867fb4 / af4375e / 35fdf7f** — neutral/non-interactive Monthly Audit structural shell and touch-scroll correction;
+- **e85c8f2 / c18af7a / d5caf60** — canonical visible-record monthly summary helper, regression coverage, and filter-aware accounting integration;
+- **8f77ea8 / 12f9751** — implementation/testing documentation for the monthly accounting correction.
+
+Latest Pass 4 quality gate after the accounting correction: **28/28 test files, 173/173 tests, typecheck, production Vite build, and bundled server build**.
+
+### Phase 6 Pass 5 — shared controls and rare states
+
+**Status: implemented; awaiting the consolidated Pass 6 full responsive/device regression gate.**
+
+Implemented:
+- **f324da6 / 8eb025d** — geometry-aware shared `AnalyticsSelect` edge selection and viewport-width clamp, including live resize/orientation correction while open;
+- **c3baaf9** — 44px native calendar hit target for `DateInput`;
+- **073336b / 7a66b / 87c15d4 / 8f60c35** — full-height coarse-pointer +/- controls for `NumberStepperInput`, while desktop keeps the compact stacked stepper;
+- **1ee4146** — `dvh`/keyboard-safe Supabase auth gate with phone input sizing that avoids focus zoom;
+- **2ed96ca** — short-viewport-safe Error Boundary with wrap-safe diagnostics;
+- **eb11566** — narrow-width-safe PWA install guide.
+
+Regression boundary:
+- no accounting, transaction, persistence, market-data, or chart-series behavior changed in Pass 5;
+- accepted Phase 2–5 glass/glow/control styling remains the visual source of truth;
+- Pass 5 changes shared interaction geometry and viewport fit only;
+- fixed offline/status behavior stays with the completed Pass 1 implementation.
 
 ## Current validated visual rules
 

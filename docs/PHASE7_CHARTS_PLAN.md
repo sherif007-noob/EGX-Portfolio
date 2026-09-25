@@ -275,6 +275,18 @@ Acceptance:
 
 ### Pass 2 — Secondary Risk & Cost Analytics
 
+**Status: IMPLEMENTED — Quality Checks #754 running.**
+
+Implemented:
+- all three secondary charts now use the shared Phase 7 inset plot surface and compact chart margins;
+- Drawdown gets a rose semantic card accent, rose plot ambience, stronger rose area glow, shared negative active point, shared percent-axis formatter, and shared zero-line treatment;
+- Cumulative Fees gets an amber semantic card accent, amber plot ambience, stronger amber step-area glow, shared cost active point, and preserves the existing `stepAfter` curve;
+- Realized vs Unrealized gets a cyan family card/plot accent, two metric blocks, explicit legend, and stronger two-series hierarchy;
+- Realized uses a solid line; Unrealized uses a dashed line so the two remain distinguishable even if both are negative and therefore both become rose;
+- Realized/Unrealized series colors now reflect current sign while preserving series identity through solid vs dashed styling;
+- all three keep `syncId="portfolio-secondary-analytics"`, Today linear paths, daily monotone paths, the shared mobile tooltip-dismiss behavior, and 520ms series timing;
+- reduced-motion mode strips the extra series glow.
+
 Scope:
 - Performance Drawdown;
 - Cumulative Fees;
@@ -312,7 +324,7 @@ Implemented so far:
 - filtered trajectory summaries, cumulative curve, persistent markers, and trade-by-trade bars all use the same filtered closed-trade set;
 - retain every trade that falls inside the selected period—no sampling or marker thinning.
 
-Pass 7.2 Secondary Analytics is intentionally still pending and will be resumed later.
+Pass 7.2 Secondary Analytics has now resumed and is implemented; validation is running.
 
 Scope:
 - cumulative trajectory mode;

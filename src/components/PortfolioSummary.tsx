@@ -85,7 +85,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                   <span className="shrink-0 text-xs font-semibold text-slate-400">EGP</span>
                 </div>
               </div>
-              <span className="hidden shrink-0 rounded-lg border border-cyan-500/20 bg-cyan-500/8 px-2 py-1 text-[10px] font-semibold text-cyan-300 sm:inline-flex">
+              <span className="hidden shrink-0 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-300 sm:inline-flex">
                 Equities + Cash
               </span>
             </div>
@@ -167,7 +167,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
             <div>
               <div className="flex items-start justify-between gap-2">
                 <span className="premium-type-metric-label">Total Market Value</span>
-                <span className="hidden rounded-md border border-cyan-500/20 bg-cyan-500/8 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300 lg:inline-flex">
+                <span className="hidden rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300 lg:inline-flex">
                   {metrics.totalPositions} Holdings
                 </span>
               </div>

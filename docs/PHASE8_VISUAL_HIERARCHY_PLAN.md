@@ -2,7 +2,7 @@
 
 ## Status
 
-**PLANNING COMPLETE — Phase 7 is closed; implementation is ready to begin.**
+**IN PROGRESS — Pass 8.0 hierarchy primitives and audit map implemented; validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -164,6 +164,19 @@ Desktop should use extra space to strengthen grouping and hierarchy, not simply 
 # Pass plan
 
 ## Pass 8.0 — Hierarchy primitives and audit map
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- add reusable H0–H5 structural surface recipes in `src/index.css`;
+- add hierarchy-specific semantic intensity variables so financial color and structural importance remain separate axes;
+- add six typography roles: page title, section title, metric, metric label, metadata, helper;
+- add canonical hierarchy spacing tokens and helpers;
+- add four action-priority classes: primary, secondary, utility, destructive;
+- add type-safe React primitives/helpers in `src/components/VisualHierarchy.tsx`;
+- add regression tests covering H0–H5, typography-role, and action-priority class mappings;
+- add `docs/PHASE8_HIERARCHY_AUDIT_MAP.md` mapping Overview, Reports, Positions, Cycles, Transactions, Cash, Stocks, report submodules, modals, and the deferred Header onto the hierarchy model;
+- no screen-specific visual migration is part of 8.0; those begin in 8.1.
 
 ### Goal
 

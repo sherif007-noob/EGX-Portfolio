@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: IN PROGRESS — Pass 7.0 shared chart primitives complete and Quality Checks #749 clean; Pass 7.1 primary analytics migration started.**
+**Status: IN PROGRESS — Passes 7.1, 7.2, and 7.3 device-accepted; Pass 7.4 Portfolio Allocation implemented, validation pending.**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -239,7 +239,7 @@ Acceptance:
 
 ### Pass 1 — Unified Portfolio Analytics
 
-**Status: STARTED — first visual migration commit `8b27336`; validation pending.**
+**Status: COMPLETE / DEVICE ACCEPTED.**
 
 Started:
 - primary chart now uses the shared inner plot surface;
@@ -275,7 +275,7 @@ Acceptance:
 
 ### Pass 2 — Secondary Risk & Cost Analytics
 
-**Status: IMPLEMENTED / DEVICE VALIDATION PENDING — Quality Checks #754 passed (29/29 test files, 182/182 tests, build 4.85s).**
+**Status: COMPLETE / DEVICE ACCEPTED — Quality Checks #754 passed (29/29 test files, 182/182 tests, build 4.85s).**
 
 Implemented:
 - all three secondary charts now use the shared Phase 7 inset plot surface and compact chart margins;
@@ -308,7 +308,7 @@ Acceptance:
 
 ### Pass 3 — Realized P&L Trajectory
 
-**Status: IN PROGRESS — implementation started ahead of Pass 7.2 at user request.**
+**Status: COMPLETE / DEVICE ACCEPTED.**
 
 Implemented so far:
 - migrate both cumulative and trade-by-trade modes onto the shared Phase 7 plot surface, margins, axes, zero-line, tooltip shell, and formatting helpers;
@@ -348,6 +348,22 @@ Acceptance:
 - no trade/P&L calculation changes.
 
 ### Pass 4 — Portfolio Allocation
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- replace rank/index-based donut colors with stable identity-based colors so the same sector/holding keeps its color when values reorder or cash is toggled;
+- reserve the comparison-purple family for cash;
+- migrate the donut into the shared Phase 7 plot surface with a stronger allocation-specific center ambience;
+- keep the center summary visible at all times: it shows Largest by default and Selected while a segment/row is active;
+- link donut segments and ranked breakdown rows into one interaction system;
+- tapping/hovering/focusing a ranked row highlights the same donut segment;
+- tapping a donut segment updates the center summary and active styling;
+- active segments use a bright outline and semantic glow while non-active segments dim;
+- tooltip dot/percentage now use the actual segment color instead of generic cyan;
+- ranked rows, dots, and progress bars carry the same stable segment color;
+- cash inclusion/exclusion behavior and allocation calculations remain unchanged;
+- reduced-motion disables allocation transitions while preserving static state styling.
 
 Scope:
 - sector donut;

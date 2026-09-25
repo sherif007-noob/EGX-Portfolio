@@ -990,6 +990,8 @@ Pass 1:
 - **6937a36 / 575b15a** — expand `AnalyticsChartTheme.tsx` into the Phase 7 shared visual layer: semantic chart tones, stable allocation palette, chart margins, zero-line recipe, active-point recipe, persistent trade-marker contract, plot surface, legend primitive, tooltip shell, and shared loading/empty treatment.
 - **2942904** — add shared premium plot, tooltip, active-point, and loading-skeleton CSS with reduced-motion handling.
 - **886eae1** — extend chart-theme tests to cover semantic colors, active-point separation, percentage-axis formatting, allocation palette stability, and all four persistent trajectory marker identities.
+- Quality Checks **#749 passed** for Pass 7.0: typecheck, **28/28 test files / 178/178 tests**, production build **5.77s**.
+- **8b27336** — start Pass 7.1 on the Unified Portfolio Analytics chart: shared plot surface, shared margins/zero-line/percent-axis formatting, and an explicit native legend for Portfolio vs Net Deposits. Analytics data, Today behavior, 1W morphing, syncId, curve rules, and series timing are untouched.
 - Planned order remains: shared chart primitives → primary analytics → secondary analytics → realized trajectory → allocation → responsive/accessibility sweep → full regression closure.
 - Portfolio Equity Bridge remains an analytical card surface, not a Phase 7 chart; its broader hierarchy remains for later phases.
 - Phone tab/page transition timing remains separate deferred motion debt and is not folded into the chart phase.

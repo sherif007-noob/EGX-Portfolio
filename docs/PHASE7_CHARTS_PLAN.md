@@ -296,6 +296,20 @@ Acceptance:
 
 ### Pass 3 — Realized P&L Trajectory
 
+**Status: IN PROGRESS — implementation started ahead of Pass 7.2 at user request.**
+
+Implemented so far:
+- migrate both cumulative and trade-by-trade modes onto the shared Phase 7 plot surface, margins, axes, zero-line, tooltip shell, and formatting helpers;
+- persistent cumulative markers now consume the shared START/WIN/LOSS/BREAKEVEN marker contract;
+- every cumulative trade observation remains rendered as a visible marker; no marker sampling/thinning;
+- active trajectory marker preserves the hovered trade's own outcome color instead of using a generic green dot;
+- breakeven trades use amber in markers, badges, tooltips, and bars;
+- cumulative trajectory stroke/area reflects overall net realized state while per-trade markers continue to represent each trade outcome independently;
+- add an explicit “Each point is one closed trade” legend and empty state;
+- add reduced-motion-safe marker emphasis.
+
+Pass 7.2 Secondary Analytics is intentionally still pending and will be resumed later.
+
 Scope:
 - cumulative trajectory mode;
 - trade-by-trade bar mode;

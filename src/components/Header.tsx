@@ -181,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div className="premium-safe-inline-header max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="premium-header-top-row flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
           
           {/* Brand Logo & Title */}
@@ -320,7 +320,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Navigation Tabs Bar */}
       <div className="premium-nav-shell relative border-t border-slate-700/40 bg-slate-950/15">
-        <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="premium-safe-inline-header relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             ref={navScrollRef}
             onScroll={updateNavOverflow}

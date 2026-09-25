@@ -1,6 +1,6 @@
 # Phase 7 — Charts Final Visual System Plan
 
-**Status: IMPLEMENTATION STARTED — Pass 7.0 shared chart primitives in progress.**
+**Status: IN PROGRESS — Pass 7.0 shared chart primitives complete and Quality Checks #749 clean; Pass 7.1 primary analytics migration started.**
 
 Phase 7 brings every chart visualization into one final premium EGX Portfolio chart system without changing financial calculations, market-data selection, timeframe semantics, or accepted chart geometry.
 
@@ -204,6 +204,21 @@ Rich domain-specific content remains allowed; only the shell/spacing/value hiera
 
 ### Pass 0 — Shared chart primitives and tokens
 
+**Status: COMPLETE — Quality Checks #749 passed (28/28 files, 178/178 tests, build 5.77s).**
+
+Implemented:
+- semantic chart tones and named allocation palette;
+- shared primary/compact/trajectory margins;
+- grid/crosshair/zero-line recipes;
+- shared active-dot recipe;
+- persistent START/WIN/LOSS/BREAKEVEN trajectory trade-marker contract;
+- premium inner plot surface;
+- chart legend primitive;
+- shared tooltip shell refinement;
+- loading skeleton and empty-state plot surfaces;
+- reduced-motion handling for chart skeleton/active-dot effects;
+- deterministic chart-theme tests.
+
 **Goal:** turn `AnalyticsChartTheme.tsx` into the authoritative visual layer before touching individual charts.
 
 Planned work:
@@ -223,6 +238,15 @@ Acceptance:
 - no data/series behavior changes.
 
 ### Pass 1 — Unified Portfolio Analytics
+
+**Status: STARTED — first visual migration commit `8b27336`; validation pending.**
+
+Started:
+- primary chart now uses the shared inner plot surface;
+- shared chart margins and zero-line recipe replace local copies;
+- percent-axis formatting uses the shared formatter;
+- Portfolio vs Net Deposits gains an explicit native comparison legend;
+- data, curves, timeframes, syncId, 1W interpolation, and 520ms series timing are unchanged.
 
 Scope:
 - `PerformanceTimeframeChart.tsx`;

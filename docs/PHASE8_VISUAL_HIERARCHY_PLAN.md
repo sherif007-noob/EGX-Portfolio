@@ -2,7 +2,7 @@
 
 ## Status
 
-**PLANNING COMPLETE — implementation begins after Phase 7 closure gate is clean.**
+**PLANNING COMPLETE — Phase 7 is closed; implementation is ready to begin.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 

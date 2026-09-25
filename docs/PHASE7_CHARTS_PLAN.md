@@ -458,6 +458,8 @@ Closure work added:
 Latest landscape correction:
 - add `viewport-fit=cover` so the application surface can paint into iPhone landscape safe areas;
 - keep header/nav/main content safely inset using `env(safe-area-inset-left/right)`, so only the background/glass surface extends edge-to-edge.
+- portrait follow-up: keep the surface edge-to-edge but add a dedicated top safe zone using `env(safe-area-inset-top) + 0.5rem` before the first header row, creating intentional dead space beneath the cutout/status area without changing the accepted landscape layout.
+- the first closure gate (#765) stopped at typecheck because the new weekly regression test cast a readonly interpolated frame to a mutable array; the test was corrected to preserve readonly typing and the closure gate will be rerun.
 
 Validation matrix:
 - primary chart: every mode × every timeframe;

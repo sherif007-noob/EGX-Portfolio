@@ -42,7 +42,7 @@ describe('weekly transition interpolation', () => {
     ];
 
     const interpolate = createWeeklyLineInterpolator('cardinal', 'cardinal');
-    const frame = interpolate(items as any, 0, {} as any) as Array<{ x?: number; y?: number }>;
+    const frame = interpolate(items as any, 0, {} as any) as readonly { x?: number; y?: number }[];
 
     expect(frame.length).toBeGreaterThanOrEqual(previous.length);
     expect(frame[0]?.x).toBeCloseTo(0, 8);

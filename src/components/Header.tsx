@@ -55,6 +55,8 @@ const NAV_GROUPS = [
   }>;
 }>;
 
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+
 interface HeaderProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
@@ -121,9 +123,42 @@ export const Header: React.FC<HeaderProps> = ({
     const container = navScrollRef.current;
     if (!container) return;
     const active = container.querySelector<HTMLElement>('[aria-current="page"]');
-    active?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    active?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
     window.requestAnimationFrame(updateNavOverflow);
   }, [activeTab, updateNavOverflow]);
+
+  const handleNavKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+
+    const tabs = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[data-nav-tab="true"]'),
+    );
+    const currentIndex = tabs.indexOf(document.activeElement as HTMLButtonElement);
+    if (currentIndex < 0 || tabs.length === 0) return;
+
+    event.preventDefault();
+
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = tabs.length - 1;
+
+    tabs[nextIndex]?.focus();
+    tabs[nextIndex]?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'auto',
+    });
+  };
 
   return (
     <header className="premium-header sticky top-0 z-40 w-full border-b">
@@ -273,7 +308,11 @@ export const Header: React.FC<HeaderProps> = ({
             onScroll={updateNavOverflow}
             className="premium-nav-scroller overflow-x-auto overscroll-x-contain scrollbar-none"
           >
-            <nav className="flex min-w-max items-center py-2" aria-label="Portfolio navigation">
+            <nav
+              className="flex min-w-max items-center py-2"
+              aria-label="Portfolio navigation"
+              onKeyDown={handleNavKeyDown}
+            >
               {NAV_GROUPS.map((group, groupIndex) => (
                 <React.Fragment key={group.label}>
                   {groupIndex > 0 && (
@@ -283,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
                     />
                   )}
                   <div className="flex items-center gap-1 sm:gap-1.5" aria-label={group.label}>
-                    <span className="premium-nav-group-label hidden xl:inline-flex px-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                    <span className="premium-nav-group-label hidden 2xl:inline-flex px-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
                       {group.label}
                     </span>
                     {group.items.map((item) => {
@@ -294,8 +333,11 @@ export const Header: React.FC<HeaderProps> = ({
                           key={item.tab}
                           id={item.id}
                           aria-current={active ? 'page' : undefined}
+                          aria-label={item.label}
+                          data-nav-tab="true"
+                          tabIndex={active ? 0 : -1}
                           onClick={() => setActiveTab(item.tab)}
-                          className={`premium-nav premium-nav-item flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium sm:text-sm ${
+                          className={`premium-nav premium-nav-item flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm ${
                             active
                               ? 'premium-nav-active text-white font-semibold'
                               : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'

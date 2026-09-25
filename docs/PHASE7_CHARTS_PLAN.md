@@ -416,6 +416,11 @@ Implemented:
 - short phone landscape caps plot height to avoid graphs consuming the full viewport;
 - shared chart surfaces use touch-action rules that preserve vertical page scrolling while keeping chart inspection usable;
 - explicit focus-visible treatment added for chart controls, allocation rows, and the cash switch;
+- phone feedback correction: replace standalone bordered main-resolution/main-timeframe and trajectory-period controls with the same `premium-selector-shell` + `premium-filter-pill` grammar already used by Transactions;
+- trajectory Cumulative/Trade-by-Trade and allocation Sectors/Holdings now consume that same segmented-selector grammar as well;
+- all canonical selector-shell pills inherit one compact 36px control height, including existing Transactions, Cash Ledger, Closed Cycles, Trading Performance, and Monthly Performance selectors;
+- chart selector scrolling now happens in an outer viewport with breathing room around the inner selector shell, removing the visibly clipped selected-state glow;
+- short landscape gets a dedicated header layout: brand metadata/action labels collapse, action buttons stay on one row, nav height tightens, and action/nav rails remain horizontally scrollable instead of wrapping/clipping;
 - Recharts series now honor `prefers-reduced-motion`: normal devices keep the accepted 520ms chart motion, while users who explicitly enable reduced motion get static series transitions;
 - the special 1W morph is skipped when reduced motion is requested so no stale interpolation state remains.
 

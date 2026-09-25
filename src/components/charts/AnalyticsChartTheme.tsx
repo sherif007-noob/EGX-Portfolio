@@ -58,6 +58,21 @@ export function getAnalyticsAllocationColor(
   ];
 }
 
+export function analyticsHexToRgbChannels(color: string): string {
+  const normalized = color.trim().replace(/^#/, '');
+  const expanded =
+    normalized.length === 3
+      ? normalized.split('').map((char) => `${char}${char}`).join('')
+      : normalized;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) {
+    return '6 182 212';
+  }
+
+  const value = Number.parseInt(expanded, 16);
+  return `${(value >> 16) & 255} ${(value >> 8) & 255} ${value & 255}`;
+}
+
 export const ANALYTICS_CHART_MARGINS = {
   primary: { top: 8, right: 8, left: 0, bottom: 0 },
   compact: { top: 8, right: 8, left: 0, bottom: 0 },

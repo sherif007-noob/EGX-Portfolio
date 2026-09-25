@@ -27,6 +27,7 @@ import {
   analyticsActiveDotProps,
   analyticsGridProps,
   analyticsTooltipCursor,
+  analyticsTooltipWrapperStyle,
   analyticsXAxisProps,
   analyticsYAxisProps,
   analyticsZeroLineProps,
@@ -200,6 +201,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <ChartPlotSurface
               className="h-48 sm:h-56"
               ariaLabel="Performance drawdown chart"
+              ariaDescription={`Selected period maximum drawdown ${secondary.summary.maxDrawdownPercent == null ? 'unavailable' : formatAnalyticsPercent(secondary.summary.maxDrawdownPercent)}. Touch or hover to inspect synchronized valuation points.`}
               style={{ '--chart-plot-accent-rgb': '244 63 94' } as React.CSSProperties}
               {...interactionProps}
             >
@@ -226,6 +228,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     <Tooltip
                       active={tooltipsEnabled ? undefined : false}
                       cursor={analyticsTooltipCursor}
+                      wrapperStyle={analyticsTooltipWrapperStyle}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      offset={8}
                       content={(props) => (
                         <AnalyticsChartTooltip
                           {...props}
@@ -290,6 +295,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <ChartPlotSurface
               className="h-48 sm:h-56"
               ariaLabel="Cumulative fees chart"
+              ariaDescription={`Cumulative fees in the selected period: ${formatAnalyticsEgp(secondary.summary.feesInPeriodEgp)}. Touch or hover to inspect synchronized valuation points.`}
               style={{ '--chart-plot-accent-rgb': '245 158 11' } as React.CSSProperties}
               {...interactionProps}
             >
@@ -312,6 +318,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     <Tooltip
                       active={tooltipsEnabled ? undefined : false}
                       cursor={analyticsTooltipCursor}
+                      wrapperStyle={analyticsTooltipWrapperStyle}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      offset={8}
                       content={(props) => (
                         <AnalyticsChartTooltip
                           {...props}
@@ -408,6 +417,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
             <ChartPlotSurface
               className="h-52 sm:h-64"
               ariaLabel="Realized and unrealized P&L chart"
+              ariaDescription={`Realized P&L ${secondary.summary.realizedPnlEgp == null ? 'unavailable' : formatAnalyticsEgp(secondary.summary.realizedPnlEgp, true)}. Unrealized P&L ${secondary.summary.unrealizedPnlEgp == null ? 'unavailable' : formatAnalyticsEgp(secondary.summary.unrealizedPnlEgp, true)}. Touch or hover to inspect synchronized valuation points.`}
               style={{ '--chart-plot-accent-rgb': '6 182 212' } as React.CSSProperties}
               {...interactionProps}
             >
@@ -425,6 +435,9 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     <Tooltip
                       active={tooltipsEnabled ? undefined : false}
                       cursor={analyticsTooltipCursor}
+                      wrapperStyle={analyticsTooltipWrapperStyle}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      offset={8}
                       content={(props) => (
                         <AnalyticsChartTooltip
                           {...props}

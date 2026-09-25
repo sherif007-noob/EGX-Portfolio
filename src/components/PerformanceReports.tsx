@@ -233,7 +233,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
           </div>
 
           <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-            <div className="premium-report-glass-soft grid grid-cols-2 gap-1 rounded-xl p-1 text-xs sm:flex sm:items-center">
+            <div className="premium-selector-shell grid grid-cols-2 text-xs sm:flex sm:items-center">
               <button
                 type="button"
                 aria-pressed={allocationTab === 'sector'}
@@ -241,11 +241,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                   setAllocationTab('sector');
                   setActiveAllocationIndex(null);
                 }}
-                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
-                  allocationTab === 'sector'
-                    ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-                }`}
+                className={`premium-filter-pill premium-compact-selector rounded-lg px-3 py-1 font-semibold ${allocationTab === 'sector' ? 'premium-filter-active-cyan' : ''}`}
               >
                 Sectors
               </button>
@@ -256,11 +252,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                   setAllocationTab('stock');
                   setActiveAllocationIndex(null);
                 }}
-                className={`premium-segment rounded-lg px-3 py-1.5 font-semibold ${
-                  allocationTab === 'stock'
-                    ? 'bg-cyan-500/15 text-cyan-300 shadow-sm'
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-                }`}
+                className={`premium-filter-pill premium-compact-selector rounded-lg px-3 py-1 font-semibold ${allocationTab === 'stock' ? 'premium-filter-active-cyan' : ''}`}
               >
                 Holdings
               </button>

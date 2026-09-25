@@ -430,7 +430,6 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                           {...props}
                           title="P&L Composition"
                           labelFormatter={labelFormatter}
-                          nameFormatter={(name) => name === 'realizedPnlEgp' ? 'Realized' : 'Unrealized'}
                           valueFormatter={(value) => formatAnalyticsEgp(value, true)}
                         />
                       )}

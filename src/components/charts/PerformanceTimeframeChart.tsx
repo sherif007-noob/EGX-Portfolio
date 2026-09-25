@@ -160,7 +160,7 @@ const TooltipMetric: React.FC<{
 }> = ({ label, value, valueClassName = 'text-slate-100' }) => (
   <div className="flex items-start justify-between gap-4">
     <span className="min-w-0 text-slate-400">{label}</span>
-    <span className={`shrink-0 text-right font-mono font-semibold ${valueClassName}`}>
+    <span className={`max-w-[68%] shrink-0 break-words text-right font-mono font-semibold ${valueClassName}`}>
       {value}
     </span>
   </div>

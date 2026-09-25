@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase6-5-nav-pass2-gate]
   pull_request:
     branches: [main]
 

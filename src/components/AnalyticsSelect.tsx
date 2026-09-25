@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { DropdownPresence } from './PremiumMotion';
 
@@ -71,6 +71,7 @@ export function AnalyticsSelect<T extends string | number = string>({
 }: AnalyticsSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [alignMenuRight, setAlignMenuRight] = useState(false);
+  const [menuMaxWidth, setMenuMaxWidth] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const accentClasses = ACCENTS[accent];
 
@@ -79,8 +80,28 @@ export function AnalyticsSelect<T extends string | number = string>({
     [options, value],
   );
 
+  const updateMenuGeometry = useCallback(() => {
+    if (!wrapperRef.current || typeof window === 'undefined') return;
+
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const gutter = 12;
+    const viewportCap = Math.max(0, window.innerWidth - gutter * 2);
+    const triggerWidth = Math.min(rect.width, viewportCap);
+    const availableWhenLeftAligned = Math.max(triggerWidth, window.innerWidth - gutter - rect.left);
+    const availableWhenRightAligned = Math.max(triggerWidth, rect.right - gutter);
+    const shouldAlignRight = availableWhenRightAligned > availableWhenLeftAligned;
+
+    setAlignMenuRight(shouldAlignRight);
+    setMenuMaxWidth(Math.floor(Math.min(
+      viewportCap,
+      shouldAlignRight ? availableWhenRightAligned : availableWhenLeftAligned,
+    )));
+  }, []);
+
   useEffect(() => {
     if (!open) return;
+
+    updateMenuGeometry();
 
     const handlePointerDown = (event: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -94,16 +115,24 @@ export function AnalyticsSelect<T extends string | number = string>({
 
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', updateMenuGeometry);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', updateMenuGeometry);
     };
-  }, [open]);
+  }, [open, updateMenuGeometry]);
 
   if (!selectedOption) return null;
 
   return (
-    <div ref={wrapperRef} className={`relative ${open ? 'z-[70]' : ''} ${className}`}>
+    <div
+      ref={wrapperRef}
+      className={`relative ${open ? 'z-[70]' : ''} ${className}`}
+      style={menuMaxWidth > 0
+        ? ({ '--premium-select-menu-max': `${menuMaxWidth}px` } as React.CSSProperties)
+        : undefined}
+    >
       <button
         type="button"
         aria-label={ariaLabel}
@@ -112,10 +141,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         data-accent={accent}
         onClick={() => {
           const nextOpen = !open;
-          if (nextOpen && wrapperRef.current && typeof window !== 'undefined') {
-            const rect = wrapperRef.current.getBoundingClientRect();
-            setAlignMenuRight(rect.left + rect.width / 2 > window.innerWidth / 2);
-          }
+          if (nextOpen) updateMenuGeometry();
           setOpen(nextOpen);
         }}
         className={[
@@ -144,7 +170,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         role="listbox"
         dataAccent={accent}
         className={[
-          'premium-floating premium-dropdown absolute top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
+          'premium-floating premium-dropdown premium-select-dropdown absolute top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
           alignMenuRight ? 'right-0' : 'left-0',
           'max-h-72 overflow-y-auto',
           menuClassName,

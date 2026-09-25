@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/monthly-filter-aware-summary-gate]
   pull_request:
     branches: [main]
 

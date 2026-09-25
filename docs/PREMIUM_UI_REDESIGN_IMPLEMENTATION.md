@@ -32,6 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
+| 8 | **In progress** | Pass 8.0 hierarchy primitives and audit map implemented; validation pending. |
 | 8–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -1022,6 +1023,8 @@ Pass 1:
 - **572fc5f** — add `docs/PHASE8_VISUAL_HIERARCHY_PLAN.md`, defining the H0–H5 hierarchy model and Passes 8.0–8.7. Phase 8 planning is complete but implementation waits for a clean Phase 7 closure gate.
 - Quality Checks **#767 passed** the final Phase 7 closure state: typecheck, **31/31 test files / 190/190 tests**, production build **6.01s**. User device verification is accepted; **Phase 7 is closed**.
 - Phase 8 planning is now active/ready: H0–H5 hierarchy model plus Passes **8.0–8.7** covering hierarchy primitives, Overview, Reports, dense workflows, typography/spacing, action priority, responsive hierarchy, and final regression.
+- **f9cb332 / 2680534 / dc9c7e1** — implement Phase 8.0 hierarchy foundation: type-safe H0–H5 surface primitives, six typography roles, hierarchy spacing tokens, semantic-intensity separation, and action-priority classes plus regression tests.
+- **540bb8c** — add the full Phase 8 hierarchy audit map for Overview, Reports, dense workflows, report submodules, modals, and the Header deferral boundary. 8.0 intentionally does not restyle screen content yet; 8.1 is the first visual migration.
 - Quality Checks **#753 passed** for the trajectory device correction.
 - **cb08cd9 / bd33174** — resume **Pass 7.2 Secondary Analytics**: Drawdown, Cumulative Fees, and Realized vs Unrealized now use the shared inset plot system, semantic card/plot accents, stronger luminous series, shared active-point/reference-line/margin formatting, and explicit Realized vs Unrealized legend hierarchy. Drawdown remains rose/risk, Fees remains amber/cost, and P&L composition uses sign-aware semantic colors with solid Realized vs dashed Unrealized identity. Data, syncId, Today/daily curve rules, fee stepAfter behavior, tooltip synchronization, and 520ms timing are unchanged. Quality Checks **#754 passed**: typecheck, **29/29 test files / 182/182 tests**, production build **4.85s**. Device visual validation remains pending.
 - **ab8aa8a** — fix Realized vs Unrealized tooltip labels after phone validation: Recharts already provides the explicit Line names (`Realized` / `Unrealized`); remove the incorrect formatter that compared those names against raw data keys and therefore mislabeled both rows as Unrealized.

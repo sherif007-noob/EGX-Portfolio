@@ -19,6 +19,7 @@ import {
   analyticsTooltipWrapperStyle,
   formatAnalyticsEgp,
   getAnalyticsAllocationColor,
+  useAnalyticsReducedMotion,
 } from './charts/AnalyticsChartTheme';
 
 interface PerformanceReportsProps {
@@ -53,6 +54,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   historicalLoading = false,
   chartsReady = true,
 }) => {
+  const reducedMotion = useAnalyticsReducedMotion();
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
@@ -338,6 +340,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                           cornerRadius={5}
                           stroke="#020617"
                           strokeWidth={1.5}
+                          isAnimationActive={!reducedMotion}
                           animationDuration={520}
                           animationEasing="ease-out"
                           onMouseEnter={(_, index) => setActiveAllocationIndex(index)}

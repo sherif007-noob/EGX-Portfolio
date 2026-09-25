@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ClosedTrade, PerformanceStats } from '../types';
 import {
   REALIZED_TRAJECTORY_TIMEFRAMES,
@@ -72,8 +72,27 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   entranceReady = true,
 }) => {
   const reducedMotion = useAnalyticsReducedMotion();
+  const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
   const [trajectoryTimeframe, setTrajectoryTimeframe] = useState<RealizedTrajectoryTimeframe>('ALL');
+
+  useEffect(() => {
+    const dismissTrajectoryTooltip = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-trajectory-chart-interactive="true"]')
+      ) {
+        return;
+      }
+      setChartTooltipsEnabled(false);
+    };
+
+    document.addEventListener('pointerdown', dismissTrajectoryTooltip, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissTrajectoryTooltip, true);
+    };
+  }, []);
 
   const filteredClosedTrades = useMemo(
     () => filterRealizedTrajectoryTrades(closedTrades, trajectoryTimeframe),
@@ -280,6 +299,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
           className="h-56 w-full sm:h-72"
           ariaLabel={trajectoryMode === 'cumulative' ? 'Cumulative realized P&L trajectory' : 'Trade-by-trade realized P&L'}
           ariaDescription={`${trajectoryTimeframe} period. ${filteredClosedTrades.length} closed trades. Net realized P&L ${formatAnalyticsEgp(netRealizedPnl, true)}. ${trajectoryMode === 'cumulative' ? 'Each visible point represents one trade.' : 'Each bar represents one trade.'}`}
+          data-trajectory-chart-interactive="true"
+          onPointerDownCapture={() => setChartTooltipsEnabled(true)}
+          onPointerMoveCapture={() => setChartTooltipsEnabled(true)}
         >
           {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
@@ -304,6 +326,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               />
               <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
+                active={chartTooltipsEnabled ? undefined : false}
                 cursor={analyticsTooltipCursor}
                 wrapperStyle={analyticsTooltipWrapperStyle}
                 allowEscapeViewBox={{ x: false, y: false }}
@@ -455,6 +478,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               />
               <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
+                active={chartTooltipsEnabled ? undefined : false}
                 cursor={false}
                 wrapperStyle={analyticsTooltipWrapperStyle}
                 allowEscapeViewBox={{ x: false, y: false }}

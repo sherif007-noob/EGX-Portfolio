@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 
 type StepperAccent = 'slate' | 'blue' | 'emerald' | 'rose' | 'amber' | 'purple' | 'indigo';
 
@@ -64,7 +64,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="premium-number-stepper relative">
       <input
         {...inputProps}
         type="number"
@@ -74,9 +74,9 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         max={max}
         disabled={disabled}
         onChange={(event) => onValueChange(event.target.value)}
-        className={`premium-field app-number-input pr-10 ${className}`}
+        className={`premium-field app-number-input premium-number-stepper-input pr-10 ${className}`}
       />
-      <div className="premium-inset-glass absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/40">
+      <div className="premium-number-stepper-desktop-controls premium-inset-glass absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/40">
         <button
           type="button"
           tabIndex={-1}
@@ -96,6 +96,27 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
           aria-label="Decrease value"
         >
           <ChevronDown className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="premium-number-stepper-touch-controls pointer-events-none absolute inset-[1px] items-stretch justify-between overflow-hidden rounded-[calc(0.75rem-1px)]">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => nudge(-1)}
+          className={`premium-control pointer-events-auto flex w-11 items-center justify-center border-r border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
+          aria-label="Decrease value"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => nudge(1)}
+          className={`premium-control pointer-events-auto flex w-11 items-center justify-center border-l border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
+          aria-label="Increase value"
+        >
+          <Plus className="h-4 w-4" />
         </button>
       </div>
     </div>

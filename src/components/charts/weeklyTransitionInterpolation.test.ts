@@ -29,16 +29,22 @@ describe('weekly transition interpolation', () => {
       point(310, 40, '2026-09-23'),
     ];
 
+    const matchedIndexes = new Set([0, 8, 16, 24]);
     const items = [
-      ...next.map((nextPoint, index) => ({
-        status: 'matched' as const,
-        prev: previous[Math.min(previous.length - 1, index * 8)],
-        next: nextPoint,
-      })),
-      ...previous.slice(next.length).map((prev) => ({
-        status: 'removed' as const,
-        prev,
-      })),
+      ...next.map((nextPoint, index) => {
+        const previousIndex = [0, 8, 16, 24][index] ?? 0;
+        return {
+          status: 'matched' as const,
+          prev: previous[previousIndex],
+          next: nextPoint,
+        };
+      }),
+      ...previous
+        .filter((_, index) => !matchedIndexes.has(index))
+        .map((prev) => ({
+          status: 'removed' as const,
+          prev,
+        })),
     ];
 
     const interpolate = createWeeklyLineInterpolator('cardinal', 'cardinal');

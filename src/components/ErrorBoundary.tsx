@@ -47,8 +47,8 @@ export class ErrorBoundary extends Component<Props, State> {
         errMsg.toLowerCase().includes('rate');
 
       return (
-        <div className="premium-page min-h-screen text-slate-100 flex items-center justify-center p-4">
-          <div className="premium-glass max-w-md w-full rounded-2xl p-6 text-center space-y-4">
+        <div className="premium-page min-h-[100dvh] overflow-y-auto text-slate-100 flex items-center justify-center p-4 sm:p-6">
+          <div className="premium-glass my-auto max-w-md w-full min-w-0 rounded-2xl p-4 sm:p-6 text-center space-y-4">
             <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
               {isQuotaError ? <Database className="w-7 h-7 text-amber-400" /> : <AlertTriangle className="w-7 h-7 text-rose-400" />}
             </div>
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 : 'The application encountered an unexpected runtime exception. Reload first; resetting local cache should only be used if the problem persists.'}
             </p>
 
-            <div className="premium-inset-glass p-3 rounded-xl text-left overflow-auto max-h-32 text-[11px] font-mono text-amber-300">
+            <div className="premium-inset-glass max-h-32 overflow-auto break-words whitespace-pre-wrap rounded-xl p-3 text-left text-[11px] font-mono text-amber-300">
               {errMsg}
             </div>
 

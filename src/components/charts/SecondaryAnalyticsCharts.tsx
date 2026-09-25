@@ -36,6 +36,8 @@ interface SecondaryAnalyticsChartsProps {
   intradayPrices: IntradayPriceSeries;
   result: UnifiedAnalyticsResult | null;
   entranceReady?: boolean;
+  tooltipsEnabled?: boolean;
+  onChartInteraction?: React.PointerEventHandler<HTMLDivElement>;
 }
 
 function formatDailyLabel(value: string): string {
@@ -78,6 +80,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   intradayPrices,
   result,
   entranceReady = true,
+  tooltipsEnabled = true,
+  onChartInteraction,
 }) => {
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -143,7 +147,12 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for drawdown.</AnalyticsEmptyState>
           ) : (
-            <div className="h-48 sm:h-56">
+            <div
+              className="h-48 sm:h-56"
+              data-analytics-chart-interactive="true"
+              onPointerDownCapture={onChartInteraction}
+              onPointerMoveCapture={onChartInteraction}
+            >
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -161,6 +170,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                   />
                   <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
                   <Tooltip
+                    active={tooltipsEnabled ? undefined : false}
                     cursor={analyticsTooltipCursor}
                     content={(props) => (
                       <AnalyticsChartTooltip
@@ -217,7 +227,12 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for fee history.</AnalyticsEmptyState>
           ) : (
-            <div className="h-48 sm:h-56">
+            <div
+              className="h-48 sm:h-56"
+              data-analytics-chart-interactive="true"
+              onPointerDownCapture={onChartInteraction}
+              onPointerMoveCapture={onChartInteraction}
+            >
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <AreaChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -231,6 +246,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                   {sharedXAxis}
                   <YAxis {...analyticsYAxisProps} tickFormatter={formatAnalyticsCompactEgp} />
                   <Tooltip
+                    active={tooltipsEnabled ? undefined : false}
                     cursor={analyticsTooltipCursor}
                     content={(props) => (
                       <AnalyticsChartTooltip
@@ -297,7 +313,12 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
           {chartData.length < 2 ? (
             <AnalyticsEmptyState>Not enough complete points for P&amp;L composition.</AnalyticsEmptyState>
           ) : (
-            <div className="h-52 sm:h-64">
+            <div
+              className="h-52 sm:h-64"
+              data-analytics-chart-interactive="true"
+              onPointerDownCapture={onChartInteraction}
+              onPointerMoveCapture={onChartInteraction}
+            >
               {entranceReady && (
               <ResponsiveContainer width="100%" height="100%" debounce={80}>
                 <LineChart data={chartData} syncId="portfolio-secondary-analytics" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -306,6 +327,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                   <YAxis {...analyticsYAxisProps} tickFormatter={formatAnalyticsCompactEgp} />
                   <ReferenceLine y={0} stroke={ANALYTICS_CHART_THEME.zeroLine} strokeDasharray="3 3" />
                   <Tooltip
+                    active={tooltipsEnabled ? undefined : false}
                     cursor={analyticsTooltipCursor}
                     content={(props) => (
                       <AnalyticsChartTooltip

@@ -63,7 +63,6 @@ function outcomeBadgeClass(outcome: AnalyticsTradeMarkerOutcome): string {
 
 const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> = ({
   closedTrades,
-  stats,
   title = 'Realized P&L Gain / Loss Trajectory',
   subtitle = 'Historical equity growth trajectory of closed trades over time (in EGP)',
   className = '',

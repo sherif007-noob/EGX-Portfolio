@@ -275,7 +275,7 @@ Acceptance:
 
 ### Pass 2 — Secondary Risk & Cost Analytics
 
-**Status: IMPLEMENTED — Quality Checks #754 running.**
+**Status: IMPLEMENTED / DEVICE VALIDATION PENDING — Quality Checks #754 passed (29/29 test files, 182/182 tests, build 4.85s).**
 
 Implemented:
 - all three secondary charts now use the shared Phase 7 inset plot surface and compact chart margins;

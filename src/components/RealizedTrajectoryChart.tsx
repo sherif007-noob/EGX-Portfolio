@@ -1,5 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { ClosedTrade, PerformanceStats } from '../types';
+import {
+  REALIZED_TRAJECTORY_TIMEFRAMES,
+  filterRealizedTrajectoryTrades,
+  type RealizedTrajectoryTimeframe,
+} from '../services/realizedTrajectoryTimeframes';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Clock, Award, ShieldCheck } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -65,10 +70,17 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   entranceReady = true,
 }) => {
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
+  const [trajectoryTimeframe, setTrajectoryTimeframe] = useState<RealizedTrajectoryTimeframe>('ALL');
 
-  // Prepare chronological trajectory points
+  const filteredClosedTrades = useMemo(
+    () => filterRealizedTrajectoryTrades(closedTrades, trajectoryTimeframe),
+    [closedTrades, trajectoryTimeframe],
+  );
+
+  // Prepare chronological trajectory points. Every filtered closed trade remains
+  // a persistent visible point in cumulative mode.
   const trajectoryData = useMemo(() => {
-    const sorted = [...closedTrades].sort((a, b) => {
+    const sorted = [...filteredClosedTrades].sort((a, b) => {
       const dateA = a.sellDate || '2026-01-01';
       const dateB = b.sellDate || '2026-01-01';
       return dateA.localeCompare(dateB);
@@ -107,9 +119,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
     });
 
     return points;
-  }, [closedTrades]);
+  }, [filteredClosedTrades]);
 
-  const netRealizedPnl = closedTrades.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
+  const netRealizedPnl = filteredClosedTrades.reduce((acc, t) => acc + t.realizedPnlEgp, 0);
   const trajectoryStroke =
     netRealizedPnl > 0
       ? ANALYTICS_CHART_THEME.emerald
@@ -117,13 +129,15 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         ? ANALYTICS_CHART_THEME.rose
         : ANALYTICS_CHART_THEME.amber;
   const peakHighWaterMark = Math.max(...trajectoryData.map((d) => d.cumulativePnl), 0);
-  const winCount = closedTrades.filter((t) => t.outcome === 'WIN').length;
-  const lossCount = closedTrades.filter((t) => t.outcome === 'LOSS').length;
+  const winCount = filteredClosedTrades.filter((t) => t.outcome === 'WIN').length;
+  const lossCount = filteredClosedTrades.filter((t) => t.outcome === 'LOSS').length;
   const avgHoldDays =
-    stats?.avgHoldDays ||
-    (closedTrades.length > 0
-      ? Math.round(closedTrades.reduce((acc, t) => acc + (t.holdingDays || 0), 0) / closedTrades.length)
-      : 0);
+    filteredClosedTrades.length > 0
+      ? Math.round(
+          filteredClosedTrades.reduce((acc, t) => acc + (t.holdingDays || 0), 0) /
+            filteredClosedTrades.length,
+        )
+      : 0;
 
   return (
     <div className={`premium-report-glass premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
@@ -163,6 +177,38 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         </div>
       </div>
 
+      <div
+        className="-mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-1"
+        role="group"
+        aria-label="Realized trajectory timeframe"
+      >
+        <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Period
+        </span>
+        {REALIZED_TRAJECTORY_TIMEFRAMES.map((item) => {
+          const selected = trajectoryTimeframe === item.value;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => setTrajectoryTimeframe(item.value)}
+              className={[
+                'premium-segment min-w-[48px] shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold',
+                selected
+                  ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300'
+                  : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700 hover:text-slate-200',
+              ].join(' ')}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+        <span className="ml-1 shrink-0 font-mono text-[10px] text-slate-500">
+          {filteredClosedTrades.length}/{closedTrades.length} trades
+        </span>
+      </div>
+
       {/* Trajectory Key Stats Summary */}
       <div className="premium-report-glass-soft grid grid-cols-2 gap-2.5 rounded-xl p-3 text-xs sm:grid-cols-4">
         <div className={`rounded-lg border p-2 ${
@@ -186,7 +232,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         <div>
           <span className="text-slate-400 block text-[10px]">Trades Closed</span>
           <span className="font-mono font-bold text-slate-200">
-            {closedTrades.length} trades ({winCount}W / {lossCount}L)
+            {filteredClosedTrades.length} trades ({winCount}W / {lossCount}L)
           </span>
         </div>
         <div>
@@ -208,7 +254,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             items={[
               { label: 'Winning trade', color: ANALYTICS_CHART_THEME.emerald, kind: 'dot' },
               { label: 'Losing trade', color: ANALYTICS_CHART_THEME.rose, kind: 'dot' },
-              ...(closedTrades.some((trade) => trade.outcome === 'BREAKEVEN')
+              ...(filteredClosedTrades.some((trade) => trade.outcome === 'BREAKEVEN')
                 ? [{ label: 'Breakeven trade', color: ANALYTICS_CHART_THEME.amber, kind: 'dot' as const }]
                 : []),
               { label: 'Inception', color: ANALYTICS_CHART_THEME.neutral, kind: 'dot' },
@@ -218,8 +264,12 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       )}
 
       {/* Chart Canvas */}
-      {closedTrades.length === 0 ? (
-        <AnalyticsEmptyState>No closed trades are available for the realized P&amp;L trajectory yet.</AnalyticsEmptyState>
+      {filteredClosedTrades.length === 0 ? (
+        <AnalyticsEmptyState>
+          {closedTrades.length === 0
+            ? 'No closed trades are available for the realized P&L trajectory yet.'
+            : `No closed trades fall inside the selected ${trajectoryTimeframe} period.`}
+        </AnalyticsEmptyState>
       ) : (
         <ChartPlotSurface
           className="h-56 w-full sm:h-72"

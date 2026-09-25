@@ -172,15 +172,11 @@
     animation: none !important;
   }
 
-  .premium-chart-active-dot,
-  .premium-secondary-chart-series,
-  .premium-trajectory-trade-marker,
-  .premium-trajectory-semantic-curve,
-  .premium-trajectory-trade-bar,
-  .premium-trajectory-active-bar {
-    filter: none !important;
-  }
-
+  /*
+   * Reduced motion disables movement/transition, not static semantic styling.
+   * Keep chart/marker/bar glows visible so financial state does not disappear
+   * when the OS accessibility setting is enabled.
+   */
   .premium-trajectory-trade-marker {
     transition: none !important;
   }

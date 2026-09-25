@@ -55,8 +55,6 @@ const NAV_GROUPS = [
   }>;
 }>;
 
-const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
-
 interface HeaderProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;

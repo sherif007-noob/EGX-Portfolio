@@ -35,6 +35,7 @@ import {
   formatAnalyticsEgp,
   formatAnalyticsPercent,
   formatAnalyticsPercentAxis,
+  useAnalyticsReducedMotion,
 } from './AnalyticsChartTheme';
 
 interface SecondaryAnalyticsChartsProps {
@@ -107,6 +108,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   tooltipsEnabled = true,
   onChartInteraction,
 }) => {
+  const reducedMotion = useAnalyticsReducedMotion();
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
     [transactions, historicalPrices, intradayPrices, result],
@@ -255,7 +257,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       activeDot={analyticsActiveDotProps('negative')}
                       className="premium-secondary-chart-series"
                       style={{ '--secondary-series-glow': 'rgba(244, 63, 94, 0.5)' } as React.CSSProperties}
-                      isAnimationActive
+                      isAnimationActive={!reducedMotion}
                       animationDuration={520}
                       animationEasing="ease-out"
                     />
@@ -344,7 +346,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       activeDot={analyticsActiveDotProps('cost')}
                       className="premium-secondary-chart-series"
                       style={{ '--secondary-series-glow': 'rgba(245, 158, 11, 0.48)' } as React.CSSProperties}
-                      isAnimationActive
+                      isAnimationActive={!reducedMotion}
                       animationDuration={520}
                       animationEasing="ease-out"
                     />
@@ -464,7 +466,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       }}
                       className="premium-secondary-chart-series"
                       style={{ '--secondary-series-glow': `${realizedStroke}80` } as React.CSSProperties}
-                      isAnimationActive
+                      isAnimationActive={!reducedMotion}
                       animationDuration={520}
                       animationEasing="ease-out"
                     />
@@ -486,7 +488,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       }}
                       className="premium-secondary-chart-series"
                       style={{ '--secondary-series-glow': `${unrealizedStroke}73` } as React.CSSProperties}
-                      isAnimationActive
+                      isAnimationActive={!reducedMotion}
                       animationDuration={520}
                       animationEasing="ease-out"
                     />

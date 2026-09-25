@@ -30,7 +30,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 4 | **Complete** | Motion system validated on phone/desktop; minor residual desktop stutter accepted and deferred to Phase 11. |
 | 5 | **Complete** | Advanced effects validated across the full coverage matrix; final Quality Checks #592 passed. |
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
-| 6.5 | **In progress** | Navigation hierarchy, active location, grouping, and mobile/desktop consistency. |
+| 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7–11 | Not started | See plan. |
 
 ## Phase 1 — Foundations
@@ -952,7 +952,7 @@ Final real-device responsive validation was accepted on 2026-09-25. Phase 6 is c
 
 ## Phase 6.5 — Navigation refinement
 
-**Status: Pass 1 implemented; validation in progress.**
+**Status: COMPLETE — Pass 3 hardening and Quality Checks #748 clean.**
 
 Plan:
 - **48c2f19** — add `docs/PHASE6_5_NAVIGATION_REFINEMENT_PLAN.md`.
@@ -973,6 +973,9 @@ Pass 1:
 - Tab/page transition is slower and more visible than before but is **explicitly deferred for further work later**; do not treat current timing as final.
 - **070db8b / fa495c4** — implement Pass 2 breakpoint/keyboard handoff: 2XL-only group labels/full labels, tighter phone density, roving arrow/Home/End keyboard focus, and reduced-motion-aware active-tab scrolling.
 - **fefd19f** — remove breakpoint-forced fade hiding; overflow fades now depend only on measured scroll geometry, with proximity snap and mobile scroll padding.
+- **b830803** — final Pass 3 hardening: active-tab visibility now scrolls only the navigation rail, every destination remains normally keyboard-tab-accessible, group semantics are explicit, and arrow/Home/End shortcuts remain available.
+- Quality Checks **#748 passed**: typecheck, **28/28 test files / 173/173 tests**, and production build (**6.18s**).
+- Phase 6.5 closes with the accepted phone navigation state. The current tab/page transition timing remains documented deferred motion debt; physical desktop/tablet visual smoke rolls into Phase 11 final regression rather than blocking navigation architecture completion.
 
 ## Current validated visual rules
 

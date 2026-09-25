@@ -998,6 +998,8 @@ Pass 1:
 - User requested jumping directly to **Pass 7.3 Realized P&L Trajectory** before 7.2; 7.2 remains pending.
 - **26a2661 / 4aaa426 / 2bc5dcc** — migrate both trajectory modes onto the Phase 7 chart system while preserving all trade observations. Cumulative markers are persistent data-bearing points using START/WIN/LOSS/BREAKEVEN semantics; active markers preserve the selected trade's outcome; breakeven uses amber; overall trajectory stroke reflects net realized state; shared plot/axis/zero-line/tooltip/formatting primitives are applied; reduced-motion-safe marker emphasis added.
 - Trajectory marker rule remains non-negotiable: one visible cumulative marker per inception/trade observation; no sampling, thinning, or markerless cumulative rendering.
+- **d7e5512 / 1257c9d / ba9f50a / da7dc45** — add Realized Trajectory period filtering: **All, 1D, 1W, 1M, 90D, YTD**. Period windows reuse the canonical analytics timeframe/session logic; KPI summary, cumulative trajectory, persistent trade markers, and trade-by-trade bars all use the selected closed-trade set. Tests cover each period.
+- **0a24aa8 / 083ee36 / 8da025d** — fix persistent mobile analytics tooltips. Main + secondary charts now share tooltip-dismiss state: a page press outside chart surfaces closes all synchronized tooltips, and the next chart interaction re-enables them without changing chart data or sync behavior.
 
 ## Current validated visual rules
 

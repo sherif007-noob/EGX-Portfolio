@@ -466,6 +466,7 @@ Real-device validation findings and corrections:
 - Monthly Audit cards consume the same normalized `auditRecords` array as the desktop table, so responsive presentation cannot diverge from the audit data model; liquidated wins/losses receive semantic green/red hero glow, current holdings use blue, and held-at-month-end/later-closed records use purple;
 - the month-level Monthly Audit container is deliberately neutral frosted glass with no profit/loss halo or colored semantic border; monthly profitability remains visible in the month badge and Realized P&L summary, while semantic glow belongs to the individual audit cards so mixed winning/losing records do not visually conflict with the outer shell;
 - the Monthly Audit outer month shell is a **structural, non-interactive glass container**, not a card: it no longer inherits `premium-report-glass` hover/elevation behavior, never scales/lifts on touch or hover, and explicitly gives vertical pan to the page so scrolling over nested audit cards has one tactile interaction layer instead of two;
+- a post-layout correctness audit found that the month banner/KPIs still summarized the old closed-only monthly aggregates even while `All Records` displayed closed trades plus holdings. The summary now derives from the same filtered `auditRecords` array as the visible cards/table: All = closed + holdings, Liquidated = closed only, Holdings = holdings only, and search filtering is reflected too. Open-position unrealized P&L now uses the canonical fee-inclusive accounting helper; closed win rate uses decisive wins/losses only and excludes breakevens.
 - the generic responsive report hero-card surface is shared by benchmark and Monthly Audit cards, preserving the accepted hero-card frosted glass, refraction depth, semantic edge/halo glow, and hover behavior without copying component-local glass recipes.
 
 Validation:
@@ -474,11 +475,12 @@ Validation:
 - real-device feedback showed the first card renderer still used the low-intensity `premium-report-glass-soft` surface and therefore did not visually match the accepted hero cards; that surface was removed and replaced with `premium-hero-metric` + dedicated hero-tier semantic glass/halo classes on snapshot `742e97f72d05552e52bd18a006f453128642b515`; the correction passed 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - Monthly Audit's normalized one-record-per-row card renderer passed the full Quality gate on implementation snapshot `2f4a920bd055d6c13e06e0da352f39a4bf4e4147`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
 - the structural month-shell scroll fix passed the full Quality gate on implementation snapshot `35fdf7fad574b02f02f21fc02f9216b696281a96`: 27/27 test files, 170/170 tests, typecheck, production Vite build, and bundled server build;
+- the filter-aware Monthly Audit summary/accounting correction passed the full Quality gate on implementation snapshot `d5caf609cf74e5f7c8aef9e6327e720ded14f88c`: 28/28 test files, 173/173 tests, typecheck, production Vite build, and bundled server build;
 - the earlier intraday smoke also passed after the main analytics shell changes.
 
 Hard boundary preserved:
 - no chart series, financial observations, interpolation, axis semantics, or Phase 7 visual redesign changed;
-- no accounting, persistence, or market-data behavior changed;
+- no persistence or market-data behavior changed; the later Monthly Audit correction intentionally aligned report summary accounting with the canonical visible-record calculations instead of preserving the stale closed-only aggregate;
 - existing Phase 2–5 control/surface styling remains the source of truth.
 
 ### Pass 5 — Shared controls and rare states

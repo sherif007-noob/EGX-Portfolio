@@ -29,6 +29,7 @@ import {
   ChartTooltipShell,
   analyticsGridProps,
   analyticsTooltipCursor,
+  analyticsTooltipWrapperStyle,
   analyticsXAxisProps,
   analyticsYAxisProps,
   analyticsZeroLineProps,
@@ -153,9 +154,10 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
 
         <div className="premium-report-glass-soft grid w-full grid-cols-2 gap-1.5 rounded-xl p-1 text-xs sm:flex sm:w-auto sm:items-center sm:self-auto">
           <button
+            type="button"
             aria-pressed={trajectoryMode === 'cumulative'}
             onClick={() => setTrajectoryMode('cumulative')}
-            className={`premium-segment min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
+            className={`premium-segment premium-chart-control min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
               trajectoryMode === 'cumulative'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -164,9 +166,10 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             Cumulative Curve
           </button>
           <button
+            type="button"
             aria-pressed={trajectoryMode === 'discrete'}
             onClick={() => setTrajectoryMode('discrete')}
-            className={`premium-segment min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
+            className={`premium-segment premium-chart-control min-w-0 px-2 py-1.5 rounded-md font-medium sm:px-3 ${
               trajectoryMode === 'discrete'
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -178,7 +181,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       </div>
 
       <div
-        className="-mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-1"
+        className="premium-chart-rail -mx-1 flex max-w-[calc(100%+0.5rem)] items-center gap-1.5 overflow-x-auto px-1 pb-1"
         role="group"
         aria-label="Realized trajectory timeframe"
       >
@@ -194,7 +197,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               aria-pressed={selected}
               onClick={() => setTrajectoryTimeframe(item.value)}
               className={[
-                'premium-segment min-w-[48px] shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold',
+                'premium-segment premium-chart-control min-w-[48px] shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold',
                 selected
                   ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300'
                   : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700 hover:text-slate-200',
@@ -274,6 +277,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
         <ChartPlotSurface
           className="h-56 w-full sm:h-72"
           ariaLabel={trajectoryMode === 'cumulative' ? 'Cumulative realized P&L trajectory' : 'Trade-by-trade realized P&L'}
+          ariaDescription={`${trajectoryTimeframe} period. ${filteredClosedTrades.length} closed trades. Net realized P&L ${formatAnalyticsEgp(netRealizedPnl, true)}. ${trajectoryMode === 'cumulative' ? 'Each visible point represents one trade.' : 'Each bar represents one trade.'}`}
         >
           {entranceReady && (
           <ResponsiveContainer width="100%" height="100%" debounce={80}>
@@ -299,6 +303,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
                 cursor={analyticsTooltipCursor}
+                wrapperStyle={analyticsTooltipWrapperStyle}
+                allowEscapeViewBox={{ x: false, y: false }}
+                offset={8}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
@@ -444,6 +451,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
               <ReferenceLine y={0} {...analyticsZeroLineProps} />
               <Tooltip
                 cursor={false}
+                wrapperStyle={analyticsTooltipWrapperStyle}
+                allowEscapeViewBox={{ x: false, y: false }}
+                offset={8}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;

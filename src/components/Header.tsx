@@ -182,11 +182,11 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="premium-header sticky top-0 z-40 w-full border-b">
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
+        <div className="premium-header-top-row flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
           
           {/* Brand Logo & Title */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
+          <div className="premium-header-brand flex items-center gap-3 shrink-0">
+            <div className="premium-header-logo premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
               <span className="absolute -bottom-1 -right-1 inline-flex h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.32)]" />
             </div>
@@ -195,11 +195,11 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
                   EGX Portfolio
                 </h1>
-                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className="premium-header-market-badge hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   EGX Equities • EGP
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
+              <p className="premium-header-subtitle text-[11px] text-slate-400 hidden sm:block">
                 Live Prices, Analytics &amp; Automated Schema Sync
               </p>
             </div>
@@ -220,7 +220,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <Bell className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 transition" />
                 )}
-                <span className="hidden lg:inline">Price Alerts</span>
+                <span className="premium-header-action-label hidden lg:inline">Price Alerts</span>
                 {unreadAlertCount > 0 ? (
                   <>
                     <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-slate-950 font-mono md:hidden">
@@ -246,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
-                <span className="hidden md:inline">{isSyncingPrices ? 'Syncing...' : 'Sync Prices'}</span>
+                <span className="premium-header-action-label hidden md:inline">{isSyncingPrices ? 'Syncing...' : 'Sync Prices'}</span>
               </button>
             )}
 
@@ -268,7 +268,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
               )}
-              <span className="hidden md:inline">
+              <span className="premium-header-action-label hidden md:inline">
                 {isTokenExpired ? 'Reconnect Sheets' : isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
               </span>
               {isSheetsConnected && !isTokenExpired && (
@@ -288,7 +288,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
-                <span className="hidden lg:inline">Backup &amp; Reconcile</span>
+                <span className="premium-header-action-label hidden lg:inline">Backup &amp; Reconcile</span>
               </button>
             )}
 
@@ -301,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
-                <span className="hidden lg:inline">Scan Receipt</span>
+                <span className="premium-header-action-label hidden lg:inline">Scan Receipt</span>
               </button>
             )}
 
@@ -312,7 +312,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Add Trade</span>
+              <span className="premium-header-action-label hidden sm:inline">Add Trade</span>
             </button>
           </div>
         </div>
@@ -327,7 +327,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="premium-nav-scroller overflow-x-auto overscroll-x-contain scrollbar-none"
           >
             <nav
-              className="flex min-w-max items-center py-2"
+              className="premium-header-nav-row flex min-w-max items-center py-2"
               aria-label="Portfolio navigation"
               onKeyDown={handleNavKeyDown}
             >

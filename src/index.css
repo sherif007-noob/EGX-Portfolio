@@ -3937,3 +3937,246 @@ body {
     }
   }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 8.0 — visual hierarchy primitives                                    */
+/* -------------------------------------------------------------------------- */
+:root {
+  /* Spacing rhythm: inline -> control -> card -> related -> major section. */
+  --hierarchy-space-inline: 0.375rem;
+  --hierarchy-space-control: 0.625rem;
+  --hierarchy-space-card: 1rem;
+  --hierarchy-space-related: 1.25rem;
+  --hierarchy-space-section: 1.75rem;
+
+  /* Typography roles. */
+  --hierarchy-page-title-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
+  --hierarchy-section-title-size: clamp(1rem, 0.92rem + 0.35vw, 1.25rem);
+  --hierarchy-metric-size: clamp(1.45rem, 1.2rem + 0.75vw, 2rem);
+  --hierarchy-label-size: 0.75rem;
+  --hierarchy-metadata-size: 0.6875rem;
+  --hierarchy-helper-size: 0.75rem;
+
+  /* Structural hierarchy is neutral. Semantic color is applied separately. */
+  --hierarchy-h1-border: rgba(148, 163, 184, 0.30);
+  --hierarchy-h2-border: rgba(148, 163, 184, 0.22);
+  --hierarchy-h3-border: rgba(148, 163, 184, 0.15);
+  --hierarchy-h4-border: rgba(148, 163, 184, 0.105);
+  --hierarchy-h5-border: rgba(148, 163, 184, 0.10);
+}
+
+.premium-hierarchy-surface {
+  position: relative;
+  min-width: 0;
+}
+
+/* H0 — structural grouping, never a card. */
+.premium-hierarchy-h0 {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* H1 — one dominant decision/hero surface per local context. */
+.premium-hierarchy-h1 {
+  --premium-semantic-border-alpha: 0.44;
+  --premium-semantic-near-alpha: 0.15;
+  --premium-semantic-far-alpha: 0.065;
+  --premium-semantic-far-radius: 72px;
+  border: 1px solid var(--hierarchy-h1-border);
+  background:
+    radial-gradient(circle at 12% -8%, rgba(56, 189, 248, 0.085), transparent 34%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.045), transparent 44%),
+    rgba(15, 23, 42, 0.69);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 24px 56px rgba(0, 0, 0, 0.30),
+    0 0 40px rgba(56, 189, 248, 0.07),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* H2 — primary support: clear surface, lower than hero. */
+.premium-hierarchy-h2 {
+  --premium-semantic-border-alpha: 0.36;
+  --premium-semantic-near-alpha: 0.115;
+  --premium-semantic-far-alpha: 0.045;
+  --premium-semantic-far-radius: 58px;
+  border: 1px solid var(--hierarchy-h2-border);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 42%),
+    rgba(15, 23, 42, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 40px rgba(0, 0, 0, 0.24),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* H3 — secondary information: quieter depth and semantic intensity. */
+.premium-hierarchy-h3 {
+  --premium-semantic-border-alpha: 0.27;
+  --premium-semantic-near-alpha: 0.075;
+  --premium-semantic-far-alpha: 0.028;
+  --premium-semantic-far-radius: 46px;
+  border: 1px solid var(--hierarchy-h3-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 44%),
+    rgba(15, 23, 42, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.034),
+    0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* H4 — inset/detail surface. */
+.premium-hierarchy-h4 {
+  --premium-semantic-border-alpha: 0.22;
+  --premium-semantic-near-alpha: 0.055;
+  --premium-semantic-far-alpha: 0.018;
+  --premium-semantic-far-radius: 34px;
+  border: 1px solid var(--hierarchy-h4-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 52%),
+    rgba(2, 6, 23, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.024);
+}
+
+/* H5 — dense data. Keep rows/data legible; avoid card-like elevation. */
+.premium-hierarchy-h5 {
+  --premium-semantic-border-alpha: 0.20;
+  --premium-semantic-near-alpha: 0.035;
+  --premium-semantic-far-alpha: 0;
+  border: 1px solid var(--hierarchy-h5-border);
+  background: rgba(2, 6, 23, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+/* Structural hierarchy should not manufacture card hover behavior. */
+.premium-hierarchy-h0:hover,
+.premium-hierarchy-h1:hover,
+.premium-hierarchy-h2:hover,
+.premium-hierarchy-h3:hover,
+.premium-hierarchy-h4:hover,
+.premium-hierarchy-h5:hover {
+  transform: none;
+}
+
+/* Typography roles. */
+.premium-type-page-title {
+  color: #f8fafc;
+  font-size: var(--hierarchy-page-title-size);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.premium-type-section-title {
+  color: #f1f5f9;
+  font-size: var(--hierarchy-section-title-size);
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+}
+
+.premium-type-metric {
+  color: #f8fafc;
+  font-size: var(--hierarchy-metric-size);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-type-metric-label {
+  color: #94a3b8;
+  font-size: var(--hierarchy-label-size);
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.premium-type-metadata {
+  color: #64748b;
+  font-size: var(--hierarchy-metadata-size);
+  line-height: 1.35;
+  font-weight: 550;
+}
+
+.premium-type-helper {
+  color: #94a3b8;
+  font-size: var(--hierarchy-helper-size);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Canonical spacing helpers. */
+.premium-hierarchy-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-hierarchy-section-gap {
+  margin-top: var(--hierarchy-space-section);
+}
+
+.premium-hierarchy-card-pad {
+  padding: var(--hierarchy-space-card);
+}
+
+.premium-hierarchy-inline-gap {
+  gap: var(--hierarchy-space-inline);
+}
+
+.premium-hierarchy-control-gap {
+  gap: var(--hierarchy-space-control);
+}
+
+/* Action priority is structural; existing semantic action color remains intact. */
+.premium-action-priority-primary {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.premium-action-priority-secondary {
+  opacity: 0.94;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.premium-action-priority-utility {
+  opacity: 0.82;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.028),
+    0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.premium-action-priority-utility:hover,
+.premium-action-priority-utility:focus-visible {
+  opacity: 1;
+}
+
+.premium-action-priority-destructive {
+  opacity: 0.86;
+}
+
+.premium-action-priority-destructive:hover,
+.premium-action-priority-destructive:focus-visible {
+  opacity: 1;
+}
+
+/* H5 dense regions should not inherit elevated repeated-row behavior. */
+.premium-hierarchy-h5 .premium-card,
+.premium-hierarchy-h5 .premium-subpanel {
+  --premium-semantic-far-alpha: 0;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --hierarchy-space-card: 0.875rem;
+    --hierarchy-space-related: 1rem;
+    --hierarchy-space-section: 1.5rem;
+    --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
+  }
+}

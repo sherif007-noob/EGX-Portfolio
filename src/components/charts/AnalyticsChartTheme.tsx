@@ -115,6 +115,21 @@ export const analyticsTooltipWrapperStyle: React.CSSProperties = {
   maxWidth: 'calc(100vw - 1.5rem)',
 };
 
+export function useAnalyticsReducedMotion(): boolean {
+  const [reduced, setReduced] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(media.matches);
+    update();
+    media.addEventListener?.('change', update);
+    return () => media.removeEventListener?.('change', update);
+  }, []);
+
+  return reduced;
+}
+
 export const analyticsZeroLineProps = {
   stroke: ANALYTICS_CHART_THEME.zeroLine,
   strokeWidth: 1,

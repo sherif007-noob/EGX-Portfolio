@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
@@ -55,9 +55,28 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   chartsReady = true,
 }) => {
   const reducedMotion = useAnalyticsReducedMotion();
+  const [allocationTooltipsEnabled, setAllocationTooltipsEnabled] = useState(true);
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const dismissAllocationTooltip = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-allocation-chart-interactive="true"]')
+      ) {
+        return;
+      }
+      setAllocationTooltipsEnabled(false);
+    };
+
+    document.addEventListener('pointerdown', dismissAllocationTooltip, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissAllocationTooltip, true);
+    };
+  }, []);
 
   const grossProfit = stats.totalRealizedGainEgp || 0;
   const grossLoss = stats.totalRealizedLossEgp || 0;
@@ -281,6 +300,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 className="premium-allocation-plot relative min-h-[270px] overflow-hidden sm:min-h-[300px]"
                 ariaLabel={`Portfolio allocation by ${allocationTab === 'sector' ? 'sector' : 'holding'}`}
                 ariaDescription={`${allocationData.length} allocation buckets totaling ${formatAnalyticsEgp(allocationTotal)}. Largest allocation is ${leadingAllocation?.name ?? 'unavailable'} at ${leadingAllocation ? `${leadingAllocation.percentage.toFixed(1)}%` : 'unavailable'}. The ranked controls below provide keyboard-accessible selection.`}
+                data-allocation-chart-interactive="true"
+                onPointerDownCapture={() => setAllocationTooltipsEnabled(true)}
+                onPointerMoveCapture={() => setAllocationTooltipsEnabled(true)}
                 style={{
                   '--chart-plot-accent-rgb': '6 182 212',
                   '--allocation-highlight': highlightedAllocation?.color ?? ANALYTICS_CHART_THEME.cyan,
@@ -385,6 +407,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                         </Pie>
 
                         <Tooltip
+                          active={allocationTooltipsEnabled ? undefined : false}
                           cursor={false}
                           wrapperStyle={analyticsTooltipWrapperStyle}
                           allowEscapeViewBox={{ x: false, y: false }}

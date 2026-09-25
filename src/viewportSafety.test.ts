@@ -17,5 +17,7 @@ describe('mobile viewport safety contracts', () => {
     expect(css).toContain('.premium-safe-inline-main');
     expect(css).toContain('env(safe-area-inset-left)');
     expect(css).toContain('env(safe-area-inset-right)');
+    expect(css).toContain('.premium-header-safe-top');
+    expect(css).toContain('env(safe-area-inset-top)');
   });
 });

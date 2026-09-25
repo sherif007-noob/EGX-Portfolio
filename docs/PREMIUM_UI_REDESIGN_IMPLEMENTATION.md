@@ -969,6 +969,10 @@ Pass 1:
 - User device review accepted the active-tab treatment but found group separators too subtle and phone tab transitions effectively imperceptible.
 - **b69e01e** — retune canonical tab presence to a more readable 560ms entrance / 360ms exit with slightly stronger travel; reduced-motion behavior remains unchanged.
 - **c1fa298** — strengthen task-group dividers to a 2px centered luminous separator while keeping them subordinate to active navigation.
+- Separator treatment accepted on phone.
+- Tab/page transition is slower and more visible than before but is **explicitly deferred for further work later**; do not treat current timing as final.
+- **070db8b / fa495c4** — implement Pass 2 breakpoint/keyboard handoff: 2XL-only group labels/full labels, tighter phone density, roving arrow/Home/End keyboard focus, and reduced-motion-aware active-tab scrolling.
+- **fefd19f** — remove breakpoint-forced fade hiding; overflow fades now depend only on measured scroll geometry, with proximity snap and mobile scroll padding.
 
 ## Current validated visual rules
 

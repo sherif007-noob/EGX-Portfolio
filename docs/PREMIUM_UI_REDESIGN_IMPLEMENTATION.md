@@ -950,6 +950,23 @@ Validation:
 
 Final real-device responsive validation was accepted on 2026-09-25. Phase 6 is complete.
 
+## Phase 6.5 — Navigation refinement
+
+**Status: Pass 1 implemented; validation in progress.**
+
+Plan:
+- **48c2f19** — add `docs/PHASE6_5_NAVIGATION_REFINEMENT_PLAN.md`.
+
+Pass 1:
+- **a256587** — replace seven duplicated Header tab blocks with one canonical grouped navigation definition while preserving the exact existing tab destinations/behavior.
+- Navigation is grouped by task: **Portfolio** (Overview, Positions, Closed Cycles), **Activity** (Transactions, Cash Ledger), and **Insights** (Reports & Performance, Stocks & Prices).
+- Existing active-tab auto-scroll is retained and now also refreshes overflow state after selection.
+- Navigation overflow is measured rather than assumed; subtle left/right edge fades advertise hidden destinations only while content actually exists beyond that edge.
+- Active tabs now inherit their destination accent for border, icon, underline, and restrained glow, producing clearer location hierarchy without making inactive tabs noisy.
+- Desktop 2XL retains full destination labels; compact labels remain below 2XL.
+- **a8deafc** — add shared Phase 6.5 navigation hierarchy, divider, semantic active-state, overflow-fade, and reduced-motion CSS.
+- Phase 9 still owns final Header utility composition; this pass does not relocate or redesign Header utilities.
+
 ## Current validated visual rules
 
 - Realized P&L / Portfolio Allocation segmented language is the default selector family.

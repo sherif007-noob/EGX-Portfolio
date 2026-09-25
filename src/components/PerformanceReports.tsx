@@ -198,8 +198,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
       <div className="premium-report-glass premium-radial rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10">
-              <PieChartIcon className="h-4 w-4 text-cyan-400" />
+            <div className="premium-allocation-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+              <PieChartIcon className="h-4 w-4 text-cyan-300" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Portfolio Allocation</h3>
@@ -247,7 +247,10 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
               <button
                 type="button"
                 aria-pressed={includeCash}
-                onClick={() => setIncludeCash((current) => !current)}
+                onClick={() => {
+                  setIncludeCash((current) => !current);
+                  setActiveAllocationIndex(null);
+                }}
                 className={`premium-segment w-full justify-center rounded-xl border px-3 py-2 text-xs font-semibold sm:w-auto ${
                   includeCash
                     ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
@@ -261,196 +264,292 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </div>
 
         <MotionSwap motionKey={`${allocationTab}-${includeCash}-${allocationData.length > 0 ? 'data' : 'empty'}`} variant="state">
-        {allocationData.length === 0 ? (
-          <div className="premium-report-glass-soft flex h-64 items-center justify-center rounded-xl text-xs text-slate-500">
-            No allocation data.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="premium-report-glass-soft relative min-h-[250px] overflow-hidden rounded-xl sm:min-h-[285px]">
-              <div className="absolute left-4 top-4 z-10">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Allocated value</div>
-                <div className="mt-1 font-mono text-sm font-bold text-slate-200">
-                  {formatEgp(allocationTotal)} EGP
+          {allocationData.length === 0 ? (
+            <AnalyticsEmptyState>No allocation data.</AnalyticsEmptyState>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+              <ChartPlotSurface
+                className="premium-allocation-plot relative min-h-[270px] overflow-hidden sm:min-h-[300px]"
+                ariaLabel={`Portfolio allocation by ${allocationTab === 'sector' ? 'sector' : 'holding'}`}
+                style={{
+                  '--chart-plot-accent-rgb': '6 182 212',
+                  '--allocation-highlight': highlightedAllocation?.color ?? ANALYTICS_CHART_THEME.cyan,
+                } as React.CSSProperties}
+              >
+                <div className="absolute left-4 top-4 z-10">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Allocated value
+                  </div>
+                  <div className="mt-1 font-mono text-sm font-bold text-slate-100">
+                    {formatEgp(allocationTotal)} EGP
+                  </div>
+                  <div className="mt-1 text-[10px] text-slate-600">
+                    {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
+                  </div>
                 </div>
-              </div>
 
-              <div className="h-[250px] sm:h-[285px]">
-                {chartsReady && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={allocationData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={67}
-                      outerRadius={98}
-                      paddingAngle={2}
-                      stroke="#020617"
-                      strokeWidth={2}
-                      onMouseEnter={(_, index) => setActiveAllocationIndex(index)}
-                      onMouseLeave={() => setActiveAllocationIndex(null)}
-                      shape={(shapeProps: any) => {
-                        const index = Number(shapeProps.index);
-                        const active = activeAllocationIndex === index;
-                        const dimmed = activeAllocationIndex != null && !active;
-                        return (
-                          <g
-                            style={{
-                              transformBox: 'fill-box',
-                              transformOrigin: 'center',
-                              transform: active ? 'scale(1.055)' : 'scale(1)',
-                              opacity: dimmed ? 0.48 : 1,
-                              transition: 'transform 320ms cubic-bezier(0.22, 0.8, 0.24, 1), opacity 280ms ease-out',
-                              filter: active ? 'drop-shadow(0 8px 12px rgba(6, 182, 212, 0.18))' : 'none',
-                            }}
-                          >
-                            <Sector {...shapeProps} />
-                          </g>
-                        );
-                      }}
-                    >
-                      {allocationData.map((_, index) => (
-                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      cursor={false}
-                      wrapperStyle={{ zIndex: 40, pointerEvents: 'none' }}
-                      content={(props: any) => {
-                        if (!props?.active || !props?.payload?.length) return null;
-                        const row = props.payload[0]?.payload as any;
-                        const rank = allocationData.findIndex((item) => item.name === row.name) + 1;
-                        const remaining = Math.max(0, 100 - Number(row.percentage || 0));
+                <div className="h-[270px] sm:h-[300px]">
+                  {chartsReady && (
+                    <ResponsiveContainer width="100%" height="100%" debounce={80}>
+                      <PieChart>
+                        <Pie
+                          data={allocationData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={70}
+                          outerRadius={101}
+                          paddingAngle={2.4}
+                          cornerRadius={5}
+                          stroke="#020617"
+                          strokeWidth={1.5}
+                          animationDuration={520}
+                          animationEasing="ease-out"
+                          onMouseEnter={(_, index) => setActiveAllocationIndex(index)}
+                          onMouseLeave={() => setActiveAllocationIndex(null)}
+                          onClick={(_, index) =>
+                            setActiveAllocationIndex((current) => current === index ? null : index)
+                          }
+                          shape={(shapeProps: any) => {
+                            const index = Number(shapeProps.index);
+                            const row = allocationData[index];
+                            const color = row?.color ?? ANALYTICS_CHART_THEME.cyan;
+                            const active = activeAllocationIndex === index;
+                            const dimmed = activeAllocationIndex != null && !active;
 
-                        return (
-                          <ChartTooltipShell className="min-w-0 sm:min-w-[235px]">
-                            <div className="mb-2 border-b border-slate-800 pb-2">
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="font-semibold text-slate-100">{row.name}</span>
-                                <span className="font-mono text-xs font-bold text-cyan-300">
-                                  {Number(row.percentage || 0).toFixed(1)}%
-                                </span>
-                              </div>
-                              <div className="mt-0.5 text-[10px] text-slate-500">
-                                {allocationTab === 'sector' ? 'Sector allocation' : row.kind === 'cash' ? 'Cash allocation' : 'Holding allocation'}
-                              </div>
-                            </div>
+                            return (
+                              <g
+                                className={[
+                                  'premium-allocation-segment',
+                                  active ? 'premium-allocation-segment-active' : '',
+                                  dimmed ? 'premium-allocation-segment-dimmed' : '',
+                                ].join(' ')}
+                                style={{
+                                  '--allocation-segment-color': color,
+                                } as React.CSSProperties}
+                              >
+                                <Sector
+                                  {...shapeProps}
+                                  fill={color}
+                                  stroke={active ? '#e2e8f0' : '#020617'}
+                                  strokeWidth={active ? 2.2 : 1.5}
+                                />
+                              </g>
+                            );
+                          }}
+                        >
+                          {allocationData.map((row) => (
+                            <Cell key={row.name} fill={row.color} />
+                          ))}
+                        </Pie>
 
-                            <div className="space-y-1.5 text-[11px]">
-                              <div className="flex justify-between gap-4">
-                                <span className="text-slate-400">Market value</span>
-                                <span className="font-mono font-semibold text-slate-100">{formatAnalyticsEgp(Number(row.value || 0))}</span>
-                              </div>
-                              <div className="flex justify-between gap-4">
-                                <span className="text-slate-400">Rank</span>
-                                <span className="font-mono font-semibold text-slate-200">#{rank} of {allocationData.length}</span>
-                              </div>
-                              <div className="flex justify-between gap-4">
-                                <span className="text-slate-400">Rest of allocation</span>
-                                <span className="font-mono font-semibold text-slate-300">{remaining.toFixed(1)}%</span>
-                              </div>
-                              {row.kind === 'sector' && (
-                                <div className="flex justify-between gap-4">
-                                  <span className="text-slate-400">Open positions</span>
-                                  <span className="font-mono font-semibold text-slate-200">{row.count}</span>
+                        <Tooltip
+                          cursor={false}
+                          wrapperStyle={{ zIndex: 40, pointerEvents: 'none' }}
+                          content={(props: any) => {
+                            if (!props?.active || !props?.payload?.length) return null;
+                            const row = props.payload[0]?.payload as any;
+                            const rank = allocationData.findIndex((item) => item.name === row.name) + 1;
+                            const remaining = Math.max(0, 100 - Number(row.percentage || 0));
+
+                            return (
+                              <ChartTooltipShell className="min-w-0 sm:min-w-[235px]">
+                                <div className="mb-2 border-b border-slate-800 pb-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-100">
+                                      <span
+                                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                        style={{
+                                          backgroundColor: row.color,
+                                          boxShadow: `0 0 10px ${row.color}70`,
+                                        }}
+                                      />
+                                      <span className="truncate">{row.name}</span>
+                                    </span>
+                                    <span
+                                      className="font-mono text-xs font-bold"
+                                      style={{ color: row.color }}
+                                    >
+                                      {Number(row.percentage || 0).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  <div className="mt-0.5 text-[10px] text-slate-500">
+                                    {allocationTab === 'sector'
+                                      ? 'Sector allocation'
+                                      : row.kind === 'cash'
+                                        ? 'Cash allocation'
+                                        : 'Holding allocation'}
+                                  </div>
                                 </div>
-                              )}
-                              {row.kind === 'holding' && (
-                                <>
+
+                                <div className="space-y-1.5 text-[11px]">
                                   <div className="flex justify-between gap-4">
-                                    <span className="text-slate-400">Shares</span>
-                                    <span className="font-mono font-semibold text-slate-200">{Number(row.shares || 0).toLocaleString('en-EG')}</span>
+                                    <span className="text-slate-400">Market value</span>
+                                    <span className="font-mono font-semibold text-slate-100">
+                                      {formatAnalyticsEgp(Number(row.value || 0))}
+                                    </span>
                                   </div>
                                   <div className="flex justify-between gap-4">
-                                    <span className="text-slate-400">Latest price</span>
-                                    <span className="font-mono font-semibold text-slate-200">{Number(row.currentPrice || 0).toFixed(2)} EGP</span>
+                                    <span className="text-slate-400">Rank</span>
+                                    <span className="font-mono font-semibold text-slate-200">
+                                      #{rank} of {allocationData.length}
+                                    </span>
                                   </div>
-                                </>
-                              )}
-                              {row.kind === 'cash' && (
-                                <div className="flex justify-between gap-4">
-                                  <span className="text-slate-400">Balance type</span>
-                                  <span className="font-semibold text-purple-300">Available cash</span>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-slate-400">Rest of allocation</span>
+                                    <span className="font-mono font-semibold text-slate-300">
+                                      {remaining.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  {row.kind === 'sector' && (
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-slate-400">Open positions</span>
+                                      <span className="font-mono font-semibold text-slate-200">
+                                        {row.count}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {row.kind === 'holding' && (
+                                    <>
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-slate-400">Shares</span>
+                                        <span className="font-mono font-semibold text-slate-200">
+                                          {Number(row.shares || 0).toLocaleString('en-EG')}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-slate-400">Latest price</span>
+                                        <span className="font-mono font-semibold text-slate-200">
+                                          {Number(row.currentPrice || 0).toFixed(2)} EGP
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                  {row.kind === 'cash' && (
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-slate-400">Balance type</span>
+                                      <span className="font-semibold text-purple-300">Available cash</span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          </ChartTooltipShell>
-                        );
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                )}
-              </div>
-
-              <div className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center premium-motion-opacity ${activeAllocationIndex == null ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="mt-5 text-center">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Largest</div>
-                  <div className="mt-1 max-w-[110px] truncate text-sm font-bold text-white">
-                    {leadingAllocation?.name ?? '—'}
-                  </div>
-                  <div className="font-mono text-xs font-semibold text-cyan-300">
-                    {leadingAllocation ? `${leadingAllocation.percentage.toFixed(1)}%` : '—'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="premium-report-glass-soft rounded-xl p-3">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-semibold text-slate-200">Concentration breakdown</div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">
-                    Ranked by current market value
-                  </div>
-                </div>
-                <div className="premium-report-glass-soft rounded-lg px-2 py-1 font-mono text-[10px] text-slate-400">
-                  {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
-                </div>
-              </div>
-
-              <div className="max-h-[238px] space-y-2 overflow-y-auto pr-1">
-                {allocationData.map((row, index) => (
-                  <div
-                    key={row.name}
-                    className="premium-subpanel px-3 py-2.5 rounded-xl hover:border-cyan-500/20 hover:bg-white/[0.025]"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="w-5 shrink-0 font-mono text-[10px] text-slate-600">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                              </ChartTooltipShell>
+                            );
+                          }}
                         />
-                        <span className="truncate text-xs font-semibold text-slate-200">{row.name}</span>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="font-mono text-xs font-semibold text-slate-200">
-                          {row.percentage.toFixed(1)}%
-                        </div>
-                        <div className="font-mono text-[10px] text-slate-500">
-                          {formatEgp(row.value)} EGP
-                        </div>
-                      </div>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
+                  <div className="mt-6 max-w-[128px] text-center">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      {activeAllocation ? 'Selected' : 'Largest'}
                     </div>
-                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-800">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${Math.max(2, row.percentage)}%`,
-                          backgroundColor: COLORS[index % COLORS.length],
-                        }}
-                      />
+                    <div className="mt-1 truncate text-sm font-bold text-white">
+                      {highlightedAllocation?.name ?? '—'}
+                    </div>
+                    <div
+                      className="mt-0.5 font-mono text-sm font-black"
+                      style={{ color: highlightedAllocation?.color ?? ANALYTICS_CHART_THEME.cyan }}
+                    >
+                      {highlightedAllocation
+                        ? `${highlightedAllocation.percentage.toFixed(1)}%`
+                        : '—'}
+                    </div>
+                    <div className="mt-0.5 font-mono text-[10px] text-slate-500">
+                      {highlightedAllocation
+                        ? formatAnalyticsEgp(highlightedAllocation.value)
+                        : ''}
                     </div>
                   </div>
-                ))}
+                </div>
+              </ChartPlotSurface>
+
+              <div className="premium-report-glass-soft rounded-xl p-3">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-200">Concentration breakdown</div>
+                    <div className="mt-0.5 text-[10px] text-slate-500">
+                      Ranked by current market value · tap a row to inspect
+                    </div>
+                  </div>
+                  <div className="premium-report-glass-soft rounded-lg px-2 py-1 font-mono text-[10px] text-slate-400">
+                    {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
+                  </div>
+                </div>
+
+                <div className="max-h-[258px] space-y-2 overflow-y-auto pr-1">
+                  {allocationData.map((row, index) => {
+                    const active = activeAllocationIndex === index;
+                    const dimmed = activeAllocationIndex != null && !active;
+
+                    return (
+                      <button
+                        type="button"
+                        key={row.name}
+                        aria-pressed={active}
+                        onMouseEnter={() => setActiveAllocationIndex(index)}
+                        onMouseLeave={() => setActiveAllocationIndex(null)}
+                        onFocus={() => setActiveAllocationIndex(index)}
+                        onBlur={() => setActiveAllocationIndex(null)}
+                        onClick={() =>
+                          setActiveAllocationIndex((current) => current === index ? null : index)
+                        }
+                        className={[
+                          'premium-subpanel premium-allocation-row w-full rounded-xl px-3 py-2.5 text-left',
+                          active ? 'premium-allocation-row-active' : '',
+                          dimmed ? 'premium-allocation-row-dimmed' : '',
+                        ].join(' ')}
+                        style={{
+                          '--allocation-row-color': row.color,
+                        } as React.CSSProperties}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span className="w-5 shrink-0 font-mono text-[10px] text-slate-600">
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <span
+                              className="premium-allocation-dot h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: row.color,
+                                '--allocation-dot-color': row.color,
+                              } as React.CSSProperties}
+                            />
+                            <span className="truncate text-xs font-semibold text-slate-200">
+                              {row.name}
+                            </span>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div
+                              className="font-mono text-xs font-bold"
+                              style={{ color: active ? row.color : undefined }}
+                            >
+                              {row.percentage.toFixed(1)}%
+                            </div>
+                            <div className="font-mono text-[10px] text-slate-500">
+                              {formatEgp(row.value)} EGP
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-800">
+                          <div
+                            className="premium-allocation-progress h-full rounded-full"
+                            style={{
+                              width: `${Math.max(2, row.percentage)}%`,
+                              backgroundColor: row.color,
+                              '--allocation-progress-color': row.color,
+                            } as React.CSSProperties}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
         </MotionSwap>
       </div>
 

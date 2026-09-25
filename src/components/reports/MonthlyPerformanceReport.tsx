@@ -18,6 +18,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ClosedTrade, Position } from '../../types';
+import { calculatePositionUnrealizedPnl } from '../../services/portfolioAccounting';
+import { calculateMonthlyAuditSummary } from '../../services/monthlyAuditSummary';
 import { getMonthKey, getMonthLabel, getLastDayOfMonth, dmyToIso, formatDateDDMMYYYY } from '../../utils/dateUtils';
 
 interface MonthlyPerformanceReportProps {
@@ -121,9 +123,10 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
         })
         .map((p) => {
           const costBasis = p.shares * p.avgBuyPrice;
-          const currentVal = p.shares * p.currentPrice;
-          const pnlEgp = currentVal - costBasis;
-          const pnlPercent = costBasis > 0 ? (pnlEgp / costBasis) * 100 : 0;
+          const entryFees = p.totalFees || 0;
+          const costBasisWithFees = costBasis + entryFees;
+          const pnlEgp = calculatePositionUnrealizedPnl(p);
+          const pnlPercent = costBasisWithFees > 0 ? (pnlEgp / costBasisWithFees) * 100 : 0;
           return {
             id: p.id,
             ticker: p.ticker,
@@ -448,10 +451,45 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
             })),
           ];
 
-          const hasActivity = auditRecords.length > 0;
-          const isProfitable = m.netRealized > 0;
-          const isDrawdown = m.netRealized < 0;
-          const isNoExits = m.liquidatedTrades.length === 0;
+          const visibleSummary = calculateMonthlyAuditSummary(auditRecords);
+          const hasActivity = visibleSummary.recordCount > 0;
+          const isProfitable = visibleSummary.state === 'positive';
+          const isDrawdown = visibleSummary.state === 'negative';
+          const isFlat = visibleSummary.state === 'neutral';
+
+          const pnlLabel =
+            statusFilter === 'LIQUIDATED'
+              ? 'Realized P&L'
+              : statusFilter === 'HOLDINGS'
+                ? 'Holdings P&L'
+                : 'Combined P&L';
+
+          const summaryBadgeLabel = !hasActivity
+            ? 'No Matching Records'
+            : statusFilter === 'LIQUIDATED'
+              ? isProfitable
+                ? `Profitable (+${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                : isDrawdown
+                  ? `Drawdown (${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                  : 'Breakeven'
+              : statusFilter === 'HOLDINGS'
+                ? isProfitable
+                  ? `Holding Gain (+${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                  : isDrawdown
+                    ? `Holding Loss (${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                    : 'Holdings Flat'
+                : isProfitable
+                  ? `Net Positive (+${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                  : isDrawdown
+                    ? `Net Negative (${formatEgp(visibleSummary.totalPnlEgp)} EGP)`
+                    : 'Net Flat';
+
+          const summaryCountText =
+            statusFilter === 'LIQUIDATED'
+              ? `${visibleSummary.closedCount} liquidated roundtrips`
+              : statusFilter === 'HOLDINGS'
+                ? `${visibleSummary.holdingCount} month-end holdings`
+                : `${visibleSummary.closedCount} liquidated • ${visibleSummary.holdingCount} holdings • ${visibleSummary.recordCount} visible records`;
 
           return (
             <div
@@ -468,70 +506,76 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                     </span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono ${
-                        isNoExits
+                        !hasActivity || isFlat
                           ? 'bg-slate-800 text-slate-300 border border-slate-700'
                           : isProfitable
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                       }`}
                     >
-                      {isNoExits ? (
-                        'Accrual / Holdings'
-                      ) : isProfitable ? (
-                        `Profitable (+${formatEgp(m.netRealized)} EGP)`
-                      ) : (
-                        `Drawdown (${formatEgp(m.netRealized)} EGP)`
-                      )}
+                      {summaryBadgeLabel}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400">
-                    {m.liquidatedTrades.length} liquidated roundtrips &bull; {m.monthEndHoldings.length} month-end portfolio positions
+                    {summaryCountText}
                   </p>
                 </div>
 
                 {/* Quick Monthly Metrics */}
                 <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 md:w-auto md:gap-4">
-                  {/* Monthly Net Realized */}
+                  {/* Filter-aware P&L */}
                   <div className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
-                    isNoExits
+                    !hasActivity || isFlat
                       ? 'border-slate-800'
                       : isProfitable
-                      ? 'premium-state-win'
-                      : isDrawdown
-                      ? 'premium-state-loss'
-                      : 'premium-state-breakeven'
+                        ? 'premium-state-win'
+                        : 'premium-state-loss'
                   }`}>
-                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Realized P&amp;L</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-mono">{pnlLabel}</span>
                     <span
                       className={`font-mono font-bold text-sm ${
-                        isNoExits
+                        !hasActivity || isFlat
                           ? 'text-slate-400'
                           : isProfitable
-                          ? 'text-emerald-400'
-                          : 'text-rose-400'
+                            ? 'text-emerald-400'
+                            : 'text-rose-400'
                       }`}
                     >
-                      {isNoExits ? '0.00 EGP' : `${isProfitable ? '+' : ''}${formatEgp(m.netRealized)} EGP`}
+                      {!hasActivity
+                        ? '0.00 EGP'
+                        : `${isProfitable ? '+' : ''}${formatEgp(visibleSummary.totalPnlEgp)} EGP`}
                     </span>
                   </div>
 
-                  {/* Win Rate */}
+                  {/* Filter-aware population / closed-trade win rate */}
                   <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Win Rate</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-mono">
+                      {statusFilter === 'LIQUIDATED'
+                        ? 'Closed Win Rate'
+                        : statusFilter === 'HOLDINGS'
+                          ? 'Holdings'
+                          : 'Visible Records'}
+                    </span>
                     <span className="font-mono font-bold text-sm text-slate-200">
-                      {m.winRate !== null ? (
-                        `${m.winRate.toFixed(1)}% (${m.winsCount}W / ${m.lossesCount}L)`
+                      {statusFilter === 'LIQUIDATED' ? (
+                        visibleSummary.winRate !== null ? (
+                          `${visibleSummary.winRate.toFixed(1)}% (${visibleSummary.wins}W / ${visibleSummary.losses}L)`
+                        ) : (
+                          <span className="text-slate-500 text-xs font-normal">&mdash; (0 decisive exits)</span>
+                        )
+                      ) : statusFilter === 'HOLDINGS' ? (
+                        `${visibleSummary.holdingCount} holdings`
                       ) : (
-                        <span className="text-slate-500 text-xs font-normal">&mdash; (0 Exits)</span>
+                        `${visibleSummary.recordCount} (${visibleSummary.closedCount}C / ${visibleSummary.holdingCount}H)`
                       )}
                     </span>
                   </div>
 
-                  {/* Brokerage Fees */}
+                  {/* Filter-aware commissions */}
                   <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
                     <span className="text-[10px] text-slate-400 block uppercase font-mono">Commissions</span>
                     <span className="font-mono font-bold text-sm text-amber-400">
-                      {formatEgp(m.fees)} EGP
+                      {formatEgp(visibleSummary.totalFees)} EGP
                     </span>
                   </div>
                 </div>

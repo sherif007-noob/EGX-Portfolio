@@ -130,12 +130,13 @@ The shell should be coherent glass, but materially quieter than Phase 8 hero car
 
 ### 9.2 — Navigation refinement
 
-**Status: COMPLETE / CI CLEAN — Quality Checks #36273301109 passed.**
+**Status: COMPLETE / CI CLEAN — initial gate #36273301109 passed; visual hierarchy correction applied after device-direction review.**
 
 Implemented:
 - explicit active vs idle navigation roles;
-- quieter inactive text/icon treatment;
-- localized active-tab accent and underline rather than broad competing glow;
+- quieter inactive text/icon treatment while keeping premium glass/refraction;
+- active tab is intentionally **more prominent than inactive tabs** with stronger glass depth, luminous accent border, icon bloom, and underline; it must never be "quieter" than the idle state;
+- localized active-tab aura remains scoped to navigation so it does not compete with Phase 8 content hero cards;
 - active-group label emphasis without changing group structure;
 - refined separators and group spacing;
 - dedicated compact/full nav label hooks;
@@ -158,6 +159,7 @@ Do not bury primary navigation in a hamburger-only interaction.
 
 - Add Trade owns primary global action styling.
 - Scan Receipt becomes a clearly related secondary creation path.
+- both creation buttons must use the accepted premium button language: translucent glass, refraction, luminous border, controlled aura/bloom, and hierarchy-appropriate intensity;
 - preserve both workflows unchanged.
 
 ### 9.4 — Utility/data-management consolidation
@@ -172,7 +174,9 @@ Likely structure:
 - Backup & Reconcile moves into the lower-frequency data-management context;
 - Settings remains a visible future affordance.
 
-**Settings design-language rule:** this is the phase that finalizes the Settings button's visual treatment. It must use the same accepted premium utility language as the rest of the header — neutral translucent glass, refraction, subtle border luminosity, restrained hover/focus bloom, and hierarchy-appropriate icon/label treatment. It must not become a primary CTA, use financial WIN/LOSS semantics, or introduce a separate visual language just because its functionality is reserved for the future.
+**Header utility button design-language rule:** this phase finalizes the visual treatment of **every utility button**, not only Settings. Price Alerts, Sync Prices, Google Sheets, Backup & Reconcile, and Settings must all use the accepted premium language: translucent glass, refraction, luminous semantic/structural border, visible but subordinate local aura/bloom, and consistent hover/focus depth. Utilities may differ by functional accent (amber/cyan/emerald/purple/neutral), but they must look like members of the same premium system. They must not become flat toolbar buttons just to communicate lower priority.
+
+**Settings-specific rule:** Settings follows the same premium utility recipe using a neutral structural accent. It must not become a primary CTA, use financial WIN/LOSS semantics, or introduce a separate visual language just because its functionality is reserved for the future.
 
 ### 9.5 — Status communication
 
@@ -217,6 +221,22 @@ No new theatrical header animation family.
 Validate phone portrait, phone landscape, tablet, desktop, and 2XL.
 
 Run typecheck, tests, build, and freeze the final header architecture.
+
+## Global button-language rule
+
+Every visible header control that is a button must belong to the same established premium material family.
+
+This includes:
+- navigation tabs;
+- Price Alerts;
+- Sync Prices;
+- Google Sheets;
+- Backup & Reconcile;
+- Settings;
+- Scan Receipt;
+- Add Trade.
+
+Priority is expressed through **intensity and semantic accent**, not by flattening lower-priority controls. Even a low-priority utility still gets translucent glass, refraction, a luminous border, and a restrained aura. Add Trade and Scan Receipt remain stronger because of their creation role; active navigation is stronger than idle navigation; utilities remain visibly premium but subordinate.
 
 ## Material rules
 

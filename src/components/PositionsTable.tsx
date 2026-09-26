@@ -91,8 +91,8 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   );
 
   return (
-    <div className="premium-dense-workflow space-y-4">
-      <div className="premium-hierarchy-h3 premium-dense-context flex items-center justify-between gap-3 rounded-xl px-3 py-2.5" data-hierarchy="h3">
+    <div className="premium-dense-workflow premium-flow-related">
+      <div className="premium-hierarchy-h3 premium-dense-context premium-pad-h3 premium-gap-control flex items-center justify-between rounded-xl" data-hierarchy="h3">
         <div>
           <div className="premium-type-section-title">Open Positions</div>
           <div className="premium-type-metadata mt-0.5">
@@ -107,7 +107,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       </div>
 
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h4">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control relative z-30 flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl" data-hierarchy="h4">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -380,7 +380,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
       {/* Mobile Card Layout */}
       {!isDesktop && (
-      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results lg:hidden space-y-3">
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results premium-flow-control lg:hidden">
         {filteredPositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
           const currentValue = pos.shares * pos.currentPrice;
@@ -391,7 +391,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className={`premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row p-3.5 sm:p-4 rounded-2xl space-y-3 ${
+              className={`premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 premium-flow-control rounded-2xl ${
                 pnlEgp > 0
                   ? 'premium-glow-win'
                   : pnlEgp < 0

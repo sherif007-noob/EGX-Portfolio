@@ -2,11 +2,11 @@
 
 ## Status
 
-**CANONICAL / PROTECTED**
+**REFERENCE ONLY — PHASE 8 IMPLEMENTATION ROLLED BACK**
 
-This document defines the application-wide visual contract after the Phase 8 hierarchy regression exposed an architectural problem: structural hierarchy classes were allowed to redefine already accepted glass/refraction and semantic-glow primitives.
+The Phase 8 implementation that introduced structural hierarchy and semantic-role remapping has been rolled back in production code. The accepted pre-Phase-8 / Phase 7 visual language is the source of truth.
 
-That is no longer permitted.
+The existing strong glass/refraction and semantic aura behavior—especially the accepted Monthly Report cards—must not be flattened, globally attenuated, or replaced by hierarchy-driven glow rules. This document may still be used as design rationale, but it must not be treated as permission to reintroduce the removed Phase 8 primitives.
 
 This contract applies to the remainder of the premium overhaul and to later visual work unless the user explicitly reopens the visual system.
 

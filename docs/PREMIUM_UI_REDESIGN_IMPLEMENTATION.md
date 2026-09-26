@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress — 8.4.4 complete** | 8.0–8.3b accepted; 8.4.1 typography foundation through 8.4.4 global spacing rhythm complete. |
+| 8 | **8.4 code complete — device validation pending** | 8.0–8.3b accepted; 8.4.1–8.4.5 implemented and CI clean. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,22 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Pass 8.4.5 full consistency sweep
+
+Implementation range `a3964c8ea2d0878a6cfe7d8444b3ee4cff21a8d9` → `57a46324b1834a737bb558b3d179b33ca7fa3abe` completes the code portion of Phase 8.4.
+
+The sweep:
+- removes remaining arbitrary helper/metadata type sizes in Phase-8-owned screens;
+- preserves intentional compact status/control chips;
+- removes the final arbitrary tracked allocation caption;
+- normalizes remaining report/dense spacing drift;
+- adds `Phase845ConsistencySweep.test.ts` to reject known hierarchy regressions;
+- leaves glass, aura, glow, semantic edges, semantic colors, charts, controls, motion and financial behavior unchanged.
+
+Quality Checks #36265246582 passed install, typecheck, tests and production build.
+
+Phase 8.4 now requires device visual validation only before closure.
 
 ## 2026-09-26 — Pass 8.4.4 global spacing rhythm normalization
 

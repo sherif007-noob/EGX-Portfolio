@@ -927,6 +927,7 @@ export default function App() {
         isTokenExpired={isSheetsTokenExpired}
         onSyncLivePrices={handleSyncPrices}
         isSyncingPrices={isSyncingPrices}
+        onOpenSettings={() => showToast('Settings are reserved for a future phase.', 'info')}
       />
 
       {/* Undo Toast Notification */}

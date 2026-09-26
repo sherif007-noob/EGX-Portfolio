@@ -273,7 +273,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   return (
     <div className="premium-dense-workflow space-y-6">
       {/* Header Banner */}
-      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h3">
+      <div className="premium-glass premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h3">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">

@@ -694,7 +694,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           </div>
 
                           {record.notes && (
-                            <div className="mt-3 border-t border-slate-700/45 pt-3 text-[11px] leading-relaxed text-slate-400">
+                            <div className="premium-type-helper mt-3 border-t border-slate-700/45 pt-3 text-slate-400">
                               <span className="premium-type-metadata mr-1 font-semibold">Notes</span>
                               {record.notes}
                             </div>
@@ -708,7 +708,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain 2xl:block">
                     <table className="report-monthly-table min-w-[1180px] w-full border-collapse text-left text-xs">
                     <thead>
-                      <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold uppercase tracking-wider">
                         <th className="py-2.5 px-4">Instrument</th>
                         <th className="py-2.5 px-4">Audit Status</th>
                         <th className="py-2.5 px-4 text-right">Shares</th>
@@ -734,7 +734,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                               <div className={`font-bold ${record.kind === 'HOLDING' ? 'text-cyan-300' : 'text-white'}`}>
                                 {record.ticker}
                               </div>
-                              <div className="text-[11px] text-slate-400 truncate max-w-xs">{record.companyName}</div>
+                              <div className="premium-type-helper truncate max-w-xs">{record.companyName}</div>
                             </td>
                             <td className="py-3 px-4">
                               <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
@@ -752,7 +752,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                             </td>
                             <td className="py-3 px-4 text-right text-slate-300 font-mono">
                               {formatEgp(record.buyPrice)}{' '}
-                              <span className="text-[10px] text-slate-500 font-sans">({record.buyDate})</span>
+                              <span className="premium-type-metadata font-sans">({record.buyDate})</span>
                             </td>
                             <td className="py-3 px-4 text-right font-bold text-slate-100 font-mono">
                               {formatEgp(record.exitPrice)}
@@ -761,7 +761,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                               <div className={`font-bold text-sm ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                                 {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)} EGP
                               </div>
-                              <div className={`text-[10px] font-semibold ${record.isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                              <div className={`premium-type-metadata font-semibold ${record.isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
                                 {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
                               </div>
                             </td>

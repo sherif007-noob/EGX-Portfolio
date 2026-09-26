@@ -2,7 +2,7 @@
 
 ## Status
 
-**8.4.3 — COMPLETE / CI CLEAN — dense workflow typography migration passed Quality Checks #36258191821. 8.4.4 spacing normalization is next.**
+**8.4.4 — COMPLETE / CI CLEAN — global spacing rhythm normalization passed Quality Checks #36263281878. 8.4.5 consistency sweep is next.**
 
 This audit starts Pass 8.4 without changing the accepted material system.
 
@@ -165,3 +165,34 @@ Protected:
 - filters, selectors, tables, motion and business behavior.
 
 Quality Checks `36258191821` passed typecheck, tests and production build.
+
+
+## 8.4.4 implementation result
+
+Implementation range `6e9f75bff50003aaefbea67e498bc96d177b67e9` → `59a1b4c8ca41774a9982606cbab20eaa2455ecc8` normalizes spacing across Overview, Reports, Monthly/Trading Performance, Positions, Closed Cycles, Transactions, Cash Ledger, and Ticker Directory.
+
+Canonical rhythm introduced:
+- major section separation → `premium-flow-major` using the existing 24–32px section token range;
+- related conceptual blocks → `premium-flow-related` using the 16–20px related token range;
+- repeated controls / dense records → `premium-flow-control` and `premium-gap-control`;
+- hierarchy padding helpers → `premium-pad-h1` through `premium-pad-h5`;
+- mobile uses tighter H-level padding and 8px control gaps while preserving the same information order.
+
+Applied:
+- Overview KPI tiers and Market Feed now use the canonical gap/padding rhythm;
+- Reports major sections use deliberate major separation and H2/H3 section padding;
+- Monthly and Trading Performance outer flows use the same major-section rhythm;
+- Monthly audit cards and Trading Performance KPI cards use hierarchy-owned padding only;
+- Positions / Cycles / Transactions / Cash / Stocks now share summary → controls → dense-data rhythm;
+- repeated H5 records use the same dense padding and control-gap cadence;
+- Cash H2/H3 KPI cards now reflect their hierarchy through spacing rather than unrelated local padding values.
+
+Protected:
+- glass/background recipes;
+- semantic aura and glow intensity;
+- semantic edge geometry and corner blend;
+- semantic colors;
+- typography scale established in 8.4.1–8.4.3;
+- charts, selectors, motion, business logic, filtering and data behavior.
+
+Quality Checks `36263281878` passed typecheck, tests and production build.

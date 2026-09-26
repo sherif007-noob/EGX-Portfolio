@@ -356,7 +356,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <PieChart className="w-4 h-4 text-blue-400" />
               Total Portfolio Equity
             </span>
-            <span className="text-[10px] text-slate-400">Cash + Equities</span>
+            <span className="premium-type-metadata">Cash + Equities</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
             <span className="premium-type-metric premium-type-metric-secondary font-mono text-white">{formatEgp(totalPortfolioValue)}</span>
@@ -375,7 +375,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <ArrowDownLeft className="w-4 h-4" />
               Total Deposited
             </span>
-            <span className="text-[10px] text-slate-400">All Time</span>
+            <span className="premium-type-metadata">All Time</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
             <span className="premium-type-metric premium-type-metric-secondary font-mono text-emerald-400">+{formatEgp(totalDeposits)}</span>
@@ -396,7 +396,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <ArrowUpRight className="w-4 h-4" />
               Total Withdrawn
             </span>
-            <span className="text-[10px] text-slate-400">All Time</span>
+            <span className="premium-type-metadata">All Time</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
             <span className="premium-type-metric premium-type-metric-secondary font-mono text-rose-400">-{formatEgp(totalWithdrawals)}</span>
@@ -448,7 +448,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               1. Net Capital Deposited
             </span>
             <div className="premium-type-metric premium-type-metric-dense font-mono text-white">+{formatEgp(netCapitalDeposited)} <span className="premium-type-unit">EGP</span></div>
-            <span className="text-[10px] text-slate-500 block">
+            <span className="premium-type-metadata block">
               {transactions.filter((t) => t.type === 'DEPOSIT').length} deposits logged
             </span>
           </div>
@@ -459,7 +459,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               2. Open Positions Cost Basis
             </span>
             <div className="premium-type-metric premium-type-metric-dense font-mono text-rose-400">-{formatEgp(totalOpenPositionsCost)} <span className="premium-type-unit">EGP</span></div>
-            <span className="text-[10px] text-slate-500 block">
+            <span className="premium-type-metadata block">
               {positions.length} active holdings bought
             </span>
           </div>
@@ -477,7 +477,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               {totalRealizedPnl >= 0 ? '+' : ''}
               {formatEgp(totalRealizedPnl)} <span className="premium-type-unit">EGP</span>
             </div>
-            <span className="text-[10px] text-slate-500 block">
+            <span className="premium-type-metadata block">
               {closedTrades.length} completed cycles
             </span>
           </div>
@@ -488,7 +488,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               4. True Liquid Cash
             </span>
             <div className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">{formatEgp(auditedLiquidCash)} <span className="premium-type-unit">EGP</span></div>
-            <span className="text-[10px] text-emerald-500/80 block">
+            <span className="premium-type-metadata block text-emerald-500/80">
               (1) - (2) + (3)
             </span>
           </div>
@@ -499,7 +499,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               5. True Portfolio NAV
             </span>
             <div className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">{formatEgp(auditedPortfolioNav)} <span className="premium-type-unit">EGP</span></div>
-            <span className="text-[10px] text-blue-400/80 block">
+            <span className="premium-type-metadata block text-blue-400/80">
               Cash + {formatEgp(totalOpenPositionsMarketValue)} EGP Equities
             </span>
           </div>
@@ -514,7 +514,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 <span className="font-bold text-amber-300">
                   Cash Balance Variance: {formatEgp(Math.abs(cashDiscrepancy))} EGP
                 </span>
-                <p className="mt-0.5 text-[11px] text-amber-200/80 leading-relaxed">
+                <p className="premium-type-helper mt-0.5 text-amber-200/80">
                   Recorded cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Net capital deposited ({formatEgp(netCapitalDeposited)} EGP) minus active holdings cost ({formatEgp(totalOpenPositionsCost)} EGP) plus realized gains ({totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP) indicates true liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
                 </p>
               </div>
@@ -614,7 +614,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                   <span>Deposit Amount (EGP)</span>
-                  <span className="text-[11px] text-slate-400">Current Balance: {formatEgp(cashBalance)} EGP</span>
+                  <span className="premium-type-metadata">Current Balance: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
                   <NumberStepperInput
@@ -635,7 +635,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                 {/* Quick Add Preset Buttons */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[10px] text-slate-400 mr-1">Quick add:</span>
+                  <span className="premium-type-metadata mr-1">Quick add:</span>
                   {[5000, 10000, 25000, 50000, 100000].map((amt) => (
                     <button
                       key={amt}
@@ -738,7 +738,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                   <span>Withdrawal Amount (EGP)</span>
-                  <span className="text-[11px] text-emerald-400 font-mono">Available: {formatEgp(cashBalance)} EGP</span>
+                  <span className="premium-type-metadata font-mono text-emerald-400">Available: {formatEgp(cashBalance)} EGP</span>
                 </label>
                 <div className="relative">
                   <NumberStepperInput
@@ -760,7 +760,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
                 {/* Quick % Withdrawal Chips */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[10px] text-slate-400 mr-1">Quick select:</span>
+                  <span className="premium-type-metadata mr-1">Quick select:</span>
                   {[
                     { label: '25%', ratio: 0.25 },
                     { label: '50%', ratio: 0.5 },

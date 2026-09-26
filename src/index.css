@@ -4483,3 +4483,176 @@ body {
       0 0 28px rgba(34,211,238,0.045);
   }
 }
+
+
+/* Phase 8.3 — dense workflow hierarchy.
+ * Operational screens prioritize scanability: summary -> controls -> dense data.
+ * Repeated records retain semantic state as edge coding, not full-card halos.
+ */
+.premium-dense-workflow {
+  --dense-surface-border: rgba(148, 163, 184, 0.105);
+}
+
+.premium-dense-context,
+.premium-dense-summary {
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.018), transparent 52%),
+    rgba(8, 15, 31, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 10px 24px rgba(0,0,0,0.15);
+}
+
+.premium-dense-summary.premium-hierarchy-h2 {
+  border-color: rgba(148, 163, 184, 0.18);
+  background:
+    radial-gradient(circle at 10% -18%, rgba(34,211,238,0.045), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 54%),
+    rgba(9, 17, 34, 0.44);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.038),
+    0 14px 30px rgba(0,0,0,0.18);
+}
+
+.premium-dense-summary-card {
+  --premium-semantic-border-alpha: 0.26;
+  --premium-semantic-near-alpha: 0.06;
+  --premium-semantic-far-alpha: 0.018;
+  --premium-semantic-far-radius: 36px;
+  border-color: rgba(148, 163, 184, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.014), transparent 54%),
+    rgba(3, 9, 22, 0.31);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.026),
+    0 8px 20px rgba(0,0,0,0.14);
+}
+
+.premium-dense-toolbar {
+  border-color: rgba(148, 163, 184, 0.105) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.012), transparent 56%),
+    rgba(2, 6, 23, 0.29) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.022) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(118%);
+  backdrop-filter: blur(10px) saturate(118%);
+}
+
+.premium-dense-data.premium-table-shell {
+  border-color: var(--dense-surface-border);
+  background: rgba(2, 6, 23, 0.31);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    0 8px 20px rgba(0,0,0,0.14);
+  -webkit-backdrop-filter: blur(8px) saturate(114%);
+  backdrop-filter: blur(8px) saturate(114%);
+}
+
+.premium-dense-data.premium-table-shell thead {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.014), transparent),
+    rgba(8, 15, 31, 0.50);
+}
+
+.premium-dense-row.premium-hierarchy-h5 {
+  --premium-semantic-border-alpha: 0.22;
+  --premium-semantic-near-alpha: 0;
+  --premium-semantic-far-alpha: 0;
+  --premium-semantic-hover-border-alpha: 0.34;
+  --premium-semantic-hover-near-alpha: 0;
+  --premium-semantic-hover-far-alpha: 0;
+  border-color: rgba(148, 163, 184, 0.105);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.010), transparent 54%),
+    rgba(3, 9, 22, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.018),
+    0 6px 16px rgba(0,0,0,0.12);
+}
+
+.premium-dense-row.premium-glow-buy,
+.premium-dense-row.premium-glow-win,
+.premium-dense-row.premium-glow-loss,
+.premium-dense-row.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / 0.24);
+  background:
+    linear-gradient(
+      90deg,
+      rgb(var(--premium-semantic-rgb) / 0.035),
+      transparent 24%
+    ),
+    rgba(3, 9, 22, 0.31);
+  box-shadow:
+    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.56),
+    inset 18px 0 28px rgb(var(--premium-semantic-rgb) / 0.028),
+    inset 0 1px 0 rgba(255,255,255,0.018),
+    0 6px 16px rgba(0,0,0,0.12);
+}
+
+.premium-dense-row.premium-radial::after {
+  display: none;
+}
+
+.premium-dense-row .premium-hierarchy-h4,
+.premium-dense-row .premium-subpanel {
+  border-color: rgba(148, 163, 184, 0.085);
+  background: rgba(2, 6, 23, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.016);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-dense-context:hover,
+  .premium-dense-summary:hover,
+  .premium-dense-summary-card:hover,
+  .premium-dense-toolbar:hover,
+  .premium-dense-data:hover,
+  .premium-dense-row:hover {
+    transform: none !important;
+  }
+
+  .premium-dense-row:hover {
+    border-color: rgba(148, 163, 184, 0.16);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.014), transparent 54%),
+      rgba(8, 15, 31, 0.38);
+  }
+
+  .premium-dense-row.premium-glow-buy:hover,
+  .premium-dense-row.premium-glow-win:hover,
+  .premium-dense-row.premium-glow-loss:hover,
+  .premium-dense-row.premium-glow-breakeven:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.34);
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.76),
+      inset 22px 0 34px rgb(var(--premium-semantic-rgb) / 0.04),
+      inset 0 1px 0 rgba(255,255,255,0.024),
+      0 8px 18px rgba(0,0,0,0.15);
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-dense-summary,
+  .premium-dense-context {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.026),
+      0 8px 18px rgba(0,0,0,0.13);
+  }
+
+  .premium-dense-row.premium-hierarchy-h5 {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.018),
+      0 5px 14px rgba(0,0,0,0.11);
+  }
+
+  .premium-dense-row.premium-glow-buy,
+  .premium-dense-row.premium-glow-win,
+  .premium-dense-row.premium-glow-loss,
+  .premium-dense-row.premium-glow-breakeven {
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.58),
+      inset 16px 0 24px rgb(var(--premium-semantic-rgb) / 0.026),
+      0 5px 14px rgba(0,0,0,0.11);
+  }
+}

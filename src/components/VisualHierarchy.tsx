@@ -10,6 +10,12 @@ export type HierarchyTextRole =
   | 'metadata'
   | 'helper';
 
+export type HierarchyMetricScale =
+  | 'hero'
+  | 'primary'
+  | 'secondary'
+  | 'dense';
+
 export type ActionPriority =
   | 'primary'
   | 'secondary'
@@ -34,6 +40,13 @@ const TEXT_CLASS: Record<HierarchyTextRole, string> = {
   helper: 'premium-type-helper',
 };
 
+const METRIC_SCALE_CLASS: Record<HierarchyMetricScale, string> = {
+  hero: 'premium-type-metric-hero',
+  primary: 'premium-type-metric-primary',
+  secondary: 'premium-type-metric-secondary',
+  dense: 'premium-type-metric-dense',
+};
+
 const ACTION_CLASS: Record<ActionPriority, string> = {
   primary: 'premium-action-priority-primary',
   secondary: 'premium-action-priority-secondary',
@@ -46,6 +59,9 @@ export const getHierarchySurfaceClass = (level: HierarchyLevel): string =>
 
 export const getHierarchyTextClass = (role: HierarchyTextRole): string =>
   TEXT_CLASS[role];
+
+export const getHierarchyMetricScaleClass = (scale: HierarchyMetricScale): string =>
+  METRIC_SCALE_CLASS[scale];
 
 export const getActionPriorityClass = (priority: ActionPriority): string =>
   ACTION_CLASS[priority];
@@ -83,11 +99,13 @@ type TextTag = 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'div';
 
 interface HierarchyTextProps extends React.HTMLAttributes<HTMLElement> {
   role: HierarchyTextRole;
+  metricScale?: HierarchyMetricScale;
   as?: TextTag;
 }
 
 export const HierarchyText: React.FC<HierarchyTextProps> = ({
   role,
+  metricScale,
   as = 'span',
   className = '',
   children,
@@ -99,7 +117,13 @@ export const HierarchyText: React.FC<HierarchyTextProps> = ({
     <Component
       {...props}
       data-hierarchy-text={role}
-      className={[TEXT_CLASS[role], className].filter(Boolean).join(' ')}
+      className={[
+        TEXT_CLASS[role],
+        role === 'metric' && metricScale ? METRIC_SCALE_CLASS[metricScale] : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {children}
     </Component>

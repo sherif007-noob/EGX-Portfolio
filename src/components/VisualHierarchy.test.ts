@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   getActionPriorityClass,
+  getHierarchyMetricScaleClass,
   getHierarchySurfaceClass,
   getHierarchyTextClass,
   type ActionPriority,
   type HierarchyLevel,
+  type HierarchyMetricScale,
   type HierarchyTextRole,
 } from './VisualHierarchy';
 
@@ -38,6 +40,16 @@ describe('Phase 8 visual hierarchy primitives', () => {
       'premium-type-metric-label',
       'premium-type-metadata',
       'premium-type-helper',
+    ]);
+  });
+
+  it('maps the financial metric scale without creating new text roles', () => {
+    const scales: HierarchyMetricScale[] = ['hero', 'primary', 'secondary', 'dense'];
+    expect(scales.map(getHierarchyMetricScaleClass)).toEqual([
+      'premium-type-metric-hero',
+      'premium-type-metric-primary',
+      'premium-type-metric-secondary',
+      'premium-type-metric-dense',
     ]);
   });
 

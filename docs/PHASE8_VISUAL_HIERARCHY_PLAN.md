@@ -332,7 +332,7 @@ Reduce nested-card competition while keeping the strong Phase 7 chart work.
 
 ## Pass 8.3 — Dense workflow hierarchy
 
-**Status: IMPLEMENTED / CI CLEAN — Quality Checks #775 passed (36/36 test files, 210/210 tests, build 6.40s); device validation pending.**
+**Status: COMPLETE / DEVICE ACCEPTED — dense hierarchy, restored material language, semantic edge and Pass 8.3b aura intensity accepted on device.**
 
 Implemented:
 - apply the summary → controls → dense-data hierarchy across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;
@@ -372,13 +372,26 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 
 ### Pass 8.3b — Aura / glow intensification
 
-**Status: IMPLEMENTED / CI CLEAN — device visual validation pending.**
+**Status: COMPLETE / DEVICE ACCEPTED — final intensified aura/glow accepted on device.**
 
 After the hierarchy/material split and semantic-edge restoration, device feedback showed that the material system was structurally correct but the aura was still too restrained. Commit `2eebfa0d5ff9647292acaa1ada26e439801283a4` increases resting and hover aura/glow strength without changing hierarchy, glass opacity/blur, spacing, typography, component structure, or the accepted semantic-edge geometry.
 
 Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
+
+**Status: IN PROGRESS — Pass 8.4.1 canonical typography scale established; screen migration begins in 8.4.2.**
+
+### Pass 8.4.1 — Canonical typography scale and audit
+
+Implemented:
+- preserve exactly six text roles: page title, section title, metric, metric label, metadata, helper;
+- add a four-level metric scale inside the metric role: hero, primary, secondary, dense;
+- add a subordinate unit helper for EGP / % / shares / days without creating a seventh hierarchy role;
+- extend `VisualHierarchy.tsx` with a typed metric-scale mapping;
+- add regression coverage proving the typography layer is material-neutral;
+- add `docs/PHASE8_4_TYPOGRAPHY_AUDIT.md` with the initial migration map;
+- no screen-wide typography migration is included in 8.4.1.
 
 ### Goal
 

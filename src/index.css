@@ -3964,10 +3964,18 @@ body {
 
   --hierarchy-page-title-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
   --hierarchy-section-title-size: clamp(1rem, 0.92rem + 0.35vw, 1.25rem);
-  --hierarchy-metric-size: clamp(1.45rem, 1.2rem + 0.75vw, 2rem);
+
+  /* Pass 8.4.1 canonical financial metric scale. */
+  --hierarchy-metric-hero-size: clamp(1.8rem, 1.35rem + 1.5vw, 2.7rem);
+  --hierarchy-metric-primary-size: clamp(1.3rem, 1.05rem + 0.7vw, 1.8rem);
+  --hierarchy-metric-secondary-size: clamp(1.15rem, 1rem + 0.45vw, 1.5rem);
+  --hierarchy-metric-dense-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --hierarchy-metric-size: var(--hierarchy-metric-primary-size);
+
   --hierarchy-label-size: 0.75rem;
   --hierarchy-metadata-size: 0.6875rem;
   --hierarchy-helper-size: 0.75rem;
+  --hierarchy-unit-size: 0.6875rem;
 }
 
 .premium-hierarchy-surface,
@@ -4005,6 +4013,45 @@ body {
   font-weight: 800;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
+}
+
+/* Metric is still one typography role; these classes only express scale. */
+.premium-type-metric-hero {
+  font-size: var(--hierarchy-metric-hero-size);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.premium-type-metric-primary {
+  font-size: var(--hierarchy-metric-primary-size);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.premium-type-metric-secondary {
+  font-size: var(--hierarchy-metric-secondary-size);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.premium-type-metric-dense {
+  font-size: var(--hierarchy-metric-dense-size);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Units are subordinate helpers, not a seventh hierarchy role. */
+.premium-type-unit {
+  color: #64748b;
+  font-size: var(--hierarchy-unit-size);
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .premium-type-metric-label {

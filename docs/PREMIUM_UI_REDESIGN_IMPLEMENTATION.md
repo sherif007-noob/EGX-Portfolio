@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress** | Accepted Phase 8 hierarchy restored; glass, aura, glow, and semantic-state visuals remain on the pre-Phase-8 visual system. |
+| 8 | **In progress — 8.4 started** | 8.0–8.3b accepted; 8.4.1 canonical typography scale/audit established. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,17 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Pass 8.4.1 typography foundation
+
+Pass 8.4 has started with a deliberately non-invasive foundation pass.
+
+- exactly six hierarchy text roles remain canonical;
+- metric values now have typed hero / primary / secondary / dense scale helpers;
+- `premium-type-unit` provides a subordinate EGP/%/shares/days treatment without adding another hierarchy role;
+- no production screen has been mass-migrated yet;
+- no glass, aura, glow, semantic edge, color mapping, chart, motion or business behavior was changed;
+- `docs/PHASE8_4_TYPOGRAPHY_AUDIT.md` records the screen-by-screen typography debt and migration order.
 
 ## 2026-09-26 — Phase 8 hierarchy/material split
 

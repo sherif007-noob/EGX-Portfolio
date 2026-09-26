@@ -329,7 +329,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       {/* KPI Cards: Cash Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Available Cash */}
-        <div className="premium-card premium-hierarchy-h2 premium-dense-summary-card p-4 rounded-2xl relative overflow-hidden">
+        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h2 premium-dense-summary-card p-4 rounded-2xl relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
               <Wallet className="w-4 h-4" />
@@ -350,7 +350,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Portfolio NAV */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-blue premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-slate-300 flex items-center gap-1.5">
               <PieChart className="w-4 h-4 text-blue-400" />
@@ -369,7 +369,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Cumulative Deposits */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
               <ArrowDownLeft className="w-4 h-4" />
@@ -390,7 +390,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Cumulative Withdrawals */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-rose premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-rose-400 flex items-center gap-1.5">
               <ArrowUpRight className="w-4 h-4" />

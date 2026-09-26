@@ -4167,3 +4167,387 @@ body {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Phase 8 material restoration — Monthly Report quality reference             */
+/* -------------------------------------------------------------------------- */
+/*
+ * CANONICAL RULE:
+ * Phase 8 controls hierarchy only. The material layer below restores the
+ * accepted pre-Phase-8 glass / aura / glow language without changing H0-H5
+ * structure, spacing, grouping or typography.
+ *
+ * Visual reference: .premium-report-hero-card / Monthly Performance audit cards.
+ * No edge-only semantic replacement. No opaque hierarchy slabs.
+ */
+
+.premium-material-tone-cyan {
+  --premium-material-rgb: 34 211 238;
+  --premium-material-deep-rgb: 8 145 178;
+}
+
+.premium-material-tone-blue {
+  --premium-material-rgb: 59 130 246;
+  --premium-material-deep-rgb: 37 99 235;
+}
+
+.premium-material-tone-purple {
+  --premium-material-rgb: 168 85 247;
+  --premium-material-deep-rgb: 126 34 206;
+}
+
+.premium-material-tone-emerald {
+  --premium-material-rgb: 16 185 129;
+  --premium-material-deep-rgb: 5 150 105;
+}
+
+.premium-material-tone-rose {
+  --premium-material-rgb: 244 63 94;
+  --premium-material-deep-rgb: 225 29 72;
+}
+
+.premium-material-tone-amber {
+  --premium-material-rgb: 245 158 11;
+  --premium-material-deep-rgb: 217 119 6;
+}
+
+/*
+ * Actual hierarchy cards retain one shared premium material recipe.
+ * Hierarchy rank is NOT allowed to attenuate glass or semantic aura.
+ */
+.premium-card.premium-hierarchy-h1,
+.premium-card.premium-hierarchy-h2,
+.premium-card.premium-hierarchy-h3,
+.premium-card.premium-hierarchy-h4,
+.premium-card.premium-hierarchy-h5 {
+  --phase8-material-rgb: var(--premium-material-rgb, 56 189 248);
+  --phase8-material-deep-rgb: var(--premium-material-deep-rgb, 37 99 235);
+  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
+  border-color: rgb(var(--phase8-material-rgb) / 0.30);
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--phase8-material-rgb) / 0.105), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--phase8-material-deep-rgb) / 0.055), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(10, 18, 36, 0.54) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.085),
+    0 18px 44px rgba(0, 0, 0, 0.29),
+    0 0 30px rgb(var(--phase8-material-rgb) / 0.10),
+    0 0 68px rgb(var(--phase8-material-deep-rgb) / 0.045),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(155%) brightness(1.025);
+  backdrop-filter: blur(24px) saturate(155%) brightness(1.025);
+}
+
+.premium-card.premium-hierarchy-h1::before,
+.premium-card.premium-hierarchy-h2::before,
+.premium-card.premium-hierarchy-h3::before,
+.premium-card.premium-hierarchy-h4::before,
+.premium-card.premium-hierarchy-h5::before {
+  background:
+    radial-gradient(circle at 20% -12%, rgb(var(--phase8-material-rgb) / 0.09), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 36%);
+  opacity: 0.56;
+}
+
+/*
+ * Semantic hierarchy cards use the SAME aura family as the accepted Monthly
+ * Report cards. H-level does not turn semantic glow down.
+ */
+.premium-card.premium-hierarchy-h1.premium-glow-win,
+.premium-card.premium-hierarchy-h1.premium-glow-loss,
+.premium-card.premium-hierarchy-h1.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h1.premium-glow-buy,
+.premium-card.premium-hierarchy-h2.premium-glow-win,
+.premium-card.premium-hierarchy-h2.premium-glow-loss,
+.premium-card.premium-hierarchy-h2.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h2.premium-glow-buy,
+.premium-card.premium-hierarchy-h3.premium-glow-win,
+.premium-card.premium-hierarchy-h3.premium-glow-loss,
+.premium-card.premium-hierarchy-h3.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h3.premium-glow-buy,
+.premium-card.premium-hierarchy-h4.premium-glow-win,
+.premium-card.premium-hierarchy-h4.premium-glow-loss,
+.premium-card.premium-hierarchy-h4.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h4.premium-glow-buy,
+.premium-card.premium-hierarchy-h5.premium-glow-win,
+.premium-card.premium-hierarchy-h5.premium-glow-loss,
+.premium-card.premium-hierarchy-h5.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h5.premium-glow-buy,
+.premium-card.premium-hierarchy-h1.premium-state-win,
+.premium-card.premium-hierarchy-h1.premium-state-loss,
+.premium-card.premium-hierarchy-h1.premium-state-breakeven,
+.premium-card.premium-hierarchy-h1.premium-state-buy,
+.premium-card.premium-hierarchy-h2.premium-state-win,
+.premium-card.premium-hierarchy-h2.premium-state-loss,
+.premium-card.premium-hierarchy-h2.premium-state-breakeven,
+.premium-card.premium-hierarchy-h2.premium-state-buy,
+.premium-card.premium-hierarchy-h3.premium-state-win,
+.premium-card.premium-hierarchy-h3.premium-state-loss,
+.premium-card.premium-hierarchy-h3.premium-state-breakeven,
+.premium-card.premium-hierarchy-h3.premium-state-buy,
+.premium-card.premium-hierarchy-h4.premium-state-win,
+.premium-card.premium-hierarchy-h4.premium-state-loss,
+.premium-card.premium-hierarchy-h4.premium-state-breakeven,
+.premium-card.premium-hierarchy-h4.premium-state-buy,
+.premium-card.premium-hierarchy-h5.premium-state-win,
+.premium-card.premium-hierarchy-h5.premium-state-loss,
+.premium-card.premium-hierarchy-h5.premium-state-breakeven,
+.premium-card.premium-hierarchy-h5.premium-state-buy {
+  --phase8-material-rgb: var(--premium-semantic-rgb);
+  --phase8-material-deep-rgb: var(--premium-semantic-deep-rgb);
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+  border-color: rgb(var(--premium-semantic-rgb) / 0.52) !important;
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-semantic-rgb) / 0.19), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.10), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(12, 20, 39, 0.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.30),
+    0 0 34px rgb(var(--premium-semantic-rgb) / 0.22),
+    0 0 76px rgb(var(--premium-semantic-deep-rgb) / 0.10),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(158%) brightness(1.035) !important;
+  backdrop-filter: blur(24px) saturate(158%) brightness(1.035) !important;
+}
+
+/* Semantic state surfaces that use .premium-state-* instead of .premium-glow-* */
+.premium-card.premium-hierarchy-h1.premium-state-win::before,
+.premium-card.premium-hierarchy-h1.premium-state-loss::before,
+.premium-card.premium-hierarchy-h1.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h1.premium-state-buy::before,
+.premium-card.premium-hierarchy-h2.premium-state-win::before,
+.premium-card.premium-hierarchy-h2.premium-state-loss::before,
+.premium-card.premium-hierarchy-h2.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h2.premium-state-buy::before,
+.premium-card.premium-hierarchy-h3.premium-state-win::before,
+.premium-card.premium-hierarchy-h3.premium-state-loss::before,
+.premium-card.premium-hierarchy-h3.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h3.premium-state-buy::before,
+.premium-card.premium-hierarchy-h4.premium-state-win::before,
+.premium-card.premium-hierarchy-h4.premium-state-loss::before,
+.premium-card.premium-hierarchy-h4.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h4.premium-state-buy::before,
+.premium-card.premium-hierarchy-h5.premium-state-win::before,
+.premium-card.premium-hierarchy-h5.premium-state-loss::before,
+.premium-card.premium-hierarchy-h5.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h5.premium-state-buy::before {
+  background:
+    radial-gradient(circle at 20% -12%, rgb(var(--premium-semantic-rgb) / 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 36%);
+  opacity: 0.66;
+}
+
+/* Hero keeps the accepted pre-Phase-8 hero identity, only in the new layout. */
+.premium-overview-hero.premium-hero-card {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+}
+
+.premium-overview-hero.premium-hero-card.premium-glow-win,
+.premium-overview-hero.premium-hero-card.premium-glow-loss,
+.premium-overview-hero.premium-hero-card.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / 0.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.105),
+    0 22px 52px rgba(0, 0, 0, 0.32),
+    0 0 40px rgb(var(--premium-semantic-rgb) / 0.26),
+    0 0 88px rgb(var(--premium-semantic-deep-rgb) / 0.12),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+}
+
+/* Rich neutral / explicitly-toned hierarchy cards use the same material body. */
+.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,
+.premium-card.premium-hierarchy-h1.premium-material-tone-blue,
+.premium-card.premium-hierarchy-h1.premium-material-tone-purple,
+.premium-card.premium-hierarchy-h1.premium-material-tone-emerald,
+.premium-card.premium-hierarchy-h1.premium-material-tone-rose,
+.premium-card.premium-hierarchy-h1.premium-material-tone-amber,
+.premium-card.premium-hierarchy-h2.premium-material-tone-cyan,
+.premium-card.premium-hierarchy-h2.premium-material-tone-blue,
+.premium-card.premium-hierarchy-h2.premium-material-tone-purple,
+.premium-card.premium-hierarchy-h2.premium-material-tone-emerald,
+.premium-card.premium-hierarchy-h2.premium-material-tone-rose,
+.premium-card.premium-hierarchy-h2.premium-material-tone-amber,
+.premium-card.premium-hierarchy-h3.premium-material-tone-cyan,
+.premium-card.premium-hierarchy-h3.premium-material-tone-blue,
+.premium-card.premium-hierarchy-h3.premium-material-tone-purple,
+.premium-card.premium-hierarchy-h3.premium-material-tone-emerald,
+.premium-card.premium-hierarchy-h3.premium-material-tone-rose,
+.premium-card.premium-hierarchy-h3.premium-material-tone-amber {
+  border-color: rgb(var(--premium-material-rgb) / 0.42);
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-material-rgb) / 0.155), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-material-deep-rgb) / 0.075), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(12, 20, 39, 0.56) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.29),
+    0 0 32px rgb(var(--premium-material-rgb) / 0.17),
+    0 0 72px rgb(var(--premium-material-deep-rgb) / 0.075),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/*
+ * Phase 8 structural surfaces must still look like premium glass.
+ * These selectors restore material only; they do not alter hierarchy rank.
+ */
+.premium-panel.premium-hierarchy-h2,
+.premium-panel.premium-hierarchy-h3,
+.premium-panel.premium-hierarchy-h4,
+.premium-report-section.premium-hierarchy-h2,
+.premium-report-section.premium-hierarchy-h3,
+.premium-dense-summary.premium-hierarchy-h2:not(.premium-card):not(.premium-panel),
+.premium-dense-summary.premium-hierarchy-h3:not(.premium-card):not(.premium-panel),
+.premium-dense-context.premium-hierarchy-h3,
+.premium-overview-market-strip {
+  position: relative;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  background:
+    radial-gradient(circle at 12% -12%, rgba(34, 211, 238, 0.10), transparent 38%),
+    radial-gradient(circle at 98% 0%, rgba(139, 92, 246, 0.065), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.050), rgba(255, 255, 255, 0.010) 42%, transparent 70%),
+    rgba(10, 18, 36, 0.50) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.26),
+    0 0 30px rgba(34, 211, 238, 0.10),
+    0 0 66px rgba(99, 102, 241, 0.045),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(150%) brightness(1.02);
+  backdrop-filter: blur(22px) saturate(150%) brightness(1.02);
+}
+
+/* Market Feed is H4 by hierarchy, but remains a real glass utility surface. */
+.premium-overview-market-strip.premium-material-tone-cyan {
+  border-color: rgb(var(--premium-material-rgb) / 0.32);
+  background:
+    radial-gradient(circle at 12% -12%, rgb(var(--premium-material-rgb) / 0.12), transparent 38%),
+    radial-gradient(circle at 98% 0%, rgb(var(--premium-material-deep-rgb) / 0.07), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.050), rgba(255, 255, 255, 0.010) 42%, transparent 70%),
+    rgba(10, 18, 36, 0.50) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.26),
+    0 0 32px rgb(var(--premium-material-rgb) / 0.14),
+    0 0 70px rgb(var(--premium-material-deep-rgb) / 0.06),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* Inset/detail surfaces keep translucency and refraction instead of going matte. */
+.premium-subpanel.premium-hierarchy-h4,
+.premium-secondary-chart-metric.premium-hierarchy-h4,
+.premium-hierarchy-h4:not(.premium-card):not(.premium-panel):not(.premium-report-structural):not(.premium-overview-market-strip) {
+  border-color: rgba(148, 163, 184, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 48%),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.025), transparent 44%, rgba(139, 92, 246, 0.018)),
+    rgba(2, 6, 23, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 26px rgba(0, 0, 0, 0.18),
+    0 0 22px rgba(34, 211, 238, 0.045);
+  -webkit-backdrop-filter: blur(15px) saturate(134%);
+  backdrop-filter: blur(15px) saturate(134%);
+}
+
+/* Dense data remains dense, but not opaque/flat. */
+.premium-table-shell.premium-hierarchy-h5,
+.premium-dense-data.premium-hierarchy-h5 {
+  border-color: rgba(148, 163, 184, 0.17);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 24%),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.018), transparent 48%, rgba(139, 92, 246, 0.014)),
+    rgba(8, 15, 31, 0.48) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 16px 38px rgba(0, 0, 0, 0.23),
+    0 0 26px rgba(34, 211, 238, 0.045);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+}
+
+/* Reports summary band keeps its Phase 8 placement but regains glass depth. */
+.premium-report-summary-band {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012) 34%, transparent 58%),
+    linear-gradient(135deg, rgba(34, 211, 238, 0.035), transparent 38%, rgba(139, 92, 246, 0.03)),
+    rgba(12, 20, 39, 0.50) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 16px 42px rgba(0, 0, 0, 0.26),
+    0 0 30px rgba(34, 211, 238, 0.055);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+
+/* Preserve transparent structural shells: hierarchy wrapper != material surface. */
+.premium-report-structural.premium-hierarchy-h0,
+.premium-hierarchy-h0 {
+  --phase8-material-rgb: initial;
+  --phase8-material-deep-rgb: initial;
+}
+
+/* Fine-pointer hover adds light; it never substitutes for the resting aura. */
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-hierarchy-h1:hover,
+  .premium-card.premium-hierarchy-h2:hover,
+  .premium-card.premium-hierarchy-h3:hover,
+  .premium-card.premium-hierarchy-h4:hover,
+  .premium-card.premium-hierarchy-h5:hover {
+    border-color: rgb(var(--phase8-material-rgb) / 0.46);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.105),
+      0 24px 56px rgba(0, 0, 0, 0.33),
+      0 0 38px rgb(var(--phase8-material-rgb) / 0.16),
+      0 0 82px rgb(var(--phase8-material-deep-rgb) / 0.075),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-card.premium-hierarchy-h1.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h1.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h1.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h2.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h2.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h2.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h3.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h3.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h3.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h5.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h5.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h5.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h5.premium-glow-buy:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.70) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.11),
+      0 24px 56px rgba(0, 0, 0, 0.34),
+      0 0 42px rgb(var(--premium-semantic-rgb) / 0.30),
+      0 0 90px rgb(var(--premium-semantic-deep-rgb) / 0.14),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Keep aura visible on touch devices; only motion/hover is omitted. */
+  .premium-card.premium-hierarchy-h1,
+  .premium-card.premium-hierarchy-h2,
+  .premium-card.premium-hierarchy-h3,
+  .premium-card.premium-hierarchy-h4,
+  .premium-card.premium-hierarchy-h5 {
+    -webkit-backdrop-filter: blur(22px) saturate(150%) brightness(1.025);
+    backdrop-filter: blur(22px) saturate(150%) brightness(1.025);
+  }
+
+  .premium-panel.premium-hierarchy-h2,
+  .premium-panel.premium-hierarchy-h3,
+  .premium-panel.premium-hierarchy-h4,
+  .premium-report-section.premium-hierarchy-h2,
+  .premium-report-section.premium-hierarchy-h3,
+  .premium-overview-market-strip {
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+    backdrop-filter: blur(20px) saturate(145%);
+  }
+}
+

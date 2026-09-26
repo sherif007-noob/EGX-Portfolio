@@ -200,8 +200,8 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               key={ticker.ticker}
               className="premium-card premium-hierarchy-h5 premium-dense-row premium-radial premium-pad-h5 premium-flow-control rounded-2xl"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2.5 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-start gap-2.5">
                   <StockLogo
                     ticker={ticker.ticker}
                     companyName={ticker.nameEn}
@@ -236,10 +236,10 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="flex w-full items-baseline justify-between gap-2 text-left sm:block sm:w-auto sm:text-right">
                   <div className="premium-type-metric premium-type-metric-dense font-mono text-white">{ticker.lastPrice.toFixed(2)} <span className="premium-type-unit">EGP</span></div>
                   <div
-                    className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${
+                    className={`flex items-center gap-0.5 text-xs font-semibold sm:justify-end ${
                       isPositive ? 'text-emerald-400' : 'text-rose-400'
                     }`}
                   >

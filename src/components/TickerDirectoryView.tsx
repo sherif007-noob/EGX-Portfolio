@@ -103,7 +103,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   return (
     <div className="premium-dense-workflow space-y-4">
       {/* Header Info */}
-      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h3">
+      <div className="premium-glass premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h3">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />

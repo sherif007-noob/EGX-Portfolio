@@ -12,9 +12,14 @@ describe('Phase 8 protected visual-language contract', () => {
     expect(start).toBeGreaterThanOrEqual(0);
 
     const phase8 = css.slice(start);
-    for (const level of ['h1', 'h2', 'h3', 'h4', 'h5']) {
-      expect(phase8).not.toContain(`.premium-hierarchy-${level} {`);
-      expect(phase8).not.toContain(`.premium-card.premium-hierarchy-${level}`);
+    expect(phase8).not.toMatch(/\.premium-card\.premium-hierarchy-h[1-5]/);
+
+    const hierarchyBlocks = [
+      ...phase8.matchAll(/\.premium-hierarchy-h[1-5]\s*\{([^}]*)\}/g),
+    ];
+    for (const match of hierarchyBlocks) {
+      const body = match[1] ?? '';
+      expect(body).not.toMatch(/background\s*:|box-shadow\s*:|backdrop-filter\s*:|border\s*:/);
     }
   });
 

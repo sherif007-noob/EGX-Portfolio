@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress — 8.4.3 complete** | 8.0–8.3b accepted; 8.4.1 foundation, 8.4.2 Overview/Reports, and 8.4.3 dense workflows complete. |
+| 8 | **In progress — 8.4.4 complete** | 8.0–8.3b accepted; 8.4.1 typography foundation through 8.4.4 global spacing rhythm complete. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,19 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Pass 8.4.4 global spacing rhythm normalization
+
+Implementation range `6e9f75bff50003aaefbea67e498bc96d177b67e9` → `59a1b4c8ca41774a9982606cbab20eaa2455ecc8` replaces ad-hoc top-level spacing and card padding with canonical hierarchy-owned rhythm helpers.
+
+Key results:
+- major sections, related groups and control/dense-record groups now use distinct shared spacing tiers;
+- H1–H5 surfaces use shared hierarchy padding helpers instead of locally drifting `p-*` values in the migrated screens;
+- dense workflows remain compact, with tighter mobile control gaps;
+- desktop spacing now emphasizes conceptual grouping rather than equal-weight separation;
+- no glass, aura, glow, semantic edge, semantic color, typography scale, chart, motion or business behavior was changed.
+
+Quality Checks #36263281878 passed typecheck, tests and production build.
 
 ## 2026-09-26 — Pass 8.4.3 dense workflow typography migration
 

@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Bell,
   BellRing,
+  Settings2,
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
@@ -69,6 +70,7 @@ interface HeaderProps {
   isTokenExpired?: boolean;
   onSyncLivePrices?: () => void;
   isSyncingPrices?: boolean;
+  onOpenSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -85,6 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
   isTokenExpired = false,
   onSyncLivePrices,
   isSyncingPrices = false,
+  onOpenSettings,
 }) => {
   const navScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
@@ -205,8 +208,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="premium-header-action-rail flex w-full min-w-0 items-center flex-nowrap justify-center gap-1.5 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none sm:w-auto sm:flex-1 sm:min-w-[200px] sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 sm:gap-2.5">
+          {/* Phase 9 command zone: utilities are grouped separately from creation actions. */}
+          <div className="premium-header-action-rail premium-header-command-zone flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1 sm:justify-end">
+            <div className="premium-header-utility-scroller min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:flex-none sm:overflow-visible">
+              <div className="premium-header-utility-cluster flex w-max items-center gap-1 rounded-xl p-1 sm:gap-1.5">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
               <button
@@ -292,6 +297,22 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+              {/* Settings placeholder — intentionally no settings modal in Phase 9. */}
+              <button
+                id="header-settings-btn"
+                onClick={onOpenSettings}
+                aria-label="Settings"
+                aria-haspopup="dialog"
+                className="premium-action premium-header-utility-action flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                title="Settings — reserved for a future phase"
+              >
+                <Settings2 className="h-3.5 w-3.5 text-slate-300" />
+                <span className="premium-header-action-label hidden 2xl:inline">Settings</span>
+              </button>
+            </div>
+            </div>
+
+            <div className="premium-header-create-cluster flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* Scan Screenshot Button */}
             {onOpenScreenshotModal && (
               <button
@@ -314,6 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="premium-header-action-label hidden sm:inline">Add Trade</span>
             </button>
+            </div>
           </div>
         </div>
       </div>

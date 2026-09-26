@@ -241,7 +241,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
           </div>
 
           <div
-            className="premium-card premium-hierarchy-h3 premium-overview-fees col-span-2 flex flex-col justify-between rounded-2xl p-3 sm:col-span-1 sm:p-3.5"
+            className="premium-card premium-hierarchy-h3 premium-overview-fees premium-glow-breakeven col-span-2 flex flex-col justify-between rounded-2xl p-3 sm:col-span-1 sm:p-3.5"
             data-hierarchy="h3"
           >
             <div className="flex min-w-0 items-start justify-between gap-3">

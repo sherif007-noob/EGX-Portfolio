@@ -101,7 +101,8 @@ Pass 8.4 has started with a deliberately non-invasive foundation pass.
 - `premium-type-unit` provides a subordinate EGP/%/shares/days treatment without adding another hierarchy role;
 - no production screen has been mass-migrated yet;
 - no glass, aura, glow, semantic edge, color mapping, chart, motion or business behavior was changed;
-- `docs/PHASE8_4_TYPOGRAPHY_AUDIT.md` records the screen-by-screen typography debt and migration order.
+- `docs/PHASE8_4_TYPOGRAPHY_AUDIT.md` records the screen-by-screen typography debt and migration order;
+- Quality Checks #36257086507 passed typecheck, tests, and production build.
 
 ## 2026-09-26 — Phase 8 hierarchy/material split
 

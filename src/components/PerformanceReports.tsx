@@ -468,7 +468,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                                   </div>
                                 </div>
 
-                                <div className="space-y-1.5 text-[11px]">
+                                <div className="premium-type-metadata space-y-1.5">
                                   <div className="flex justify-between gap-4">
                                     <span className="text-slate-400">Market value</span>
                                     <span className="font-mono font-semibold text-slate-100">

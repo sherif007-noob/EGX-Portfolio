@@ -391,7 +391,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className={`premium-card premium-hierarchy-h5 premium-dense-row p-3.5 sm:p-4 rounded-2xl space-y-3 ${
+              className={`premium-card premium-semantic-record premium-hierarchy-h5 premium-dense-row p-3.5 sm:p-4 rounded-2xl space-y-3 ${
                 pnlEgp > 0
                   ? 'premium-glow-win'
                   : pnlEgp < 0

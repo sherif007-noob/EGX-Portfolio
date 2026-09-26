@@ -46,6 +46,9 @@ describe('PortfolioSummary Phase 8 hierarchy', () => {
     expect((html.match(/data-hierarchy="h3"/g) ?? []).length).toBe(3);
     expect(html).toContain('data-hierarchy="h4"');
     expect(html).toContain('premium-overview-hero');
+    expect(html).toMatch(/premium-hierarchy-h1[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-hierarchy-h1/);
+    expect(html).toMatch(/premium-hierarchy-h2[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-hierarchy-h2/);
+    expect(html).toMatch(/premium-overview-fees[^"]*premium-glow-breakeven|premium-glow-breakeven[^"]*premium-overview-fees/);
   });
 
   it('places portfolio KPIs before the market-feed utility strip', () => {

@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase8-4-2-overview-reports-typography]
   pull_request:
     branches: [main]
 

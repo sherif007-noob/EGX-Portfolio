@@ -483,7 +483,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <span className="premium-type-metric-label block">Total Transactions</span>
             <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
               {transactions.length}{' '}
-              <span className="text-[11px] text-slate-400 font-normal">
+              <span className="premium-type-metadata font-normal">
                 ({buyCount}B / {sellCount}S)
               </span>
             </span>
@@ -619,7 +619,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           {/* Page Size Selector */}
           <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-xl">
-            <span className="shrink-0 text-[11px] font-medium text-slate-400">Show:</span>
+            <span className="premium-type-metadata shrink-0 font-medium">Show:</span>
             <AnalyticsSelect
               value={pageSize}
               onChange={(value) => setPageSize(value === 'ALL' ? 'ALL' : Number(value))}
@@ -947,7 +947,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         })}
 
         {filteredAndSortedTransactions.length === 0 && (
-          <div className="premium-subpanel text-center py-12 rounded-2xl border-dashed text-xs text-slate-400 space-y-3">
+          <div className="premium-subpanel premium-flow-control text-center py-12 rounded-2xl border-dashed text-xs text-slate-400">
             <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-1" />
             <div>
               <p className="font-semibold text-slate-300">No transactions match your criteria.</p>
@@ -1225,7 +1225,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* If SELL: Realized P&L and Outcome */}
               {editType === 'SELL' && (
                 <div className="premium-modal-section p-3 rounded-xl border-purple-500/20 space-y-3">
-                  <div className="text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
+                  <div className="premium-type-metric-label font-bold text-purple-400 flex items-center gap-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     Sell Exit Financial Outcome
                   </div>

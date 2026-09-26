@@ -9,10 +9,13 @@ describe('Phase 8 material restoration', () => {
   it('keeps hierarchy cards on the Monthly Report glass/aura family', () => {
     const css = readRelative('../index.css');
     expect(css).toContain('Phase 8 material restoration — Monthly Report quality reference');
-    expect(css).toContain('0 0 34px rgb(var(--premium-semantic-rgb) / 0.22)');
-    expect(css).toContain('0 0 76px rgb(var(--premium-semantic-deep-rgb) / 0.10)');
+    expect(css).toContain('0 0 48px rgb(var(--premium-semantic-rgb) / 0.34)');
+    expect(css).toContain('0 0 112px rgb(var(--premium-semantic-deep-rgb) / 0.18)');
     expect(css).toContain('blur(24px) saturate(158%)');
     expect(css).toContain('rgba(12, 20, 39, 0.58)');
+    expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
+    expect(css).toContain('0 0 58px rgb(var(--premium-semantic-rgb) / 0.40)');
+    expect(css).toContain('0 0 132px rgb(var(--premium-semantic-deep-rgb) / 0.24)');
   });
 
   it('does not replace dense semantic cards with edge-only coding', () => {

@@ -88,7 +88,7 @@ const SecondaryMetric: React.FC<{
   toneClass: string;
   detail?: React.ReactNode;
 }> = ({ label, value, toneClass, detail }) => (
-  <div className="premium-secondary-chart-metric min-w-0 rounded-xl px-3 py-2.5">
+  <div className="premium-secondary-chart-metric premium-hierarchy-h4 min-w-0 rounded-xl px-3 py-2.5" data-hierarchy="h4">
     <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
       {label}
     </div>
@@ -151,7 +151,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   } as const;
 
   return (
-    <section className="space-y-3" aria-label="Secondary portfolio analytics">
+    <section className="premium-hierarchy-h0 space-y-3" data-hierarchy="h0" aria-label="Secondary portfolio analytics">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h3 className="text-sm font-bold text-white">Risk &amp; Cost Analytics</h3>
@@ -166,7 +166,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div
-          className="premium-panel premium-secondary-chart-card rounded-2xl p-4 sm:p-5 space-y-4"
+          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2"
           style={{ '--secondary-chart-rgb': '244 63 94' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -269,7 +269,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
         </div>
 
         <div
-          className="premium-panel premium-secondary-chart-card rounded-2xl p-4 sm:p-5 space-y-4"
+          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2"
           style={{ '--secondary-chart-rgb': '245 158 11' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -358,7 +358,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
         </div>
 
         <div
-          className="premium-panel premium-secondary-chart-card space-y-4 rounded-2xl p-4 sm:p-5 xl:col-span-2"
+          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 space-y-4 rounded-2xl p-4 sm:p-5 xl:col-span-2" data-hierarchy="h2"
           style={{ '--secondary-chart-rgb': '6 182 212' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

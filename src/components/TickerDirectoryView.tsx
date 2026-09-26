@@ -101,9 +101,9 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="premium-dense-workflow space-y-4">
       {/* Header Info */}
-      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
+      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h3">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />
@@ -162,7 +162,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </SurfacePresence>
 
       {/* Filter Bar */}
-      <div className="premium-panel flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl" data-hierarchy="h4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -198,7 +198,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           return (
             <div
               key={ticker.ticker}
-              className="premium-card premium-radial p-3.5 sm:p-4 rounded-2xl space-y-3"
+              className="premium-card premium-hierarchy-h5 premium-dense-row premium-radial p-3.5 sm:p-4 rounded-2xl space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
@@ -252,13 +252,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               </div>
 
               {/* Sector & Volume */}
-              <div className="premium-subpanel flex items-center justify-between text-[11px] text-slate-400 px-2 py-1 rounded-lg">
+              <div className="premium-subpanel premium-hierarchy-h4 flex items-center justify-between text-[11px] text-slate-400 px-2 py-1 rounded-lg">
                 <span>{ticker.sector}</span>
                 <span>Vol: {(ticker.volume / 1000000).toFixed(2)}M shrs</span>
               </div>
 
               {/* Technical Levels */}
-              <div className="premium-subpanel grid grid-cols-3 gap-1.5 p-2 rounded-xl text-[11px]">
+              <div className="premium-subpanel premium-hierarchy-h4 grid grid-cols-3 gap-1.5 p-2 rounded-xl text-[11px]">
                 <div>
                   <span className="text-slate-400 text-[10px] block">RSI(14)</span>
                   <span className={`font-mono font-bold ${ticker.rsi14 >= 70 ? 'text-rose-400' : ticker.rsi14 <= 35 ? 'text-emerald-400' : 'text-slate-200'}`}>

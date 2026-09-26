@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 9.0/9.1 CODE COMPLETE / CI CLEAN. Quality Checks #36272919126 passed. Pass 9.2 navigation refinement is next.**
+**IN PROGRESS — Pass 9.2 COMPLETE / CI CLEAN. Quality Checks #36273301109 passed. Pass 9.3 primary creation architecture is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -129,6 +129,19 @@ Build the structural header shell:
 The shell should be coherent glass, but materially quieter than Phase 8 hero cards.
 
 ### 9.2 — Navigation refinement
+
+**Status: COMPLETE / CI CLEAN — Quality Checks #36273301109 passed.**
+
+Implemented:
+- explicit active vs idle navigation roles;
+- quieter inactive text/icon treatment;
+- localized active-tab accent and underline rather than broad competing glow;
+- active-group label emphasis without changing group structure;
+- refined separators and group spacing;
+- dedicated compact/full nav label hooks;
+- explicit keyboard focus-visible treatment;
+- narrow-phone spacing refinement while retaining direct horizontal navigation;
+- regression coverage for all seven destinations, keyboard behavior, overflow affordances, and Phase 8 material isolation.
 
 Refine:
 

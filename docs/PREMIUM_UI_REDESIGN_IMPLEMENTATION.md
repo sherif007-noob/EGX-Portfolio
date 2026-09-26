@@ -33,8 +33,27 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.2 corrected** | Navigation active-state prominence corrected; all header buttons now share premium glass/refraction/bloom language; Quality Checks #36273839931 passed. |
+| 9 | **In progress — 9.3 complete** | Creation architecture grouped; Add Trade primary / Scan Receipt secondary contract locked; Quality Checks #36277267864 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.3 primary creation architecture
+
+Implementation range `141eb69fc8b9795220e741e60bddb0a4bee4844a` → `e949af579b42de43d84c1b214f515a22eb2333b9`.
+
+Implemented:
+- formalized Add Trade as `creation-primary` and Scan Receipt as `creation-secondary`;
+- placed both inside a single dedicated premium creation cluster so the two controls read as related ways to record activity;
+- gave the cluster restrained translucent glass, refraction and ambient cyan/purple atmosphere without competing with the buttons;
+- strengthened Add Trade's blue border luminosity, near/far aura and hover/focus bloom while preserving its existing aurora/shimmer border;
+- kept Scan Receipt emerald, premium and clearly secondary rather than flattening it;
+- added explicit accessible labels for both creation actions;
+- retained narrow-phone touch-target behavior and fixed-access creation;
+- preserved both existing callbacks/workflows unchanged;
+- added `Phase93CreationArchitecture.test.ts` to lock primary/secondary ownership and protect Phase 8 material contracts.
+
+Quality Checks #36277267864 passed typecheck, tests, and production build.
+
+Next: **Pass 9.4 — utility/data-management consolidation**.
 
 ## 2026-09-27 — Phase 9 visual-language correction
 

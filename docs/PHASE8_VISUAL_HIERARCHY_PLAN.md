@@ -2,7 +2,9 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 canonical visual-language correction is CI-clean (Quality Checks #775), device validation pending.**
+**ROLLED BACK — Phase 8 implementation is disabled. The accepted Phase 7 visual language is restored and is the current source of truth.**
+
+On 2026-09-26, all Phase 8 production-code hierarchy/semantic-role changes were restored to the pre-Phase-8 baseline `157bf351ba259287481b39c5708062dc708f3c54` by commit `3ab42e6e035f355206be9bd808609ddca3725c99`. The strong glass + semantic aura treatment visible on the accepted Monthly Report cards is the visual reference; do not reintroduce hierarchy rules that flatten, suppress, or globally remap those effects without a new explicit design pass.
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 

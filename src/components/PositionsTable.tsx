@@ -91,9 +91,23 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="premium-dense-workflow space-y-4">
+      <div className="premium-hierarchy-h3 premium-dense-context flex items-center justify-between gap-3 rounded-xl px-3 py-2.5" data-hierarchy="h3">
+        <div>
+          <div className="premium-type-section-title">Open Positions</div>
+          <div className="premium-type-metadata mt-0.5">
+            {filteredPositions.length === positions.length
+              ? `${positions.length} active holdings`
+              : `${filteredPositions.length} of ${positions.length} holdings visible`}
+          </div>
+        </div>
+        <span className="premium-chip shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-300">
+          Live holdings
+        </span>
+      </div>
+
       {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="premium-glass relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h4">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -137,7 +151,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       {/* Desktop Table View */}
       {isDesktop && (
       <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
-      <div className="premium-table-shell rounded-2xl overflow-hidden">
+      <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data rounded-2xl overflow-hidden" data-hierarchy="h5">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
@@ -377,7 +391,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           return (
             <div
               key={pos.id}
-              className={`premium-card p-3.5 sm:p-4 rounded-2xl space-y-3 ${
+              className={`premium-card premium-hierarchy-h5 premium-dense-row p-3.5 sm:p-4 rounded-2xl space-y-3 ${
                 pnlEgp > 0
                   ? 'premium-glow-win'
                   : pnlEgp < 0

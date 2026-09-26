@@ -307,7 +307,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   return (
     <div className="premium-dense-workflow space-y-6">
       {/* Top Banner */}
-      <div className="premium-hierarchy-h2 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h2">
+      <div className="premium-glass premium-hierarchy-h2 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h2">
         <div>
           <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
             <Wallet className="w-5 h-5 text-emerald-400" />

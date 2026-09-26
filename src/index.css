@@ -4268,6 +4268,36 @@ body {
   }
 }
 
+
+/* Pass 8.6 — narrow-phone hierarchy guard. Material/aura/glow are intentionally untouched. */
+@media (max-width: 390px) {
+  :root {
+    --hierarchy-page-title-size: 1.2rem;
+    --hierarchy-section-title-size: 0.95rem;
+    --hierarchy-metric-hero-size: clamp(1.55rem, 8vw, 1.9rem);
+    --hierarchy-metric-primary-size: clamp(1.08rem, 5.4vw, 1.28rem);
+    --hierarchy-metric-secondary-size: clamp(1rem, 4.8vw, 1.15rem);
+    --hierarchy-metric-dense-size: 0.95rem;
+    --hierarchy-pad-h1: 0.875rem;
+    --hierarchy-pad-h2: 0.75rem;
+    --hierarchy-pad-h3: 0.75rem;
+    --hierarchy-pad-h4: 0.75rem;
+    --hierarchy-pad-h5: 0.75rem;
+  }
+
+  .premium-overview-hero {
+    min-height: 8.75rem;
+  }
+
+  .premium-type-metric,
+  .premium-type-metric-hero,
+  .premium-type-metric-primary,
+  .premium-type-metric-secondary,
+  .premium-type-metric-dense {
+    min-width: 0;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Phase 8 material restoration — Monthly Report quality reference             */
 /* Pass 8.3b: intensified resting aura/glow; hierarchy, glass and edge unchanged. */

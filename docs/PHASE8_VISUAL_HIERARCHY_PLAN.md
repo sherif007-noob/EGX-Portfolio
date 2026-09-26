@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented with the canonical material/semantic/hierarchy separation, validation pending.**
+**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 canonical visual-language correction is CI-clean (Quality Checks #775), device validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -325,7 +325,7 @@ Reduce nested-card competition while keeping the strong Phase 7 chart work.
 
 ## Pass 8.3 — Dense workflow hierarchy
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: IMPLEMENTED / CI CLEAN — Quality Checks #775 passed (36/36 test files, 210/210 tests, build 6.40s); device validation pending.**
 
 Implemented:
 - apply the summary → controls → dense-data hierarchy across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;

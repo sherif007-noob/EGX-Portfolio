@@ -380,7 +380,7 @@ Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
 
-**Status: IN PROGRESS — Pass 8.4.1 canonical typography scale established; screen migration begins in 8.4.2.**
+**Status: IN PROGRESS — Pass 8.4.1 COMPLETE / CI CLEAN; Overview + Reports migration begins in 8.4.2. Quality Checks #36257086507 passed.**
 
 ### Pass 8.4.1 — Canonical typography scale and audit
 

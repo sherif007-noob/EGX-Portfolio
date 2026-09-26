@@ -10,6 +10,11 @@ Phase 8 is an editorial hierarchy pass over the premium system already establish
 
 The purpose is to make the interface easier to scan by giving different information different visual weight.
 
+
+### Material restoration gate — 2026-09-26
+
+The hierarchy/material separation has now been implemented and validated. Monthly Performance audit cards are the canonical quality reference for glass depth, refraction, semantic aura and bloom. Phase 8 hierarchy classes must never attenuate those properties. Production commits: `d801db35e46ceb826361bfe43132f25c1269d9c4` and `477f95930d0657e1f9dbcc85e0fc45749b6ed84d`. Quality Checks run `36223796577` passed typecheck, tests and production build.
+
 ## Why Phase 8 exists
 
 The application now has a coherent premium visual vocabulary:

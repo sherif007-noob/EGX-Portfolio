@@ -494,7 +494,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           return (
             <div
               key={m.monthKey}
-              className="premium-month-audit-shell overflow-hidden rounded-xl"
+              className="premium-month-audit-shell premium-hierarchy-h3 overflow-hidden rounded-xl" data-hierarchy="h3"
             >
               {/* Monthly Banner Ribbon */}
               <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">

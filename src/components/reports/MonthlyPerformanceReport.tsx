@@ -497,7 +497,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
               className="premium-month-audit-shell premium-hierarchy-h3 overflow-hidden rounded-xl" data-hierarchy="h3"
             >
               {/* Monthly Banner Ribbon */}
-              <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="premium-pad-h3 premium-gap-related bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="premium-type-section-title flex items-center gap-1.5 font-display">

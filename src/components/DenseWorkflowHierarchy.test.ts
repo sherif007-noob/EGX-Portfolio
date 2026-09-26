@@ -40,14 +40,17 @@ describe('Phase 8.3 dense workflow hierarchy', () => {
     expect(directory).toContain('premium-hierarchy-h5 premium-dense-row');
   });
 
-  it('keeps the full hero-grade semantic halo on dense cards', () => {
-    const css = readRelative('../index.css');
-    const start = css.indexOf('Phase 8 visual-language hard reset');
-    const protectedSection = css.slice(start);
+  it('maps repeated semantic cards to the dedicated record role', () => {
+    const positions = readRelative('./PositionsTable.tsx');
+    const cycles = readRelative('./ClosedCyclesView.tsx');
+    const journal = readRelative('./TradingJournal.tsx');
 
-    expect(protectedSection).toContain('.premium-card.premium-dense-row.premium-glow-win');
-    expect(protectedSection).toContain('inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.78)');
-    expect(protectedSection).toContain('0 0 40px rgb(var(--premium-semantic-rgb) / 0.30)');
-    expect(protectedSection).toContain('0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15)');
+    for (const source of [positions, cycles, journal]) {
+      expect(source).toContain('premium-semantic-record');
+    }
+
+    const css = readRelative('../index.css');
+    expect(css).toContain('.premium-semantic-record');
+    expect(css).toContain('--premium-semantic-far-radius: 60px');
   });
 });

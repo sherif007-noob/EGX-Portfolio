@@ -435,7 +435,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </SurfacePresence>
 
       {/* Top Banner with P&L, Transaction Stats and Commissions */}
-      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl" data-hierarchy="h3">
+      <div className="premium-glass premium-hierarchy-h3 premium-dense-summary flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl" data-hierarchy="h3">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">

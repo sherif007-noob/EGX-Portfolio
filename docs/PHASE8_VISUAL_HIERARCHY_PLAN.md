@@ -380,7 +380,7 @@ Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
 
-**Status: IN PROGRESS — Pass 8.4.3 COMPLETE / CI CLEAN; global spacing rhythm normalization begins in 8.4.4. Quality Checks #36258191821 passed.**
+**Status: IN PROGRESS — Pass 8.4.4 COMPLETE / CI CLEAN; full typography/spacing consistency sweep begins in 8.4.5. Quality Checks #36263281878 passed.**
 
 ### Pass 8.4.1 — Canonical typography scale and audit
 
@@ -417,6 +417,19 @@ Implemented:
 - metadata/helper roles for company, sector, date, and supporting context;
 - preserved compact operational density across phone and desktop;
 - regression coverage confirms the accepted material and semantic-edge systems remain untouched.
+
+### Pass 8.4.4 — Global spacing rhythm normalization
+
+**Status: COMPLETE / CI CLEAN — Quality Checks #36263281878 passed.**
+
+Implemented:
+- canonical major / related / control spacing flow primitives;
+- canonical H1–H5 internal padding helpers with tighter mobile values;
+- Overview KPI and utility-strip spacing normalization;
+- Reports / Monthly Performance / Trading Performance section rhythm normalization;
+- dense workflow summary → controls → data rhythm across Positions, Cycles, Transactions, Cash, and Stocks;
+- repeated H5 record padding and inter-record spacing normalization;
+- source-level regression coverage proving the spacing layer remains material-neutral.
 
 ### Goal
 

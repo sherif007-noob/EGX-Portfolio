@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **8.4 code complete — device validation pending** | 8.0–8.3b accepted; 8.4.1–8.4.5 implemented and CI clean. |
+| 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,26 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Combined Pass 8.6–8.7 responsive validation and regression gate
+
+Implementation range `fba08d53e7fbbd5efa20d808fe4101b2a51c8f37` → `48eb5dd49d858c09ed640015b046529da8d66516`.
+
+Responsive fixes:
+- added a <=390px hierarchy-only scale/padding guard so large financial values remain dominant without causing narrow-phone overflow;
+- kept the content area capped at `max-w-7xl` on desktop while reducing phone inline padding and moving the shell onto canonical major-flow spacing;
+- fixed collision-prone mobile headers in Open Positions, Transactions, Monthly Performance audit cards, and Ticker Directory records by stacking only below the existing responsive breakpoint;
+- allowed Cash audit heading/status content to wrap safely;
+- kept report tables horizontally scrollable and dense selectors responsive rather than forcing desktop widths.
+
+Regression/closure work:
+- added `Phase867ResponsiveClosure.test.ts`;
+- verifies Overview H1→H4 structure, report/dense responsive behavior, desktop containment, narrow-phone scale, and Header deferral to Phase 9;
+- explicitly proves responsive CSS does not alter glass, aura, glow, border material, or semantic-edge geometry.
+
+Quality Checks #36270371223 passed install, typecheck, tests, and production build.
+
+**Phase 8 is not marked closed yet.** Two prerequisites remain: Pass 8.5 action-priority/control de-emphasis has not been executed, and device visual acceptance is still required for the final 8.4/8.6 responsive result.
 
 ## 2026-09-26 — Pass 8.4.5 full consistency sweep
 

@@ -278,103 +278,107 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Data management: lower-frequency tools share one premium command. */}
-            <div ref={dataToolsRef} className="premium-header-tools relative shrink-0">
-              <button
-                id="header-data-tools-btn"
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={isDataToolsOpen}
-                onClick={() => setIsDataToolsOpen((open) => !open)}
-                className="premium-action premium-header-action premium-header-action-purple premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3"
-                title="Google Sheets, backup, restore, and ledger reconciliation"
-              >
-                <Database className="h-3.5 w-3.5 text-purple-300" />
-                <span className="premium-header-action-label hidden lg:inline">Data &amp; Tools</span>
-                <ChevronDown className={`premium-motion-chevron h-3.5 w-3.5 text-purple-300/80 ${isDataToolsOpen ? 'rotate-180' : ''}`} />
-                {isTokenExpired ? (
-                  <span
-                    className="premium-header-tools-status premium-header-tools-status-warning"
-                    title="Google Sheets needs reconnection"
-                    aria-label="Google Sheets needs reconnection"
-                  />
-                ) : isSheetsConnected ? (
-                  <span
-                    className="premium-header-tools-status premium-header-tools-status-connected"
-                    title="Google Sheets connected"
-                    aria-label="Google Sheets connected"
-                  />
-                ) : null}
-              </button>
+            </div>
+            </div>
 
-              {isDataToolsOpen && (
-                <div
-                  id="header-data-tools-menu"
-                  role="menu"
-                  aria-label="Data and tools"
-                  className="premium-floating premium-dropdown premium-header-tools-menu absolute right-0 top-full z-[80] mt-2 w-[min(19rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border p-1.5"
+            <div className="premium-header-data-cluster flex shrink-0 items-center gap-1 rounded-xl p-1">
+              {/* Data management: lower-frequency tools share one premium command. */}
+              <div ref={dataToolsRef} className="premium-header-tools relative shrink-0">
+                <button
+                  id="header-data-tools-btn"
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isDataToolsOpen}
+                  onClick={() => setIsDataToolsOpen((open) => !open)}
+                  className="premium-action premium-header-action premium-header-action-purple premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3"
+                  title="Google Sheets, backup, restore, and ledger reconciliation"
                 >
-                  <button
-                    id="header-google-sheets-btn"
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setIsDataToolsOpen(false);
-                      onOpenGoogleSheets();
-                    }}
-                    className={`premium-menu-item premium-header-tools-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left ${
-                      isTokenExpired ? 'premium-header-tools-item-warning' : 'premium-header-tools-item-emerald'
-                    }`}
-                  >
-                    <span className="premium-header-tools-icon-wrap">
-                      {isTokenExpired ? (
-                        <AlertTriangle className="h-4 w-4 text-amber-300" />
-                      ) : (
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-300" />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-semibold text-slate-100">
-                        {isTokenExpired ? 'Reconnect Google Sheets' : 'Google Sheets'}
-                      </span>
-                      <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
-                        {isTokenExpired
-                          ? 'Authentication expired — reconnect to continue sync'
-                          : isSheetsConnected
-                          ? 'Connected — manage or sync spreadsheet data'
-                          : 'Connect portfolio data to Google Sheets'}
-                      </span>
-                    </span>
-                    {isSheetsConnected && !isTokenExpired && (
-                      <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                    )}
-                  </button>
+                  <Database className="h-3.5 w-3.5 text-purple-300" />
+                  <span className="premium-header-action-label hidden lg:inline">Data &amp; Tools</span>
+                  <ChevronDown className={`premium-motion-chevron h-3.5 w-3.5 text-purple-300/80 ${isDataToolsOpen ? 'rotate-180' : ''}`} />
+                  {isTokenExpired ? (
+                    <span
+                      className="premium-header-tools-status premium-header-tools-status-warning"
+                      title="Google Sheets needs reconnection"
+                      aria-label="Google Sheets needs reconnection"
+                    />
+                  ) : isSheetsConnected ? (
+                    <span
+                      className="premium-header-tools-status premium-header-tools-status-connected"
+                      title="Google Sheets connected"
+                      aria-label="Google Sheets connected"
+                    />
+                  ) : null}
+                </button>
 
-                  {onOpenBackupModal && (
+                {isDataToolsOpen && (
+                  <div
+                    id="header-data-tools-menu"
+                    role="menu"
+                    aria-label="Data and tools"
+                    className="premium-floating premium-dropdown premium-header-tools-menu absolute right-0 top-full z-[80] mt-2 w-[min(19rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border p-1.5"
+                  >
                     <button
-                      id="header-backup-reconcile-btn"
+                      id="header-google-sheets-btn"
                       type="button"
                       role="menuitem"
                       onClick={() => {
                         setIsDataToolsOpen(false);
-                        onOpenBackupModal();
+                        onOpenGoogleSheets();
                       }}
-                      className="premium-menu-item premium-header-tools-item premium-header-tools-item-purple flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left"
+                      className={`premium-menu-item premium-header-tools-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left ${
+                        isTokenExpired ? 'premium-header-tools-item-warning' : 'premium-header-tools-item-emerald'
+                      }`}
                     >
                       <span className="premium-header-tools-icon-wrap">
-                        <Database className="h-4 w-4 text-purple-300" />
+                        {isTokenExpired ? (
+                          <AlertTriangle className="h-4 w-4 text-amber-300" />
+                        ) : (
+                          <FileSpreadsheet className="h-4 w-4 text-emerald-300" />
+                        )}
                       </span>
-                      <span className="min-w-0">
-                        <span className="block text-xs font-semibold text-slate-100">Backup &amp; Reconcile</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-semibold text-slate-100">
+                          {isTokenExpired ? 'Reconnect Google Sheets' : 'Google Sheets'}
+                        </span>
                         <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
-                          Backup, restore, or reconcile against the ledger
+                          {isTokenExpired
+                            ? 'Authentication expired — reconnect to continue sync'
+                            : isSheetsConnected
+                            ? 'Connected — manage or sync spreadsheet data'
+                            : 'Connect portfolio data to Google Sheets'}
                         </span>
                       </span>
+                      {isSheetsConnected && !isTokenExpired && (
+                        <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                      )}
                     </button>
-                  )}
-                </div>
-              )}
-            </div>
+
+                    {onOpenBackupModal && (
+                      <button
+                        id="header-backup-reconcile-btn"
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsDataToolsOpen(false);
+                          onOpenBackupModal();
+                        }}
+                        className="premium-menu-item premium-header-tools-item premium-header-tools-item-purple flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left"
+                      >
+                        <span className="premium-header-tools-icon-wrap">
+                          <Database className="h-4 w-4 text-purple-300" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-slate-100">Backup &amp; Reconcile</span>
+                          <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
+                            Backup, restore, or reconcile against the ledger
+                          </span>
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Settings entry point is reserved for future functionality; Phase 9 adds the affordance only. */}
               <button
@@ -387,7 +391,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <Settings2 className="h-3.5 w-3.5 text-slate-300" />
                 <span className="premium-header-action-label hidden 2xl:inline">Settings</span>
               </button>
-            </div>
             </div>
 
             <div className="premium-header-create-cluster flex shrink-0 items-center gap-1 p-1 sm:gap-1.5">

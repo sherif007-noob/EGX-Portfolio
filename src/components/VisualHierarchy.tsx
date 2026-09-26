@@ -16,6 +16,8 @@ export type ActionPriority =
   | 'utility'
   | 'destructive';
 
+export type SemanticSurfaceRole = 'hero' | 'card' | 'record';
+
 const SURFACE_CLASS: Record<HierarchyLevel, string> = {
   h0: 'premium-hierarchy-h0',
   h1: 'premium-hierarchy-h1',
@@ -41,6 +43,12 @@ const ACTION_CLASS: Record<ActionPriority, string> = {
   destructive: 'premium-action-priority-destructive',
 };
 
+const SEMANTIC_SURFACE_CLASS: Record<SemanticSurfaceRole, string> = {
+  hero: 'premium-semantic-hero',
+  card: 'premium-semantic-card',
+  record: 'premium-semantic-record',
+};
+
 export const getHierarchySurfaceClass = (level: HierarchyLevel): string =>
   SURFACE_CLASS[level];
 
@@ -49,6 +57,9 @@ export const getHierarchyTextClass = (role: HierarchyTextRole): string =>
 
 export const getActionPriorityClass = (priority: ActionPriority): string =>
   ACTION_CLASS[priority];
+
+export const getSemanticSurfaceClass = (role: SemanticSurfaceRole): string =>
+  SEMANTIC_SURFACE_CLASS[role];
 
 type SurfaceTag = 'div' | 'section' | 'article' | 'aside';
 

@@ -1455,7 +1455,7 @@ body {
 
 /* Phase 5 canonical semantic halo system.
  * The semantic family supplies color; the surface hierarchy supplies intensity.
- * Dense desktop rows stay edge-coded rather than receiving a card halo.
+ * True dense table rows may stay edge-coded; semantic cards retain a scaled aura.
  */
 .premium-glow-win,
 .premium-state-win {
@@ -4487,7 +4487,7 @@ body {
 
 /* Phase 8.3 — dense workflow hierarchy.
  * Operational screens prioritize scanability: summary -> controls -> dense data.
- * Repeated records retain semantic state as edge coding, not full-card halos.
+ * Repeated semantic cards use a scaled aura plus edge cue; hierarchy never erases state.
  */
 .premium-dense-workflow {
   --dense-surface-border: rgba(148, 163, 184, 0.105);

@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress — 8.4 started** | 8.0–8.3b accepted; 8.4.1 canonical typography scale/audit established. |
+| 8 | **In progress — 8.4.2 complete** | 8.0–8.3b accepted; 8.4.1 foundation and 8.4.2 Overview/Reports migration complete. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,20 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Pass 8.4.2 Overview + Reports typography migration
+
+Commit `d079304e798b022e2ef1e1d488eb9dc8253b9ace` applies the 8.4 typography system to Overview and Reports.
+
+Key changes:
+- hero / primary / secondary / dense financial metric scales are now used in hierarchy-sensitive surfaces;
+- EGP and similar units use the subordinate unit helper;
+- non-status metadata no longer relies on unnecessary uppercase/tracking;
+- Monthly Performance keeps its accepted glass, aura and semantic edge while its typography is normalized;
+- Trading Performance KPI and benchmark typography now follows the same system;
+- no material, semantic, chart, motion or business-logic behavior changed.
+
+Quality Checks #36257664993 passed typecheck, tests and production build.
 
 ## 2026-09-26 — Pass 8.4.1 typography foundation
 

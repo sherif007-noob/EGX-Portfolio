@@ -569,7 +569,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
         </div>
       </div>
 
-      <MotionSwap motionKey={`${timeframe}-${tradeTypeFilter}`} variant="state" className="space-y-6">
+      <MotionSwap motionKey={`${timeframe}-${tradeTypeFilter}`} variant="state" className="premium-flow-major">
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         <div className={`premium-card premium-hierarchy-h4 premium-report-kpi premium-pad-h4 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
@@ -651,7 +651,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </div>
 
       {/* Responsive benchmark scorecards: phone + tablet */}
-      <section className="space-y-3 2xl:hidden" aria-label="Detailed performance benchmark scorecards">
+      <section className="premium-flow-control 2xl:hidden" aria-label="Detailed performance benchmark scorecards">
         <div className="flex items-end justify-between gap-3 px-0.5">
           <div>
             <div className="premium-type-section-title text-purple-300/90">Detailed Benchmark Scorecard</div>
@@ -723,7 +723,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain rounded-xl 2xl:block">
         <table className="report-benchmark-table min-w-[1120px] w-full border-collapse text-left text-xs font-sans">
           <thead>
-            <tr className="border-b border-slate-800/70 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+            <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold uppercase tracking-wider">
               <th className="py-3 px-4">Performance Indicator</th>
               <th className="py-3 px-4 text-right">Measured Result</th>
               <th className="py-3 px-4">Institutional Benchmark / Target</th>
@@ -1285,7 +1285,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </div>
 
       {/* Summary Footer Note */}
-      <div className="flex flex-col gap-1 border-t border-slate-800 pt-2 text-[11px] text-slate-500 font-sans sm:flex-row sm:items-center sm:justify-between">
+      <div className="premium-type-metadata flex flex-col gap-1 border-t border-slate-800 pt-2 font-sans sm:flex-row sm:items-center sm:justify-between">
         <span>* All calculations account for buy/sell brokerage fees and real EGX settlement execution.</span>
         <span>Filter applied: {timeframe === 'ALL' ? 'Entire Trading History' : timeframe} ({indicators.totalClosed} closed trades)</span>
       </div>

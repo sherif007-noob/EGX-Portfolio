@@ -5125,3 +5125,45 @@ body {
       var(--premium-refraction-shadow, 0 0 0 transparent);
   }
 }
+
+
+/* Restore the accepted premium-glass primitive when hierarchy is additive. */
+.premium-glass.premium-hierarchy-h2,
+.premium-glass.premium-hierarchy-h3,
+.premium-glass.premium-hierarchy-h4 {
+  border-color: var(--premium-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008)),
+    var(--premium-glass);
+  box-shadow:
+    inset 0 1px 0 var(--premium-highlight),
+    var(--premium-shadow-soft),
+    0 0 30px rgba(34, 211, 238, 0.075),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+
+/* H4/inset semantic state keeps the accepted compact semantic glow.
+ * This protects report KPI/state cards from hierarchy overrides.
+ */
+.premium-hierarchy-h4.premium-state-win,
+.premium-hierarchy-h4.premium-state-loss,
+.premium-hierarchy-h4.premium-state-breakeven,
+.premium-hierarchy-h4.premium-state-buy,
+.premium-report-kpi.premium-state-win,
+.premium-report-kpi.premium-state-loss,
+.premium-report-kpi.premium-state-breakeven,
+.premium-report-kpi.premium-state-buy {
+  --premium-state-border-alpha: 0.38;
+  --premium-state-near-alpha: 0.13;
+  --premium-state-far-alpha: 0.06;
+  --premium-state-far-radius: 58px;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-state-border-alpha)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 26px rgb(var(--premium-semantic-rgb) / var(--premium-state-near-alpha)),
+    0 0 var(--premium-state-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha)),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+}

@@ -305,9 +305,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   });
 
   return (
-    <div className="premium-dense-workflow space-y-6">
+    <div className="premium-dense-workflow premium-flow-related">
       {/* Top Banner */}
-      <div className="premium-hierarchy-h2 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h2">
+      <div className="premium-hierarchy-h2 premium-dense-summary premium-pad-h2 premium-gap-control flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl" data-hierarchy="h2">
         <div>
           <h2 className="premium-type-section-title flex items-center gap-2">
             <Wallet className="w-5 h-5 text-emerald-400" />
@@ -327,9 +327,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* KPI Cards: Cash Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="premium-gap-control grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Available Cash */}
-        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h2 premium-dense-summary-card p-4 rounded-2xl relative overflow-hidden">
+        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h2 premium-dense-summary-card premium-pad-h2 rounded-2xl relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
               <Wallet className="w-4 h-4" />
@@ -350,7 +350,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Portfolio NAV */}
-        <div className="premium-card premium-material-tone-blue premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-blue premium-hierarchy-h3 premium-dense-summary-card premium-pad-h3 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-slate-300 flex items-center gap-1.5">
               <PieChart className="w-4 h-4 text-blue-400" />
@@ -369,7 +369,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Cumulative Deposits */}
-        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-emerald premium-hierarchy-h3 premium-dense-summary-card premium-pad-h3 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
               <ArrowDownLeft className="w-4 h-4" />
@@ -390,7 +390,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
 
         {/* Cumulative Withdrawals */}
-        <div className="premium-card premium-material-tone-rose premium-hierarchy-h3 premium-dense-summary-card p-4 rounded-2xl">
+        <div className="premium-card premium-material-tone-rose premium-hierarchy-h3 premium-dense-summary-card premium-pad-h3 rounded-2xl">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-semibold text-rose-400 flex items-center gap-1.5">
               <ArrowUpRight className="w-4 h-4" />
@@ -412,7 +412,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Cash Ledger & Capital Accounting Reconciliation Audit Card */}
-      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary premium-radial p-5 rounded-2xl space-y-4" data-hierarchy="h3">
+      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary premium-radial premium-pad-h3 premium-flow-related rounded-2xl" data-hierarchy="h3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
@@ -574,7 +574,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </SurfacePresence>
 
       {/* Main Operations Card: Deposit or Withdraw */}
-      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary p-4 sm:p-5 rounded-2xl space-y-5" data-hierarchy="h3">
+      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary premium-pad-h3 premium-flow-related rounded-2xl" data-hierarchy="h3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
             <h3 className="text-base font-bold text-white">Record New Cash Transfer</h3>
@@ -876,7 +876,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Cash Transaction History Ledger */}
-      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary p-4 sm:p-5 rounded-2xl space-y-4" data-hierarchy="h3">
+      <div className="premium-panel premium-hierarchy-h3 premium-dense-summary premium-pad-h3 premium-flow-related rounded-2xl" data-hierarchy="h3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">

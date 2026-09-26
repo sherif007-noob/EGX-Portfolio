@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 9.0/9.1 started on 2026-09-27.**
+**IN PROGRESS — Passes 9.0/9.1 CODE COMPLETE / CI CLEAN. Quality Checks #36272919126 passed. Pass 9.2 navigation refinement is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -90,6 +90,10 @@ Phase 9 must preserve:
 
 ### 9.0 — Functional inventory + contract lock
 
+**Status: COMPLETE / CI CLEAN.**
+
+Current control ownership is now locked in source-level regression coverage. The test protects all seven destinations, the three navigation groups, existing callbacks, keyboard navigation, scroll affordances, active-tab semantics, and the primary-vs-utility action contract.
+
 Audit and classify every existing header control as:
 
 - brand/context;
@@ -103,6 +107,16 @@ Audit and classify every existing header control as:
 Add regression coverage before deeper movement of controls.
 
 ### 9.1 — Command-zone shell
+
+**Status: COMPLETE / CI CLEAN.**
+
+Implemented:
+- utilities are grouped into a dedicated quiet glass cluster;
+- Add Trade / Scan Receipt live in a separate creation cluster;
+- the creation cluster remains fixed-access while utility overflow can scroll on narrow phones;
+- a visible Settings affordance is present now but intentionally opens no Settings modal;
+- the Settings action is wired only to an informational acknowledgement for future expansion;
+- existing navigation remains untouched functionally.
 
 Build the structural header shell:
 

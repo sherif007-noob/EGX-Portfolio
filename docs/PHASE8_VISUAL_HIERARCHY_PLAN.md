@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 8.0 complete; Pass 8.1 Overview hierarchy implemented, validation pending.**
+**IN PROGRESS — Passes 8.0–8.1 complete; Pass 8.2 Reports hierarchy implemented, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -226,7 +226,7 @@ Define reusable hierarchy primitives before changing individual screens.
 
 ## Pass 8.1 — Overview information hierarchy
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: COMPLETE — Quality Checks #769 passed (33/33 test files, 196/196 tests, build 5.13s).**
 
 Implemented:
 - move the EGX Live Market Feed below the KPI summary so portfolio information owns the first visual read;
@@ -274,6 +274,22 @@ Make the Overview scan correctly in under a second.
 ---
 
 ## Pass 8.2 — Reports composition hierarchy
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- make the Reports page intro structural H0 instead of another glass card;
+- consolidate Realized Gains / Losses / Net Realized / Fees into one quiet H3 summary band instead of four peer cards;
+- promote the main unified analytics surface to the single H1 visualization in Reports;
+- place Drawdown, Fees, Realized-vs-Unrealized, Realized Trajectory, and Portfolio Allocation at H2;
+- demote chart metric blocks and report detail blocks to H4;
+- reduce Portfolio Equity Bridge and Closed Trade Summary to H3;
+- convert Trading Performance and Monthly Performance outer shells to structural H0 containers so their internal data is not nested inside another full-strength glass card;
+- demote Trading Performance KPI cards to H4 while preserving semantic state;
+- keep each Monthly Audit month as an H3 section rather than a full-strength peer card;
+- add Reports-specific CSS overrides so H-level classes actually supersede older premium-report-glass / premium-panel shadow intensity;
+- preserve every Phase 7 chart interaction, selector, tooltip, animation, calculation, and data pipeline;
+- add source-level regression coverage for the H1/H2/H3/H4/H0 composition contracts.
 
 ### Goal
 

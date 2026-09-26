@@ -128,7 +128,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
             <div>
               <div className="flex items-start justify-between gap-2">
                 <span className="premium-type-metric-label">Unrealized P&amp;L</span>
-                <span className="hidden text-[10px] text-slate-500 lg:inline">Net of Buy Fees</span>
+                <span className="premium-type-metadata hidden lg:inline">Net of Buy Fees</span>
               </div>
               <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
                 <span

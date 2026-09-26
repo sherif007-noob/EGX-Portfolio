@@ -297,12 +297,11 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-              {/* Settings placeholder — intentionally no settings modal in Phase 9. */}
+              {/* Settings entry point is reserved for future functionality; Phase 9 adds the affordance only. */}
               <button
                 id="header-settings-btn"
                 onClick={onOpenSettings}
                 aria-label="Settings"
-                aria-haspopup="dialog"
                 className="premium-action premium-header-utility-action flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                 title="Settings — reserved for a future phase"
               >

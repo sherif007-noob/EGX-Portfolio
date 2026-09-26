@@ -131,13 +131,13 @@ Rules:
 - structural hierarchy comes from scale, layout, depth, spacing, and typography;
 - semantic color communicates state within that hierarchy;
 - **semantic atmosphere is preserved wherever a financial surface has a meaningful BUY / WIN / LOSS / BREAKEVEN or cost state**;
-- H1 keeps the strongest semantic border + near glow + far aura;
-- H2 keeps a clearly visible but smaller semantic halo;
-- H3 keeps an unmistakable moderate semantic halo;
-- H4 may use primarily local tint/border because it is an inset/detail surface;
-- H5 semantic cards keep a restrained outer aura **plus** a stronger edge cue; they must not become edge-only;
+- the accepted Phase 5 semantic halo is a protected visual-language primitive and is **not attenuated by H2/H3/H5 hierarchy**;
+- H1 hero surfaces may strengthen/widen the accepted halo when their geometry is materially larger;
+- H4/inset state surfaces use the accepted compact semantic-state treatment;
 - true dense table rows may remain edge-coded where an outer card halo is not geometrically appropriate;
-- hierarchy may scale semantic radius/intensity, but **must never zero the near/far glow of a semantic card**;
+- semantic cards in mobile lists/records retain the full semantic aura; H5 does not mean edge-only;
+- **glass/refraction primitives are additive to hierarchy**: Phase 8 may add H-level classes but must not replace `premium-card`, `premium-glass`, `premium-panel`, `premium-subpanel`, hero, or report glass roles;
+- hierarchy must never replace the accepted semantic/glass engine with flatter custom backgrounds or weaker shadows;
 - emerald / rose / amber should be preserved for meaningful financial state;
 - cyan / blue / purple remain the preferred structural/accent families;
 - avoid decorative green/red/amber when no financial state is being communicated.
@@ -334,6 +334,9 @@ Implemented:
 - H1/H2/H3 semantic cards now retain scaled near/far aura according to hierarchy level;
 - H5 semantic records retain edge coding **and** a restrained outer aura/interior wash;
 - Brokerage Fees regains the amber cost semantic glow;
+- second device review showed the first correction was still visibly too weak because the hierarchy-specific flat glass recipes remained active; correction v2 restores the actual pre-Phase-8 card/panel/subpanel/glass recipes and removes H2/H3/H5 semantic attenuation entirely;
+- Total Portfolio Value regains the original `premium-hero-card` role; because the new H1 geometry is substantially larger, its semantic aura is widened to preserve the original perceptual strength;
+- summary/context bands regain their original `premium-glass` primitive instead of using hierarchy as a replacement visual style;
 - give Open Positions an explicit H3 dataset context with visible/total holding count;
 - convert search/filter/sort/action toolbars to quiet H4 surfaces;
 - convert desktop table shells and cash-ledger tables to H5 data surfaces;

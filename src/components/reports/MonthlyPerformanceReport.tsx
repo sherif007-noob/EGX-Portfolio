@@ -615,7 +615,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                       return (
                         <article
                           key={record.key}
-                          className={`premium-card premium-hero-metric premium-report-hero-card ${toneClass} relative overflow-hidden rounded-2xl border p-4`}
+                          className={`premium-card premium-semantic-edge premium-report-semantic-edge premium-hero-metric premium-report-hero-card ${toneClass} relative overflow-hidden rounded-2xl border p-4`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">

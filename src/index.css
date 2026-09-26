@@ -4588,3 +4588,63 @@ body {
       var(--premium-refraction-shadow, 0 0 0 transparent) !important;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Additive semantic edge — aura/glass remain untouched                        */
+/* -------------------------------------------------------------------------- */
+/*
+ * This is a detail layer only. It must NEVER replace, reduce, or override the
+ * host card's existing semantic border, full-card aura, far bloom, glass body,
+ * refraction, or box-shadow. The edge uses its own ::after layer so the current
+ * material system remains exactly intact.
+ */
+.premium-semantic-edge {
+  --premium-edge-rgb: var(--premium-semantic-rgb, 34 211 238);
+  position: relative;
+  isolation: isolate;
+}
+
+.premium-report-hero-card.premium-report-semantic-edge {
+  --premium-edge-rgb: var(--premium-report-hero-rgb, 34 211 238);
+}
+
+.premium-semantic-edge::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  top: 0.7rem;
+  bottom: 0.7rem;
+  left: 0;
+  width: 3px;
+  pointer-events: none;
+  border-radius: 0 999px 999px 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--premium-edge-rgb) / 0.50) 0%,
+      rgb(var(--premium-edge-rgb) / 0.98) 24%,
+      rgb(var(--premium-edge-rgb) / 0.98) 76%,
+      rgb(var(--premium-edge-rgb) / 0.50) 100%
+    );
+  box-shadow:
+    0 0 7px rgb(var(--premium-edge-rgb) / 0.88),
+    0 0 16px rgb(var(--premium-edge-rgb) / 0.42),
+    0 0 28px rgb(var(--premium-edge-rgb) / 0.16),
+    inset 1px 0 0 rgba(255, 255, 255, 0.24);
+  opacity: 0.96;
+}
+
+/* Give the edge a little breathing room on compact cards without moving content. */
+@media (max-width: 767px) {
+  .premium-semantic-edge::after {
+    top: 0.6rem;
+    bottom: 0.6rem;
+    width: 3px;
+    box-shadow:
+      0 0 7px rgb(var(--premium-edge-rgb) / 0.90),
+      0 0 15px rgb(var(--premium-edge-rgb) / 0.44),
+      0 0 26px rgb(var(--premium-edge-rgb) / 0.17),
+      inset 1px 0 0 rgba(255, 255, 255, 0.24);
+  }
+}
+

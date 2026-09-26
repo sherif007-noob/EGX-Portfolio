@@ -47,8 +47,10 @@ describe('PortfolioSummary Phase 8 hierarchy', () => {
     expect(html).toContain('data-hierarchy="h4"');
     expect(html).toContain('premium-overview-hero');
     expect(html).toContain('premium-hero-card');
-    expect(html).toMatch(/premium-hierarchy-h1[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-hierarchy-h1/);
-    expect(html).toMatch(/premium-hierarchy-h2[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-hierarchy-h2/);
+    expect(html).toContain('premium-semantic-hero');
+    expect((html.match(/premium-semantic-card/g) ?? []).length).toBe(3);
+    expect(html).toMatch(/premium-semantic-hero[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-semantic-hero/);
+    expect(html).toMatch(/premium-semantic-card[^"]*premium-glow-loss|premium-glow-loss[^"]*premium-semantic-card/);
     expect(html).toMatch(/premium-overview-fees[^"]*premium-glow-breakeven|premium-glow-breakeven[^"]*premium-overview-fees/);
   });
 

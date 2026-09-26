@@ -609,7 +609,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
                     {cycle.shares.toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-slate-500 block">shares completed</span>
+                  <span className="premium-type-metadata block">shares completed</span>
                 </div>
 
                 {/* Average Buying Price */}
@@ -618,7 +618,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
                     {formatEgp(cycle.weightedAvgBuyPrice)} EGP
                   </span>
-                  <span className="text-[10px] text-slate-500 block">
+                  <span className="premium-type-metadata block">
                     {cycle.buyPhases.length > 1 ? `${cycle.buyPhases.length} Buy Lots Avg` : 'Entry lot'}
                   </span>
                 </div>
@@ -629,7 +629,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-purple-400">
                     {formatEgp(cycle.weightedAvgSellPrice)} EGP
                   </span>
-                  <span className="text-[10px] text-slate-500 block">
+                  <span className="premium-type-metadata block">
                     {cycle.sellPhases.length > 1 ? `${cycle.sellPhases.length} Phases Avg` : 'Exit lot'}
                   </span>
                 </div>
@@ -640,7 +640,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">
                     {formatEgp(cycle.netOutlay)} EGP
                   </span>
-                  <span className="text-[10px] text-slate-500 block">Cost basis + fees</span>
+                  <span className="premium-type-metadata block">Cost basis + fees</span>
                 </div>
 
                 {/* Total Net Proceeds */}
@@ -649,7 +649,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">
                     {formatEgp(cycle.netProceeds)} EGP
                   </span>
-                  <span className="text-[10px] text-slate-500 block">After sell fees</span>
+                  <span className="premium-type-metadata block">After sell fees</span>
                 </div>
 
                 {/* Cycle Duration & Dates */}
@@ -659,7 +659,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
                     {cycle.holdingDays} days
                   </span>
-                  <span className="text-[10px] text-slate-400 block truncate font-mono">
+                  <span className="premium-type-metadata block truncate font-mono">
                     {formatDateDDMMYYYY(cycle.buyDate)} → {formatDateDDMMYYYY(cycle.sellDate)}
                   </span>
                 </div>
@@ -679,7 +679,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </button>
 
                 {cycle.notes && (
-                  <div className="text-[11px] text-slate-400 italic truncate max-w-sm">
+                  <div className="premium-type-helper italic truncate max-w-sm">
                     &ldquo;{cycle.notes}&rdquo;
                   </div>
                 )}
@@ -693,7 +693,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                       <Layers className="w-3.5 h-3.5 text-purple-400" />
                       Multi-Phase Order Execution Details
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="premium-type-metadata">
                       Total Brokerage Commission:{' '}
                       <strong className="text-amber-400 font-mono font-bold">
                         {formatEgp(cycle.totalFees || 0)} EGP
@@ -704,7 +704,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Buy Phases Column */}
                     <div className="space-y-2">
-                      <div className="text-[11px] font-bold text-blue-400 flex items-center justify-between">
+                      <div className="premium-type-metric-label font-bold text-blue-400 flex items-center justify-between">
                         <span>BUY INFLOW PHASES ({cycle.buyPhases.length})</span>
                         <span className="font-mono text-slate-400 font-normal">
                           Avg: {formatEgp(cycle.weightedAvgBuyPrice)} EGP
@@ -723,7 +723,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                               <span className="text-slate-400 mx-1">@</span>
                               <span className="text-blue-300 font-bold">{formatEgp(phase.price)} EGP</span>
                             </div>
-                            <div className="text-right text-[10px] text-slate-400">
+                            <div className="premium-type-metadata text-right">
                               <div className="font-mono text-slate-300">{formatDateDDMMYYYY(phase.date)}</div>
                               {phase.fees > 0 && <div>Fee: {formatEgp(phase.fees)} EGP</div>}
                             </div>
@@ -731,7 +731,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.buyPhases.length === 0 && (
-                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass premium-type-helper p-2 rounded-lg text-slate-500 italic">
                             Initial position entry: {cycle.shares} shares @ {formatEgp(cycle.buyPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.buyDate)}
                           </div>
@@ -741,7 +741,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                     {/* Sell Phases Column */}
                     <div className="space-y-2">
-                      <div className="text-[11px] font-bold text-purple-400 flex items-center justify-between">
+                      <div className="premium-type-metric-label font-bold text-purple-400 flex items-center justify-between">
                         <span>SELL OUTFLOW PHASES ({cycle.sellPhases.length})</span>
                         <span className="font-mono text-slate-400 font-normal">
                           Avg: {formatEgp(cycle.weightedAvgSellPrice)} EGP
@@ -760,7 +760,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                               <span className="text-slate-400 mx-1">@</span>
                               <span className="text-purple-300 font-bold">{formatEgp(phase.price)} EGP</span>
                             </div>
-                            <div className="text-right text-[10px] text-slate-400">
+                            <div className="premium-type-metadata text-right">
                               <div className="font-mono text-slate-300">{formatDateDDMMYYYY(phase.date)}</div>
                               {phase.fees > 0 && <div>Fee: {formatEgp(phase.fees)} EGP</div>}
                             </div>
@@ -768,7 +768,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         ))}
 
                         {cycle.sellPhases.length === 0 && (
-                          <div className="premium-inset-glass p-2 rounded-lg text-slate-500 text-[11px] italic">
+                          <div className="premium-inset-glass premium-type-helper p-2 rounded-lg text-slate-500 italic">
                             Single exit order: {cycle.shares} shares @ {formatEgp(cycle.sellPrice)} EGP on{' '}
                             {formatDateDDMMYYYY(cycle.sellDate)}
                           </div>
@@ -783,7 +783,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         })}
 
         {filteredCycles.length === 0 && (
-          <div className="premium-subpanel text-center py-12 rounded-2xl border-dashed text-xs text-slate-400 space-y-3">
+          <div className="premium-subpanel premium-flow-control text-center py-12 rounded-2xl border-dashed text-xs text-slate-400">
             <RotateCcw className="w-8 h-8 text-slate-600 mx-auto mb-1" />
             <div>
               <p className="font-semibold text-slate-300">No closed cycles match your filters.</p>

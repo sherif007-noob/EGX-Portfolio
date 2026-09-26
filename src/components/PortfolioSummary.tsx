@@ -72,7 +72,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
         <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-6">
           {/* H1 — Total Portfolio Value */}
           <div
-            className={`premium-card premium-hierarchy-h1 premium-overview-hero col-span-2 rounded-2xl p-4 sm:p-5 md:col-span-2 ${dayGlowClass}`}
+            className={`premium-card premium-hero-card premium-hierarchy-h1 premium-overview-hero col-span-2 rounded-2xl p-4 sm:p-5 md:col-span-2 ${dayGlowClass}`}
             data-hierarchy="h1"
           >
             <div className="flex items-start justify-between gap-3">

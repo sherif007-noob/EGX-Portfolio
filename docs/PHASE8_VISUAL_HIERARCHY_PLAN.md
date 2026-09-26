@@ -380,7 +380,7 @@ Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
 
-**Status: IN PROGRESS — Pass 8.4.2 COMPLETE / CI CLEAN; dense workflow typography migration begins in 8.4.3. Quality Checks #36257664993 passed.**
+**Status: IN PROGRESS — Pass 8.4.3 COMPLETE / CI CLEAN; global spacing rhythm normalization begins in 8.4.4. Quality Checks #36258191821 passed.**
 
 ### Pass 8.4.1 — Canonical typography scale and audit
 
@@ -404,6 +404,19 @@ Implemented:
 - Monthly Performance typography normalization while preserving its accepted glass/aura/edge material;
 - Trading Performance KPI and benchmark-scorecard typography normalization;
 - source-level regression coverage proving the protected material and semantic-edge systems remain intact.
+
+### Pass 8.4.3 — Dense workflow typography migration
+
+**Status: COMPLETE / CI CLEAN — Quality Checks #36258191821 passed.**
+
+Implemented:
+- canonical section-title/helper roles on dense workflow headers;
+- canonical H3 summary metric labels and values;
+- canonical dense metric scale for repeated H5 position/cycle/transaction/ticker records;
+- subordinate EGP unit treatment;
+- metadata/helper roles for company, sector, date, and supporting context;
+- preserved compact operational density across phone and desktop;
+- regression coverage confirms the accepted material and semantic-edge systems remain untouched.
 
 ### Goal
 

@@ -271,7 +271,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
   };
 
   return (
-    <div id="report-monthly-performance" className="premium-monthly-performance-results premium-report-structural premium-hierarchy-h0 space-y-6" data-hierarchy="h0">
+    <div id="report-monthly-performance" className="premium-monthly-performance-results premium-report-structural premium-hierarchy-h0 premium-flow-major" data-hierarchy="h0">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -373,7 +373,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
       </div>
 
       {/* Monthly Audit Statements */}
-      <MotionSwap motionKey={`${selectedMonth}-${statusFilter}`} variant="state" className="premium-monthly-results space-y-6">
+      <MotionSwap motionKey={`${selectedMonth}-${statusFilter}`} variant="state" className="premium-monthly-results premium-flow-major">
         {displayedMonths.map((m) => {
           // Filter items by search query and status
           const filteredLiquidated = m.liquidatedTrades.filter((t) => {
@@ -613,7 +613,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                       return (
                         <article
                           key={record.key}
-                          className={`premium-card premium-semantic-edge premium-report-semantic-edge premium-hero-metric premium-report-hero-card ${toneClass} relative overflow-hidden rounded-2xl border p-4`}
+                          className={`premium-card premium-semantic-edge premium-report-semantic-edge premium-hero-metric premium-report-hero-card premium-pad-h5 ${toneClass} relative overflow-hidden rounded-2xl border`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">

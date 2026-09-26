@@ -2,7 +2,7 @@
 
 ## Status
 
-**8.4.1 — CANONICAL TYPOGRAPHY SCALE ESTABLISHED / migration not yet started**
+**8.4.1 — COMPLETE / CI CLEAN — Quality Checks #36257086507 passed; 8.4.2 migration is next.**
 
 This audit starts Pass 8.4 without changing the accepted material system.
 

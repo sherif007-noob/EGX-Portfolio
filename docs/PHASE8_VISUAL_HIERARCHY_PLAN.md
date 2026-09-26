@@ -380,7 +380,7 @@ Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
 
-**Status: IN PROGRESS — Pass 8.4.1 COMPLETE / CI CLEAN; Overview + Reports migration begins in 8.4.2. Quality Checks #36257086507 passed.**
+**Status: IN PROGRESS — Pass 8.4.2 COMPLETE / CI CLEAN; dense workflow typography migration begins in 8.4.3. Quality Checks #36257664993 passed.**
 
 ### Pass 8.4.1 — Canonical typography scale and audit
 
@@ -392,6 +392,18 @@ Implemented:
 - add regression coverage proving the typography layer is material-neutral;
 - add `docs/PHASE8_4_TYPOGRAPHY_AUDIT.md` with the initial migration map;
 - no screen-wide typography migration is included in 8.4.1.
+
+### Pass 8.4.2 — Overview + Reports typography migration
+
+**Status: COMPLETE / CI CLEAN — Quality Checks #36257664993 passed.**
+
+Implemented:
+- canonical hero / primary / secondary metric scales on Overview;
+- subordinate unit treatment for EGP and other units;
+- Reports summary / allocation typography normalization;
+- Monthly Performance typography normalization while preserving its accepted glass/aura/edge material;
+- Trading Performance KPI and benchmark-scorecard typography normalization;
+- source-level regression coverage proving the protected material and semantic-edge systems remain intact.
 
 ### Goal
 

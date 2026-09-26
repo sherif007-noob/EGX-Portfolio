@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.1 complete; Pass 8.2 Reports hierarchy implemented, validation pending.**
+**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 dense workflow hierarchy implemented, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -275,7 +275,7 @@ Make the Overview scan correctly in under a second.
 
 ## Pass 8.2 — Reports composition hierarchy
 
-**Status: IMPLEMENTED — validation pending.**
+**Status: COMPLETE — Quality Checks #770 passed (34/34 test files, 200/200 tests, build 6.24s).**
 
 Implemented:
 - make the Reports page intro structural H0 instead of another glass card;
@@ -317,6 +317,22 @@ Reduce nested-card competition while keeping the strong Phase 7 chart work.
 ---
 
 ## Pass 8.3 — Dense workflow hierarchy
+
+**Status: IMPLEMENTED — validation pending.**
+
+Implemented:
+- add a shared `premium-dense-workflow` hierarchy recipe across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;
+- give Open Positions an explicit H3 dataset context with visible/total holding count;
+- convert search/filter/sort/action toolbars to quiet H4 surfaces;
+- convert desktop table shells and cash-ledger tables to H5 data surfaces;
+- convert repeated mobile/list cards in Positions, Closed Cycles, Transactions, and Stocks to H5 dense records;
+- replace full semantic card halos on repeated BUY/WIN/LOSS/BREAKEVEN records with semantic left-edge coding plus a very shallow local tint;
+- suppress radial card effects on dense records;
+- keep Closed Cycles and Transaction summaries at H3 while their local metric insets remain H4;
+- keep Cash available/capital context at H2, supporting cash KPIs/audit/action/history sections at H3, and the actual ledger at H5;
+- place the Ticker Directory context at H3, filter/search controls at H4, repeated ticker cards at H5, and their technical subpanels at H4;
+- preserve all filtering, sorting, pagination, expand/collapse, transaction editing, cash mutation, ticker sync/export, and trade actions;
+- add source-level regression coverage for summary/control/data hierarchy and dense semantic edge coding.
 
 ### Goal
 

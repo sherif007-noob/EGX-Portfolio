@@ -40,14 +40,14 @@ describe('Phase 8.3 dense workflow hierarchy', () => {
     expect(directory).toContain('premium-hierarchy-h5 premium-dense-row');
   });
 
-  it('keeps the full semantic halo on dense cards instead of replacing it with edge-only coding', () => {
+  it('keeps the full hero-grade semantic halo on dense cards', () => {
     const css = readRelative('../index.css');
-    const start = css.indexOf('Phase 8 protected visual-language restoration');
+    const start = css.indexOf('Phase 8 visual-language hard reset');
     const protectedSection = css.slice(start);
 
     expect(protectedSection).toContain('.premium-card.premium-dense-row.premium-glow-win');
-    expect(protectedSection).toContain('inset 3px 0 0 rgb(var(--premium-semantic-rgb)');
-    expect(protectedSection).toContain('0 0 34px rgb(var(--premium-semantic-rgb)');
-    expect(protectedSection).toContain('--premium-semantic-far-radius: 76px');
+    expect(protectedSection).toContain('inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.78)');
+    expect(protectedSection).toContain('0 0 40px rgb(var(--premium-semantic-rgb) / 0.30)');
+    expect(protectedSection).toContain('0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15)');
   });
 });

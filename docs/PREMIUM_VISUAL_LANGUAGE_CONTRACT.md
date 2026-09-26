@@ -13,6 +13,12 @@ This contract applies to the remainder of the premium overhaul and to later visu
 ---
 
 
+## Additive semantic edge rule
+
+For transaction cards, open-position cards, closed-cycle cards, and Monthly Performance audit cards, a semantic left-edge accent is part of the accepted visual language.
+
+The edge is never a substitute for semantic aura. It must be layered **on top of** the existing glass + full-card glow system. Implement it as an independent decoration layer so it cannot override the host card's background, box-shadow, refraction, border, near aura, or far bloom.
+
 ## Monthly Report material reference
 
 The accepted Monthly Performance audit cards are the canonical material benchmark. A hierarchy surface is visually regressed if it becomes more opaque, flatter, loses inner sheen/refraction, or reduces a semantic state to border-only/edge-only emphasis compared with that reference.

@@ -203,7 +203,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-white tracking-wide">{pos.ticker}</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 max-w-[160px] truncate">
+                        <p className="premium-type-helper max-w-[160px] truncate">
                           {pos.companyName}
                         </p>
                       </div>
@@ -212,7 +212,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
                   {/* Sector */}
                   <td className="py-3 px-3">
-                    <span className="text-[11px] text-slate-300 font-medium truncate block max-w-[130px]">
+                    <span className="premium-type-metadata text-slate-300 truncate block max-w-[130px]">
                       {pos.sector}
                     </span>
                   </td>
@@ -221,7 +221,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   <td className="py-3 px-3 text-right font-medium text-slate-200">
                     <div>{pos.shares.toLocaleString()}</div>
                     {pos.totalFees ? (
-                      <span className="text-[10px] text-slate-400" title="Total entry brokerage fees paid">
+                      <span className="premium-type-metadata" title="Total entry brokerage fees paid">
                         Fees: {pos.totalFees.toFixed(1)} EGP
                       </span>
                     ) : null}
@@ -252,7 +252,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       {isProfit ? '+' : ''}{formatEgp(pnlEgp)} <span className="premium-type-unit">EGP</span>
                     </div>
                     <div
-                      className={`text-[11px] font-semibold flex items-center justify-end gap-0.5 ${
+                      className={`premium-type-metadata font-semibold flex items-center justify-end gap-0.5 ${
                         isProfit ? 'text-emerald-500' : 'text-rose-500'
                       }`}
                     >
@@ -440,7 +440,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   <span className="premium-type-metric-label block">Shares</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{pos.shares.toLocaleString()}</span>
                   {pos.totalFees ? (
-                    <span className="text-[9px] text-slate-400 block">Fee: {pos.totalFees.toFixed(1)}</span>
+                    <span className="premium-type-metadata block">Fee: {pos.totalFees.toFixed(1)}</span>
                   ) : null}
                 </div>
                 <div>
@@ -482,7 +482,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   ) : null}
                 </div>
               ) : (
-                <div className="text-[11px] text-slate-500">
+                <div className="premium-type-metadata">
                   <button
                     onClick={() => onEditPosition(pos)}
                     className="premium-action premium-action-warning w-full justify-center px-2 py-1 rounded-lg text-[10px] sm:w-auto"

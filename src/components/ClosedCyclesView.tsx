@@ -276,7 +276,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <h2 className="premium-type-section-title flex items-center gap-2">
               <RotateCcw className="w-5 h-5 text-purple-400" />
               Closed Trade Cycles
             </h2>
@@ -284,7 +284,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               {summary.totalCount} Completed Cycles
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="premium-type-helper mt-1">
             Consolidated cycle views combining multi-phase executions (e.g. CANA, TAQA) into weighted average buy &amp; sell prices.
           </p>
         </div>
@@ -303,86 +303,86 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Realized P&L */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Net Realized P&amp;L</span>
             <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div
-            className={`mt-2 text-lg font-black font-mono truncate ${
+            className={`premium-type-metric premium-type-metric-secondary mt-2 truncate font-mono ${
               summary.totalRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
             }`}
           >
             {summary.totalRealizedPnl >= 0 ? '+' : ''}
             {formatEgp(summary.totalRealizedPnl)}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">EGP net after fees</div>
+          <div className="premium-type-metadata mt-0.5">EGP net after fees</div>
         </div>
 
         {/* Win Rate */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Win Rate</span>
             <Percent className="w-3.5 h-3.5 text-blue-400" />
           </div>
-          <div className="mt-2 text-lg font-black font-mono text-white">
+          <div className="premium-type-metric premium-type-metric-secondary mt-2 font-mono text-white">
             {summary.winRate === null ? 'N/A' : `${summary.winRate.toFixed(1)}%`}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">
+          <div className="premium-type-metadata mt-0.5">
             {summary.winCount}W / {summary.lossCount}L / {summary.breakevenCount}BE
           </div>
         </div>
 
         {/* Profit Factor */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Profit Factor</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
           </div>
-          <div className="mt-2 text-lg font-black font-mono text-purple-300">
+          <div className="premium-type-metric premium-type-metric-secondary mt-2 font-mono text-purple-300">
             {summary.profitFactor === null ? 'N/A' : Number.isFinite(summary.profitFactor) ? summary.profitFactor.toFixed(2) : '∞'}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Wins / Gross Losses</div>
+          <div className="premium-type-metadata mt-0.5">Wins / Gross Losses</div>
         </div>
 
         {/* Average Return per Cycle */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Avg Return / Cycle</span>
             <ArrowUpDown className="w-3.5 h-3.5 text-teal-400" />
           </div>
           <div
-            className={`mt-2 text-lg font-black font-mono truncate ${
+            className={`premium-type-metric premium-type-metric-secondary mt-2 truncate font-mono ${
               summary.avgReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
             }`}
           >
             {summary.avgReturnPct >= 0 ? '+' : ''}
             {summary.avgReturnPct.toFixed(2)}%
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Mean cycle gain</div>
+          <div className="premium-type-metadata mt-0.5">Mean cycle gain</div>
         </div>
 
         {/* Average Holding Days */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Avg Hold Duration</span>
             <Clock className="w-3.5 h-3.5 text-amber-400" />
           </div>
-          <div className="mt-2 text-lg font-black font-mono text-amber-300">
+          <div className="premium-type-metric premium-type-metric-secondary mt-2 font-mono text-amber-300">
             {summary.avgHoldingDays} days
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">First buy to exit</div>
+          <div className="premium-type-metadata mt-0.5">First buy to exit</div>
         </div>
 
         {/* Total Brokerage Fees */}
         <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="premium-type-metric-label flex items-center justify-between">
             <span>Cycle Fees Paid</span>
             <Receipt className="w-3.5 h-3.5 text-rose-400" />
           </div>
-          <div className="mt-2 text-lg font-black font-mono text-rose-300">
+          <div className="premium-type-metric premium-type-metric-secondary mt-2 font-mono text-rose-300">
             {formatEgp(summary.totalFees)}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">EGP commissions</div>
+          <div className="premium-type-metadata mt-0.5">EGP commissions</div>
         </div>
       </div>
 
@@ -511,7 +511,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-white text-base">{cycle.ticker}</span>
+                      <span className="premium-type-metric-dense text-white">{cycle.ticker}</span>
                       {cycle.cycleTag && (
                         <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                           <Tag className="w-3 h-3" />
@@ -545,8 +545,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {cycle.companyName} • <span className="text-slate-500">{cycle.sector}</span>
+                    <p className="premium-type-helper mt-0.5">
+                      {cycle.companyName} • <span className="premium-type-metadata">{cycle.sector}</span>
                     </p>
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 <div className="flex items-center gap-4 sm:justify-end">
                   <div className="text-left sm:text-right">
                     <div
-                      className={`text-lg font-black font-mono flex items-center gap-1 sm:justify-end ${
+                      className={`premium-type-metric premium-type-metric-dense font-mono flex items-center gap-1 sm:justify-end ${
                         isWin
                           ? 'text-emerald-400'
                           : isLoss
@@ -564,7 +564,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                       }`}
                     >
                       {cycle.realizedPnlEgp >= 0 ? '+' : ''}
-                      {formatEgp(cycle.realizedPnlEgp)} EGP
+                      {formatEgp(cycle.realizedPnlEgp)} <span className="premium-type-unit">EGP</span>
                     </div>
                     <div
                       className={`text-xs font-bold flex items-center gap-1 sm:justify-end ${
@@ -605,8 +605,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 py-3.5 text-xs">
                 {/* Total Shares */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Total Cycle Shares</span>
-                  <span className="font-mono text-white font-bold text-sm">
+                  <span className="premium-type-metric-label block">Total Cycle Shares</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
                     {cycle.shares.toLocaleString()}
                   </span>
                   <span className="text-[10px] text-slate-500 block">shares completed</span>
@@ -614,8 +614,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                 {/* Average Buying Price */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Avg. Buying Price</span>
-                  <span className="font-mono text-blue-400 font-bold text-sm">
+                  <span className="premium-type-metric-label block">Avg. Buying Price</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
                     {formatEgp(cycle.weightedAvgBuyPrice)} EGP
                   </span>
                   <span className="text-[10px] text-slate-500 block">
@@ -625,8 +625,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                 {/* Average Selling Price */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Avg. Selling Price</span>
-                  <span className="font-mono text-purple-400 font-bold text-sm">
+                  <span className="premium-type-metric-label block">Avg. Selling Price</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-purple-400">
                     {formatEgp(cycle.weightedAvgSellPrice)} EGP
                   </span>
                   <span className="text-[10px] text-slate-500 block">
@@ -636,8 +636,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                 {/* Capital Outlay */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Total Invested Outlay</span>
-                  <span className="font-mono text-slate-200 font-semibold text-sm">
+                  <span className="premium-type-metric-label block">Total Invested Outlay</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">
                     {formatEgp(cycle.netOutlay)} EGP
                   </span>
                   <span className="text-[10px] text-slate-500 block">Cost basis + fees</span>
@@ -645,8 +645,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                 {/* Total Net Proceeds */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Net Realized Proceeds</span>
-                  <span className="font-mono text-emerald-400 font-semibold text-sm">
+                  <span className="premium-type-metric-label block">Net Realized Proceeds</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">
                     {formatEgp(cycle.netProceeds)} EGP
                   </span>
                   <span className="text-[10px] text-slate-500 block">After sell fees</span>
@@ -654,8 +654,8 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
                 {/* Cycle Duration & Dates */}
                 <div className="premium-subpanel p-2.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 font-medium block">Cycle Duration</span>
-                  <span className="font-mono text-amber-300 font-bold text-sm flex items-center gap-1">
+                  <span className="premium-type-metric-label block">Cycle Duration</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-300 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
                     {cycle.holdingDays} days
                   </span>

@@ -105,11 +105,11 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       {/* Header Info */}
       <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h3">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="premium-type-section-title flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />
             EGX Ticker Directory &amp; Market Data Feed
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="premium-type-helper mt-0.5">
             Directory of active Egyptian Exchange equities with live market quotes, technical levels, and Google Sheet sync.
           </p>
         </div>
@@ -211,7 +211,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
                   />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-base font-black text-white">{ticker.ticker}</span>
+                      <span className="premium-type-metric-dense text-white">{ticker.ticker}</span>
                       <span className="premium-chip text-[10px] px-2 py-0.5 rounded-full text-slate-300 font-medium shrink-0">
                         {ticker.trendStatus}
                       </span>
@@ -227,19 +227,17 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
                         </span>
                       )}
                     </div>
-                    <h3 className="text-xs text-slate-300 font-medium line-clamp-1" title={ticker.nameEn}>
+                    <h3 className="premium-type-helper text-slate-300 line-clamp-1" title={ticker.nameEn}>
                       {ticker.nameEn}
                     </h3>
-                    <p className="text-[11px] text-slate-400 font-arabic line-clamp-1" dir="rtl">
+                    <p className="premium-type-metadata font-arabic line-clamp-1" dir="rtl">
                       {ticker.nameAr}
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <div className="font-mono font-bold text-base text-white">
-                    {ticker.lastPrice.toFixed(2)} EGP
-                  </div>
+                  <div className="premium-type-metric premium-type-metric-dense font-mono text-white">{ticker.lastPrice.toFixed(2)} <span className="premium-type-unit">EGP</span></div>
                   <div
                     className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${
                       isPositive ? 'text-emerald-400' : 'text-rose-400'
@@ -260,18 +258,18 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               {/* Technical Levels */}
               <div className="premium-subpanel premium-hierarchy-h4 grid grid-cols-3 gap-1.5 p-2 rounded-xl text-[11px]">
                 <div>
-                  <span className="text-slate-400 text-[10px] block">RSI(14)</span>
-                  <span className={`font-mono font-bold ${ticker.rsi14 >= 70 ? 'text-rose-400' : ticker.rsi14 <= 35 ? 'text-emerald-400' : 'text-slate-200'}`}>
+                  <span className="premium-type-metric-label block">RSI(14)</span>
+                  <span className={`premium-type-metric-dense font-mono ${ticker.rsi14 >= 70 ? 'text-rose-400' : ticker.rsi14 <= 35 ? 'text-emerald-400' : 'text-slate-200'}`}>
                     {ticker.rsi14.toFixed(1)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-[10px] block">Support</span>
-                  <span className="font-mono text-slate-300">{ticker.support.toFixed(2)}</span>
+                  <span className="premium-type-metric-label block">Support</span>
+                  <span className="premium-type-metric-dense font-mono text-slate-300">{ticker.support.toFixed(2)}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-400 text-[10px] block">Target</span>
-                  <span className="font-mono font-bold text-emerald-400">{ticker.targetPrice.toFixed(2)}</span>
+                  <span className="premium-type-metric-label block">Target</span>
+                  <span className="premium-type-metric-dense font-mono text-emerald-400">{ticker.targetPrice.toFixed(2)}</span>
                 </div>
               </div>
 

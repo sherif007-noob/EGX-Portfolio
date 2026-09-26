@@ -442,7 +442,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
                 <BookOpen className="w-4 h-4" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="premium-type-section-title">
                 Trade Journal &amp; Transaction Ledger
               </h2>
             </div>
@@ -473,15 +473,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               )}
             </div>
           </div>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+          <p className="premium-type-helper mt-1 max-w-2xl">
             Chronological log of all individual executions (entries, DCA purchases, and exit sales). Each buy order is tracked as a separate transaction at its exact purchase price.
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
           <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl">
-            <span className="text-slate-400 block text-[10px] font-medium">Total Transactions</span>
-            <span className="font-mono font-bold text-white text-sm">
+            <span className="premium-type-metric-label block">Total Transactions</span>
+            <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
               {transactions.length}{' '}
               <span className="text-[11px] text-slate-400 font-normal">
                 ({buyCount}B / {sellCount}S)
@@ -490,9 +490,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
 
           <div className={`premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl ${totalRealizedPnl > 0 ? 'premium-state-win' : totalRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}>
-            <span className="text-slate-400 block text-[10px] font-medium">Net Realized P&amp;L</span>
+            <span className="premium-type-metric-label block">Net Realized P&amp;L</span>
             <span
-              className={`font-mono font-bold text-sm ${
+              className={`premium-type-metric premium-type-metric-dense font-mono ${
                 totalRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
@@ -502,15 +502,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
 
           <div className="premium-subpanel premium-state-buy p-2.5 rounded-xl">
-            <span className="text-slate-400 block text-[10px] font-medium">Total Buy Inflow</span>
-            <span className="font-mono font-bold text-blue-400 text-sm">
+            <span className="premium-type-metric-label block">Total Buy Inflow</span>
+            <span className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
               {formatEgp(totalBuyOutlay)} EGP
             </span>
           </div>
 
           <div className="premium-subpanel premium-state-breakeven p-2.5 rounded-xl">
-            <span className="text-slate-400 block text-[10px] font-medium">Brokerage Fees Paid</span>
-            <span className="font-mono font-bold text-amber-400 text-sm">
+            <span className="premium-type-metric-label block">Brokerage Fees Paid</span>
+            <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-400">
               {formatEgp(totalFeesPaid)} EGP
             </span>
           </div>
@@ -727,7 +727,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-white text-base tracking-wide">
+                      <span className="premium-type-metric-dense text-white">
                         {tx.ticker}
                       </span>
 
@@ -788,7 +788,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-400 mt-0.5">{tx.companyName}</p>
+                    <p className="premium-type-helper mt-0.5">{tx.companyName}</p>
                   </div>
                 </div>
 
@@ -798,7 +798,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     {isSell ? (
                       <>
                         <div
-                          className={`font-mono font-bold text-base ${
+                          className={`premium-type-metric premium-type-metric-dense font-mono ${
                             isWinningSell
                               ? 'text-emerald-400'
                               : isLosingSell
@@ -807,7 +807,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           }`}
                         >
                           {realizedPnlEgp > 0 ? '+' : ''}
-                          {formatEgp(realizedPnlEgp)} EGP
+                          {formatEgp(realizedPnlEgp)} <span className="premium-type-unit">EGP</span>
                         </div>
                         <div
                           className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${
@@ -833,12 +833,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       </>
                     ) : (
                       <>
-                        <div className="font-mono font-bold text-base text-blue-400">
-                          {formatEgp(totalOutlayOrProceeds)} EGP
+                        <div className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
+                          {formatEgp(totalOutlayOrProceeds)} <span className="premium-type-unit">EGP</span>
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
-                          Total Capital Outlay
-                        </div>
+                        <div className="premium-type-metadata">Total Capital Outlay</div>
                       </>
                     )}
                   </div>
@@ -866,48 +864,48 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* Row 2: Detailed Transaction Attributes Grid */}
               <div className="premium-inset-glass grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs">
                 <div>
-                  <span className="text-slate-400 text-[10px] block font-medium">Transaction Shares</span>
-                  <span className="font-mono text-slate-100 font-bold">
+                  <span className="premium-type-metric-label block">Transaction Shares</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {tx.shares.toLocaleString()} shares
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] block font-medium">
+                  <span className="premium-type-metric-label block">
                     {isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
                   </span>
-                  <span className="font-mono text-slate-100 font-bold">
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(tx.price)} EGP
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] block font-medium">Execution Date</span>
+                  <span className="premium-type-metric-label block">Execution Date</span>
                   <span
-                    className="font-mono text-slate-200 flex items-center gap-1 font-semibold cursor-help"
+                    className="premium-type-metric-dense font-mono text-slate-200 flex items-center gap-1 cursor-help"
                     title={`Interpreted Date: ${formatDateVerbose(tx.date, true)}`}
                   >
                     <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
                     <span>{formatDateVerbose(tx.date, false)}</span>
                   </span>
-                  <span className="text-[10px] text-slate-500 block font-mono">
+                  <span className="premium-type-metadata block font-mono">
                     {formatDateDDMMYYYY(tx.date)}
                     {formatExecutionTime(tx.executedAt) ? ` • ${formatExecutionTime(tx.executedAt)}` : ''}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] block font-medium">Brokerage Fee</span>
-                  <span className="font-mono text-amber-400 font-semibold">
+                  <span className="premium-type-metric-label block">Brokerage Fee</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-400">
                     {tx.fees ? `${formatEgp(tx.fees)} EGP` : '0.00 EGP'}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] block font-medium">
+                  <span className="premium-type-metric-label block">
                     {isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
                   </span>
-                  <span className="font-mono text-slate-100 font-semibold">
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(totalOutlayOrProceeds)} EGP
                   </span>
                 </div>

@@ -309,19 +309,19 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       {/* Top Banner */}
       <div className="premium-hierarchy-h2 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h2">
         <div>
-          <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <h2 className="premium-type-section-title flex items-center gap-2">
             <Wallet className="w-5 h-5 text-emerald-400" />
             Cash Ledger &amp; Capital Balances
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="premium-type-helper mt-0.5">
             Deposit capital, withdraw funds, and manage previous cash entries directly to match your brokerage cash.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
           <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            <span className="text-[10px] text-emerald-500/80 block font-semibold">Available Liquid Cash</span>
-            <span className="font-mono font-black text-sm">{formatEgp(cashBalance)} EGP</span>
+            <span className="premium-type-metric-label block text-emerald-500/80">Available Liquid Cash</span>
+            <span className="premium-type-metric premium-type-metric-dense font-mono">{formatEgp(cashBalance)} <span className="premium-type-unit">EGP</span></span>
           </div>
         </div>
       </div>
@@ -340,8 +340,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-white font-mono">{formatEgp(cashBalance)}</span>
-            <span className="text-xs text-slate-400">EGP</span>
+            <span className="premium-type-metric premium-type-metric-primary font-mono text-white">{formatEgp(cashBalance)}</span>
+            <span className="premium-type-unit">EGP</span>
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
             <span>Portfolio Share:</span>
@@ -359,8 +359,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             <span className="text-[10px] text-slate-400">Cash + Equities</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-white font-mono">{formatEgp(totalPortfolioValue)}</span>
-            <span className="text-xs text-slate-400">EGP</span>
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-white">{formatEgp(totalPortfolioValue)}</span>
+            <span className="premium-type-unit">EGP</span>
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
             <span>Equities Allocation:</span>
@@ -378,8 +378,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             <span className="text-[10px] text-slate-400">All Time</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-emerald-400 font-mono">+{formatEgp(totalDeposits)}</span>
-            <span className="text-xs text-slate-400">EGP</span>
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-emerald-400">+{formatEgp(totalDeposits)}</span>
+            <span className="premium-type-unit">EGP</span>
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
             <span>Deposit Count:</span>
@@ -399,8 +399,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             <span className="text-[10px] text-slate-400">All Time</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-rose-400 font-mono">-{formatEgp(totalWithdrawals)}</span>
-            <span className="text-xs text-slate-400">EGP</span>
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-rose-400">-{formatEgp(totalWithdrawals)}</span>
+            <span className="premium-type-unit">EGP</span>
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between">
             <span>Withdrawal Count:</span>
@@ -419,7 +419,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="premium-type-section-title flex items-center gap-2">
                 Capital Ledger &amp; Cash Balance Audit
                 {hasDiscrepancy ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
@@ -433,7 +433,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="premium-type-helper mt-0.5">
                 Exact mathematical breakdown of account cash from your deposits, open positions cost outlays, and realized trade gains.
               </p>
             </div>
@@ -444,12 +444,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           {/* 1. Net Capital Inflow */}
           <div className="premium-subpanel p-3 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+            <span className="premium-type-metric-label block">
               1. Net Capital Deposited
             </span>
-            <div className="text-sm font-mono font-bold text-white">
-              +{formatEgp(netCapitalDeposited)} EGP
-            </div>
+            <div className="premium-type-metric premium-type-metric-dense font-mono text-white">+{formatEgp(netCapitalDeposited)} <span className="premium-type-unit">EGP</span></div>
             <span className="text-[10px] text-slate-500 block">
               {transactions.filter((t) => t.type === 'DEPOSIT').length} deposits logged
             </span>
@@ -457,12 +455,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
           {/* 2. Open Positions Cost Outlay */}
           <div className="premium-subpanel p-3 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+            <span className="premium-type-metric-label block">
               2. Open Positions Cost Basis
             </span>
-            <div className="text-sm font-mono font-bold text-rose-400">
-              -{formatEgp(totalOpenPositionsCost)} EGP
-            </div>
+            <div className="premium-type-metric premium-type-metric-dense font-mono text-rose-400">-{formatEgp(totalOpenPositionsCost)} <span className="premium-type-unit">EGP</span></div>
             <span className="text-[10px] text-slate-500 block">
               {positions.length} active holdings bought
             </span>
@@ -470,16 +466,16 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
           {/* 3. Realized P&L */}
           <div className="premium-subpanel p-3 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+            <span className="premium-type-metric-label block">
               3. Closed Cycles Net P&amp;L
             </span>
             <div
-              className={`text-sm font-mono font-bold ${
+              className={`premium-type-metric premium-type-metric-dense font-mono ${
                 totalRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
               {totalRealizedPnl >= 0 ? '+' : ''}
-              {formatEgp(totalRealizedPnl)} EGP
+              {formatEgp(totalRealizedPnl)} <span className="premium-type-unit">EGP</span>
             </div>
             <span className="text-[10px] text-slate-500 block">
               {closedTrades.length} completed cycles
@@ -488,12 +484,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
           {/* 4. Audited Available Cash */}
           <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-1">
-            <span className="text-[10px] text-emerald-300 font-semibold block uppercase tracking-wider">
+            <span className="premium-type-metric-label block text-emerald-300">
               4. True Liquid Cash
             </span>
-            <div className="text-sm font-mono font-black text-emerald-400">
-              {formatEgp(auditedLiquidCash)} EGP
-            </div>
+            <div className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">{formatEgp(auditedLiquidCash)} <span className="premium-type-unit">EGP</span></div>
             <span className="text-[10px] text-emerald-500/80 block">
               (1) - (2) + (3)
             </span>
@@ -501,12 +495,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
           {/* 5. True Total Portfolio NAV */}
           <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 space-y-1">
-            <span className="text-[10px] text-blue-300 font-semibold block uppercase tracking-wider">
+            <span className="premium-type-metric-label block text-blue-300">
               5. True Portfolio NAV
             </span>
-            <div className="text-sm font-mono font-black text-blue-400">
-              {formatEgp(auditedPortfolioNav)} EGP
-            </div>
+            <div className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">{formatEgp(auditedPortfolioNav)} <span className="premium-type-unit">EGP</span></div>
             <span className="text-[10px] text-blue-400/80 block">
               Cash + {formatEgp(totalOpenPositionsMarketValue)} EGP Equities
             </span>

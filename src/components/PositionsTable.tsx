@@ -249,7 +249,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         isProfit ? 'text-emerald-400' : 'text-rose-400'
                       }`}
                     >
-                      {isProfit ? '+' : ''}{formatEgp(pnlEgp)} EGP
+                      {isProfit ? '+' : ''}{formatEgp(pnlEgp)} <span className="premium-type-unit">EGP</span>
                     </div>
                     <div
                       className={`text-[11px] font-semibold flex items-center justify-end gap-0.5 ${
@@ -409,16 +409,16 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   />
                   <div>
                     <div className="flex min-w-0 items-center gap-2">
-                      <span className="font-bold text-white text-sm">{pos.ticker}</span>
-                      <span className="max-w-[120px] truncate text-[10px] text-slate-500">{pos.sector}</span>
+                      <span className="premium-type-metric-dense text-white">{pos.ticker}</span>
+                      <span className="premium-type-metadata max-w-[120px] truncate">{pos.sector}</span>
                     </div>
-                    <p className="text-xs text-slate-400 truncate max-w-[200px]">{pos.companyName}</p>
+                    <p className="premium-type-helper truncate max-w-[200px]">{pos.companyName}</p>
                   </div>
                 </div>
 
                 <div className="shrink-0 text-right">
                   <div
-                    className={`font-mono font-bold text-sm ${
+                    className={`premium-type-metric premium-type-metric-dense font-mono ${
                       isProfit ? 'text-emerald-400' : 'text-rose-400'
                     }`}
                   >
@@ -437,23 +437,23 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               {/* Stats details */}
               <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-xl">
                 <div>
-                  <span className="text-slate-500 text-[10px] block">Shares</span>
-                  <span className="font-mono text-slate-200">{pos.shares.toLocaleString()}</span>
+                  <span className="premium-type-metric-label block">Shares</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{pos.shares.toLocaleString()}</span>
                   {pos.totalFees ? (
                     <span className="text-[9px] text-slate-400 block">Fee: {pos.totalFees.toFixed(1)}</span>
                   ) : null}
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px] block">Avg Buy</span>
-                  <span className="font-mono text-slate-200">{formatEgp(pos.avgBuyPrice)}</span>
+                  <span className="premium-type-metric-label block">Avg Buy</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{formatEgp(pos.avgBuyPrice)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px] block">Current</span>
-                  <span className="font-mono text-white font-bold">{formatEgp(pos.currentPrice)}</span>
+                  <span className="premium-type-metric-label block">Current</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-white">{formatEgp(pos.currentPrice)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px] block">Mkt Value</span>
-                  <span className="font-mono text-white font-bold">{formatEgp(currentValue)}</span>
+                  <span className="premium-type-metric-label block">Mkt Value</span>
+                  <span className="premium-type-metric premium-type-metric-dense font-mono text-white">{formatEgp(currentValue)}</span>
                 </div>
               </div>
 

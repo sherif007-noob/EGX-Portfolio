@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 dense workflow hierarchy implemented, validation pending.**
+**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented with semantic-soul correction, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -125,11 +125,19 @@ Treatment:
 
 **Hierarchy and financial state are separate axes.**
 
-A loss should not automatically become more visually important than the hero because it is red.
+A loss should not automatically become more visually important than the hero because it is red. Equally, hierarchy must never make a real financial state visually disappear.
 
 Rules:
 - structural hierarchy comes from scale, layout, depth, spacing, and typography;
 - semantic color communicates state within that hierarchy;
+- **semantic atmosphere is preserved wherever a financial surface has a meaningful BUY / WIN / LOSS / BREAKEVEN or cost state**;
+- H1 keeps the strongest semantic border + near glow + far aura;
+- H2 keeps a clearly visible but smaller semantic halo;
+- H3 keeps an unmistakable moderate semantic halo;
+- H4 may use primarily local tint/border because it is an inset/detail surface;
+- H5 semantic cards keep a restrained outer aura **plus** a stronger edge cue; they must not become edge-only;
+- true dense table rows may remain edge-coded where an outer card halo is not geometrically appropriate;
+- hierarchy may scale semantic radius/intensity, but **must never zero the near/far glow of a semantic card**;
 - emerald / rose / amber should be preserved for meaningful financial state;
 - cyan / blue / purple remain the preferred structural/accent families;
 - avoid decorative green/red/amber when no financial state is being communicated.
@@ -322,6 +330,10 @@ Reduce nested-card competition while keeping the strong Phase 7 chart work.
 
 Implemented:
 - add a shared `premium-dense-workflow` hierarchy recipe across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;
+- device review exposed an overcorrection: hierarchy CSS was overriding the Phase 5 semantic `box-shadow`, and H5 explicitly zeroed near/far glow; this is corrected by a late hierarchy-aware semantic layer;
+- H1/H2/H3 semantic cards now retain scaled near/far aura according to hierarchy level;
+- H5 semantic records retain edge coding **and** a restrained outer aura/interior wash;
+- Brokerage Fees regains the amber cost semantic glow;
 - give Open Positions an explicit H3 dataset context with visible/total holding count;
 - convert search/filter/sort/action toolbars to quiet H4 surfaces;
 - convert desktop table shells and cash-ledger tables to H5 data surfaces;
@@ -343,7 +355,7 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 - separate summary, controls, and data regions more deliberately;
 - filters/search/sort toolbars become quiet H4 utility bands;
 - dense result lists/tables remain H5;
-- reduce full-card treatment on repeated rows where an edge/accent state is sufficient;
+- reduce structural elevation on repeated rows while preserving a restrained semantic aura plus edge/accent state;
 - keep selected/expanded rows legible without turning every row into a hero card;
 - standardize section headings/counts/actions above tables;
 - make empty/loading states clearly subordinate to the screen title but stronger than helper copy.
@@ -352,7 +364,7 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 
 - user can identify the current dataset, active filters, and primary action without scanning every row;
 - table/list rows remain dense and readable;
-- semantic row state stays meaningful without excessive halo saturation.
+- semantic row state stays immediately perceptible without returning every repeated record to hero-level halo saturation.
 
 ---
 

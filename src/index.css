@@ -4306,3 +4306,180 @@ body {
     min-height: auto;
   }
 }
+
+
+/* Phase 8.2 — Reports composition hierarchy.
+ * Reports now use structure/spacing for section boundaries and reserve the
+ * strongest glass treatment for the main analytics surface.
+ */
+.premium-reports-hierarchy {
+  --reports-section-gap: 1.75rem;
+}
+
+.premium-report-summary-band {
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 52%),
+    rgba(2, 6, 23, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.028),
+    0 10px 24px rgba(0, 0, 0, 0.15);
+}
+
+.premium-report-summary-cell {
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+  background: rgba(8, 15, 31, 0.48);
+}
+
+.premium-report-summary-cell.premium-glow-win,
+.premium-report-summary-cell.premium-glow-loss,
+.premium-report-summary-cell.premium-glow-breakeven {
+  box-shadow:
+    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.38),
+    inset 18px 0 34px rgb(var(--premium-semantic-rgb) / 0.035);
+}
+
+.premium-report-main-analytics.premium-hierarchy-h1 {
+  border-color: rgba(186, 230, 253, 0.25);
+  background:
+    radial-gradient(circle at 12% -8%, rgba(34, 211, 238, 0.085), transparent 34%),
+    radial-gradient(circle at 88% -14%, rgba(139, 92, 246, 0.06), transparent 36%),
+    linear-gradient(155deg, rgba(255,255,255,0.045), transparent 46%),
+    rgba(10, 18, 36, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 22px 54px rgba(0,0,0,0.28),
+    0 0 38px rgba(34,211,238,0.055),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+.premium-report-section {
+  position: relative;
+  -webkit-backdrop-filter: blur(17px) saturate(138%);
+  backdrop-filter: blur(17px) saturate(138%);
+}
+
+.premium-report-section.premium-hierarchy-h2 {
+  border-color: rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 46%),
+    rgba(10, 18, 36, 0.43);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.038),
+    0 14px 32px rgba(0,0,0,0.20);
+}
+
+.premium-report-section.premium-hierarchy-h3 {
+  border-color: rgba(148, 163, 184, 0.125);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.015), transparent 48%),
+    rgba(7, 13, 27, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.028),
+    0 10px 24px rgba(0,0,0,0.15);
+}
+
+.premium-report-structural {
+  position: relative;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+}
+
+.premium-report-structural > :first-child {
+  padding-bottom: 1rem;
+  border-bottom-color: rgba(100, 116, 139, 0.28);
+}
+
+.premium-report-structural .premium-report-glass-soft {
+  border-color: rgba(148, 163, 184, 0.11);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.014), transparent 52%),
+    rgba(2, 6, 23, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.024);
+}
+
+.premium-report-kpi.premium-hierarchy-h4 {
+  --premium-semantic-border-alpha: 0.22;
+  --premium-semantic-near-alpha: 0.05;
+  --premium-semantic-far-alpha: 0.015;
+  --premium-semantic-far-radius: 34px;
+  border-color: rgba(148, 163, 184, 0.11);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.012), transparent 52%),
+    rgba(2, 6, 23, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.024);
+}
+
+.premium-secondary-chart-card.premium-hierarchy-h2 {
+  border-color: rgb(var(--secondary-chart-rgb, 34 211 238) / 0.16);
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgb(var(--secondary-chart-rgb, 34 211 238) / 0.045),
+      transparent 30%
+    ),
+    rgba(8, 15, 31, 0.46);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 12px 28px rgba(0,0,0,0.18),
+    0 0 22px rgb(var(--secondary-chart-rgb, 34 211 238) / 0.035);
+}
+
+.premium-secondary-chart-metric.premium-hierarchy-h4 {
+  border-color: rgb(var(--secondary-chart-rgb, 34 211 238) / 0.12);
+  background: rgba(2, 6, 23, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.022);
+}
+
+.premium-month-audit-shell.premium-hierarchy-h3 {
+  border-color: rgba(148, 163, 184, 0.135) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 46%),
+    rgba(8, 15, 31, 0.38) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.032),
+    0 12px 28px rgba(0,0,0,0.17) !important;
+  -webkit-backdrop-filter: blur(17px) saturate(136%);
+  backdrop-filter: blur(17px) saturate(136%);
+}
+
+.premium-month-audit-shell.premium-hierarchy-h3:hover,
+.premium-month-audit-shell.premium-hierarchy-h3:active {
+  border-color: rgba(148, 163, 184, 0.135) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.032),
+    0 12px 28px rgba(0,0,0,0.17) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-report-main-analytics:hover,
+  .premium-report-section:hover,
+  .premium-report-kpi:hover,
+  .premium-secondary-chart-card.premium-hierarchy-h2:hover {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-reports-hierarchy {
+    --reports-section-gap: 1.5rem;
+  }
+
+  .premium-report-summary-cell {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .premium-report-main-analytics.premium-hierarchy-h1 {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.055),
+      0 16px 36px rgba(0,0,0,0.23),
+      0 0 28px rgba(34,211,238,0.045);
+  }
+}

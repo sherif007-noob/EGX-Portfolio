@@ -581,11 +581,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span className={`premium-type-metric premium-type-metric-secondary font-mono ${indicators.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {indicators.winRate.toFixed(1)}%
             </span>
-            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
+            <span className="premium-type-metadata whitespace-nowrap font-mono">
               ({indicators.winCount}W / {indicators.lossCount}L)
             </span>
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
+          <div className="mt-1 flex items-center gap-1 premium-type-metadata text-slate-400">
             <span>Target: &gt; 50.0%</span>
             {indicators.winRate >= 50 ? (
               <span className="text-emerald-400 font-semibold">&bull; Target Met</span>
@@ -604,9 +604,9 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span className={`premium-type-metric premium-type-metric-secondary font-mono ${indicators.profitFactor >= 1.5 ? 'text-emerald-400' : indicators.profitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'}`}>
               {formatRatio(indicators.profitFactor)}
             </span>
-            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">Gross Gain/Loss</span>
+            <span className="premium-type-metadata whitespace-nowrap font-mono">Gross Gain/Loss</span>
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
+          <div className="mt-1 flex items-center gap-1 premium-type-metadata text-slate-400">
             <span>Benchmark: &gt; 1.50</span>
             {indicators.profitFactor >= 1.5 ? (
               <span className="text-emerald-400 font-semibold">&bull; Outperforming</span>
@@ -626,7 +626,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
               {formatRatio(indicators.payoffRatio)} : 1
             </span>
           </div>
-          <div className="mt-1 text-[10px] text-slate-400 flex items-center gap-1">
+          <div className="mt-1 premium-type-metadata text-slate-400 flex items-center gap-1">
             <span>Avg Win: +{formatEgp(indicators.avgWin)}</span>
           </div>
         </div>
@@ -640,11 +640,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span className={`premium-type-metric premium-type-metric-secondary font-mono ${!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent! <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
               {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
             </span>
-            <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
+            <span className="premium-type-metadata whitespace-nowrap font-mono">
               {indicators.drawdownAvailable ? `(nominal gap ${formatEgp(indicators.maxDrawdownEgp!)} EGP)` : '(historical analytics unavailable)'}
             </span>
           </div>
-          <div className="mt-1 text-[10px] text-slate-400">
+          <div className="mt-1 premium-type-metadata text-slate-400">
             <span>Target: &le; 10.0% &bull; TWR peak-to-trough</span>
           </div>
         </div>
@@ -738,7 +738,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Percent className="w-3.5 h-3.5 text-blue-400" />
                   Win Rate %
                 </div>
-                <div className="text-[11px] text-slate-400">Winning trades as a percentage of total closed trades</div>
+                <div className="premium-type-helper text-slate-400">Winning trades as a percentage of total closed trades</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
                 <span className={indicators.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}>
@@ -767,7 +767,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   Profit Factor
                 </div>
-                <div className="text-[11px] text-slate-400">Gross Realized Profit divided by Gross Realized Loss</div>
+                <div className="premium-type-helper text-slate-400">Gross Realized Profit divided by Gross Realized Loss</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
                 <span
@@ -817,7 +817,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
                   Payoff Ratio (Win / Loss Magnitude)
                 </div>
-                <div className="text-[11px] text-slate-400">Average Winning Trade divided by Average Losing Trade</div>
+                <div className="premium-type-helper text-slate-400">Average Winning Trade divided by Average Losing Trade</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-purple-300">
                 {formatRatio(indicators.payoffRatio)} : 1
@@ -848,7 +848,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
                   Mathematical Trade Expectancy
                 </div>
-                <div className="text-[11px] text-slate-400">Expected statistical return per trade execution (EGP)</div>
+                <div className="premium-type-helper text-slate-400">Expected statistical return per trade execution (EGP)</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
                 <span className={indicators.expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
@@ -884,7 +884,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Layers className="w-3.5 h-3.5 text-slate-400" />
                   Total Closed Trades Sample Size
                 </div>
-                <div className="text-[11px] text-slate-400">Completed roundtrip trades in filtered sample</div>
+                <div className="premium-type-helper text-slate-400">Completed roundtrip trades in filtered sample</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-white">
                 {indicators.totalClosed} Trades
@@ -913,7 +913,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                   Total Winning Trades
                 </div>
-                <div className="text-[11px] text-slate-400">Number of liquidated trades with positive realized return</div>
+                <div className="premium-type-helper text-slate-400">Number of liquidated trades with positive realized return</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-emerald-400">
                 {indicators.winCount} Positions
@@ -935,7 +935,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
                   Total Losing Trades
                 </div>
-                <div className="text-[11px] text-slate-400">Number of liquidated trades with net realized loss</div>
+                <div className="premium-type-helper text-slate-400">Number of liquidated trades with net realized loss</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-rose-400">
                 {indicators.lossCount} Positions
@@ -957,7 +957,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
                   Win / Loss Count Ratio
                 </div>
-                <div className="text-[11px] text-slate-400">Ratio of winning positions count to losing positions count</div>
+                <div className="premium-type-helper text-slate-400">Ratio of winning positions count to losing positions count</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-white">
                 {formatRatio(indicators.winLossRatio)} : 1
@@ -984,7 +984,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Target className="w-3.5 h-3.5 text-teal-400" />
                   Average Trade P&amp;L
                 </div>
-                <div className="text-[11px] text-slate-400">Net Realized P&amp;L divided by Total Closed Trades</div>
+                <div className="premium-type-helper text-slate-400">Net Realized P&amp;L divided by Total Closed Trades</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
                 <span className={indicators.avgTradePnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
@@ -1012,7 +1012,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                   Average Win
                 </div>
-                <div className="text-[11px] text-slate-400">Mean realized gain per profitable position</div>
+                <div className="premium-type-helper text-slate-400">Mean realized gain per profitable position</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-emerald-400">
                 +{formatEgp(indicators.avgWin)} EGP
@@ -1032,7 +1032,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
                   Average Loss
                 </div>
-                <div className="text-[11px] text-slate-400">Mean realized loss per unprofitable position</div>
+                <div className="premium-type-helper text-slate-400">Mean realized loss per unprofitable position</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-rose-400">
                 -{formatEgp(indicators.avgLoss)} EGP
@@ -1058,7 +1058,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Award className="w-3.5 h-3.5 text-emerald-400" />
                   Largest Win
                 </div>
-                <div className="text-[11px] text-slate-400">Single highest realized profit transaction</div>
+                <div className="premium-type-helper text-slate-400">Single highest realized profit transaction</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-emerald-400">
                 +{formatEgp(indicators.largestWin)} EGP
@@ -1087,7 +1087,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
                   Largest Loss
                 </div>
-                <div className="text-[11px] text-slate-400">Single largest realized loss transaction</div>
+                <div className="premium-type-helper text-slate-400">Single largest realized loss transaction</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-rose-400">
                 -{formatEgp(indicators.largestLoss)} EGP
@@ -1116,7 +1116,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                   Gross Realized Profit
                 </div>
-                <div className="text-[11px] text-slate-400">Sum total of all winning transactions</div>
+                <div className="premium-type-helper text-slate-400">Sum total of all winning transactions</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-emerald-400">
                 +{formatEgp(indicators.grossProfit)} EGP
@@ -1136,7 +1136,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
                   Gross Realized Loss
                 </div>
-                <div className="text-[11px] text-slate-400">Sum total of all losing transactions</div>
+                <div className="premium-type-helper text-slate-400">Sum total of all losing transactions</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-rose-400">
                 -{formatEgp(indicators.grossLoss)} EGP
@@ -1156,7 +1156,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
                   Net Realized P&amp;L
                 </div>
-                <div className="text-[11px] text-slate-400">Gross Profit minus Gross Loss (Net of Trade Fees)</div>
+                <div className="premium-type-helper text-slate-400">Gross Profit minus Gross Loss (Net of Trade Fees)</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-base">
                 <span className={indicators.netRealized >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
@@ -1185,13 +1185,13 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
                   Peak-to-Trough Max Drawdown
                 </div>
-                <div className="text-[11px] text-slate-400">Maximum cumulative equity drop from historical peak</div>
+                <div className="premium-type-helper text-slate-400">Maximum cumulative equity drop from historical peak</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm">
                 <span className={!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : 'text-amber-400'}>
                   {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
                 </span>
-                <span className="block text-[10px] text-slate-400 font-normal">
+                <span className="block premium-type-metadata text-slate-400 font-normal">
                   {indicators.drawdownAvailable ? `-${formatEgp(indicators.maxDrawdownEgp!)} EGP` : 'Historical equity data unavailable'}
                 </span>
               </td>
@@ -1219,7 +1219,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                   Recovery Factor (Net P&amp;L / Max Drawdown)
                 </div>
-                <div className="text-[11px] text-slate-400">Measures ability of system to generate profits relative to drawdown depth</div>
+                <div className="premium-type-helper text-slate-400">Measures ability of system to generate profits relative to drawdown depth</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-cyan-300">
                 {indicators.recoveryFactor === null ? 'N/A' : `${formatRatio(indicators.recoveryFactor)}x`}
@@ -1248,7 +1248,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <Clock className="w-3.5 h-3.5 text-blue-400" />
                   Average Holding Duration
                 </div>
-                <div className="text-[11px] text-slate-400">Mean calendar duration from purchase to sale</div>
+                <div className="premium-type-helper text-slate-400">Mean calendar duration from purchase to sale</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-white">
                 {indicators.avgHoldDays} Days
@@ -1268,7 +1268,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                   <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                   Total Brokerage Commissions Paid
                 </div>
-                <div className="text-[11px] text-slate-400">Execution friction &amp; exchange levies incurred on completed trades</div>
+                <div className="premium-type-helper text-slate-400">Execution friction &amp; exchange levies incurred on completed trades</div>
               </td>
               <td className="py-3 px-4 text-right font-mono font-bold text-sm text-amber-400">
                 {formatEgp(indicators.totalFees)} EGP

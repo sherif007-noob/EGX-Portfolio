@@ -976,7 +976,7 @@ export default function App() {
       </SurfacePresence>
 
       {/* Main Container */}
-      <main className="premium-safe-inline-main relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+      <main className="premium-safe-inline-main premium-flow-major relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6">
         {/* Top Summary Banner */}
         <PortfolioSummary
           metrics={metrics}
@@ -1020,15 +1020,15 @@ export default function App() {
           }}
         >
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+          <div className="premium-flow-major">
+            <div className="premium-flow-control">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="premium-type-section-title">
                   Active Stock Positions ({positions.length})
                 </h2>
                 <button
                   onClick={() => handleTabChange('positions')}
-                  className="premium-action premium-action-primary px-2.5 py-1 rounded-lg text-xs font-semibold"
+                  className="premium-action premium-action-primary w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
                 >
                   View Full Table →
                 </button>
@@ -1064,13 +1064,11 @@ export default function App() {
         )}
 
         {activeTab === 'positions' && (
-          <div className="space-y-4">
+          <div className="premium-flow-related">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-white tracking-tight">
-                  EGX Portfolio Positions
-                </h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="premium-type-section-title">EGX Portfolio Positions</h2>
+                <p className="premium-type-helper mt-0.5">
                   Track equities, real-time unrealized gains, and price targets.
                 </p>
               </div>

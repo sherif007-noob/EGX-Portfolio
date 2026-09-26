@@ -2,7 +2,7 @@
 
 ## Status
 
-**8.4.4 — COMPLETE / CI CLEAN — global spacing rhythm normalization passed Quality Checks #36263281878. 8.4.5 consistency sweep is next.**
+**8.4.5 — CODE COMPLETE / CI CLEAN — full typography + spacing consistency sweep passed Quality Checks #36265246582. Device visual validation is pending before Phase 8.4 closure.**
 
 This audit starts Pass 8.4 without changing the accepted material system.
 
@@ -196,3 +196,44 @@ Protected:
 - charts, selectors, motion, business logic, filtering and data behavior.
 
 Quality Checks `36263281878` passed typecheck, tests and production build.
+
+
+## 8.4.5 implementation result
+
+Implementation range `a3964c8ea2d0878a6cfe7d8444b3ee4cff21a8d9` → `57a46324b1834a737bb558b3d179b33ca7fa3abe` performs the final Phase 8.4 consistency sweep across every Phase-8-owned screen.
+
+Covered:
+- Overview;
+- Reports;
+- Monthly Performance;
+- Trading Performance;
+- Open Positions;
+- Closed Cycles;
+- Transactions / Trade Journal;
+- Cash Ledger;
+- Ticker Directory / Stocks.
+
+Corrected genuine outliers:
+- leftover raw 9px/10px/11px helper and metadata text that was not a badge/control/status;
+- one remaining arbitrary tracked allocation caption;
+- residual helper/description text in report scorecards and allocation UI;
+- desktop position/cycle/cash supporting metadata that had escaped 8.4.2–8.4.3;
+- one remaining report-level `space-y-6` flow and other local spacing drift;
+- Monthly Report month-banner spacing now uses the canonical H3/related-group rhythm.
+
+Intentional compact exceptions retained:
+- status/outcome chips;
+- report identity badges;
+- tiny action/control labels;
+- target/stop alert badges;
+- compact table status pills.
+
+Regression guard:
+- rejects raw `text-[9px]` and arbitrary `tracking-[0.xem]` inside Phase-8-owned screens;
+- rejects legacy Overview metric-size classes;
+- requires every migrated screen to use canonical typography and spacing primitives;
+- preserves accepted glass, aura/glow and semantic-edge recipes.
+
+Quality Checks `36265246582` passed dependency install, typecheck, tests and production build.
+
+**Remaining acceptance:** device visual validation only. No further 8.4 code work is planned unless device review finds a real regression.

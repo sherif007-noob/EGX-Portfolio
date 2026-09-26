@@ -181,11 +181,16 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   const bridgeBalanced = isEquityBridgeBalanced(performanceBridge);
 
   return (
-    <div className="space-y-6">
-      <div className="premium-glass p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="premium-reports-hierarchy space-y-7">
+      <div className="premium-hierarchy-h0 flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between" data-hierarchy="h0">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-purple-400" />Trading Performance &amp; Analytical Reports</h2>
-          <p className="text-xs text-slate-400 mt-1">All portfolio equity and P&amp;L bridge figures use the centralized accounting engine.</p>
+          <h2 className="premium-type-page-title flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-purple-400" />
+            Trading Performance &amp; Analytical Reports
+          </h2>
+          <p className="premium-type-helper mt-1 max-w-3xl">
+            All portfolio equity and P&amp;L bridge figures use the centralized accounting engine.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="premium-chip px-2.5 py-1 rounded-lg text-slate-300">Closed Trades: {stats.totalTrades}</span>
@@ -193,11 +198,23 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="premium-card premium-state-win p-4 rounded-2xl"><div className="text-xs text-emerald-400 font-semibold">Realized Gains</div><div className="mt-2 text-2xl font-black font-mono text-emerald-400">+{formatEgp(grossProfit)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="premium-card premium-state-loss p-4 rounded-2xl"><div className="text-xs text-rose-400 font-semibold">Realized Losses</div><div className="mt-2 text-2xl font-black font-mono text-rose-400">-{formatEgp(grossLoss)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className={`premium-card ${netRealizedGlow} p-4 rounded-2xl`}><div className="text-xs text-slate-300 font-semibold">Net Realized P&amp;L</div><div className={`mt-2 text-2xl font-black font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-xs text-slate-400">EGP</span></div></div>
-        <div className="premium-card premium-state-breakeven p-4 rounded-2xl"><div className="text-xs text-amber-400 font-semibold flex items-center gap-1"><Receipt className="w-4 h-4" /> Fees</div><div className="mt-2 text-2xl font-black font-mono text-amber-400">{formatEgp(closedFees + openFees)} <span className="text-xs text-slate-400">EGP</span></div></div>
+      <div className="premium-hierarchy-h3 premium-report-summary-band grid grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4" data-hierarchy="h3">
+        <div className="premium-report-summary-cell">
+          <div className="premium-type-metric-label text-emerald-400">Realized Gains</div>
+          <div className="mt-1.5 font-mono text-lg font-black text-emerald-400 sm:text-xl">+{formatEgp(grossProfit)} <span className="text-[10px] text-slate-500">EGP</span></div>
+        </div>
+        <div className="premium-report-summary-cell">
+          <div className="premium-type-metric-label text-rose-400">Realized Losses</div>
+          <div className="mt-1.5 font-mono text-lg font-black text-rose-400 sm:text-xl">-{formatEgp(grossLoss)} <span className="text-[10px] text-slate-500">EGP</span></div>
+        </div>
+        <div className={`premium-report-summary-cell ${netRealizedGlow}`}>
+          <div className="premium-type-metric-label">Net Realized P&amp;L</div>
+          <div className={`mt-1.5 font-mono text-lg font-black sm:text-xl ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-[10px] text-slate-500">EGP</span></div>
+        </div>
+        <div className="premium-report-summary-cell">
+          <div className="premium-type-metric-label flex items-center gap-1 text-amber-400"><Receipt className="h-3.5 w-3.5" /> Fees</div>
+          <div className="mt-1.5 font-mono text-lg font-black text-amber-400 sm:text-xl">{formatEgp(closedFees + openFees)} <span className="text-[10px] text-slate-500">EGP</span></div>
+        </div>
       </div>
 
       <TradingPerformanceReport stats={stats} closedTrades={closedTrades} positions={positions} cashBalance={cashBalance} />
@@ -218,7 +235,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         entranceReady={chartsReady}
       />
 
-      <div className="premium-report-glass premium-radial rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="premium-report-section premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="premium-allocation-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
@@ -614,8 +631,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </MotionSwap>
       </div>
 
-      <div className="premium-report-glass rounded-2xl p-4 space-y-4 sm:p-5">
-        <div><h3 className="text-sm font-bold text-white flex items-center gap-2"><Layers className="w-4 h-4 text-blue-400" />Portfolio Equity Bridge</h3><p className="text-xs text-slate-400 mt-1">Ending equity = net capital contributed + realized P&amp;L + unrealized P&amp;L. Fees are already embedded in P&amp;L and are not deducted again.</p></div>
+      <div className="premium-report-section premium-hierarchy-h3 rounded-2xl p-4 space-y-4 sm:p-5" data-hierarchy="h3">
+        <div><h3 className="premium-type-section-title flex items-center gap-2"><Layers className="w-4 h-4 text-blue-400" />Portfolio Equity Bridge</h3><p className="text-xs text-slate-400 mt-1">Ending equity = net capital contributed + realized P&amp;L + unrealized P&amp;L. Fees are already embedded in P&amp;L and are not deducted again.</p></div>
         {!bridgeBalanced && <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><div><strong>Accounting reconciliation difference:</strong> {formatEgp(performanceBridge.reconciliationDelta)} EGP. The report is showing the actual ledger/equity values instead of inventing a balancing capital figure.</div></div>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
           <div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Net Capital Contributed</span><strong className="font-mono text-blue-300">{formatEgp(performanceBridge.netCapitalContributed)} EGP</strong></div>
@@ -629,7 +646,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         <div className="text-[11px] text-slate-500">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
       </div>
 
-      <div className="premium-report-glass rounded-2xl p-4 sm:p-5"><h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
+      <div className="premium-report-section premium-hierarchy-h3 rounded-2xl p-4 sm:p-5" data-hierarchy="h3"><h3 className="premium-type-section-title flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
 
       <MonthlyPerformanceReport closedTrades={closedTrades} positions={positions} />
     </div>

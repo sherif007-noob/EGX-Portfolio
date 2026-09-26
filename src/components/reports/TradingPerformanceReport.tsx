@@ -687,7 +687,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold leading-snug text-white">{item.title}</h3>
-                  <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{item.description}</p>
+                  <p className="premium-type-helper mt-1 text-slate-400">{item.description}</p>
                 </div>
               </div>
 

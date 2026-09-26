@@ -492,6 +492,16 @@ Make actions communicate priority without changing availability.
 
 ## Pass 8.6 — Responsive hierarchy sweep
 
+**Status: CODE COMPLETE / CI CLEAN — combined 8.6–8.7 gate #36270371223 passed; device viewport review pending.**
+
+Implemented:
+- narrow-phone metric/padding guard at <=390px without changing material/aura/glow;
+- main content shell uses canonical major-flow spacing and tighter phone inline padding while retaining max-w-7xl desktop containment;
+- Overview active-positions heading/actions stack safely on phone and preserve desktop reading order;
+- Positions, Transactions, Monthly audit cards, and Ticker Directory record headers stack only where narrow widths can collide;
+- Cash audit heading/badge can wrap without clipping;
+- responsive regression coverage checks report table overflow, dense selector min-width behavior, bounded desktop composition, and Phase 9 Header ownership.
+
 ### Goal
 
 Ensure hierarchy survives changes in available space.
@@ -522,6 +532,18 @@ Checks:
 ---
 
 ## Pass 8.7 — Hierarchy regression and closure
+
+**Status: REGRESSION GATE COMPLETE / CI CLEAN — Quality Checks #36270371223 passed. Final Phase 8 closure remains blocked by Pass 8.5 action-priority implementation and device visual acceptance of 8.4 + 8.6.**
+
+Regression guard `Phase867ResponsiveClosure.test.ts` now protects:
+- phone/desktop reading-order structure;
+- narrow-phone metric scale;
+- responsive record-header composition;
+- report/table horizontal overflow behavior;
+- bounded desktop width;
+- accepted aura/glow and semantic-edge values;
+- material-neutral responsive rules;
+- Header/nav ownership remaining deferred to Phase 9.
 
 ### Validation
 

@@ -35,6 +35,22 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 8 | **In progress** | Accepted Phase 8 hierarchy restored; glass, aura, glow, and semantic-state visuals remain on the pre-Phase-8 visual system. |
 | 8–11 | Not started | See plan. |
 
+## 2026-09-26 — Phase 8 material restoration: Monthly Report reference locked
+
+The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now restored independently from hierarchy.
+
+- Production restoration: `d801db35e46ceb826361bfe43132f25c1269d9c4`
+- Hover parity correction: `477f95930d0657e1f9dbcc85e0fc45749b6ed84d`
+- Quality gate: **Quality Checks #36223796577 — PASS** (typecheck, tests, build)
+- Canonical visual reference: the accepted **Monthly Performance audit cards** (`.premium-report-hero-card` family).
+- Hierarchy cards now use translucent 24px-blur glass with internal sheen/refraction rather than opaque hierarchy slabs.
+- Semantic win/loss/breakeven/buy cards retain full-card near + far aura at Monthly-Report-grade strength; hierarchy rank does not attenuate the semantic material.
+- Dense mobile record cards keep full semantic halos; Phase 8 does not replace them with edge-only coding.
+- Overview hero regains its pre-Phase-8 hero material role. Market Value / Cash / Brokerage Fees receive explicit structural cyan / blue / amber material tones, and EGX Live Market Feed is restored as a real glass utility surface.
+- Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
+
+This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
 ## 2026-09-26 — Phase 8 hierarchy/material split
 
 The earlier full Phase 8 rollback was too broad. Commit `7e17bd33c3d61c59dd88dc88365c37bdab6f57ba` restores the accepted Phase 8 hierarchy, layout, typography, report composition, Overview hierarchy, and dense-workflow structure while keeping pre-Phase-8 glass, aura, glow, and semantic-state styling as the material source of truth. Hierarchy CSS is now material-neutral: it must not set semantic glow alpha/radii, replace full-card halos with edge coding, or redefine glass/background recipes.

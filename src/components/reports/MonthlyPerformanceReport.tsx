@@ -271,7 +271,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
   };
 
   return (
-    <div id="report-monthly-performance" className="premium-report-glass rounded-2xl p-4 space-y-6 sm:p-6">
+    <div id="report-monthly-performance" className="premium-monthly-performance-results premium-report-structural premium-hierarchy-h0 space-y-6" data-hierarchy="h0">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">

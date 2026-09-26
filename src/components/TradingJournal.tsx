@@ -421,7 +421,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="premium-dense-workflow space-y-4">
       {/* Toast Notification for deletion */}
       <SurfacePresence isOpen={!!deletedIdToast} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-safe fixed bottom-6 right-6 z-50">
         {deletedIdToast && (
@@ -435,7 +435,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </SurfacePresence>
 
       {/* Top Banner with P&L, Transaction Stats and Commissions */}
-      <div className="premium-glass flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl">
+      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl" data-hierarchy="h3">
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-          <div className="premium-subpanel p-2.5 rounded-xl">
+          <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl">
             <span className="text-slate-400 block text-[10px] font-medium">Total Transactions</span>
             <span className="font-mono font-bold text-white text-sm">
               {transactions.length}{' '}
@@ -489,7 +489,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </span>
           </div>
 
-          <div className={`premium-subpanel p-2.5 rounded-xl ${totalRealizedPnl > 0 ? 'premium-state-win' : totalRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}>
+          <div className={`premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl ${totalRealizedPnl > 0 ? 'premium-state-win' : totalRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven'}`}>
             <span className="text-slate-400 block text-[10px] font-medium">Net Realized P&amp;L</span>
             <span
               className={`font-mono font-bold text-sm ${
@@ -518,7 +518,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       </div>
 
       {/* Filter and Search Controls Bar */}
-      <div className="premium-panel flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h4">
         <div className="relative w-full min-w-0 flex-1 max-w-xl">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
@@ -705,7 +705,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           return (
             <div
               key={tx.id}
-              className={`premium-card p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
+              className={`premium-card premium-hierarchy-h5 premium-dense-row p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
                 isBuy
                   ? 'premium-glow-buy'
                   : isWinningSell
@@ -976,7 +976,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
       {/* Pagination Controls (Bottom) */}
       {showPagination && (
-        <div className="premium-panel flex flex-col items-stretch justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400 sm:flex-row sm:items-center">
+        <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar flex flex-col items-stretch justify-between gap-3 px-4 py-3 rounded-2xl text-xs text-slate-400 sm:flex-row sm:items-center">
           <span>
             Page <strong className="text-white">{safeCurrentPage}</strong> of <strong className="text-white">{totalPages}</strong> ({totalFilteredCount} total transactions)
           </span>

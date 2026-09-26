@@ -33,8 +33,26 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.2 complete** | Header contract/shell complete; navigation hierarchy refined; Settings visual-language finalization assigned to 9.4; Quality Checks #36273301109 passed. |
+| 9 | **In progress — 9.2 corrected** | Navigation active-state prominence corrected; all header buttons now share premium glass/refraction/bloom language; Quality Checks #36273839931 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9 visual-language correction
+
+Implementation range `6e905f712b7b71a0d228da86ee8571aaf88dc2f6` → `3421eb5598bfe9b857690426fe1e0d7445ae5a56`.
+
+Correction after visual-direction review:
+- reversed the over-de-emphasis introduced in 9.2: the active navigation tab is now intentionally more prominent than idle navigation;
+- restored premium glass/refraction to idle navigation instead of leaving it visually flat;
+- strengthened active-tab border luminosity, glass depth, icon bloom, underline and local aura while keeping the effect scoped to navigation;
+- introduced a shared `premium-header-action` material family for Price Alerts, Sync Prices, Google Sheets, Backup & Reconcile, and Settings;
+- each utility keeps a functional accent while sharing the same translucent glass / refraction / luminous-border / restrained-bloom recipe;
+- preserved stronger creation tiers for Scan Receipt and Add Trade;
+- Settings uses the same premium neutral utility language even though its actual settings UI remains intentionally deferred;
+- added `Phase9HeaderButtonLanguage.test.ts` to prevent future flattening of utilities or weakening active navigation below idle state.
+
+Quality Checks #36273839931 passed typecheck, tests, and production build.
+
+Next: **Pass 9.3 — primary creation architecture**.
 
 ## 2026-09-27 — Phase 9.2 navigation refinement
 

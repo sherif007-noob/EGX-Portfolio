@@ -4098,6 +4098,50 @@ body {
   gap: var(--hierarchy-space-control);
 }
 
+
+/* Pass 8.4.4 — canonical spacing rhythm. Layout only; no material ownership. */
+:root {
+  --hierarchy-pad-h1: 1.25rem;
+  --hierarchy-pad-h2: 1rem;
+  --hierarchy-pad-h3: 0.875rem;
+  --hierarchy-pad-h4: 0.875rem;
+  --hierarchy-pad-h5: 0.875rem;
+}
+
+.premium-flow-major,
+.premium-flow-related,
+.premium-flow-control {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.premium-flow-major {
+  gap: var(--hierarchy-space-section);
+}
+
+.premium-flow-related {
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-flow-control {
+  gap: var(--hierarchy-space-control);
+}
+
+.premium-gap-control {
+  gap: var(--hierarchy-space-control);
+}
+
+.premium-gap-related {
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-pad-h1 { padding: var(--hierarchy-pad-h1); }
+.premium-pad-h2 { padding: var(--hierarchy-pad-h2); }
+.premium-pad-h3 { padding: var(--hierarchy-pad-h3); }
+.premium-pad-h4 { padding: var(--hierarchy-pad-h4); }
+.premium-pad-h5 { padding: var(--hierarchy-pad-h5); }
+
 /* Action importance only; semantic color/material still comes from existing controls. */
 .premium-action-priority-primary {
   opacity: 1;
@@ -4199,6 +4243,16 @@ body {
     --hierarchy-space-related: 1rem;
     --hierarchy-space-section: 1.5rem;
     --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
+    --hierarchy-pad-h1: 1rem;
+    --hierarchy-pad-h2: 0.875rem;
+    --hierarchy-pad-h3: 0.75rem;
+    --hierarchy-pad-h4: 0.75rem;
+    --hierarchy-pad-h5: 0.875rem;
+  }
+
+  .premium-flow-control,
+  .premium-gap-control {
+    gap: 0.5rem;
   }
 
   .premium-overview-hero {

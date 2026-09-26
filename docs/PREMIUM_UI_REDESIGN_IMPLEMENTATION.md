@@ -32,8 +32,12 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress** | Passes 8.0–8.2 complete; 8.3 systemic visual-language correction implemented, validation pending. |
+| 8 | **Rolled back** | Production code restored to the accepted pre-Phase-8 / Phase 7 visual baseline (`157bf351`), preserving the established strong glass and semantic aura language. |
 | 8–11 | Not started | See plan. |
+
+## 2026-09-26 — Phase 8 visual rollback
+
+Phase 8's hierarchy/semantic-role implementation was removed from production code after it degraded the already accepted visual language. Commit `3ab42e6e035f355206be9bd808609ddca3725c99` restores all Phase-8-touched production UI/CSS files to baseline `157bf351ba259287481b39c5708062dc708f3c54` and removes the Phase 8 hierarchy primitives/tests. The accepted Monthly Report card treatment is the reference for semantic glow strength, glass depth, and aura behavior. Future hierarchy work must be additive and must not globally weaken or replace these established primitives.
 
 ## Phase 1 — Foundations
 

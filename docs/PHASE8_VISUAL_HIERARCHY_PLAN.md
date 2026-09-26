@@ -370,6 +370,14 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 
 ---
 
+### Pass 8.3b — Aura / glow intensification
+
+**Status: IMPLEMENTED / CI CLEAN — device visual validation pending.**
+
+After the hierarchy/material split and semantic-edge restoration, device feedback showed that the material system was structurally correct but the aura was still too restrained. Commit `2eebfa0d5ff9647292acaa1ada26e439801283a4` increases resting and hover aura/glow strength without changing hierarchy, glass opacity/blur, spacing, typography, component structure, or the accepted semantic-edge geometry.
+
+Quality Checks run `36253526700` passed typecheck, tests and production build.
+
 ## Pass 8.4 — Typography and spacing normalization
 
 ### Goal

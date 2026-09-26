@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.2 COMPLETE / CI CLEAN. Quality Checks #36273301109 passed. Pass 9.3 primary creation architecture is next.**
+**IN PROGRESS — Pass 9.2 corrected / CI CLEAN. Quality Checks #36273839931 passed. Shared premium button-language foundation is now active across all header buttons; Pass 9.3 primary creation architecture is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -154,6 +154,19 @@ Refine:
 - keyboard/focus states.
 
 Do not bury primary navigation in a hamburger-only interaction.
+
+### 9.2 correction note — active prominence + full button language
+
+After visual-direction review, the 9.2 interpretation was corrected:
+
+- the **active tab must be louder than idle tabs**, not quieter;
+- idle tabs retain premium translucent glass/refraction rather than becoming flat;
+- active tabs receive stronger border luminosity, glass depth, icon bloom, and localized underline/aura;
+- every header button now participates in one premium material family rather than leaving utilities as plain toolbar controls;
+- utility buttons use functional structural accents (amber/cyan/emerald/purple/neutral) with restrained local bloom;
+- Add Trade and Scan Receipt remain stronger creation actions through intensity, not through an unrelated material recipe.
+
+Correction gate: **Quality Checks #36273839931 — PASS**.
 
 ### 9.3 — Primary creation architecture
 

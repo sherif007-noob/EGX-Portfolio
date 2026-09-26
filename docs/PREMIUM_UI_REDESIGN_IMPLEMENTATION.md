@@ -35,6 +35,21 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 8 | **In progress** | Accepted Phase 8 hierarchy restored; glass, aura, glow, and semantic-state visuals remain on the pre-Phase-8 visual system. |
 | 8–11 | Not started | See plan. |
 
+## 2026-09-26 — Additive semantic edge restored
+
+Commit `fd23594ce216167d8710859241f91688999e5d50` restores the liked semantic edge accent to transaction cards, open-position cards, closed-cycle cards, and Monthly Performance audit cards.
+
+The edge is intentionally **additive**:
+
+- it is rendered through a dedicated `.premium-semantic-edge::after` layer;
+- it does not alter the card background, glass blur, border, or host box-shadow;
+- full semantic near/far aura remains active;
+- the edge color follows the existing semantic state for transactions/positions/cycles;
+- Monthly Performance cards map the edge to their existing report tone;
+- the edge is a narrow luminous left rail with local bloom, visually integrated with the card's full-card semantic aura.
+
+Quality Checks run `36224476265` passed typecheck, tests, and production build.
+
 ## 2026-09-26 — Phase 8 material restoration: Monthly Report reference locked
 
 The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now restored independently from hierarchy.

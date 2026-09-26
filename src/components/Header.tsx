@@ -217,7 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
+                className="premium-action premium-header-action premium-header-action-amber relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
@@ -247,7 +247,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="premium-action premium-filter-active-cyan flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+                className="premium-action premium-header-action premium-header-action-cyan flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
@@ -259,12 +259,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-google-sheets-btn"
               onClick={onOpenGoogleSheets}
-              className={`premium-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
+              className={`premium-action premium-header-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
                 isTokenExpired
-                  ? 'premium-action-warning'
-                  : isSheetsConnected
-                  ? 'premium-action-success'
-                  : ''
+                  ? 'premium-header-action-amber premium-header-action-attention'
+                  : 'premium-header-action-emerald'
               }`}
               title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
             >
@@ -289,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-backup-reconcile-btn"
                 onClick={onOpenBackupModal}
-                className="premium-action flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
+                className="premium-action premium-header-action premium-header-action-purple flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Backup JSON, restore database, or reconcile portfolio ledger"
               >
                 <Database className="w-3.5 h-3.5 text-purple-400" />
@@ -302,7 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-settings-btn"
                 onClick={onOpenSettings}
                 aria-label="Settings"
-                className="premium-action premium-header-utility-action flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                className="premium-action premium-header-action premium-header-action-neutral premium-header-utility-action flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                 title="Settings — reserved for a future phase"
               >
                 <Settings2 className="h-3.5 w-3.5 text-slate-300" />
@@ -317,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
-                className="premium-action premium-action-success flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                className="premium-action premium-action-success premium-header-create-secondary flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Upload trade screenshot or receipt to scan and log"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
@@ -329,7 +327,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
-              className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
+              className="premium-action premium-action-primary premium-shimmer-border premium-header-create-primary flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="premium-header-action-label hidden sm:inline">Add Trade</span>

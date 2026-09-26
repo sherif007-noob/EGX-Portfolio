@@ -33,7 +33,28 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 8–11 | Not started | See plan. |
+| 9 | **In progress — 9.0/9.1 complete** | Header contract locked; command-zone shell + future Settings affordance implemented; Quality Checks #36272919126 passed. |
+| 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.0–9.1 command-zone header foundation
+
+Implementation range `11d4473e8a0cc4bd34ac8b98db6d5ba9f0d3bfd1` → `ec4fd20c30c4e049101536401821312566aade27`.
+
+Implemented:
+- created the Phase 9 header/navigation plan and froze Phase 8 content/material ownership;
+- separated header utilities from global creation actions;
+- grouped Price Alerts, Sync Prices, Google Sheets, Backup & Reconcile, and the new Settings affordance into a quiet utility cluster;
+- kept Scan Receipt and Add Trade in a separate creation cluster;
+- kept Add Trade as the only primary CTA in the new architecture;
+- ensured mobile utility overflow can scroll without pushing the creation cluster off-screen;
+- added a visible Settings button as a future entry point only — no Settings modal, settings model, persistence, or configuration behavior exists yet;
+- clicking Settings currently produces only a lightweight informational toast;
+- preserved all seven nav destinations, group structure, keyboard behavior, active-tab scrolling, safe areas, reduced motion, alert status, sync state, and Sheets state;
+- added `Phase90HeaderArchitecture.test.ts` to protect the Phase 9 functional contract and prevent Settings/utility actions from becoming primary.
+
+Quality Checks #36272919126 passed install, typecheck, tests, and production build.
+
+Next: **Pass 9.2 — navigation refinement.**
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
 

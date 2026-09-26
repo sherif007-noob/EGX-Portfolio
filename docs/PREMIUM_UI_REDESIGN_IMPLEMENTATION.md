@@ -33,8 +33,35 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.0/9.1 complete** | Header contract locked; command-zone shell + future Settings affordance implemented; Quality Checks #36272919126 passed. |
+| 9 | **In progress — 9.2 complete** | Header contract/shell complete; navigation hierarchy refined; Settings visual-language finalization assigned to 9.4; Quality Checks #36273301109 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.2 navigation refinement
+
+Implementation range `3db77e40a06a9cbf38629183fd36571e13b12b74` → `e6f4ea727684310a3149afd0bba9f84468e02952`.
+
+Changed:
+- navigation now has explicit active and idle roles instead of relying on ad-hoc text/background utilities;
+- inactive tabs are quieter while remaining readable and directly accessible;
+- active tabs use localized border/accent/underline illumination instead of a broad competing glow;
+- active navigation groups receive subtle label emphasis;
+- separators are lighter and less visually dominant;
+- compact/full labels now have dedicated hooks for later responsive refinement;
+- keyboard focus-visible treatment is explicit and accent-aware;
+- phone nav spacing is tighter without changing the horizontal-scroll model.
+
+Protected:
+- all seven navigation destinations;
+- Portfolio / Activity / Insights grouping;
+- ArrowLeft / ArrowRight / Home / End behavior;
+- active-item scroll-into-view and edge affordances;
+- Phase 8 content hierarchy, glass, aura, semantic edge and chart behavior.
+
+The Phase 9 plan also now assigns final Settings-button visual-language treatment to **9.4 Utility/data-management consolidation**: neutral premium glass/refraction, restrained hover/focus bloom, and no primary or financial-semantic styling.
+
+Quality Checks #36273301109 passed install, typecheck, tests, and production build.
+
+Next: **Pass 9.3 — primary creation architecture.**
 
 ## 2026-09-27 — Phase 9.0–9.1 command-zone header foundation
 

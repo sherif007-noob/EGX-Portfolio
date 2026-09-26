@@ -40,4 +40,16 @@ describe('Phase 8 semantic hierarchy contract', () => {
     expect(protectedSection).toContain('.premium-card.premium-dense-row.premium-glow-win');
     expect(protectedSection).toContain('--premium-semantic-near-alpha: 0.22');
   });
+
+  it('keeps the accepted glass primitive additive to hierarchy classes', () => {
+    const css = readCss();
+    const start = css.indexOf('Phase 8 protected visual-language restoration');
+    const protectedSection = css.slice(start);
+
+    expect(protectedSection).toContain('.premium-card.premium-hierarchy-h1');
+    expect(protectedSection).toContain('blur(14px) saturate(135%)');
+    expect(protectedSection).toContain('rgba(15, 23, 42, 0.62)');
+    expect(protectedSection).toContain('.premium-glass.premium-hierarchy-h3');
+    expect(protectedSection).toContain('blur(24px) saturate(155%)');
+  });
 });

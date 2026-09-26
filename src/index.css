@@ -3940,126 +3940,51 @@ body {
 
 
 /* -------------------------------------------------------------------------- */
-/* Phase 8.0 — visual hierarchy primitives                                    */
+/* Phase 8 — structural hierarchy language                                    */
 /* -------------------------------------------------------------------------- */
+/*
+ * PROTECTED CONTRACT:
+ * - premium-card / premium-glass / premium-panel / premium-subpanel and the
+ *   refraction tiers are the accepted material system from the pre-Phase-8 UI.
+ * - premium-glow-* / premium-state-* supply semantic color.
+ * - H0-H5 supply information hierarchy only.
+ * - premium-semantic-hero / card / record choose semantic halo scale.
+ *
+ * No H-level is allowed to redefine background, border, backdrop-filter,
+ * refraction, or box-shadow.
+ */
+
 :root {
-  /* Spacing rhythm: inline -> control -> card -> related -> major section. */
   --hierarchy-space-inline: 0.375rem;
   --hierarchy-space-control: 0.625rem;
   --hierarchy-space-card: 1rem;
   --hierarchy-space-related: 1.25rem;
   --hierarchy-space-section: 1.75rem;
 
-  /* Typography roles. */
   --hierarchy-page-title-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
   --hierarchy-section-title-size: clamp(1rem, 0.92rem + 0.35vw, 1.25rem);
   --hierarchy-metric-size: clamp(1.45rem, 1.2rem + 0.75vw, 2rem);
   --hierarchy-label-size: 0.75rem;
   --hierarchy-metadata-size: 0.6875rem;
   --hierarchy-helper-size: 0.75rem;
-
-  /* Structural hierarchy is neutral. Semantic color is applied separately. */
-  --hierarchy-h1-border: rgba(148, 163, 184, 0.30);
-  --hierarchy-h2-border: rgba(148, 163, 184, 0.22);
-  --hierarchy-h3-border: rgba(148, 163, 184, 0.15);
-  --hierarchy-h4-border: rgba(148, 163, 184, 0.105);
-  --hierarchy-h5-border: rgba(148, 163, 184, 0.10);
 }
 
-.premium-hierarchy-surface {
+.premium-hierarchy-surface,
+.premium-hierarchy-h0,
+.premium-hierarchy-h1,
+.premium-hierarchy-h2,
+.premium-hierarchy-h3,
+.premium-hierarchy-h4,
+.premium-hierarchy-h5 {
   position: relative;
   min-width: 0;
 }
 
-/* H0 — structural grouping, never a card. */
+/* H0 is grouping only. H1-H5 intentionally have no material declarations. */
 .premium-hierarchy-h0 {
   border: 0;
   background: transparent;
   box-shadow: none;
-}
-
-/* H1 — one dominant decision/hero surface per local context. */
-.premium-hierarchy-h1 {
-  --premium-semantic-border-alpha: 0.44;
-  --premium-semantic-near-alpha: 0.15;
-  --premium-semantic-far-alpha: 0.065;
-  --premium-semantic-far-radius: 72px;
-  border: 1px solid var(--hierarchy-h1-border);
-  background:
-    radial-gradient(circle at 12% -8%, rgba(56, 189, 248, 0.085), transparent 34%),
-    linear-gradient(155deg, rgba(255, 255, 255, 0.045), transparent 44%),
-    rgba(15, 23, 42, 0.69);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.075),
-    0 24px 56px rgba(0, 0, 0, 0.30),
-    0 0 40px rgba(56, 189, 248, 0.07),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-/* H2 — primary support: clear surface, lower than hero. */
-.premium-hierarchy-h2 {
-  --premium-semantic-border-alpha: 0.36;
-  --premium-semantic-near-alpha: 0.115;
-  --premium-semantic-far-alpha: 0.045;
-  --premium-semantic-far-radius: 58px;
-  border: 1px solid var(--hierarchy-h2-border);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 42%),
-    rgba(15, 23, 42, 0.62);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 18px 40px rgba(0, 0, 0, 0.24),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-/* H3 — secondary information: quieter depth and semantic intensity. */
-.premium-hierarchy-h3 {
-  --premium-semantic-border-alpha: 0.27;
-  --premium-semantic-near-alpha: 0.075;
-  --premium-semantic-far-alpha: 0.028;
-  --premium-semantic-far-radius: 46px;
-  border: 1px solid var(--hierarchy-h3-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 44%),
-    rgba(15, 23, 42, 0.48);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.034),
-    0 12px 28px rgba(0, 0, 0, 0.18);
-}
-
-/* H4 — inset/detail surface. */
-.premium-hierarchy-h4 {
-  --premium-semantic-border-alpha: 0.22;
-  --premium-semantic-near-alpha: 0.055;
-  --premium-semantic-far-alpha: 0.018;
-  --premium-semantic-far-radius: 34px;
-  border: 1px solid var(--hierarchy-h4-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 52%),
-    rgba(2, 6, 23, 0.36);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.024);
-}
-
-/* H5 — dense data. Keep rows/data legible; avoid card-like elevation. */
-.premium-hierarchy-h5 {
-  --premium-semantic-border-alpha: 0.20;
-  --premium-semantic-near-alpha: 0.035;
-  --premium-semantic-far-alpha: 0;
-  border: 1px solid var(--hierarchy-h5-border);
-  background: rgba(2, 6, 23, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.018);
-}
-
-/* Structural hierarchy should not manufacture card hover behavior. */
-.premium-hierarchy-h0:hover,
-.premium-hierarchy-h1:hover,
-.premium-hierarchy-h2:hover,
-.premium-hierarchy-h3:hover,
-.premium-hierarchy-h4:hover,
-.premium-hierarchy-h5:hover {
-  transform: none;
 }
 
 /* Typography roles. */
@@ -4109,7 +4034,6 @@ body {
   font-weight: 400;
 }
 
-/* Canonical spacing helpers. */
 .premium-hierarchy-stack {
   display: flex;
   flex-direction: column;
@@ -4132,7 +4056,7 @@ body {
   gap: var(--hierarchy-space-control);
 }
 
-/* Action priority is structural; existing semantic action color remains intact. */
+/* Action priority changes emphasis only; it never replaces button material. */
 .premium-action-priority-primary {
   opacity: 1;
   font-weight: 700;
@@ -4140,104 +4064,121 @@ body {
 
 .premium-action-priority-secondary {
   opacity: 0.94;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
 .premium-action-priority-utility {
-  opacity: 0.82;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.028),
-    0 4px 12px rgba(0, 0, 0, 0.14);
+  opacity: 0.84;
 }
 
 .premium-action-priority-utility:hover,
-.premium-action-priority-utility:focus-visible {
-  opacity: 1;
-}
-
-.premium-action-priority-destructive {
-  opacity: 0.86;
-}
-
+.premium-action-priority-utility:focus-visible,
 .premium-action-priority-destructive:hover,
 .premium-action-priority-destructive:focus-visible {
   opacity: 1;
 }
 
-/* H5 dense regions should not inherit elevated repeated-row behavior. */
-.premium-hierarchy-h5 .premium-card,
-.premium-hierarchy-h5 .premium-subpanel {
-  --premium-semantic-far-alpha: 0;
+.premium-action-priority-destructive {
+  opacity: 0.88;
 }
 
-@media (max-width: 767px) {
-  :root {
-    --hierarchy-space-card: 0.875rem;
-    --hierarchy-space-related: 1rem;
-    --hierarchy-space-section: 1.5rem;
-    --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
+/* -------------------------------------------------------------------------- */
+/* Canonical semantic surface roles                                           */
+/* -------------------------------------------------------------------------- */
+/*
+ * State family = color. Role = halo geometry/intensity.
+ * These values deliberately anchor to the accepted pre-Phase-8 Phase 5 system.
+ */
+
+/* Hero: strongest financial-state surface, bounded rather than page-flooding. */
+.premium-semantic-hero {
+  --premium-semantic-border-alpha: 0.52;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.095;
+  --premium-semantic-far-radius: 72px;
+  --premium-semantic-hover-border-alpha: 0.70;
+  --premium-semantic-hover-near-alpha: 0.30;
+  --premium-semantic-hover-far-alpha: 0.135;
+  --premium-semantic-hover-far-radius: 86px;
+
+  --premium-state-border-alpha: 0.50;
+  --premium-state-near-alpha: 0.19;
+  --premium-state-far-alpha: 0.085;
+  --premium-state-far-radius: 66px;
+}
+
+/* Standard semantic card: exact accepted Phase 5 card atmosphere. */
+.premium-semantic-card {
+  --premium-semantic-border-alpha: 0.44;
+  --premium-semantic-near-alpha: 0.18;
+  --premium-semantic-far-alpha: 0.075;
+  --premium-semantic-far-radius: 68px;
+  --premium-semantic-hover-border-alpha: 0.62;
+  --premium-semantic-hover-near-alpha: 0.25;
+  --premium-semantic-hover-far-alpha: 0.11;
+  --premium-semantic-hover-far-radius: 84px;
+
+  --premium-state-border-alpha: 0.44;
+  --premium-state-near-alpha: 0.18;
+  --premium-state-far-alpha: 0.075;
+  --premium-state-far-radius: 68px;
+}
+
+/* Repeated record: same clear near glow, tighter far field for dense stacks. */
+.premium-semantic-record {
+  --premium-semantic-border-alpha: 0.46;
+  --premium-semantic-near-alpha: 0.18;
+  --premium-semantic-far-alpha: 0.065;
+  --premium-semantic-far-radius: 60px;
+  --premium-semantic-hover-border-alpha: 0.64;
+  --premium-semantic-hover-near-alpha: 0.25;
+  --premium-semantic-hover-far-alpha: 0.095;
+  --premium-semantic-hover-far-radius: 72px;
+
+  --premium-state-border-alpha: 0.42;
+  --premium-state-near-alpha: 0.16;
+  --premium-state-far-alpha: 0.065;
+  --premium-state-far-radius: 60px;
+}
+
+/* Repeated semantic cards retain a strong edge cue in addition to the halo. */
+.premium-card.premium-semantic-record:is(
+  .premium-glow-buy,
+  .premium-glow-win,
+  .premium-glow-loss,
+  .premium-glow-breakeven
+) {
+  box-shadow:
+    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.66),
+    inset 0 1px 0 rgba(255,255,255,0.065),
+    0 16px 38px rgba(0,0,0,0.28),
+    0 0 30px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
+    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-semantic-record:is(
+    .premium-glow-buy,
+    .premium-glow-win,
+    .premium-glow-loss,
+    .premium-glow-breakeven
+  ):hover {
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.82),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 22px 52px rgba(0,0,0,0.32),
+      0 0 38px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-hover-near-alpha)),
+      0 0 var(--premium-semantic-hover-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-hover-far-alpha)),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
   }
 }
 
-
-/* Phase 8.1 — Overview hierarchy application. */
-.premium-hierarchy-h1 {
-  --premium-semantic-hover-border-alpha: 0.56;
-  --premium-semantic-hover-near-alpha: 0.19;
-  --premium-semantic-hover-far-alpha: 0.075;
-  --premium-semantic-hover-far-radius: 76px;
-}
-
-.premium-hierarchy-h2 {
-  --premium-semantic-hover-border-alpha: 0.44;
-  --premium-semantic-hover-near-alpha: 0.145;
-  --premium-semantic-hover-far-alpha: 0.055;
-  --premium-semantic-hover-far-radius: 62px;
-}
-
-.premium-hierarchy-h3 {
-  --premium-semantic-hover-border-alpha: 0.32;
-  --premium-semantic-hover-near-alpha: 0.09;
-  --premium-semantic-hover-far-alpha: 0.032;
-  --premium-semantic-hover-far-radius: 48px;
-}
-
+/* -------------------------------------------------------------------------- */
+/* Phase 8.1 — Overview layout hierarchy                                      */
+/* -------------------------------------------------------------------------- */
 .premium-overview-hero {
   isolation: isolate;
-  overflow: hidden;
   min-height: 10.25rem;
-  background:
-    radial-gradient(
-      circle at 92% 4%,
-      rgb(var(--premium-semantic-rgb, 34 211 238) / 0.09),
-      transparent 34%
-    ),
-    radial-gradient(circle at 10% -12%, rgba(56, 189, 248, 0.10), transparent 40%),
-    linear-gradient(155deg, rgba(255, 255, 255, 0.045), transparent 44%),
-    rgba(15, 23, 42, 0.70);
-}
-
-.premium-overview-hero::after {
-  content: '';
-  position: absolute;
-  inset: auto -12% -52% 22%;
-  height: 76%;
-  pointer-events: none;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse,
-    rgb(var(--premium-semantic-rgb, 34 211 238) / 0.075),
-    transparent 66%
-  );
-  filter: blur(16px);
-  z-index: 0;
-}
-
-.premium-overview-hero > * {
-  position: relative;
-  z-index: 1;
 }
 
 .premium-overview-hero-value {
@@ -4262,209 +4203,54 @@ body {
 }
 
 .premium-overview-today {
-  border: 1px solid rgb(var(--premium-semantic-rgb, 34 211 238) / 0.18);
-  background:
-    linear-gradient(
-      110deg,
-      rgb(var(--premium-semantic-rgb, 34 211 238) / 0.075),
-      rgba(2, 6, 23, 0.30) 58%
-    );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    inset 3px 0 0 rgb(var(--premium-semantic-rgb, 34 211 238) / 0.30);
+  border-color: rgb(var(--premium-semantic-rgb, 148 163 184) / 0.24);
 }
 
 .premium-overview-market-strip {
   color: #94a3b8;
-  -webkit-backdrop-filter: blur(9px) saturate(118%);
-  backdrop-filter: blur(9px) saturate(118%);
-}
-
-.premium-overview-market-strip .premium-action-priority-utility {
-  color: #94a3b8;
-  border-color: rgba(100, 116, 139, 0.20);
-  background: rgba(15, 23, 42, 0.32);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .premium-overview-market-strip .premium-action-priority-utility:hover {
-    border-color: rgba(100, 116, 139, 0.34);
-    background: rgba(15, 23, 42, 0.48);
-  }
-
-  .premium-card.premium-hierarchy-h3:hover {
-    transform: none;
-  }
 }
 
 @media (max-width: 639px) {
   .premium-overview-hero {
     min-height: 9.25rem;
   }
-
-  .premium-overview-fees {
-    min-height: auto;
-  }
 }
 
-
-/* Phase 8.2 — Reports composition hierarchy.
- * Reports now use structure/spacing for section boundaries and reserve the
- * strongest glass treatment for the main analytics surface.
- */
+/* -------------------------------------------------------------------------- */
+/* Phase 8.2 — Reports composition hierarchy                                  */
+/* -------------------------------------------------------------------------- */
 .premium-reports-hierarchy {
   --reports-section-gap: 1.75rem;
-}
-
-.premium-report-summary-band {
-  border-color: rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 52%),
-    rgba(2, 6, 23, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.028),
-    0 10px 24px rgba(0, 0, 0, 0.15);
 }
 
 .premium-report-summary-cell {
   min-width: 0;
   padding: 0.85rem 0.9rem;
-  background: rgba(8, 15, 31, 0.48);
 }
 
-.premium-report-summary-cell.premium-glow-win,
-.premium-report-summary-cell.premium-glow-loss,
-.premium-report-summary-cell.premium-glow-breakeven {
-  box-shadow:
-    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.38),
-    inset 18px 0 34px rgb(var(--premium-semantic-rgb) / 0.035);
-}
-
-.premium-report-main-analytics.premium-hierarchy-h1 {
-  border-color: rgba(186, 230, 253, 0.25);
-  background:
-    radial-gradient(circle at 12% -8%, rgba(34, 211, 238, 0.085), transparent 34%),
-    radial-gradient(circle at 88% -14%, rgba(139, 92, 246, 0.06), transparent 36%),
-    linear-gradient(155deg, rgba(255,255,255,0.045), transparent 46%),
-    rgba(10, 18, 36, 0.62);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.07),
-    0 22px 54px rgba(0,0,0,0.28),
-    0 0 38px rgba(34,211,238,0.055),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-.premium-report-section {
+.premium-report-section,
+.premium-report-main-analytics,
+.premium-secondary-chart-card,
+.premium-secondary-chart-metric,
+.premium-month-audit-shell {
   position: relative;
-  -webkit-backdrop-filter: blur(17px) saturate(138%);
-  backdrop-filter: blur(17px) saturate(138%);
+  min-width: 0;
 }
 
-.premium-report-section.premium-hierarchy-h2 {
-  border-color: rgba(148, 163, 184, 0.18);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 46%),
-    rgba(10, 18, 36, 0.43);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.038),
-    0 14px 32px rgba(0,0,0,0.20);
-}
-
-.premium-report-section.premium-hierarchy-h3 {
-  border-color: rgba(148, 163, 184, 0.125);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.015), transparent 48%),
-    rgba(7, 13, 27, 0.34);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.028),
-    0 10px 24px rgba(0,0,0,0.15);
-}
-
+/* Structural wrapper only; inner accepted report surfaces keep their material. */
 .premium-report-structural {
   position: relative;
+  padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  padding: 0 !important;
 }
 
 .premium-report-structural > :first-child {
   padding-bottom: 1rem;
   border-bottom-color: rgba(100, 116, 139, 0.28);
-}
-
-.premium-report-structural .premium-report-glass-soft {
-  border-color: rgba(148, 163, 184, 0.11);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.014), transparent 52%),
-    rgba(2, 6, 23, 0.30);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.024);
-}
-
-.premium-report-kpi.premium-hierarchy-h4 {
-  --premium-semantic-border-alpha: 0.22;
-  --premium-semantic-near-alpha: 0.05;
-  --premium-semantic-far-alpha: 0.015;
-  --premium-semantic-far-radius: 34px;
-  border-color: rgba(148, 163, 184, 0.11);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.012), transparent 52%),
-    rgba(2, 6, 23, 0.32);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.024);
-}
-
-.premium-secondary-chart-card.premium-hierarchy-h2 {
-  border-color: rgb(var(--secondary-chart-rgb, 34 211 238) / 0.16);
-  background:
-    radial-gradient(
-      circle at 8% 0%,
-      rgb(var(--secondary-chart-rgb, 34 211 238) / 0.045),
-      transparent 30%
-    ),
-    rgba(8, 15, 31, 0.46);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.035),
-    0 12px 28px rgba(0,0,0,0.18),
-    0 0 22px rgb(var(--secondary-chart-rgb, 34 211 238) / 0.035);
-}
-
-.premium-secondary-chart-metric.premium-hierarchy-h4 {
-  border-color: rgb(var(--secondary-chart-rgb, 34 211 238) / 0.12);
-  background: rgba(2, 6, 23, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.022);
-}
-
-.premium-month-audit-shell.premium-hierarchy-h3 {
-  border-color: rgba(148, 163, 184, 0.135) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 46%),
-    rgba(8, 15, 31, 0.38) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.032),
-    0 12px 28px rgba(0,0,0,0.17) !important;
-  -webkit-backdrop-filter: blur(17px) saturate(136%);
-  backdrop-filter: blur(17px) saturate(136%);
-}
-
-.premium-month-audit-shell.premium-hierarchy-h3:hover,
-.premium-month-audit-shell.premium-hierarchy-h3:active {
-  border-color: rgba(148, 163, 184, 0.135) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.032),
-    0 12px 28px rgba(0,0,0,0.17) !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .premium-report-main-analytics:hover,
-  .premium-report-section:hover,
-  .premium-report-kpi:hover,
-  .premium-secondary-chart-card.premium-hierarchy-h2:hover {
-    transform: none !important;
-  }
 }
 
 @media (max-width: 767px) {
@@ -4475,894 +4261,27 @@ body {
   .premium-report-summary-cell {
     padding: 0.75rem 0.8rem;
   }
-
-  .premium-report-main-analytics.premium-hierarchy-h1 {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.055),
-      0 16px 36px rgba(0,0,0,0.23),
-      0 0 28px rgba(34,211,238,0.045);
-  }
 }
-
-
-/* Phase 8.3 — dense workflow hierarchy.
- * Operational screens prioritize scanability: summary -> controls -> dense data.
- * Repeated semantic cards use a scaled aura plus edge cue; hierarchy never erases state.
- */
-.premium-dense-workflow {
-  --dense-surface-border: rgba(148, 163, 184, 0.105);
-}
-
-.premium-dense-context,
-.premium-dense-summary {
-  border: 1px solid rgba(148, 163, 184, 0.13);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.018), transparent 52%),
-    rgba(8, 15, 31, 0.34);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.03),
-    0 10px 24px rgba(0,0,0,0.15);
-}
-
-.premium-dense-summary.premium-hierarchy-h2 {
-  border-color: rgba(148, 163, 184, 0.18);
-  background:
-    radial-gradient(circle at 10% -18%, rgba(34,211,238,0.045), transparent 38%),
-    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 54%),
-    rgba(9, 17, 34, 0.44);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.038),
-    0 14px 30px rgba(0,0,0,0.18);
-}
-
-.premium-dense-summary-card {
-  --premium-semantic-border-alpha: 0.26;
-  --premium-semantic-near-alpha: 0.06;
-  --premium-semantic-far-alpha: 0.018;
-  --premium-semantic-far-radius: 36px;
-  border-color: rgba(148, 163, 184, 0.12);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.014), transparent 54%),
-    rgba(3, 9, 22, 0.31);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.026),
-    0 8px 20px rgba(0,0,0,0.14);
-}
-
-.premium-dense-toolbar {
-  border-color: rgba(148, 163, 184, 0.105) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.012), transparent 56%),
-    rgba(2, 6, 23, 0.29) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.022) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(118%);
-  backdrop-filter: blur(10px) saturate(118%);
-}
-
-.premium-dense-data.premium-table-shell {
-  border-color: var(--dense-surface-border);
-  background: rgba(2, 6, 23, 0.31);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.02),
-    0 8px 20px rgba(0,0,0,0.14);
-  -webkit-backdrop-filter: blur(8px) saturate(114%);
-  backdrop-filter: blur(8px) saturate(114%);
-}
-
-.premium-dense-data.premium-table-shell thead {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.014), transparent),
-    rgba(8, 15, 31, 0.50);
-}
-
-.premium-dense-row.premium-hierarchy-h5 {
-  --premium-semantic-border-alpha: 0.22;
-  --premium-semantic-near-alpha: 0;
-  --premium-semantic-far-alpha: 0;
-  --premium-semantic-hover-border-alpha: 0.34;
-  --premium-semantic-hover-near-alpha: 0;
-  --premium-semantic-hover-far-alpha: 0;
-  border-color: rgba(148, 163, 184, 0.105);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.010), transparent 54%),
-    rgba(3, 9, 22, 0.30);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.018),
-    0 6px 16px rgba(0,0,0,0.12);
-}
-
-.premium-dense-row.premium-glow-buy,
-.premium-dense-row.premium-glow-win,
-.premium-dense-row.premium-glow-loss,
-.premium-dense-row.premium-glow-breakeven {
-  border-color: rgb(var(--premium-semantic-rgb) / 0.24);
-  background:
-    linear-gradient(
-      90deg,
-      rgb(var(--premium-semantic-rgb) / 0.035),
-      transparent 24%
-    ),
-    rgba(3, 9, 22, 0.31);
-  box-shadow:
-    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.56),
-    inset 18px 0 28px rgb(var(--premium-semantic-rgb) / 0.028),
-    inset 0 1px 0 rgba(255,255,255,0.018),
-    0 6px 16px rgba(0,0,0,0.12);
-}
-
-.premium-dense-row.premium-radial::after {
-  display: none;
-}
-
-.premium-dense-row .premium-hierarchy-h4,
-.premium-dense-row .premium-subpanel {
-  border-color: rgba(148, 163, 184, 0.085);
-  background: rgba(2, 6, 23, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.016);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .premium-dense-context:hover,
-  .premium-dense-summary:hover,
-  .premium-dense-summary-card:hover,
-  .premium-dense-toolbar:hover,
-  .premium-dense-data:hover,
-  .premium-dense-row:hover {
-    transform: none !important;
-  }
-
-  .premium-dense-row:hover {
-    border-color: rgba(148, 163, 184, 0.16);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.014), transparent 54%),
-      rgba(8, 15, 31, 0.38);
-  }
-
-  .premium-dense-row.premium-glow-buy:hover,
-  .premium-dense-row.premium-glow-win:hover,
-  .premium-dense-row.premium-glow-loss:hover,
-  .premium-dense-row.premium-glow-breakeven:hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.34);
-    box-shadow:
-      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.76),
-      inset 22px 0 34px rgb(var(--premium-semantic-rgb) / 0.04),
-      inset 0 1px 0 rgba(255,255,255,0.024),
-      0 8px 18px rgba(0,0,0,0.15);
-  }
-}
-
-@media (max-width: 767px) {
-  .premium-dense-summary,
-  .premium-dense-context {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.026),
-      0 8px 18px rgba(0,0,0,0.13);
-  }
-
-  .premium-dense-row.premium-hierarchy-h5 {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.018),
-      0 5px 14px rgba(0,0,0,0.11);
-  }
-
-  .premium-dense-row.premium-glow-buy,
-  .premium-dense-row.premium-glow-win,
-  .premium-dense-row.premium-glow-loss,
-  .premium-dense-row.premium-glow-breakeven {
-    box-shadow:
-      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.58),
-      inset 16px 0 24px rgb(var(--premium-semantic-rgb) / 0.026),
-      0 5px 14px rgba(0,0,0,0.11);
-  }
-}
-
-
-/* Phase 8 semantic-soul correction.
- * Structural hierarchy and financial state are independent axes.
- * H-levels may scale a semantic halo; they must never erase it.
- */
-.premium-hierarchy-h1:is(
-  .premium-glow-buy,
-  .premium-glow-win,
-  .premium-glow-loss,
-  .premium-glow-breakeven,
-  .premium-state-buy,
-  .premium-state-win,
-  .premium-state-loss,
-  .premium-state-breakeven
-) {
-  --premium-semantic-border-alpha: 0.58;
-  --premium-semantic-near-alpha: 0.24;
-  --premium-semantic-far-alpha: 0.11;
-  --premium-semantic-far-radius: 88px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.075),
-    0 20px 48px rgba(0,0,0,0.28),
-    0 0 38px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-.premium-hierarchy-h2:is(
-  .premium-glow-buy,
-  .premium-glow-win,
-  .premium-glow-loss,
-  .premium-glow-breakeven,
-  .premium-state-buy,
-  .premium-state-win,
-  .premium-state-loss,
-  .premium-state-breakeven
-) {
-  --premium-semantic-border-alpha: 0.48;
-  --premium-semantic-near-alpha: 0.17;
-  --premium-semantic-far-alpha: 0.075;
-  --premium-semantic-far-radius: 70px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.060),
-    0 16px 36px rgba(0,0,0,0.24),
-    0 0 30px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-.premium-hierarchy-h3:is(
-  .premium-glow-buy,
-  .premium-glow-win,
-  .premium-glow-loss,
-  .premium-glow-breakeven,
-  .premium-state-buy,
-  .premium-state-win,
-  .premium-state-loss,
-  .premium-state-breakeven
-) {
-  --premium-semantic-border-alpha: 0.40;
-  --premium-semantic-near-alpha: 0.13;
-  --premium-semantic-far-alpha: 0.055;
-  --premium-semantic-far-radius: 56px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.048),
-    0 12px 28px rgba(0,0,0,0.20),
-    0 0 24px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-/* Dense H5 records still need peripheral semantic recognition.
- * Keep the edge as the strongest cue, but restore a restrained near/far aura.
- */
-.premium-dense-row.premium-hierarchy-h5:is(
-  .premium-glow-buy,
-  .premium-glow-win,
-  .premium-glow-loss,
-  .premium-glow-breakeven
-) {
-  --premium-semantic-border-alpha: 0.32;
-  --premium-semantic-near-alpha: 0.105;
-  --premium-semantic-far-alpha: 0.042;
-  --premium-semantic-far-radius: 42px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  background:
-    radial-gradient(
-      circle at 4% 18%,
-      rgb(var(--premium-semantic-rgb) / 0.075),
-      transparent 32%
-    ),
-    linear-gradient(
-      90deg,
-      rgb(var(--premium-semantic-rgb) / 0.055),
-      transparent 30%
-    ),
-    rgba(3, 9, 22, 0.32);
-  box-shadow:
-    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.68),
-    inset 20px 0 32px rgb(var(--premium-semantic-rgb) / 0.040),
-    inset 0 1px 0 rgba(255,255,255,0.022),
-    0 7px 18px rgba(0,0,0,0.14),
-    0 0 20px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha));
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .premium-hierarchy-h1:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ):hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.68);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.085),
-      0 22px 52px rgba(0,0,0,0.30),
-      0 0 44px rgb(var(--premium-semantic-rgb) / 0.29),
-      0 0 98px rgb(var(--premium-semantic-deep-rgb) / 0.13),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-hierarchy-h2:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ):hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.56);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.07),
-      0 18px 40px rgba(0,0,0,0.26),
-      0 0 34px rgb(var(--premium-semantic-rgb) / 0.205),
-      0 0 76px rgb(var(--premium-semantic-deep-rgb) / 0.088),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-hierarchy-h3:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ):hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.48);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.056),
-      0 14px 32px rgba(0,0,0,0.22),
-      0 0 28px rgb(var(--premium-semantic-rgb) / 0.155),
-      0 0 62px rgb(var(--premium-semantic-deep-rgb) / 0.065),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-dense-row.premium-hierarchy-h5:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven
-  ):hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.42);
-    box-shadow:
-      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.80),
-      inset 24px 0 36px rgb(var(--premium-semantic-rgb) / 0.050),
-      inset 0 1px 0 rgba(255,255,255,0.028),
-      0 9px 22px rgba(0,0,0,0.16),
-      0 0 24px rgb(var(--premium-semantic-rgb) / 0.13),
-      0 0 48px rgb(var(--premium-semantic-deep-rgb) / 0.052);
-  }
-}
-
-@media (max-width: 767px) {
-  .premium-hierarchy-h1:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ) {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.07),
-      0 16px 38px rgba(0,0,0,0.25),
-      0 0 36px rgb(var(--premium-semantic-rgb) / 0.235),
-      0 0 82px rgb(var(--premium-semantic-deep-rgb) / 0.105),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-hierarchy-h2:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ) {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.055),
-      0 13px 30px rgba(0,0,0,0.22),
-      0 0 28px rgb(var(--premium-semantic-rgb) / 0.17),
-      0 0 64px rgb(var(--premium-semantic-deep-rgb) / 0.072),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-hierarchy-h3:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven,
-    .premium-state-buy,
-    .premium-state-win,
-    .premium-state-loss,
-    .premium-state-breakeven
-  ) {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.045),
-      0 10px 24px rgba(0,0,0,0.18),
-      0 0 22px rgb(var(--premium-semantic-rgb) / 0.135),
-      0 0 52px rgb(var(--premium-semantic-deep-rgb) / 0.055),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-dense-row.premium-hierarchy-h5:is(
-    .premium-glow-buy,
-    .premium-glow-win,
-    .premium-glow-loss,
-    .premium-glow-breakeven
-  ) {
-    box-shadow:
-      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.70),
-      inset 18px 0 30px rgb(var(--premium-semantic-rgb) / 0.042),
-      inset 0 1px 0 rgba(255,255,255,0.020),
-      0 6px 16px rgba(0,0,0,0.13),
-      0 0 19px rgb(var(--premium-semantic-rgb) / 0.11),
-      0 0 42px rgb(var(--premium-semantic-deep-rgb) / 0.044);
-  }
-}
-
-
-/* Phase 8 protected visual-language restoration.
- * Phase 8 may change information hierarchy, geometry, grouping, spacing, and type.
- * It must not replace the accepted Phase 5 glass/refraction or semantic halo engine.
- */
-
-/* Restore the accepted glass recipe to hierarchy-bearing card surfaces. */
-.premium-card.premium-hierarchy-h1,
-.premium-card.premium-hierarchy-h2,
-.premium-card.premium-hierarchy-h3,
-.premium-card.premium-hierarchy-h4,
-.premium-card.premium-hierarchy-h5,
-.premium-card.premium-dense-row {
-  -webkit-backdrop-filter: blur(14px) saturate(135%);
-  backdrop-filter: blur(14px) saturate(135%);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 38%),
-    rgba(15, 23, 42, 0.62);
-  box-shadow:
-    inset 0 1px 0 var(--premium-highlight),
-    var(--premium-shadow-soft),
-    0 0 30px rgba(34, 211, 238, 0.075),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-.premium-card.premium-hierarchy-h1::before,
-.premium-card.premium-hierarchy-h2::before,
-.premium-card.premium-hierarchy-h3::before,
-.premium-card.premium-hierarchy-h4::before,
-.premium-card.premium-hierarchy-h5::before,
-.premium-card.premium-dense-row::before {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 34%);
-  opacity: 0.38;
-}
-
-/* Restore the accepted hero glass/refraction treatment on the enlarged H1 hero. */
-.premium-card.premium-hero-card.premium-hierarchy-h1 {
-  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
-  background:
-    radial-gradient(circle at 18% -15%, rgb(var(--premium-semantic-rgb, 16 185 129) / 0.12), transparent 34%),
-    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.075), transparent 42%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.034), transparent 44%),
-    rgba(15, 23, 42, 0.66);
-}
-
-/* Restore accepted panel/subpanel glass instead of hierarchy-specific flat fills. */
-.premium-panel.premium-hierarchy-h2,
-.premium-panel.premium-hierarchy-h3,
-.premium-panel.premium-hierarchy-h4,
-.premium-panel.premium-dense-toolbar {
-  -webkit-backdrop-filter: blur(14px) saturate(135%) !important;
-  backdrop-filter: blur(14px) saturate(135%) !important;
-  border-color: var(--premium-border) !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 30%),
-    rgba(15, 23, 42, 0.62) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 18px 42px rgba(0, 0, 0, 0.28),
-    0 0 34px rgba(34, 211, 238, 0.09),
-    0 0 64px rgba(139, 92, 246, 0.035),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-}
-
-.premium-subpanel.premium-hierarchy-h4,
-.premium-dense-row .premium-subpanel,
-.premium-dense-row .premium-hierarchy-h4 {
-  -webkit-backdrop-filter: blur(13px) saturate(130%);
-  backdrop-filter: blur(13px) saturate(130%);
-  border-color: rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 48%),
-    rgba(2, 6, 23, 0.40);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.035),
-    0 8px 20px rgba(0,0,0,0.10);
-}
-
-/* Restore full semantic halo to every semantic card.
- * No H2/H3/H5 attenuation: this matches the accepted Phase 5 model.
- */
-.premium-card.premium-glow-buy,
-.premium-card.premium-glow-win,
-.premium-card.premium-glow-loss,
-.premium-card.premium-glow-breakeven {
-  --premium-semantic-border-alpha: 0.50;
-  --premium-semantic-near-alpha: 0.22;
-  --premium-semantic-far-alpha: 0.10;
-  --premium-semantic-far-radius: 76px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 34px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-/* Dense semantic cards use the same accepted halo, not an edge-only substitute. */
-.premium-card.premium-dense-row.premium-glow-buy,
-.premium-card.premium-dense-row.premium-glow-win,
-.premium-card.premium-dense-row.premium-glow-loss,
-.premium-card.premium-dense-row.premium-glow-breakeven {
-  --premium-semantic-border-alpha: 0.50;
-  --premium-semantic-near-alpha: 0.22;
-  --premium-semantic-far-alpha: 0.10;
-  --premium-semantic-far-radius: 76px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  background:
-    radial-gradient(circle at 8% -8%, rgb(var(--premium-semantic-rgb) / 0.07), transparent 34%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 38%),
-    rgba(15, 23, 42, 0.62);
-  box-shadow:
-    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.68),
-    inset 0 1px 0 rgba(255, 255, 255, 0.065),
-    0 16px 38px rgba(0, 0, 0, 0.28),
-    0 0 34px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-/* The H1 hero is larger than the original Phase 5 card, so preserve the same
- * perceptual glow strength with a proportionally wider hero aura.
- */
-.premium-card.premium-hero-card.premium-glow-buy,
-.premium-card.premium-hero-card.premium-glow-win,
-.premium-card.premium-hero-card.premium-glow-loss,
-.premium-card.premium-hero-card.premium-glow-breakeven {
-  --premium-semantic-border-alpha: 0.62;
-  --premium-semantic-near-alpha: 0.32;
-  --premium-semantic-far-alpha: 0.16;
-  --premium-semantic-far-radius: 108px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    0 20px 48px rgba(0,0,0,0.30),
-    0 0 46px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
-    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .premium-card.premium-glow-buy:hover,
-  .premium-card.premium-glow-win:hover,
-  .premium-card.premium-glow-loss:hover,
-  .premium-card.premium-glow-breakeven:hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.68);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      0 22px 52px rgba(0,0,0,0.32),
-      0 0 42px rgb(var(--premium-semantic-rgb) / 0.29),
-      0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.135),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-card.premium-hero-card.premium-glow-buy:hover,
-  .premium-card.premium-hero-card.premium-glow-win:hover,
-  .premium-card.premium-hero-card.premium-glow-loss:hover,
-  .premium-card.premium-hero-card.premium-glow-breakeven:hover {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.76);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.09),
-      0 24px 56px rgba(0,0,0,0.34),
-      0 0 54px rgb(var(--premium-semantic-rgb) / 0.38),
-      0 0 124px rgb(var(--premium-semantic-deep-rgb) / 0.19),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-}
-
-/* Mobile must keep the static semantic halo. Do not weaken it on coarse pointers. */
-@media (max-width: 767px), (pointer: coarse) {
-  .premium-card.premium-glow-buy,
-  .premium-card.premium-glow-win,
-  .premium-card.premium-glow-loss,
-  .premium-card.premium-glow-breakeven,
-  .premium-card.premium-dense-row.premium-glow-buy,
-  .premium-card.premium-dense-row.premium-glow-win,
-  .premium-card.premium-dense-row.premium-glow-loss,
-  .premium-card.premium-dense-row.premium-glow-breakeven {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.065),
-      0 14px 34px rgba(0,0,0,0.26),
-      0 0 34px rgb(var(--premium-semantic-rgb) / 0.23),
-      0 0 78px rgb(var(--premium-semantic-deep-rgb) / 0.105),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-card.premium-dense-row.premium-glow-buy,
-  .premium-card.premium-dense-row.premium-glow-win,
-  .premium-card.premium-dense-row.premium-glow-loss,
-  .premium-card.premium-dense-row.premium-glow-breakeven {
-    box-shadow:
-      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.70),
-      inset 0 1px 0 rgba(255,255,255,0.065),
-      0 14px 34px rgba(0,0,0,0.26),
-      0 0 34px rgb(var(--premium-semantic-rgb) / 0.23),
-      0 0 78px rgb(var(--premium-semantic-deep-rgb) / 0.105),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-
-  .premium-card.premium-hero-card.premium-glow-buy,
-  .premium-card.premium-hero-card.premium-glow-win,
-  .premium-card.premium-hero-card.premium-glow-loss,
-  .premium-card.premium-hero-card.premium-glow-breakeven {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      0 18px 42px rgba(0,0,0,0.28),
-      0 0 48px rgb(var(--premium-semantic-rgb) / 0.34),
-      0 0 112px rgb(var(--premium-semantic-deep-rgb) / 0.17),
-      var(--premium-refraction-shadow, 0 0 0 transparent);
-  }
-}
-
-
-/* Restore the accepted premium-glass primitive when hierarchy is additive. */
-.premium-glass.premium-hierarchy-h2,
-.premium-glass.premium-hierarchy-h3,
-.premium-glass.premium-hierarchy-h4 {
-  border-color: var(--premium-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008)),
-    var(--premium-glass);
-  box-shadow:
-    inset 0 1px 0 var(--premium-highlight),
-    var(--premium-shadow-soft),
-    0 0 30px rgba(34, 211, 238, 0.075),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(155%);
-  backdrop-filter: blur(24px) saturate(155%);
-}
-
-/* H4/inset semantic state keeps the accepted compact semantic glow.
- * This protects report KPI/state cards from hierarchy overrides.
- */
-.premium-hierarchy-h4.premium-state-win,
-.premium-hierarchy-h4.premium-state-loss,
-.premium-hierarchy-h4.premium-state-breakeven,
-.premium-hierarchy-h4.premium-state-buy,
-.premium-report-kpi.premium-state-win,
-.premium-report-kpi.premium-state-loss,
-.premium-report-kpi.premium-state-breakeven,
-.premium-report-kpi.premium-state-buy {
-  --premium-state-border-alpha: 0.38;
-  --premium-state-near-alpha: 0.13;
-  --premium-state-far-alpha: 0.06;
-  --premium-state-far-radius: 58px;
-  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-state-border-alpha)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.055),
-    0 10px 26px rgba(0,0,0,0.22),
-    0 0 26px rgb(var(--premium-semantic-rgb) / var(--premium-state-near-alpha)),
-    0 0 var(--premium-state-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha)),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-}
-
 
 /* -------------------------------------------------------------------------- */
-/* Phase 8 visual-language hard reset                                         */
+/* Phase 8.3 — Dense workflow hierarchy                                       */
 /* -------------------------------------------------------------------------- */
-/*
- * Phase 8 hierarchy is structural only. It must never flatten the accepted
- * premium glass / refraction / semantic system.
- *
- * Canonical visual benchmark: premium-report-hero-card + premium-report-glass.
- * These late rules intentionally beat all earlier H1-H5/dense overrides.
- */
-
-/* Strong frosted glass for every hierarchy-bearing card. */
-.premium-card.premium-hierarchy-h1,
-.premium-card.premium-hierarchy-h2,
-.premium-card.premium-hierarchy-h3,
-.premium-card.premium-hierarchy-h4,
-.premium-card.premium-hierarchy-h5,
-.premium-card.premium-dense-row {
-  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
-  border-color: rgba(186, 230, 253, 0.20) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.014) 34%, transparent 64%),
-    linear-gradient(135deg, rgba(34,211,238,0.040), transparent 42%, rgba(139,92,246,0.035)),
-    rgba(10, 18, 36, 0.50) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.085),
-    0 20px 48px rgba(0,0,0,0.28),
-    0 0 34px rgba(34,211,238,0.055),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
-  backdrop-filter: blur(26px) saturate(155%) !important;
-}
-
-.premium-card.premium-hierarchy-h1::before,
-.premium-card.premium-hierarchy-h2::before,
-.premium-card.premium-hierarchy-h3::before,
-.premium-card.premium-hierarchy-h4::before,
-.premium-card.premium-hierarchy-h5::before,
-.premium-card.premium-dense-row::before {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.080), rgba(255,255,255,0.018) 34%, transparent 68%) !important;
-  opacity: 0.70 !important;
-}
-
-/* Strong frosted working glass for hierarchy-bearing panels/summary bands. */
-.premium-panel.premium-hierarchy-h2,
-.premium-panel.premium-hierarchy-h3,
-.premium-panel.premium-hierarchy-h4,
-.premium-panel.premium-dense-toolbar,
-.premium-glass.premium-hierarchy-h2,
-.premium-glass.premium-hierarchy-h3,
-.premium-glass.premium-hierarchy-h4,
+.premium-dense-workflow,
 .premium-dense-context,
-.premium-dense-summary {
-  border-color: rgba(186, 230, 253, 0.18) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.012) 34%, transparent 64%),
-    linear-gradient(135deg, rgba(34,211,238,0.026), transparent 42%, rgba(139,92,246,0.026)),
-    rgba(10, 18, 36, 0.52) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.075),
-    0 18px 42px rgba(0,0,0,0.26),
-    0 0 28px rgba(34,211,238,0.040),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
-  backdrop-filter: blur(24px) saturate(150%) !important;
+.premium-dense-summary,
+.premium-dense-summary-card,
+.premium-dense-toolbar,
+.premium-dense-data,
+.premium-dense-row {
+  min-width: 0;
 }
 
-/* Insets keep visible frosted depth instead of becoming opaque navy blocks. */
-.premium-subpanel.premium-hierarchy-h4,
-.premium-dense-row .premium-subpanel,
-.premium-dense-row .premium-hierarchy-h4 {
-  border-color: rgba(148,163,184,0.16) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 42%, transparent 72%),
-    rgba(3, 9, 22, 0.36) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.045),
-    0 10px 26px rgba(0,0,0,0.15),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  -webkit-backdrop-filter: blur(17px) saturate(140%) !important;
-  backdrop-filter: blur(17px) saturate(140%) !important;
-}
-
-/* Semantic cards use the accepted hero-grade glass + halo.
- * No hierarchy attenuation. A WIN/LOSS/BUY/BREAKEVEN card must look semantic
- * before the user reads a number.
- */
-.premium-card.premium-glow-buy,
-.premium-card.premium-glow-win,
-.premium-card.premium-glow-loss,
-.premium-card.premium-glow-breakeven,
-.premium-card.premium-dense-row.premium-glow-buy,
-.premium-card.premium-dense-row.premium-glow-win,
-.premium-card.premium-dense-row.premium-glow-loss,
-.premium-card.premium-dense-row.premium-glow-breakeven {
-  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
-  border-color: rgb(var(--premium-semantic-rgb) / 0.58) !important;
-  background:
-    radial-gradient(circle at 16% -18%, rgb(var(--premium-semantic-rgb) / 0.19), transparent 38%),
-    radial-gradient(circle at 102% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.10), transparent 44%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
-    rgba(12, 20, 39, 0.66) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 18px 44px rgba(0, 0, 0, 0.30),
-    0 0 40px rgb(var(--premium-semantic-rgb) / 0.30),
-    0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(158%) !important;
-  backdrop-filter: blur(24px) saturate(158%) !important;
-}
-
-/* Dense semantic cards may keep the semantic edge as an additional cue,
- * but never as a replacement for the halo.
- */
-.premium-card.premium-dense-row.premium-glow-buy,
-.premium-card.premium-dense-row.premium-glow-win,
-.premium-card.premium-dense-row.premium-glow-loss,
-.premium-card.premium-dense-row.premium-glow-breakeven {
-  box-shadow:
-    inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.78),
-    inset 0 1px 0 rgba(255,255,255,0.09),
-    0 18px 44px rgba(0,0,0,0.30),
-    0 0 40px rgb(var(--premium-semantic-rgb) / 0.30),
-    0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-}
-
-/* The enlarged Portfolio Value hero gets the strongest semantic environment. */
-.premium-card.premium-hero-card.premium-glow-buy,
-.premium-card.premium-hero-card.premium-glow-win,
-.premium-card.premium-hero-card.premium-glow-loss,
-.premium-card.premium-hero-card.premium-glow-breakeven {
-  border-color: rgb(var(--premium-semantic-rgb) / 0.68) !important;
-  background:
-    radial-gradient(circle at 15% -20%, rgb(var(--premium-semantic-rgb) / 0.24), transparent 40%),
-    radial-gradient(circle at 100% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.13), transparent 46%),
-    linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.014) 42%, transparent 72%),
-    rgba(12, 20, 39, 0.64) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    0 22px 52px rgba(0,0,0,0.32),
-    0 0 52px rgb(var(--premium-semantic-rgb) / 0.38),
-    0 0 126px rgb(var(--premium-semantic-deep-rgb) / 0.20),
-    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(165%) !important;
-  backdrop-filter: blur(26px) saturate(165%) !important;
-}
-
-/* Coarse-pointer/mobile is where the previous restoration failed perceptually.
- * Keep the same strong static halo; do not downscale it for phones.
- */
-@media (max-width: 767px), (pointer: coarse) {
-  .premium-card.premium-glow-buy,
-  .premium-card.premium-glow-win,
-  .premium-card.premium-glow-loss,
-  .premium-card.premium-glow-breakeven,
-  .premium-card.premium-dense-row.premium-glow-buy,
-  .premium-card.premium-dense-row.premium-glow-win,
-  .premium-card.premium-dense-row.premium-glow-loss,
-  .premium-card.premium-dense-row.premium-glow-breakeven {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.62) !important;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.09),
-      0 16px 40px rgba(0,0,0,0.28),
-      0 0 44px rgb(var(--premium-semantic-rgb) / 0.34),
-      0 0 98px rgb(var(--premium-semantic-deep-rgb) / 0.17),
-      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  }
-
-  .premium-card.premium-dense-row.premium-glow-buy,
-  .premium-card.premium-dense-row.premium-glow-win,
-  .premium-card.premium-dense-row.premium-glow-loss,
-  .premium-card.premium-dense-row.premium-glow-breakeven {
-    box-shadow:
-      inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.80),
-      inset 0 1px 0 rgba(255,255,255,0.09),
-      0 16px 40px rgba(0,0,0,0.28),
-      0 0 44px rgb(var(--premium-semantic-rgb) / 0.34),
-      0 0 98px rgb(var(--premium-semantic-deep-rgb) / 0.17),
-      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
-  }
-
-  .premium-card.premium-hero-card.premium-glow-buy,
-  .premium-card.premium-hero-card.premium-glow-win,
-  .premium-card.premium-hero-card.premium-glow-loss,
-  .premium-card.premium-hero-card.premium-glow-breakeven {
-    border-color: rgb(var(--premium-semantic-rgb) / 0.72) !important;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.10),
-      0 20px 48px rgba(0,0,0,0.30),
-      0 0 58px rgb(var(--premium-semantic-rgb) / 0.42),
-      0 0 138px rgb(var(--premium-semantic-deep-rgb) / 0.22),
-      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+/* Dense hierarchy intentionally adds no surface styling. */
+@media (max-width: 767px) {
+  :root {
+    --hierarchy-space-card: 0.875rem;
+    --hierarchy-space-related: 1rem;
+    --hierarchy-space-section: 1.5rem;
+    --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
   }
 }

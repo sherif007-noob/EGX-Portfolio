@@ -309,12 +309,14 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             </div>
 
-            <div className="premium-header-create-cluster flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="premium-header-create-cluster flex shrink-0 items-center gap-1 p-1 sm:gap-1.5">
             {/* Scan Screenshot Button */}
             {onOpenScreenshotModal && (
               <button
                 id="header-scan-btn"
                 onClick={onOpenScreenshotModal}
+                aria-label="Scan receipt to add trade"
+                data-action-priority="creation-secondary"
                 className="premium-action premium-action-success premium-header-create-secondary flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
                 title="Upload trade screenshot or receipt to scan and log"
               >
@@ -327,6 +329,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-add-trade-btn"
               onClick={onOpenAddTrade}
+              aria-label="Add trade"
+              data-action-priority="creation-primary"
               className="premium-action premium-action-primary premium-shimmer-border premium-header-create-primary flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />

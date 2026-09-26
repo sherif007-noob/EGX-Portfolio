@@ -716,8 +716,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               }`}
             >
               {/* Row 1: Ticker, Type Tag, Date, and P&L / Total Outlay */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
                   <StockLogo
                     ticker={tx.ticker}
                     companyName={tx.companyName}
@@ -793,7 +793,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
 
                 {/* Right side: Financial Impact & Delete Action */}
-                <div className="flex items-center gap-3 text-right">
+                <div className="flex w-full items-center justify-between gap-3 text-left sm:w-auto sm:justify-end sm:text-right">
                   <div>
                     {isSell ? (
                       <>

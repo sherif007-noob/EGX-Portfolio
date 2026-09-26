@@ -92,7 +92,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
   return (
     <div className="premium-dense-workflow space-y-4">
-      <div className="premium-hierarchy-h3 premium-dense-context flex items-center justify-between gap-3 rounded-xl px-3 py-2.5" data-hierarchy="h3">
+      <div className="premium-glass premium-hierarchy-h3 premium-dense-context flex items-center justify-between gap-3 rounded-xl px-3 py-2.5" data-hierarchy="h3">
         <div>
           <div className="premium-type-section-title">Open Positions</div>
           <div className="premium-type-metadata mt-0.5">

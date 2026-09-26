@@ -380,7 +380,7 @@ Quality Checks run `36253526700` passed typecheck, tests and production build.
 
 ## Pass 8.4 — Typography and spacing normalization
 
-**Status: IN PROGRESS — Pass 8.4.4 COMPLETE / CI CLEAN; full typography/spacing consistency sweep begins in 8.4.5. Quality Checks #36263281878 passed.**
+**Status: DEVICE VALIDATION PENDING — Pass 8.4.5 code complete / CI clean. Quality Checks #36265246582 passed; Phase 8.4 closes after device visual acceptance.**
 
 ### Pass 8.4.1 — Canonical typography scale and audit
 
@@ -430,6 +430,18 @@ Implemented:
 - dense workflow summary → controls → data rhythm across Positions, Cycles, Transactions, Cash, and Stocks;
 - repeated H5 record padding and inter-record spacing normalization;
 - source-level regression coverage proving the spacing layer remains material-neutral.
+
+### Pass 8.4.5 — Full consistency sweep
+
+**Status: CODE COMPLETE / CI CLEAN — Quality Checks #36265246582 passed; device visual validation pending.**
+
+Implemented:
+- audited every Phase-8-owned screen for arbitrary type sizes, tracked captions, unit hierarchy and local spacing drift;
+- migrated genuine helper/metadata outliers to canonical roles;
+- retained compact 10px treatments only where they are intentional badges, statuses or controls;
+- removed the final arbitrary tracked allocation caption and legacy Overview metric-size usage;
+- normalized the remaining report/dense spacing outliers onto the shared major/related/control rhythm;
+- added regression coverage against reintroducing 9px hierarchy text, arbitrary tracked captions, legacy Overview metric classes or material changes.
 
 ### Goal
 

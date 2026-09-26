@@ -348,7 +348,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="premium-nav-scroller overflow-x-auto overscroll-x-contain scrollbar-none"
           >
             <nav
-              className="premium-header-nav-row flex min-w-max items-center py-2"
+              className="premium-header-nav-row flex min-w-max items-center gap-1 py-2"
               aria-label="Portfolio navigation"
               onKeyDown={handleNavKeyDown}
             >
@@ -356,16 +356,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <React.Fragment key={group.label}>
                   {groupIndex > 0 && (
                     <span
-                      className="premium-nav-divider mx-1.5 h-6 w-px shrink-0 sm:mx-2.5"
+                      className="premium-nav-divider mx-1 h-5 w-px shrink-0 sm:mx-2"
                       aria-hidden="true"
                     />
                   )}
                   <div
-                    className="flex items-center gap-1 sm:gap-1.5"
+                    className="premium-nav-group flex items-center gap-1 sm:gap-1.5"
                     role="group"
                     aria-label={group.label}
                   >
-                    <span className="premium-nav-group-label hidden 2xl:inline-flex px-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                    <span className="premium-nav-group-label hidden 2xl:inline-flex px-1.5 text-[9px] font-semibold uppercase tracking-[0.12em]">
                       {group.label}
                     </span>
                     {group.items.map((item) => {
@@ -382,13 +382,13 @@ export const Header: React.FC<HeaderProps> = ({
                           className={`premium-nav premium-nav-item flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium sm:gap-2 sm:px-3 sm:text-sm ${
                             active
                               ? 'premium-nav-active text-white font-semibold'
-                              : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.035]'
+                              : 'premium-nav-idle'
                           }`}
                           style={{ '--premium-nav-accent': item.accent } as React.CSSProperties}
                         >
                           <Icon className="premium-nav-icon h-4 w-4" />
-                          <span className="2xl:hidden">{item.compactLabel}</span>
-                          <span className="hidden 2xl:inline">{item.label}</span>
+                          <span className="premium-nav-label-compact 2xl:hidden">{item.compactLabel}</span>
+                          <span className="premium-nav-label-full hidden 2xl:inline">{item.label}</span>
                         </button>
                       );
                     })}

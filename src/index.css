@@ -5167,3 +5167,202 @@ body {
     0 0 var(--premium-state-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha)),
     var(--premium-refraction-shadow, 0 0 0 transparent) !important;
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 8 visual-language hard reset                                         */
+/* -------------------------------------------------------------------------- */
+/*
+ * Phase 8 hierarchy is structural only. It must never flatten the accepted
+ * premium glass / refraction / semantic system.
+ *
+ * Canonical visual benchmark: premium-report-hero-card + premium-report-glass.
+ * These late rules intentionally beat all earlier H1-H5/dense overrides.
+ */
+
+/* Strong frosted glass for every hierarchy-bearing card. */
+.premium-card.premium-hierarchy-h1,
+.premium-card.premium-hierarchy-h2,
+.premium-card.premium-hierarchy-h3,
+.premium-card.premium-hierarchy-h4,
+.premium-card.premium-hierarchy-h5,
+.premium-card.premium-dense-row {
+  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
+  border-color: rgba(186, 230, 253, 0.20) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.014) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.040), transparent 42%, rgba(139,92,246,0.035)),
+    rgba(10, 18, 36, 0.50) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.085),
+    0 20px 48px rgba(0,0,0,0.28),
+    0 0 34px rgba(34,211,238,0.055),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+}
+
+.premium-card.premium-hierarchy-h1::before,
+.premium-card.premium-hierarchy-h2::before,
+.premium-card.premium-hierarchy-h3::before,
+.premium-card.premium-hierarchy-h4::before,
+.premium-card.premium-hierarchy-h5::before,
+.premium-card.premium-dense-row::before {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.080), rgba(255,255,255,0.018) 34%, transparent 68%) !important;
+  opacity: 0.70 !important;
+}
+
+/* Strong frosted working glass for hierarchy-bearing panels/summary bands. */
+.premium-panel.premium-hierarchy-h2,
+.premium-panel.premium-hierarchy-h3,
+.premium-panel.premium-hierarchy-h4,
+.premium-panel.premium-dense-toolbar,
+.premium-glass.premium-hierarchy-h2,
+.premium-glass.premium-hierarchy-h3,
+.premium-glass.premium-hierarchy-h4,
+.premium-dense-context,
+.premium-dense-summary {
+  border-color: rgba(186, 230, 253, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.012) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.026), transparent 42%, rgba(139,92,246,0.026)),
+    rgba(10, 18, 36, 0.52) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.075),
+    0 18px 42px rgba(0,0,0,0.26),
+    0 0 28px rgba(34,211,238,0.040),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+}
+
+/* Insets keep visible frosted depth instead of becoming opaque navy blocks. */
+.premium-subpanel.premium-hierarchy-h4,
+.premium-dense-row .premium-subpanel,
+.premium-dense-row .premium-hierarchy-h4 {
+  border-color: rgba(148,163,184,0.16) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 42%, transparent 72%),
+    rgba(3, 9, 22, 0.36) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 10px 26px rgba(0,0,0,0.15),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(17px) saturate(140%) !important;
+  backdrop-filter: blur(17px) saturate(140%) !important;
+}
+
+/* Semantic cards use the accepted hero-grade glass + halo.
+ * No hierarchy attenuation. A WIN/LOSS/BUY/BREAKEVEN card must look semantic
+ * before the user reads a number.
+ */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven,
+.premium-card.premium-dense-row.premium-glow-buy,
+.premium-card.premium-dense-row.premium-glow-win,
+.premium-card.premium-dense-row.premium-glow-loss,
+.premium-card.premium-dense-row.premium-glow-breakeven {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+  border-color: rgb(var(--premium-semantic-rgb) / 0.58) !important;
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-semantic-rgb) / 0.19), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.10), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(12, 20, 39, 0.66) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.30),
+    0 0 40px rgb(var(--premium-semantic-rgb) / 0.30),
+    0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(158%) !important;
+  backdrop-filter: blur(24px) saturate(158%) !important;
+}
+
+/* Dense semantic cards may keep the semantic edge as an additional cue,
+ * but never as a replacement for the halo.
+ */
+.premium-card.premium-dense-row.premium-glow-buy,
+.premium-card.premium-dense-row.premium-glow-win,
+.premium-card.premium-dense-row.premium-glow-loss,
+.premium-card.premium-dense-row.premium-glow-breakeven {
+  box-shadow:
+    inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.78),
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 18px 44px rgba(0,0,0,0.30),
+    0 0 40px rgb(var(--premium-semantic-rgb) / 0.30),
+    0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.15),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+}
+
+/* The enlarged Portfolio Value hero gets the strongest semantic environment. */
+.premium-card.premium-hero-card.premium-glow-buy,
+.premium-card.premium-hero-card.premium-glow-win,
+.premium-card.premium-hero-card.premium-glow-loss,
+.premium-card.premium-hero-card.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / 0.68) !important;
+  background:
+    radial-gradient(circle at 15% -20%, rgb(var(--premium-semantic-rgb) / 0.24), transparent 40%),
+    radial-gradient(circle at 100% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.13), transparent 46%),
+    linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.014) 42%, transparent 72%),
+    rgba(12, 20, 39, 0.64) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 22px 52px rgba(0,0,0,0.32),
+    0 0 52px rgb(var(--premium-semantic-rgb) / 0.38),
+    0 0 126px rgb(var(--premium-semantic-deep-rgb) / 0.20),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(165%) !important;
+  backdrop-filter: blur(26px) saturate(165%) !important;
+}
+
+/* Coarse-pointer/mobile is where the previous restoration failed perceptually.
+ * Keep the same strong static halo; do not downscale it for phones.
+ */
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-card.premium-glow-buy,
+  .premium-card.premium-glow-win,
+  .premium-card.premium-glow-loss,
+  .premium-card.premium-glow-breakeven,
+  .premium-card.premium-dense-row.premium-glow-buy,
+  .premium-card.premium-dense-row.premium-glow-win,
+  .premium-card.premium-dense-row.premium-glow-loss,
+  .premium-card.premium-dense-row.premium-glow-breakeven {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.62) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.09),
+      0 16px 40px rgba(0,0,0,0.28),
+      0 0 44px rgb(var(--premium-semantic-rgb) / 0.34),
+      0 0 98px rgb(var(--premium-semantic-deep-rgb) / 0.17),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+
+  .premium-card.premium-dense-row.premium-glow-buy,
+  .premium-card.premium-dense-row.premium-glow-win,
+  .premium-card.premium-dense-row.premium-glow-loss,
+  .premium-card.premium-dense-row.premium-glow-breakeven {
+    box-shadow:
+      inset 4px 0 0 rgb(var(--premium-semantic-rgb) / 0.80),
+      inset 0 1px 0 rgba(255,255,255,0.09),
+      0 16px 40px rgba(0,0,0,0.28),
+      0 0 44px rgb(var(--premium-semantic-rgb) / 0.34),
+      0 0 98px rgb(var(--premium-semantic-deep-rgb) / 0.17),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+
+  .premium-card.premium-hero-card.premium-glow-buy,
+  .premium-card.premium-hero-card.premium-glow-win,
+  .premium-card.premium-hero-card.premium-glow-loss,
+  .premium-card.premium-hero-card.premium-glow-breakeven {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.72) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 20px 48px rgba(0,0,0,0.30),
+      0 0 58px rgb(var(--premium-semantic-rgb) / 0.42),
+      0 0 138px rgb(var(--premium-semantic-deep-rgb) / 0.22),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+}

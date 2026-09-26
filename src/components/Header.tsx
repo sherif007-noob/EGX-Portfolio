@@ -17,6 +17,7 @@ import {
   Bell,
   BellRing,
   Settings2,
+  ChevronDown,
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
@@ -90,6 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
 }) => {
   const navScrollRef = useRef<HTMLDivElement>(null);
+  const dataToolsRef = useRef<HTMLDivElement>(null);
+  const [isDataToolsOpen, setIsDataToolsOpen] = useState(false);
   const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
   const [canScrollNavRight, setCanScrollNavRight] = useState(false);
 
@@ -119,6 +122,26 @@ export const Header: React.FC<HeaderProps> = ({
       window.removeEventListener('resize', updateNavOverflow);
     };
   }, [updateNavOverflow]);
+
+  useEffect(() => {
+    if (!isDataToolsOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (dataToolsRef.current && !dataToolsRef.current.contains(event.target as Node)) {
+        setIsDataToolsOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsDataToolsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDataToolsOpen]);
 
   const scrollNavItemIntoView = useCallback((
     item: HTMLElement | null,
@@ -255,45 +278,103 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Google Sheets Trigger */}
-            <button
-              id="header-google-sheets-btn"
-              onClick={onOpenGoogleSheets}
-              className={`premium-action premium-header-action relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                isTokenExpired
-                  ? 'premium-header-action-amber premium-header-action-attention'
-                  : 'premium-header-action-emerald'
-              }`}
-              title={isTokenExpired ? 'Google Sheets token expired. Click to reconnect' : 'Connect or sync Google Sheets'}
-            >
-              {isTokenExpired ? (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              ) : (
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span className="premium-header-action-label hidden md:inline">
-                {isTokenExpired ? 'Reconnect Sheets' : isSheetsConnected ? 'Sheets Synced' : 'Google Sheets'}
-              </span>
-              {isSheetsConnected && !isTokenExpired && (
-                <>
-                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-400 md:hidden" title="Google Sheets connected" />
-                  <Check className="hidden md:block w-3 h-3 text-emerald-400 ml-0.5" />
-                </>
-              )}
-            </button>
-
-            {/* Backup & Ledger Reconcile Modal Trigger */}
-            {onOpenBackupModal && (
+            {/* Data management: lower-frequency tools share one premium command. */}
+            <div ref={dataToolsRef} className="premium-header-tools relative shrink-0">
               <button
-                id="header-backup-reconcile-btn"
-                onClick={onOpenBackupModal}
-                className="premium-action premium-header-action premium-header-action-purple flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold"
-                title="Backup JSON, restore database, or reconcile portfolio ledger"
+                id="header-data-tools-btn"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={isDataToolsOpen}
+                onClick={() => setIsDataToolsOpen((open) => !open)}
+                className="premium-action premium-header-action premium-header-action-purple premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3"
+                title="Google Sheets, backup, restore, and ledger reconciliation"
               >
-                <Database className="w-3.5 h-3.5 text-purple-400" />
-                <span className="premium-header-action-label hidden lg:inline">Backup &amp; Reconcile</span>
+                <Database className="h-3.5 w-3.5 text-purple-300" />
+                <span className="premium-header-action-label hidden lg:inline">Data &amp; Tools</span>
+                <ChevronDown className={`premium-motion-chevron h-3.5 w-3.5 text-purple-300/80 ${isDataToolsOpen ? 'rotate-180' : ''}`} />
+                {isTokenExpired ? (
+                  <span
+                    className="premium-header-tools-status premium-header-tools-status-warning"
+                    title="Google Sheets needs reconnection"
+                    aria-label="Google Sheets needs reconnection"
+                  />
+                ) : isSheetsConnected ? (
+                  <span
+                    className="premium-header-tools-status premium-header-tools-status-connected"
+                    title="Google Sheets connected"
+                    aria-label="Google Sheets connected"
+                  />
+                ) : null}
               </button>
-            )}
+
+              {isDataToolsOpen && (
+                <div
+                  id="header-data-tools-menu"
+                  role="menu"
+                  aria-label="Data and tools"
+                  className="premium-floating premium-dropdown premium-header-tools-menu absolute right-0 top-full z-[80] mt-2 w-[min(19rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border p-1.5"
+                >
+                  <button
+                    id="header-google-sheets-btn"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsDataToolsOpen(false);
+                      onOpenGoogleSheets();
+                    }}
+                    className={`premium-menu-item premium-header-tools-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left ${
+                      isTokenExpired ? 'premium-header-tools-item-warning' : 'premium-header-tools-item-emerald'
+                    }`}
+                  >
+                    <span className="premium-header-tools-icon-wrap">
+                      {isTokenExpired ? (
+                        <AlertTriangle className="h-4 w-4 text-amber-300" />
+                      ) : (
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-300" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-semibold text-slate-100">
+                        {isTokenExpired ? 'Reconnect Google Sheets' : 'Google Sheets'}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
+                        {isTokenExpired
+                          ? 'Authentication expired — reconnect to continue sync'
+                          : isSheetsConnected
+                          ? 'Connected — manage or sync spreadsheet data'
+                          : 'Connect portfolio data to Google Sheets'}
+                      </span>
+                    </span>
+                    {isSheetsConnected && !isTokenExpired && (
+                      <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    )}
+                  </button>
+
+                  {onOpenBackupModal && (
+                    <button
+                      id="header-backup-reconcile-btn"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsDataToolsOpen(false);
+                        onOpenBackupModal();
+                      }}
+                      className="premium-menu-item premium-header-tools-item premium-header-tools-item-purple flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left"
+                    >
+                      <span className="premium-header-tools-icon-wrap">
+                        <Database className="h-4 w-4 text-purple-300" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-slate-100">Backup &amp; Reconcile</span>
+                        <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
+                          Backup, restore, or reconcile against the ledger
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
               {/* Settings entry point is reserved for future functionality; Phase 9 adds the affordance only. */}
               <button

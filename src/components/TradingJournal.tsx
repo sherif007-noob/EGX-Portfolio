@@ -705,7 +705,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           return (
             <div
               key={tx.id}
-              className={`premium-card premium-hierarchy-h5 premium-dense-row p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
+              className={`premium-card premium-semantic-record premium-hierarchy-h5 premium-dense-row p-4 rounded-2xl border transition space-y-3 relative overflow-hidden ${
                 isBuy
                   ? 'premium-glow-buy'
                   : isWinningSell

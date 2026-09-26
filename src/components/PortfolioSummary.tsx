@@ -66,13 +66,13 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
   const totalMarketVal = metrics.totalMarketValue !== undefined ? metrics.totalMarketValue : Math.max(0, metrics.totalValue - metrics.cashBalance);
 
   return (
-    <div className="premium-hierarchy-h0 space-y-4" data-hierarchy="h0">
+    <div className="premium-hierarchy-h0 premium-flow-related" data-hierarchy="h0">
       {/* Phase 8.1 — portfolio hierarchy: hero -> primary support -> secondary support. */}
-      <div className="space-y-2.5 sm:space-y-3">
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-6">
+      <div className="premium-flow-control">
+        <div className="premium-gap-control grid grid-cols-2 md:grid-cols-6">
           {/* H1 — Total Portfolio Value */}
           <div
-            className={`premium-card premium-hero-card premium-hierarchy-h1 premium-overview-hero col-span-2 rounded-2xl p-4 sm:p-5 md:col-span-2 ${dayGlowClass}`}
+            className={`premium-card premium-hero-card premium-hierarchy-h1 premium-overview-hero premium-pad-h1 col-span-2 rounded-2xl md:col-span-2 ${dayGlowClass}`}
             data-hierarchy="h1"
           >
             <div className="flex items-start justify-between gap-3">
@@ -122,7 +122,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
           {/* H2 — Unrealized P&L */}
           <div
-            className={`premium-card premium-hierarchy-h2 col-span-1 flex flex-col justify-between rounded-2xl p-3.5 sm:p-4 md:col-span-2 ${unrealizedGlowClass}`}
+            className={`premium-card premium-hierarchy-h2 premium-pad-h2 col-span-1 flex flex-col justify-between rounded-2xl md:col-span-2 ${unrealizedGlowClass}`}
             data-hierarchy="h2"
           >
             <div>
@@ -161,7 +161,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
           {/* H2 — Market exposure */}
           <div
-            className="premium-card premium-material-tone-cyan premium-hierarchy-h2 col-span-1 flex flex-col justify-between rounded-2xl p-3.5 sm:p-4 md:col-span-2"
+            className="premium-card premium-material-tone-cyan premium-hierarchy-h2 premium-pad-h2 col-span-1 flex flex-col justify-between rounded-2xl md:col-span-2"
             data-hierarchy="h2"
           >
             <div>
@@ -190,9 +190,9 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* H3 — supporting metrics */}
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
+        <div className="premium-gap-control grid grid-cols-2 sm:grid-cols-3">
           <div
-            className={`premium-card premium-hierarchy-h3 flex flex-col justify-between rounded-2xl p-3 sm:p-3.5 ${realizedGlowClass}`}
+            className={`premium-card premium-hierarchy-h3 premium-pad-h3 flex flex-col justify-between rounded-2xl ${realizedGlowClass}`}
             data-hierarchy="h3"
           >
             <div>
@@ -215,7 +215,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
           </div>
 
           <div
-            className="premium-card premium-material-tone-blue premium-hierarchy-h3 flex flex-col justify-between rounded-2xl p-3 sm:p-3.5"
+            className="premium-card premium-material-tone-blue premium-hierarchy-h3 premium-pad-h3 flex flex-col justify-between rounded-2xl"
             data-hierarchy="h3"
           >
             <div>
@@ -241,7 +241,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
           </div>
 
           <div
-            className="premium-card premium-material-tone-amber premium-hierarchy-h3 premium-overview-fees col-span-2 flex flex-col justify-between rounded-2xl p-3 sm:col-span-1 sm:p-3.5"
+            className="premium-card premium-material-tone-amber premium-hierarchy-h3 premium-overview-fees premium-pad-h3 col-span-2 flex flex-col justify-between rounded-2xl sm:col-span-1"
             data-hierarchy="h3"
           >
             <div className="flex min-w-0 items-start justify-between gap-3">
@@ -266,7 +266,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
       {/* H4 utility/context strip — deliberately below the portfolio summary. */}
       <div
-        className="premium-glass premium-material-tone-cyan premium-hierarchy-h4 premium-overview-market-strip flex flex-col justify-between gap-3 rounded-2xl p-3 md:flex-row md:items-center"
+        className="premium-glass premium-material-tone-cyan premium-hierarchy-h4 premium-overview-market-strip premium-pad-h4 premium-gap-control flex flex-col justify-between rounded-2xl md:flex-row md:items-center"
         data-hierarchy="h4"
       >
         <div className="flex min-w-0 flex-col gap-1">

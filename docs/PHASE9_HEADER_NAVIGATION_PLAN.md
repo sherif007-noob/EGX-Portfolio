@@ -159,6 +159,8 @@ Likely structure:
 - Backup & Reconcile moves into the lower-frequency data-management context;
 - Settings remains a visible future affordance.
 
+**Settings design-language rule:** this is the phase that finalizes the Settings button's visual treatment. It must use the same accepted premium utility language as the rest of the header — neutral translucent glass, refraction, subtle border luminosity, restrained hover/focus bloom, and hierarchy-appropriate icon/label treatment. It must not become a primary CTA, use financial WIN/LOSS semantics, or introduce a separate visual language just because its functionality is reserved for the future.
+
 ### 9.5 — Status communication
 
 Prefer compact status indicators over whole-button semantic promotion.

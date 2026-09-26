@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented; accepted glass/semantic visual language hard-reset restored, validation pending.**
+**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented with the canonical material/semantic/hierarchy separation, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -45,14 +45,15 @@ Do not change:
 - accepted semantic meaning: green/red/amber remain financial state, not generic decoration.
 
 Phase 8 may change:
-- surface hierarchy and strength;
+- surface composition and information hierarchy;
 - card grouping and visual containment;
 - typography scale, weight, contrast, and metadata treatment;
 - spacing rhythm;
 - summary-vs-detail composition;
 - action emphasis/de-emphasis;
-- desktop/mobile responsive hierarchy where information order is unchanged;
-- decorative intensity when necessary to establish hierarchy.
+- desktop/mobile responsive hierarchy where information order is unchanged.
+
+Phase 8 must consume, not redefine, the protected material and semantic systems documented in `docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md`.
 
 ## Core hierarchy model
 
@@ -85,10 +86,9 @@ Purpose:
 - values or visualizations needed to interpret the hero.
 
 Treatment:
-- clear glass/card boundary;
-- medium elevation;
-- semantic border/glow only when financially meaningful;
-- should not visually overpower H1.
+- retain the accepted material primitive assigned to the component;
+- use layout, scale, typography, and grouping to remain below H1;
+- semantic state uses its independent semantic surface role when financially meaningful.
 
 ### H3 — Secondary information surface
 
@@ -96,10 +96,9 @@ Purpose:
 - useful supporting metrics, summaries, utilities, or related context.
 
 Treatment:
-- quieter border and shadow;
-- reduced glow;
-- smaller metric typography;
-- may use grouping instead of separate full-strength cards.
+- retain the accepted material primitive;
+- use smaller typography, composition, spacing, and grouping to communicate lower importance;
+- do not weaken a real financial semantic state merely because the surface is H3.
 
 ### H4 — Inset / detail surface
 
@@ -117,32 +116,30 @@ Purpose:
 - tables, journals, directories, cycle lists, transaction lists.
 
 Treatment:
-- information density over decoration;
-- row-level state primarily through edge/border/accent, not full-card halo;
+- information density over structural prominence;
+- repeated card records use the dedicated `premium-semantic-record` role when they carry financial state;
+- true table rows may continue using the accepted row-edge semantic treatment;
 - toolbars and summaries must remain visually separate from rows.
 
-## Semantic intensity rule
+## Protected visual-language rule
 
-**Hierarchy and financial state are separate axes.**
+Phase 8 now follows the app-wide contract in `docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md`.
 
-A loss should not automatically become more visually important than the hero because it is red. Equally, hierarchy must never make a real financial state visually disappear.
+Three systems are independent:
+
+1. **Material** — accepted `premium-card`, `premium-glass`, `premium-panel`, `premium-subpanel`, report glass, refraction, modal, table, and overlay primitives.
+2. **Semantic state/role** — financial color plus one of exactly three outer roles: `premium-semantic-hero`, `premium-semantic-card`, or `premium-semantic-record`.
+3. **Hierarchy** — H0–H5 controls layout, scale, typography, grouping, spacing, and density only.
 
 Rules:
-- structural hierarchy comes from scale, layout, depth, spacing, and typography;
-- semantic color communicates state within that hierarchy;
-- **semantic atmosphere is preserved wherever a financial surface has a meaningful BUY / WIN / LOSS / BREAKEVEN or cost state**;
-- the accepted Phase 5 semantic halo is a protected visual-language primitive and is **not attenuated by H2/H3/H5 hierarchy**;
-- H1 hero surfaces may strengthen/widen the accepted halo when their geometry is materially larger;
-- H4/inset state surfaces use the accepted compact semantic-state treatment;
-- true dense table rows may remain edge-coded where an outer card halo is not geometrically appropriate;
-- semantic cards in mobile lists/records retain the full semantic aura; H5 does not mean edge-only;
-- **glass/refraction primitives are additive to hierarchy**: Phase 8 may add H-level classes but must not replace `premium-card`, `premium-glass`, `premium-panel`, `premium-subpanel`, hero, or report glass roles;
-- hierarchy must never replace the accepted semantic/glass engine with flatter custom backgrounds or weaker shadows;
-- the hero-grade report glass benchmark is the canonical fallback when a hierarchy override causes visual regression: 24–26px blur, ~150–165% saturation, visible top-edge refraction, translucent layered glass, semantic interior bloom, and a clearly visible near + far halo;
-- mobile/coarse-pointer semantic cards keep full static halo strength; there is no phone-specific attenuation;
-- emerald / rose / amber should be preserved for meaningful financial state;
-- cyan / blue / purple remain the preferred structural/accent families;
-- avoid decorative green/red/amber when no financial state is being communicated.
+- H1–H5 may not redefine background, border, backdrop-filter, refraction, or box-shadow;
+- hierarchy must not attenuate a semantic halo;
+- Total Portfolio Value uses `semantic-hero`;
+- normal semantic KPI cards use `semantic-card`;
+- repeated semantic position/transaction/cycle cards use `semantic-record`;
+- true dense table rows may remain edge-coded;
+- accepted Phase 3–7 visual primitives are protected unless explicitly reopened;
+- emergency late-cascade “restoration” blocks are prohibited; ownership must be fixed at the primitive/class-composition level.
 
 ## Typography roles
 
@@ -179,7 +176,7 @@ Desktop should use extra space to strengthen grouping and hierarchy, not simply 
 
 Implemented:
 - add reusable H0–H5 structural surface recipes in `src/index.css`;
-- add hierarchy-specific semantic intensity variables so financial color and structural importance remain separate axes;
+- establish H0–H5 as structural hierarchy primitives; after device regression, these classes were corrected to be fully material-agnostic;
 - add six typography roles: page title, section title, metric, metric label, metadata, helper;
 - add canonical hierarchy spacing tokens and helpers;
 - add four action-priority classes: primary, secondary, utility, destructive;
@@ -331,26 +328,18 @@ Reduce nested-card competition while keeping the strong Phase 7 chart work.
 **Status: IMPLEMENTED — validation pending.**
 
 Implemented:
-- add a shared `premium-dense-workflow` hierarchy recipe across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;
-- device review exposed an overcorrection: hierarchy CSS was overriding the Phase 5 semantic `box-shadow`, and H5 explicitly zeroed near/far glow; this is corrected by a late hierarchy-aware semantic layer;
-- H1/H2/H3 semantic cards now retain scaled near/far aura according to hierarchy level;
-- H5 semantic records retain edge coding **and** a restrained outer aura/interior wash;
-- repeated device review showed even the first two restoration attempts were still visibly too flat on iPhone; a **visual-language hard reset** now forces the accepted hero-grade report glass + semantic halo recipes at the very end of the cascade so hierarchy cannot override them;
-- Brokerage Fees regains the amber cost semantic glow;
-- second device review showed the first correction was still visibly too weak because the hierarchy-specific flat glass recipes remained active; correction v2 restores the actual pre-Phase-8 card/panel/subpanel/glass recipes and removes H2/H3/H5 semantic attenuation entirely;
-- Total Portfolio Value regains the original `premium-hero-card` role; because the new H1 geometry is substantially larger, its semantic aura is widened to preserve the original perceptual strength;
-- summary/context bands regain their original `premium-glass` primitive instead of using hierarchy as a replacement visual style;
-- give Open Positions an explicit H3 dataset context with visible/total holding count;
-- convert search/filter/sort/action toolbars to quiet H4 surfaces;
-- convert desktop table shells and cash-ledger tables to H5 data surfaces;
-- convert repeated mobile/list cards in Positions, Closed Cycles, Transactions, and Stocks to H5 dense records;
-- replace full semantic card halos on repeated BUY/WIN/LOSS/BREAKEVEN records with semantic left-edge coding plus a very shallow local tint;
-- suppress radial card effects on dense records;
-- keep Closed Cycles and Transaction summaries at H3 while their local metric insets remain H4;
-- keep Cash available/capital context at H2, supporting cash KPIs/audit/action/history sections at H3, and the actual ledger at H5;
-- place the Ticker Directory context at H3, filter/search controls at H4, repeated ticker cards at H5, and their technical subpanels at H4;
-- preserve all filtering, sorting, pagination, expand/collapse, transaction editing, cash mutation, ticker sync/export, and trade actions;
-- add source-level regression coverage for summary/control/data hierarchy and dense semantic edge coding.
+- apply the summary → controls → dense-data hierarchy across Open Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks;
+- preserve the accepted `premium-glass`, `premium-card`, `premium-panel`, `premium-subpanel`, table-shell, and report-glass materials instead of replacing them with H-level styling;
+- introduce exactly three semantic surface roles: `premium-semantic-hero`, `premium-semantic-card`, and `premium-semantic-record`;
+- map Total Portfolio Value to semantic hero, standalone financial KPI cards to semantic card, and repeated Positions/Transactions/Cycles cards to semantic record;
+- keep desktop table-row semantics on the accepted edge system;
+- remove the accumulated Phase 8 semantic-soul/restoration/hard-reset cascade patches entirely;
+- remove material ownership from H1–H5; hierarchy now controls only information structure, typography, spacing, grouping, and density;
+- restore accepted report glass primitives to report sections while keeping the reduced nested-card information architecture from 8.2;
+- restore accepted glass primitives to workflow context/summary bands;
+- add `docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md` as the protected app-wide contract for Phases 8–11 and future visual work;
+- add regression tests that reject H-level material styling, require the three semantic roles, verify Overview role mapping, and verify record-role mapping across dense workflows;
+- preserve all filtering, sorting, pagination, expand/collapse, transaction editing, cash mutation, ticker sync/export, chart behavior, and trade actions.
 
 ### Goal
 
@@ -361,7 +350,7 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 - separate summary, controls, and data regions more deliberately;
 - filters/search/sort toolbars become quiet H4 utility bands;
 - dense result lists/tables remain H5;
-- reduce structural elevation on repeated rows while preserving a restrained semantic aura plus edge/accent state;
+- reduce hierarchy through composition/density while repeated semantic cards keep the canonical `semantic-record` atmosphere;
 - keep selected/expanded rows legible without turning every row into a hero card;
 - standardize section headings/counts/actions above tables;
 - make empty/loading states clearly subordinate to the screen title but stronger than helper copy.
@@ -370,7 +359,7 @@ Make Positions, Closed Cycles, Transactions, Cash Ledger, and Stocks easier to s
 
 - user can identify the current dataset, active filters, and primary action without scanning every row;
 - table/list rows remain dense and readable;
-- semantic row state stays immediately perceptible without returning every repeated record to hero-level halo saturation.
+- semantic record state remains immediately perceptible while using the bounded record role rather than hero/card halo geometry.
 
 ---
 

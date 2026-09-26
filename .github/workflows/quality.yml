@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase8-pass3-dense-workflows-gate]
   pull_request:
     branches: [main]
 

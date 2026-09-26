@@ -101,9 +101,9 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
   };
 
   return (
-    <div className="premium-dense-workflow space-y-4">
+    <div className="premium-dense-workflow premium-flow-related">
       {/* Header Info */}
-      <div className="premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl" data-hierarchy="h3">
+      <div className="premium-hierarchy-h3 premium-dense-summary premium-pad-h3 premium-gap-control flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl" data-hierarchy="h3">
         <div>
           <h2 className="premium-type-section-title flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-400" />
@@ -162,7 +162,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </SurfacePresence>
 
       {/* Filter Bar */}
-      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl" data-hierarchy="h4">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control flex flex-col sm:flex-row items-stretch sm:items-center justify-between rounded-2xl" data-hierarchy="h4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -191,14 +191,14 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
       </div>
 
       {/* Grid of Tickers */}
-      <MotionSwap motionKey={selectedSector} variant="state" className="premium-directory-results grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <MotionSwap motionKey={selectedSector} variant="state" className="premium-directory-results premium-gap-control grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {filteredTickers.map((ticker) => {
           const isPositive = ticker.changePercent >= 0;
 
           return (
             <div
               key={ticker.ticker}
-              className="premium-card premium-hierarchy-h5 premium-dense-row premium-radial p-3.5 sm:p-4 rounded-2xl space-y-3"
+              className="premium-card premium-hierarchy-h5 premium-dense-row premium-radial premium-pad-h5 premium-flow-control rounded-2xl"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">

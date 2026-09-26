@@ -12,6 +12,13 @@ This contract applies to the remainder of the premium overhaul and to later visu
 
 ---
 
+
+## Monthly Report material reference
+
+The accepted Monthly Performance audit cards are the canonical material benchmark. A hierarchy surface is visually regressed if it becomes more opaque, flatter, loses inner sheen/refraction, or reduces a semantic state to border-only/edge-only emphasis compared with that reference.
+
+For semantic cards, the resting state must include both a visible near aura and a wider far bloom. These effects exist before hover; hover may intensify them but must never be the only place they appear.
+
 # 1. Three independent visual axes
 
 Every surface is composed from independent systems.

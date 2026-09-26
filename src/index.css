@@ -4612,39 +4612,70 @@ body {
   content: '';
   position: absolute;
   z-index: 3;
-  top: 0.7rem;
-  bottom: 0.7rem;
-  left: 0;
-  width: 3px;
+  inset: 0;
+  box-sizing: border-box;
   pointer-events: none;
-  border-radius: 0 999px 999px 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgb(var(--premium-edge-rgb) / 0.50) 0%,
-      rgb(var(--premium-edge-rgb) / 0.98) 24%,
-      rgb(var(--premium-edge-rgb) / 0.98) 76%,
-      rgb(var(--premium-edge-rgb) / 0.50) 100%
-    );
-  box-shadow:
-    0 0 7px rgb(var(--premium-edge-rgb) / 0.88),
-    0 0 16px rgb(var(--premium-edge-rgb) / 0.42),
-    0 0 28px rgb(var(--premium-edge-rgb) / 0.16),
-    inset 1px 0 0 rgba(255, 255, 255, 0.24);
-  opacity: 0.96;
+  border: 3px solid rgb(var(--premium-edge-rgb) / 0.96);
+  border-radius: inherit;
+
+  /*
+   * Use the real rounded card border as the edge path, then reveal only the
+   * left side plus the top/bottom border as they leave the two left corners.
+   * The horizontal mask fade recreates the accepted curved "wrap then blend"
+   * behavior without touching the host card's own border or aura.
+   */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 8%,
+    rgba(0, 0, 0, 0.92) 15%,
+    rgba(0, 0, 0, 0.66) 24%,
+    rgba(0, 0, 0, 0.30) 33%,
+    transparent 43%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 8%,
+    rgba(0, 0, 0, 0.92) 15%,
+    rgba(0, 0, 0, 0.66) 24%,
+    rgba(0, 0, 0, 0.30) 33%,
+    transparent 43%
+  );
+
+  filter:
+    drop-shadow(0 0 4px rgb(var(--premium-edge-rgb) / 0.86))
+    drop-shadow(0 0 9px rgb(var(--premium-edge-rgb) / 0.40))
+    drop-shadow(0 0 15px rgb(var(--premium-edge-rgb) / 0.16));
+  opacity: 0.98;
 }
 
-/* Give the edge a little breathing room on compact cards without moving content. */
+/* Preserve the same curve-wrap/fade language on touch layouts. */
 @media (max-width: 767px) {
   .premium-semantic-edge::after {
-    top: 0.6rem;
-    bottom: 0.6rem;
-    width: 3px;
-    box-shadow:
-      0 0 7px rgb(var(--premium-edge-rgb) / 0.90),
-      0 0 15px rgb(var(--premium-edge-rgb) / 0.44),
-      0 0 26px rgb(var(--premium-edge-rgb) / 0.17),
-      inset 1px 0 0 rgba(255, 255, 255, 0.24);
+    border-width: 3px;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 9%,
+      rgba(0, 0, 0, 0.92) 17%,
+      rgba(0, 0, 0, 0.64) 26%,
+      rgba(0, 0, 0, 0.28) 35%,
+      transparent 46%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 9%,
+      rgba(0, 0, 0, 0.92) 17%,
+      rgba(0, 0, 0, 0.64) 26%,
+      rgba(0, 0, 0, 0.28) 35%,
+      transparent 46%
+    );
+    filter:
+      drop-shadow(0 0 4px rgb(var(--premium-edge-rgb) / 0.88))
+      drop-shadow(0 0 9px rgb(var(--premium-edge-rgb) / 0.42))
+      drop-shadow(0 0 15px rgb(var(--premium-edge-rgb) / 0.17));
   }
 }
 

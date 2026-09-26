@@ -30,6 +30,10 @@ describe('Additive semantic edge', () => {
     expect(block).toContain('.premium-semantic-edge::after');
     expect(block).toContain('--premium-edge-rgb: var(--premium-semantic-rgb');
     expect(block).toContain('--premium-edge-rgb: var(--premium-report-hero-rgb');
+    expect(block).toContain('border-radius: inherit');
+    expect(block).toContain('border: 3px solid rgb(var(--premium-edge-rgb) / 0.96)');
+    expect(block).toContain('-webkit-mask-image: linear-gradient(');
+    expect(block).toContain('transparent 43%');
     expect(block).not.toMatch(/\.premium-semantic-edge\s*\{[^}]*box-shadow:/s);
     expect(block).not.toMatch(/\.premium-semantic-edge\s*\{[^}]*background:/s);
   });

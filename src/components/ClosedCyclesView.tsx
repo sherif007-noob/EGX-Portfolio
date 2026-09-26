@@ -271,9 +271,9 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   };
 
   return (
-    <div className="premium-dense-workflow space-y-6">
+    <div className="space-y-6">
       {/* Header Banner */}
-      <div className="premium-glass premium-hierarchy-h3 premium-dense-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl" data-hierarchy="h3">
+      <div className="premium-glass flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
@@ -302,7 +302,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total Realized P&L */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Net Realized P&amp;L</span>
             <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -319,7 +319,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Win Rate */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Win Rate</span>
             <Percent className="w-3.5 h-3.5 text-blue-400" />
@@ -333,7 +333,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Profit Factor */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Profit Factor</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -345,7 +345,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Average Return per Cycle */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Avg Return / Cycle</span>
             <ArrowUpDown className="w-3.5 h-3.5 text-teal-400" />
@@ -362,7 +362,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Average Holding Days */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Avg Hold Duration</span>
             <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -374,7 +374,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Total Brokerage Fees */}
-        <div className="premium-card premium-hierarchy-h3 premium-dense-summary-card p-3.5 rounded-2xl">
+        <div className="premium-card p-3.5 rounded-2xl">
           <div className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
             <span>Cycle Fees Paid</span>
             <Receipt className="w-3.5 h-3.5 text-rose-400" />
@@ -387,7 +387,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
       </div>
 
       {/* Search, Filter & Sort Controls */}
-      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3" data-hierarchy="h4">
+      <div className="premium-panel p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search Bar */}
         <div className="relative w-full min-w-0 flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -491,7 +491,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           return (
             <div
               key={cycle.id}
-              className={`premium-card premium-semantic-record premium-hierarchy-h5 premium-dense-row p-4 sm:p-5 rounded-2xl border ${
+              className={`premium-card p-4 sm:p-5 rounded-2xl border ${
                 isWin
                   ? 'premium-glow-win'
                   : isLoss

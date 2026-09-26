@@ -162,7 +162,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       : 0;
 
   return (
-    <div className={`premium-report-glass premium-report-section premium-hierarchy-h2 premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`} data-hierarchy="h2">
+    <div className={`premium-report-glass premium-radial p-4 sm:p-5 rounded-2xl space-y-4 ${className}`}>
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -225,7 +225,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
       </div>
 
       {/* Trajectory Key Stats Summary */}
-      <div className="premium-hierarchy-h4 grid grid-cols-2 gap-2.5 rounded-xl p-3 text-xs sm:grid-cols-4" data-hierarchy="h4">
+      <div className="premium-report-glass-soft grid grid-cols-2 gap-2.5 rounded-xl p-3 text-xs sm:grid-cols-4">
         <div className={`rounded-lg border p-2 ${
           netRealizedPnl > 0
             ? 'premium-state-win'

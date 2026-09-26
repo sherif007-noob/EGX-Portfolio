@@ -819,7 +819,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
   return (
     <>
-      <div className="premium-panel premium-radial premium-hierarchy-h1 premium-report-main-analytics p-4 sm:p-5 rounded-2xl space-y-4" data-hierarchy="h1">
+      <div className="premium-panel premium-radial p-4 sm:p-5 rounded-2xl space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div ref={modeMenuRef} className="relative min-w-0 z-20">

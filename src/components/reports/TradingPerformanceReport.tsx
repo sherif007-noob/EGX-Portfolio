@@ -495,7 +495,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
   };
 
   return (
-    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-structural premium-hierarchy-h0 space-y-6" data-hierarchy="h0">
+    <div id="report-trading-performance" className="premium-trading-performance-results premium-report-glass rounded-2xl p-4 space-y-6 sm:p-6">
       {/* Report Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="space-y-1">
@@ -572,7 +572,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       <MotionSwap motionKey={`${timeframe}-${tradeTypeFilter}`} variant="state" className="space-y-6">
       {/* Primary KPI Ribbon */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-        <div className={`premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -595,7 +595,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           </div>
         </div>
 
-        <div className={`premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -616,7 +616,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           </div>
         </div>
 
-        <div className={`premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
@@ -631,7 +631,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           </div>
         </div>
 
-        <div className={`premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
+        <div className={`premium-card premium-hero-metric p-3.5 rounded-xl ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
@@ -681,7 +681,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           return (
             <article
               key={item.title}
-              className={`premium-card premium-hierarchy-h4 premium-report-kpi premium-report-hero-card ${tone.surface} relative flex min-h-[196px] flex-col overflow-hidden rounded-2xl border p-4`}
+              className={`premium-card premium-hero-metric premium-report-hero-card ${tone.surface} relative flex min-h-[196px] flex-col overflow-hidden rounded-2xl border p-4`}
             >
               <div className="flex items-start gap-3">
                 <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${tone.icon}`}>

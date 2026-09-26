@@ -399,7 +399,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   : 'premium-glow-breakeven'
               }`}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <StockLogo
                     ticker={pos.ticker}
@@ -416,7 +416,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   </div>
                 </div>
 
-                <div className="shrink-0 text-right">
+                <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
                   <div
                     className={`premium-type-metric premium-type-metric-dense font-mono ${
                       isProfit ? 'text-emerald-400' : 'text-rose-400'

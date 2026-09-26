@@ -4551,3 +4551,40 @@ body {
   }
 }
 
+
+
+/* Phase 8 semantic hover parity — never dim a semantic card on hover. */
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-hierarchy-h1.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-buy:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.70) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.11),
+      0 24px 56px rgba(0, 0, 0, 0.34),
+      0 0 42px rgb(var(--premium-semantic-rgb) / 0.30),
+      0 0 90px rgb(var(--premium-semantic-deep-rgb) / 0.14),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+}

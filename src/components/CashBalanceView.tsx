@@ -414,12 +414,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       {/* Cash Ledger & Capital Accounting Reconciliation Audit Card */}
       <div className="premium-panel premium-hierarchy-h3 premium-dense-summary premium-radial premium-pad-h3 premium-flow-related rounded-2xl" data-hierarchy="h3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div className="flex min-w-0 items-start gap-2.5 sm:items-center">
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Calculator className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="premium-type-section-title flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="premium-type-section-title flex flex-wrap items-center gap-2">
                 Capital Ledger &amp; Cash Balance Audit
                 {hasDiscrepancy ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">

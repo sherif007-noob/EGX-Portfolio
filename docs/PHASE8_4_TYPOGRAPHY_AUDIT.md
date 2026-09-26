@@ -2,7 +2,7 @@
 
 ## Status
 
-**8.4.1 — COMPLETE / CI CLEAN — Quality Checks #36257086507 passed; 8.4.2 migration is next.**
+**8.4.2 — COMPLETE / CI CLEAN — Overview + Reports typography migration passed Quality Checks #36257664993. 8.4.3 dense workflow migration is next.**
 
 This audit starts Pass 8.4 without changing the accepted material system.
 
@@ -108,3 +108,29 @@ Spacing migration begins after Overview + Reports typography validation.
 ## Acceptance guardrail
 
 If any 8.4 change alters glass, aura, glow, semantic edge, semantic color, chart behavior, motion, or business logic, it is outside the pass and must be reverted.
+
+
+## 8.4.2 implementation result
+
+Commit `d079304e798b022e2ef1e1d488eb9dc8253b9ace` migrates the hierarchy-sensitive Overview and Reports surfaces onto the canonical typography system.
+
+Implemented:
+- Overview Total Portfolio Value → hero metric scale;
+- Overview Unrealized P&L / Total Market Value → primary metric scale;
+- Overview Realized Gain / Cash / Fees → secondary metric scale;
+- Overview EGP labels → subordinate unit helper;
+- Reports summary band → canonical secondary metrics + unit helper;
+- Portfolio Allocation summary → canonical section / metric / metadata roles;
+- Monthly Performance header, month banners, audit KPIs, audit-card performance values, labels, units, dates and notes → canonical roles while preserving material;
+- Trading Performance header, KPI ribbon, benchmark-scorecard labels and measured values → canonical roles;
+- removed redundant uppercase/tracking from non-status metadata where hierarchy roles now provide the distinction.
+
+Protected:
+- glass / blur / opacity;
+- semantic aura / glow strength;
+- semantic edge geometry and corner wrap;
+- semantic colors;
+- H0–H5 structural composition;
+- chart behavior, motion, selectors and business logic.
+
+Quality Checks `36257664993` passed typecheck, tests and production build.

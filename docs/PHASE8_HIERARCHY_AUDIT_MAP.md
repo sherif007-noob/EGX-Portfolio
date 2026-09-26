@@ -72,7 +72,7 @@ It is an audit/map, not a statement that every component already implements the 
 - **H2/H3** — summary/count/value region.
 - **H4** — search, sector filtering, and local action toolbar.
 - **H5** — positions table / repeated mobile position cards.
-- **Row semantic state** — edge/accent treatment only; never promote a row to H1/H2.
+- **Row semantic state** — repeated mobile/card records use `premium-semantic-record`; true table rows retain the accepted edge treatment.
 
 ### Current debt
 

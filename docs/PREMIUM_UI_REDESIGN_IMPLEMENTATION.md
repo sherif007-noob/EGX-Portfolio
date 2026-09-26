@@ -35,6 +35,28 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 8 | **In progress** | Accepted Phase 8 hierarchy restored; glass, aura, glow, and semantic-state visuals remain on the pre-Phase-8 visual system. |
 | 8–11 | Not started | See plan. |
 
+### 2026-09-26 — Pass 8.3b aura / glow intensification
+
+Commit `2eebfa0d5ff9647292acaa1ada26e439801283a4` increases **only** the resting/hover aura and glow strength after device feedback that the restored material language was still too restrained.
+
+Changed:
+- stronger neutral hierarchy-card ambient bloom;
+- stronger internal material sheen;
+- semantic WIN / LOSS / BUY / BREAKEVEN cards now use a wider and brighter near + far aura at rest;
+- the Overview semantic hero receives the strongest aura tier;
+- cyan / blue / emerald / rose / amber structural-tone cards receive stronger ambient bloom;
+- panel and EGX Live Market Feed structural glow is increased;
+- hover glow scales upward from the stronger resting state rather than being the only time the aura becomes obvious.
+
+Protected / unchanged:
+- Phase 8 hierarchy and layout;
+- glass opacity / blur recipe;
+- semantic meaning and color mapping;
+- semantic edge geometry, including the accepted corner-wrap/fade;
+- spacing, typography, component structure and behavior.
+
+Quality Checks run `36253526700` passed typecheck, tests and production build. Device visual acceptance remains pending before closing 8.3.
+
 ### 2026-09-26 — Semantic edge corner-wrap refinement
 
 Commit `e48d694b2dc7a93ca0e89f910be4a72c84067916` refines the accepted additive semantic edge. The edge now follows the card's actual rounded left border, wraps through both upper-left and lower-left corner curves, then fades progressively along the top and bottom borders. The host card's glass, semantic border, near aura, far bloom, refraction and box-shadow remain untouched.

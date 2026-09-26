@@ -4081,6 +4081,133 @@ body {
     0 0 42px rgb(var(--premium-header-action-rgb) / 0.07);
 }
 
+/* Phase 9.4 — utility/data-management consolidation.
+ * Frequent utilities remain direct; lower-frequency data administration is
+ * grouped behind one premium command without changing any underlying workflow.
+ */
+.premium-header-data-cluster {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(167, 139, 250, 0.14);
+  background:
+    linear-gradient(180deg, rgba(167, 139, 250, 0.045), transparent 76%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.032), transparent 44%),
+    rgba(2, 6, 23, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 22px rgba(0, 0, 0, 0.12),
+    0 0 22px rgba(139, 92, 246, 0.035);
+  -webkit-backdrop-filter: blur(14px) saturate(136%);
+  backdrop-filter: blur(14px) saturate(136%);
+}
+
+.premium-header-tools-trigger[aria-expanded='true'] {
+  border-color: rgba(168, 85, 247, 0.58);
+  background:
+    linear-gradient(180deg, rgba(168, 85, 247, 0.19), transparent 74%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 44%),
+    rgba(12, 18, 36, 0.64);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 26px rgba(168, 85, 247, 0.16),
+    0 0 44px rgba(139, 92, 246, 0.065);
+}
+
+.premium-header-tools-status {
+  position: absolute;
+  right: 0.2rem;
+  top: 0.2rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  border: 1px solid rgba(2, 6, 23, 0.78);
+}
+
+.premium-header-tools-status-connected {
+  background: rgb(52 211 153);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+}
+
+.premium-header-tools-status-warning {
+  background: rgb(251 191 36);
+  box-shadow: 0 0 9px rgba(251, 191, 36, 0.78);
+}
+
+.premium-header-tools-menu {
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+  transform-origin: top right;
+}
+
+.premium-header-tools-item {
+  --premium-tools-item-rgb: 148 163 184;
+  position: relative;
+  border: 1px solid transparent;
+  color: rgb(203 213 225);
+  transition:
+    background var(--premium-fast) var(--premium-ease),
+    border-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease),
+    transform var(--premium-fast) var(--premium-ease);
+}
+
+.premium-header-tools-item-emerald {
+  --premium-tools-item-rgb: 16 185 129;
+}
+
+.premium-header-tools-item-warning {
+  --premium-tools-item-rgb: 245 158 11;
+}
+
+.premium-header-tools-item-purple {
+  --premium-tools-item-rgb: 168 85 247;
+}
+
+.premium-header-tools-item:hover,
+.premium-header-tools-item:focus-visible {
+  outline: none;
+  border-color: rgb(var(--premium-tools-item-rgb) / 0.28);
+  background:
+    linear-gradient(90deg, rgb(var(--premium-tools-item-rgb) / 0.105), transparent 74%),
+    rgba(15, 23, 42, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 18px rgb(var(--premium-tools-item-rgb) / 0.07);
+}
+
+.premium-header-tools-icon-wrap {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(var(--premium-tools-item-rgb, 148 163 184) / 0.22);
+  border-radius: 0.65rem;
+  background:
+    linear-gradient(180deg, rgb(var(--premium-tools-item-rgb, 148 163 184) / 0.105), transparent),
+    rgba(2, 6, 23, 0.44);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 14px rgb(var(--premium-tools-item-rgb, 148 163 184) / 0.055);
+}
+
+@media (max-width: 639px) {
+  .premium-header-data-cluster {
+    gap: 0.25rem;
+    padding: 0.2rem;
+  }
+
+  .premium-header-tools-trigger,
+  .premium-header-utility-action {
+    min-width: var(--premium-touch-target);
+  }
+
+  .premium-header-tools-menu {
+    max-width: calc(100vw - 1.5rem);
+  }
+}
+
 .premium-header-create-secondary {
   min-height: 2.25rem;
   border-color: rgba(16, 185, 129, 0.42);

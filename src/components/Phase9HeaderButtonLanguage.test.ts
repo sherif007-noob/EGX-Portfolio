@@ -12,8 +12,7 @@ describe('Phase 9 header button language', () => {
     for (const id of [
       'header-price-alerts-btn',
       'header-live-sync-btn',
-      'header-google-sheets-btn',
-      'header-backup-reconcile-btn',
+      'header-data-tools-btn',
       'header-settings-btn',
     ]) {
       const start = header.indexOf(`id="${id}"`);
@@ -22,11 +21,18 @@ describe('Phase 9 header button language', () => {
       expect(block).toContain('premium-header-action');
     }
 
+    for (const id of ['header-google-sheets-btn', 'header-backup-reconcile-btn']) {
+      const start = header.indexOf(`id="${id}"`);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const block = header.slice(start, start + 900);
+      expect(block).toContain('premium-header-tools-item');
+    }
+
     expect(header).toContain('premium-header-action-amber');
     expect(header).toContain('premium-header-action-cyan');
-    expect(header).toContain('premium-header-action-emerald');
     expect(header).toContain('premium-header-action-purple');
     expect(header).toContain('premium-header-action-neutral');
+    expect(header).toContain('premium-header-tools-item-emerald');
   });
 
   it('keeps creation actions richer and Add Trade primary', () => {

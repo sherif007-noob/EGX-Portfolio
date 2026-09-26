@@ -3,9 +3,11 @@ import {
   getActionPriorityClass,
   getHierarchySurfaceClass,
   getHierarchyTextClass,
+  getSemanticSurfaceClass,
   type ActionPriority,
   type HierarchyLevel,
   type HierarchyTextRole,
+  type SemanticSurfaceRole,
 } from './VisualHierarchy';
 
 describe('Phase 8 visual hierarchy primitives', () => {
@@ -38,6 +40,15 @@ describe('Phase 8 visual hierarchy primitives', () => {
       'premium-type-metric-label',
       'premium-type-metadata',
       'premium-type-helper',
+    ]);
+  });
+
+  it('maps the three canonical semantic surface roles', () => {
+    const roles: SemanticSurfaceRole[] = ['hero', 'card', 'record'];
+    expect(roles.map(getSemanticSurfaceClass)).toEqual([
+      'premium-semantic-hero',
+      'premium-semantic-card',
+      'premium-semantic-record',
     ]);
   });
 

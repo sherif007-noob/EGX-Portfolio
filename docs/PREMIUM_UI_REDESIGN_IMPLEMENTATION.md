@@ -35,6 +35,10 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 8 | **In progress** | Accepted Phase 8 hierarchy restored; glass, aura, glow, and semantic-state visuals remain on the pre-Phase-8 visual system. |
 | 8–11 | Not started | See plan. |
 
+### 2026-09-26 — Semantic edge corner-wrap refinement
+
+Commit `e48d694b2dc7a93ca0e89f910be4a72c84067916` refines the accepted additive semantic edge. The edge now follows the card's actual rounded left border, wraps through both upper-left and lower-left corner curves, then fades progressively along the top and bottom borders. The host card's glass, semantic border, near aura, far bloom, refraction and box-shadow remain untouched.
+
 ## 2026-09-26 — Additive semantic edge restored
 
 Commit `fd23594ce216167d8710859241f91688999e5d50` restores the liked semantic edge accent to transaction cards, open-position cards, closed-cycle cards, and Monthly Performance audit cards.

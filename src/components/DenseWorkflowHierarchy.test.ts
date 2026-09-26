@@ -40,10 +40,12 @@ describe('Phase 8.3 dense workflow hierarchy', () => {
     expect(directory).toContain('premium-hierarchy-h5 premium-dense-row');
   });
 
-  it('uses semantic edge coding rather than full-card halo for dense records', () => {
+  it('keeps semantic atmosphere on dense records while preserving the stronger edge cue', () => {
     const css = readRelative('../index.css');
-    expect(css).toContain('.premium-dense-row.premium-glow-win');
+    expect(css).toContain('Phase 8 semantic-soul correction');
+    expect(css).toContain('.premium-dense-row.premium-hierarchy-h5:is(');
     expect(css).toContain('inset 3px 0 0 rgb(var(--premium-semantic-rgb)');
-    expect(css).toContain('.premium-dense-row.premium-radial::after');
+    expect(css).toContain('0 0 20px rgb(var(--premium-semantic-rgb)');
+    expect(css).toContain('0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb)');
   });
 });

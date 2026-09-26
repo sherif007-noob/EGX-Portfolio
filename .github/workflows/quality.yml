@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/phase9-0-1-header-shell]
   pull_request:
     branches: [main]
 

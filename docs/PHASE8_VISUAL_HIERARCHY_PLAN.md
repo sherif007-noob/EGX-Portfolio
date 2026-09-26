@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented with semantic-soul correction, validation pending.**
+**IN PROGRESS — Passes 8.0–8.2 complete; Pass 8.3 implemented; accepted glass/semantic visual language hard-reset restored, validation pending.**
 
 Phase 8 is an editorial hierarchy pass over the premium system already established in Phases 1–7. It is not an aesthetic reboot and must not replace the accepted glass, semantic-color, chart, selector, motion, or responsive languages.
 
@@ -138,6 +138,8 @@ Rules:
 - semantic cards in mobile lists/records retain the full semantic aura; H5 does not mean edge-only;
 - **glass/refraction primitives are additive to hierarchy**: Phase 8 may add H-level classes but must not replace `premium-card`, `premium-glass`, `premium-panel`, `premium-subpanel`, hero, or report glass roles;
 - hierarchy must never replace the accepted semantic/glass engine with flatter custom backgrounds or weaker shadows;
+- the hero-grade report glass benchmark is the canonical fallback when a hierarchy override causes visual regression: 24–26px blur, ~150–165% saturation, visible top-edge refraction, translucent layered glass, semantic interior bloom, and a clearly visible near + far halo;
+- mobile/coarse-pointer semantic cards keep full static halo strength; there is no phone-specific attenuation;
 - emerald / rose / amber should be preserved for meaningful financial state;
 - cyan / blue / purple remain the preferred structural/accent families;
 - avoid decorative green/red/amber when no financial state is being communicated.
@@ -333,6 +335,7 @@ Implemented:
 - device review exposed an overcorrection: hierarchy CSS was overriding the Phase 5 semantic `box-shadow`, and H5 explicitly zeroed near/far glow; this is corrected by a late hierarchy-aware semantic layer;
 - H1/H2/H3 semantic cards now retain scaled near/far aura according to hierarchy level;
 - H5 semantic records retain edge coding **and** a restrained outer aura/interior wash;
+- repeated device review showed even the first two restoration attempts were still visibly too flat on iPhone; a **visual-language hard reset** now forces the accepted hero-grade report glass + semantic halo recipes at the very end of the cascade so hierarchy cannot override them;
 - Brokerage Fees regains the amber cost semantic glow;
 - second device review showed the first correction was still visibly too weak because the hierarchy-specific flat glass recipes remained active; correction v2 restores the actual pre-Phase-8 card/panel/subpanel/glass recipes and removes H2/H3/H5 semantic attenuation entirely;
 - Total Portfolio Value regains the original `premium-hero-card` role; because the new H1 geometry is substantially larger, its semantic aura is widened to preserve the original perceptual strength;

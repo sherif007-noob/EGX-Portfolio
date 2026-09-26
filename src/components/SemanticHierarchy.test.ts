@@ -6,32 +6,38 @@ const readCss = () =>
   readFileSync(fileURLToPath(new URL('../index.css', import.meta.url)), 'utf8');
 
 describe('Phase 8 semantic hierarchy contract', () => {
-  it('preserves a visible semantic aura on H1, H2, and H3 financial surfaces', () => {
+  it('restores one full-strength semantic halo engine for every semantic card', () => {
     const css = readCss();
+    const start = css.indexOf('Phase 8 protected visual-language restoration');
+    expect(start).toBeGreaterThanOrEqual(0);
 
-    expect(css).toContain('Phase 8 semantic-soul correction');
-    expect(css).toContain('.premium-hierarchy-h1:is(');
-    expect(css).toContain('.premium-hierarchy-h2:is(');
-    expect(css).toContain('.premium-hierarchy-h3:is(');
-
-    expect(css).toContain('--premium-semantic-near-alpha: 0.24');
-    expect(css).toContain('--premium-semantic-far-alpha: 0.11');
-    expect(css).toContain('--premium-semantic-near-alpha: 0.17');
-    expect(css).toContain('--premium-semantic-far-alpha: 0.075');
-    expect(css).toContain('--premium-semantic-near-alpha: 0.13');
-    expect(css).toContain('--premium-semantic-far-alpha: 0.055');
+    const protectedSection = css.slice(start);
+    expect(protectedSection).toContain('.premium-card.premium-glow-win');
+    expect(protectedSection).toContain('--premium-semantic-near-alpha: 0.22');
+    expect(protectedSection).toContain('--premium-semantic-far-alpha: 0.10');
+    expect(protectedSection).toContain('--premium-semantic-far-radius: 76px');
+    expect(protectedSection).toContain('0 0 34px rgb(var(--premium-semantic-rgb)');
   });
 
-  it('never zeros near/far glow on semantic H5 cards', () => {
+  it('keeps the enlarged Overview hero stronger than the standard semantic card', () => {
     const css = readCss();
-    const start = css.indexOf('Phase 8 semantic-soul correction');
-    const semanticSection = css.slice(start);
+    const start = css.indexOf('Phase 8 protected visual-language restoration');
+    const protectedSection = css.slice(start);
 
-    expect(semanticSection).toContain('--premium-semantic-near-alpha: 0.105');
-    expect(semanticSection).toContain('--premium-semantic-far-alpha: 0.042');
-    expect(semanticSection).toContain('0 0 20px rgb(var(--premium-semantic-rgb)');
-    expect(semanticSection).toContain(
-      '0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb)',
-    );
+    expect(protectedSection).toContain('.premium-card.premium-hero-card.premium-glow-loss');
+    expect(protectedSection).toContain('--premium-semantic-near-alpha: 0.32');
+    expect(protectedSection).toContain('--premium-semantic-far-alpha: 0.16');
+    expect(protectedSection).toContain('--premium-semantic-far-radius: 108px');
+  });
+
+  it('does not attenuate H2, H3, or H5 semantic cards in the protected layer', () => {
+    const css = readCss();
+    const start = css.indexOf('Phase 8 protected visual-language restoration');
+    const protectedSection = css.slice(start);
+
+    expect(protectedSection).not.toContain('--premium-semantic-near-alpha: 0.105');
+    expect(protectedSection).not.toContain('--premium-semantic-far-alpha: 0.042');
+    expect(protectedSection).toContain('.premium-card.premium-dense-row.premium-glow-win');
+    expect(protectedSection).toContain('--premium-semantic-near-alpha: 0.22');
   });
 });

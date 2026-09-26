@@ -198,7 +198,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </div>
       </div>
 
-      <div className="premium-hierarchy-h3 premium-report-summary-band grid grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4" data-hierarchy="h3">
+      <div className="premium-report-glass-soft premium-hierarchy-h3 premium-report-summary-band grid grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4" data-hierarchy="h3">
         <div className="premium-report-summary-cell">
           <div className="premium-type-metric-label text-emerald-400">Realized Gains</div>
           <div className="mt-1.5 font-mono text-lg font-black text-emerald-400 sm:text-xl">+{formatEgp(grossProfit)} <span className="text-[10px] text-slate-500">EGP</span></div>
@@ -235,7 +235,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         entranceReady={chartsReady}
       />
 
-      <div className="premium-report-section premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2">
+      <div className="premium-report-glass premium-report-section premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="premium-allocation-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
@@ -631,7 +631,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </MotionSwap>
       </div>
 
-      <div className="premium-report-section premium-hierarchy-h3 rounded-2xl p-4 space-y-4 sm:p-5" data-hierarchy="h3">
+      <div className="premium-report-glass premium-report-section premium-hierarchy-h3 rounded-2xl p-4 space-y-4 sm:p-5" data-hierarchy="h3">
         <div><h3 className="premium-type-section-title flex items-center gap-2"><Layers className="w-4 h-4 text-blue-400" />Portfolio Equity Bridge</h3><p className="text-xs text-slate-400 mt-1">Ending equity = net capital contributed + realized P&amp;L + unrealized P&amp;L. Fees are already embedded in P&amp;L and are not deducted again.</p></div>
         {!bridgeBalanced && <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><div><strong>Accounting reconciliation difference:</strong> {formatEgp(performanceBridge.reconciliationDelta)} EGP. The report is showing the actual ledger/equity values instead of inventing a balancing capital figure.</div></div>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
@@ -646,7 +646,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         <div className="text-[11px] text-slate-500">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
       </div>
 
-      <div className="premium-report-section premium-hierarchy-h3 rounded-2xl p-4 sm:p-5" data-hierarchy="h3"><h3 className="premium-type-section-title flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
+      <div className="premium-report-glass premium-report-section premium-hierarchy-h3 rounded-2xl p-4 sm:p-5" data-hierarchy="h3"><h3 className="premium-type-section-title flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>
 
       <MonthlyPerformanceReport closedTrades={closedTrades} positions={positions} />
     </div>

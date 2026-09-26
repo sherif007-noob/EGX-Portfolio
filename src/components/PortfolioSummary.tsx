@@ -266,7 +266,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
       {/* H4 utility/context strip — deliberately below the portfolio summary. */}
       <div
-        className="premium-hierarchy-h4 premium-overview-market-strip flex flex-col justify-between gap-3 rounded-2xl p-3 md:flex-row md:items-center"
+        className="premium-glass premium-hierarchy-h4 premium-overview-market-strip flex flex-col justify-between gap-3 rounded-2xl p-3 md:flex-row md:items-center"
         data-hierarchy="h4"
       >
         <div className="flex min-w-0 flex-col gap-1">

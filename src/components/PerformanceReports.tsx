@@ -302,9 +302,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold text-slate-200">Include cash</span>
-                  <span className="mt-0.5 block text-[10px] text-slate-500">
-                    Available balance in allocation
-                  </span>
+                  <span className="premium-type-metadata mt-0.5 block">Available balance in allocation</span>
                 </span>
                 <span className="premium-cash-switch-track relative h-6 w-11 shrink-0 rounded-full" aria-hidden="true">
                   <span className="premium-cash-switch-knob absolute h-[18px] w-[18px] rounded-full" />
@@ -461,7 +459,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                                       {Number(row.percentage || 0).toFixed(1)}%
                                     </span>
                                   </div>
-                                  <div className="mt-0.5 text-[10px] text-slate-500">
+                                  <div className="premium-type-metadata mt-0.5">
                                     {allocationTab === 'sector'
                                       ? 'Sector allocation'
                                       : row.kind === 'cash'
@@ -531,7 +529,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
 
                 <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
                   <div className="mt-6 max-w-[128px] text-center" aria-live="polite">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <div className="premium-type-metric-label">
                       {activeAllocation ? 'Selected' : 'Largest'}
                     </div>
                     <div className="mt-1 truncate text-sm font-bold text-white">
@@ -545,7 +543,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                         ? `${highlightedAllocation.percentage.toFixed(1)}%`
                         : '—'}
                     </div>
-                    <div className="mt-0.5 font-mono text-[10px] text-slate-500">
+                    <div className="premium-type-metadata mt-0.5 font-mono">
                       {highlightedAllocation
                         ? formatAnalyticsEgp(highlightedAllocation.value)
                         : ''}
@@ -558,11 +556,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div>
                     <div className="text-xs font-semibold text-slate-200">Concentration breakdown</div>
-                    <div className="mt-0.5 text-[10px] text-slate-500">
-                      Ranked by current market value · tap a row to inspect
-                    </div>
+                    <div className="premium-type-helper mt-0.5">Ranked by current market value · tap a row to inspect</div>
                   </div>
-                  <div className="premium-report-glass-soft rounded-lg px-2 py-1 font-mono text-[10px] text-slate-400">
+                  <div className="premium-report-glass-soft premium-type-metadata rounded-lg px-2 py-1 font-mono text-slate-400">
                     {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
                   </div>
                 </div>
@@ -597,7 +593,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <span className="w-5 shrink-0 font-mono text-[10px] text-slate-600">
+                            <span className="premium-type-metadata w-5 shrink-0 font-mono text-slate-600">
                               {String(index + 1).padStart(2, '0')}
                             </span>
                             <span
@@ -618,9 +614,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                             >
                               {row.percentage.toFixed(1)}%
                             </div>
-                            <div className="font-mono text-[10px] text-slate-500">
-                              {formatEgp(row.value)} EGP
-                            </div>
+                            <div className="premium-type-metadata font-mono">{formatEgp(row.value)} EGP</div>
                           </div>
                         </div>
 
@@ -654,9 +648,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
           <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Ending Equity / NAV</span><strong className="font-mono text-purple-300">{formatEgp(performanceBridge.endingEquity)} EGP</strong></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          {waterfallSteps.map((step, index) => <div key={step.name} className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><div className="text-[10px] text-slate-400">Step {index + 1}</div><div className="text-xs font-semibold text-slate-200">{step.name}</div><div className={`font-mono font-bold mt-1 ${step.total ? 'text-purple-300' : step.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{step.total ? formatEgp(step.end) : `${step.delta >= 0 ? '+' : ''}${formatEgp(step.delta)}`} EGP</div></div>)}
+          {waterfallSteps.map((step, index) => <div key={step.name} className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><div className="premium-type-metadata">Step {index + 1}</div><div className="premium-type-metric-label text-slate-200">{step.name}</div><div className={`font-mono font-bold mt-1 ${step.total ? 'text-purple-300' : step.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{step.total ? formatEgp(step.end) : `${step.delta >= 0 ? '+' : ''}${formatEgp(step.delta)}`} EGP</div></div>)}
         </div>
-        <div className="text-[11px] text-slate-500">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
+        <div className="premium-type-metadata">Reported NAV: {formatEgp(reportedNav)} EGP · Bridge delta: {formatEgp(performanceBridge.reconciliationDelta)} EGP</div>
       </div>
 
       <div className="premium-report-section premium-hierarchy-h3 premium-pad-h3 rounded-2xl" data-hierarchy="h3"><h3 className="premium-type-section-title flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-rose-400" />Closed Trade Summary</h3><div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs"><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Winning</span><strong className="text-emerald-400">{stats.winningTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Losing</span><strong className="text-rose-400">{stats.losingTrades}</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Average Hold</span><strong className="text-purple-300">{stats.avgHoldDays} days</strong></div><div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl"><span className="text-slate-400 block">Profit Factor</span><strong className="text-amber-300">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}x</strong></div></div></div>

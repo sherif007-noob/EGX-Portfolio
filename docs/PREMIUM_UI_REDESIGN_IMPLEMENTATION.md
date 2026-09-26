@@ -32,7 +32,7 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6 | **Complete** | Pass 6 34-file code audit + Quality Checks #745 passed; final real-device smoke accepted. |
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
-| 8 | **In progress — 8.4.2 complete** | 8.0–8.3b accepted; 8.4.1 foundation and 8.4.2 Overview/Reports migration complete. |
+| 8 | **In progress — 8.4.3 complete** | 8.0–8.3b accepted; 8.4.1 foundation, 8.4.2 Overview/Reports, and 8.4.3 dense workflows complete. |
 | 8–11 | Not started | See plan. |
 
 ### 2026-09-26 — Pass 8.3b aura / glow intensification
@@ -91,6 +91,20 @@ The accepted Phase 8 hierarchy remains active, but glass/aura/glow are now resto
 - Cash KPI cards receive explicit emerald / blue / rose material tones without changing their hierarchy level or business semantics.
 
 This establishes a hard rule: **H0–H5 controls hierarchy; accepted pre-Phase-8 primitives control material.**
+
+## 2026-09-26 — Pass 8.4.3 dense workflow typography migration
+
+Commit `7b018b96c8a5470f82a4bdccd11d8f603a75ca39` applies the canonical typography system to Open Positions, Closed Cycles, Transactions, Cash Ledger, and Ticker Directory.
+
+Key results:
+- H5 operational records use the dense metric scale rather than dashboard KPI sizing;
+- H3 summary metrics use canonical metric labels and hierarchy-appropriate values;
+- EGP units are subordinate;
+- company / sector / date / supporting context use metadata/helper roles;
+- dense workflows remain compact;
+- glass, aura, glow, semantic edge, semantic colors, motion, selectors, and business logic were not changed.
+
+Quality Checks #36258191821 passed typecheck, tests and production build.
 
 ## 2026-09-26 — Pass 8.4.2 Overview + Reports typography migration
 

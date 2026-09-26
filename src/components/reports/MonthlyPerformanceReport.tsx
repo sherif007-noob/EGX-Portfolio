@@ -279,13 +279,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
               REPORT 2 &bull; MONTHLY AUDIT
             </span>
-            <span className="text-xs text-slate-400">Institutional Reconciliation</span>
+            <span className="premium-type-metadata">Institutional Reconciliation</span>
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 font-display">
+          <h2 className="premium-type-section-title flex items-center gap-2 font-display">
             <Calendar className="w-5 h-5 text-purple-400 shrink-0" />
             Monthly Performance &amp; End-of-Month Positions Review
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="premium-type-helper">
             Official monthly reconciliation audit detailing liquidated trade outcomes, month-end holdings, and brokerage costs.
           </p>
         </div>
@@ -500,7 +500,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
               <div className="p-4 sm:p-5 bg-gradient-to-r from-white/[0.025] via-transparent to-purple-500/[0.025] border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-white text-base sm:text-lg flex items-center gap-1.5 font-display">
+                    <span className="premium-type-section-title flex items-center gap-1.5 font-display">
                       <Calendar className="w-4 h-4 text-purple-400" />
                       {m.monthLabel}
                     </span>
@@ -516,9 +516,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                       {summaryBadgeLabel}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    {summaryCountText}
-                  </p>
+                  <p className="premium-type-helper">{summaryCountText}</p>
                 </div>
 
                 {/* Quick Monthly Metrics */}
@@ -531,9 +529,9 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                         ? 'premium-state-win'
                         : 'premium-state-loss'
                   }`}>
-                    <span className="text-[10px] text-slate-400 block uppercase font-mono">{pnlLabel}</span>
+                    <span className="premium-type-metric-label block">{pnlLabel}</span>
                     <span
-                      className={`font-mono font-bold text-sm ${
+                      className={`premium-type-metric premium-type-metric-dense font-mono ${
                         !hasActivity || isFlat
                           ? 'text-slate-400'
                           : isProfitable
@@ -549,14 +547,14 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
 
                   {/* Filter-aware population / closed-trade win rate */}
                   <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block uppercase font-mono">
+                    <span className="premium-type-metric-label block">
                       {statusFilter === 'LIQUIDATED'
                         ? 'Closed Win Rate'
                         : statusFilter === 'HOLDINGS'
                           ? 'Holdings'
                           : 'Visible Records'}
                     </span>
-                    <span className="font-mono font-bold text-sm text-slate-200">
+                    <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">
                       {statusFilter === 'LIQUIDATED' ? (
                         visibleSummary.winRate !== null ? (
                           `${visibleSummary.winRate.toFixed(1)}% (${visibleSummary.wins}W / ${visibleSummary.losses}L)`
@@ -573,8 +571,8 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
 
                   {/* Filter-aware commissions */}
                   <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block uppercase font-mono">Commissions</span>
-                    <span className="font-mono font-bold text-sm text-amber-400">
+                    <span className="premium-type-metric-label block">Commissions</span>
+                    <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-400">
                       {formatEgp(visibleSummary.totalFees)} EGP
                     </span>
                   </div>
@@ -635,7 +633,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                                 </span>
                               </div>
                               <p className="mt-1 truncate text-xs text-slate-400">{record.companyName}</p>
-                              <p className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-500">{record.sector}</p>
+                              <p className="premium-type-metadata mt-0.5">{record.sector}</p>
                             </div>
 
                             <div className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${statusClass}`}>
@@ -648,11 +646,12 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           </div>
 
                           <div className="mt-4">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                              Performance
-                            </div>
-                            <div className={`mt-1 font-mono text-2xl font-black leading-none ${pnlClass}`}>
-                              {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)} EGP
+                            <div className="premium-type-metric-label">Performance</div>
+                            <div className="mt-1 flex items-baseline gap-1.5">
+                              <span className={`premium-type-metric premium-type-metric-primary font-mono ${pnlClass}`}>
+                                {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)}
+                              </span>
+                              <span className="premium-type-unit">EGP</span>
                             </div>
                             <div className={`mt-1 font-mono text-xs font-bold ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
@@ -661,39 +660,42 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
 
                           <div className="mt-4 grid grid-cols-2 gap-2">
                             <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
-                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Shares</span>
-                              <span className="mt-1 block font-mono text-sm font-bold text-slate-100">
+                              <span className="premium-type-metric-label block">Shares</span>
+                              <span className="premium-type-metric premium-type-metric-dense mt-1 block font-mono text-slate-100">
                                 {record.shares.toLocaleString()}
                               </span>
                             </div>
                             <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
-                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Commissions</span>
-                              <span className="mt-1 block font-mono text-sm font-bold text-amber-300">
-                                {formatEgp(record.fees)} EGP
+                              <span className="premium-type-metric-label block">Commissions</span>
+                              <span className="mt-1 flex items-baseline gap-1">
+                                <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-300">{formatEgp(record.fees)}</span>
+                                <span className="premium-type-unit">EGP</span>
                               </span>
                             </div>
                           </div>
 
                           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
-                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">Entry</span>
-                              <span className="mt-1 block font-mono text-sm font-bold text-slate-200">
-                                {formatEgp(record.buyPrice)} EGP
+                              <span className="premium-type-metric-label block">Entry</span>
+                              <span className="mt-1 flex items-baseline gap-1">
+                                <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{formatEgp(record.buyPrice)}</span>
+                                <span className="premium-type-unit">EGP</span>
                               </span>
-                              <span className="mt-0.5 block text-[10px] text-slate-500">{record.buyDate}</span>
+                              <span className="premium-type-metadata mt-0.5 block">{record.buyDate}</span>
                             </div>
                             <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
-                              <span className="block text-[10px] uppercase tracking-[0.12em] text-slate-500">{record.exitLabel}</span>
-                              <span className="mt-1 block font-mono text-sm font-bold text-slate-100">
-                                {formatEgp(record.exitPrice)} EGP
+                              <span className="premium-type-metric-label block">{record.exitLabel}</span>
+                              <span className="mt-1 flex items-baseline gap-1">
+                                <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">{formatEgp(record.exitPrice)}</span>
+                                <span className="premium-type-unit">EGP</span>
                               </span>
-                              <span className="mt-0.5 block text-[10px] text-slate-500">{record.statusDetail}</span>
+                              <span className="premium-type-metadata mt-0.5 block">{record.statusDetail}</span>
                             </div>
                           </div>
 
                           {record.notes && (
                             <div className="mt-3 border-t border-slate-700/45 pt-3 text-[11px] leading-relaxed text-slate-400">
-                              <span className="mr-1 font-semibold uppercase tracking-[0.12em] text-slate-500">Notes</span>
+                              <span className="premium-type-metadata mr-1 font-semibold">Notes</span>
                               {record.notes}
                             </div>
                           )}

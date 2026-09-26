@@ -503,13 +503,13 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
               REPORT 1 &bull; INSTITUTIONAL BENCHMARK
             </span>
-            <span className="text-xs text-slate-400">EGX Trading Discipline</span>
+            <span className="premium-type-metadata">EGX Trading Discipline</span>
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 font-display">
+          <h2 className="premium-type-section-title flex items-center gap-2 font-display">
             <Award className="w-5 h-5 text-amber-400 shrink-0" />
             Trading Performance Indicators &amp; Institutional Benchmarks
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="premium-type-helper">
             Comprehensive statistical evaluation of trading edge, win/loss mechanics, expectancy, and risk-adjusted efficiency.
           </p>
         </div>
@@ -574,11 +574,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         <div className={`premium-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.winRate >= 50 ? 'premium-state-win' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Win Rate</span>
+            <span className="premium-type-metric-label">Win Rate</span>
             <Target className="w-3.5 h-3.5 text-blue-400" />
           </div>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`premium-type-metric premium-type-metric-secondary font-mono ${indicators.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {indicators.winRate.toFixed(1)}%
             </span>
             <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
@@ -597,11 +597,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
 
         <div className={`premium-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.profitFactor >= 1.5 ? 'premium-state-win' : indicators.profitFactor >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Profit Factor</span>
+            <span className="premium-type-metric-label">Profit Factor</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.profitFactor >= 1.5 ? 'text-emerald-400' : indicators.profitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'}`}>
+            <span className={`premium-type-metric premium-type-metric-secondary font-mono ${indicators.profitFactor >= 1.5 ? 'text-emerald-400' : indicators.profitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'}`}>
               {formatRatio(indicators.profitFactor)}
             </span>
             <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">Gross Gain/Loss</span>
@@ -618,11 +618,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
 
         <div className={`premium-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${indicators.payoffRatio >= 1.5 ? 'premium-state-win' : indicators.payoffRatio >= 1.0 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Payoff Ratio</span>
+            <span className="premium-type-metric-label">Payoff Ratio</span>
             <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
           </div>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className={`text-xl sm:text-2xl font-bold font-mono ${indicators.payoffRatio >= 1.5 ? 'text-purple-300' : 'text-slate-200'}`}>
+            <span className={`premium-type-metric premium-type-metric-secondary font-mono ${indicators.payoffRatio >= 1.5 ? 'text-purple-300' : 'text-slate-200'}`}>
               {formatRatio(indicators.payoffRatio)} : 1
             </span>
           </div>
@@ -633,11 +633,11 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
 
         <div className={`premium-card premium-hierarchy-h4 premium-report-kpi p-3.5 rounded-xl ${!indicators.drawdownAvailable ? '' : indicators.maxDrawdownPercent! <= 5 ? 'premium-state-win' : indicators.maxDrawdownPercent! <= 10 ? 'premium-state-breakeven' : 'premium-state-loss'}`}>
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Performance Drawdown</span>
+            <span className="premium-type-metric-label">Performance Drawdown</span>
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
           </div>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className={`text-xl sm:text-2xl font-bold font-mono ${!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent! <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
+            <span className={`premium-type-metric premium-type-metric-secondary font-mono ${!indicators.drawdownAvailable ? 'text-slate-400' : indicators.maxDrawdownPercent! <= 5 ? 'text-emerald-400' : indicators.maxDrawdownPercent! <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
               {indicators.drawdownAvailable ? `-${indicators.maxDrawdownPercent!.toFixed(2)}%` : 'N/A'}
             </span>
             <span className="whitespace-nowrap text-[11px] text-slate-500 font-mono">
@@ -654,10 +654,8 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       <section className="space-y-3 2xl:hidden" aria-label="Detailed performance benchmark scorecards">
         <div className="flex items-end justify-between gap-3 px-0.5">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-purple-300/80">
-              Detailed Benchmark Scorecard
-            </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <div className="premium-type-section-title text-purple-300/90">Detailed Benchmark Scorecard</div>
+            <p className="premium-type-helper mt-1">
               Measured result, institutional target, and assessment for every tracked indicator.
             </p>
           </div>
@@ -694,21 +692,17 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
               </div>
 
               <div className="mt-4 flex-1">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Measured Result
-                </div>
+                <div className="premium-type-metric-label">Measured Result</div>
                 <div
-                  className={`mt-1 break-words font-mono text-xl font-black leading-tight sm:text-2xl ${item.valueClass || tone.value}`}
+                  className={`premium-type-metric premium-type-metric-secondary mt-1 break-words font-mono ${item.valueClass || tone.value}`}
                 >
                   {item.measured}
                 </div>
               </div>
 
               <div className="mt-4 border-t border-slate-700/45 pt-3">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Institutional Benchmark
-                </div>
-                <div className="mt-1 text-xs leading-relaxed text-slate-300">{item.benchmark}</div>
+                <div className="premium-type-metric-label">Institutional Benchmark</div>
+                <div className="premium-type-helper mt-1 text-slate-300">{item.benchmark}</div>
 
                 <div className="mt-3">
                   <span

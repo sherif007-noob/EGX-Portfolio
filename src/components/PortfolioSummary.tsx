@@ -79,10 +79,10 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               <div className="min-w-0">
                 <div className="premium-type-metric-label">Total Portfolio Value</div>
                 <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
-                  <span className="premium-overview-hero-value font-mono font-black text-white">
+                  <span className="premium-type-metric premium-type-metric-hero font-mono text-white">
                     {formatEgp(metrics.totalValue)}
                   </span>
-                  <span className="shrink-0 text-xs font-semibold text-slate-400">EGP</span>
+                  <span className="premium-type-unit shrink-0">EGP</span>
                 </div>
               </div>
               <span className="hidden shrink-0 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-300 sm:inline-flex">
@@ -92,7 +92,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
             <div className="premium-overview-today mt-3 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5">
               <div className="min-w-0">
-                <div className="premium-type-metadata uppercase tracking-[0.12em]">Today</div>
+                <div className="premium-type-metadata font-semibold">Today</div>
                 <div
                   className={`mt-0.5 flex items-center gap-1.5 text-sm font-bold ${
                     isPositiveDay ? 'text-emerald-400' : 'text-rose-400'
@@ -132,13 +132,13 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               </div>
               <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
                 <span
-                  className={`premium-overview-primary-value min-w-0 font-mono font-black ${
+                  className={`premium-type-metric premium-type-metric-primary min-w-0 font-mono ${
                     isPositiveUnrealized ? 'text-emerald-400' : 'text-rose-400'
                   }`}
                 >
                   {isPositiveUnrealized ? '+' : ''}{formatEgp(metrics.unrealizedPnlEgp)}
                 </span>
-                <span className="shrink-0 text-[11px] text-slate-400">EGP</span>
+                <span className="premium-type-unit shrink-0">EGP</span>
               </div>
             </div>
             <div className="mt-3 flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
@@ -172,10 +172,10 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 </span>
               </div>
               <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
-                <span className="premium-overview-primary-value min-w-0 font-mono font-black text-white">
+                <span className="premium-type-metric premium-type-metric-primary min-w-0 font-mono text-white">
                   {formatEgp(totalMarketVal)}
                 </span>
-                <span className="shrink-0 text-[11px] font-semibold text-slate-400">EGP</span>
+                <span className="premium-type-unit shrink-0">EGP</span>
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between gap-2">
@@ -199,13 +199,13 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               <div className="premium-type-metric-label">Realized Gain (Booked)</div>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span
-                  className={`premium-overview-secondary-value font-mono font-bold ${
+                  className={`premium-type-metric premium-type-metric-secondary font-mono ${
                     isPositiveRealized ? 'text-emerald-400' : 'text-rose-400'
                   }`}
                 >
                   {isPositiveRealized ? '+' : ''}{formatEgp(metrics.realizedPnlEgp)}
                 </span>
-                <span className="text-[10px] text-slate-500">EGP</span>
+                <span className="premium-type-unit">EGP</span>
               </div>
             </div>
             <div className="premium-type-metadata mt-2 flex items-center gap-1.5">
@@ -229,10 +229,10 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 </button>
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="premium-overview-secondary-value font-mono font-bold text-white">
+                <span className="premium-type-metric premium-type-metric-secondary font-mono text-white">
                   {formatEgp(metrics.cashBalance)}
                 </span>
-                <span className="text-[10px] text-slate-500">EGP</span>
+                <span className="premium-type-unit">EGP</span>
               </div>
             </div>
             <div className="premium-type-metadata mt-2">
@@ -248,10 +248,10 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               <div className="min-w-0">
                 <div className="premium-type-metric-label">Brokerage Fees</div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="premium-overview-secondary-value font-mono font-bold text-amber-400">
+                  <span className="premium-type-metric premium-type-metric-secondary font-mono text-amber-400">
                     {formatEgp(metrics.totalFeesPaid || 0)}
                   </span>
-                  <span className="text-[10px] text-slate-500">EGP</span>
+                  <span className="premium-type-unit">EGP</span>
                 </div>
               </div>
               <Receipt className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400/80" />
@@ -271,7 +271,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
       >
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <span className="premium-type-metadata flex items-center gap-1.5 font-bold text-slate-400">
               <Activity className="h-3.5 w-3.5 text-cyan-400/80" />
               EGX Live Market Feed
             </span>

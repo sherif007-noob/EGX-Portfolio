@@ -201,19 +201,33 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
       <div className="premium-hierarchy-h3 premium-report-summary-band grid grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4" data-hierarchy="h3">
         <div className="premium-report-summary-cell">
           <div className="premium-type-metric-label text-emerald-400">Realized Gains</div>
-          <div className="mt-1.5 font-mono text-lg font-black text-emerald-400 sm:text-xl">+{formatEgp(grossProfit)} <span className="text-[10px] text-slate-500">EGP</span></div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-emerald-400">+{formatEgp(grossProfit)}</span>
+            <span className="premium-type-unit">EGP</span>
+          </div>
         </div>
         <div className="premium-report-summary-cell">
           <div className="premium-type-metric-label text-rose-400">Realized Losses</div>
-          <div className="mt-1.5 font-mono text-lg font-black text-rose-400 sm:text-xl">-{formatEgp(grossLoss)} <span className="text-[10px] text-slate-500">EGP</span></div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-rose-400">-{formatEgp(grossLoss)}</span>
+            <span className="premium-type-unit">EGP</span>
+          </div>
         </div>
         <div className={`premium-report-summary-cell ${netRealizedGlow}`}>
           <div className="premium-type-metric-label">Net Realized P&amp;L</div>
-          <div className={`mt-1.5 font-mono text-lg font-black sm:text-xl ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)} <span className="text-[10px] text-slate-500">EGP</span></div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className={`premium-type-metric premium-type-metric-secondary font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)}
+            </span>
+            <span className="premium-type-unit">EGP</span>
+          </div>
         </div>
         <div className="premium-report-summary-cell">
           <div className="premium-type-metric-label flex items-center gap-1 text-amber-400"><Receipt className="h-3.5 w-3.5" /> Fees</div>
-          <div className="mt-1.5 font-mono text-lg font-black text-amber-400 sm:text-xl">{formatEgp(closedFees + openFees)} <span className="text-[10px] text-slate-500">EGP</span></div>
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="premium-type-metric premium-type-metric-secondary font-mono text-amber-400">{formatEgp(closedFees + openFees)}</span>
+            <span className="premium-type-unit">EGP</span>
+          </div>
         </div>
       </div>
 
@@ -242,7 +256,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
               <PieChartIcon className="h-4 w-4 text-cyan-300" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Portfolio Allocation</h3>
+              <h3 className="premium-type-section-title">Portfolio Allocation</h3>
               <p className="mt-1 text-xs text-slate-400">
                 Current market-value concentration across {allocationTab === 'sector' ? 'sectors' : 'holdings'}.
               </p>
@@ -318,13 +332,12 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 } as React.CSSProperties}
               >
                 <div className="absolute left-4 top-4 z-10">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Allocated value
+                  <div className="premium-type-metric-label">Allocated value</div>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">{formatEgp(allocationTotal)}</span>
+                    <span className="premium-type-unit">EGP</span>
                   </div>
-                  <div className="mt-1 font-mono text-sm font-bold text-slate-100">
-                    {formatEgp(allocationTotal)} EGP
-                  </div>
-                  <div className="mt-1 text-[10px] text-slate-600">
+                  <div className="premium-type-metadata mt-1">
                     {allocationData.length} {allocationData.length === 1 ? 'bucket' : 'buckets'}
                   </div>
                 </div>

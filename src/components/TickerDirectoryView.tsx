@@ -250,13 +250,13 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
               </div>
 
               {/* Sector & Volume */}
-              <div className="premium-subpanel premium-hierarchy-h4 flex items-center justify-between text-[11px] text-slate-400 px-2 py-1 rounded-lg">
+              <div className="premium-subpanel premium-hierarchy-h4 premium-type-metadata flex items-center justify-between px-2 py-1 rounded-lg">
                 <span>{ticker.sector}</span>
                 <span>Vol: {(ticker.volume / 1000000).toFixed(2)}M shrs</span>
               </div>
 
               {/* Technical Levels */}
-              <div className="premium-subpanel premium-hierarchy-h4 grid grid-cols-3 gap-1.5 p-2 rounded-xl text-[11px]">
+              <div className="premium-subpanel premium-hierarchy-h4 premium-type-metadata grid grid-cols-3 gap-1.5 p-2 rounded-xl">
                 <div>
                   <span className="premium-type-metric-label block">RSI(14)</span>
                   <span className={`premium-type-metric-dense font-mono ${ticker.rsi14 >= 70 ? 'text-rose-400' : ticker.rsi14 <= 35 ? 'text-emerald-400' : 'text-slate-200'}`}>

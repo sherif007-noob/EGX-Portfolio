@@ -4911,3 +4911,217 @@ body {
       0 0 42px rgb(var(--premium-semantic-deep-rgb) / 0.044);
   }
 }
+
+
+/* Phase 8 protected visual-language restoration.
+ * Phase 8 may change information hierarchy, geometry, grouping, spacing, and type.
+ * It must not replace the accepted Phase 5 glass/refraction or semantic halo engine.
+ */
+
+/* Restore the accepted glass recipe to hierarchy-bearing card surfaces. */
+.premium-card.premium-hierarchy-h1,
+.premium-card.premium-hierarchy-h2,
+.premium-card.premium-hierarchy-h3,
+.premium-card.premium-hierarchy-h4,
+.premium-card.premium-hierarchy-h5,
+.premium-card.premium-dense-row {
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 38%),
+    rgba(15, 23, 42, 0.62);
+  box-shadow:
+    inset 0 1px 0 var(--premium-highlight),
+    var(--premium-shadow-soft),
+    0 0 30px rgba(34, 211, 238, 0.075),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+.premium-card.premium-hierarchy-h1::before,
+.premium-card.premium-hierarchy-h2::before,
+.premium-card.premium-hierarchy-h3::before,
+.premium-card.premium-hierarchy-h4::before,
+.premium-card.premium-hierarchy-h5::before,
+.premium-card.premium-dense-row::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 34%);
+  opacity: 0.38;
+}
+
+/* Restore the accepted hero glass/refraction treatment on the enlarged H1 hero. */
+.premium-card.premium-hero-card.premium-hierarchy-h1 {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+  background:
+    radial-gradient(circle at 18% -15%, rgb(var(--premium-semantic-rgb, 16 185 129) / 0.12), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.075), transparent 42%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.034), transparent 44%),
+    rgba(15, 23, 42, 0.66);
+}
+
+/* Restore accepted panel/subpanel glass instead of hierarchy-specific flat fills. */
+.premium-panel.premium-hierarchy-h2,
+.premium-panel.premium-hierarchy-h3,
+.premium-panel.premium-hierarchy-h4,
+.premium-panel.premium-dense-toolbar {
+  -webkit-backdrop-filter: blur(14px) saturate(135%) !important;
+  backdrop-filter: blur(14px) saturate(135%) !important;
+  border-color: var(--premium-border) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 30%),
+    rgba(15, 23, 42, 0.62) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 18px 42px rgba(0, 0, 0, 0.28),
+    0 0 34px rgba(34, 211, 238, 0.09),
+    0 0 64px rgba(139, 92, 246, 0.035),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+}
+
+.premium-subpanel.premium-hierarchy-h4,
+.premium-dense-row .premium-subpanel,
+.premium-dense-row .premium-hierarchy-h4 {
+  -webkit-backdrop-filter: blur(13px) saturate(130%);
+  backdrop-filter: blur(13px) saturate(130%);
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.022), transparent 48%),
+    rgba(2, 6, 23, 0.40);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 8px 20px rgba(0,0,0,0.10);
+}
+
+/* Restore full semantic halo to every semantic card.
+ * No H2/H3/H5 attenuation: this matches the accepted Phase 5 model.
+ */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven {
+  --premium-semantic-border-alpha: 0.50;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.10;
+  --premium-semantic-far-radius: 76px;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 38px rgba(0, 0, 0, 0.28),
+    0 0 34px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
+    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* Dense semantic cards use the same accepted halo, not an edge-only substitute. */
+.premium-card.premium-dense-row.premium-glow-buy,
+.premium-card.premium-dense-row.premium-glow-win,
+.premium-card.premium-dense-row.premium-glow-loss,
+.premium-card.premium-dense-row.premium-glow-breakeven {
+  --premium-semantic-border-alpha: 0.50;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.10;
+  --premium-semantic-far-radius: 76px;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
+  background:
+    radial-gradient(circle at 8% -8%, rgb(var(--premium-semantic-rgb) / 0.07), transparent 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.028), transparent 38%),
+    rgba(15, 23, 42, 0.62);
+  box-shadow:
+    inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 38px rgba(0, 0, 0, 0.28),
+    0 0 34px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
+    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* The H1 hero is larger than the original Phase 5 card, so preserve the same
+ * perceptual glow strength with a proportionally wider hero aura.
+ */
+.premium-card.premium-hero-card.premium-glow-buy,
+.premium-card.premium-hero-card.premium-glow-win,
+.premium-card.premium-hero-card.premium-glow-loss,
+.premium-card.premium-hero-card.premium-glow-breakeven {
+  --premium-semantic-border-alpha: 0.62;
+  --premium-semantic-near-alpha: 0.32;
+  --premium-semantic-far-alpha: 0.16;
+  --premium-semantic-far-radius: 108px;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-border-alpha));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 20px 48px rgba(0,0,0,0.30),
+    0 0 46px rgb(var(--premium-semantic-rgb) / var(--premium-semantic-near-alpha)),
+    0 0 var(--premium-semantic-far-radius) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-far-alpha)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-glow-buy:hover,
+  .premium-card.premium-glow-win:hover,
+  .premium-card.premium-glow-loss:hover,
+  .premium-card.premium-glow-breakeven:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.68);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 22px 52px rgba(0,0,0,0.32),
+      0 0 42px rgb(var(--premium-semantic-rgb) / 0.29),
+      0 0 92px rgb(var(--premium-semantic-deep-rgb) / 0.135),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-card.premium-hero-card.premium-glow-buy:hover,
+  .premium-card.premium-hero-card.premium-glow-win:hover,
+  .premium-card.premium-hero-card.premium-glow-loss:hover,
+  .premium-card.premium-hero-card.premium-glow-breakeven:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / 0.76);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.09),
+      0 24px 56px rgba(0,0,0,0.34),
+      0 0 54px rgb(var(--premium-semantic-rgb) / 0.38),
+      0 0 124px rgb(var(--premium-semantic-deep-rgb) / 0.19),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+}
+
+/* Mobile must keep the static semantic halo. Do not weaken it on coarse pointers. */
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-card.premium-glow-buy,
+  .premium-card.premium-glow-win,
+  .premium-card.premium-glow-loss,
+  .premium-card.premium-glow-breakeven,
+  .premium-card.premium-dense-row.premium-glow-buy,
+  .premium-card.premium-dense-row.premium-glow-win,
+  .premium-card.premium-dense-row.premium-glow-loss,
+  .premium-card.premium-dense-row.premium-glow-breakeven {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.065),
+      0 14px 34px rgba(0,0,0,0.26),
+      0 0 34px rgb(var(--premium-semantic-rgb) / 0.23),
+      0 0 78px rgb(var(--premium-semantic-deep-rgb) / 0.105),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-card.premium-dense-row.premium-glow-buy,
+  .premium-card.premium-dense-row.premium-glow-win,
+  .premium-card.premium-dense-row.premium-glow-loss,
+  .premium-card.premium-dense-row.premium-glow-breakeven {
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-semantic-rgb) / 0.70),
+      inset 0 1px 0 rgba(255,255,255,0.065),
+      0 14px 34px rgba(0,0,0,0.26),
+      0 0 34px rgb(var(--premium-semantic-rgb) / 0.23),
+      0 0 78px rgb(var(--premium-semantic-deep-rgb) / 0.105),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-card.premium-hero-card.premium-glow-buy,
+  .premium-card.premium-hero-card.premium-glow-win,
+  .premium-card.premium-hero-card.premium-glow-loss,
+  .premium-card.premium-hero-card.premium-glow-breakeven {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 18px 42px rgba(0,0,0,0.28),
+      0 0 48px rgb(var(--premium-semantic-rgb) / 0.34),
+      0 0 112px rgb(var(--premium-semantic-deep-rgb) / 0.17),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+}

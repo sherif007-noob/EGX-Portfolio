@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.2 corrected / CI CLEAN. Quality Checks #36273839931 passed. Shared premium button-language foundation is now active across all header buttons; Pass 9.3 primary creation architecture is next.**
+**IN PROGRESS — Pass 9.3 COMPLETE / CI CLEAN. Quality Checks #36277267864 passed. Pass 9.4 utility/data-management consolidation is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -170,9 +170,23 @@ Correction gate: **Quality Checks #36273839931 — PASS**.
 
 ### 9.3 — Primary creation architecture
 
-- Add Trade owns primary global action styling.
-- Scan Receipt becomes a clearly related secondary creation path.
-- both creation buttons must use the accepted premium button language: translucent glass, refraction, luminous border, controlled aura/bloom, and hierarchy-appropriate intensity;
+**Status: COMPLETE / CI CLEAN — Quality Checks #36277267864 passed.**
+
+Implemented:
+- Add Trade is explicitly marked as the primary creation action;
+- Scan Receipt is explicitly marked as the secondary creation action;
+- both actions now sit inside one dedicated creation cluster so they read as two paths into the same activity;
+- the creation cluster itself uses restrained premium glass/refraction so it groups the actions without competing with them;
+- Add Trade retains the strongest border luminosity, blue aura and aurora/shimmer treatment;
+- Scan Receipt keeps the accepted emerald premium treatment at a lower intensity;
+- touch-target behavior remains protected on narrow phones;
+- both original callbacks/workflows are unchanged;
+- source regression coverage prevents Scan Receipt from becoming primary or Add Trade from losing primary ownership.
+
+Rules retained:
+- Add Trade owns primary global action styling;
+- Scan Receipt is a clearly related secondary creation path;
+- both creation buttons use the accepted premium button language: translucent glass, refraction, luminous border, controlled aura/bloom, and hierarchy-appropriate intensity;
 - preserve both workflows unchanged.
 
 ### 9.4 — Utility/data-management consolidation

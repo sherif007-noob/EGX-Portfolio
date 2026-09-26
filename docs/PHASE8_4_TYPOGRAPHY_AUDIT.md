@@ -2,7 +2,7 @@
 
 ## Status
 
-**8.4.2 — COMPLETE / CI CLEAN — Overview + Reports typography migration passed Quality Checks #36257664993. 8.4.3 dense workflow migration is next.**
+**8.4.3 — COMPLETE / CI CLEAN — dense workflow typography migration passed Quality Checks #36258191821. 8.4.4 spacing normalization is next.**
 
 This audit starts Pass 8.4 without changing the accepted material system.
 
@@ -134,3 +134,34 @@ Protected:
 - chart behavior, motion, selectors and business logic.
 
 Quality Checks `36257664993` passed typecheck, tests and production build.
+
+
+## 8.4.3 implementation result
+
+Commit `7b018b96c8a5470f82a4bdccd11d8f603a75ca39` migrates dense workflows onto the canonical typography system without increasing row/card density.
+
+Covered:
+- Open Positions;
+- Closed Cycles;
+- Transactions / Trade Journal;
+- Cash Ledger;
+- Ticker Directory / Stocks.
+
+Implemented:
+- screen headings use the canonical section-title role;
+- workflow descriptions use helper copy;
+- H3 summary KPI labels use metric-label and H3 values use secondary scale where appropriate;
+- H5 record P&L / price / execution values use the dense metric scale;
+- EGP units are visually subordinate through `premium-type-unit`;
+- company, sector, date and supporting details move to helper/metadata roles;
+- repeated `text-[10px]` label recipes are replaced with canonical metric-label roles in the migrated surfaces;
+- dense operational rows stay compact and do not inherit dashboard-sized metrics.
+
+Protected:
+- glass, aura and glow intensity;
+- semantic edge and its corner-wrap/fade geometry;
+- semantic colors;
+- H0–H5 composition;
+- filters, selectors, tables, motion and business behavior.
+
+Quality Checks `36258191821` passed typecheck, tests and production build.

@@ -134,17 +134,39 @@ export const Header: React.FC<HeaderProps> = ({
 
     const rect = trigger.getBoundingClientRect();
     const gutter = 12;
-    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const width = Math.min(304, Math.max(0, viewportWidth - gutter * 2));
+    const visualViewport = window.visualViewport;
+    const viewportLeft = visualViewport?.offsetLeft ?? 0;
+    const viewportTop = visualViewport?.offsetTop ?? 0;
+    const viewportWidth = visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = visualViewport?.height ?? window.innerHeight;
+    const viewportRight = viewportLeft + viewportWidth;
+
+    const safeHost = trigger.closest<HTMLElement>('.premium-safe-inline-header');
+    const safeHostRect = safeHost?.getBoundingClientRect();
+    const safeHostStyle = safeHost ? window.getComputedStyle(safeHost) : null;
+    const safeLeft = safeHostRect
+      ? Math.max(
+          viewportLeft + gutter,
+          safeHostRect.left + Number.parseFloat(safeHostStyle?.paddingLeft ?? '0'),
+        )
+      : viewportLeft + gutter;
+    const safeRight = safeHostRect
+      ? Math.min(
+          viewportRight - gutter,
+          safeHostRect.right - Number.parseFloat(safeHostStyle?.paddingRight ?? '0'),
+        )
+      : viewportRight - gutter;
+
+    const availableWidth = Math.max(0, safeRight - safeLeft);
+    const width = Math.min(304, availableWidth);
     const preferredLeft = rect.right - width;
-    const maxLeft = Math.max(gutter, viewportWidth - gutter - width);
-    const left = Math.min(maxLeft, Math.max(gutter, preferredLeft));
+    const maxLeft = Math.max(safeLeft, safeRight - width);
+    const left = Math.min(maxLeft, Math.max(safeLeft, preferredLeft));
     const estimatedMenuHeight = 148;
     const preferredTop = rect.bottom + 8;
     const top = Math.min(
       preferredTop,
-      Math.max(gutter, viewportHeight - gutter - estimatedMenuHeight),
+      Math.max(viewportTop + gutter, viewportTop + viewportHeight - gutter - estimatedMenuHeight),
     );
 
     setDataToolsMenuGeometry({ left, top, width });

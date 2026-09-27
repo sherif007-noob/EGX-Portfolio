@@ -211,6 +211,8 @@ Resulting utility architecture:
 - grouped under Data & Tools: Google Sheets + Backup & Reconcile;
 - direct future affordance: Settings.
 
+**Viewport-safety correction:** the Data & Tools dropdown must never rely on trigger-relative right alignment on narrow screens. It is rendered through a body portal, uses fixed viewport geometry, clamps to the resolved safe-inline header bounds, and repositions on resize / visual-viewport changes. This prevents the menu from opening outside the screen or being clipped by sticky-header/backdrop-filter/overflow contexts. Quality Checks #36282456713 passed after this fix.
+
 Reduce equal-weight utility competition.
 
 Final structure:

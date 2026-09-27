@@ -185,6 +185,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   } | null>(null);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
+  const modeMenuTriggerRef = useRef<HTMLButtonElement>(null);
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
   const [loadedIntradayPrices, setLoadedIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
@@ -336,8 +337,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
   useEffect(() => {
     const handleGlobalPress = (event: Event) => {
-      const target = event.target as Node | null;
-      if (target && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-premium-dropdown-portal="true"]')) return;
+      if (target && modeMenuRef.current && !modeMenuRef.current.contains(target as Node)) {
         setModeMenuOpen(false);
       }
     };
@@ -824,6 +826,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div ref={modeMenuRef} className="relative min-w-0 z-20">
             <button
+              ref={modeMenuTriggerRef}
               type="button"
               onClick={() => setModeMenuOpen((value) => !value)}
               className="premium-accordion-trigger premium-chart-control group flex max-w-full items-center gap-1.5 text-left"
@@ -842,7 +845,12 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             <DropdownPresence
               isOpen={modeMenuOpen}
               role="menu"
-              className="premium-floating premium-dropdown absolute left-0 top-9 z-[80] w-[min(calc(100vw-2rem),320px)] overflow-hidden rounded-xl border p-1.5"
+              anchorRef={modeMenuTriggerRef}
+              portal
+              matchAnchorWidth={false}
+              preferredWidth={320}
+              align="left"
+              className="premium-floating premium-dropdown z-[100] overflow-hidden rounded-xl border p-1.5"
             >
               {modeMenuOpen && <>
                 {ANALYTICS_MODES.map((item) => {

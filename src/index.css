@@ -4466,6 +4466,183 @@ body {
 }
 
 
+/* Phase 9.6 — mobile command architecture.
+ * Portrait uses a deliberate two-tier header: brand/context first, then a
+ * three-zone command rail where quick utilities may scroll but Data/Settings
+ * and creation stay fixed-access. Navigation remains a separate direct rail.
+ */
+@media (max-width: 639px) {
+  .premium-header-top-row {
+    min-height: 0;
+    align-items: stretch;
+    row-gap: 0.5rem;
+    column-gap: 0;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .premium-header-brand {
+    width: 100%;
+    min-width: 0;
+    gap: 0.65rem;
+    padding-inline: 0.125rem;
+  }
+
+  .premium-header-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .premium-header-command-zone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    gap: 0.35rem;
+  }
+
+  .premium-header-utility-scroller {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.2rem;
+    mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
+  }
+
+  .premium-header-utility-cluster {
+    min-width: max-content;
+    gap: 0.25rem;
+    padding: 0.2rem;
+  }
+
+  .premium-header-utility-cluster > .premium-action {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .premium-header-data-cluster,
+  .premium-header-create-cluster {
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.2rem;
+  }
+
+  .premium-header-tools-trigger {
+    min-width: var(--premium-touch-target);
+    padding-inline: 0.5rem;
+  }
+
+  .premium-header-utility-action,
+  .premium-header-create-secondary,
+  .premium-header-create-primary {
+    min-width: var(--premium-touch-target);
+    min-height: var(--premium-touch-target);
+    padding-inline: 0.6rem;
+  }
+
+  .premium-nav-scroller {
+    scroll-padding-inline: 3rem;
+  }
+
+  .premium-header-nav-row {
+    gap: 0.25rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .premium-header .premium-nav-item {
+    min-height: var(--premium-touch-target);
+    padding-inline: 0.75rem;
+  }
+
+  .premium-header .premium-nav-edge {
+    width: 2rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .premium-header-top-row {
+    row-gap: 0.4rem;
+  }
+
+  .premium-header-brand {
+    gap: 0.5rem;
+  }
+
+  .premium-header-logo {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .premium-header-command-zone {
+    gap: 0.2rem;
+  }
+
+  .premium-header-utility-cluster,
+  .premium-header-data-cluster,
+  .premium-header-create-cluster {
+    gap: 0.125rem;
+    padding: 0.125rem;
+  }
+
+  .premium-header-tools-trigger,
+  .premium-header-utility-action,
+  .premium-header-create-secondary,
+  .premium-header-create-primary {
+    padding-inline: 0.4rem;
+  }
+}
+
+/* Short landscape phones keep creation/data fixed while only quick utilities
+ * are allowed to scroll. This intentionally overrides the older whole-rail
+ * overflow fallback from Phase 6.5.
+ */
+@media (orientation: landscape) and (max-height: 520px) {
+  .premium-header-top-row {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center !important;
+  }
+
+  .premium-header-brand {
+    width: auto !important;
+  }
+
+  .premium-header-command-zone,
+  .premium-header-action-rail {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0.35rem !important;
+    overflow: visible !important;
+  }
+
+  .premium-header-utility-scroller {
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x proximity;
+  }
+
+  .premium-header-data-cluster,
+  .premium-header-create-cluster {
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .premium-header-action-rail .premium-action {
+    min-width: var(--premium-touch-target) !important;
+    min-height: var(--premium-touch-target) !important;
+  }
+}
+
 /* iPhone landscape edge-to-edge viewport.
  * The document paints beneath the display cutout/safe areas while app content
  * retains the same visual gutters using env(safe-area-inset-*).

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { computeDropdownViewportGeometry } from '../utils/dropdownGeometry';
 
 export type MotionSwapVariant = 'tab' | 'state';
 
@@ -270,52 +271,43 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
     const viewportTop = visualViewport?.offsetTop ?? 0;
     const viewportWidth = visualViewport?.width ?? window.innerWidth;
     const viewportHeight = visualViewport?.height ?? window.innerHeight;
-    const safeLeft = viewportLeft + viewportGutter;
-    const safeRight = viewportLeft + viewportWidth - viewportGutter;
-    const availableWidth = Math.max(0, safeRight - safeLeft);
-
-    const desiredWidth = matchAnchorWidth
-      ? rect.width
-      : Math.max(rect.width, preferredWidth ?? 240);
-    const width = Math.min(desiredWidth, availableWidth);
-
-    const leftAligned = rect.left;
-    const rightAligned = rect.right - width;
-    const preferredLeft =
-      align === 'left'
-        ? leftAligned
-        : align === 'right'
-        ? rightAligned
-        : leftAligned + width <= safeRight
-        ? leftAligned
-        : rightAligned;
-    const left = Math.min(
-      Math.max(safeLeft, preferredLeft),
-      Math.max(safeLeft, safeRight - width),
+    const geometry = computeDropdownViewportGeometry(
+      {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        width: rect.width,
+      },
+      {
+        left: viewportLeft,
+        top: viewportTop,
+        width: viewportWidth,
+        height: viewportHeight,
+        layoutHeight: window.innerHeight,
+      },
+      {
+        matchAnchorWidth,
+        preferredWidth,
+        align,
+        offset,
+        gutter: viewportGutter,
+      },
     );
-
-    const safeTop = viewportTop + viewportGutter;
-    const safeBottom = viewportTop + viewportHeight - viewportGutter;
-    const availableBelow = Math.max(0, safeBottom - (rect.bottom + offset));
-    const availableAbove = Math.max(0, rect.top - offset - safeTop);
-    const placeBelow = availableBelow >= 180 || availableBelow >= availableAbove;
-    const maxHeight = Math.max(0, placeBelow ? availableBelow : availableAbove);
 
     setPortalStyle({
       position: 'fixed',
-      left,
-      top: placeBelow ? rect.bottom + offset : 'auto',
-      bottom: placeBelow
-        ? 'auto'
-        : Math.max(viewportGutter, window.innerHeight - rect.top + offset),
-      width,
+      left: geometry.left,
+      top: geometry.top,
+      bottom: geometry.bottom,
+      width: geometry.width,
       minWidth: 0,
-      maxWidth: availableWidth,
-      maxHeight,
+      maxWidth: geometry.maxWidth,
+      maxHeight: geometry.maxHeight,
       overflowX: 'hidden',
       overflowY: 'auto',
       boxSizing: 'border-box',
-      transformOrigin: placeBelow ? 'top center' : 'bottom center',
+      transformOrigin: geometry.placement === 'below' ? 'top center' : 'bottom center',
       zIndex: 100,
     });
   }, [

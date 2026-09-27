@@ -33,8 +33,27 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.4 complete** | Frequent utilities remain direct; Sheets + Backup/Reconcile consolidated under premium Data & Tools; Settings remains direct; Quality Checks #36281063871 passed. |
+| 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.5 status communication
+
+Implementation range `ea4238cbf965ad7c10896097900a3e56f57e84c7` → `21d84aefba82ab4da84aca7688bb29cce599b91f`.
+
+Implemented:
+- Price Alerts now communicates state with a compact unread-count badge, active dot, or paused dot;
+- whole-button attention is applied to Alerts only when unread items exist;
+- removed the permanent bounce animation from unread alerts so urgency comes from count/status rather than theatrical motion;
+- Sync Prices now has explicit idle/running state, running label, spinner and cyan status dot;
+- Data & Tools remains purple normally, shows connected state locally, and temporarily becomes amber/attention only when Sheets authentication has expired;
+- standardized header status primitives for connected, warning, running, muted and count-badge states;
+- added accessible status labels/data-state markers so state does not rely solely on color;
+- added reduced-motion protection for active sync rotation;
+- updated Phase 9.4 regression expectations and added `Phase95StatusCommunication.test.ts`.
+
+Quality Checks #36282139801 passed install, typecheck, tests, and production build.
+
+Next: **Pass 9.6 — mobile command architecture**.
 
 ## 2026-09-27 — Phase 9.4 utility/data-management consolidation
 

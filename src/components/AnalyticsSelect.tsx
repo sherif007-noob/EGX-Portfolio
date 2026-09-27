@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { DropdownPresence } from './PremiumMotion';
 
@@ -70,8 +70,6 @@ export function AnalyticsSelect<T extends string | number = string>({
   accent = 'cyan',
 }: AnalyticsSelectProps<T>) {
   const [open, setOpen] = useState(false);
-  const [alignMenuRight, setAlignMenuRight] = useState(false);
-  const [menuMaxWidth, setMenuMaxWidth] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const accentClasses = ACCENTS[accent];
 
@@ -80,31 +78,13 @@ export function AnalyticsSelect<T extends string | number = string>({
     [options, value],
   );
 
-  const updateMenuGeometry = useCallback(() => {
-    if (!wrapperRef.current || typeof window === 'undefined') return;
-
-    const rect = wrapperRef.current.getBoundingClientRect();
-    const gutter = 12;
-    const viewportCap = Math.max(0, window.innerWidth - gutter * 2);
-    const triggerWidth = Math.min(rect.width, viewportCap);
-    const availableWhenLeftAligned = Math.max(triggerWidth, window.innerWidth - gutter - rect.left);
-    const availableWhenRightAligned = Math.max(triggerWidth, rect.right - gutter);
-    const shouldAlignRight = availableWhenRightAligned > availableWhenLeftAligned;
-
-    setAlignMenuRight(shouldAlignRight);
-    setMenuMaxWidth(Math.floor(Math.min(
-      viewportCap,
-      shouldAlignRight ? availableWhenRightAligned : availableWhenLeftAligned,
-    )));
-  }, []);
-
   useEffect(() => {
     if (!open) return;
 
-    updateMenuGeometry();
-
     const handlePointerDown = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-premium-dropdown-portal="true"]')) return;
+      if (wrapperRef.current && !wrapperRef.current.contains(target as Node)) {
         setOpen(false);
       }
     };
@@ -115,13 +95,11 @@ export function AnalyticsSelect<T extends string | number = string>({
 
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', updateMenuGeometry);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', updateMenuGeometry);
     };
-  }, [open, updateMenuGeometry]);
+  }, [open]);
 
   if (!selectedOption) return null;
 
@@ -129,9 +107,6 @@ export function AnalyticsSelect<T extends string | number = string>({
     <div
       ref={wrapperRef}
       className={`relative ${open ? 'z-[70]' : ''} ${className}`}
-      style={menuMaxWidth > 0
-        ? ({ '--premium-select-menu-max': `${menuMaxWidth}px` } as React.CSSProperties)
-        : undefined}
     >
       <button
         type="button"
@@ -139,11 +114,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         aria-haspopup="listbox"
         aria-expanded={open}
         data-accent={accent}
-        onClick={() => {
-          const nextOpen = !open;
-          if (nextOpen) updateMenuGeometry();
-          setOpen(nextOpen);
-        }}
+        onClick={() => setOpen((current) => !current)}
         className={[
           'premium-control premium-select-trigger group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200',
           'hover:border-slate-600 hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2',
@@ -169,9 +140,12 @@ export function AnalyticsSelect<T extends string | number = string>({
         isOpen={open}
         role="listbox"
         dataAccent={accent}
+        anchorRef={wrapperRef}
+        portal
+        matchAnchorWidth
+        align="auto"
         className={[
-          'premium-floating premium-dropdown premium-select-dropdown absolute top-full z-50 mt-1.5 min-w-full overflow-hidden rounded-xl border p-1.5',
-          alignMenuRight ? 'right-0' : 'left-0',
+          'premium-floating premium-dropdown premium-select-dropdown z-[100] overflow-hidden rounded-xl border p-1.5',
           'max-h-72 overflow-y-auto',
           menuClassName,
         ].join(' ')}

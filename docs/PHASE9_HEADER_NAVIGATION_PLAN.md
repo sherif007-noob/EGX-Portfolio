@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.4 COMPLETE / CI CLEAN. Quality Checks #36281063871 passed. Pass 9.5 status communication is next.**
+**IN PROGRESS — Pass 9.5 COMPLETE / CI CLEAN. Quality Checks #36282139801 passed. Pass 9.6 mobile command architecture is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -227,9 +227,24 @@ Final structure:
 
 ### 9.5 — Status communication
 
-Prefer compact status indicators over whole-button semantic promotion.
+**Status: COMPLETE / CI CLEAN — Quality Checks #36282139801 passed.**
 
-Warnings may temporarily elevate importance; resolved states return to normal utility priority.
+Implemented:
+- Alerts now uses a compact amber unread badge, green active dot, or muted paused dot;
+- the Alerts button only receives stronger attention treatment when unread alerts actually exist;
+- removed the bouncing BellRing treatment so the unread count carries urgency without theatrical motion;
+- Sync Prices exposes an explicit running state with spinner, text and cyan status dot while keeping the normal idle button at regular utility intensity;
+- Data & Tools stays purple in normal/connected state and temporarily switches to amber attention treatment only when the Sheets token is expired;
+- Sheets connected/expired state stays visible as a compact status dot on the consolidated trigger;
+- shared status vocabulary now covers connected / warning / running / muted / count-badge states;
+- reduced-motion rules stop sync rotation where requested;
+- status semantics are exposed through aria labels/data-status without relying only on color;
+- source regression coverage protects the temporary-promotion rule and Phase 8 material isolation.
+
+Rules:
+- prefer compact status indicators over whole-button semantic promotion;
+- warnings may temporarily elevate importance; resolved states return to normal utility priority;
+- status must never be conveyed by color alone.
 
 ### 9.6 — Mobile command architecture
 

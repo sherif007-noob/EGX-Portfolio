@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/fix-data-tools-viewport]
   pull_request:
     branches: [main]
 

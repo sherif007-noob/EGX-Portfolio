@@ -19,6 +19,18 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
     expect(block).not.toContain('justify-content: space-between');
   });
 
+
+  it('lets the desktop header use spare viewport width and clears stale nav scroll', () => {
+    const header = readRelative('./Header.tsx');
+
+    expect(header.match(/xl:max-w-\[100rem\]/g)?.length).toBe(2);
+    expect(header).toContain('const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth)');
+    expect(header).toContain('if (maxScrollLeft <= tolerance)');
+    expect(header).toContain('container.scrollLeft = 0');
+    expect(header).toContain('setCanScrollNavLeft(false)');
+    expect(header).toContain('setCanScrollNavRight(false)');
+  });
+
   it('keeps laptop-width desktop compact while preserving the primary creation label', () => {
     const css = readRelative('../index.css');
     const start = css.indexOf('@media (min-width: 1024px) and (max-width: 1279px) and (min-height: 521px)');

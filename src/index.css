@@ -1437,6 +1437,17 @@ body {
   z-index: 1;
 }
 
+/* Portaled dropdown geometry is authoritative. Legacy min-width/max-width rules
+ * must never expand a body-level menu beyond the clamped inline viewport box.
+ */
+.premium-dropdown[data-premium-dropdown-portal='true'],
+.premium-select-dropdown[data-premium-dropdown-portal='true'] {
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+}
+
 @media (max-width: 767px) {
   .premium-dropdown {
     max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));

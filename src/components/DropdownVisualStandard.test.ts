@@ -41,6 +41,24 @@ describe('canonical dropdown visual standard', () => {
     }
   });
 
+  it('renders content dropdowns in the same body-level overlay context as Data & Tools', () => {
+    const analyticsSelect = readRelative('./AnalyticsSelect.tsx');
+    const addTrade = readRelative('./AddTradeModal.tsx');
+    const chart = readRelative('./charts/PerformanceTimeframeChart.tsx');
+    const motion = readRelative('./PremiumMotion.tsx');
+    const header = readRelative('./Header.tsx');
+
+    for (const source of [analyticsSelect, addTrade, chart]) {
+      expect(source).toContain('portal');
+      expect(source).toContain('anchorRef=');
+    }
+
+    expect(motion).toContain("createPortal(dropdown, document.body)");
+    expect(motion).toContain("data-premium-dropdown-portal={portal ? 'true' : undefined}");
+    expect(header).toContain('createPortal(');
+    expect(header).toContain('document.body');
+  });
+
   it('rejects the legacy opaque slate dropdown surface anywhere in component TSX', () => {
     const sources = collectTsx(componentsDir).map((file) => readFileSync(file, 'utf8'));
     const joined = sources.join('\n');

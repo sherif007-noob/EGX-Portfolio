@@ -33,9 +33,9 @@ describe('Phase 9.4 utility/data-management consolidation', () => {
   it('keeps Sheets state visible on the consolidated trigger', () => {
     const header = readRelative('./Header.tsx');
 
-    expect(header).toContain('premium-header-tools-status-warning');
+    expect(header).toContain('premium-header-status-dot-warning');
     expect(header).toContain('Google Sheets needs reconnection');
-    expect(header).toContain('premium-header-tools-status-connected');
+    expect(header).toContain('premium-header-status-dot-connected');
     expect(header).toContain('Google Sheets connected');
   });
 

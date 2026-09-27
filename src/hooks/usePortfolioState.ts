@@ -1,3 +1,4 @@
+import { selectPositionQuote } from '../services/positionQuote';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector, CashTransaction } from '../types';
 import { INITIAL_EGX_TICKERS, mergeTickerDirectoryWithBaseline } from '../data/egxTickers';
@@ -214,10 +215,12 @@ export function usePortfolioState() {
   useEffect(() => {
     let activeUnsubscribe: (() => void) | null = null;
     let isMounted = true;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
     const initializeRemotePortfolio = async () => {
       try {
         const remoteData = await loadPortfolioFromFirestore();
+        if (!remoteData) throw new Error('Authoritative portfolio is unavailable.');
         if (remoteData && isMounted) {
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
@@ -245,16 +248,9 @@ export function usePortfolioState() {
             if (loadedPositions.length === 0) loadedPositions = report.reconciledPositions;
             if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
             if (loadedCash === 0) loadedCash = report.reconciledCashBalance;
-            debouncedSavePortfolioToFirestore({
-              positions: loadedPositions,
-              closedTrades: loadedClosed,
-              transactions: loadedTransactions,
-              cashBalance: loadedCash,
-              capitalDeposits: loadedCapital,
-              tickers: loadedTickers,
-            }, 300);
           }
 
+          setIsInitialized(true);
           setPositions(loadedPositions);
           setClosedTrades(loadedClosed);
           setTransactions(loadedTransactions);
@@ -265,8 +261,8 @@ export function usePortfolioState() {
         }
       } catch (err) {
         console.warn('Initial Supabase load failed, using local cache:', err);
-      } finally {
-        if (isMounted) setIsInitialized(true);
+        if (isMounted) retryTimer = setTimeout(initializeRemotePortfolio, 30_000);
+        return;
       }
 
       try { await flushPendingWriteQueue(); } catch { /* ignore */ }
@@ -296,10 +292,24 @@ export function usePortfolioState() {
             if (loadedClosed.length === 0) loadedClosed = report.reconciledClosedTrades;
           }
 
-          setPositions(loadedPositions);
+          setPositions(previous => loadedPositions.map(incoming => {
+            const local = previous.find(p => p.ticker === incoming.ticker);
+            const quote = selectPositionQuote(incoming, local ? {
+              ticker: local.ticker, lastPrice: local.currentPrice, change: local.dayChange,
+              changePercent: local.dayChangePercent, priceUpdatedAt: local.priceUpdatedAt,
+            } as EGXTicker : undefined);
+            return { ...incoming, ...quote };
+          }));
           setClosedTrades(loadedClosed);
           setTransactions(loadedTransactions);
-          if (Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0) setTickers(loadedTickers);
+          if (Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0) setTickers(previous => loadedTickers.map(incoming => {
+            const local = previous.find(t => t.ticker === incoming.ticker);
+            if (local && (Date.parse(local.priceUpdatedAt ?? '') || 0) > (Date.parse(incoming.priceUpdatedAt ?? '') || 0)) {
+              return { ...incoming, lastPrice: local.lastPrice, change: local.change,
+                changePercent: local.changePercent, priceUpdatedAt: local.priceUpdatedAt };
+            }
+            return incoming;
+          }));
           if (typeof remoteData.cashBalance === 'number' && Number.isFinite(remoteData.cashBalance)) setCashBalance(remoteData.cashBalance);
           if (typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0) setCapitalDeposits(remoteData.capitalDeposits);
           setTimeout(() => { isRemoteSyncingRef.current = false; }, 150);
@@ -313,6 +323,7 @@ export function usePortfolioState() {
 
     return () => {
       isMounted = false;
+      clearTimeout(retryTimer);
       if (activeUnsubscribe) activeUnsubscribe();
     };
   }, []);
@@ -341,12 +352,16 @@ export function usePortfolioState() {
       const canonicalTicker = resolveTickerFromDirectory(p.ticker, tickerList);
       const t = tickerMap.get(canonicalTicker);
       if (!t) return p;
-      const currentPrice = t.lastPrice > 0 ? t.lastPrice : p.currentPrice;
+      const quote = selectPositionQuote(p, t);
+      const currentPrice = quote.currentPrice;
       const targetPrice = p.targetPrice ?? t.targetPrice;
       const stopLoss = p.stopLoss ?? t.stopLoss;
       const companyName = t.nameEn || p.companyName || canonicalTicker;
       const sector = t.sector !== 'Other' ? t.sector : (p.sector || 'Other');
       if (
+        p.priceUpdatedAt !== quote.priceUpdatedAt ||
+        p.dayChange !== quote.dayChange ||
+        p.dayChangePercent !== quote.dayChangePercent ||
         p.ticker !== canonicalTicker ||
         Math.abs((p.currentPrice || 0) - currentPrice) > 0.0001 ||
         p.targetPrice !== targetPrice ||
@@ -355,7 +370,7 @@ export function usePortfolioState() {
         p.sector !== sector
       ) {
         hasChanges = true;
-        return { ...p, ticker: canonicalTicker, currentPrice, targetPrice, stopLoss, companyName, sector };
+        return { ...p, ...quote, ticker: canonicalTicker, currentPrice, targetPrice, stopLoss, companyName, sector };
       }
       return p;
     });

@@ -14,17 +14,17 @@ on:
         type: boolean
   schedule:
     # GitHub cron is UTC and scheduled workflows run from the default branch.
-    # 07:00-12:59 UTC covers Cairo's 10:00-14:30 EGX session across DST
+    # 07:00-13:59 UTC covers Cairo's session and delayed close across DST
     # changes. The Node script applies the authoritative Africa/Cairo session
-    # gate and allows a short post-close grace window for final completed bars.
-    - cron: '*/5 7-12 * * 0-4'
+    # gate through 15:15 Cairo for delayed final bars and runner delays.
+    - cron: '*/5 7-13 * * 0-4'
 
 permissions:
   contents: read
 
 concurrency:
   group: egx-intraday-market-data
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync:

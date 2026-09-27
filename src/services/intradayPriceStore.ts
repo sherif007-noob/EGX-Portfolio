@@ -1,5 +1,4 @@
 import { INTRADAY_POLICY } from './intradayPolicy';
-import { loadIntradayPricesFromSupabase } from './supabasePersistence';
 
 export interface IntradayPricePoint {
   timestamp: string;
@@ -119,6 +118,7 @@ export async function getIntradayPrices(
   const normalized = [...new Set(tickers.map(normalizeIntradayTicker).filter(Boolean))];
   if (!normalized.length) return {};
 
+  const { loadIntradayPricesFromSupabase } = await import('./supabasePersistence');
   const rows = await loadIntradayPricesFromSupabase(
     normalized,
     startTimestamp,

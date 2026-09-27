@@ -1,3 +1,4 @@
+import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
   configureSupabaseServer,
   verifySupabaseBearerToken,
@@ -16,7 +17,7 @@ interface Env {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
   });
 
 const errorJson = (error: unknown, status = 500) =>
@@ -143,24 +144,14 @@ async function handleApi(request: Request): Promise<Response> {
 
   if (path === "/api/egx/scan" && request.method === "POST") {
     try {
-      const payload = {
-        filter: [],
-        options: { lang: "en" },
-        symbols: { query: { types: [] }, tickers: [] },
-        columns: [
-          "name", "description", "logoid", "close", "change", "change_abs",
-          "volume", "high", "low", "high_52_week", "low_52_week", "sector", "RSI",
-        ],
-        sort: { sortBy: "name", sortOrder: "asc" },
-        range: [0, 500],
-      };
+      const payload = EGX_SCANNER_PAYLOAD;
       const tvResponse = await fetch("https://scanner.tradingview.com/egypt/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "User-Agent": "Mozilla/5.0",
         },
-        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(12_000), body: JSON.stringify(payload),
       });
       if (!tvResponse.ok) {
         return json(
@@ -170,7 +161,7 @@ async function handleApi(request: Request): Promise<Response> {
       }
       return new Response(tvResponse.body, {
         status: tvResponse.status,
-        headers: { "content-type": "application/json; charset=utf-8" },
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
       });
     } catch (error) {
       console.error("Error proxying TradingView Scanner:", error);
@@ -192,7 +183,7 @@ async function handleApi(request: Request): Promise<Response> {
       }
       return new Response(tvResponse.body, {
         status: tvResponse.status,
-        headers: { "content-type": "application/json; charset=utf-8" },
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
       });
     } catch (error) {
       console.error("Error proxying TradingView Symbol Search:", error);

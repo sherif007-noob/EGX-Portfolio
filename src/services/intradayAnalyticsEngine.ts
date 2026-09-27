@@ -431,7 +431,7 @@ export function buildIntradayAnalyticsResult(
   // the authoritative endpoint for the current active session. Append one
   // as-of point only when every currently held ticker has a trustworthy live
   // quote; never mix a partial live snapshot with stale bar closes.
-  if (options.livePrices && completePoints.length && sessionDate <= cairoDateKey(asOfDate.toISOString())) {
+  if (options.livePrices && completePoints.length && sessionDate === cairoDateKey(asOfDate.toISOString())) {
     while (
       txIndex < transactionsByTime.length &&
       parseMs(transactionsByTime[txIndex].executedAt) <= asOfMs

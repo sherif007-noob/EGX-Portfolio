@@ -456,3 +456,10 @@ The secondary analytics service never mutates portfolio rows, positions, closed 
 ### Rolling-period boundary valuation
 
 Daily rolling periods distinguish the **first plotted date** from the **beginning-of-period valuation**. If a 1W chart ends on Sep 23, its plotted window begins Sep 16, but the return baseline is the last complete close strictly before that boundary (Sep 15). This is the portfolio value at the beginning of Sep 16; using Sep 16's closing valuation would discard the first day's performance. External capital flows after the baseline are neutralized by the return calculations.
+
+
+## Market-data consistency audit (September 28, 2026)
+
+Today uses one Cairo session for Auto/1m/5m/15m/1h. Missing current-session candles do not authorize switching dates. Secondary unrealized P&L uses the primary engine's market value minus ledger remaining cost and buy fees, so candle timing and the complete live endpoint match the main chart. Drawdown continues to use the unified performance curve. Daily 1W/1M/90D/YTD/ALL reads are paginated in `(trading_date, ticker)` order. Intraday reads use `(bar_timestamp, ticker)` order. Visible history and realized-trajectory windows refresh independently of whether a quote price changed. Daily axis labels are Cairo-based across device timezones.
+
+The visual curves, materials, navigation, and accepted Phase 8/9 hierarchy are unchanged. See [the audit](MARKET_DATA_AUDIT_2026_09_28.md) for evidence and deployment limits.

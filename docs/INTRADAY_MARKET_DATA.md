@@ -40,7 +40,7 @@ Current policy:
 | Derived retention | 90 calendar days |
 | Timezone | `Africa/Cairo` |
 | Regular session | 10:00-14:30 Cairo |
-| Scheduled ingestion grace | through 14:40 Cairo |
+| Scheduled ingestion grace | through 15:15 Cairo |
 | Trading weekdays | Sunday-Thursday |
 | Scheduled cadence target | about every 5 minutes |
 | Read order | 1m -> 5m -> 15m |
@@ -202,7 +202,7 @@ Selection is not based merely on whether one 1-minute row exists.
 
 For each session-relevant ticker, the selector compares the observed session envelope across available resolutions. A tiny late/early 1m sample cannot displace a healthier 5m dataset, while sparse legitimate trading remains acceptable because the selector does not require a candle every minute.
 
-If the requested calendar date has no market bars, such as after midnight, a weekend or an exchange-closed date, the reader may use the latest real session not after that date. It never invents a session.
+The requested session comes from the Cairo EGX clock: before opening and on weekends it selects the previous trading weekday. Every resolution must match that exact session. Missing ingestion is not evidence of a holiday: an empty current session remains unavailable rather than silently displaying an older day. Manual 1m never falls back to a different resolution. Auto isolates failed resolution reads and can use a healthy same-session fallback. History refreshes every five minutes while visible and on resume/reconnection, independently of price changes.
 
 ## Today chart resolution control
 
@@ -232,7 +232,7 @@ The Today engine does not vertically shift a finished equity curve to force a ta
 
 The TradingView Scanner HTTP snapshot remains separate from persisted intraday ingestion.
 
-A complete live snapshot may be appended as the authoritative active-session endpoint. A mixed snapshot where a currently held ticker lacks a trustworthy live quote must not be treated as a complete portfolio endpoint.
+A complete live snapshot may be appended only to the same Cairo session date. Every held position must have the same valid scanner receipt timestamp; mixed snapshots and previous-day cached prices cannot anchor live NAV. A mixed snapshot where a currently held ticker lacks a trustworthy live quote must not be treated as a complete portfolio endpoint.
 
 ## Workflow scheduling
 
@@ -245,7 +245,7 @@ Primary workflow:
 On the Premium branch it is configured for:
 
 ```text
-*/5 7-12 * * 0-4
+*/5 7-13 * * 0-4
 ```
 
 GitHub cron is UTC. The Node script applies the authoritative Cairo-local session gate and post-close grace window, so the broad UTC window safely covers Cairo DST changes.
@@ -260,7 +260,7 @@ Legacy direct-TradingView 5-minute workflow:
 
 is manual-only. It remains a repair/rollback tool and is no longer a competing scheduled producer.
 
-Both workflows share the same concurrency group to prevent simultaneous writes.
+Both reviewed workflows share the same concurrency group and queue rather than cancelling an active writer. The old workflow on main uses a different group until rollout; retire that scheduled producer during promotion.
 
 ## Commands
 
@@ -348,3 +348,9 @@ The smoke workflow typechecks and runs the intraday regression suite before writ
 - Preserve 15m fallback until rollout observation is complete.
 
 See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the canonical 15-phase rollout status.
+
+## September 28 audit and repair
+
+See [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) for confirmed production evidence, implementation changes, verification, and the remaining scheduler promotion step.
+
+Manual ingestion now resolves the latest EGX session rather than using the calendar day after midnight. Set `EGX_INTRADAY_SKIP_RETENTION=true` for a repair that must not prune old rows. Normal scheduled retention remains 30/90 days.

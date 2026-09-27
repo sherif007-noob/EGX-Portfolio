@@ -1,3 +1,5 @@
+import { useMarketRefresh } from '../../hooks/useMarketRefresh';
+import { trustedLivePrices } from '../../services/positionQuote';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DropdownPresence } from '../PremiumMotion';
 import {
@@ -22,11 +24,10 @@ import {
 } from './weeklyTransitionInterpolation';
 import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
-import { getIntradayPrices, normalizeIntradayTicker, type IntradayPriceSeries } from '../../services/intradayPriceStore';
-import { INTRADAY_POLICY } from '../../services/intradayPolicy';
+import type { IntradayPriceSeries } from '../../services/intradayPriceStore';
 import { aggregateIntradayBars } from '../../services/intradayAggregation';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
-import { selectBestIntradayResolution } from '../../services/intradayResolution';
+import { loadTodayIntraday } from '../../services/todayIntraday';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
 import { deriveCanonicalCapitalDeposits } from '../../services/portfolioReconciliation';
 import {
@@ -96,6 +97,7 @@ const TIMEFRAMES: Array<{ value: AnalyticsTimeframe; label: string }> = [
 
 function formatDailyLabel(value: string): string {
   return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-EG', {
+    timeZone: 'Africa/Cairo',
     month: 'short',
     day: 'numeric',
   });
@@ -127,6 +129,7 @@ function formatCairoDateTime(value: string): string {
 
 function formatFullDailyDate(value: string): string {
   return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-EG', {
+    timeZone: 'Africa/Cairo',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -177,6 +180,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
+  const marketRefresh = useMarketRefresh();
   const [todayResolution, setTodayResolution] = useState<TodayResolution>('AUTO');
   const [effectiveTodayResolution, setEffectiveTodayResolution] = useState<number | null>(null);
   const [weeklyMorph, setWeeklyMorph] = useState<{
@@ -225,7 +229,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     return buildUnifiedAnalyticsResult(transactions, historicalPrices, timeframe, {
       openingCapital: canonicalCapitalDeposits,
     });
-  }, [transactions, historicalPrices, timeframe, canonicalCapitalDeposits]);
+  }, [transactions, historicalPrices, timeframe, canonicalCapitalDeposits, marketRefresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -236,53 +240,13 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       try {
         const requestedWindow = resolveAnalyticsWindow('TODAY');
         const requestedSessionDate = requestedWindow.endDate;
+        setIntradayResult(previous => previous?.window.endDate === requestedSessionDate ? previous : null);
         const tickers = resolveIntradaySessionTickers(transactions, requestedSessionDate);
 
-        const loadWindow = async (startDate: string, intervalMinutes: number) =>
-          getIntradayPrices(
-            tickers,
-            `${startDate}T00:00:00.000Z`,
-            `${requestedSessionDate}T23:59:59.999Z`,
-            intervalMinutes,
-          );
+        const selection = await loadTodayIntraday(tickers, requestedSessionDate, todayResolution);
 
-        const loadResolutionCandidates = async (startDate: string) =>
-          Promise.all(
-            INTRADAY_POLICY.readIntervals.map(async (intervalMinutes) => ({
-              intervalMinutes,
-              series: await loadWindow(startDate, intervalMinutes),
-            })),
-          );
-
-        const chooseResolution = (
-          candidates: Awaited<ReturnType<typeof loadResolutionCandidates>>,
-        ) => {
-          if (todayResolution === 'AUTO' || todayResolution === 60) {
-            return selectBestIntradayResolution(candidates, tickers, requestedSessionDate);
-          }
-          const requested = candidates.find(
-            (candidate) => candidate.intervalMinutes === todayResolution,
-          );
-          return requested
-            ? selectBestIntradayResolution([requested], tickers, requestedSessionDate)
-            : null;
-        };
-
-        let candidates = await loadResolutionCandidates(requestedSessionDate);
-        let selection = chooseResolution(candidates);
-
-        // Normal sessions stay on a one-day query. Only fall back to a wider
-        // lookback when the requested day has no actual market bars
-        // (for example, after midnight, a weekend, or an exchange holiday).
-        if (!selection) {
-          const lookback = new Date(`${requestedSessionDate}T00:00:00Z`);
-          lookback.setUTCDate(lookback.getUTCDate() - 14);
-          const lookbackDate = lookback.toISOString().slice(0, 10);
-
-          candidates = await loadResolutionCandidates(lookbackDate);
-          selection = chooseResolution(candidates);
-        }
-
+        // The requested EGX session is shared by every resolution. Missing
+        // current-session data must remain missing, never become an older day.
         let intradayPrices: IntradayPriceSeries = selection?.series ?? {};
         let effectiveResolution = selection?.intervalMinutes ?? null;
         if (todayResolution === 60 && selection) {
@@ -296,11 +260,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         }
         const sessionDate = selection?.sessionDate ?? requestedSessionDate;
 
-        const livePrices = Object.fromEntries(
-          positions
-            .map((position) => [normalizeIntradayTicker(position.ticker), Number(position.currentPrice)] as const)
-            .filter(([ticker, price]) => ticker && Number.isFinite(price) && price > 0),
-        );
+        const livePrices = trustedLivePrices(positions, requestedSessionDate);
 
         const result = buildIntradayAnalyticsResult(
           transactions,
@@ -322,6 +282,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         }
       } catch (error) {
         if (!cancelled) {
+          setIntradayResult(null);
+          setLoadedIntradayPrices({});
+          setEffectiveTodayResolution(null);
           setIntradayError(error instanceof Error ? error.message : 'Intraday analytics unavailable.');
         }
       } finally {
@@ -333,7 +296,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     return () => {
       cancelled = true;
     };
-  }, [transactions, historicalPrices, canonicalCapitalDeposits, currentCashBalance, positions, todayResolution]);
+  }, [transactions, historicalPrices, canonicalCapitalDeposits, currentCashBalance, positions, todayResolution, marketRefresh]);
 
   useEffect(() => {
     const handleGlobalPress = (event: Event) => {

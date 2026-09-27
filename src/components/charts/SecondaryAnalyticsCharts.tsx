@@ -50,6 +50,7 @@ interface SecondaryAnalyticsChartsProps {
 
 function formatDailyLabel(value: string): string {
   return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-EG', {
+    timeZone: 'Africa/Cairo',
     month: 'short',
     day: 'numeric',
   });
@@ -116,7 +117,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
   if (!result || result.points.length < 2) return null;
 
-  const intraday = result.window.resolution === '15m';
+  const intraday = result.window.requiresIntraday;
   const lineType = intraday ? 'linear' : 'monotone';
   const chartData = secondary.points.map((point) => ({
     ...point,

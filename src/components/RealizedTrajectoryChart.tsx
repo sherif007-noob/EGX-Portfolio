@@ -1,3 +1,4 @@
+import { useMarketRefresh } from '../hooks/useMarketRefresh';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ClosedTrade, PerformanceStats } from '../types';
 import {
@@ -71,6 +72,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   className = '',
   entranceReady = true,
 }) => {
+  const marketRefresh = useMarketRefresh();
   const reducedMotion = useAnalyticsReducedMotion();
   const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
   const [trajectoryMode, setTrajectoryMode] = useState<'cumulative' | 'discrete'>('cumulative');
@@ -96,7 +98,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
 
   const filteredClosedTrades = useMemo(
     () => filterRealizedTrajectoryTrades(closedTrades, trajectoryTimeframe),
-    [closedTrades, trajectoryTimeframe],
+    [closedTrades, trajectoryTimeframe, marketRefresh],
   );
 
   // Prepare chronological trajectory points. Every filtered closed trade remains

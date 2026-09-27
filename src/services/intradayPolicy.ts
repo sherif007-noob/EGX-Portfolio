@@ -8,7 +8,7 @@ export const INTRADAY_POLICY = {
   ingestionCadenceMinutes: 5,
   sessionStartMinutes: 10 * 60,
   sessionEndMinutes: 14 * 60 + 30,
-  scheduledIngestionEndMinutes: 14 * 60 + 40,
+  scheduledIngestionEndMinutes: 15 * 60 + 15,
   tradingWeekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'] as const,
   initialBackfillBars: 5000,
   backfillBatchBars: 5000,

@@ -1,3 +1,4 @@
+import { getLatestEgxSessionDate } from './analyticsTimeframes';
 import { describe, expect, it } from 'vitest';
 import type { IntradayPriceSeries } from './intradayPriceStore';
 import {
@@ -94,7 +95,7 @@ describe('intraday resolution selection', () => {
     expect(selected?.referenceTickers).toEqual(['ACTF']);
   });
 
-  it('uses the latest session not after the requested date', () => {
+  it('does not substitute yesterday when the requested session is missing', () => {
     const selected = selectBestIntradayResolution(
       [
         {
@@ -110,8 +111,7 @@ describe('intraday resolution selection', () => {
       '2026-09-24',
     );
 
-    expect(selected?.intervalMinutes).toBe(1);
-    expect(selected?.sessionDate).toBe('2026-09-23');
+    expect(selected).toBeNull();
   });
 
   it('reports covered tickers using Cairo session dates', () => {
@@ -195,14 +195,14 @@ describe('intraday resolution selection', () => {
         },
       ],
       ['ACTF'],
-      '2026-09-25',
+      getLatestEgxSessionDate(new Date('2026-09-24T22:00:00Z')),
     );
 
     expect(selected?.sessionDate).toBe('2026-09-24');
     expect(selected?.intervalMinutes).toBe(1);
   });
 
-  it('falls back across a weekend or exchange-closed date without inventing intraday points', () => {
+  it('does not infer an exchange holiday from missing ingestion', () => {
     const selected = selectBestIntradayResolution(
       [
         {
@@ -218,7 +218,6 @@ describe('intraday resolution selection', () => {
       '2026-09-27',
     );
 
-    expect(selected?.sessionDate).toBe('2026-09-24');
-    expect(selected?.series.ACTF).toHaveLength(1);
+    expect(selected).toBeNull();
   });
 });

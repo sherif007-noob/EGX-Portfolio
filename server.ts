@@ -1,3 +1,4 @@
+import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import express from "express";
 import path from "path";
 import http from "http";
@@ -85,8 +86,9 @@ async function startServer() {
   app.post("/api/egx/scan", async (_req, res) => {
     try {
       const tvUrl = "https://scanner.tradingview.com/egypt/scan";
-      const payload = { filter: [], options: { lang: "en" }, symbols: { query: { types: [] }, tickers: [] }, columns: ["name","description","logoid","close","change","change_abs","volume","high","low","high_52_week","low_52_week","sector","RSI"], sort: { sortBy: "name", sortOrder: "asc" }, range: [0, 500] };
-      const tvResponse = await fetch(tvUrl, { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, body: JSON.stringify(payload) });
+      const payload = EGX_SCANNER_PAYLOAD;
+      res.setHeader("Cache-Control", "no-store");
+      const tvResponse = await fetch(tvUrl, { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, signal: AbortSignal.timeout(12_000), body: JSON.stringify(payload) });
       if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}` });
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Scanner:", err); res.status(500).json({ error: err.message || "Failed to fetch prices from TradingView" }); }

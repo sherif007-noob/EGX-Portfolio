@@ -1,3 +1,5 @@
+import { selectPositionQuote } from './positionQuote';
+import { EGX_SCANNER_PAYLOAD } from './scannerRequest';
 import { EGXTicker, Position, LivePriceQuote } from '../types';
 import { EGX_STOCK_DICTIONARY, LEGACY_TICKER_ALIASES, canonicalizeEGXSymbol, createEGXTickerRecord } from '../data/egxTickers';
 
@@ -27,63 +29,27 @@ export interface TradingViewScanResult {
 export async function fetchTradingViewEGXPrices(
   directory: EGXTicker[] = [],
 ): Promise<TradingViewScanResult> {
-  const payload = {
-    filter: [],
-    options: { lang: 'en' },
-    symbols: { query: { types: [] }, tickers: [] },
-    columns: [
-      'name',
-      'description',
-      'logoid',
-      'close',
-      'change',
-      'change_abs',
-      'volume',
-      'high',
-      'low',
-      'high_52_week',
-      'low_52_week',
-      'sector',
-      'RSI',
-      'industry',
-      'isin',
-      'currency'
-    ],
-    sort: { sortBy: 'name', sortOrder: 'asc' },
-    range: [0, 500]
-  };
+  const payload = EGX_SCANNER_PAYLOAD;
 
   let json: any = null;
-
-  try {
-    const proxyRes = await fetch('/api/egx/scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (proxyRes.ok) {
-      json = await proxyRes.json();
-    }
-  } catch (err) {
-    console.warn('Proxy request failed, trying direct TradingView endpoint...', err);
+  let lastError: unknown;
+  // Retry the same-origin proxy before the optional direct endpoint. Every
+  // attempt is bounded so a stalled network cannot leave sync locked forever.
+  for (const endpoint of ['/api/egx/scan', '/api/egx/scan', 'https://scanner.tradingview.com/egypt/scan']) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload), cache: 'no-store',
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) throw new Error(`Price scanner HTTP ${response.status}`);
+      const candidate = await response.json();
+      if (!Array.isArray(candidate?.data) || !candidate.data.length) throw new Error('Price scanner returned no data.');
+      json = candidate;
+      break;
+    } catch (error) { lastError = error; }
   }
-
-  if (!json || !json.data) {
-    const directRes = await fetch('https://scanner.tradingview.com/egypt/scan', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!directRes.ok) {
-      throw new Error(`TradingView Scanner HTTP ${directRes.status}: ${directRes.statusText}`);
-    }
-
-    json = await directRes.json();
-  }
+  if (!json) throw lastError instanceof Error ? lastError : new Error('Price scanner unavailable.');
 
   const data = json.data || [];
   const quotes: Record<string, LivePriceQuote> = {};
@@ -129,7 +95,7 @@ export async function fetchTradingViewEGXPrices(
 
       // This portfolio is EGP-denominated. Ignore alternate USD share classes rather
       // than silently labeling a USD quote as EGP in the directory and valuation UI.
-      if (close > 0 && (!currency || currency === 'EGP')) {
+      if (Number.isFinite(close) && close > 0 && (!currency || currency === 'EGP')) {
         const roundedPrice = Math.round(close * 100) / 100;
         const roundedChangePercent = Math.round(changePercent * 100) / 100;
         let calculatedChangeAbs = changeAbs;
@@ -282,7 +248,7 @@ export function applyLivePricesToPortfolio(
   const updatedTickers = Array.from(tickerMap.values()).map(t => {
     const symbol = resolveTickerSymbol(t.ticker);
     const quote = quotes[symbol] || quotes[t.ticker.toUpperCase()];
-    if (quote) {
+    if (quote && Number.isFinite(quote.price) && quote.price > 0) {
       matchCount++;
       const changeEgp = quote.change !== undefined && !isNaN(quote.change)
         ? quote.change
@@ -293,6 +259,7 @@ export function applyLivePricesToPortfolio(
       const newDayLow = Math.min(t.dayLow || quote.price, quote.price);
       
       if (
+        t.priceUpdatedAt !== nowIso ||
         t.lastPrice !== quote.price ||
         t.change !== changeEgp ||
         t.changePercent !== quote.changePercent ||
@@ -335,7 +302,7 @@ export function applyLivePricesToPortfolio(
     let newDayChangePercent = p.dayChangePercent;
     
     const quote = quotes[symbol] || quotes[cleanSym] || quotes[p.ticker];
-    if (quote && quote.price > 0) {
+    if (quote && Number.isFinite(quote.price) && quote.price > 0) {
       newPrice = quote.price;
       newDayChange = quote.change !== undefined ? quote.change : newDayChange;
       newDayChangePercent = quote.changePercent !== undefined ? quote.changePercent : newDayChangePercent;
@@ -348,9 +315,10 @@ export function applyLivePricesToPortfolio(
       } else {
         const matchedTicker = tickerMap.get(cleanSym) || tickerMap.get(symbol);
         if (matchedTicker && matchedTicker.lastPrice > 0) {
-          newPrice = matchedTicker.lastPrice;
-          newDayChange = matchedTicker.change !== undefined ? matchedTicker.change : newDayChange;
-          newDayChangePercent = matchedTicker.changePercent !== undefined ? matchedTicker.changePercent : newDayChangePercent;
+          const selected = selectPositionQuote(p, matchedTicker);
+          newPrice = selected.currentPrice;
+          newDayChange = selected.dayChange;
+          newDayChangePercent = selected.dayChangePercent;
         }
       }
     }
@@ -365,6 +333,7 @@ export function applyLivePricesToPortfolio(
     const sector = liveMetadata?.sector || fallbackMetadata?.sector || p.sector;
 
     if (
+      (quote && p.priceUpdatedAt !== nowIso) ||
       newPrice !== p.currentPrice ||
       newDayChange !== p.dayChange ||
       newDayChangePercent !== p.dayChangePercent ||
@@ -379,7 +348,7 @@ export function applyLivePricesToPortfolio(
         currentPrice: newPrice,
         dayChange: newDayChange,
         dayChangePercent: newDayChangePercent,
-        priceUpdatedAt: nowIso
+        priceUpdatedAt: quote ? nowIso : p.priceUpdatedAt
       };
     }
     return p;

@@ -125,7 +125,7 @@ export function selectBestIntradayResolution(
     .sort()
     .at(-1);
 
-  if (!latestSessionDate) return null;
+  if (!latestSessionDate || latestSessionDate !== notAfterDate) return null;
 
   const coverageByInterval = normalizedCandidates
     .filter((candidate) => candidate.sessionDate === latestSessionDate)

@@ -18,6 +18,14 @@ type PortfolioWrite = Omit<PortfolioDataDocument, 'updatedAt' | 'schemaVersion' 
 
 let lastSerializedPayload = '';
 let lastKnownRemoteTimestamp: string | null = null;
+let lastMarketFingerprint = '';
+
+function marketFingerprint(data: Partial<PortfolioDataDocument>) {
+  return JSON.stringify({
+    positions: [...(data.positions ?? [])].sort((a, b) => a.ticker.localeCompare(b.ticker)).map(p => [p.ticker, p.currentPrice, p.dayChange, p.dayChangePercent, p.priceUpdatedAt]),
+    tickers: [...(data.tickers ?? [])].sort((a, b) => a.ticker.localeCompare(b.ticker)).map(t => [t.ticker, t.lastPrice, t.change, t.changePercent, t.priceUpdatedAt]),
+  });
+}
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let localMutationLockUntil = 0;
 let lastPriceWriteTimestamp = 0;
@@ -36,6 +44,7 @@ export function generateFingerprint(data: Partial<PortfolioDataDocument>): strin
 
 export function updateLastSavedSnapshot(data: Partial<PortfolioDataDocument>) {
   lastSerializedPayload = generateFingerprint(data);
+  lastMarketFingerprint = marketFingerprint(data);
   if (data.updatedAt) lastKnownRemoteTimestamp = data.updatedAt;
 }
 export function getLastSavedFingerprint() { return lastSerializedPayload; }
@@ -227,9 +236,9 @@ export function subscribeToPortfolioFromFirestore(onData: (data: PortfolioDataDo
       const reconciled = deriveLedgerState(data);
       const incoming = new Date(data.updatedAt || 0).getTime();
       const known = lastKnownRemoteTimestamp ? new Date(lastKnownRemoteTimestamp).getTime() : 0;
-      if (incoming && known && incoming <= known) return;
+      if (incoming && known && incoming < known) return;
       const snapshot = { ...reconciled, updatedAt: data.updatedAt, schemaVersion: data.schemaVersion, lastPriceWriteAt: data.lastPriceWriteAt };
-      if (generateFingerprint(snapshot) === lastSerializedPayload) return;
+      if (generateFingerprint(snapshot) === lastSerializedPayload && marketFingerprint(snapshot) === lastMarketFingerprint) return;
       updateLastSavedSnapshot(snapshot);
       onData(snapshot);
     } catch (error) {

@@ -18,7 +18,8 @@ export function useMarketData(
   tickers: EGXTicker[],
   onUpdatePositions: (updated: Position[]) => void,
   onUpdateTickers?: (updated: EGXTicker[]) => void,
-  onLivePricesSynced?: (updatedPositions: Position[], updatedTickers: EGXTicker[], manual: boolean) => void
+  onLivePricesSynced?: (updatedPositions: Position[], updatedTickers: EGXTicker[], manual: boolean) => void,
+  ready = true
 ) {
   const [isSyncingPrices, setIsSyncingPrices] = useState(false);
   const [lastPriceSyncTime, setLastPriceSyncTime] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export function useMarketData(
   }, []);
 
   const syncLivePrices = useCallback(async (manual = false, forcePersist = false) => {
+    if (!ready) return { success: false, error: 'Portfolio is still loading.' };
     if (isSyncingRef.current) return { success: false, error: 'Price sync already in progress.' };
 
     isSyncingRef.current = true;
@@ -88,16 +90,37 @@ export function useMarketData(
       isSyncingRef.current = false;
       setIsSyncingPrices(false);
     }
-  }, [onUpdatePositions, onUpdateTickers]);
+  }, [onUpdatePositions, onUpdateTickers, ready]);
 
-  const hasInitialSyncedRef = useRef(false);
+  const lastSuccessfulSyncRef = useRef(0);
 
-  // One initial valuation refresh when the app opens. This is intentionally not a live poll.
+  // Wait for the authoritative portfolio before fetching/applying quotes. Failed
+  // startup requests retry, and suspended/offline tabs recover without a reload.
   useEffect(() => {
-    if (hasInitialSyncedRef.current) return;
-    hasInitialSyncedRef.current = true;
-    void syncLivePrices(false, false);
-  }, [syncLivePrices]);
+    if (!ready) return;
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const refresh = async () => {
+      if (cancelled || document.visibilityState === 'hidden' || navigator.onLine === false) return;
+      if (Date.now() - lastSuccessfulSyncRef.current < 60_000) return;
+      clearTimeout(retry);
+      const result = await syncLivePrices(false, false);
+      if (cancelled) return;
+      if (result.success) lastSuccessfulSyncRef.current = Date.now();
+      else retry = setTimeout(refresh, 30_000);
+    };
+    void refresh();
+    window.addEventListener('online', refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      cancelled = true;
+      clearTimeout(retry);
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [ready, syncLivePrices]);
 
   // TradingView is delayed data. Keep automatic syncing on a strict 15-minute cadence,
   // aligned to quarter-hour boundaries. The 3:15 PM closing write is a separate deliberate
@@ -137,10 +160,11 @@ export function useMarketData(
         const closingStart = CLOSING_HOUR_CAIRO * 60 + CLOSING_MINUTE_CAIRO;
         const isClosingWindow = cairoDayMinutes >= closingStart && cairoDayMinutes < closingStart + CLOSING_WINDOW_MINUTES;
 
-        if (isClosingWindow && lastClosingSyncKeyRef.current !== cairoDateKey) {
-          lastClosingSyncKeyRef.current = cairoDateKey;
+        const tradingWeekday = !['Fri', 'Sat'].includes(new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short' }).format(new Date()));
+        if (tradingWeekday && isClosingWindow && lastClosingSyncKeyRef.current !== cairoDateKey) {
           console.log('[MarketData] 3:15 PM Cairo closing valuation write.');
-          await syncLivePrices(false, true);
+          const result = await syncLivePrices(false, true);
+          if (result.success) lastClosingSyncKeyRef.current = cairoDateKey;
         } else if (status.isSessionActive) {
           await syncLivePrices(false, false);
         }

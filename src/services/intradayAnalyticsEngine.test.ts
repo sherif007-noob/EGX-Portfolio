@@ -71,6 +71,19 @@ describe('intraday analytics engine', () => {
     expect(result.dataQuality.incompleteDays).toBeGreaterThan(0);
   });
 
+  it('never attaches Sunday live quotes to a Thursday chart', () => {
+    const transactions = [
+      tx({ id: 'dep-old', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-23' }),
+      tx({ id: 'hold-old', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-09-23', executedAt: '2026-09-23T08:00:00Z' }),
+    ];
+    const result = buildIntradayAnalyticsResult(transactions,
+      { TEST: [{ date: '2026-09-23', close: 100 }] },
+      { TEST: [{ timestamp: '2026-09-24T07:00:00Z', intervalMinutes: 1, open: 100, high: 100, low: 100, close: 100 }] },
+      { sessionDate: '2026-09-24', asOf: '2026-09-27T08:00:00Z', livePrices: { TEST: 200 } });
+    expect(result.summary.endEquity).toBe(1000);
+    expect(result.points.at(-1)?.date).toBe('2026-09-24T07:01:00.000Z');
+  });
+
   it('appends the authoritative live NAV as the final active-session point', () => {
     const transactions: TradeTransaction[] = [
       tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-09-16' }),

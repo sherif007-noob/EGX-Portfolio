@@ -36,6 +36,21 @@ describe('ledger storage mutations', () => {
 
   afterEach(() => vi.useRealTimers());
 
+  it('delivers price-only changes from another device without changing the ledger', async () => {
+    vi.useFakeTimers();
+    await storage.loadPortfolioFromFirestore();
+    const onData = vi.fn();
+    const stop = storage.subscribeToPortfolioFromFirestore(onData);
+    await vi.advanceTimersByTimeAsync(1);
+    remote.tickers = [{ ticker: 'TEST', lastPrice: 12, priceUpdatedAt: '2026-01-02T10:00:00Z' } as any];
+    remote.updatedAt = '2026-01-02T10:00:00Z';
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(onData).toHaveBeenCalledOnce();
+    expect(onData.mock.calls[0][0].positions[0].currentPrice).toBe(12);
+    expect(savePortfolioToSupabase).not.toHaveBeenCalled();
+    stop();
+  });
+
   it('persists same-ID date and note edits even when all balances are unchanged', async () => {
     await storage.loadPortfolioFromFirestore();
     const edited = { ...buy(), date: '2026-01-03', notes: 'Corrected execution' };

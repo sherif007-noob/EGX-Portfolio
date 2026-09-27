@@ -28,7 +28,7 @@ describe('EGX Cairo trading session clock', () => {
 
   it('allows a short post-close ingestion grace window for the final completed bars', () => {
     const inGrace = egxCairoSessionClock(new Date('2026-09-24T11:35:00.000Z'));
-    const afterGrace = egxCairoSessionClock(new Date('2026-09-24T11:45:00.000Z'));
+    const afterGrace = egxCairoSessionClock(new Date('2026-09-24T12:16:00.000Z'));
     expect(inGrace.isRegularSession).toBe(false);
     expect(inGrace.isScheduledIngestionWindow).toBe(true);
     expect(afterGrace.isScheduledIngestionWindow).toBe(false);

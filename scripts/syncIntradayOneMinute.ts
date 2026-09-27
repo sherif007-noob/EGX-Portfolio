@@ -1,3 +1,4 @@
+import { getLatestEgxSessionDate } from '../src/services/analyticsTimeframes';
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
@@ -675,7 +676,7 @@ async function main() {
 
   const sb = createSupabaseClient();
   const portfolioId = await resolvePortfolioId(sb);
-  const sessionDate = sessionClock.dateKey;
+  const sessionDate = getLatestEgxSessionDate(now);
   const universe = await resolveTickerUniverse(sb, portfolioId, sessionDate);
   const tickers = universe.tickers;
 
@@ -914,7 +915,7 @@ async function main() {
       }
     }
 
-    const [prunedRaw, prunedDerived] = await Promise.all([
+    const [prunedRaw, prunedDerived] = readBoolean('EGX_INTRADAY_SKIP_RETENTION') ? [0, 0] : await Promise.all([
       pruneInterval(sb, INTRADAY_POLICY.rawIntervalMinutes, rawCutoffIso),
       pruneInterval(sb, INTRADAY_POLICY.derivedIntervalMinutes, derivedCutoffIso),
     ]);

@@ -311,6 +311,23 @@ export async function loadPortfolioFromSupabase(): Promise<SupabasePortfolioData
   }
 }
 
+async function persistTickerQuotes(supabase: ReturnType<typeof getSupabaseBrowserClient>, tickers: EGXTicker[]) {
+  const quoteRows = tickers.filter(row => toIso(row.priceUpdatedAt) && Number.isFinite(row.lastPrice) && row.lastPrice > 0).map(toDbTicker);
+  if (quoteRows.length) {
+    // Insert new symbols without replacing existing quotes. Updates are
+    // conditional in Postgres, so a slow device cannot roll a price backward.
+    const { error } = await supabase.from('tickers').upsert(quoteRows, { onConflict: 'ticker', ignoreDuplicates: true });
+    if (error) throw error;
+    for (let offset = 0; offset < quoteRows.length; offset += 10) {
+      const results = await Promise.all(quoteRows.slice(offset, offset + 10).map(row =>
+        supabase.from('tickers').update(row).eq('ticker', row.ticker)
+          .or(`price_updated_at.is.null,price_updated_at.lte.${row.price_updated_at}`),
+      ));
+      for (const result of results) if (result.error) throw result.error;
+    }
+  }
+}
+
 export async function savePortfolioToSupabase(
   data: Omit<SupabasePortfolioData, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
 ): Promise<boolean> {
@@ -332,8 +349,7 @@ export async function savePortfolioToSupabase(
     if (error) throw error;
 
     if (Array.isArray(data.tickers) && data.tickers.length) {
-      const { error: tickerError } = await supabase.from('tickers').upsert(data.tickers.map(toDbTicker), { onConflict: 'ticker' });
-      if (tickerError) throw tickerError;
+      await persistTickerQuotes(supabase, data.tickers);
     }
     return true;
   } catch (error) {
@@ -352,15 +368,23 @@ export async function savePriceTickToSupabase(positions: Position[], tickers: EG
     }
 
     if (positions.length) {
-      const { error } = await supabase.from('positions').upsert(positions.map((row) => toDbPosition(row, portfolio.id)), { onConflict: 'id' });
-      if (error) throw error;
+      // Quotes must never recreate a sold position or overwrite shares/cost basis
+      // from a trade committed on another device while this request was running.
+      for (const row of positions) {
+        if (!row.priceUpdatedAt || !Number.isFinite(row.currentPrice) || row.currentPrice <= 0) continue;
+        const { error } = await supabase.from('positions').update({
+          current_price: row.currentPrice,
+          day_change: row.dayChange ?? null,
+          day_change_percent: row.dayChangePercent ?? null,
+          price_updated_at: row.priceUpdatedAt,
+        }).eq('id', row.id).eq('portfolio_id', portfolio.id)
+          .or(`price_updated_at.is.null,price_updated_at.lte.${row.priceUpdatedAt}`);
+        if (error) throw error;
+      }
     }
-    if (tickers.length) {
-      const { error } = await supabase.from('tickers').upsert(tickers.map(toDbTicker), { onConflict: 'ticker' });
-      if (error) throw error;
-    }
+    await persistTickerQuotes(supabase, tickers);
 
-    const nowIso = now.toISOString();
+    const nowIso = new Date().toISOString();
     const { error: portfolioError } = await supabase
       .from('portfolios')
       .update({ last_price_write_at: nowIso, updated_at: nowIso })
@@ -370,7 +394,7 @@ export async function savePriceTickToSupabase(positions: Position[], tickers: EG
     return true;
   } catch (error) {
     console.error('[Supabase] Direct price tick save failed:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -379,13 +403,18 @@ export async function loadHistoricalPricesFromSupabase(tickers: string[], startD
   const normalized = tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean);
   if (!normalized.length) return [];
 
-  let query = supabase.from('price_history').select('*').in('ticker', normalized).order('trading_date', { ascending: true });
-  if (startDate) query = query.gte('trading_date', startDate);
-  if (endDate) query = query.lte('trading_date', endDate);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data ?? [];
+  const rows: any[] = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    let query = supabase.from('price_history').select('*').in('ticker', normalized)
+      .order('trading_date', { ascending: true }).order('ticker', { ascending: true });
+    if (startDate) query = query.gte('trading_date', startDate);
+    if (endDate) query = query.lte('trading_date', endDate);
+    const { data, error } = await query.range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) return rows;
+  }
 }
 
 export async function loadIntradayPricesFromSupabase(
@@ -416,6 +445,7 @@ export async function loadIntradayPricesFromSupabase(
       .gte('bar_timestamp', startTimestamp)
       .lte('bar_timestamp', endTimestamp)
       .order('bar_timestamp', { ascending: true })
+      .order('ticker', { ascending: true })
       .range(from, from + pageSize - 1);
 
     if (error) throw error;

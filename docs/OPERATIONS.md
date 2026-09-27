@@ -379,3 +379,14 @@ Before promoting analytics changes, verify:
 - final-session NAV from 15-minute closes agrees with stored portfolio market value.
 
 The production RLS event-trigger function is intentionally not executable by browser API roles. The remaining Supabase security-advisor item at the time of the analytics audit is leaked-password protection, which should be enabled in Supabase Auth settings when available for the project.
+
+
+## Intraday scheduler rollout and freshness
+
+The September 28 audit confirmed that `main` still scheduled legacy 15m ingestion while `feature/premium-ui-redesign` contained the new 1m workflow. GitHub schedules use the default branch; deploying the web application alone does not activate the feature-branch schedule. Before declaring rollout complete, promote the reviewed Node ingestion workflow and dependencies to the default branch and retire the old scheduled producer. Do not move TradingView WebSockets into the Worker.
+
+The reviewed schedule covers 07:00–13:59 UTC, gated by `Africa/Cairo` through 15:15 local time to accommodate delayed final candles and runner delays. Writers queue rather than cancelling a job mid-universe. GitHub cron is best-effort, not a one-minute service guarantee.
+
+After promotion, inspect a scheduled run (not just a manual dispatch), verify current-session 1m coverage for held/session-traded tickers, and compare derived 5m OHLCV with raw aggregation. An active-session empty Today chart signals missing data; it no longer silently shows the preceding day. A manual 1m selection is strict; Auto may display 5m/15m for the same session when fine coverage is insufficient.
+
+For a non-pruning repair, run `EGX_INTRADAY_SKIP_RETENTION=true npm run sync:intraday:1m` using server-side credentials. The September 28 repair completed successfully; see the dated audit report. No schema migration is required by this code patch.

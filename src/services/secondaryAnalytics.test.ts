@@ -23,7 +23,7 @@ const result: UnifiedAnalyticsResult = {
   },
   points: [
     {
-      date: '2026-01-01', equity: 1000, cash: 499, marketValue: 501,
+      date: '2026-01-01', equity: 999, cash: 499, marketValue: 500,
       netDeposits: 1000, externalFlow: 0, twrPercent: 0, mwrrPercent: 0,
       annualizedMwrrPercent: 0, performanceIndex: 100, drawdownPercent: 0,
       equityDrawdownEgp: 0, complete: true,
@@ -101,4 +101,14 @@ describe('secondary analytics', () => {
     const analytics = buildSecondaryAnalytics(transactions, {}, {}, result);
     expect(analytics.summary.feesInPeriodEgp).toBe(3);
   });
+});
+
+it('uses the primary live endpoint market value rather than stale intraday closes', () => {
+  const unified = { ...result, timeframe: 'TODAY' as const,
+    window: { ...result.window, timeframe: 'TODAY' as const, requiresIntraday: true, endDate: '2026-01-02' },
+    points: [{ ...result.points[1], date: '2026-01-02T08:00:00Z', marketValue: 650 }] };
+  const analytics = buildSecondaryAnalytics([
+    tx({ id: 'buy', type: 'BUY', ticker: 'TEST', shares: 10, price: 50, fees: 1, date: '2026-01-01' }),
+  ], {}, { TEST: [{ timestamp: '2026-01-02T07:00:00Z', intervalMinutes: 1, open: 50, high: 50, low: 50, close: 50 }] }, unified);
+  expect(analytics.summary.unrealizedPnlEgp).toBe(149);
 });

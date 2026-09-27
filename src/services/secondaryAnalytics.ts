@@ -108,58 +108,6 @@ function applyTrade(
   return realized;
 }
 
-function dailyCloseAtOrBefore(
-  historicalPrices: HistoricalPriceSeries,
-  ticker: string,
-  date: string,
-): number | undefined {
-  const series = historicalPrices[ticker];
-  if (!series?.length) return undefined;
-
-  const target = dayKey(date);
-  let value: number | undefined;
-  for (const point of series) {
-    const pointDate = dayKey(point.date);
-    if (pointDate > target) break;
-    if (Number.isFinite(point.close) && point.close > 0) value = point.close;
-  }
-  return value;
-}
-
-function previousDailyClose(
-  historicalPrices: HistoricalPriceSeries,
-  ticker: string,
-  sessionDate: string,
-): number | undefined {
-  const series = historicalPrices[ticker];
-  if (!series?.length) return undefined;
-
-  let value: number | undefined;
-  for (const point of series) {
-    if (dayKey(point.date) >= sessionDate) break;
-    if (Number.isFinite(point.close) && point.close > 0) value = point.close;
-  }
-  return value;
-}
-
-function intradayCloseAtOrBefore(
-  intradayPrices: IntradayPriceSeries,
-  ticker: string,
-  timestamp: string,
-): number | undefined {
-  const target = new Date(timestamp).getTime();
-  if (!Number.isFinite(target)) return undefined;
-
-  let value: number | undefined;
-  for (const bar of intradayPrices[ticker] ?? []) {
-    const time = new Date(bar.timestamp).getTime();
-    if (!Number.isFinite(time)) continue;
-    if (time > target) break;
-    if (Number.isFinite(bar.close) && bar.close > 0) value = bar.close;
-  }
-  return value;
-}
-
 function pointIncludesTransaction(
   tx: TradeTransaction,
   pointDate: string,
@@ -214,7 +162,7 @@ export function buildSecondaryAnalytics(
     };
   }
 
-  const intraday = result.window.resolution === '15m';
+  const intraday = result.window.requiresIntraday;
   const sessionDate = result.window.endDate;
   const orderedTransactions = sortPerformanceTransactions(transactions);
   const states = new Map<string, OpenCostState>();
@@ -232,27 +180,14 @@ export function buildSecondaryAnalytics(
       transactionIndex += 1;
     }
 
-    let unrealizedPnl = 0;
-    let complete = point.complete;
-
-    for (const [ticker, state] of states.entries()) {
-      if (state.shares <= EPSILON) continue;
-
-      const marketPrice = intraday
-        ? point.date === firstPointDate
-          ? previousDailyClose(historicalPrices, ticker, sessionDate) ?? state.lastExecutionPrice
-          : intradayCloseAtOrBefore(intradayPrices, ticker, point.date)
-            ?? previousDailyClose(historicalPrices, ticker, sessionDate)
-            ?? state.lastExecutionPrice
-        : dailyCloseAtOrBefore(historicalPrices, ticker, point.date);
-
-      if (marketPrice === undefined) {
-        complete = false;
-        continue;
-      }
-
-      unrealizedPnl += state.shares * marketPrice - state.grossCost - state.buyFees;
-    }
+    // The primary engine has already valued the exact holdings at this point,
+    // including its complete live endpoint. Repricing bars independently here
+    // used a candle's close at its start and disagreed with the main NAV chart.
+    const remainingCost = [...states.values()].reduce(
+      (sum, state) => sum + state.grossCost + state.buyFees, 0,
+    );
+    const unrealizedPnl = point.marketValue - remainingCost;
+    const complete = point.complete && Number.isFinite(unrealizedPnl);
 
     const cumulativeFeesEgp = orderedTransactions
       .filter((tx) => transactionInsideVisiblePeriod(tx, firstPointDate, point.date, intraday))

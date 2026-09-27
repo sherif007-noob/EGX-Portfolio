@@ -1,3 +1,4 @@
+import { selectPositionQuote } from './positionQuote';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector } from '../types';
 import { INITIAL_CAPITAL_DEPOSITS } from '../data/initialPortfolio';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
@@ -338,11 +339,8 @@ export function reconcilePortfolioFromLedger(
     const avgBuyPrice = grossCost / shares;
     const quote = tickers.find((t) => t.ticker.trim().toUpperCase() === ticker);
     const existing = existingPositions.find((p) => p.ticker.trim().toUpperCase() === ticker);
-    const currentPrice = quote && quote.lastPrice > 0
-      ? quote.lastPrice
-      : existing && Number.isFinite(existing.currentPrice) && existing.currentPrice > 0
-        ? existing.currentPrice
-        : avgBuyPrice;
+    const selectedQuote = selectPositionQuote(existing, quote, avgBuyPrice);
+    const currentPrice = selectedQuote.currentPrice;
     const sample = lots[0];
     const cleanShares = Math.abs(shares - Math.round(shares)) < EPSILON ? Math.round(shares) : shares;
 
@@ -353,6 +351,7 @@ export function reconcilePortfolioFromLedger(
       sector: sample.sector,
       shares: cleanShares,
       avgBuyPrice: Number(avgBuyPrice.toFixed(4)),
+      ...selectedQuote,
       currentPrice: Number(currentPrice.toFixed(4)),
       buyDate: sample.date,
       totalFees: Number(totalFees.toFixed(2)),

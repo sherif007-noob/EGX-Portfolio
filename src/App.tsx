@@ -1,3 +1,4 @@
+import { useMarketRefresh } from './hooks/useMarketRefresh';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Position,
@@ -79,6 +80,7 @@ export default function App() {
 
   // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
   const {
+    isInitialized,
     positions,
     setPositions,
     closedTrades,
@@ -159,7 +161,7 @@ export default function App() {
     lastPriceSyncTime,
     scheduleStatus,
     syncLivePrices,
-  } = useMarketData(positions, tickers, setPositions, updateTickers, handleLivePricesSynced);
+  } = useMarketData(positions, tickers, setPositions, updateTickers, handleLivePricesSynced, isInitialized);
 
   // Price Target & Web Push Alerts Hook (PWA service worker push notifications & thresholds)
   const {
@@ -219,6 +221,7 @@ export default function App() {
   } | null>(null);
   const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
+  const marketRefresh = useMarketRefresh();
   const historicalBackfillAttemptsRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -228,6 +231,7 @@ export default function App() {
     setHistoricalAnalyticsLoading(true);
 
     const loadHistoricalPerformance = async () => {
+      if (!isInitialized) { setHistoricalAnalyticsLoading(false); return; }
       const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
       if (!hasMarketTransactions) {
         if (!cancelled) setHistoricalAnalyticsLoading(false);
@@ -302,7 +306,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [transactions, analyticsCapitalDeposits]);
+  }, [transactions, analyticsCapitalDeposits, marketRefresh, isInitialized]);
 
 
   const stats: PerformanceStats = useMemo(() => {

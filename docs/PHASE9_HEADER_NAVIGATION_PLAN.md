@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.5 COMPLETE / CI CLEAN. Quality Checks #36282139801 passed. Pass 9.6 mobile command architecture is next.**
+**IN PROGRESS — Pass 9.6 COMPLETE / CI CLEAN. Quality Checks #36298460804 passed. Pass 9.7 desktop / 2XL refinement is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -250,14 +250,31 @@ Rules:
 
 ### 9.6 — Mobile command architecture
 
-Design narrow phone intentionally:
+**Status: COMPLETE / CI CLEAN — Quality Checks #36298460804 passed.**
 
-- brand/context;
-- fixed-access creation;
-- navigation;
-- scrollable/collapsed utility access;
-- no six-button full-width action rail;
-- safe-area and touch-target contracts preserved.
+Implemented:
+- portrait mobile now has an explicit two-tier header: brand/context first, command rail second;
+- the command rail is a three-zone grid: quick utilities | Data/Settings | creation;
+- only the quick-utility zone is allowed to scroll horizontally;
+- Data & Tools, Settings, Scan Receipt, and Add Trade remain fixed-access;
+- quick utilities use scroll snapping and a controlled fade affordance instead of pushing creation off-screen;
+- all command buttons retain the 44px touch-target contract;
+- compact navigation auto-centers the active/focused tab on phone while retaining direct horizontal navigation;
+- nav spacing/edge affordances are tightened for mobile without changing route ownership or active-state material;
+- <=359px receives an extra density guard without reducing touch targets;
+- short-landscape phones now override the older whole-command-rail overflow fallback: only quick utilities may scroll, while data/settings and creation remain fixed;
+- safe-area padding remains owned by the existing header safe-inline primitives;
+- semantic/material behavior from Phases 8 and 9.1–9.5 is unchanged.
+
+Rules:
+- brand/context remains visually first;
+- Add Trade remains fixed-access and primary;
+- Scan Receipt remains fixed-access and secondary;
+- direct utilities may scroll only in their own bounded region;
+- Data & Tools and Settings may not be pushed off-screen by utility overflow;
+- navigation remains directly accessible and active-tab centered on compact viewports;
+- no command action may fall below the 44px touch target;
+- mobile layout changes must not reopen Phase 8 content hierarchy or material.
 
 ### 9.7 — Desktop / 2XL refinement
 

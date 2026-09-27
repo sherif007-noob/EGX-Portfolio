@@ -147,10 +147,10 @@
     0 0 18px rgb(var(--secondary-chart-rgb, 34 211 238) / 0.045);
 }
 
+/* Series glow is painted by ChartSeriesGlow from the current SVG geometry.
+ * Never put a raster filter on the animated series group or filled area. */
 .premium-secondary-chart-series {
-  filter:
-    drop-shadow(0 0 3px var(--secondary-series-glow, rgba(56, 189, 248, 0.34)))
-    drop-shadow(0 0 8px var(--secondary-series-glow, rgba(56, 189, 248, 0.18)));
+  filter: none;
 }
 
 .premium-allocation-icon {
@@ -320,9 +320,7 @@
 }
 
 .premium-trajectory-semantic-curve {
-  filter:
-    drop-shadow(0 0 3px var(--trajectory-curve-glow, rgba(16, 185, 129, 0.42)))
-    drop-shadow(0 0 8px var(--trajectory-curve-glow, rgba(16, 185, 129, 0.22)));
+  filter: none;
 }
 
 .premium-trajectory-trade-bar {

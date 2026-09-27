@@ -1,3 +1,4 @@
+import { useChartResourceId } from './ChartSeriesGlow';
 import { useMarketRefresh } from '../../hooks/useMarketRefresh';
 import { trustedLivePrices } from '../../services/positionQuote';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -180,6 +181,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
+  const primaryGradientId = useChartResourceId('analytics-primary');
   const marketRefresh = useMarketRefresh();
   const [todayResolution, setTodayResolution] = useState<TodayResolution>('AUTO');
   const [effectiveTodayResolution, setEffectiveTodayResolution] = useState<number | null>(null);
@@ -736,7 +738,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       strokeWidth={2.25}
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill="url(#analyticsPrimaryGradient)"
+      fill={`url(#${primaryGradientId})`}
       fillOpacity={1}
       dot={false}
       activeDot={{
@@ -986,7 +988,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               margin={ANALYTICS_CHART_MARGINS.primary}
             >
               <defs>
-                <linearGradient id="analyticsPrimaryGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={primaryGradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
                     stopColor={primaryStroke}

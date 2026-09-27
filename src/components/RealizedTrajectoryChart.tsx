@@ -1,3 +1,4 @@
+import { ChartAreaGlow, useChartResourceId } from './charts/ChartSeriesGlow';
 import { useMarketRefresh } from '../hooks/useMarketRefresh';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ClosedTrade, PerformanceStats } from '../types';
@@ -72,6 +73,9 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
   className = '',
   entranceReady = true,
 }) => {
+  const gradientId = useChartResourceId('trajectory-fill');
+  const barGlowId = useChartResourceId('trajectory-bar-glow');
+  const activeBarGlowId = useChartResourceId('trajectory-active-bar-glow');
   const marketRefresh = useMarketRefresh();
   const reducedMotion = useAnalyticsReducedMotion();
   const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
@@ -301,7 +305,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             {trajectoryMode === 'cumulative' ? (
             <AreaChart data={trajectoryData} margin={ANALYTICS_CHART_MARGINS.trajectory}>
               <defs>
-                <linearGradient id="pnlGrowthGradReusable" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={trajectoryStroke} stopOpacity={0.32} />
                   <stop offset="95%" stopColor={trajectoryStroke} stopOpacity={0.0} />
                 </linearGradient>
@@ -366,6 +370,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                 }}
               />
               <Area
+                shape={ChartAreaGlow}
                 type="monotone"
                 dataKey="cumulativePnl"
                 isAnimationActive={!reducedMotion}
@@ -374,7 +379,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                 stroke={trajectoryStroke}
                 strokeWidth={2.5}
                 fillOpacity={1}
-                fill="url(#pnlGrowthGradReusable)"
+                fill={`url(#${gradientId})`}
                 className="premium-trajectory-semantic-curve"
                 style={{
                   '--trajectory-curve-glow': `${trajectoryStroke}8f`,
@@ -424,7 +429,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
             >
               <defs>
                 <filter
-                  id="trajectoryTradeBarGlow"
+                  id={barGlowId}
                   x="-70%"
                   y="-70%"
                   width="240%"
@@ -441,7 +446,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                   </feMerge>
                 </filter>
                 <filter
-                  id="trajectoryTradeBarActiveGlow"
+                  id={activeBarGlowId}
                   x="-95%"
                   y="-95%"
                   width="290%"
@@ -529,7 +534,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                     stroke="#e2e8f0"
                     strokeWidth={1.5}
                     radius={[4, 4, 0, 0]}
-                    filter="url(#trajectoryTradeBarActiveGlow)"
+                    filter={`url(#${activeBarGlowId})`}
                     className="premium-trajectory-active-bar"
                   />
                 )}
@@ -544,7 +549,7 @@ const RealizedTrajectoryChartComponent: React.FC<RealizedTrajectoryChartProps> =
                       <Cell
                         key={`bar-${entry.index}-${entry.ticker}`}
                         fill={marker.fill}
-                        filter="url(#trajectoryTradeBarGlow)"
+                        filter={`url(#${barGlowId})`}
                         className="premium-trajectory-trade-bar"
                       />
                     );

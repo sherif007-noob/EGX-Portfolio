@@ -1,3 +1,4 @@
+import { ChartAreaGlow, ChartLineGlow, useChartResourceId } from './ChartSeriesGlow';
 import React, { useMemo } from 'react';
 import {
   Area,
@@ -109,6 +110,8 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   tooltipsEnabled = true,
   onChartInteraction,
 }) => {
+  const drawdownGradientId = useChartResourceId('secondary-drawdown');
+  const feesGradientId = useChartResourceId('secondary-fees');
   const reducedMotion = useAnalyticsReducedMotion();
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
@@ -216,7 +219,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     margin={ANALYTICS_CHART_MARGINS.compact}
                   >
                     <defs>
-                      <linearGradient id="secondaryDrawdownGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id={drawdownGradientId} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.30} />
                         <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.rose} stopOpacity={0.015} />
                       </linearGradient>
@@ -246,13 +249,14 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       )}
                     />
                     <Area
+                      shape={ChartAreaGlow}
                       type={lineType}
                       dataKey="drawdownPercent"
                       stroke={ANALYTICS_CHART_THEME.rose}
                       strokeWidth={2.2}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      fill="url(#secondaryDrawdownGradient)"
+                      fill={`url(#${drawdownGradientId})`}
                       fillOpacity={1}
                       dot={false}
                       activeDot={analyticsActiveDotProps('negative')}
@@ -310,7 +314,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                     margin={ANALYTICS_CHART_MARGINS.compact}
                   >
                     <defs>
-                      <linearGradient id="secondaryFeesGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id={feesGradientId} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.28} />
                         <stop offset="95%" stopColor={ANALYTICS_CHART_THEME.amber} stopOpacity={0.01} />
                       </linearGradient>
@@ -335,13 +339,14 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       )}
                     />
                     <Area
+                      shape={ChartAreaGlow}
                       type="stepAfter"
                       dataKey="cumulativeFeesEgp"
                       stroke={ANALYTICS_CHART_THEME.amber}
                       strokeWidth={2.2}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      fill="url(#secondaryFeesGradient)"
+                      fill={`url(#${feesGradientId})`}
                       fillOpacity={1}
                       dot={false}
                       activeDot={analyticsActiveDotProps('cost')}
@@ -451,6 +456,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       )}
                     />
                     <Line
+                      shape={ChartLineGlow}
                       type={lineType}
                       dataKey="realizedPnlEgp"
                       name="Realized"
@@ -472,6 +478,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
                       animationEasing="ease-out"
                     />
                     <Line
+                      shape={ChartLineGlow}
                       type={lineType}
                       dataKey="unrealizedPnlEgp"
                       name="Unrealized"

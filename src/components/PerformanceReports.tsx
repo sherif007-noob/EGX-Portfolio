@@ -1,3 +1,4 @@
+import { useChartResourceId } from './charts/ChartSeriesGlow';
 import React, { useEffect, useMemo, useState } from 'react';
 import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
@@ -54,6 +55,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   historicalLoading = false,
   chartsReady = true,
 }) => {
+  const allocationGlowId = useChartResourceId('allocation-glow');
   const reducedMotion = useAnalyticsReducedMotion();
   const [allocationTooltipsEnabled, setAllocationTooltipsEnabled] = useState(true);
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
@@ -348,7 +350,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                           {allocationData.map((row, index) => (
                             <filter
                               key={`allocation-glow-${row.name}`}
-                              id={`allocationActiveGlow-${index}`}
+                              id={`${allocationGlowId}-${index}`}
                               x="-110%"
                               y="-110%"
                               width="320%"
@@ -415,7 +417,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                                   stroke={active ? color : '#020617'}
                                   strokeOpacity={active ? 1 : 0.92}
                                   strokeWidth={active ? 3.2 : 1.5}
-                                  filter={active ? `url(#allocationActiveGlow-${index})` : undefined}
+                                  filter={active ? `url(#${allocationGlowId}-${index})` : undefined}
                                 />
                               </g>
                             );

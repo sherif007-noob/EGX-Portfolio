@@ -93,6 +93,11 @@ export const Header: React.FC<HeaderProps> = ({
   const navScrollRef = useRef<HTMLDivElement>(null);
   const dataToolsRef = useRef<HTMLDivElement>(null);
   const [isDataToolsOpen, setIsDataToolsOpen] = useState(false);
+  const [dataToolsMenuGeometry, setDataToolsMenuGeometry] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
   const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
   const [canScrollNavRight, setCanScrollNavRight] = useState(false);
 
@@ -123,8 +128,32 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [updateNavOverflow]);
 
+  const updateDataToolsMenuGeometry = useCallback(() => {
+    const trigger = dataToolsRef.current;
+    if (!trigger || typeof window === 'undefined') return;
+
+    const rect = trigger.getBoundingClientRect();
+    const gutter = 12;
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const width = Math.min(304, Math.max(0, viewportWidth - gutter * 2));
+    const preferredLeft = rect.right - width;
+    const maxLeft = Math.max(gutter, viewportWidth - gutter - width);
+    const left = Math.min(maxLeft, Math.max(gutter, preferredLeft));
+    const estimatedMenuHeight = 148;
+    const preferredTop = rect.bottom + 8;
+    const top = Math.min(
+      preferredTop,
+      Math.max(gutter, viewportHeight - gutter - estimatedMenuHeight),
+    );
+
+    setDataToolsMenuGeometry({ left, top, width });
+  }, []);
+
   useEffect(() => {
     if (!isDataToolsOpen) return;
+
+    updateDataToolsMenuGeometry();
 
     const handlePointerDown = (event: MouseEvent) => {
       if (dataToolsRef.current && !dataToolsRef.current.contains(event.target as Node)) {
@@ -137,11 +166,17 @@ export const Header: React.FC<HeaderProps> = ({
 
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', updateDataToolsMenuGeometry);
+    window.visualViewport?.addEventListener('resize', updateDataToolsMenuGeometry);
+    window.visualViewport?.addEventListener('scroll', updateDataToolsMenuGeometry);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', updateDataToolsMenuGeometry);
+      window.visualViewport?.removeEventListener('resize', updateDataToolsMenuGeometry);
+      window.visualViewport?.removeEventListener('scroll', updateDataToolsMenuGeometry);
     };
-  }, [isDataToolsOpen]);
+  }, [isDataToolsOpen, updateDataToolsMenuGeometry]);
 
   const scrollNavItemIntoView = useCallback((
     item: HTMLElement | null,
@@ -311,7 +346,11 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   aria-haspopup="menu"
                   aria-expanded={isDataToolsOpen}
-                  onClick={() => setIsDataToolsOpen((open) => !open)}
+                  onClick={() => {
+                    const nextOpen = !isDataToolsOpen;
+                    if (nextOpen) updateDataToolsMenuGeometry();
+                    setIsDataToolsOpen(nextOpen);
+                  }}
                   data-status={isTokenExpired ? 'attention' : isSheetsConnected ? 'connected' : 'idle'}
                   className={`premium-action premium-header-action premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3 ${
                     isTokenExpired
@@ -343,7 +382,14 @@ export const Header: React.FC<HeaderProps> = ({
                     id="header-data-tools-menu"
                     role="menu"
                     aria-label="Data and tools"
-                    className="premium-floating premium-dropdown premium-header-tools-menu absolute right-0 top-full z-[80] mt-2 w-[min(19rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border p-1.5"
+                    className="premium-floating premium-dropdown premium-header-tools-menu fixed z-[80] max-h-[min(70dvh,24rem)] overflow-y-auto overflow-x-hidden rounded-xl border p-1.5"
+                    style={dataToolsMenuGeometry
+                      ? {
+                          left: dataToolsMenuGeometry.left,
+                          top: dataToolsMenuGeometry.top,
+                          width: dataToolsMenuGeometry.width,
+                        }
+                      : { visibility: 'hidden' }}
                   >
                     <button
                       id="header-google-sheets-btn"

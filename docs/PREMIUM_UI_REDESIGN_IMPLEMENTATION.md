@@ -36,6 +36,23 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
 | 10–11 | Not started | See plan. |
 
+## 2026-09-27 — Data & Tools viewport-safety correction
+
+Implementation range `27d1b6aa5d62976a79820f6236b769cdd8b860ee` → `8e3b6fa32892d38503743c487d201f779068b65a`.
+
+Fixed a Phase 9.4 regression where the Data & Tools dropdown could open partly outside the visible screen on narrow devices.
+
+Changes:
+- replaced trigger-relative absolute placement with viewport-clamped fixed geometry;
+- derives the allowed horizontal bounds from the resolved `.premium-safe-inline-header` padding, so iPhone safe areas and app gutters are respected;
+- clamps menu width to the available safe viewport width;
+- repositions on window resize plus `visualViewport` resize/scroll;
+- renders the dropdown through `createPortal(..., document.body)` so sticky-header backdrop-filter / overflow contexts cannot clip or redefine its fixed positioning;
+- added a separate menu ref so outside-click dismissal still works with the portaled menu;
+- added `Phase94DataToolsViewport.test.ts` and updated the Phase 9.4 regression test.
+
+Quality Checks #36282456713 passed typecheck, tests, and production build.
+
 ## 2026-09-27 — Phase 9.5 status communication
 
 Implementation range `ea4238cbf965ad7c10896097900a3e56f57e84c7` → `21d84aefba82ab4da84aca7688bb29cce599b91f`.

@@ -36,6 +36,22 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
 | 10–11 | Not started | See plan. |
 
+## 2026-09-27 — Side quest: canonical dropdown surface
+
+Implementation range `b08ed62d3df79856459ccfb29ae7adbc24598c89` → `23956f2b362b5300b9806c83d80cbbcbe5b37eaa`.
+
+Standardized the Phase 9 Data & Tools dropdown visual across the app:
+- tuned the Data & Tools reference surface approximately **12% more transparent**;
+- desktop base tint changed from 0.68 → 0.60;
+- mobile base tint changed from 0.64 → 0.56;
+- proportionally reduced the white/cyan/purple overlay alphas so the same glass composition is preserved instead of merely reducing one layer;
+- retained the accepted blur, saturation, refraction, border luminosity and overlay elevation;
+- `premium-dropdown` is now the canonical dropdown material primitive for all current custom menus/listboxes;
+- AnalyticsSelect consumers (sector/status/sort/etc.), ticker autocomplete, analytics mode menu and Data & Tools all resolve through the same material recipe;
+- added `DropdownVisualStandard.test.ts` to reject the legacy opaque slate dropdown recipe and require current menu/listbox owners to opt into `premium-dropdown`.
+
+Quality Checks #36283020426 passed typecheck, tests and production build.
+
 ## 2026-09-27 — Data & Tools viewport-safety correction
 
 Implementation range `27d1b6aa5d62976a79820f6236b769cdd8b860ee` → `8e3b6fa32892d38503743c487d201f779068b65a`.

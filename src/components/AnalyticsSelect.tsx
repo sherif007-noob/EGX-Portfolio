@@ -142,7 +142,8 @@ export function AnalyticsSelect<T extends string | number = string>({
         dataAccent={accent}
         anchorRef={wrapperRef}
         portal
-        matchAnchorWidth
+        matchAnchorWidth={false}
+        preferredWidth={320}
         align="auto"
         className={[
           'premium-floating premium-dropdown premium-select-dropdown z-[100] overflow-hidden rounded-xl border p-1.5',

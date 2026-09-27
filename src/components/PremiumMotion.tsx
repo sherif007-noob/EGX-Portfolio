@@ -299,15 +299,15 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
     const availableBelow = Math.max(0, safeBottom - (rect.bottom + offset));
     const availableAbove = Math.max(0, rect.top - offset - safeTop);
     const placeBelow = availableBelow >= 180 || availableBelow >= availableAbove;
-    const maxHeight = Math.max(96, placeBelow ? availableBelow : availableAbove);
-    const top = placeBelow
-      ? rect.bottom + offset
-      : safeTop;
+    const maxHeight = Math.max(0, placeBelow ? availableBelow : availableAbove);
 
     setPortalStyle({
       position: 'fixed',
       left,
-      top,
+      top: placeBelow ? rect.bottom + offset : 'auto',
+      bottom: placeBelow
+        ? 'auto'
+        : Math.max(viewportGutter, window.innerHeight - rect.top + offset),
       width,
       minWidth: 0,
       maxWidth: availableWidth,
@@ -316,9 +316,6 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
       overflowY: 'auto',
       boxSizing: 'border-box',
       transformOrigin: placeBelow ? 'top center' : 'bottom center',
-      ...(placeBelow
-        ? {}
-        : { bottom: Math.max(viewportGutter, window.innerHeight - rect.top + offset) }),
       zIndex: 100,
     });
   }, [

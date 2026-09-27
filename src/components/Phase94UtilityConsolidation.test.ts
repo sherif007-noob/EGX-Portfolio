@@ -27,7 +27,8 @@ describe('Phase 9.4 utility/data-management consolidation', () => {
     expect(header).toContain('onOpenBackupModal();');
     expect(header).toContain('setIsDataToolsOpen(false);');
     expect(header).toContain("if (event.key === 'Escape') setIsDataToolsOpen(false)");
-    expect(header).toContain('dataToolsRef.current.contains');
+    expect(header).toContain('dataToolsRef.current?.contains');
+    expect(header).toContain('dataToolsMenuRef.current?.contains');
   });
 
   it('keeps Sheets state visible on the consolidated trigger', () => {

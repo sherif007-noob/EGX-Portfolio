@@ -49,6 +49,21 @@ describe('canonical dropdown visual standard', () => {
     expect(joined).not.toContain('shadow-2xl shadow-black/50 backdrop-blur-xl');
   });
 
+  it('requires every menu/listbox owner to opt into the canonical dropdown surface', () => {
+    for (const file of collectTsx(componentsDir)) {
+      const source = readFileSync(file, 'utf8');
+      const ownsDropdown =
+        source.includes('role="menu"') ||
+        source.includes('role="listbox"') ||
+        source.includes('role="menuitem"') ||
+        source.includes('role="menuitemradio"');
+
+      if (ownsDropdown) {
+        expect(source, file).toContain('premium-dropdown');
+      }
+    }
+  });
+
   it('keeps dropdown rows on the shared premium menu-item language', () => {
     const analyticsSelect = readRelative('./AnalyticsSelect.tsx');
     const addTrade = readRelative('./AddTradeModal.tsx');

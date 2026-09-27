@@ -240,27 +240,40 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-price-alerts-btn"
                 onClick={onOpenPriceAlerts}
-                className="premium-action premium-header-action premium-header-action-amber relative flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold group"
+                aria-label={
+                  unreadAlertCount > 0
+                    ? `Price Alerts — ${unreadAlertCount} unread`
+                    : isAlertsActive
+                    ? 'Price Alerts — active'
+                    : 'Price Alerts — paused'
+                }
+                data-status={unreadAlertCount > 0 ? 'attention' : isAlertsActive ? 'active' : 'paused'}
+                className={`premium-action premium-header-action premium-header-action-amber relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold group sm:px-3 ${
+                  unreadAlertCount > 0 ? 'premium-header-action-attention' : ''
+                }`}
                 title="Price Target Web Push Notifications & Alerts"
               >
                 {unreadAlertCount > 0 ? (
-                  <BellRing className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                  <BellRing className="h-3.5 w-3.5 text-amber-300" />
                 ) : (
-                  <Bell className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 transition" />
+                  <Bell className="h-3.5 w-3.5 text-amber-300/80 transition group-hover:text-amber-200" />
                 )}
                 <span className="premium-header-action-label hidden lg:inline">Price Alerts</span>
                 {unreadAlertCount > 0 ? (
-                  <>
-                    <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-slate-950 font-mono md:hidden">
-                      {unreadAlertCount}
-                    </span>
-                    <span className="hidden md:inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
-                      {unreadAlertCount}
-                    </span>
-                  </>
-                ) : isAlertsActive ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden sm:inline-block" title="Alerts active" />
-                ) : null}
+                  <span className="premium-header-status-badge premium-header-status-badge-amber">
+                    {unreadAlertCount}
+                  </span>
+                ) : (
+                  <span
+                    className={`premium-header-status-dot ${
+                      isAlertsActive
+                        ? 'premium-header-status-dot-connected'
+                        : 'premium-header-status-dot-muted'
+                    }`}
+                    title={isAlertsActive ? 'Alerts active' : 'Alerts paused'}
+                    aria-hidden="true"
+                  />
+                )}
               </button>
             )}
 
@@ -270,11 +283,20 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-live-sync-btn"
                 onClick={onSyncLivePrices}
                 disabled={isSyncingPrices}
-                className="premium-action premium-header-action premium-header-action-cyan flex shrink-0 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+                aria-label={isSyncingPrices ? 'Sync Prices — syncing now' : 'Sync Prices'}
+                data-status={isSyncingPrices ? 'running' : 'idle'}
+                className={`premium-action premium-header-action premium-header-action-cyan relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-100 sm:px-3 ${
+                  isSyncingPrices ? 'premium-header-action-running' : ''
+                }`}
                 title="Sync live EGX prices from TradingView Egypt Scanner"
               >
-                <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingPrices ? 'animate-spin' : ''}`} />
-                <span className="premium-header-action-label hidden md:inline">{isSyncingPrices ? 'Syncing...' : 'Sync Prices'}</span>
+                <RefreshCw className={`h-3.5 w-3.5 text-cyan-300 ${isSyncingPrices ? 'animate-spin' : ''}`} />
+                <span className="premium-header-action-label hidden md:inline">
+                  {isSyncingPrices ? 'Syncing...' : 'Sync Prices'}
+                </span>
+                {isSyncingPrices && (
+                  <span className="premium-header-status-dot premium-header-status-dot-running" aria-hidden="true" />
+                )}
               </button>
             )}
 
@@ -290,7 +312,12 @@ export const Header: React.FC<HeaderProps> = ({
                   aria-haspopup="menu"
                   aria-expanded={isDataToolsOpen}
                   onClick={() => setIsDataToolsOpen((open) => !open)}
-                  className="premium-action premium-header-action premium-header-action-purple premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3"
+                  data-status={isTokenExpired ? 'attention' : isSheetsConnected ? 'connected' : 'idle'}
+                  className={`premium-action premium-header-action premium-header-tools-trigger relative flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:px-3 ${
+                    isTokenExpired
+                      ? 'premium-header-action-amber premium-header-action-attention'
+                      : 'premium-header-action-purple'
+                  }`}
                   title="Google Sheets, backup, restore, and ledger reconciliation"
                 >
                   <Database className="h-3.5 w-3.5 text-purple-300" />
@@ -298,13 +325,13 @@ export const Header: React.FC<HeaderProps> = ({
                   <ChevronDown className={`premium-motion-chevron h-3.5 w-3.5 text-purple-300/80 ${isDataToolsOpen ? 'rotate-180' : ''}`} />
                   {isTokenExpired ? (
                     <span
-                      className="premium-header-tools-status premium-header-tools-status-warning"
+                      className="premium-header-status-dot premium-header-status-dot-warning"
                       title="Google Sheets needs reconnection"
                       aria-label="Google Sheets needs reconnection"
                     />
                   ) : isSheetsConnected ? (
                     <span
-                      className="premium-header-tools-status premium-header-tools-status-connected"
+                      className="premium-header-status-dot premium-header-status-dot-connected"
                       title="Google Sheets connected"
                       aria-label="Google Sheets connected"
                     />

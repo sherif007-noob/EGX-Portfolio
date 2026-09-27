@@ -276,7 +276,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
 
     const desiredWidth = matchAnchorWidth
       ? rect.width
-      : preferredWidth ?? Math.max(rect.width, 240);
+      : Math.max(rect.width, preferredWidth ?? 240);
     const width = Math.min(desiredWidth, availableWidth);
 
     const leftAligned = rect.left;
@@ -294,22 +294,31 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
       Math.max(safeLeft, safeRight - width),
     );
 
-    const estimatedMenuHeight = Math.min(320, viewportHeight * 0.7);
-    const belowTop = rect.bottom + offset;
-    const aboveTop = rect.top - offset - estimatedMenuHeight;
-    const canFitBelow = belowTop + Math.min(180, estimatedMenuHeight) <= viewportTop + viewportHeight - viewportGutter;
-    const top = canFitBelow
-      ? belowTop
-      : Math.max(viewportTop + viewportGutter, aboveTop);
+    const safeTop = viewportTop + viewportGutter;
+    const safeBottom = viewportTop + viewportHeight - viewportGutter;
+    const availableBelow = Math.max(0, safeBottom - (rect.bottom + offset));
+    const availableAbove = Math.max(0, rect.top - offset - safeTop);
+    const placeBelow = availableBelow >= 180 || availableBelow >= availableAbove;
+    const maxHeight = Math.max(96, placeBelow ? availableBelow : availableAbove);
+    const top = placeBelow
+      ? rect.bottom + offset
+      : safeTop;
 
     setPortalStyle({
       position: 'fixed',
       left,
       top,
       width,
+      minWidth: 0,
       maxWidth: availableWidth,
-      maxHeight: Math.max(120, viewportHeight - viewportGutter * 2),
-      transformOrigin: canFitBelow ? 'top center' : 'bottom center',
+      maxHeight,
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      boxSizing: 'border-box',
+      transformOrigin: placeBelow ? 'top center' : 'bottom center',
+      ...(placeBelow
+        ? {}
+        : { bottom: Math.max(viewportGutter, window.innerHeight - rect.top + offset) }),
       zIndex: 100,
     });
   }, [

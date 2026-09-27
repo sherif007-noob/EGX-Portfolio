@@ -36,6 +36,29 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
 | 10–11 | Not started | See plan. |
 
+## 2026-09-27 — Dropdown visual-standard correction: shared overlay context
+
+Implementation range `b3075429fe6f76b354171b0865f5c26fbc9ef530` → `8e2234590b3200f59398dd355f7da2fe4edaa7bb`.
+
+Corrected the first dropdown-standard pass after device screenshots showed that only Data & Tools actually matched the intended material.
+
+Root cause:
+- the shared `premium-dropdown` CSS was applied correctly;
+- however Data & Tools renders through `document.body`, while AnalyticsSelect, ticker autocomplete, and analytics-mode menus were still rendered inside transformed / backdrop-filtered cards and panels;
+- nested backdrop contexts changed the apparent translucency/refraction, so the same CSS did **not** produce the same visual result.
+
+Fix:
+- extended `DropdownPresence` with canonical body-portal positioning anchored to the trigger;
+- added viewport-clamped fixed geometry plus resize / scroll / `visualViewport` tracking;
+- migrated every AnalyticsSelect dropdown to the body overlay context, covering sector, sort, status, page-size, trade-type, funding-method and other shared selectors;
+- migrated Add Trade ticker autocomplete;
+- migrated the main analytics mode menu;
+- retained Data & Tools on its existing body portal;
+- protected portaled dropdown interaction from outside-click handlers;
+- strengthened `DropdownVisualStandard.test.ts` so current dropdown owners must share both `premium-dropdown` material **and** the canonical overlay context.
+
+Quality Checks #36283628581 passed typecheck, tests and production build.
+
 ## 2026-09-27 — Side quest: canonical dropdown surface
 
 Implementation range `b08ed62d3df79856459ccfb29ae7adbc24598c89` → `23956f2b362b5300b9806c83d80cbbcbe5b37eaa`.

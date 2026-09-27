@@ -36,6 +36,24 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
 | 10–11 | Not started | See plan. |
 
+## 2026-09-27 — Dropdown viewport-containment hardening
+
+Implementation range `c80bf53d129bbb1b7f4e514c25938c8f75e51a59` → `32b43060546fe0eb4a1417d75756fbe1b9b4ea71`.
+
+Device screenshots exposed a second defect in the dropdown standard: portaling the menus was not enough. Legacy `premium-select-dropdown` width rules could still override the computed inline geometry, and the shared positioning code only estimated vertical containment.
+
+Fix:
+- centralized dropdown placement in `src/utils/dropdownGeometry.ts`;
+- compact shared selectors now target 320px but are hard-clamped to the visible viewport gutter;
+- right-edge menus shift left and left-edge menus clamp rightward;
+- bottom-edge menus open upward and receive a max-height equal to the actually available side;
+- body-level dropdowns scroll internally instead of exceeding the visible viewport;
+- portaled dropdown CSS explicitly disables legacy min/max-width rules that could expand the menu after geometry was calculated;
+- AnalyticsSelect keeps the wider readable dropdown style while remaining fully viewport-contained;
+- added numerical regression tests for phone, desktop, right edge, left edge, bottom edge, and oversized preferred widths.
+
+Quality Checks #36284230784 passed typecheck, tests, and production build.
+
 ## 2026-09-27 — Dropdown visual-standard correction: shared overlay context
 
 Implementation range `b3075429fe6f76b354171b0865f5c26fbc9ef530` → `8e2234590b3200f59398dd355f7da2fe4edaa7bb`.

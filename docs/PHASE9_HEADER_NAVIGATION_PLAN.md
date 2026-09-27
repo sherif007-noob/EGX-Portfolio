@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.6 COMPLETE / CI CLEAN. Quality Checks #36298460804 passed. Pass 9.7 desktop / 2XL refinement is next.**
+**IN PROGRESS — Pass 9.7 IMPLEMENTED. Desktop / 2XL geometry and regression coverage are committed; CI/build validation is pending before the pass is frozen.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -278,11 +278,31 @@ Rules:
 
 ### 9.7 — Desktop / 2XL refinement
 
+**Status: IMPLEMENTED — validation pending before freeze.**
+
 Use width for clearer grouping, not more visible noise.
+
+Implemented:
+- desktop top-row geometry is now an explicit bounded grid instead of an inherited wrapping / `justify-between` layout;
+- command ownership reads as three stable desktop zones: frequent utilities | Data/Settings | creation;
+- the command rail is content-sized and anchored to the content container rather than stretched across spare viewport width;
+- 1024–1279px desktop intentionally collapses lower-priority labels while keeping Add Trade readable and dominant;
+- 1280px+ restores normal command labels without inflating the buttons themselves;
+- 1536px+ uses the existing full navigation labels, navigation group labels, and Settings label for context instead of adding new commands;
+- navigation remains horizontally overflow-safe and keeps its existing active-state, keyboard, scroll-into-view, edge-fade, and reduced-motion infrastructure;
+- desktop rules are gated by `min-height: 521px` so the Phase 9.6 short-landscape architecture cannot be overridden;
+- no Phase 8 card/material/semantic rules, page content, callbacks, destinations, charts, or data behavior were changed;
+- dedicated `Phase97DesktopHeaderRefinement.test.ts` coverage locks the geometry, laptop compaction, 2XL context rule, mobile isolation, navigation behavior, and Phase 8 material boundary.
 
 Target conceptual zones:
 
-`brand/context | navigation | actions/utilities`
+`brand/context | navigation | utilities | creation`
+
+Validation gate before freeze:
+- typecheck/tests/build;
+- 1024 / 1280 / 1440 / 1600 / 1920 / 2560 desktop-width review;
+- downward regression across 2XL → XL → desktop → tablet boundary;
+- verify no viewport overflow or command clipping in the final rendered app.
 
 ### 9.8 — Interaction / focus / motion
 

@@ -71,7 +71,7 @@ Phase 9 must preserve:
 
 - sticky header behavior;
 - safe-area handling;
-- max-width alignment with content;
+- shared horizontal rhythm with content; desktop header/navigation may use a wider bounded shell when the standard content max-width would otherwise create unnecessary command overflow;
 - all seven navigation destinations;
 - grouped navigation semantics;
 - active-tab `aria-current`;
@@ -285,14 +285,17 @@ Use width for clearer grouping, not more visible noise.
 Implemented:
 - desktop top-row geometry is now an explicit bounded grid instead of an inherited wrapping / `justify-between` layout;
 - command ownership reads as three stable desktop zones: frequent utilities | Data/Settings | creation;
-- the command rail is content-sized and anchored to the content container rather than stretched across spare viewport width;
+- the command rail is content-sized, while the desktop header shell may expand beyond the main content max-width (up to 100rem) so available viewport width is used before horizontal overflow is introduced;
 - 1024–1279px desktop intentionally collapses lower-priority labels while keeping Add Trade readable and dominant;
 - 1280px+ restores normal command labels without inflating the buttons themselves;
 - 1536px+ uses the existing full navigation labels, navigation group labels, and Settings label for context instead of adding new commands;
-- navigation remains horizontally overflow-safe and keeps its existing active-state, keyboard, scroll-into-view, edge-fade, and reduced-motion infrastructure;
+- navigation remains horizontally overflow-safe and keeps its existing active-state, keyboard, scroll-into-view, edge-fade, and reduced-motion infrastructure; when the whole row fits again, stale horizontal scroll is reset to zero so the first tab cannot remain clipped;
 - desktop rules are gated by `min-height: 521px` so the Phase 9.6 short-landscape architecture cannot be overridden;
 - no Phase 8 card/material/semantic rules, page content, callbacks, destinations, charts, or data behavior were changed;
 - dedicated `Phase97DesktopHeaderRefinement.test.ts` coverage locks the geometry, laptop compaction, 2XL context rule, mobile isolation, navigation behavior, and Phase 8 material boundary.
+
+
+**9.7 desktop-width correction after rendered review:** the original implementation preserved `max-w-7xl` on both header rows. That left large unused side gutters on wide desktops while navigation could still overflow inside the narrower shell. The header/nav shell now expands at `xl` up to `100rem`, keeping the main page content width unchanged. Horizontal nav scrolling remains only as a fallback when the controls genuinely cannot fit, and retained scroll position is cleared once overflow disappears.
 
 Target conceptual zones:
 

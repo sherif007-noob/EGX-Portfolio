@@ -24,9 +24,9 @@ describe('computeDropdownViewportGeometry', () => {
     );
 
     expect(result.width).toBe(320);
-    expect(result.left).toBe(58);
     expect(result.left).toBeGreaterThanOrEqual(12);
     expect(result.left + result.width).toBeLessThanOrEqual(378);
+    expect(result.left + result.width).toBe(370);
   });
 
   it('keeps a left-side phone menu inside the left gutter', () => {
@@ -60,8 +60,9 @@ describe('computeDropdownViewportGeometry', () => {
     );
 
     expect(result.width).toBe(320);
-    expect(result.left).toBe(1108);
-    expect(result.left + result.width).toBe(1428);
+    expect(result.left).toBeGreaterThanOrEqual(12);
+    expect(result.left + result.width).toBeLessThanOrEqual(1428);
+    expect(result.left + result.width).toBe(1420);
   });
 
   it('opens upward and limits height when there is not enough room below', () => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 export type MotionSwapVariant = 'tab' | 'state';
@@ -230,6 +231,13 @@ interface DropdownPresenceProps {
   className: string;
   role?: React.AriaRole;
   dataAccent?: string;
+  anchorRef?: React.RefObject<HTMLElement | null>;
+  portal?: boolean;
+  matchAnchorWidth?: boolean;
+  preferredWidth?: number;
+  align?: 'left' | 'right' | 'auto';
+  offset?: number;
+  viewportGutter?: number;
 }
 
 /**
@@ -242,19 +250,109 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
   className,
   role,
   dataAccent,
+  anchorRef,
+  portal = false,
+  matchAnchorWidth = true,
+  preferredWidth,
+  align = 'auto',
+  offset = 6,
+  viewportGutter = 12,
 }) => {
   const reduceMotion = useReducedMotion();
+  const [portalStyle, setPortalStyle] = React.useState<React.CSSProperties | null>(null);
 
-  return (
+  const updatePortalGeometry = React.useCallback(() => {
+    if (!portal || !anchorRef?.current || typeof window === 'undefined') return;
+
+    const rect = anchorRef.current.getBoundingClientRect();
+    const visualViewport = window.visualViewport;
+    const viewportLeft = visualViewport?.offsetLeft ?? 0;
+    const viewportTop = visualViewport?.offsetTop ?? 0;
+    const viewportWidth = visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = visualViewport?.height ?? window.innerHeight;
+    const safeLeft = viewportLeft + viewportGutter;
+    const safeRight = viewportLeft + viewportWidth - viewportGutter;
+    const availableWidth = Math.max(0, safeRight - safeLeft);
+
+    const desiredWidth = matchAnchorWidth
+      ? rect.width
+      : preferredWidth ?? Math.max(rect.width, 240);
+    const width = Math.min(desiredWidth, availableWidth);
+
+    const leftAligned = rect.left;
+    const rightAligned = rect.right - width;
+    const preferredLeft =
+      align === 'left'
+        ? leftAligned
+        : align === 'right'
+        ? rightAligned
+        : leftAligned + width <= safeRight
+        ? leftAligned
+        : rightAligned;
+    const left = Math.min(
+      Math.max(safeLeft, preferredLeft),
+      Math.max(safeLeft, safeRight - width),
+    );
+
+    const estimatedMenuHeight = Math.min(320, viewportHeight * 0.7);
+    const belowTop = rect.bottom + offset;
+    const aboveTop = rect.top - offset - estimatedMenuHeight;
+    const canFitBelow = belowTop + Math.min(180, estimatedMenuHeight) <= viewportTop + viewportHeight - viewportGutter;
+    const top = canFitBelow
+      ? belowTop
+      : Math.max(viewportTop + viewportGutter, aboveTop);
+
+    setPortalStyle({
+      position: 'fixed',
+      left,
+      top,
+      width,
+      maxWidth: availableWidth,
+      maxHeight: Math.max(120, viewportHeight - viewportGutter * 2),
+      transformOrigin: canFitBelow ? 'top center' : 'bottom center',
+      zIndex: 100,
+    });
+  }, [
+    align,
+    anchorRef,
+    matchAnchorWidth,
+    offset,
+    portal,
+    preferredWidth,
+    viewportGutter,
+  ]);
+
+  React.useEffect(() => {
+    if (!isOpen || !portal) {
+      setPortalStyle(null);
+      return;
+    }
+
+    updatePortalGeometry();
+    const update = () => updatePortalGeometry();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    window.visualViewport?.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('scroll', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+      window.visualViewport?.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('scroll', update);
+    };
+  }, [isOpen, portal, updatePortalGeometry]);
+
+  const dropdown = (
     <AnimatePresence initial={false}>
-      {isOpen && (
+      {isOpen && (!portal || portalStyle) && (
         <motion.div
           key="dropdown"
           role={role}
           className={className}
           data-accent={dataAccent}
           data-motion-owned="react"
-          style={{ transformOrigin: 'top center' }}
+          onMouseDown={portal ? (event) => event.stopPropagation() : undefined}
+          style={portal ? portalStyle ?? undefined : { transformOrigin: 'top center' }}
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.975 }}
           animate={{
             opacity: 1,
@@ -280,6 +378,12 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
       )}
     </AnimatePresence>
   );
+
+  if (portal && typeof document !== 'undefined') {
+    return createPortal(dropdown, document.body);
+  }
+
+  return dropdown;
 };
 
 interface SurfacePresenceProps {

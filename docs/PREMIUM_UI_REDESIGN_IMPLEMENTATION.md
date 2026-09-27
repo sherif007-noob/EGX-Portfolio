@@ -33,8 +33,29 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.5 complete** | Compact alert/sync/Sheets status vocabulary implemented; warnings elevate temporarily only; Quality Checks #36282139801 passed. |
+| 9 | **In progress — 9.6 complete** | Mobile command architecture locked: quick utilities may scroll; Data/Settings + creation stay fixed-access; compact nav centers active tab; Quality Checks #36298460804 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.6 mobile command architecture
+
+Implementation range `eaa2a336dd8ba21832dc23d3d2a30ec4e35cc5da` → `fcc5d3f98d594138b2a9e8c115e5bc0b63251c88`.
+
+Implemented:
+- formalized mobile command ownership with accessible Quick utilities, Data and settings, and Create trade groups;
+- portrait phone uses a deliberate two-tier header and three-zone command grid;
+- quick utilities are the only horizontally scrollable command area;
+- Data & Tools, Settings, Scan Receipt, and Add Trade remain fixed-access;
+- quick utility scrolling gets snap behavior and a bounded fade affordance;
+- preserved 44px touch targets for all mobile command actions;
+- compact navigation now centers active/focused tabs when switching or using keyboard navigation;
+- tightened mobile nav spacing and edge fades without changing navigation material or destinations;
+- added a <=359px density guard that reduces wrapper spacing/padding only, never touch targets;
+- short-landscape mode now keeps creation/data fixed and prevents the old whole-header action rail from scrolling;
+- added `Phase96MobileCommandArchitecture.test.ts` to protect command ownership, compact-nav centering, touch targets, safe areas, and Phase 8 isolation.
+
+Quality Checks #36298460804 passed install, typecheck, tests, and production build.
+
+Next: **Pass 9.7 — desktop / 2XL refinement**.
 
 ## 2026-09-27 — Dropdown viewport-containment hardening
 

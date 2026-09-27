@@ -94,7 +94,9 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   // Click outside suggestions dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-premium-dropdown-portal="true"]')) return;
+      if (wrapperRef.current && !wrapperRef.current.contains(target as Node)) {
         setShowSuggestions(false);
       }
     }
@@ -286,7 +288,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <DropdownPresence
               isOpen={showSuggestions && suggestions.length > 0}
               role="listbox"
-              className="premium-floating premium-dropdown absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border p-1.5"
+              anchorRef={wrapperRef}
+              portal
+              matchAnchorWidth
+              align="left"
+              className="premium-floating premium-dropdown z-[100] max-h-64 overflow-y-auto rounded-xl border p-1.5"
             >
               {showSuggestions && suggestions.length > 0 && <>
                 {suggestions.map((t) => (

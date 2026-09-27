@@ -37,6 +37,19 @@ Canonical implementation:
 
 This standard applies to AnalyticsSelect menus (including sector/filter dropdowns), ticker autocomplete, analytics mode menus, Data & Tools, and future custom dropdowns.
 
+### Overlay-context rule
+
+Matching the `premium-dropdown` CSS alone is not sufficient. Nested `backdrop-filter` / transformed card and panel contexts can materially change the perceived glass result.
+
+Therefore every custom dropdown surface must also render in the **body-level overlay context**:
+- shared dropdowns use the portaled `DropdownPresence` path anchored to their trigger;
+- Data & Tools uses its equivalent body portal;
+- geometry is viewport-clamped and follows the trigger on scroll/resize;
+- dropdown clicks must remain inside the overlay interaction boundary;
+- content cards/panels may not become the dropdown's backdrop containing context.
+
+This makes the Data & Tools material reference visually consistent across Positions, Transactions, Cycles, Reports, ticker autocomplete, analytics mode selection, and future dropdowns.
+
 ## Monthly Report material reference
 
 The accepted Monthly Performance audit cards are the canonical material benchmark. A hierarchy surface is visually regressed if it becomes more opaque, flatter, loses inner sheen/refraction, or reduces a semantic state to border-only/edge-only emphasis compared with that reference.

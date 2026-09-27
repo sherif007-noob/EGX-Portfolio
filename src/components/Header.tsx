@@ -215,9 +215,16 @@ export const Header: React.FC<HeaderProps> = ({
     const containerRect = container.getBoundingClientRect();
     const itemRect = item.getBoundingClientRect();
     const edgePadding = 24;
+    const compactViewport = container.clientWidth < 640;
     let nextLeft = container.scrollLeft;
 
-    if (itemRect.left < containerRect.left + edgePadding) {
+    if (compactViewport) {
+      const itemCenter =
+        container.scrollLeft
+        + (itemRect.left - containerRect.left)
+        + itemRect.width / 2;
+      nextLeft = itemCenter - container.clientWidth / 2;
+    } else if (itemRect.left < containerRect.left + edgePadding) {
       nextLeft += itemRect.left - containerRect.left - edgePadding;
     } else if (itemRect.right > containerRect.right - edgePadding) {
       nextLeft += itemRect.right - containerRect.right + edgePadding;
@@ -273,7 +280,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="premium-header-top-row flex flex-wrap items-center justify-between min-h-[4rem] py-2 gap-y-2.5 gap-x-2">
           
           {/* Brand Logo & Title */}
-          <div className="premium-header-brand flex items-center gap-3 shrink-0">
+          <div className="premium-header-brand flex min-w-0 shrink-0 items-center gap-3">
             <div className="premium-header-logo premium-inset-glass relative w-10 h-10 rounded-xl flex items-center justify-center p-1.5 shrink-0">
               <img src="/icon.svg" alt="EGX Logo" className="w-full h-full object-contain" />
               <span className="absolute -bottom-1 -right-1 inline-flex h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.32)]" />
@@ -295,7 +302,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Phase 9 command zone: utilities are grouped separately from creation actions. */}
           <div className="premium-header-action-rail premium-header-command-zone flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1 sm:justify-end">
-            <div className="premium-header-utility-scroller min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:flex-none sm:overflow-visible">
+            <div
+              className="premium-header-utility-scroller min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:flex-none sm:overflow-visible"
+              role="group"
+              aria-label="Quick utilities"
+            >
               <div className="premium-header-utility-cluster flex w-max items-center gap-1 rounded-xl p-1 sm:gap-1.5">
             {/* Price Target & Push Notifications Trigger */}
             {onOpenPriceAlerts && (
@@ -365,7 +376,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             </div>
 
-            <div className="premium-header-data-cluster flex shrink-0 items-center gap-1 rounded-xl p-1">
+            <div
+              className="premium-header-data-cluster flex shrink-0 items-center gap-1 rounded-xl p-1"
+              role="group"
+              aria-label="Data and settings"
+            >
               {/* Data management: lower-frequency tools share one premium command. */}
               <div ref={dataToolsRef} className="premium-header-tools relative shrink-0">
                 <button
@@ -496,7 +511,11 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            <div className="premium-header-create-cluster flex shrink-0 items-center gap-1 p-1 sm:gap-1.5">
+            <div
+              className="premium-header-create-cluster flex shrink-0 items-center gap-1 p-1 sm:gap-1.5"
+              role="group"
+              aria-label="Create trade"
+            >
             {/* Scan Screenshot Button */}
             {onOpenScreenshotModal && (
               <button

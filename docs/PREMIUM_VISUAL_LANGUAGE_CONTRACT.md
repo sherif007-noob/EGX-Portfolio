@@ -21,6 +21,22 @@ The edge is never a substitute for semantic aura. It must be layered **on top of
 
 The accepted edge geometry follows the card's real rounded left border: it remains continuous through both left corner curves, then fades into the top and bottom borders rather than stopping short of the corners.
 
+## Canonical dropdown surface
+
+The **Data & Tools** dropdown is the visual reference for every custom application dropdown/menu.
+
+Canonical implementation:
+- every custom menu/listbox uses `premium-floating + premium-dropdown`;
+- dropdown rows use `premium-menu-item`;
+- individual menus may supply an accent for selected/hover state, but may not invent a separate background material;
+- the canonical surface keeps the Data & Tools layered-glass/refraction recipe while being approximately **12% more transparent** than its initial Phase 9.4 appearance;
+- desktop base tint: `rgba(8, 15, 31, 0.60)`;
+- mobile base tint: `rgba(8, 15, 31, 0.56)`;
+- blur/refraction, luminous border and overlay elevation remain shared across menus;
+- legacy opaque slate dropdown recipes such as `bg-slate-950/98 + shadow-2xl + backdrop-blur-xl` are prohibited.
+
+This standard applies to AnalyticsSelect menus (including sector/filter dropdowns), ticker autocomplete, analytics mode menus, Data & Tools, and future custom dropdowns.
+
 ## Monthly Report material reference
 
 The accepted Monthly Performance audit cards are the canonical material benchmark. A hierarchy surface is visually regressed if it becomes more opaque, flatter, loses inner sheen/refraction, or reduces a semantic state to border-only/edge-only emphasis compared with that reference.

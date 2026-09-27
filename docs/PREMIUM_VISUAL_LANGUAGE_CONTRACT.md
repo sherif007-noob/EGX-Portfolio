@@ -50,6 +50,18 @@ Therefore every custom dropdown surface must also render in the **body-level ove
 
 This makes the Data & Tools material reference visually consistent across Positions, Transactions, Cycles, Reports, ticker autocomplete, analytics mode selection, and future dropdowns.
 
+### Viewport-containment rule
+
+Every body-level dropdown must be physically contained by the visible viewport, not merely portaled:
+- horizontal geometry is clamped to a fixed gutter on both sides;
+- compact selectors target a 320px menu width but may never exceed the safe viewport width;
+- trigger width is treated as a minimum when the trigger itself is wider;
+- menus near the right edge shift left instead of overflowing;
+- menus near the bottom open upward when that side has more usable room;
+- max-height is limited to the available side and the menu scrolls internally;
+- portaled dropdown CSS must not reintroduce legacy `min-width: 100%` / max-width rules that override the computed geometry;
+- the same geometry function is covered with phone, desktop, right-edge, left-edge, bottom-edge, and oversized-width regression cases.
+
 ## Monthly Report material reference
 
 The accepted Monthly Performance audit cards are the canonical material benchmark. A hierarchy surface is visually regressed if it becomes more opaque, flatter, loses inner sheen/refraction, or reduces a semantic state to border-only/edge-only emphasis compared with that reference.

@@ -2,7 +2,7 @@ name: Quality Checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/dropdown-standard-sidequest]
   pull_request:
     branches: [main]
 

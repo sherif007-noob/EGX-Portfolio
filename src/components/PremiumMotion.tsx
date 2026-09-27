@@ -351,6 +351,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
           className={className}
           data-accent={dataAccent}
           data-motion-owned="react"
+          data-premium-dropdown-portal={portal ? 'true' : undefined}
           onMouseDown={portal ? (event) => event.stopPropagation() : undefined}
           style={portal ? portalStyle ?? undefined : { transformOrigin: 'top center' }}
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.975 }}

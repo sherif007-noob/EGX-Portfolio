@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.3 COMPLETE / CI CLEAN. Quality Checks #36277267864 passed. Pass 9.4 utility/data-management consolidation is next.**
+**IN PROGRESS — Pass 9.4 COMPLETE / CI CLEAN. Quality Checks #36281063871 passed. Pass 9.5 status communication is next.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -191,14 +191,34 @@ Rules retained:
 
 ### 9.4 — Utility/data-management consolidation
 
+**Status: COMPLETE / CI CLEAN — Quality Checks #36281063871 passed.**
+
+Implemented:
+- Price Alerts remains a direct amber utility because unread state is time-sensitive;
+- Sync Prices remains a direct cyan utility because it is operationally frequent;
+- Google Sheets and Backup & Reconcile are consolidated behind a single premium **Data & Tools** command;
+- the Data & Tools menu preserves the existing Google Sheets and backup/reconcile callbacks unchanged;
+- Google Sheets connected/expired state remains visible on the Data & Tools trigger;
+- the menu closes on outside click, Escape, or after an action is chosen;
+- Settings stays directly visible as a neutral premium utility and remains future-only;
+- the data-management cluster and dropdown use the same accepted translucent glass/refraction/luminous-border/bloom language as the rest of the header;
+- the dropdown is intentionally outside the horizontally scrolling frequent-utility rail so it is not clipped by overflow;
+- source regression coverage protects direct-vs-consolidated utility ownership, callback preservation, Settings visibility, status visibility, and Phase 8 material isolation.
+
+Resulting utility architecture:
+- direct: Price Alerts;
+- direct: Sync Prices;
+- grouped under Data & Tools: Google Sheets + Backup & Reconcile;
+- direct future affordance: Settings.
+
 Reduce equal-weight utility competition.
 
-Likely structure:
+Final structure:
 
 - direct compact Sync trigger;
 - Alerts remain separately discoverable because unread state matters;
-- Google Sheets status/configuration grouped with data tools;
-- Backup & Reconcile moves into the lower-frequency data-management context;
+- Google Sheets status/configuration is grouped with data tools;
+- Backup & Reconcile lives inside the lower-frequency data-management context;
 - Settings remains a visible future affordance.
 
 **Header utility button design-language rule:** this phase finalizes the visual treatment of **every utility button**, not only Settings. Price Alerts, Sync Prices, Google Sheets, Backup & Reconcile, and Settings must all use the accepted premium language: translucent glass, refraction, luminous semantic/structural border, visible but subordinate local aura/bloom, and consistent hover/focus depth. Utilities may differ by functional accent (amber/cyan/emerald/purple/neutral), but they must look like members of the same premium system. They must not become flat toolbar buttons just to communicate lower priority.

@@ -33,8 +33,28 @@ A redesign-caused regression may be restored so an existing interaction remains 
 | 6.5 | **Complete** | Grouped navigation, active hierarchy, responsive overflow, keyboard/reduced-motion behavior, and Pass 3 hardening complete; Quality Checks #748 passed. |
 | 7 | **Complete** | Device accepted; Quality Checks #767 passed with 31/31 test files, 190/190 tests, production build 6.01s. |
 | 8 | **8.6–8.7 code/gate complete — closure pending** | 8.0–8.4 code complete; combined responsive/regression gate is clean. Pass 8.5 + device visual acceptance still required before Phase 8 closure. |
-| 9 | **In progress — 9.3 complete** | Creation architecture grouped; Add Trade primary / Scan Receipt secondary contract locked; Quality Checks #36277267864 passed. |
+| 9 | **In progress — 9.4 complete** | Frequent utilities remain direct; Sheets + Backup/Reconcile consolidated under premium Data & Tools; Settings remains direct; Quality Checks #36281063871 passed. |
 | 10–11 | Not started | See plan. |
+
+## 2026-09-27 — Phase 9.4 utility/data-management consolidation
+
+Implementation range `7525ed80bf75f01e510a262f9092bc5dfc328f48` → `f2e7a82c36e5848ee91344af355f81b84f7ee134`.
+
+Implemented:
+- retained Price Alerts and Sync Prices as direct utilities;
+- consolidated Google Sheets and Backup & Reconcile under a single premium `Data & Tools` command;
+- preserved Google Sheets connected/expired visibility on the consolidated trigger;
+- added premium data-tool menu rows with structural emerald/amber/purple accents, refraction, luminous borders and restrained local bloom;
+- retained the existing Google Sheets and Backup/Reconcile callbacks unchanged;
+- added outside-click and Escape dismissal, plus close-on-selection behavior;
+- kept Settings as a directly visible neutral premium utility for future plans;
+- moved the data-management cluster outside the horizontally scrolling frequent-utility rail so its dropdown is not clipped by overflow;
+- updated header-button regression coverage to recognize direct premium utility buttons and premium menu-item buttons as the same visual-language family;
+- added `Phase94UtilityConsolidation.test.ts` to protect utility ownership, callback preservation, Sheets status, Settings visibility and Phase 8 material isolation.
+
+Quality Checks #36281063871 passed install, typecheck, tests, and production build.
+
+Next: **Pass 9.5 — status communication**.
 
 ## 2026-09-27 — Phase 9.3 primary creation architecture
 

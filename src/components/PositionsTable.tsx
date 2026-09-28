@@ -151,10 +151,10 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
       {/* Desktop Table View */}
       {isDesktop && (
       <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
-      <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data rounded-2xl overflow-hidden" data-hierarchy="h5">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data overflow-x-auto overscroll-x-contain rounded-2xl" data-hierarchy="h5">
+        <table className="w-full min-w-[1080px] text-left text-xs border-collapse">
           <thead>
-            <tr className="text-slate-400 border-b border-slate-800/70 font-medium">
+            <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold">
               <th className="py-3 px-4">Ticker &amp; Security</th>
               <th className="py-3 px-3">Sector</th>
               <th className="py-3 px-3 text-right">Shares</th>
@@ -366,7 +366,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
             {filteredPositions.length === 0 && (
               <tr>
-                <td colSpan={9} className="py-10 text-center text-slate-400">
+                <td colSpan={9} className="premium-type-helper py-10 text-center text-slate-400">
                   <p className="text-sm font-semibold">No stock positions match your filters.</p>
                   <p className="text-xs text-slate-500 mt-1">Add a trade or clear the sector filter to see holdings.</p>
                 </td>

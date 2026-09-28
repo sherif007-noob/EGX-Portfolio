@@ -9,7 +9,8 @@ describe('Phase 8.2 Reports composition hierarchy', () => {
   it('reserves H1 for the main analytics surface', () => {
     const primary = readRelative('./charts/PerformanceTimeframeChart.tsx');
     expect(primary).toContain('premium-report-main-analytics');
-    expect(primary).toContain('premium-hierarchy-h1');
+    expect(primary).toContain("visualContext = 'reports'");
+    expect(primary).toContain("visualContext === 'overview' ? 'premium-hierarchy-h2' : 'premium-hierarchy-h1'");
     expect(primary).toContain('data-hierarchy="h1"');
   });
 
@@ -18,7 +19,9 @@ describe('Phase 8.2 Reports composition hierarchy', () => {
     const trajectory = readRelative('./RealizedTrajectoryChart.tsx');
     const reports = readRelative('./PerformanceReports.tsx');
 
-    expect(secondary).toContain('premium-secondary-chart-card premium-hierarchy-h2');
+    expect(secondary).toContain("hierarchyLevel = 'h2'");
+    expect(secondary).toContain("hierarchyLevel === 'h3' ? 'premium-hierarchy-h3' : 'premium-hierarchy-h2'");
+    expect(secondary).toContain('premium-secondary-chart-card');
     expect(trajectory).toContain('premium-report-section premium-hierarchy-h2');
     expect(reports).toContain('premium-report-section premium-hierarchy-h2');
     expect(reports).toContain('Portfolio Allocation');

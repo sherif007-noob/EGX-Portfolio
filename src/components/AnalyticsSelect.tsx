@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { DropdownPresence } from './PremiumMotion';
+import { PREMIUM_PRIMITIVE_CLASS } from './VisualPrimitives';
 
 export interface AnalyticsSelectOption<T extends string | number = string> {
   value: T;
@@ -116,7 +117,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         data-accent={accent}
         onClick={() => setOpen((current) => !current)}
         className={[
-          'premium-control premium-select-trigger group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200',
+          `${PREMIUM_PRIMITIVE_CLASS.control} ${PREMIUM_PRIMITIVE_CLASS.selectTrigger} group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200`,
           'hover:border-slate-600 hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2',
           accentClasses.ring,
           compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm',
@@ -146,7 +147,7 @@ export function AnalyticsSelect<T extends string | number = string>({
         preferredWidth={320}
         align="auto"
         className={[
-          'premium-floating premium-dropdown premium-select-dropdown z-[100] overflow-hidden rounded-xl border p-1.5',
+          `${PREMIUM_PRIMITIVE_CLASS.dropdownSurface} premium-select-dropdown z-[100] overflow-hidden rounded-xl border p-1.5`,
           'max-h-72 overflow-y-auto',
           menuClassName,
         ].join(' ')}
@@ -165,7 +166,7 @@ export function AnalyticsSelect<T extends string | number = string>({
                   setOpen(false);
                 }}
                 className={[
-                  'premium-menu-item flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left',
+                  `${PREMIUM_PRIMITIVE_CLASS.menuItem} flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left`,
                   selected
                     ? accentClasses.selected
                     : 'text-slate-300',

@@ -11,9 +11,9 @@ describe('Additive semantic edge', () => {
     const cycles = readRelative('./ClosedCyclesView.tsx');
     const journal = readRelative('./TradingJournal.tsx');
 
-    expect(positions).toContain('premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
-    expect(cycles).toContain('premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
-    expect(journal).toContain('premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
+    expect(positions).toContain('premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
+    expect(cycles).toContain('premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
+    expect(journal).toContain('premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row');
   });
 
   it('adds the edge to Monthly Performance audit cards using report tone', () => {

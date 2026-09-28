@@ -522,7 +522,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 {/* Quick Monthly Metrics */}
                 <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 md:w-auto md:gap-4">
                   {/* Filter-aware P&L */}
-                  <div className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
+                  <div data-hierarchy="h4" className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
                     !hasActivity || isFlat
                       ? 'border-slate-800'
                       : isProfitable
@@ -546,7 +546,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   </div>
 
                   {/* Filter-aware population / closed-trade win rate */}
-                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
+                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl" data-hierarchy="h4">
                     <span className="premium-type-metric-label block">
                       {statusFilter === 'LIQUIDATED'
                         ? 'Closed Win Rate'
@@ -570,7 +570,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   </div>
 
                   {/* Filter-aware commissions */}
-                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl">
+                  <div className="premium-report-glass-soft px-3 py-2 rounded-xl" data-hierarchy="h4">
                     <span className="premium-type-metric-label block">Commissions</span>
                     <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-400">
                       {formatEgp(visibleSummary.totalFees)} EGP
@@ -613,6 +613,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                       return (
                         <article
                           key={record.key}
+                          data-hierarchy="h5"
                           className={`premium-card premium-semantic-edge premium-report-semantic-edge premium-hero-metric premium-report-hero-card premium-pad-h5 ${toneClass} relative overflow-hidden rounded-2xl border`}
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -659,13 +660,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           </div>
 
                           <div className="mt-4 grid grid-cols-2 gap-2">
-                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
+                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5" data-hierarchy="h4">
                               <span className="premium-type-metric-label block">Shares</span>
                               <span className="premium-type-metric premium-type-metric-dense mt-1 block font-mono text-slate-100">
                                 {record.shares.toLocaleString()}
                               </span>
                             </div>
-                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5">
+                            <div className="premium-report-glass-soft rounded-xl px-3 py-2.5" data-hierarchy="h4">
                               <span className="premium-type-metric-label block">Commissions</span>
                               <span className="mt-1 flex items-baseline gap-1">
                                 <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-300">{formatEgp(record.fees)}</span>
@@ -675,7 +676,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           </div>
 
                           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
+                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5" data-hierarchy="h4">
                               <span className="premium-type-metric-label block">Entry</span>
                               <span className="mt-1 flex items-baseline gap-1">
                                 <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{formatEgp(record.buyPrice)}</span>
@@ -683,7 +684,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                               </span>
                               <span className="premium-type-metadata mt-0.5 block">{record.buyDate}</span>
                             </div>
-                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5">
+                            <div className="rounded-xl border border-slate-700/55 bg-slate-950/30 px-3 py-2.5" data-hierarchy="h4">
                               <span className="premium-type-metric-label block">{record.exitLabel}</span>
                               <span className="mt-1 flex items-baseline gap-1">
                                 <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">{formatEgp(record.exitPrice)}</span>

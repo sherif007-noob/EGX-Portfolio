@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
+import { PREMIUM_PRIMITIVE_CLASS } from './VisualPrimitives';
 
 type StepperAccent = 'slate' | 'blue' | 'emerald' | 'rose' | 'amber' | 'purple' | 'indigo';
 
@@ -74,15 +75,15 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
         max={max}
         disabled={disabled}
         onChange={(event) => onValueChange(event.target.value)}
-        className={`premium-field app-number-input premium-number-stepper-input pr-10 ${className}`}
+        className={`${PREMIUM_PRIMITIVE_CLASS.field} app-number-input premium-number-stepper-input pr-10 ${className}`}
       />
-      <div className="premium-number-stepper-desktop-controls premium-inset-glass absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/40">
+      <div className={`premium-number-stepper-desktop-controls ${PREMIUM_PRIMITIVE_CLASS.insetGlass} absolute inset-y-[1px] right-[1px] flex w-8 flex-col overflow-hidden rounded-r-[calc(0.75rem-1px)] border-l border-slate-700/40`}>
         <button
           type="button"
           tabIndex={-1}
           disabled={disabled}
           onClick={() => nudge(1)}
-          className={`premium-control flex flex-1 items-center justify-center border-b border-slate-700/50 disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`${PREMIUM_PRIMITIVE_CLASS.control} flex flex-1 items-center justify-center border-b border-slate-700/50 disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Increase value"
         >
           <ChevronUp className="h-3.5 w-3.5" />
@@ -92,7 +93,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
           tabIndex={-1}
           disabled={disabled}
           onClick={() => nudge(-1)}
-          className={`premium-control flex flex-1 items-center justify-center disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`${PREMIUM_PRIMITIVE_CLASS.control} flex flex-1 items-center justify-center disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Decrease value"
         >
           <ChevronDown className="h-3.5 w-3.5" />
@@ -104,7 +105,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
           type="button"
           disabled={disabled}
           onClick={() => nudge(-1)}
-          className={`premium-control pointer-events-auto flex w-11 items-center justify-center border-r border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`${PREMIUM_PRIMITIVE_CLASS.control} pointer-events-auto flex w-11 items-center justify-center border-r border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Decrease value"
         >
           <Minus className="h-4 w-4" />
@@ -113,7 +114,7 @@ export const NumberStepperInput: React.FC<NumberStepperInputProps> = ({
           type="button"
           disabled={disabled}
           onClick={() => nudge(1)}
-          className={`premium-control pointer-events-auto flex w-11 items-center justify-center border-l border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
+          className={`${PREMIUM_PRIMITIVE_CLASS.control} pointer-events-auto flex w-11 items-center justify-center border-l border-slate-700/50 bg-slate-950/65 disabled:opacity-30 ${ACCENTS[accent]}`}
           aria-label="Increase value"
         >
           <Plus className="h-4 w-4" />

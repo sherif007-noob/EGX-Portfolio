@@ -116,7 +116,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ticker (e.g. COMI) or company..."
-              className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
+              className="premium-field premium-dense-search w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
             />
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.3 — DROPDOWNS, MENUS, POPOVERS & OVERLAYS IMPLEMENTED AT SOURCE LEVEL. Body-portaled application menus now share viewport-aware height caps and internal scrolling; the accepted Phase 9 Data & Tools overlay remains source-frozen. External CI/render validation remains pending.**
+**PHASE 10.4 — CARD HIERARCHY & SURFACE CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. H1–H5 composition has been re-audited; nested workflow details now converge on the H4 inset family, Cash reconciliation no longer mixes ad-hoc result slabs with shared subpanels, and Monthly Performance keeps its accepted material while declaring H3/H4/H5 information roles explicitly. External full CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -1288,13 +1288,131 @@ Also corrected `DropdownVisualStandard.test.ts` so canonical menu-row ownership 
 
 ## 10.4 — Card hierarchy & surface consistency
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external full CI/render validation pending.**
+
 Audit H1–H5 composition before adjusting intensity.
 
-Gate:
+### Audit result
 
-- hierarchy assignment verified before visual change;
-- material remains independent;
-- nested surfaces do not compete with parents.
+The existing Phase 8 top-level composition is fundamentally correct and does **not** need another hierarchy redesign.
+
+Verified/frozen:
+
+- global PortfolioSummary keeps H1 Total Portfolio Value, H2 primary support, H3 secondary support, and H4 utility context;
+- main Reports analytics remains the sole H1 visualization;
+- supporting report visualizations remain H2;
+- report bridge/summary sections remain H3 with H4 detail surfaces;
+- dense workflow result records remain H5 and are deliberately deferred to 10.5;
+- Phase 9 Header remains outside Phase 10 card implementation scope.
+
+The actual 10.4 debt was narrower: several nested detail surfaces were visually implemented with the right general material family but did not consistently declare the same H4 role, and one Cash reconciliation group mixed shared subpanels with two one-off tinted result slabs.
+
+### Findings and implementation
+
+#### 1. Open Positions nested statistics now declare the H4 detail role
+
+The mobile position record remains H5.
+
+Its internal Shares / Avg Buy / Current / Market Value statistics surface now explicitly composes the existing H4 detail hierarchy on top of the existing `premium-subpanel` material.
+
+No position-card semantic state, row density, action layout, or data behavior changed.
+
+#### 2. Closed Cycles nested metrics and expanded execution detail now share H4 ownership
+
+The six core cycle metric subpanels now explicitly use the H4 detail role.
+
+The expanded multi-phase execution container also uses H4 while the outer realized cycle record remains H5.
+
+This preserves the intended relationship:
+
+`H5 repeated cycle record -> H4 execution/detail surfaces`
+
+without changing realized WIN / LOSS / BREAKEVEN meaning or the additive semantic edge.
+
+#### 3. Transaction attribute detail now explicitly uses H4
+
+The transaction Shares / Price / Date / Fee / Net Outlay-or-Proceeds block already used the accepted inset glass material.
+
+10.4 adds the H4 detail role rather than inventing another nested-card recipe.
+
+The outer transaction record remains H5.
+
+#### 4. Cash reconciliation had a real surface-family inconsistency
+
+Inside **Capital Ledger & Cash Balance Audit**, five peer calculation steps were visually split between:
+
+- three `premium-subpanel` surfaces;
+- one custom emerald opaque/tinted slab;
+- one custom blue opaque/tinted slab.
+
+Those five items have the same structural role: line-by-line H4 accounting detail under one H3 reconciliation panel.
+
+10.4 converges all five onto:
+
+`premium-subpanel + H4`
+
+while retaining the existing emerald/blue text emphasis for the calculated Cash and NAV values.
+
+This removes a local one-off material exception and prevents the last two calculation steps from reading as peer outer cards.
+
+It does **not** reinterpret positive cash or NAV as WIN/LOSS semantic state.
+
+#### 5. Monthly Performance hierarchy is now explicit without touching its accepted material
+
+Monthly Performance remains the canonical material benchmark and receives no material/intensity rewrite.
+
+Its information roles are now explicitly recorded:
+
+- month audit shell -> H3;
+- quick month metrics -> H4;
+- nested Shares / Commissions / Entry / Exit details -> H4;
+- repeated audit record -> H5.
+
+The repeated audit record deliberately keeps its accepted `premium-report-hero-card` material while using `data-hierarchy="h5"`.
+
+That is intentional and demonstrates the protected three-axis rule:
+
+**high-quality/strong material does not automatically mean high information hierarchy.**
+
+10.4 does not add `premium-hierarchy-h5` to that record, because doing so merely to make the material look weaker would violate the accepted Monthly reference and the hierarchy/material independence rule.
+
+### Intentionally unchanged
+
+10.4 does **not**:
+
+- retune glass opacity, blur, refraction, shadow, or aura;
+- add a new Phase 10 CSS override block;
+- change semantic WIN / LOSS / BUY / BREAKEVEN rendering;
+- change dense table/record styling owned by 10.5;
+- change any chart data, interpolation, selectors, timing, or tooltips;
+- change Header composition;
+- normalize alerts/status banners into ordinary cards;
+- convert every local badge/chip/field treatment into a card primitive.
+
+### Regression coverage
+
+Added `Phase104CardHierarchy.test.ts`, protecting:
+
+- the global PortfolioSummary H1/H2/H3/H4 mapping;
+- H4 nested-detail ownership in Positions, Closed Cycles, and Transactions;
+- all five Cash reconciliation steps using one H4 subpanel family;
+- removal of the two Cash one-off opaque/tinted calculation surfaces;
+- Monthly H3/H4/H5 information-role mapping while preserving its accepted hero-grade audit-card material;
+- Reports H1 -> H2 -> H3/H4 composition;
+- dense H5 records remaining intact for 10.5;
+- Phase 8 material/semantic contract;
+- Phase 7 chart behavior;
+- Phase 9 Header freeze.
+
+### Gate
+
+- hierarchy assignment is verified before any surface change;
+- equivalent nested detail roles converge on H4;
+- material remains an independent axis and accepted material references are preserved;
+- nested detail surfaces remain subordinate to their parent context;
+- mixed semantic report parents do not inherit child state;
+- dense H5 record/table styling remains deferred to 10.5;
+- no broad CSS override or hierarchy-driven glow attenuation is introduced.
 
 ---
 

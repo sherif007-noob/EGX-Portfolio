@@ -179,7 +179,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               const pnlEgp = effectivePrice > 0 ? currentValue - totalCostWithFees : 0;
               const pnlPercent = totalCostWithFees > 0 ? (pnlEgp / totalCostWithFees) * 100 : 0;
               const isProfit = pnlEgp > 0;
-              const isLoss = pnlEgp < 0;
+          const isLoss = pnlEgp < 0;
 
               return (
                 <tr

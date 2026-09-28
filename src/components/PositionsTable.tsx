@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   ArrowUpRight,
   ArrowDownRight,
+  Minus,
   Search,
   Filter,
   Layers,
@@ -177,7 +178,8 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               const totalCostWithFees = totalCost + entryFees;
               const pnlEgp = effectivePrice > 0 ? currentValue - totalCostWithFees : 0;
               const pnlPercent = totalCostWithFees > 0 ? (pnlEgp / totalCostWithFees) * 100 : 0;
-              const isProfit = pnlEgp >= 0;
+              const isProfit = pnlEgp > 0;
+              const isLoss = pnlEgp < 0;
 
               return (
                 <tr
@@ -246,20 +248,22 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                   <td className="py-3 px-3 text-right">
                     <div
                       className={`font-mono font-bold ${
-                        isProfit ? 'text-emerald-400' : 'text-rose-400'
+                        isProfit ? 'text-emerald-400' : isLoss ? 'text-rose-400' : 'text-amber-400'
                       }`}
                     >
                       {isProfit ? '+' : ''}{formatEgp(pnlEgp)} <span className="premium-type-unit">EGP</span>
                     </div>
                     <div
                       className={`premium-type-metadata font-semibold flex items-center justify-end gap-0.5 ${
-                        isProfit ? 'text-emerald-500' : 'text-rose-500'
+                        isProfit ? 'text-emerald-500' : isLoss ? 'text-rose-500' : 'text-amber-500'
                       }`}
                     >
                       {isProfit ? (
                         <ArrowUpRight className="w-3 h-3 inline" />
-                      ) : (
+                      ) : isLoss ? (
                         <ArrowDownRight className="w-3 h-3 inline" />
+                      ) : (
+                        <Minus className="w-3 h-3 inline" />
                       )}
                       <span>
                         {isProfit ? '+' : ''}{pnlPercent.toFixed(2)}%
@@ -386,7 +390,8 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
           const currentValue = pos.shares * pos.currentPrice;
           const pnlEgp = currentValue - totalCost;
           const pnlPercent = totalCost > 0 ? (pnlEgp / totalCost) * 100 : 0;
-          const isProfit = pnlEgp >= 0;
+          const isProfit = pnlEgp > 0;
+              const isLoss = pnlEgp < 0;
 
           return (
             <div
@@ -419,14 +424,14 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
                   <div
                     className={`premium-type-metric premium-type-metric-dense font-mono ${
-                      isProfit ? 'text-emerald-400' : 'text-rose-400'
+                      isProfit ? 'text-emerald-400' : isLoss ? 'text-rose-400' : 'text-amber-400'
                     }`}
                   >
                     {isProfit ? '+' : ''}{formatEgp(pnlEgp)} EGP
                   </div>
                   <div
                     className={`text-xs font-semibold ${
-                      isProfit ? 'text-emerald-500' : 'text-rose-500'
+                      isProfit ? 'text-emerald-500' : isLoss ? 'text-rose-500' : 'text-amber-500'
                     }`}
                   >
                     {isProfit ? '+' : ''}{pnlPercent.toFixed(2)}%

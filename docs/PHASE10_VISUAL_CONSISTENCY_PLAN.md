@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.0 — BASELINE FREEZE + VISUAL INVENTORY COMPLETE AT SOURCE LEVEL. NO VISUAL CHANGES MADE.**
+**PHASE 10.1 — PRIMITIVE & TOKEN OWNERSHIP IMPLEMENTED AT SOURCE LEVEL. Shared primitive composition and motion-token ownership are regression-locked; no intentional rendered visual change was introduced. External CI remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -825,6 +825,8 @@ Production visual changes: **none**.
 
 ## 10.1 — Primitive & token ownership audit
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external CI/render validation pending.**
+
 Goal:
 
 - identify duplicated local recipes;
@@ -833,10 +835,155 @@ Goal:
 
 Do not restyle accepted references.
 
-Gate:
+### Ownership findings
+
+#### 1. CSS remains the visual/material owner
+
+The audit confirms that the accepted CSS primitive classes remain the source of rendered appearance. Phase 10.1 does **not** move glass, glow, semantic, spacing, or motion styling into React.
+
+Canonical structural primitive names now also have a React-side registry in:
+
+- `src/components/VisualPrimitives.ts`
+
+The registry exists only to prevent shared React controls from inventing parallel class-name families. It does not contain style values.
+
+Registered structural families include:
+
+- action;
+- control;
+- field;
+- icon action;
+- selector shell;
+- select trigger;
+- floating/dropdown/menu item;
+- inset glass;
+- panel/subpanel;
+- table shell;
+- modal/modal section.
+
+Financial semantic state is deliberately excluded from this registry. WIN / LOSS / BUY / BREAKEVEN continue to belong to the independent semantic system.
+
+#### 2. Shared control ownership is now explicit
+
+The following shared controls now consume the primitive registry without changing their accepted class composition or behavior:
+
+- `AnalyticsSelect.tsx`;
+- `DateInput.tsx`;
+- `NumberStepperInput.tsx`.
+
+This establishes the intended ownership chain:
+
+`shared control component -> canonical primitive class name -> CSS visual implementation`
+
+rather than:
+
+`shared control component -> duplicated literal primitive names -> CSS`.
+
+No field sizing, tint, border, refraction, focus state, dropdown geometry, native date behavior, or number-stepper behavior was intentionally changed.
+
+#### 3. Motion duration tokens had two global owners
+
+The source contained an early Phase 4 duration block and a later Phase 4.1 duration block defining the same six global tokens:
+
+- `--motion-instant`;
+- `--motion-fast`;
+- `--motion-control`;
+- `--motion-popover`;
+- `--motion-panel`;
+- `--motion-modal`.
+
+Because CSS custom properties resolve from the winning cascade value, the later Phase 4.1 definitions were already the runtime values everywhere.
+
+10.1 removes the dead earlier duration definitions while retaining the early easing-token definitions.
+
+Result:
+
+- each canonical duration token now has exactly one global definition;
+- runtime duration values remain the existing Phase 4.1 values;
+- no intentional motion-speed change.
+
+#### 4. Responsive hierarchy tokens are not duplicate ownership
+
+Repeated hierarchy variables inside:
+
+- base `:root`;
+- `max-width: 767px`;
+- `max-width: 390px`;
+
+are intentional responsive overrides, not ownership duplication.
+
+They remain untouched.
+
+#### 5. Local neutral utility classes are not automatically legacy
+
+Mature components still contain local Slate text/border/background utilities alongside premium primitives.
+
+10.1 does **not** mass-remove them because many are legitimate:
+
+- typography contrast;
+- row separators;
+- dense metadata;
+- border-width declarations;
+- native-control compatibility;
+- accepted local neutral treatment.
+
+They will only be removed/replaced when 10.2–10.8 proves that a specific local recipe duplicates or conflicts with a canonical primitive.
+
+#### 6. Selector accent layering requires visual audit, not primitive rewrite
+
+`premium-select-trigger` currently has:
+
+- a shared expanded-state structural treatment;
+- later accent-variable ownership for icon/accent parity.
+
+This is retained in 10.1. Any actual accent inconsistency belongs to the rendered control audit in 10.2, not token-ownership cleanup.
+
+#### 7. Modal shell variants remain intentionally separate
+
+The viewport-centered and frame/internal-scroll modal patterns both compose canonical modal primitives.
+
+10.1 does not merge them.
+
+Their visual/workflow consistency remains a 10.8 responsibility.
+
+### Implemented changes
+
+- added `VisualPrimitives.ts` as the canonical React-side structural primitive registry;
+- migrated `AnalyticsSelect`, `DateInput`, and `NumberStepperInput` to registry-owned primitive names;
+- removed the obsolete first owner of the six global motion-duration tokens;
+- retained easing ownership and all existing final motion values;
+- added `Phase101PrimitiveOwnership.test.ts`.
+
+### Regression contract
+
+`Phase101PrimitiveOwnership.test.ts` locks:
+
+- the canonical primitive registry;
+- registry usage by the three shared controls;
+- semantic-state exclusion from structural primitive ownership;
+- exactly one global owner for each canonical motion-duration token;
+- intentional responsive hierarchy overrides;
+- Phase 8 material boundary;
+- Phase 9 header freeze.
+
+### Gate
 
 - every proposed primitive change must list all known consumers;
-- visual behavior of accepted reference components must remain unchanged.
+- visual behavior of accepted reference components must remain unchanged;
+- semantic financial state must remain independent from structural primitive ownership;
+- responsive overrides must not be mistaken for duplicate tokens;
+- no page-level restyling belongs in 10.1.
+
+### Deferred to later passes
+
+- selector/filter sizing and selected-state parity -> **10.2**;
+- dropdown rendered material/viewport parity -> **10.3**;
+- card/panel hierarchy consistency -> **10.4**;
+- dense table/record consistency -> **10.5**;
+- semantic aura/edge correctness -> **10.6**;
+- modal shell/workflow parity -> **10.8**.
+
+Production appearance intent for 10.1: **no visible change.**
 
 ---
 

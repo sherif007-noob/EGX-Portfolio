@@ -1556,6 +1556,16 @@ No `premium-glow-*` class is applied to true table rows.
 - change chart behavior;
 - change Header composition.
 
+### Representative commits
+
+- `c32644d` — Positions table containment + dense header/empty-state alignment.
+- `8a195ec` — Cash Ledger dense header/empty-state alignment.
+- `27aff7a` — Monthly audit table explicit H5 role.
+- `8b0b245` — Trading benchmark table explicit H5 role.
+- `759a25d` — Phase 10.5 dense-data regression contract.
+
+Source-contract verification after implementation passed **27/27 targeted checks**. The final branch head still has no emitted generic Quality Checks run, so full typecheck/test/build and rendered device validation remain pending.
+
 ### Regression coverage
 
 Added `Phase105DenseDataSystem.test.ts`, protecting:

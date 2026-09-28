@@ -292,7 +292,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               portal
               matchAnchorWidth
               align="left"
-              className="premium-floating premium-dropdown z-[100] max-h-64 overflow-y-auto rounded-xl border p-1.5"
+              maxHeight="16rem"
+              className="premium-floating premium-dropdown z-[100] rounded-xl border p-1.5"
             >
               {showSuggestions && suggestions.length > 0 && <>
                 {suggestions.map((t) => (

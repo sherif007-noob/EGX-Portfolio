@@ -397,12 +397,12 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             placeholder="Search by ticker, cycle tag (e.g. CANA, TAQA), company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="premium-field w-full pl-9 pr-4 py-2 rounded-xl text-slate-100 placeholder-slate-400 text-xs focus:outline-none"
+            className="premium-field premium-dense-search w-full pl-9 pr-4 py-2 rounded-xl text-slate-100 placeholder-slate-400 text-xs focus:outline-none"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="premium-action absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-[10px]"
+              className="premium-action premium-action-priority-utility absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-[10px]"
             >
               Clear
             </button>
@@ -417,7 +417,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'ALL'}
               onClick={() => changeOutcomeFilter('ALL')}
-              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
@@ -425,7 +425,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'WIN'}
               onClick={() => changeOutcomeFilter('WIN')}
-              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
@@ -433,7 +433,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'LOSS'}
               onClick={() => changeOutcomeFilter('LOSS')}
-              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
@@ -441,7 +441,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'BREAKEVEN'}
               onClick={() => changeOutcomeFilter('BREAKEVEN')}
-              className={`premium-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
+              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>
@@ -472,7 +472,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 filteredCycles.map((c) => c.id)
               )
             }
-            className="premium-action w-full justify-center px-3 py-1.5 rounded-xl text-xs font-medium sm:w-auto"
+            className="premium-action premium-action-priority-secondary w-full justify-center px-3 py-1.5 rounded-xl text-xs font-medium sm:w-auto"
           >
             {expandedCycleIds.size < filteredCycles.length ? 'Expand All Phases' : 'Collapse All'}
           </button>

@@ -815,6 +815,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               matchAnchorWidth={false}
               preferredWidth={320}
               align="left"
+              maxHeight="24rem"
               className="premium-floating premium-dropdown z-[100] overflow-hidden rounded-xl border p-1.5"
             >
               {modeMenuOpen && <>

@@ -163,7 +163,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               </span>
               {metrics.grossUnrealizedPnlEgp !== undefined && (
                 <span className="premium-type-metadata font-mono" title="Gross gain before deducting buy commissions">
-                  Gross: {metrics.grossUnrealizedPnlEgp >= 0 ? '+' : ''}{formatEgp(metrics.grossUnrealizedPnlEgp)}
+                  Gross: {metrics.grossUnrealizedPnlEgp > 0 ? '+' : ''}{formatEgp(metrics.grossUnrealizedPnlEgp)}
                 </span>
               )}
             </div>
@@ -219,7 +219,15 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               </div>
             </div>
             <div className="premium-type-metadata mt-2 flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <ShieldCheck
+                className={`h-3.5 w-3.5 ${
+                  isPositiveRealized
+                    ? 'text-emerald-400'
+                    : isNegativeRealized
+                      ? 'text-rose-400'
+                      : 'text-amber-400'
+                }`}
+              />
               <span>{stats.winningTrades} W / {stats.losingTrades} L</span>
             </div>
           </div>

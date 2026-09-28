@@ -9,10 +9,10 @@ describe('Phase 10.4 card hierarchy and surface consistency', () => {
   it('preserves the protected global PortfolioSummary hierarchy', () => {
     const summary = readRelative('./PortfolioSummary.tsx');
 
-    expect(summary).toContain('premium-hero-card premium-hierarchy-h1 premium-overview-hero');
-    expect(summary).toContain('premium-card premium-hierarchy-h2');
+    expect(summary).toContain('premium-hero-card premium-semantic-hero premium-hierarchy-h1 premium-overview-hero');
+    expect(summary).toContain('premium-card premium-semantic-card premium-hierarchy-h2');
     expect(summary).toContain('premium-card premium-material-tone-cyan premium-hierarchy-h2');
-    expect(summary).toContain('premium-card premium-hierarchy-h3');
+    expect(summary).toContain('premium-card premium-semantic-card premium-hierarchy-h3');
     expect(summary).toContain('premium-glass premium-material-tone-cyan premium-hierarchy-h4');
   });
 
@@ -87,7 +87,7 @@ describe('Phase 10.4 card hierarchy and surface consistency', () => {
     expect(reports).toContain('premium-report-section premium-hierarchy-h3');
     expect(reports).toContain('premium-subpanel premium-hierarchy-h4');
     expect(trading).toContain('premium-report-structural premium-hierarchy-h0');
-    expect(trading).toContain('premium-card premium-hierarchy-h4 premium-report-kpi');
+    expect(trading).toContain('premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi');
   });
 
   it('does not reopen material, semantic, dense-data, chart, or header ownership', () => {

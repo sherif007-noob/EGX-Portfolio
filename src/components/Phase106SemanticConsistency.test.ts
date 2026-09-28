@@ -101,10 +101,12 @@ describe('Phase 10.6 semantic-state consistency', () => {
     expect(positions).toContain("'text-amber-500'");
 
     expect(monthly).toContain("? 'premium-state-breakeven'");
-    expect(monthly).toContain("? 'premium-report-tone-warning'");
+    expect(monthly).toContain("'premium-report-tone-warning'");
     expect(monthly).toContain(
       "? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'",
     );
+    expect(monthly).toContain("statusAccent:");
+    expect(monthly).toContain("record.statusAccent === 'blue'");
   });
 
   it('assigns semantic-record plus additive edge to repeated financial records', () => {
@@ -131,6 +133,22 @@ describe('Phase 10.6 semantic-state consistency', () => {
     expect(positions).toContain("'premium-row-loss'");
     expect(positions).toContain("'premium-row-breakeven'");
     expect(positions).not.toMatch(/<tr[^>]*premium-glow-/);
+  });
+
+  it('keeps holding status accents separate from financial aura', () => {
+    const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
+
+    expect(monthly).toContain(
+      "holding.pnlEgp > 0\n                  ? 'positive' as const",
+    );
+    expect(monthly).toContain(
+      "holding.pnlEgp < 0\n                    ? 'negative' as const",
+    );
+    expect(monthly).toContain(
+      "holding.type === 'CURRENT_OPEN'\n                  ? 'blue' as const",
+    );
+    expect(monthly).toContain("record.statusAccent === 'blue'");
+    expect(monthly).not.toContain("record.tone === 'blue'");
   });
 
   it('keeps Monthly parent neutral while child state remains local', () => {

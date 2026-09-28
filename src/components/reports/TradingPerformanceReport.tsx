@@ -524,7 +524,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
                 type="button"
                 aria-pressed={timeframe === tf}
                 onClick={() => changeTimeframe(tf)}
-                className={`premium-filter-pill shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
+                className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium ${timeframe === tf ? 'premium-filter-active-blue font-semibold' : ''}`}
               >
                 {tf === 'ALL' ? 'All Time' : tf}
               </button>
@@ -551,7 +551,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           <button
             type="button"
             onClick={handleExportCSV}
-            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
+            className="premium-action premium-action-priority-utility premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Download CSV report"
           >
             <Download className="w-3.5 h-3.5 text-blue-400" />
@@ -560,7 +560,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
           <button
             type="button"
             onClick={handlePrint}
-            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
+            className="premium-action premium-action-priority-utility premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />

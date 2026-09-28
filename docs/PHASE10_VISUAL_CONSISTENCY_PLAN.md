@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.5 — DENSE DATA & TABLE SYSTEM IMPLEMENTED AT SOURCE LEVEL. Dense tables now share containment/header/empty-state anatomy without collapsing their material families; report tables explicitly declare H5 data roles; repeated dense cards remain H5 and no indiscriminate row glow was introduced. External full CI/render validation remains pending.**
+**PHASE 10.6 — SEMANTIC-STATE CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. The canonical semantic hero/card/record role layer is restored and consumed by the existing strong 8.3b halo engine; repeated financial records use bounded semantic-record bloom plus additive edge; true breakeven states render amber rather than leaking into positive/negative; Monthly parent neutrality and dense-row exceptions remain intact. External full CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -1598,14 +1598,237 @@ Added `Phase105DenseDataSystem.test.ts`, protecting:
 
 ## 10.6 — Semantic-state consistency
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external full CI/render validation pending.**
+
 Audit BUY/WIN/LOSS/BREAKEVEN meaning and rendering.
 
-Gate:
+### Audit result
 
-- aura + additive edge;
-- no parent semantic leakage;
-- correct dense-row exception;
-- no financial semantic color used decoratively.
+10.6 found a real architecture regression rather than merely a color mismatch.
+
+The protected Phase 8 contract requires exactly three independent semantic surface roles:
+
+- `premium-semantic-hero`;
+- `premium-semantic-card`;
+- `premium-semantic-record`.
+
+The current source still had the canonical BUY / WIN / LOSS / BREAKEVEN colors and strong 8.3b halo values, but the role classes themselves had disappeared from both CSS and their intended consumers.
+
+As a result, halo geometry was effectively coupled back to H-level selectors even though the documentation correctly stated that semantic role and information hierarchy must be independent.
+
+10.6 restores that role layer without weakening the accepted material or aura.
+
+### Findings and implementation
+
+#### 1. The three canonical semantic roles are restored as halo-geometry owners
+
+`src/index.css` now defines exactly:
+
+- `premium-semantic-hero`;
+- `premium-semantic-card`;
+- `premium-semantic-record`.
+
+These classes own only semantic halo geometry/intensity variables.
+
+They do **not** own:
+
+- material background;
+- glass opacity;
+- backdrop blur;
+- refraction;
+- semantic color;
+- hierarchy.
+
+The existing `premium-glow-*` / `premium-state-*` families remain the financial-color owners.
+
+#### 2. Accepted 8.3b glow strength is preserved
+
+10.6 does not lower the previously accepted strong aura.
+
+Canonical resting roles:
+
+- hero -> near **58px / 0.40**, far **132px / 0.24**;
+- normal semantic card -> near **48px / 0.34**, far **112px / 0.18**;
+- repeated semantic record -> near **48px / 0.34**, far **96px / 0.18**.
+
+The record role retains the same visible near-aura and alpha strength but uses a tighter far radius so repeated records remain strongly semantic without flooding adjacent list items.
+
+Hover preserves the accepted strong 8.3b alpha values; repeated records again use the tighter far-field geometry.
+
+#### 3. The existing halo engine now consumes semantic role variables
+
+Both the original Phase 5 semantic-card path and the restored Phase 8 hierarchy/material path resolve semantic radius/intensity through the role variables.
+
+This removes the accidental dependency:
+
+`H-level -> semantic halo size`
+
+and restores the canonical dependency:
+
+`financial state -> semantic color`
++
+`semantic surface role -> halo geometry`
++
+`H-level -> information hierarchy only`.
+
+No new screen-specific glow engine is introduced.
+
+#### 4. Overview semantic composition is restored
+
+The global PortfolioSummary now maps:
+
+- Total Portfolio Value -> `semantic-hero` + WIN/LOSS/BREAKEVEN;
+- Unrealized P&L -> `semantic-card` + WIN/LOSS/BREAKEVEN;
+- Realized Gain -> `semantic-card` + WIN/LOSS/BREAKEVEN;
+- Brokerage Fees -> `semantic-card` + amber BREAKEVEN/cost state.
+
+The following remain intentionally structural/neutral:
+
+- Total Market Value -> cyan material tone, no financial semantic halo;
+- Cash Available -> blue material tone, no WIN/LOSS interpretation.
+
+This prevents structural accents from being confused with portfolio performance state.
+
+#### 5. True zero values now render as BREAKEVEN instead of positive/negative
+
+Several components already used an amber breakeven card glow but still rendered zero-value text/icons with binary `>= 0` logic.
+
+10.6 makes visual state genuinely three-way without changing calculations.
+
+Corrected:
+
+- Overview Today;
+- Overview Unrealized P&L;
+- Overview Realized Gain;
+- Open Positions desktop P&L;
+- Open Positions responsive record P&L;
+- Monthly Performance summary state;
+- Monthly closed audit records.
+
+Zero/flat now uses amber and neutral/flat direction imagery rather than green/up or red/down.
+
+No numeric value or outcome calculation is changed.
+
+#### 6. Repeated financial records now explicitly use semantic-record
+
+The repeated semantic card families now compose:
+
+`premium-card + premium-semantic-record + premium-semantic-edge + H5 + premium-glow-*`
+
+for:
+
+- Open Positions responsive records;
+- Closed Cycles;
+- Transactions.
+
+The semantic edge remains additive.
+
+It does not replace:
+
+- the full-card halo;
+- far bloom;
+- material;
+- refraction;
+- border.
+
+#### 7. Trading Performance semantic KPIs use semantic-card
+
+The four standalone Trading Performance KPI cards now explicitly use `premium-semantic-card`.
+
+Their existing threshold logic and compact `premium-state-*` color mapping remain unchanged.
+
+#### 8. Desktop table rows retain the dense-row exception
+
+True Position table rows remain:
+
+- `premium-row-win`;
+- `premium-row-loss`;
+- `premium-row-breakeven`.
+
+They do not receive full-card `premium-glow-*` halos.
+
+This is the canonical dense-row exception and remains separate from repeated card records.
+
+#### 9. Monthly Performance keeps parent neutrality and its accepted report material
+
+The month audit shell remains a neutral H3 structural container.
+
+Financial state stays local to its child summaries/records, preventing mixed winning and losing content from tinting the parent shell.
+
+The accepted Monthly audit-card report material remains the visual benchmark and is **not** converted into the standard record material.
+
+10.6 only corrects semantic meaning inside that accepted system:
+
+- no matching activity -> neutral slate;
+- actual flat/breakeven -> amber;
+- positive -> emerald;
+- negative -> rose.
+
+Closed BREAKEVEN audit records now receive the report warning/amber tone rather than falling through to LOSS styling.
+
+#### 10. Cash and Stocks remain intentional non-P&L exceptions
+
+Cash Ledger deposit/withdrawal accents are operational/accounting direction, not portfolio WIN/LOSS.
+
+Stocks & Prices green/red trend text describes market movement, not a portfolio P&L semantic surface.
+
+10.6 therefore does **not** add semantic halos or `semantic-record` to those surfaces.
+
+### Regression coverage
+
+Added `Phase106SemanticConsistency.test.ts`, protecting:
+
+- exactly three semantic surface roles;
+- role/material/state independence;
+- accepted 8.3b hero/card strength;
+- bounded record far bloom;
+- Overview hero/card/cost mapping;
+- real three-state zero/breakeven rendering;
+- semantic-record + additive-edge composition;
+- desktop row-edge exception;
+- Monthly parent neutrality;
+- Monthly local BREAKEVEN semantics;
+- Trading Performance semantic-card mapping;
+- Cash and Directory intentional non-P&L treatment;
+- additive edge ownership;
+- Phase 7 chart and Phase 9 Header boundaries.
+
+Existing Phase 8/9 material regression tests were also migrated away from literal pre-role shadow strings so they now protect the same accepted strength through the canonical semantic-role variables.
+
+### Validation
+
+Source-contract verification after implementation passed **25/25 targeted checks**.
+
+A further audit of **14 existing Phase 8/9 regression files** found no remaining stale assertions against the old hard-coded semantic shadow strings.
+
+The generic Quality Checks workflow has not been emitted for the final feature-branch head, so full external typecheck/test/build and rendered-device validation remain pending.
+
+### Representative commits
+
+- `95d1209` / `ffc41f3` — restore Overview semantic roles and true three-state detail rendering.
+- `6320e8b` — Open Positions semantic-record ownership.
+- `762992d` — Closed Cycles semantic-record ownership.
+- `7a977cd` — Transactions semantic-record ownership.
+- `3814a7d` — Trading Performance semantic-card ownership.
+- `df5d023` — restore the canonical three-role semantic halo engine.
+- `fe83da4` / `f8acabd` — position BREAKEVEN rendering and source cleanup.
+- `5c77e17` — Monthly Performance BREAKEVEN consistency.
+- `c8fff9d` — Phase 10.6 semantic regression contract.
+- `14b3b0f` / `dbf2bbc` — migrate older material guards to role-aware assertions.
+
+### Gate
+
+- BUY remains blue;
+- WIN / positive remains emerald;
+- LOSS / negative remains rose;
+- BREAKEVEN / cost remains amber where financially meaningful;
+- aura and far bloom remain visible at rest;
+- additive edge never replaces aura;
+- semantic role is independent from H-level;
+- parent mixed-content surfaces do not inherit child financial state;
+- true dense table rows remain the edge-coded exception;
+- structural/operational accents are not reinterpreted as financial P&L semantics;
+- no accounting, data, chart, Header, persistence, or workflow behavior changes.
 
 ---
 

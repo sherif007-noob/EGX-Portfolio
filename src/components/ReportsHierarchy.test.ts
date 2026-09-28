@@ -45,7 +45,7 @@ describe('Phase 8.2 Reports composition hierarchy', () => {
 
     expect(reports).toContain('premium-report-summary-band');
     expect(reports).toContain('premium-report-section premium-hierarchy-h3');
-    expect(trading).toContain('premium-card premium-hierarchy-h4 premium-report-kpi');
+    expect(trading).toContain('premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi');
     expect(monthly).toContain('premium-month-audit-shell premium-hierarchy-h3');
   });
 });

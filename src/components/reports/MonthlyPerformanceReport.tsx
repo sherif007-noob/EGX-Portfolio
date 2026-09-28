@@ -706,7 +706,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   </section>
 
                   {/* Full institutional audit table on true desktop */}
-                  <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain 2xl:block">
+                  <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain 2xl:block" data-hierarchy="h5">
                     <table className="report-monthly-table min-w-[1180px] w-full border-collapse text-left text-xs">
                     <thead>
                       <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold uppercase tracking-wider">

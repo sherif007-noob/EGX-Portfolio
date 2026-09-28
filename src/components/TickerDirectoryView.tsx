@@ -144,7 +144,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
           <button
             id="download-directory-json-btn"
             onClick={handleDownloadJson}
-            className="premium-action flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
+            className="premium-action premium-action-priority-utility flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
           >
             <Download className="w-3.5 h-3.5" />
             Export JSON
@@ -170,7 +170,7 @@ export const TickerDirectoryView: React.FC<TickerDirectoryViewProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter by ticker, old ticker, ISIN, English or Arabic name..."
-            className="premium-field w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/72 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-teal-500/60"
+            className="premium-field premium-dense-search w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/72 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-teal-500/60"
           />
         </div>
 

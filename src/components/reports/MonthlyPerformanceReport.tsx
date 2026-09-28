@@ -295,7 +295,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           <button
             type="button"
             onClick={() => handleExportCSV(selectedMonth)}
-            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
+            className="premium-action premium-action-priority-utility premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Download CSV audit"
           >
             <Download className="w-3.5 h-3.5 text-purple-400" />
@@ -304,7 +304,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           <button
             type="button"
             onClick={() => window.print()}
-            className="premium-action premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
+            className="premium-action premium-action-priority-utility premium-report-glass-soft flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white sm:justify-start"
             title="Print Monthly Report"
           >
             <Printer className="w-3.5 h-3.5 text-slate-400" />
@@ -321,7 +321,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
             type="button"
             aria-pressed={selectedMonth === 'ALL'}
             onClick={() => changeSelectedMonth('ALL')}
-            className={`premium-filter-pill shrink-0 px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
+            className={`premium-filter-pill premium-compact-selector shrink-0 px-3 py-1 rounded-lg text-xs font-medium ${selectedMonth === 'ALL' ? 'premium-filter-active-purple font-semibold' : ''}`}
           >
             All Recorded Months
           </button>
@@ -331,7 +331,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
               type="button"
               aria-pressed={selectedMonth === m.monthKey}
               onClick={() => changeSelectedMonth(m.monthKey)}
-              className={`premium-filter-pill flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
+              className={`premium-filter-pill premium-compact-selector flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium ${selectedMonth === m.monthKey ? 'premium-filter-active-purple font-semibold' : ''}`}
             >
               <span>{m.monthLabel}</span>
               <span className="premium-chip px-1.5 py-0.2 rounded-full text-[10px] text-slate-300 font-mono">

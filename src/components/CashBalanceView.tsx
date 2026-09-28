@@ -921,7 +921,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data overflow-x-auto overscroll-x-contain rounded-xl" data-hierarchy="h5">
           <table className="w-full min-w-[720px] text-left text-xs border-collapse">
             <thead>
-              <tr className="text-slate-400 border-b border-slate-800/70 font-semibold">
+              <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold">
                 <th className="py-3 px-4">Date</th>
                 <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Details &amp; Notes</th>
@@ -987,7 +987,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
               {filteredTransactions.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500 font-sans">
+                  <td colSpan={6} className="premium-type-helper py-8 text-center text-slate-500 font-sans">
                     No cash transactions found for this filter.
                   </td>
                 </tr>

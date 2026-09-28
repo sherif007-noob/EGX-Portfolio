@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.4 — CARD HIERARCHY & SURFACE CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. H1–H5 composition has been re-audited; nested workflow details now converge on the H4 inset family, Cash reconciliation no longer mixes ad-hoc result slabs with shared subpanels, and Monthly Performance keeps its accepted material while declaring H3/H4/H5 information roles explicitly. External full CI/render validation remains pending.**
+**PHASE 10.5 — DENSE DATA & TABLE SYSTEM IMPLEMENTED AT SOURCE LEVEL. Dense tables now share containment/header/empty-state anatomy without collapsing their material families; report tables explicitly declare H5 data roles; repeated dense cards remain H5 and no indiscriminate row glow was introduced. External full CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -1429,13 +1429,160 @@ Added `Phase104CardHierarchy.test.ts`, protecting:
 
 ## 10.5 — Dense data & table system
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external full CI/render validation pending.**
+
 Audit positions, transactions, cash, cycles, directory, and report tables together.
 
-Gate:
+### Audit result
 
-- dense information remains dense;
-- mobile repeated records preserve semantic scan cues;
-- no indiscriminate row glow.
+The application already has two valid dense-data presentation modes:
+
+1. **true tables** for wide, columnar data;
+2. **repeated H5 records/cards** where responsive scanning is more important than column alignment.
+
+10.5 preserves that split rather than forcing every dataset into one visual structure.
+
+Verified existing repeated-record families:
+
+- Open Positions mobile records -> H5;
+- Closed Cycles records -> H5;
+- Transactions records -> H5;
+- Stocks & Prices records -> H5;
+- Monthly Performance responsive audit records -> H5 information role with accepted report material.
+
+These remain dense records and are not promoted to H1/H2 cards.
+
+### Findings and implementation
+
+#### 1. Positions was the only wide operational table without horizontal containment
+
+The Positions desktop table contains nine columns but previously used:
+
+- `overflow-hidden`;
+- no table minimum width.
+
+At laptop/desktop widths this allowed the columns to compress rather than behaving like the other dense tables.
+
+10.5 changes the table shell to:
+
+- `overflow-x-auto`;
+- `overscroll-x-contain`;
+- `min-w-[1080px]` on the table itself.
+
+The existing `lg` desktop / card fallback split remains unchanged.
+
+This is a density/containment repair only; position calculations, sorting/filtering, actions, and semantic row state are untouched.
+
+#### 2. Cash Ledger and Positions now share the same dense header role
+
+Operational table headers previously differed:
+
+- Positions used local slate text + medium weight;
+- Cash Ledger used local slate text + semibold.
+
+Both now use the existing `premium-type-metadata` role plus semibold weight and the existing divider.
+
+No new table-header material or CSS primitive is introduced.
+
+#### 3. Report tables now explicitly declare H5 information hierarchy
+
+Monthly Performance and Trading Performance desktop tables already used the correct `premium-report-table` material and responsive `2xl` table mode.
+
+They now explicitly declare:
+
+`data-hierarchy="h5"`
+
+This records their information role without adding `premium-hierarchy-h5`, which could alter their accepted report material through existing hierarchy/material composition rules.
+
+Therefore:
+
+- information hierarchy = H5;
+- report material = unchanged.
+
+#### 4. Report material and operational table material remain intentionally distinct
+
+10.5 does **not** replace `premium-report-table` with `premium-table-shell`.
+
+Those are two intentional material families:
+
+- operational ledger/positions tables;
+- report/institutional tables.
+
+Consistency is established through dense behavior and information anatomy, not by flattening both into one surface.
+
+#### 5. Empty rows now use subordinate helper typography
+
+Positions and Cash Ledger empty table states now explicitly compose `premium-type-helper`.
+
+This keeps an empty dataset readable without giving it the same emphasis as row content or section summaries.
+
+#### 6. Repeated records already satisfy the structural dense-data contract
+
+Closed Cycles, Transactions, and Stocks & Prices already share:
+
+- H5;
+- `premium-dense-row`;
+- dense metric typography;
+- nested H4 detail surfaces where applicable.
+
+No visual rewrite was justified.
+
+10.5 deliberately leaves their semantic aura/edge ownership to **10.6** rather than mixing dense-data and semantic-state work.
+
+#### 7. No indiscriminate row glow was added
+
+Desktop Position rows retain the accepted:
+
+- `premium-row-win`;
+- `premium-row-loss`;
+- `premium-row-breakeven`;
+
+edge-coded row state.
+
+Cash and report table rows remain neutral unless their cell content communicates state.
+
+No `premium-glow-*` class is applied to true table rows.
+
+### Intentionally unchanged
+
+10.5 does **not**:
+
+- add a new dense-data CSS override layer;
+- turn rows into standalone glowing cards;
+- change BUY / WIN / LOSS / BREAKEVEN semantic rendering;
+- alter the semantic-record role contract owned by 10.6;
+- change table data, calculations, sorting, filtering, pagination, exports, or actions;
+- change report material;
+- change chart behavior;
+- change Header composition.
+
+### Regression coverage
+
+Added `Phase105DenseDataSystem.test.ts`, protecting:
+
+- Positions and Cash horizontal table containment;
+- explicit minimum widths for wide operational tables;
+- metadata-grade table headers;
+- H5 declaration for report desktop tables;
+- report-material independence from operational table material;
+- H5 repeated-record families across Positions/Cycles/Transactions/Directory;
+- Position desktop row semantic-edge classes;
+- absence of `premium-glow-*` on true table rows;
+- responsive report card/table mode separation;
+- subordinate empty-state typography;
+- Phase 8 hierarchy/material boundary;
+- Phase 7 chart behavior;
+- Phase 9 Header freeze.
+
+### Gate
+
+- dense information remains dense rather than being inflated into hero cards;
+- wide tables scroll horizontally before their columns become unreadably compressed;
+- responsive record fallbacks remain separate from true desktop tables;
+- report and operational table materials may remain different while sharing dense anatomy;
+- mobile/repeated records preserve their existing semantic scan cues;
+- no indiscriminate table-row glow is introduced;
+- semantic-state changes remain deferred to 10.6.
 
 ---
 

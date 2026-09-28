@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.1 — PRIMITIVE & TOKEN OWNERSHIP IMPLEMENTED AT SOURCE LEVEL. Shared primitive composition and motion-token ownership are regression-locked; no intentional rendered visual change was introduced. External CI remains pending.**
+**PHASE 10.2 — BUTTONS, SELECTORS & INTERACTIVE CONTROLS IMPLEMENTED AT SOURCE LEVEL. Equivalent toolbar/search/filter roles now share explicit sizing and priority contracts; intentional workflow/switch differences remain preserved. External CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -989,6 +989,8 @@ Production appearance intent for 10.1: **no visible change.**
 
 ## 10.2 — Buttons, selectors & interactive controls
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external CI/render validation pending.**
+
 Audit:
 
 - actions;
@@ -1001,11 +1003,146 @@ Audit:
 - numeric inputs;
 - pagination.
 
-Gate:
+### Findings and implementation
 
-- equivalent role shares the same family;
-- financial semantics are not used merely as generic action colors;
-- desktop/mobile control parity.
+#### 1. Compact dropdown triggers were not explicitly bound to the segmented-control height contract
+
+`AnalyticsSelect compact` already used the accepted selector material, but its compact trigger sizing was owned only by local padding.
+
+It now also composes `premium-compact-selector`.
+
+Result:
+
+- compact AnalyticsSelect triggers and compact segmented pills share the same 36px desktop height contract;
+- existing mobile/coarse-pointer 44px touch-target rules remain authoritative;
+- dropdown material, portal behavior, accent logic, and menu geometry are unchanged.
+
+#### 2. Dense toolbar search fields had small cross-page height differences
+
+Search controls on:
+
+- Open Positions;
+- Closed Cycles;
+- Transactions;
+- Stocks & Prices;
+
+used the same `premium-field` material but local vertical padding differed.
+
+Added the structural `premium-dense-search` sizing class:
+
+- 36px minimum desktop height;
+- canonical compact-selector vertical padding;
+- no background/border/material ownership;
+- mobile/coarse-pointer field rules still raise controls to the existing 44px touch target.
+
+The four dense toolbar searches now compose that class.
+
+#### 3. Page-level segmented filters now explicitly use the compact-selector role
+
+The following page-level filter groups now compose:
+
+`premium-selector-shell + premium-filter-pill + premium-compact-selector`
+
+where they represent compact toolbar/report filtering:
+
+- Closed Cycles outcome filters;
+- Transactions ALL / OPEN / WIN / LOSS / BUY / SELL;
+- Cash Ledger Deposit / Withdraw action selector;
+- Cash Ledger history filters;
+- Monthly Performance month selector;
+- Trading Performance timeframe selector;
+- existing Portfolio Allocation selectors;
+- existing analytics timeframe/resolution selectors.
+
+This makes their role explicit rather than relying only on the selector-shell descendant rule.
+
+#### 4. Cash Ledger edit modal no longer invents a second Deposit/Withdrawal selector language
+
+The Edit Cash Transaction modal previously used:
+
+- `premium-choice-success`;
+- `premium-choice-danger`;
+
+for the same Deposit/Withdrawal role represented elsewhere by selector pills.
+
+That workflow now uses the canonical selector shell + compact filter pills with the existing emerald/rose active states.
+
+Behavior is unchanged:
+
+- same `editType`;
+- same callbacks;
+- same DEPOSIT / WITHDRAWAL values.
+
+#### 5. Workflow decisions remain intentionally larger
+
+The BUY / SELL decision inside the transaction edit workflow remains a larger `premium-filter-pill` pair and does **not** receive `premium-compact-selector`.
+
+Reason:
+
+- it is a form/workflow decision, not a dense toolbar filter;
+- making it compact would reduce decision weight for the sake of superficial uniformity.
+
+#### 6. Real switches remain switches
+
+Portfolio Allocation's **Include cash** control remains:
+
+- `role="switch"`;
+- `aria-checked`;
+- dedicated switch-track/knob treatment.
+
+It is not converted into a segmented selector because its interaction semantics are different.
+
+#### 7. Secondary and utility actions now declare priority explicitly
+
+Added existing Phase 8 action-priority classes where the role was previously visually implicit:
+
+- Closed Cycles search Clear -> utility;
+- Closed Cycles Expand/Collapse All -> secondary;
+- Stocks & Prices Export JSON -> utility;
+- Monthly Performance Export CSV / Print -> utility;
+- Trading Performance Export CSV / Print -> utility;
+- Cash quick amount/percentage presets -> utility.
+
+Primary actions such as Add Trade remain untouched and continue using their accepted stronger action material.
+
+### Intentionally unchanged
+
+10.2 does not normalize everything into one control:
+
+- transaction-edit BUY/SELL remains larger;
+- Include Cash remains a switch;
+- icon-only pagination remains the existing icon-action family;
+- report export buttons retain their accepted report-context glass composition while gaining utility priority;
+- success/warning/danger action accents remain operation/function accents and are not reinterpreted as financial WIN/LOSS semantics;
+- DateInput, NumberStepperInput, and AnalyticsSelect behavior remains unchanged;
+- chart timeframe/resolution logic is untouched;
+- no card/panel material or semantic aura work belongs in this pass.
+
+### Regression coverage
+
+Added `Phase102InteractiveControls.test.ts`, protecting:
+
+- compact dropdown / segmented-control sizing parity;
+- dense toolbar search sizing;
+- page-level compact selector ownership;
+- Cash Ledger edit-selector convergence;
+- intentional larger workflow choice;
+- real switch semantics;
+- utility/secondary action priorities;
+- primary action preservation;
+- Phase 8 material/semantic boundary;
+- Phase 9 header freeze;
+- chart behavior boundary.
+
+### Gate
+
+- equivalent toolbar/filter role shares the same family and size contract;
+- workflow decisions may remain more prominent than toolbar filters;
+- switches remain switches;
+- utility/secondary actions do not compete with primaries;
+- financial semantic color is not repurposed as generic structure;
+- desktop/mobile touch-target rules remain intact;
+- no Phase 8 material, Phase 9 header, chart behavior, or data logic changes.
 
 ---
 

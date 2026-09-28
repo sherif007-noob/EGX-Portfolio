@@ -146,9 +146,9 @@ export function AnalyticsSelect<T extends string | number = string>({
         matchAnchorWidth={false}
         preferredWidth={320}
         align="auto"
+        maxHeight="18rem"
         className={[
           `${PREMIUM_PRIMITIVE_CLASS.dropdownSurface} premium-select-dropdown z-[100] overflow-hidden rounded-xl border p-1.5`,
-          'max-h-72 overflow-y-auto',
           menuClassName,
         ].join(' ')}
       >

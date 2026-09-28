@@ -81,8 +81,10 @@ describe('Phase 10.4 card hierarchy and surface consistency', () => {
     const reports = readRelative('./PerformanceReports.tsx');
     const trading = readRelative('./reports/TradingPerformanceReport.tsx');
 
-    expect(primary).toContain('premium-hierarchy-h1 premium-report-main-analytics');
-    expect(secondary).toContain('premium-secondary-chart-card premium-hierarchy-h2');
+    expect(primary).toContain("visualContext === 'overview' ? 'premium-hierarchy-h2' : 'premium-hierarchy-h1'");
+    expect(primary).toContain('premium-report-main-analytics');
+    expect(secondary).toContain("hierarchyLevel === 'h3' ? 'premium-hierarchy-h3' : 'premium-hierarchy-h2'");
+    expect(secondary).toContain('premium-secondary-chart-card');
     expect(reports).toContain('premium-report-section premium-hierarchy-h2');
     expect(reports).toContain('premium-report-section premium-hierarchy-h3');
     expect(reports).toContain('premium-subpanel premium-hierarchy-h4');

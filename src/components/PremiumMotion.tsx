@@ -239,6 +239,7 @@ interface DropdownPresenceProps {
   align?: 'left' | 'right' | 'auto';
   offset?: number;
   viewportGutter?: number;
+  maxHeight?: number | string;
 }
 
 /**
@@ -258,6 +259,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
   align = 'auto',
   offset = 6,
   viewportGutter = 12,
+  maxHeight = 'min(70dvh, 24rem)',
 }) => {
   const reduceMotion = useReducedMotion();
   const [portalStyle, setPortalStyle] = React.useState<React.CSSProperties | null>(null);
@@ -295,6 +297,9 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
       },
     );
 
+    const resolvedMaxHeight =
+      typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight;
+
     setPortalStyle({
       position: 'fixed',
       left: geometry.left,
@@ -303,9 +308,10 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
       width: geometry.width,
       minWidth: 0,
       maxWidth: geometry.maxWidth,
-      maxHeight: geometry.maxHeight,
+      maxHeight: `min(${geometry.maxHeight}px, ${resolvedMaxHeight})`,
       overflowX: 'hidden',
       overflowY: 'auto',
+      overscrollBehavior: 'contain',
       boxSizing: 'border-box',
       transformOrigin: geometry.placement === 'below' ? 'top center' : 'bottom center',
       zIndex: 100,
@@ -314,6 +320,7 @@ export const DropdownPresence: React.FC<DropdownPresenceProps> = ({
     align,
     anchorRef,
     matchAnchorWidth,
+    maxHeight,
     offset,
     portal,
     preferredWidth,

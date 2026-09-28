@@ -57,7 +57,8 @@ describe('Phase 8.4.4 canonical spacing rhythm', () => {
   it('keeps accepted material, aura and semantic-edge recipes untouched', () => {
     const css = readRelative('../index.css');
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
-    expect(css).toContain('0 0 48px rgb(var(--premium-semantic-rgb) / 0.34)');
+    expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
+    expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('border-radius: inherit');
   });

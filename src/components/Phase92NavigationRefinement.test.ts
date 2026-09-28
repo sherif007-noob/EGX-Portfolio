@@ -69,7 +69,8 @@ describe('Phase 9.2 navigation refinement', () => {
     const css = readRelative('../index.css');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
-    expect(css).toContain('0 0 48px rgb(var(--premium-semantic-rgb) / 0.34)');
+    expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
+    expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('border-radius: inherit');
   });

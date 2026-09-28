@@ -69,8 +69,10 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
     const css = readRelative('../index.css');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
-    expect(css).toContain('0 0 48px rgb(var(--premium-semantic-rgb) / 0.34)');
-    expect(css).toContain('0 0 112px rgb(var(--premium-semantic-deep-rgb) / 0.18)');
+    expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
+    expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');
+    expect(css).toContain('--premium-semantic-role-far-radius: 112px;');
+    expect(css).toContain('--premium-semantic-role-far-alpha: 0.18;');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('border-radius: inherit');
 

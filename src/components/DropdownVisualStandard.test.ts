@@ -89,7 +89,10 @@ describe('canonical dropdown visual standard', () => {
     const header = readRelative('./Header.tsx');
 
     for (const source of [analyticsSelect, addTrade, chart, header]) {
-      expect(source).toContain('premium-menu-item');
+      expect(
+        source.includes('premium-menu-item') ||
+          source.includes('PREMIUM_PRIMITIVE_CLASS.menuItem'),
+      ).toBe(true);
     }
   });
 });

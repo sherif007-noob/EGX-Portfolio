@@ -1572,12 +1572,8 @@ body {
                          */
 /* -------------------------------------------------------------------------- */
 :root {
-  --motion-instant: 110ms;
-  --motion-fast: 150ms;
-  --motion-control: 180ms;
-  --motion-popover: 200ms;
-  --motion-panel: 240ms;
-  --motion-modal: 270ms;
+  /* Easing ownership lives here. Canonical motion durations are owned by the
+   * Phase 4.1 perceptible-motion token block below; do not shadow them here. */
   --motion-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-standard: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-snappy: cubic-bezier(0.2, 0.9, 0.25, 1);

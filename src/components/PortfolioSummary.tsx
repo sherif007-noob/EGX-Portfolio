@@ -2,7 +2,8 @@ import React from 'react';
 import { PortfolioMetrics, PerformanceStats } from '../types';
 import { 
   TrendingUp, 
-  TrendingDown, 
+  TrendingDown,
+  Minus,
   ShieldCheck, 
   Activity,
   RefreshCw,
@@ -42,9 +43,12 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
   lastPriceSyncTime,
   scheduleStatus,
 }) => {
-  const isPositiveUnrealized = metrics.unrealizedPnlEgp >= 0;
-  const isPositiveRealized = metrics.realizedPnlEgp >= 0;
-  const isPositiveDay = metrics.dayChangeEgp >= 0;
+  const isPositiveUnrealized = metrics.unrealizedPnlEgp > 0;
+  const isNegativeUnrealized = metrics.unrealizedPnlEgp < 0;
+  const isPositiveRealized = metrics.realizedPnlEgp > 0;
+  const isNegativeRealized = metrics.realizedPnlEgp < 0;
+  const isPositiveDay = metrics.dayChangeEgp > 0;
+  const isNegativeDay = metrics.dayChangeEgp < 0;
   const dayGlowClass =
     metrics.dayChangeEgp > 0
       ? 'premium-glow-win'
@@ -72,7 +76,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
         <div className="premium-gap-control grid grid-cols-2 md:grid-cols-6">
           {/* H1 — Total Portfolio Value */}
           <div
-            className={`premium-card premium-hero-card premium-hierarchy-h1 premium-overview-hero premium-pad-h1 col-span-2 rounded-2xl md:col-span-2 ${dayGlowClass}`}
+            className={`premium-card premium-hero-card premium-semantic-hero premium-hierarchy-h1 premium-overview-hero premium-pad-h1 col-span-2 rounded-2xl md:col-span-2 ${dayGlowClass}`}
             data-hierarchy="h1"
           >
             <div className="flex items-start justify-between gap-3">
@@ -95,13 +99,15 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 <div className="premium-type-metadata font-semibold">Today</div>
                 <div
                   className={`mt-0.5 flex items-center gap-1.5 text-sm font-bold ${
-                    isPositiveDay ? 'text-emerald-400' : 'text-rose-400'
+                    isPositiveDay ? 'text-emerald-400' : isNegativeDay ? 'text-rose-400' : 'text-amber-400'
                   }`}
                 >
                   {isPositiveDay ? (
                     <TrendingUp className="h-4 w-4 shrink-0" />
-                  ) : (
+                  ) : isNegativeDay ? (
                     <TrendingDown className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Minus className="h-4 w-4 shrink-0" />
                   )}
                   <span className="font-mono">
                     {isPositiveDay ? '+' : ''}{formatEgp(metrics.dayChangeEgp)} EGP
@@ -112,7 +118,9 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-xs font-bold ${
                   isPositiveDay
                     ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                    : isNegativeDay
+                      ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                      : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                 }`}
               >
                 {isPositiveDay ? '+' : ''}{metrics.dayChangePercent.toFixed(2)}%
@@ -122,7 +130,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
 
           {/* H2 — Unrealized P&L */}
           <div
-            className={`premium-card premium-hierarchy-h2 premium-pad-h2 col-span-1 flex flex-col justify-between rounded-2xl md:col-span-2 ${unrealizedGlowClass}`}
+            className={`premium-card premium-semantic-card premium-hierarchy-h2 premium-pad-h2 col-span-1 flex flex-col justify-between rounded-2xl md:col-span-2 ${unrealizedGlowClass}`}
             data-hierarchy="h2"
           >
             <div>
@@ -133,7 +141,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
                 <span
                   className={`premium-type-metric premium-type-metric-primary min-w-0 font-mono ${
-                    isPositiveUnrealized ? 'text-emerald-400' : 'text-rose-400'
+                    isPositiveUnrealized ? 'text-emerald-400' : isNegativeUnrealized ? 'text-rose-400' : 'text-amber-400'
                   }`}
                 >
                   {isPositiveUnrealized ? '+' : ''}{formatEgp(metrics.unrealizedPnlEgp)}
@@ -146,7 +154,9 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 className={`rounded-md border px-1.5 py-0.5 font-mono text-xs font-semibold ${
                   isPositiveUnrealized
                     ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                    : isNegativeUnrealized
+                      ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                      : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                 }`}
               >
                 {isPositiveUnrealized ? '+' : ''}{metrics.unrealizedPnlPercent.toFixed(2)}%
@@ -192,7 +202,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
         {/* H3 — supporting metrics */}
         <div className="premium-gap-control grid grid-cols-2 sm:grid-cols-3">
           <div
-            className={`premium-card premium-hierarchy-h3 premium-pad-h3 flex flex-col justify-between rounded-2xl ${realizedGlowClass}`}
+            className={`premium-card premium-semantic-card premium-hierarchy-h3 premium-pad-h3 flex flex-col justify-between rounded-2xl ${realizedGlowClass}`}
             data-hierarchy="h3"
           >
             <div>
@@ -200,7 +210,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span
                   className={`premium-type-metric premium-type-metric-secondary font-mono ${
-                    isPositiveRealized ? 'text-emerald-400' : 'text-rose-400'
+                    isPositiveRealized ? 'text-emerald-400' : isNegativeRealized ? 'text-rose-400' : 'text-amber-400'
                   }`}
                 >
                   {isPositiveRealized ? '+' : ''}{formatEgp(metrics.realizedPnlEgp)}
@@ -241,7 +251,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
           </div>
 
           <div
-            className="premium-card premium-material-tone-amber premium-hierarchy-h3 premium-overview-fees premium-pad-h3 col-span-2 flex flex-col justify-between rounded-2xl sm:col-span-1"
+            className="premium-card premium-semantic-card premium-glow-breakeven premium-hierarchy-h3 premium-overview-fees premium-pad-h3 col-span-2 flex flex-col justify-between rounded-2xl sm:col-span-1"
             data-hierarchy="h3"
           >
             <div className="flex min-w-0 items-start justify-between gap-3">

@@ -75,6 +75,7 @@ interface PerformanceTimeframeChartProps {
   currentCashBalance: number;
   historicalLoading?: boolean;
   entranceReady?: boolean;
+  visualContext?: 'overview' | 'reports';
 }
 
 type TodayResolution = 'AUTO' | 1 | 5 | 15 | 60;
@@ -178,6 +179,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   currentCashBalance,
   historicalLoading = false,
   entranceReady = true,
+  visualContext = 'reports',
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<AnalyticsChartMode>('PORTFOLIO_RETURN');
@@ -198,6 +200,9 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const [intradayError, setIntradayError] = useState<string | null>(null);
   const [chartTooltipsEnabled, setChartTooltipsEnabled] = useState(true);
   const reducedMotion = useAnalyticsReducedMotion();
+  const mainHierarchyLevel = visualContext === 'overview' ? 'h2' : 'h1';
+  const mainHierarchyClass = visualContext === 'overview' ? 'premium-hierarchy-h2' : 'premium-hierarchy-h1';
+  const secondaryHierarchyLevel = visualContext === 'overview' ? 'h3' : 'h2';
 
   const enableChartTooltips = useCallback(() => {
     setChartTooltipsEnabled(true);
@@ -786,7 +791,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
   return (
     <>
-      <div className="premium-panel premium-radial premium-hierarchy-h1 premium-report-main-analytics p-4 sm:p-5 rounded-2xl space-y-4" data-hierarchy="h1">
+      <div className={`premium-panel premium-radial ${mainHierarchyClass} premium-report-main-analytics p-4 sm:p-5 rounded-2xl space-y-4`} data-hierarchy={mainHierarchyLevel}>
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div ref={modeMenuRef} className="relative min-w-0 z-20">
@@ -1061,6 +1066,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         entranceReady={entranceReady}
         tooltipsEnabled={chartTooltipsEnabled}
         onChartInteraction={enableChartTooltips}
+        hierarchyLevel={secondaryHierarchyLevel}
       />
     </>
   );

@@ -423,6 +423,11 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   : isLoss
                     ? 'negative' as const
                     : 'breakeven' as const,
+                statusAccent: isWin
+                  ? 'positive' as const
+                  : isLoss
+                    ? 'negative' as const
+                    : 'breakeven' as const,
                 isPositive: isWin,
                 isNegative: isLoss,
                 isBreakeven,
@@ -453,6 +458,12 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                   ? 'Open at reporting date'
                   : `Exited ${holding.exitDate || 'later'}`,
               tone:
+                holding.pnlEgp > 0
+                  ? 'positive' as const
+                  : holding.pnlEgp < 0
+                    ? 'negative' as const
+                    : 'breakeven' as const,
+              statusAccent:
                 holding.type === 'CURRENT_OPEN'
                   ? 'blue' as const
                   : 'purple' as const,
@@ -614,26 +625,22 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           ? 'premium-report-tone-positive'
                           : record.tone === 'negative'
                             ? 'premium-report-tone-negative'
-                            : record.tone === 'breakeven'
-                              ? 'premium-report-tone-warning'
-                              : record.tone === 'blue'
-                                ? 'premium-report-tone-blue'
-                                : 'premium-report-tone-purple';
+                            : 'premium-report-tone-warning';
                       const pnlClass = record.isPositive
                         ? 'text-emerald-300'
                         : record.isNegative
                           ? 'text-rose-300'
                           : 'text-amber-300';
                       const statusClass =
-                        record.tone === 'positive'
+                        record.statusAccent === 'positive'
                           ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                          : record.tone === 'negative'
+                          : record.statusAccent === 'negative'
                             ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
-                            : record.tone === 'breakeven'
-                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                            : record.tone === 'blue'
-                              ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
-                              : 'border-purple-500/30 bg-purple-500/10 text-purple-300';
+                            : record.statusAccent === 'breakeven'
+                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                              : record.statusAccent === 'blue'
+                                ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                                : 'border-purple-500/30 bg-purple-500/10 text-purple-300';
 
                       return (
                         <article
@@ -656,7 +663,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                                   ) : (
                                     <ArrowUpDown className="h-3 w-3" />
                                   )
-                                  ) : record.tone === 'blue' ? (
+                                  ) : record.statusAccent === 'blue' ? (
                                     <Clock className="h-3 w-3" />
                                   ) : (
                                     <Briefcase className="h-3 w-3" />
@@ -759,15 +766,15 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                     <tbody className="divide-y divide-slate-800/40">
                       {auditRecords.map((record) => {
                         const statusClass =
-                          record.tone === 'positive'
+                          record.statusAccent === 'positive'
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : record.tone === 'negative'
+                            : record.statusAccent === 'negative'
                               ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                              : record.tone === 'breakeven'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                              : record.tone === 'blue'
-                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                                : 'bg-purple-500/10 text-purple-300 border border-purple-500/30';
+                              : record.statusAccent === 'breakeven'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                                : record.statusAccent === 'blue'
+                                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                                  : 'bg-purple-500/10 text-purple-300 border border-purple-500/30';
                         return (
                           <tr key={record.key} className={`transition ${record.kind === 'HOLDING' ? 'bg-white/[0.01]' : ''}`}>
                             <td className="py-3 px-4">

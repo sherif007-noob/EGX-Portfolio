@@ -657,12 +657,12 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                                 <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
                                   {record.kind === 'LIQUIDATED' ? (
                                     record.isPositive ? (
-                                    <ArrowUpRight className="h-3 w-3" />
-                                  ) : record.isNegative ? (
-                                    <ArrowDownRight className="h-3 w-3" />
-                                  ) : (
-                                    <ArrowUpDown className="h-3 w-3" />
-                                  )
+                                      <ArrowUpRight className="h-3 w-3" />
+                                    ) : record.isNegative ? (
+                                      <ArrowDownRight className="h-3 w-3" />
+                                    ) : (
+                                      <ArrowUpDown className="h-3 w-3" />
+                                    )
                                   ) : record.statusAccent === 'blue' ? (
                                     <Clock className="h-3 w-3" />
                                   ) : (

@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.2 — BUTTONS, SELECTORS & INTERACTIVE CONTROLS IMPLEMENTED AT SOURCE LEVEL. Equivalent toolbar/search/filter roles now share explicit sizing and priority contracts; intentional workflow/switch differences remain preserved. External CI/render validation remains pending.**
+**PHASE 10.3 — DROPDOWNS, MENUS, POPOVERS & OVERLAYS IMPLEMENTED AT SOURCE LEVEL. Body-portaled application menus now share viewport-aware height caps and internal scrolling; the accepted Phase 9 Data & Tools overlay remains source-frozen. External CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -1148,15 +1148,141 @@ Added `Phase102InteractiveControls.test.ts`, protecting:
 
 ## 10.3 — Dropdowns, menus, popovers & overlays
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — external CI/render validation pending.**
+
 Audit all custom application dropdowns against the canonical contract.
 
-Gate:
+### Audit result
 
-- portal context;
-- viewport containment;
-- max height/internal scroll;
-- correct material;
-- no content push/clipping.
+There are four current custom application dropdown/menu owners:
+
+- `AnalyticsSelect`;
+- Add Trade ticker autocomplete;
+- Unified Portfolio Analytics mode menu;
+- Header Data & Tools.
+
+The first three use the shared `DropdownPresence` lifecycle/geometry primitive. Header Data & Tools remains the accepted Phase 9-owned exception because its safe-inline header geometry and command-zone composition are frozen dependencies.
+
+### Findings and implementation
+
+#### 1. Portal context was already correct for content dropdowns
+
+All three non-header dropdown owners already use:
+
+- a real anchor ref;
+- `portal`;
+- `createPortal(..., document.body)` through `DropdownPresence`;
+- fixed positioning;
+- `visualViewport`-aware geometry;
+- left/right viewport clamping;
+- automatic above/below placement.
+
+This is retained. No content dropdown is converted back to inline/absolute layout, so opening a menu cannot push surrounding cards/tables or become trapped by an ancestor overflow context.
+
+#### 2. The shared geometry layer was overriding the menus' intended max-height caps
+
+`DropdownPresence` previously wrote:
+
+`style.maxHeight = geometry.maxHeight`
+
+for every portaled menu.
+
+Because inline style wins over utility/CSS `max-height`, this silently defeated intended content caps such as:
+
+- AnalyticsSelect `max-h-72`;
+- Add Trade suggestions `max-h-64`;
+- the canonical mobile dropdown `min(70dvh, 24rem)` cap.
+
+Viewport safety still worked, but a menu could become much taller than its intended visual family before internal scrolling began.
+
+10.3 moves that ownership into the canonical overlay primitive.
+
+`DropdownPresence` now accepts an explicit `maxHeight` content cap and resolves:
+
+`min(viewport-available-height, content-cap)`
+
+while keeping `overflow-y: auto` and `overscroll-behavior: contain`.
+
+Its default cap is:
+
+`min(70dvh, 24rem)`
+
+so future canonical portaled menus cannot silently grow to the full available viewport.
+
+#### 3. Existing dropdown families now declare their intended caps explicitly
+
+The current content dropdowns use:
+
+- AnalyticsSelect -> **18rem**;
+- Add Trade ticker suggestions -> **16rem**;
+- Unified Portfolio Analytics mode menu -> **24rem**.
+
+The obsolete local max-height/overflow utilities on AnalyticsSelect and Add Trade were removed because the shared overlay primitive now owns the actual scroll box.
+
+No menu-row density, selected state, accent, option content, callback, or open/close behavior changed.
+
+#### 4. Canonical glass/material ownership is unchanged
+
+All application dropdowns continue to use the accepted:
+
+`premium-floating + premium-dropdown`
+
+overlay material, whose Data & Tools glass recipe remains the visual reference.
+
+10.3 does not alter:
+
+- glass transparency;
+- blur/saturation;
+- border/refraction;
+- semantic item accents;
+- hover/focus language;
+- Phase 5 refraction tiers.
+
+This pass fixes geometry/scroll ownership, not the accepted appearance.
+
+#### 5. Header Data & Tools remains the intentional Phase 9 exception
+
+The Header menu is not migrated to `DropdownPresence` in 10.3.
+
+It already satisfies the pass gate through its Phase 9 implementation:
+
+- body-level portal;
+- fixed overlay;
+- safe-inline-header clamping;
+- explicit 304px maximum working width;
+- `min(70dvh, 24rem)` height cap;
+- internal vertical scrolling;
+- canonical `premium-dropdown` material;
+- no content push.
+
+Changing that architecture here would violate the Phase 9 source freeze for no visual or behavioral benefit.
+
+### Regression coverage
+
+Added `Phase103DropdownOverlays.test.ts`, protecting:
+
+- body-level portal ownership;
+- fixed/visualViewport-aware geometry;
+- shared max-height cap ownership;
+- internal scrolling and overscroll containment;
+- explicit per-family content caps;
+- canonical dropdown material;
+- Header Data & Tools as the frozen Phase 9 exception;
+- Phase 8 material/semantic boundary;
+- chart/data behavior boundary.
+
+Also corrected `DropdownVisualStandard.test.ts` so canonical menu-row ownership through `PREMIUM_PRIMITIVE_CLASS.menuItem` is recognized alongside literal class composition. This aligns the older test with the accepted Phase 10.1 primitive registry; it does not change rendered UI.
+
+### Gate
+
+- every content dropdown is body-portaled from a real anchor;
+- portaled geometry is clamped to the live visual viewport;
+- available viewport height and family content cap both constrain the scroll box;
+- long menus scroll internally and contain overscroll;
+- canonical dropdown glass/material remains unchanged;
+- no dropdown opening pushes surrounding content;
+- Header Data & Tools remains Phase 9-owned and source-frozen;
+- no Phase 8 hierarchy/material, card system, modal workflow, chart/data behavior, or business logic changes.
 
 ---
 

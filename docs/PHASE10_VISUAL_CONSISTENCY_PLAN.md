@@ -1389,6 +1389,17 @@ That is intentional and demonstrates the protected three-axis rule:
 - normalize alerts/status banners into ordinary cards;
 - convert every local badge/chip/field treatment into a card primitive.
 
+### Representative commits
+
+- `8e13ac3` — Open Positions H4 detail ownership.
+- `95cda58` — Closed Cycles nested H4 convergence.
+- `7f479d8` — Transactions H4 attribute detail.
+- `aed6551` — complete Cash reconciliation five-step H4 convergence.
+- `596f52a` — explicit Monthly H3/H4/H5 information roles with material preserved.
+- `31b54a6` — finalized Phase 10.4 regression contract.
+
+Source-contract verification after the final corrections passed **22/22 targeted checks**. A full generic Quality Checks workflow has not been emitted for the final branch head, so full typecheck/test/build and rendered device validation remain pending.
+
 ### Regression coverage
 
 Added `Phase104CardHierarchy.test.ts`, protecting:

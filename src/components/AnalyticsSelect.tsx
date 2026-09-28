@@ -120,7 +120,7 @@ export function AnalyticsSelect<T extends string | number = string>({
           `${PREMIUM_PRIMITIVE_CLASS.control} ${PREMIUM_PRIMITIVE_CLASS.selectTrigger} group flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/70 text-left text-slate-200`,
           'hover:border-slate-600 hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2',
           accentClasses.ring,
-          compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm',
+          compact ? 'premium-compact-selector px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm',
           buttonClassName,
         ].join(' ')}
       >

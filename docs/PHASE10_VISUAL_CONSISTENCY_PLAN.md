@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.6 — SEMANTIC-STATE CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. The canonical semantic hero/card/record role layer is restored and consumed by the existing strong 8.3b halo engine; repeated financial records use bounded semantic-record bloom plus additive edge; true breakeven states render amber rather than leaking into positive/negative; Monthly parent neutrality and dense-row exceptions remain intact. External full CI/render validation remains pending.**
+**PHASE 10.7A — OVERVIEW PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Overview now uses the protected shared PortfolioSummary once, a compact/read-only H5 holdings snapshot instead of the full operational Positions workflow, H2/H3 analytics hierarchy beneath the portfolio hero, and an H4 reconciliation support notice. Reports keeps H1/H2 analytics; the dedicated Positions tab keeps its complete controls/actions. Runtime source typecheck passed in Intraday 1m Migration Smoke #36442599598; full Quality Checks and rendered-device validation remain pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -1863,7 +1863,168 @@ Each page receives:
 
 The shared global PortfolioSummary is not reworked seven times.
 
+### 10.7A — Overview
+
+**Status: IMPLEMENTED AT SOURCE LEVEL — runtime source typecheck passed; full Quality Checks/render validation pending.**
+
+Overview closure audited the complete page composition rather than restyling already accepted cards.
+
+#### Findings
+
+1. The shared `PortfolioSummary` already satisfied the protected hierarchy/material/semantic contract after 10.4 and 10.6:
+   - Total Portfolio Value = H1 + semantic hero;
+   - Unrealized P&L = H2 + semantic card;
+   - Market Value = H2 structural;
+   - Realized Gain / Cash / Fees = H3;
+   - Live Market Feed = H4 utility/context.
+
+2. Overview was embedding the **entire operational `PositionsTable`** beneath a second “Active Stock Positions” heading and a “View Full Table” action.
+   That duplicated:
+   - the internal Open Positions context heading;
+   - search;
+   - sector filtering;
+   - Add Trade;
+   - target/stop controls;
+   - Buy More / Sell / Edit / Delete actions;
+   - the complete dense dataset.
+
+   This made the Overview section visually behave like a second Positions page and made the navigation CTA semantically redundant.
+
+3. The unified analytics component always declared its main surface H1 and secondary charts H2.
+   That hierarchy is correct inside Reports, but on Overview it placed a second H1 beside the Total Portfolio Value hero and made the secondary analytics compete with primary page support.
+
+4. The ledger-reconciliation notice was visually useful but had no explicit information hierarchy assignment.
+
+#### Implementation
+
+##### A. Compact/read-only holdings snapshot
+
+`PositionsTable` now supports two presentation variants:
+
+- `full` — default; unchanged dedicated Positions workflow;
+- `overview` — compact read-only portfolio snapshot.
+
+The Overview variant:
+
+- shows at most **4 holdings** in existing portfolio order;
+- removes the duplicate internal H3 context block;
+- removes search/filter/Add Trade controls;
+- removes target/stop controls from the preview;
+- removes Buy More / Sell / Edit / Delete operations from the preview;
+- removes the delete modal ownership from the preview;
+- keeps the canonical H5 desktop row semantics and responsive semantic-record cards;
+- uses a narrower 760px desktop table floor instead of the full workflow's 1080px floor;
+- shows a subordinate “Showing X of Y active holdings” helper when more positions exist;
+- uses a dedicated “No open positions yet.” empty state.
+
+The dedicated Positions tab remains the sole owner of the complete operational workflow.
+
+##### B. Overview section navigation priority
+
+The Overview positions section now owns one explicit heading/context row.
+
+Its navigation action is:
+
+- `Open Positions →`;
+- secondary priority;
+- full-width on narrow layouts, compact on larger layouts.
+
+It no longer competes with an embedded Add Trade primary action.
+
+##### C. Context-aware analytics hierarchy
+
+`PerformanceTimeframeChart` now accepts a visual context without changing any chart/data behavior.
+
+Hierarchy mapping:
+
+- **Overview**
+  - main analytics = H2;
+  - three secondary analytics cards = H3.
+- **Reports**
+  - main analytics = H1;
+  - secondary analytics cards = H2.
+
+Reports remains the default context, so existing Reports composition is preserved.
+
+Only hierarchy class/data attributes change by context.
+
+No changes were made to:
+
+- timeframe semantics;
+- Today resolution/fallback;
+- intraday loading;
+- interpolation;
+- tooltip synchronization;
+- data calculations;
+- chart curves;
+- animation behavior.
+
+##### D. Reconciliation notice
+
+The transaction-ledger reconciliation alert is now explicitly H4 support using the existing panel material.
+
+Its corrective action remains primary **inside the alert** because reconciliation is the alert's single resolution action.
+
+#### Audit gates
+
+10.7A passed the page-specific source audit for:
+
+- hierarchy;
+- typography;
+- controls;
+- material ownership;
+- semantic ownership;
+- dense/empty states;
+- responsive composition;
+- protected chart/data boundaries;
+- frozen Header boundary.
+
+Final targeted source verification passed **26/26 checks**.
+
+#### External validation
+
+Because `App.tsx` and `PerformanceTimeframeChart.tsx` are covered by the feature-branch Intraday smoke workflow, runtime source commit `4dda77f` triggered **Intraday 1m Migration Smoke #36442599598**.
+
+The run completed successfully, including:
+
+- dependency install;
+- TypeScript typecheck;
+- intraday migration regression tests;
+- configured intraday sync steps.
+
+The subsequent commits only update regression tests/documentation around the already typechecked runtime source.
+
+The generic `Quality Checks` workflow still runs only on `main` pushes / PR events and has not emitted a final run for this feature-branch head.
+
+#### Regression coverage
+
+Added `Phase107AOverviewClosure.test.ts`, protecting:
+
+- shared PortfolioSummary hierarchy;
+- Overview compact positions variant;
+- four-holding preview bound;
+- read-only preview ownership;
+- dedicated Positions full-workflow ownership;
+- Overview secondary navigation priority;
+- Overview H2/H3 analytics mapping;
+- Reports H1/H2 analytics defaults;
+- H4 reconciliation notice;
+- dense/empty preview states;
+- chart runtime/data invariants;
+- Phase 9 Header freeze.
+
+Representative commits:
+
+- `f49591f` — context-aware main analytics hierarchy.
+- `d3f0160` — context-aware secondary analytics hierarchy.
+- `322ea02` / `7db325b` — compact Overview positions preview and markup correction.
+- `4dda77f` — Overview composition integration.
+- `61f93b1` / `f5057a4` — hierarchy regression guards updated for page context.
+- `502a81e` — Phase 10.7A closure regression contract.
+
 ---
+
+
 
 ## 10.8 — Modal & workflow consistency
 

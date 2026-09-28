@@ -6,6 +6,7 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowUpDown,
   ShieldCheck,
   Download,
   Printer,
@@ -393,6 +394,8 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
           const auditRecords = [
             ...filteredLiquidated.map((trade) => {
               const isWin = trade.outcome === 'WIN';
+              const isLoss = trade.outcome === 'LOSS';
+              const isBreakeven = trade.outcome === 'BREAKEVEN';
               const totalFees =
                 typeof trade.totalFees === 'number' && trade.totalFees > 0
                   ? trade.totalFees
@@ -415,8 +418,14 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 notes: trade.notes || '',
                 statusLabel: `Closed ${trade.outcome}`,
                 statusDetail: trade.sellDate,
-                tone: isWin ? 'positive' as const : 'negative' as const,
+                tone: isWin
+                  ? 'positive' as const
+                  : isLoss
+                    ? 'negative' as const
+                    : 'breakeven' as const,
                 isPositive: isWin,
+                isNegative: isLoss,
+                isBreakeven,
               };
             }),
             ...filteredHoldings.map((holding) => ({
@@ -447,7 +456,9 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 holding.type === 'CURRENT_OPEN'
                   ? 'blue' as const
                   : 'purple' as const,
-              isPositive: holding.pnlEgp >= 0,
+              isPositive: holding.pnlEgp > 0,
+              isNegative: holding.pnlEgp < 0,
+              isBreakeven: holding.pnlEgp === 0,
             })),
           ];
 
@@ -506,11 +517,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                     </span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono ${
-                        !hasActivity || isFlat
+                        !hasActivity
                           ? 'bg-slate-800 text-slate-300 border border-slate-700'
-                          : isProfitable
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          : isFlat
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                            : isProfitable
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                       }`}
                     >
                       {summaryBadgeLabel}
@@ -523,20 +536,24 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                 <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 md:w-auto md:gap-4">
                   {/* Filter-aware P&L */}
                   <div data-hierarchy="h4" className={`premium-report-glass-soft px-3 py-2 rounded-xl ${
-                    !hasActivity || isFlat
+                    !hasActivity
                       ? 'border-slate-800'
-                      : isProfitable
-                        ? 'premium-state-win'
-                        : 'premium-state-loss'
+                      : isFlat
+                        ? 'premium-state-breakeven'
+                        : isProfitable
+                          ? 'premium-state-win'
+                          : 'premium-state-loss'
                   }`}>
                     <span className="premium-type-metric-label block">{pnlLabel}</span>
                     <span
                       className={`premium-type-metric premium-type-metric-dense font-mono ${
-                        !hasActivity || isFlat
+                        !hasActivity
                           ? 'text-slate-400'
-                          : isProfitable
-                            ? 'text-emerald-400'
-                            : 'text-rose-400'
+                          : isFlat
+                            ? 'text-amber-400'
+                            : isProfitable
+                              ? 'text-emerald-400'
+                              : 'text-rose-400'
                       }`}
                     >
                       {!hasActivity
@@ -597,15 +614,23 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                           ? 'premium-report-tone-positive'
                           : record.tone === 'negative'
                             ? 'premium-report-tone-negative'
-                            : record.tone === 'blue'
-                              ? 'premium-report-tone-blue'
-                              : 'premium-report-tone-purple';
-                      const pnlClass = record.isPositive ? 'text-emerald-300' : 'text-rose-300';
+                            : record.tone === 'breakeven'
+                              ? 'premium-report-tone-warning'
+                              : record.tone === 'blue'
+                                ? 'premium-report-tone-blue'
+                                : 'premium-report-tone-purple';
+                      const pnlClass = record.isPositive
+                        ? 'text-emerald-300'
+                        : record.isNegative
+                          ? 'text-rose-300'
+                          : 'text-amber-300';
                       const statusClass =
                         record.tone === 'positive'
                           ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
                           : record.tone === 'negative'
                             ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                            : record.tone === 'breakeven'
+                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                             : record.tone === 'blue'
                               ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
                               : 'border-purple-500/30 bg-purple-500/10 text-purple-300';
@@ -624,7 +649,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                                 </span>
                                 <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
                                   {record.kind === 'LIQUIDATED' ? (
-                                    record.isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />
+                                    record.isPositive ? (
+                                    <ArrowUpRight className="h-3 w-3" />
+                                  ) : record.isNegative ? (
+                                    <ArrowDownRight className="h-3 w-3" />
+                                  ) : (
+                                    <ArrowUpDown className="h-3 w-3" />
+                                  )
                                   ) : record.tone === 'blue' ? (
                                     <Clock className="h-3 w-3" />
                                   ) : (
@@ -639,7 +670,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
 
                             <div className={`inline-flex h-9 w-9 shrink-0 self-start items-center justify-center rounded-xl border sm:self-auto ${statusClass}`}>
                               {record.kind === 'LIQUIDATED' ? (
-                                record.isPositive ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />
+                                record.isPositive ? (
+                                  <CheckCircle2 className="h-4 w-4" />
+                                ) : record.isNegative ? (
+                                  <AlertTriangle className="h-4 w-4" />
+                                ) : (
+                                  <ArrowUpDown className="h-4 w-4" />
+                                )
                               ) : (
                                 <ShieldCheck className="h-4 w-4" />
                               )}
@@ -654,7 +691,7 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                               </span>
                               <span className="premium-type-unit">EGP</span>
                             </div>
-                            <div className={`mt-1 font-mono text-xs font-bold ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className={`mt-1 font-mono text-xs font-bold ${record.isPositive ? 'text-emerald-400' : record.isNegative ? 'text-rose-400' : 'text-amber-400'}`}>
                               {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
                             </div>
                           </div>
@@ -726,6 +763,8 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                             : record.tone === 'negative'
                               ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              : record.tone === 'breakeven'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                               : record.tone === 'blue'
                                 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                                 : 'bg-purple-500/10 text-purple-300 border border-purple-500/30';
@@ -740,7 +779,13 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                             <td className="py-3 px-4">
                               <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusClass}`}>
                                 {record.kind === 'LIQUIDATED' ? (
-                                  record.isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />
+                                  record.isPositive ? (
+                                    <ArrowUpRight className="w-3 h-3" />
+                                  ) : record.isNegative ? (
+                                    <ArrowDownRight className="w-3 h-3" />
+                                  ) : (
+                                    <ArrowUpDown className="w-3 h-3" />
+                                  )
                                 ) : (
                                   <Clock className="w-3 h-3" />
                                 )}
@@ -759,10 +804,10 @@ const MonthlyPerformanceReportComponent: React.FC<MonthlyPerformanceReportProps>
                               {formatEgp(record.exitPrice)}
                             </td>
                             <td className="py-3 px-4 text-right font-mono">
-                              <div className={`font-bold text-sm ${record.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              <div className={`font-bold text-sm ${record.isPositive ? 'text-emerald-400' : record.isNegative ? 'text-rose-400' : 'text-amber-400'}`}>
                                 {record.isPositive ? '+' : ''}{formatEgp(record.pnlEgp)} EGP
                               </div>
-                              <div className={`premium-type-metadata font-semibold ${record.isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                              <div className={`premium-type-metadata font-semibold ${record.isPositive ? 'text-emerald-500' : record.isNegative ? 'text-rose-500' : 'text-amber-500'}`}>
                                 {record.isPositive ? '+' : ''}{record.pnlPercent.toFixed(2)}%
                               </div>
                             </td>

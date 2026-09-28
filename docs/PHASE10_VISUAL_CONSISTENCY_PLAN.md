@@ -1804,7 +1804,7 @@ Existing Phase 8/9 material regression tests were also migrated away from litera
 
 ### Validation
 
-Final source-contract verification after the holding-aura correction passed **31/31 targeted checks**.
+Final source-contract verification after the holding-aura correction and source cleanup passed **32/32 targeted checks**.
 
 A further audit of **14 existing Phase 8/9 regression files** found no remaining stale assertions against the old hard-coded semantic shadow strings.
 

@@ -720,7 +720,7 @@ const TradingPerformanceReportComponent: React.FC<TradingPerformanceReportProps>
       </section>
 
       {/* Main Indicators Scorecard Table — true desktop only */}
-      <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain rounded-xl 2xl:block">
+      <div className="premium-report-table hidden overflow-x-auto overscroll-x-contain rounded-xl 2xl:block" data-hierarchy="h5">
         <table className="report-benchmark-table min-w-[1120px] w-full border-collapse text-left text-xs font-sans">
           <thead>
             <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold uppercase tracking-wider">

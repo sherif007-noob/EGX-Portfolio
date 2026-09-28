@@ -1766,6 +1766,13 @@ The accepted Monthly audit-card report material remains the visual benchmark and
 
 Closed BREAKEVEN audit records now receive the report warning/amber tone rather than falling through to LOSS styling.
 
+Holding audit records also separate two previously conflated axes:
+
+- the outer audit-card aura now follows the holding's actual P&L state: emerald / rose / amber;
+- the holding-status badge remains structural: blue for Active Holding and purple for Held at Month-End.
+
+This prevents a losing holding from receiving a blue/purple outer semantic aura merely because it is still open or was held at the reporting boundary.
+
 #### 10. Cash and Stocks remain intentional non-P&L exceptions
 
 Cash Ledger deposit/withdrawal accents are operational/accounting direction, not portfolio WIN/LOSS.
@@ -1812,8 +1819,8 @@ The generic Quality Checks workflow has not been emitted for the final feature-b
 - `3814a7d` — Trading Performance semantic-card ownership.
 - `df5d023` — restore the canonical three-role semantic halo engine.
 - `fe83da4` / `f8acabd` — position BREAKEVEN rendering and source cleanup.
-- `5c77e17` — Monthly Performance BREAKEVEN consistency.
-- `c8fff9d` — Phase 10.6 semantic regression contract.
+- `5c77e17` / `a35494b` — Monthly Performance BREAKEVEN consistency and P&L-aura/status-accent separation.
+- `c8fff9d` / `68aef7a` — Phase 10.6 semantic regression contract, including holding aura/status separation.
 - `14b3b0f` / `dbf2bbc` — migrate older material guards to role-aware assertions.
 
 ### Gate

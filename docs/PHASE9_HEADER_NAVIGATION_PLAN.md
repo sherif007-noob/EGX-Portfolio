@@ -2,7 +2,7 @@
 
 ## Status
 
-**IN PROGRESS — Pass 9.7 IMPLEMENTED. Desktop / 2XL geometry and regression coverage are committed; CI/build validation is pending before the pass is frozen.**
+**PHASE 9 SOURCE-FROZEN — Pass 9.9 closure matrix is implemented. Architecture, responsive behavior, interaction/focus/motion, status semantics, and Phase 8 boundaries are regression-locked. Final CI typecheck/tests/build remains the only external closure gate.**
 
 Phase 9 redesigns the global command/navigation layer only. Phase 8 content hierarchy, glass, aura, semantic edge, chart behavior, dense workflows, selectors, and financial behavior remain frozen.
 
@@ -278,7 +278,7 @@ Rules:
 
 ### 9.7 — Desktop / 2XL refinement
 
-**Status: IMPLEMENTED — validation pending before freeze.**
+**Status: COMPLETE — rendered desktop-width correction accepted and closure-locked by 9.9.**
 
 Use width for clearer grouping, not more visible noise.
 
@@ -309,22 +309,59 @@ Validation gate before freeze:
 
 ### 9.8 — Interaction / focus / motion
 
-Validate:
+**Status: COMPLETE — source-validated and regression-locked during the 9.9 closure audit.**
 
-- hover/press/focus;
-- keyboard navigation;
-- unread alerts;
-- sync progress;
-- connected/expired Sheets;
-- reduced motion.
+Validated:
+- navigation idle/active hover treatment remains explicit;
+- navigation and every global header command retain visible `:focus-visible` treatment;
+- ArrowLeft / ArrowRight / Home / End navigation and focus transfer remain intact;
+- Data & Tools retains `aria-haspopup`, `aria-expanded`, Escape close, and viewport-safe portal behavior;
+- unread Alerts, sync-running, Sheets connected, and Sheets-expired states remain local status treatments rather than permanent hierarchy promotion;
+- sync rotation is the only purposeful status animation and is disabled under reduced motion;
+- nav scrolling switches to non-animated behavior under reduced motion;
+- no bounce/theatrical notification motion was reintroduced;
+- dedicated `Phase98InteractionFocusMotion.test.ts` coverage locks these contracts.
 
-No new theatrical header animation family.
+No new theatrical header animation family was introduced.
 
 ### 9.9 — Regression + closure
 
-Validate phone portrait, phone landscape, tablet, desktop, and 2XL.
+**Status: IMPLEMENTED / SOURCE-FROZEN — final CI gate pending.**
 
-Run typecheck, tests, build, and freeze the final header architecture.
+#### Closure rules
+
+1. **Freeze, do not redesign.** 9.9 may fix only a regression proven by the closure audit; it may not introduce a new header concept, control, visual language, or motion family.
+2. **One architecture across all widths.** Phone portrait, <=359px, short phone landscape, tablet, desktop, XL, and 2XL must remain adaptations of the same command/navigation model.
+3. **Overflow is fallback, never default.** Desktop must consume genuinely available header width before horizontal navigation scrolling appears; stale scroll position must clear when overflow disappears.
+4. **Creation priority is immutable.** Add Trade remains the only primary creation command; Scan Receipt remains secondary.
+5. **Utility ownership is immutable.** Alerts and Sync remain direct; Google Sheets + Backup/Reconcile remain inside Data & Tools; Settings remains a direct future affordance.
+6. **Interaction/accessibility is part of the architecture.** Existing IDs, callbacks, `aria-current`, disclosure semantics, focus-visible states, keyboard navigation, reduced-motion handling, and safe-area behavior are frozen contracts.
+7. **Status never becomes permanent hierarchy.** Unread/warning/running states may temporarily elevate locally; normal states return to their normal utility weight.
+8. **Phase 8 is a hard boundary.** Closure work must not alter content-card hierarchy, semantic aura/glow, additive semantic edge, charts, page content, or financial/data behavior.
+9. **No opportunistic cleanup.** Anything outside the global header/navigation scope belongs to a later phase.
+10. **Closure requires evidence.** Source regression matrix first; typecheck, tests, and production build are the final external gate before calling Phase 9 CI-clean.
+
+#### Implemented closure matrix
+
+- all three navigation groups and all seven destinations are frozen;
+- every global command ID and callback owner is frozen;
+- Add Trade / Scan Receipt priority is frozen;
+- keyboard navigation, active `aria-current`, focus transfer, active-item scroll-into-view, overflow fades, and stale-scroll recovery are frozen;
+- mobile two-tier / three-zone command architecture, <=359px density guard, 44px targets, short-landscape isolation, and safe areas are frozen;
+- desktop 1024–1279 compaction, 1280+ full labels, 2XL contextual labels, and the widened 100rem desktop header shell are frozen;
+- Alerts / Sync / Sheets status vocabulary and reduced-motion behavior are frozen;
+- Data & Tools body portal and viewport clamping are frozen;
+- Phase 8 semantic/material markers are explicitly protected and financial WIN/LOSS semantics are forbidden on header chrome;
+- dedicated `Phase99HeaderClosure.test.ts` covers the cross-phase acceptance matrix.
+
+#### Final gate
+
+Run:
+- typecheck;
+- full test suite;
+- production build.
+
+Until that external runner executes against the connector-written HEAD, Phase 9 is **source-frozen but not labeled CI-clean**.
 
 ## Global button-language rule
 

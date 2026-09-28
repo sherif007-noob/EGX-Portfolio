@@ -435,7 +435,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               </div>
 
               {/* Stats details */}
-              <div className="premium-subpanel grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-xl">
+              <div className="premium-subpanel premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs py-2 px-3 rounded-xl" data-hierarchy="h4">
                 <div>
                   <span className="premium-type-metric-label block">Shares</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">{pos.shares.toLocaleString()}</span>

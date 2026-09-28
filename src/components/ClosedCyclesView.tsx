@@ -491,7 +491,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           return (
             <div
               key={cycle.id}
-              className={`premium-card premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 rounded-2xl border ${
+              className={`premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 rounded-2xl border ${
                 isWin
                   ? 'premium-glow-win'
                   : isLoss

@@ -42,7 +42,7 @@ describe('Phase 10.4 card hierarchy and surface consistency', () => {
 
   it('uses one H4 subpanel family for the five Cash reconciliation steps', () => {
     const cash = readRelative('./CashBalanceView.tsx');
-    const auditStart = cash.indexOf('Capital Ledger & Cash Balance Audit');
+    const auditStart = cash.indexOf('Capital Ledger &amp; Cash Balance Audit');
     const historyStart = cash.indexOf('Cash Transaction History', auditStart);
     const audit = cash.slice(auditStart, historyStart > auditStart ? historyStart : auditStart + 12000);
 

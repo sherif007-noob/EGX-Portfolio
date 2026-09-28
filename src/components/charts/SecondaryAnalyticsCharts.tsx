@@ -47,6 +47,7 @@ interface SecondaryAnalyticsChartsProps {
   entranceReady?: boolean;
   tooltipsEnabled?: boolean;
   onChartInteraction?: React.PointerEventHandler<HTMLDivElement>;
+  hierarchyLevel?: 'h2' | 'h3';
 }
 
 function formatDailyLabel(value: string): string {
@@ -109,10 +110,12 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
   entranceReady = true,
   tooltipsEnabled = true,
   onChartInteraction,
+  hierarchyLevel = 'h2',
 }) => {
   const drawdownGradientId = useChartResourceId('secondary-drawdown');
   const feesGradientId = useChartResourceId('secondary-fees');
   const reducedMotion = useAnalyticsReducedMotion();
+  const surfaceHierarchyClass = hierarchyLevel === 'h3' ? 'premium-hierarchy-h3' : 'premium-hierarchy-h2';
   const secondary = useMemo(
     () => buildSecondaryAnalytics(transactions, historicalPrices, intradayPrices, result),
     [transactions, historicalPrices, intradayPrices, result],
@@ -170,7 +173,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div
-          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2"
+          className={`premium-panel premium-secondary-chart-card ${surfaceHierarchyClass} rounded-2xl p-4 sm:p-5 space-y-4`} data-hierarchy={hierarchyLevel}
           style={{ '--secondary-chart-rgb': '244 63 94' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -274,7 +277,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
         </div>
 
         <div
-          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 rounded-2xl p-4 sm:p-5 space-y-4" data-hierarchy="h2"
+          className={`premium-panel premium-secondary-chart-card ${surfaceHierarchyClass} rounded-2xl p-4 sm:p-5 space-y-4`} data-hierarchy={hierarchyLevel}
           style={{ '--secondary-chart-rgb': '245 158 11' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -364,7 +367,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
         </div>
 
         <div
-          className="premium-panel premium-secondary-chart-card premium-hierarchy-h2 space-y-4 rounded-2xl p-4 sm:p-5 xl:col-span-2" data-hierarchy="h2"
+          className={`premium-panel premium-secondary-chart-card ${surfaceHierarchyClass} space-y-4 rounded-2xl p-4 sm:p-5 xl:col-span-2`} data-hierarchy={hierarchyLevel}
           style={{ '--secondary-chart-rgb': '6 182 212' } as React.CSSProperties}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

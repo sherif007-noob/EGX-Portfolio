@@ -443,7 +443,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         {/* Audit Line-by-Line Breakdown Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           {/* 1. Net Capital Inflow */}
-          <div className="premium-subpanel p-3 rounded-xl space-y-1">
+          <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl space-y-1" data-hierarchy="h4">
             <span className="premium-type-metric-label block">
               1. Net Capital Deposited
             </span>
@@ -483,7 +483,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </div>
 
           {/* 4. Audited Available Cash */}
-          <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-1">
+          <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl space-y-1" data-hierarchy="h4">
             <span className="premium-type-metric-label block text-emerald-300">
               4. True Liquid Cash
             </span>
@@ -494,7 +494,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </div>
 
           {/* 5. True Total Portfolio NAV */}
-          <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/40 space-y-1">
+          <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl space-y-1" data-hierarchy="h4">
             <span className="premium-type-metric-label block text-blue-300">
               5. True Portfolio NAV
             </span>

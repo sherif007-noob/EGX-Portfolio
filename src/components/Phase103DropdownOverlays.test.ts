@@ -68,7 +68,10 @@ describe('Phase 10.3 dropdowns, menus, popovers and overlays', () => {
 
     for (const source of [select, addTrade, chart]) {
       expect(source).toContain('premium-dropdown');
-      expect(source).toContain('premium-menu-item');
+      expect(
+        source.includes('premium-menu-item') ||
+          source.includes('PREMIUM_PRIMITIVE_CLASS.menuItem'),
+      ).toBe(true);
     }
   });
 

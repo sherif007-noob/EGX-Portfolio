@@ -454,7 +454,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </div>
 
           {/* 2. Open Positions Cost Outlay */}
-          <div className="premium-subpanel p-3 rounded-xl space-y-1">
+          <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl space-y-1" data-hierarchy="h4">
             <span className="premium-type-metric-label block">
               2. Open Positions Cost Basis
             </span>
@@ -465,7 +465,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
           </div>
 
           {/* 3. Realized P&L */}
-          <div className="premium-subpanel p-3 rounded-xl space-y-1">
+          <div className="premium-subpanel premium-hierarchy-h4 p-3 rounded-xl space-y-1" data-hierarchy="h4">
             <span className="premium-type-metric-label block">
               3. Closed Cycles Net P&amp;L
             </span>

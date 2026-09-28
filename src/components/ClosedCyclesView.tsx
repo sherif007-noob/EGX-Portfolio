@@ -604,7 +604,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               {/* Core Averaged Prices & Execution Metrics (User Requested Highlight) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 py-3.5 text-xs">
                 {/* Total Shares */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Total Cycle Shares</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
                     {cycle.shares.toLocaleString()}
@@ -613,7 +613,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Average Buying Price */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Avg. Buying Price</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
                     {formatEgp(cycle.weightedAvgBuyPrice)} EGP
@@ -624,7 +624,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Average Selling Price */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Avg. Selling Price</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-purple-400">
                     {formatEgp(cycle.weightedAvgSellPrice)} EGP
@@ -635,7 +635,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Capital Outlay */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Total Invested Outlay</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-200">
                     {formatEgp(cycle.netOutlay)} EGP
@@ -644,7 +644,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Total Net Proceeds */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Net Realized Proceeds</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">
                     {formatEgp(cycle.netProceeds)} EGP
@@ -653,7 +653,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                 </div>
 
                 {/* Cycle Duration & Dates */}
-                <div className="premium-subpanel p-2.5 rounded-xl">
+                <div className="premium-subpanel premium-hierarchy-h4 p-2.5 rounded-xl" data-hierarchy="h4">
                   <span className="premium-type-metric-label block">Cycle Duration</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-300 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -687,7 +687,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
               {/* Expanded Multi-Phase Execution Breakdown */}
               <ExpandPresence isOpen={isExpanded} className="mt-3.5">
-                <div className="premium-inset-glass p-3.5 rounded-xl space-y-3">
+                <div className="premium-inset-glass premium-hierarchy-h4 p-3.5 rounded-xl space-y-3" data-hierarchy="h4">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
                     <span className="flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-purple-400" />

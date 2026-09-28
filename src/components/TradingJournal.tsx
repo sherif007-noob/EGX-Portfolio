@@ -862,7 +862,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Row 2: Detailed Transaction Attributes Grid */}
-              <div className="premium-inset-glass grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs">
+              <div className="premium-inset-glass premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs" data-hierarchy="h4">
                 <div>
                   <span className="premium-type-metric-label block">Transaction Shares</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">

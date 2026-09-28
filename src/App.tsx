@@ -996,7 +996,10 @@ export default function App() {
 
         {/* Ledger Reconciliation Alert if transactions exist but positions/closed cycles are empty */}
         {transactions.length > 0 && positions.length === 0 && (
-          <div className="premium-glass p-4 rounded-xl border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div
+            className="premium-panel premium-hierarchy-h4 premium-pad-h4 rounded-xl border-blue-500/35 text-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+            data-hierarchy="h4"
+          >
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping shrink-0" />
               <span>
@@ -1026,16 +1029,19 @@ export default function App() {
         >
         {activeTab === 'overview' && (
           <div className="premium-flow-major">
-            <div className="premium-flow-control">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="premium-type-section-title">
-                  Active Stock Positions ({positions.length})
-                </h2>
+            <section className="premium-flow-control" data-overview-section="positions-preview">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="premium-type-section-title">Active Stock Positions</h2>
+                  <p className="premium-type-helper mt-0.5">
+                    {positions.length} active holding{positions.length === 1 ? '' : 's'} · compact portfolio snapshot
+                  </p>
+                </div>
                 <button
                   onClick={() => handleTabChange('positions')}
-                  className="premium-action premium-action-primary w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
+                  className="premium-action premium-action-priority-secondary w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
                 >
-                  View Full Table →
+                  Open Positions →
                 </button>
               </div>
               <PositionsTable
@@ -1052,8 +1058,10 @@ export default function App() {
                   setSelectedTickerForTrade(null);
                   setIsAddTradeModalOpen(true);
                 }}
+                variant="overview"
+                overviewLimit={4}
               />
-            </div>
+            </section>
 
             {/* Unified portfolio analytics */}
             <PerformanceTimeframeChart
@@ -1064,6 +1072,7 @@ export default function App() {
               currentCashBalance={cashBalance}
               historicalLoading={historicalAnalyticsLoading}
               entranceReady={settledTab === activeTab}
+              visualContext="overview"
             />
           </div>
         )}

@@ -56,6 +56,8 @@ interface PositionsTableProps {
   onAddNewTrade: () => void;
   onBuyMore: (position: Position) => void;
   onOpenPriceAlerts?: () => void;
+  variant?: 'full' | 'overview';
+  overviewLimit?: number;
 }
 
 export const PositionsTable: React.FC<PositionsTableProps> = ({
@@ -66,11 +68,14 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   onAddNewTrade,
   onBuyMore,
   onOpenPriceAlerts,
+  variant = 'full',
+  overviewLimit = 4,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
   const isDesktop = useDesktopLayout();
+  const isOverviewPreview = variant === 'overview';
 
   const changeSelectedSector = (next: string) => {
     if (next === selectedSector) return;
@@ -90,85 +95,100 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
     () => Array.from(new Set(positions.map((p) => p.sector))),
     [positions],
   );
+  const visiblePositions = isOverviewPreview
+    ? positions.slice(0, overviewLimit)
+    : filteredPositions;
+  const positionsMotionKey = isOverviewPreview
+    ? `overview-${positions.length}-${visiblePositions.length}`
+    : selectedSector;
+  const desktopColumnCount = isOverviewPreview ? 6 : 9;
+  const hasHiddenPositions = isOverviewPreview && positions.length > visiblePositions.length;
 
   return (
-    <div className="premium-dense-workflow premium-flow-related">
-      <div className="premium-hierarchy-h3 premium-dense-context premium-pad-h3 premium-gap-control flex items-center justify-between rounded-xl" data-hierarchy="h3">
-        <div>
-          <div className="premium-type-section-title">Open Positions</div>
-          <div className="premium-type-metadata mt-0.5">
-            {filteredPositions.length === positions.length
-              ? `${positions.length} active holdings`
-              : `${filteredPositions.length} of ${positions.length} holdings visible`}
+    <div
+      className={`premium-dense-workflow ${isOverviewPreview ? 'premium-flow-control' : 'premium-flow-related'}`}
+      data-positions-variant={variant}
+    >
+      {!isOverviewPreview && (
+        <>
+        <div className="premium-hierarchy-h3 premium-dense-context premium-pad-h3 premium-gap-control flex items-center justify-between rounded-xl" data-hierarchy="h3">
+          <div>
+            <div className="premium-type-section-title">Open Positions</div>
+            <div className="premium-type-metadata mt-0.5">
+              {filteredPositions.length === positions.length
+                ? `${positions.length} active holdings`
+                : `${filteredPositions.length} of ${positions.length} holdings visible`}
+            </div>
           </div>
+          <span className="premium-chip shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-300">
+            Live holdings
+          </span>
         </div>
-        <span className="premium-chip shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-300">
-          Live holdings
-        </span>
-      </div>
-
-      {/* Controls Bar: Search, Filter, and Add Position */}
-      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control relative z-30 flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl" data-hierarchy="h4">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ticker (e.g. COMI) or company..."
-              className="premium-field premium-dense-search w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
-            />
+  
+        {/* Controls Bar: Search, Filter, and Add Position */}
+        <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control relative z-30 flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl" data-hierarchy="h4">
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative w-full">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search ticker (e.g. COMI) or company..."
+                className="premium-field premium-dense-search w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900/75 text-slate-100 placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-cyan-500/60"
+              />
+            </div>
           </div>
-        </div>
-
-        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
-          {/* Sector filter */}
-          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <AnalyticsSelect
-              value={selectedSector}
-              onChange={(value) => changeSelectedSector(String(value))}
-              compact
-              ariaLabel="Filter positions by sector"
-              className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
-              options={[
-                { value: 'ALL', label: `All Sectors (${positions.length})` },
-                ...sectors.map((sec) => ({ value: sec, label: sec })),
-              ]}
-            />
+  
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-nowrap">
+            {/* Sector filter */}
+            <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <AnalyticsSelect
+                value={selectedSector}
+                onChange={(value) => changeSelectedSector(String(value))}
+                compact
+                ariaLabel="Filter positions by sector"
+                className="w-full min-w-0 sm:w-auto sm:min-w-[170px]"
+                options={[
+                  { value: 'ALL', label: `All Sectors (${positions.length})` },
+                  ...sectors.map((sec) => ({ value: sec, label: sec })),
+                ]}
+              />
+            </div>
+  
+            <button
+              onClick={onAddNewTrade}
+              className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold sm:ml-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Trade</span>
+            </button>
           </div>
-
-          <button
-            onClick={onAddNewTrade}
-            className="premium-action premium-action-primary premium-shimmer-border flex shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold sm:ml-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Trade</span>
-          </button>
-        </div>
-      </div>
+  
+        </>
+      )}
 
       {/* Desktop Table View */}
       {isDesktop && (
-      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results hidden lg:block">
+      <MotionSwap motionKey={positionsMotionKey} variant="state" className="premium-positions-results hidden lg:block">
       <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data overflow-x-auto overscroll-x-contain rounded-2xl" data-hierarchy="h5">
-        <table className="w-full min-w-[1080px] text-left text-xs border-collapse">
+        <table className={`w-full ${isOverviewPreview ? 'min-w-[760px]' : 'min-w-[1080px]'} text-left text-xs border-collapse`}>
           <thead>
             <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold">
               <th className="py-3 px-4">Ticker &amp; Security</th>
-              <th className="py-3 px-3">Sector</th>
+              {!isOverviewPreview && <th className="py-3 px-3">Sector</th>}
               <th className="py-3 px-3 text-right">Shares</th>
               <th className="py-3 px-3 text-right">Avg Buy (EGP)</th>
               <th className="py-3 px-3 text-right">Current Price</th>
               <th className="py-3 px-3 text-right">Market Value</th>
               <th className="py-3 px-3 text-right">Unrealized P&amp;L</th>
-              <th className="py-3 px-3 text-center">Targets / SL</th>
-              <th className="py-3 px-4 text-center">Actions</th>
+              {!isOverviewPreview && <th className="py-3 px-3 text-center">Targets / SL</th>}
+              {!isOverviewPreview && <th className="py-3 px-4 text-center">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-200">
-            {filteredPositions.map((pos) => {
+            {visiblePositions.map((pos) => {
               const totalCost = pos.shares * pos.avgBuyPrice;
               const effectivePrice = (pos.currentPrice && pos.currentPrice > 0)
                 ? pos.currentPrice
@@ -212,12 +232,13 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Sector */}
-                  <td className="py-3 px-3">
-                    <span className="premium-type-metadata text-slate-300 truncate block max-w-[130px]">
-                      {pos.sector}
-                    </span>
-                  </td>
+                  {!isOverviewPreview && (
+                    <td className="py-3 px-3">
+                      <span className="premium-type-metadata text-slate-300 truncate block max-w-[130px]">
+                        {pos.sector}
+                      </span>
+                    </td>
+                  )}
 
                   {/* Shares */}
                   <td className="py-3 px-3 text-right font-medium text-slate-200">
@@ -271,8 +292,10 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Targets & SL */}
-                  <td className="py-3 px-3 text-center">
+                  {!isOverviewPreview && (
+                    <>
+                      {/* Targets & SL */}
+                      <td className="py-3 px-3 text-center">
                     {(() => {
                       const current = pos.currentPrice || 0;
                       const target = pos.targetPrice || 0;
@@ -322,9 +345,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         </div>
                       );
                     })()}
-                  </td>
-
-                  {/* Action Buttons */}
+                      </td>
+                    </>
+                  )}
+                  {!isOverviewPreview && (
+                    <>
+                      {/* Action Buttons */}
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       {/* DCA / Buy More Button */}
@@ -363,16 +389,22 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </td>
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}
 
-            {filteredPositions.length === 0 && (
+            {visiblePositions.length === 0 && (
               <tr>
-                <td colSpan={9} className="premium-type-helper py-10 text-center text-slate-400">
-                  <p className="text-sm font-semibold">No stock positions match your filters.</p>
-                  <p className="text-xs text-slate-500 mt-1">Add a trade or clear the sector filter to see holdings.</p>
+                <td colSpan={desktopColumnCount} className="premium-type-helper py-10 text-center text-slate-400">
+                  <p className="text-sm font-semibold">
+                    {isOverviewPreview ? 'No open positions yet.' : 'No stock positions match your filters.'}
+                  </p>
+                  {!isOverviewPreview && (
+                    <p className="text-xs text-slate-500 mt-1">Add a trade or clear the sector filter to see holdings.</p>
+                  )}
                 </td>
               </tr>
             )}
@@ -384,14 +416,14 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 
       {/* Mobile Card Layout */}
       {!isDesktop && (
-      <MotionSwap motionKey={selectedSector} variant="state" className="premium-positions-results premium-flow-control lg:hidden">
-        {filteredPositions.map((pos) => {
+      <MotionSwap motionKey={positionsMotionKey} variant="state" className="premium-positions-results premium-flow-control lg:hidden">
+        {visiblePositions.map((pos) => {
           const totalCost = pos.shares * pos.avgBuyPrice;
           const currentValue = pos.shares * pos.currentPrice;
           const pnlEgp = currentValue - totalCost;
           const pnlPercent = totalCost > 0 ? (pnlEgp / totalCost) * 100 : 0;
           const isProfit = pnlEgp > 0;
-              const isLoss = pnlEgp < 0;
+          const isLoss = pnlEgp < 0;
 
           return (
             <div
@@ -462,111 +494,130 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                 </div>
               </div>
 
-              {/* Targets / SL */}
-              {(pos.targetPrice || pos.stopLoss) ? (
-                <div className="flex items-center gap-3 text-xs flex-wrap">
-                  {pos.targetPrice ? (
-                    <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
-                      pos.currentPrice >= pos.targetPrice
-                        ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 animate-pulse'
-                        : 'text-emerald-400 bg-emerald-950/30'
-                    }`}>
-                      <Target className="w-3.5 h-3.5" />
-                      <span>{pos.currentPrice >= pos.targetPrice ? '🎯 HIT:' : 'Target:'} {pos.targetPrice.toFixed(2)} EGP</span>
-                    </div>
-                  ) : null}
-                  {pos.stopLoss ? (
-                    <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
-                      pos.currentPrice <= pos.stopLoss
-                        ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 animate-pulse'
-                        : 'text-rose-400 bg-rose-950/30'
-                    }`}>
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      <span>{pos.currentPrice <= pos.stopLoss ? '🛑 BREACH:' : 'Stop:'} {pos.stopLoss.toFixed(2)} EGP</span>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="premium-type-metadata">
-                  <button
-                    onClick={() => onEditPosition(pos)}
-                    className="premium-action premium-action-warning w-full justify-center px-2 py-1 rounded-lg text-[10px] sm:w-auto"
-                  >
-                    + Set Target &amp; Stop-Loss Alerts
-                  </button>
-                </div>
+              {!isOverviewPreview && (
+                <>
+                {/* Targets / SL */}
+                {(pos.targetPrice || pos.stopLoss) ? (
+                  <div className="flex items-center gap-3 text-xs flex-wrap">
+                    {pos.targetPrice ? (
+                      <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
+                        pos.currentPrice >= pos.targetPrice
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 animate-pulse'
+                          : 'text-emerald-400 bg-emerald-950/30'
+                      }`}>
+                        <Target className="w-3.5 h-3.5" />
+                        <span>{pos.currentPrice >= pos.targetPrice ? '🎯 HIT:' : 'Target:'} {pos.targetPrice.toFixed(2)} EGP</span>
+                      </div>
+                    ) : null}
+                    {pos.stopLoss ? (
+                      <div className={`flex items-center gap-1 font-mono px-2 py-0.5 rounded ${
+                        pos.currentPrice <= pos.stopLoss
+                          ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 animate-pulse'
+                          : 'text-rose-400 bg-rose-950/30'
+                      }`}>
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <span>{pos.currentPrice <= pos.stopLoss ? '🛑 BREACH:' : 'Stop:'} {pos.stopLoss.toFixed(2)} EGP</span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="premium-type-metadata">
+                    <button
+                      onClick={() => onEditPosition(pos)}
+                      className="premium-action premium-action-warning w-full justify-center px-2 py-1 rounded-lg text-[10px] sm:w-auto"
+                    >
+                      + Set Target &amp; Stop-Loss Alerts
+                    </button>
+                  </div>
+                )}
+  
+                  </>
               )}
 
-              {/* Action row */}
-              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)_2.75rem_2.75rem] items-center gap-1.5 pt-2 border-t border-slate-800/80">
-                <button
-                  onClick={() => onBuyMore(pos)}
-                  className="premium-action premium-action-primary min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
-                >
-                  <Layers className="w-3.5 h-3.5 shrink-0 text-blue-400" />
-                  <span className="sm:hidden">DCA</span>
-                  <span className="hidden sm:inline">Buy More (DCA)</span>
-                </button>
-                <button
-                  onClick={() => onSellPosition(pos)}
-                  className="premium-action premium-action-warning min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
-                >
-                  <DollarSign className="w-3.5 h-3.5 shrink-0" />
-                  <span>Sell</span>
-                </button>
-                <button
-                  onClick={() => onEditPosition(pos)}
-                  className="premium-icon-action premium-icon-edit w-11 h-11 p-0 rounded-lg"
-                  aria-label={`Edit ${pos.ticker} position`}
-                  title="Edit position"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setPositionToDelete(pos)}
-                  className="premium-icon-action premium-icon-delete w-11 h-11 p-0 rounded-lg"
-                  aria-label={`Delete ${pos.ticker} position`}
-                  title="Delete position"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {!isOverviewPreview && (
+                <>
+                {/* Action row */}
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)_2.75rem_2.75rem] items-center gap-1.5 pt-2 border-t border-slate-800/80">
+                  <button
+                    onClick={() => onBuyMore(pos)}
+                    className="premium-action premium-action-primary min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                  >
+                    <Layers className="w-3.5 h-3.5 shrink-0 text-blue-400" />
+                    <span className="sm:hidden">DCA</span>
+                    <span className="hidden sm:inline">Buy More (DCA)</span>
+                  </button>
+                  <button
+                    onClick={() => onSellPosition(pos)}
+                    className="premium-action premium-action-warning min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                  >
+                    <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                    <span>Sell</span>
+                  </button>
+                  <button
+                    onClick={() => onEditPosition(pos)}
+                    className="premium-icon-action premium-icon-edit w-11 h-11 p-0 rounded-lg"
+                    aria-label={`Edit ${pos.ticker} position`}
+                    title="Edit position"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPositionToDelete(pos)}
+                    className="premium-icon-action premium-icon-delete w-11 h-11 p-0 rounded-lg"
+                    aria-label={`Delete ${pos.ticker} position`}
+                    title="Delete position"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                  </>
+              )}
             </div>
           );
         })}
 
-        {filteredPositions.length === 0 && (
+        {visiblePositions.length === 0 && (
           <div className="premium-inset-glass p-8 text-center rounded-xl text-slate-400 text-sm">
-            No stock positions match your filters.
+            {isOverviewPreview ? 'No open positions yet.' : 'No stock positions match your filters.'}
           </div>
         )}
       </MotionSwap>
       )}
 
-      {/* Confirm Delete Position Modal */}
-      <ConfirmDeleteModal
-        isOpen={!!positionToDelete}
-        onClose={() => setPositionToDelete(null)}
-        onConfirm={() => {
-          if (positionToDelete) {
-            onDeletePosition(positionToDelete.id);
-            setPositionToDelete(null);
+      {hasHiddenPositions && (
+        <div className="premium-type-helper text-right">
+          Showing {visiblePositions.length} of {positions.length} active holdings
+        </div>
+      )}
+
+      {!isOverviewPreview && (
+        <>
+        {/* Confirm Delete Position Modal */}
+        <ConfirmDeleteModal
+          isOpen={!!positionToDelete}
+          onClose={() => setPositionToDelete(null)}
+          onConfirm={() => {
+            if (positionToDelete) {
+              onDeletePosition(positionToDelete.id);
+              setPositionToDelete(null);
+            }
+          }}
+          title="Delete Open Position"
+          description="Are you sure you want to delete this open position? This will remove the position holding from your portfolio dashboard."
+          itemDetails={
+            positionToDelete
+              ? {
+                  ticker: positionToDelete.ticker,
+                  type: 'OPEN POSITION',
+                  shares: positionToDelete.shares,
+                  amount: `${(positionToDelete.shares * positionToDelete.avgBuyPrice).toFixed(2)} EGP Cost Basis`,
+                  date: positionToDelete.buyDate,
+                }
+              : undefined
           }
-        }}
-        title="Delete Open Position"
-        description="Are you sure you want to delete this open position? This will remove the position holding from your portfolio dashboard."
-        itemDetails={
-          positionToDelete
-            ? {
-                ticker: positionToDelete.ticker,
-                type: 'OPEN POSITION',
-                shares: positionToDelete.shares,
-                amount: `${(positionToDelete.shares * positionToDelete.avgBuyPrice).toFixed(2)} EGP Cost Basis`,
-                date: positionToDelete.buyDate,
-              }
-            : undefined
-        }
-      />
+        />
+          </>
+      )}
     </div>
   );
 };

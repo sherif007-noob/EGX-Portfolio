@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateDDMMYYYY, dmyToIso, formatDateVerbose } from '../utils/dateUtils';
+import { PREMIUM_PRIMITIVE_CLASS } from './VisualPrimitives';
 
 interface DateInputProps {
   id?: string;
@@ -96,7 +97,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           onBlur={handleBlur}
           placeholder="DD/MM/YYYY (e.g. 08/09/2026)"
           required={required}
-          className="premium-field w-full px-3 py-2 pr-14 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono text-xs focus:outline-none focus:border-cyan-500/60 placeholder-slate-500 tracking-wider"
+          className={`${PREMIUM_PRIMITIVE_CLASS.field} w-full px-3 py-2 pr-14 rounded-xl bg-slate-900/72 border border-slate-700/80 text-white font-mono text-xs focus:outline-none focus:border-cyan-500/60 placeholder-slate-500 tracking-wider`}
         />
 
         {/* Hidden native date picker with trigger button */}
@@ -114,7 +115,7 @@ export const DateInput: React.FC<DateInputProps> = ({
             type="button"
             tabIndex={-1}
             aria-hidden="true"
-            className="premium-icon-action pointer-events-none flex h-9 w-9 items-center justify-center rounded-lg p-0"
+            className={`${PREMIUM_PRIMITIVE_CLASS.iconAction} pointer-events-none flex h-9 w-9 items-center justify-center rounded-lg p-0`}
           >
             <Calendar className="w-3.5 h-3.5 text-slate-300" />
           </button>

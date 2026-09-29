@@ -5803,3 +5803,83 @@ body {
     margin-inline: 0.65rem;
   }
 }
+
+
+/* Phase 10.9 — cross-app responsive containment.
+ * These rules are layout-only. They must not own glass, aura, semantic color,
+ * hierarchy weight, or chart behavior.
+ */
+.premium-motion-swap-shell,
+.premium-motion-swap,
+.premium-tab-stage {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.premium-table-shell,
+.premium-report-table,
+.premium-chart-stage,
+.premium-chart-plot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 320px is the only supported width where the Overview financial summary is
+ * too narrow for two side-by-side money cards. Keep 359px+ composition intact.
+ */
+@media (max-width: 359px) {
+  .premium-overview-primary-grid,
+  .premium-overview-support-grid,
+  .premium-report-summary-band {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .premium-overview-primary-grid > *,
+  .premium-overview-support-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  .premium-overview-today {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .premium-overview-today > :last-child {
+    align-self: flex-start;
+  }
+}
+
+/* Width-only mobile media queries do not catch modern phones in landscape.
+ * Extend safe-area protection to overlays without changing the Phase 9 header.
+ */
+@supports (padding-left: max(0px)) {
+  @media (orientation: landscape) and (max-height: 520px) {
+    .premium-modal-backdrop {
+      padding:
+        max(0.5rem, env(safe-area-inset-top))
+        max(0.75rem, env(safe-area-inset-right))
+        max(0.5rem, env(safe-area-inset-bottom))
+        max(0.75rem, env(safe-area-inset-left));
+    }
+
+    .premium-fixed-overlay {
+      right: max(1rem, env(safe-area-inset-right)) !important;
+      max-width: min(
+        var(--premium-fixed-overlay-max),
+        calc(
+          100vw
+          - max(0.75rem, env(safe-area-inset-left))
+          - max(0.75rem, env(safe-area-inset-right))
+        )
+      );
+    }
+
+    .premium-fixed-bottom-safe {
+      bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    }
+
+    .premium-fixed-bottom-above-status {
+      bottom: max(4.75rem, calc(env(safe-area-inset-bottom) + 4.25rem)) !important;
+    }
+  }
+}

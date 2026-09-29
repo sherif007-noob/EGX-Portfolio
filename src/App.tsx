@@ -58,6 +58,7 @@ import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 
 // Phase 10.8 exact-head validation trigger: complete modal/workflow consistency runtime source.
+// Phase 10.9 exact-head validation trigger: responsive cross-app containment runtime source.
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [settledTab, setSettledTab] = useState<NavigationTab>('overview');

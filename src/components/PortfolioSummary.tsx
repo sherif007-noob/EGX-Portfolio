@@ -73,7 +73,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
     <div className="premium-hierarchy-h0 premium-flow-related" data-hierarchy="h0">
       {/* Phase 8.1 — portfolio hierarchy: hero -> primary support -> secondary support. */}
       <div className="premium-flow-control">
-        <div className="premium-gap-control grid grid-cols-2 md:grid-cols-6">
+        <div className="premium-overview-primary-grid premium-gap-control grid grid-cols-2 md:grid-cols-6">
           {/* H1 — Total Portfolio Value */}
           <div
             className={`premium-card premium-hero-card premium-semantic-hero premium-hierarchy-h1 premium-overview-hero premium-pad-h1 col-span-2 rounded-2xl md:col-span-2 ${dayGlowClass}`}
@@ -200,7 +200,7 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
         </div>
 
         {/* H3 — supporting metrics */}
-        <div className="premium-gap-control grid grid-cols-2 sm:grid-cols-3">
+        <div className="premium-overview-support-grid premium-gap-control grid grid-cols-2 sm:grid-cols-3">
           <div
             className={`premium-card premium-semantic-card premium-hierarchy-h3 premium-pad-h3 flex flex-col justify-between rounded-2xl ${realizedGlowClass}`}
             data-hierarchy="h3"

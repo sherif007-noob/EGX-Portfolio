@@ -1078,23 +1078,16 @@ export default function App() {
         )}
 
         {activeTab === 'positions' && (
-          <div className="premium-flow-related">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="premium-type-section-title">EGX Portfolio Positions</h2>
-                <p className="premium-type-helper mt-0.5">
-                  Track equities, real-time unrealized gains, and price targets.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSelectedTickerForTrade(null);
-                  setIsAddTradeModalOpen(true);
-                }}
-                className="premium-action premium-action-primary premium-shimmer-border hidden px-3.5 py-1.5 rounded-lg text-xs font-semibold sm:inline-flex"
-              >
-                + Add Position
-              </button>
+          <section
+            className="premium-hierarchy-h0 premium-flow-related"
+            data-hierarchy="h0"
+            data-page="positions"
+          >
+            <div className="min-w-0">
+              <h2 className="premium-type-section-title">EGX Portfolio Positions</h2>
+              <p className="premium-type-helper mt-0.5">
+                Track holdings, unrealized performance, price targets, and position actions.
+              </p>
             </div>
             <PositionsTable
               positions={positions}
@@ -1111,7 +1104,7 @@ export default function App() {
                 setIsAddTradeModalOpen(true);
               }}
             />
-          </div>
+          </section>
         )}
 
         {activeTab === 'closed_cycles' && (

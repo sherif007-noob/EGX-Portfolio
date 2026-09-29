@@ -38,7 +38,7 @@ When a historical phase log conflicts with one of these about current behavior, 
 | Document | State |
 | --- | --- |
 | [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) | **master sequencing authority** |
-| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | active; completed through 10.7C |
+| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | active; 10.8 source-complete, 10.9 next |
 | [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | scheduled as master-roadmap Stage 5; implementation deferred |
 | [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | migration/rollout reference; remaining promotion evidence still relevant |
 

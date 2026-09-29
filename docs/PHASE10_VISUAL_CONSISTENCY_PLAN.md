@@ -2,9 +2,11 @@
 
 ## Status
 
-**PHASE 10.7C — CLOSED CYCLES PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Closed Cycles now has explicit H0 page ownership, H2 page context, H3 summary support, H4 controls/details, and H5 semantic cycle records; realized summary cards own canonical semantic roles, structural duration/proceeds accents no longer borrow WIN/LOSS colors, expansion state follows the visible result set, and no-data/filter-empty states are distinct. Exact-head Intraday 1m Migration Smoke #36525056735 passed end-to-end; full generic Quality Checks/render validation remain pending.**
+**PHASE 10.8 — MODAL & WORKFLOW CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. All 13 inventoried workflow owners now use the shared PremiumModalMotion contract; modal rendering is body-portaled, page scrolling is locked while open, visualViewport geometry protects iOS/keyboard containment, backdrop/panel nested-scroll traps are removed, frame workflows retain dedicated internal scroll bodies, PWA Install has been migrated from its hand-built portal, and close affordances are explicitly labeled. Exact-head Intraday 1m Migration Smoke #36643635140 passed end-to-end on runtime head `d3395be5`; full generic Quality Checks and rendered-device validation remain pending.**
 
-Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.\n\n**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is 10.8. Business/data/accounting work from later roadmap stages must not be mixed into 10.8–10.10.
+Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
+
+**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is 10.9. Business/data/accounting work from later roadmap stages must not be mixed into 10.9–10.10.
 
 The purpose of Phase 10 is **consistency, not redesign**.
 
@@ -2431,16 +2433,200 @@ Representative commits:
 
 ## 10.8 — Modal & workflow consistency
 
-Audit every modal/workflow listed above.
+**Status: IMPLEMENTED AT SOURCE LEVEL — exact-head smoke passed; full generic Quality Checks/render validation pending.**
 
-Gate:
+All workflows from the Phase 10.0 inventory were audited:
 
-- viewport safety;
-- long-content scrolling;
-- form-control consistency;
-- destructive/primary hierarchy;
-- mobile keyboard behavior where relevant;
-- no workflow/business logic changes.
+- Add Trade;
+- Edit Position;
+- Sell Position;
+- Quick Cash;
+- Google Sheets;
+- Backup & Reconcile;
+- Delete confirmation;
+- Receipt scanner;
+- Price Alerts;
+- Schema sync;
+- Transaction edit;
+- Cash edit;
+- PWA Install.
+
+### Findings
+
+1. **The two existing modal structures are both valid and remain intentionally separate.**
+   - small/medium forms use `premium-modal-viewport`;
+   - large workflows use `premium-modal-frame + premium-modal-scroll-body`.
+   10.8 does not flatten these into one layout.
+
+2. **Scroll ownership was inconsistent.**
+   Several viewport modals allowed both the backdrop and the panel to scroll. On touch devices this creates two competing vertical scroll regions and is consistent with the previously observed unreachable-header / spring-back behavior.
+
+3. **Portal ownership was inconsistent.**
+   Transaction Edit and Cash Edit manually portaled themselves while most standalone modals relied on their render location. The shared modal primitive therefore did not actually guarantee body-level overlay ownership.
+
+4. **Mobile keyboard containment relied only on CSS viewport units.**
+   The modal system did not explicitly track `window.visualViewport`, so the visible viewport after the iOS keyboard opens was not a first-class geometry input.
+
+5. **PWA Install bypassed the shared modal primitive.**
+   It hand-built its own backdrop + `createPortal` frame even though it belongs to the same modal family.
+
+6. **Close-affordance accessibility was inconsistent.**
+   Several icon-only close buttons had no explicit accessible label.
+
+7. **Action hierarchy was already substantially correct.**
+   - Add/Edit actions remain primary;
+   - Sell remains warning;
+   - destructive confirmation remains danger;
+   - Cancel remains secondary.
+   No semantic action recoloring was required.
+
+8. **Form-control ownership was already acceptable.**
+   Existing workflows reuse `premium-field`, `NumberStepperInput`, `DateInput`, `AnalyticsSelect`, canonical filter/selector primitives and the accepted portaled ticker dropdown. 10.8 therefore avoided unnecessary control restyling.
+
+### Implementation
+
+#### A. PremiumModalMotion now owns the overlay contract
+
+`PremiumModalMotion` now:
+
+- portals the complete modal tree to `document.body`;
+- exposes `role="dialog"` + `aria-modal="true"`;
+- retains the caller's explicit dialog label;
+- uses a reference-counted body scroll lock while modals are open;
+- restores the previously focused element on close;
+- tracks `window.visualViewport` resize/scroll geometry;
+- publishes the actual visible height through `--premium-modal-visual-height`.
+
+This removes dependency on transformed/tab ancestors for fixed positioning.
+
+#### B. One vertical scroll owner
+
+Every audited workflow now uses:
+
+`premium-modal-backdrop-panel-scroll`
+
+The backdrop itself does not vertically scroll.
+
+For viewport forms:
+
+`backdrop -> premium-modal-viewport (scroll owner)`
+
+For framed workflows:
+
+`backdrop -> premium-modal-frame -> premium-modal-scroll-body (scroll owner)`
+
+This removes nested backdrop/panel scroll competition.
+
+#### C. Keyboard and safe-area containment
+
+The modal height contract now uses the actual Visual Viewport height when available, while preserving the existing `100vh/100dvh` fallback.
+
+The mobile contract still subtracts top/bottom safe-area gutters.
+
+Scrollable modal owners also receive:
+
+- momentum touch scrolling;
+- contained overscroll;
+- scroll padding;
+- focused form-control scroll margins.
+
+This lets the browser reveal active fields/actions above the software keyboard without moving the page behind the modal.
+
+#### D. Embedded editors now use shared portal ownership
+
+Removed component-local `createPortal` ownership from:
+
+- `TradingJournal.tsx` Transaction Edit;
+- `CashBalanceView.tsx` Cash Edit.
+
+Both now use the same shared body-level modal primitive as the standalone workflows.
+
+#### E. PWA Install migrated to the shared shell
+
+`PWAInstallButton.tsx` no longer hand-builds its own portal/backdrop.
+
+It now uses:
+
+- `PremiumModalMotion`;
+- canonical frame + internal scroll-body;
+- the same viewport/keyboard/body-lock contract;
+- explicit dialog/close labeling.
+
+#### F. Close-button accessibility
+
+Icon-only close controls across the audited workflow family now have explicit labels, including Add Trade, Sell, Edit Position, Cash, Backup, Sheets, Alerts, Schema Sync, Receipt Scanner, Transaction Edit, Cash Edit and PWA Install.
+
+### Protected boundaries
+
+10.8 did **not** change:
+
+- BUY/SELL accounting;
+- cash mutation behavior;
+- Supabase persistence;
+- transaction reconciliation;
+- analytics calculations;
+- market-data behavior;
+- chart behavior;
+- dropdown geometry;
+- Phase 8 material/refraction semantics;
+- Phase 9 Header architecture.
+
+The known financial mutation issues remain intentionally scheduled for Stage 2 of the master roadmap.
+
+### Regression coverage
+
+Added:
+
+`src/components/Phase108ModalWorkflowConsistency.test.ts`
+
+The source contract protects:
+
+- shared body portal ownership;
+- dialog/aria-modal semantics;
+- body scroll lock;
+- Visual Viewport tracking;
+- single vertical scroll ownership;
+- frame + scroll-body preservation;
+- removal of component-local portals;
+- PWA Install migration;
+- accessible close affordances;
+- primary/warning/danger action hierarchy;
+- accounting/chart/material boundaries.
+
+### Source audit gate
+
+Final source sweep:
+
+- **13 / 13 workflow owners** use `PremiumModalMotion`;
+- **13 / 13** use the canonical backdrop panel-scroll contract;
+- no audited workflow retains a component-local modal `createPortal`;
+- all large framed workflows retain an internal `premium-modal-scroll-body`.
+
+### External validation
+
+Exact runtime head:
+
+`d3395be5`
+
+**Intraday 1m Migration Smoke #36643635140 — PASSED end-to-end**
+
+Passed stages:
+
+- dependency installation;
+- **TypeScript typecheck**;
+- focused intraday migration regression suite;
+- ACTF/NAPR/ORAS raw-1m rebuild path;
+- current session-relevant portfolio-universe sync.
+
+The new 10.8 source regression file is compiled by TypeScript on this head. The complete Vitest suite is still owned by the generic Quality Checks gate and will be run as part of final Phase 10 closure.
+
+Rendered phone/desktop/keyboard validation is not claimed by this source pass; it flows directly into 10.9 responsive parity and the later rendered-regression gate.
+
+Representative commits:
+
+- `83adade6` — shared body portal, Visual Viewport, one-scroll-owner contract, modal sweep and 10.8 regression contract;
+- `7c855450` — close-accessibility completion and exact-head runtime trigger;
+- `d3395be5` — PWA Install migration and final exact-head runtime source.
 
 ---
 

@@ -173,9 +173,9 @@ First remove or migrate that path ownership during a later closure pass. Then mo
 
 **Business/data behavior remains frozen throughout this stage.**
 
-Current completed point: **10.7C**.
+Current completed point: **10.8 — source complete; exact-head smoke passed.**
 
-## Pass 1.1 — Phase 10.8: modal & workflow consistency
+## Pass 1.1 — Phase 10.8: modal & workflow consistency — IMPLEMENTED AT SOURCE LEVEL
 
 Audit all user workflows, especially:
 

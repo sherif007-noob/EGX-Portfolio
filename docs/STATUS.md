@@ -10,7 +10,7 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-09-30  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Runtime code baseline audited:** `28afc7dc` — “Enable live sector cluster scanner”  
+**Current validated runtime head:** `d3395be5` — Phase 10.8 modal/workflow consistency  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -30,16 +30,31 @@ Completed through:
 
 - 10.7A Overview;
 - 10.7B Open Positions;
-- 10.7C Closed Cycles.
+- 10.7C Closed Cycles;
+- **10.8 Modal & workflow consistency — source complete, exact-head smoke passed.**
 
 Next:
 
-1. **10.8 — Modal & workflow consistency**
-2. **10.9 — Responsive cross-app parity**
-3. rendered browser regression baseline
-4. **10.10 — Visual regression closure**
+1. **10.9 — Responsive cross-app parity**
+2. rendered browser regression baseline
+3. **10.10 — Visual regression closure**
 
 Do not mix accounting/data behavior changes into these passes.
+
+---
+
+### Phase 10.8 validation
+
+Runtime head `d3395be5` passed **Intraday 1m Migration Smoke #36643635140** end-to-end:
+
+- TypeScript passed;
+- focused intraday regression suite passed;
+- ACTF/NAPR/ORAS rebuild path passed;
+- session-relevant portfolio-universe sync passed.
+
+10.8 standardized all 13 inventoried modal/workflow owners on the shared body-level modal contract, including Visual Viewport keyboard safety and one-scroll-owner behavior.
+
+Full generic Quality Checks and rendered device validation remain pending and are not represented as complete.
 
 ---
 
@@ -233,6 +248,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Phase 10.8 — Modal & workflow consistency.**
+**Phase 10.9 — Responsive cross-app parity.**
 
 After Phase 10.10: **Stage 2.1 — Canonical financial mutation executor.**

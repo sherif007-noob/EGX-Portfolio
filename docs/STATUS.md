@@ -10,7 +10,7 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-09-30  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `d3395be5` — Phase 10.8 modal/workflow consistency  
+**Current validated runtime head:** `74741fa9` — Phase 10.9 responsive cross-app parity  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -32,12 +32,12 @@ Completed through:
 - 10.7B Open Positions;
 - 10.7C Closed Cycles;
 - **10.8 Modal & workflow consistency — source complete, exact-head smoke passed.**
+- **10.9 Responsive cross-app parity — source complete, exact-head smoke passed.**
 
 Next:
 
-1. **10.9 — Responsive cross-app parity**
-2. rendered browser regression baseline
-3. **10.10 — Visual regression closure**
+1. **Rendered browser regression baseline**
+2. **10.10 — Visual regression closure**
 
 Do not mix accounting/data behavior changes into these passes.
 
@@ -55,6 +55,21 @@ Runtime head `d3395be5` passed **Intraday 1m Migration Smoke #36643635140** end-
 10.8 standardized all 13 inventoried modal/workflow owners on the shared body-level modal contract, including Visual Viewport keyboard safety and one-scroll-owner behavior.
 
 Full generic Quality Checks and rendered device validation remain pending and are not represented as complete.
+
+---
+
+### Phase 10.9 validation
+
+Runtime head `74741fa9` passed **Intraday 1m Migration Smoke #36647092353** end-to-end:
+
+- TypeScript passed;
+- focused intraday regression suite passed;
+- ACTF/NAPR/ORAS rebuild path passed;
+- session-relevant portfolio-universe sync passed.
+
+Source parity now explicitly covers the 320/359 narrow-phone tier, 390/430 phone layouts, short landscape, tablet, laptop, desktop and 2XL containment rules without reopening the frozen Header or chart behavior.
+
+The remaining visual evidence gap is intentional: **actual browser screenshots/render comparison**. That is the next pass.
 
 ---
 
@@ -248,6 +263,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Phase 10.9 — Responsive cross-app parity.**
+**Rendered browser regression baseline.**
 
-After Phase 10.10: **Stage 2.1 — Canonical financial mutation executor.**
+After that: **Phase 10.10 — Visual regression closure**, then **Stage 2.1 — Canonical financial mutation executor.**

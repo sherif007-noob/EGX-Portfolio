@@ -173,7 +173,7 @@ First remove or migrate that path ownership during a later closure pass. Then mo
 
 **Business/data behavior remains frozen throughout this stage.**
 
-Current completed point: **10.8 — source complete; exact-head smoke passed.**
+Current completed point: **10.9 — source complete; exact-head smoke passed.**
 
 ## Pass 1.1 — Phase 10.8: modal & workflow consistency — IMPLEMENTED AT SOURCE LEVEL
 
@@ -210,7 +210,7 @@ Source contract tests + rendered manual validation.
 
 ---
 
-## Pass 1.2 — Phase 10.9: responsive cross-app parity
+## Pass 1.2 — Phase 10.9: responsive cross-app parity — IMPLEMENTED AT SOURCE LEVEL
 
 Required widths:
 
@@ -246,7 +246,7 @@ No redesign.
 
 ---
 
-## Pass 1.3 — Rendered regression harness
+## Pass 1.3 — Rendered regression harness — NEXT
 
 Add a small Playwright/browser screenshot matrix after responsive parity is known-good.
 

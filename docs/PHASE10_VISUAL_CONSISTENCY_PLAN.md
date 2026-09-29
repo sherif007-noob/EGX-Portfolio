@@ -2,11 +2,11 @@
 
 ## Status
 
-**PHASE 10.8 — MODAL & WORKFLOW CONSISTENCY IMPLEMENTED AT SOURCE LEVEL. All 13 inventoried workflow owners now use the shared PremiumModalMotion contract; modal rendering is body-portaled, page scrolling is locked while open, visualViewport geometry protects iOS/keyboard containment, backdrop/panel nested-scroll traps are removed, frame workflows retain dedicated internal scroll bodies, PWA Install has been migrated from its hand-built portal, and close affordances are explicitly labeled. Exact-head Intraday 1m Migration Smoke #36643635140 passed end-to-end on runtime head `d3395be5`; full generic Quality Checks and rendered-device validation remain pending.**
+**PHASE 10.9 — RESPONSIVE CROSS-APP PARITY IMPLEMENTED AT SOURCE LEVEL. Motion/tab wrappers and dense table/chart shells now have explicit intrinsic-width containment without clipping semantic effects; the narrowest phone layout no longer forces high-value financial summaries into cramped two-column cards; short-landscape modals/toasts now respect left/right/bottom safe areas; the existing mobile-record, table-scroll, dropdown portal, chart-selector, modal, Header, and 2XL width contracts were audited and preserved. Exact-head Intraday 1m Migration Smoke #36647092353 passed end-to-end on runtime head `74741fa9`; the next pass is the rendered browser regression harness, so physical screenshot/device parity is not yet claimed.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
-**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is 10.9. Business/data/accounting work from later roadmap stages must not be mixed into 10.9–10.10.
+**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is the rendered browser regression harness, followed by 10.10. Business/data/accounting work from later roadmap stages must not be mixed into the remaining Phase 10 closure work.
 
 The purpose of Phase 10 is **consistency, not redesign**.
 
@@ -2632,6 +2632,8 @@ Representative commits:
 
 ## 10.9 — Responsive cross-app parity
 
+**Status: IMPLEMENTED AT SOURCE LEVEL — exact-head smoke passed; rendered screenshot/device validation moves to the next pass.**
+
 Representative widths:
 
 - 320;
@@ -2647,17 +2649,207 @@ Representative widths:
 - 1920;
 - 2560.
 
-Audit:
+### Source audit findings
 
-- page overflow;
-- menu clipping;
-- glow clipping;
-- modal containment;
-- control wrapping;
-- grid collapse;
-- nested scroll traps;
-- excessive 2XL stretching;
-- header regression only, without redesigning it.
+#### 1. Root page width was already bounded, but Motion result wrappers could still honor child min-content
+
+The application main container already uses:
+
+`w-full max-w-7xl`
+
+and the hierarchy flow primitives already declare `min-width: 0`.
+
+However the Motion-owned tab/result wrappers are themselves flex items in multiple flows. A wide descendant such as an intentionally `min-w-[1080px]` table can therefore contribute intrinsic width before its local scroller receives the overflow.
+
+10.9 adds layout-only containment to:
+
+- `premium-motion-swap-shell`;
+- `premium-motion-swap`;
+- `premium-tab-stage`.
+
+They now use:
+
+- `min-width: 0`;
+- `max-width: 100%`.
+
+No `overflow-x: hidden` or `overflow-x: clip` was added, because that would trade page overflow for clipped aura/glow.
+
+#### 2. Dense table/report/chart surfaces remain locally bounded
+
+The shared structural shells now explicitly use `min-width: 0; max-width: 100%`:
+
+- `premium-table-shell`;
+- `premium-report-table`;
+- `premium-chart-stage`;
+- `premium-chart-plot`.
+
+Existing component-level horizontal-scroll ownership remains unchanged.
+
+Verified source owners include:
+
+- Open Positions desktop table;
+- Cash Ledger table;
+- Monthly Performance desktop table;
+- Trading Performance benchmark table.
+
+Their semantic columns are allowed to remain wide; the local shell scrolls instead of widening the page.
+
+#### 3. Narrowest-phone financial summaries were genuinely too dense
+
+At the 320/359 narrow-phone tier, Overview previously forced:
+
+- Unrealized P&L;
+- Total Market Value;
+- Realized Gain;
+- Cash Available;
+
+into two columns while also displaying EGP values, units, percentages and metadata.
+
+That composition is now explicitly single-column only for the existing `max-width: 359px` narrow-phone tier.
+
+Added structural markers:
+
+- `premium-overview-primary-grid`;
+- `premium-overview-support-grid`.
+
+The Today row also stacks at this tier so the EGP change and percent chip cannot collide.
+
+The existing 390/430 composition remains two-column, and the tablet/desktop hierarchy remains unchanged.
+
+#### 4. Reports summary band had the same narrow-phone pressure
+
+`premium-report-summary-band` now uses one column at the same narrowest-phone tier.
+
+At wider widths it retains the accepted:
+
+- two-column mobile layout;
+- four-column `sm` layout.
+
+No Reports calculations or workspace structure changed.
+
+#### 5. Short-landscape safe areas were incomplete outside the Header
+
+Phase 9 already protects the Header in short landscape.
+
+Before 10.9, the modal/fixed-overlay safe-area rules lived mainly under width-based mobile media queries. A modern phone in landscape can exceed 767px width while remaining only ~390–430px tall.
+
+10.9 extends safe-area geometry under:
+
+`@media (orientation: landscape) and (max-height: 520px)`
+
+for:
+
+- modal backdrop padding;
+- fixed toast/undo max width and right inset;
+- bottom-safe floating overlays;
+- the bottom-above-status undo surface.
+
+This does not alter Header layout.
+
+#### 6. Header architecture already covered the width matrix
+
+The Phase 9 Header remains frozen.
+
+Existing source already owns:
+
+- <=359 compact portrait;
+- <=639 mobile command architecture;
+- short landscape <=520px height;
+- 1024–1279 compact laptop;
+- >=1280 standard desktop;
+- >=1536 2XL refinement;
+- portaled Data & Tools geometry;
+- horizontal nav recovery.
+
+10.9 therefore reports no Header redesign.
+
+#### 7. Charts already contain their controls
+
+The main analytics chart already uses:
+
+- a portaled/clamped mode dropdown;
+- horizontal resolution selector viewport;
+- horizontal timeframe selector viewport;
+- mobile tooltip max-width;
+- short-landscape plot-height guard.
+
+No chart logic, interpolation, smoothing, tooltip synchronization or timeframe behavior changed.
+
+#### 8. Seven destination layouts already had deliberate breakpoint fallbacks
+
+Source-level width behavior after 10.9:
+
+| Width family | Source behavior |
+| --- | --- |
+| 320 / 359 | narrowest Overview + Reports summaries stack; mobile dense records; mobile Header; safe fixed overlays |
+| 390 / 430 | accepted two-column financial summaries; mobile record fallbacks; scroll-contained selector rails |
+| short landscape | compact Phase 9 Header; chart height guard; modal/toast safe-area extension |
+| 768 | tablet form/grid layouts; Directory becomes two columns; dense tables remain locally contained |
+| 1024 | Open Positions desktop table activates; Directory becomes three columns; allocation becomes two-pane |
+| 1280 / 1440 | bounded main canvas; standard desktop Header; controls use available width without page stretching |
+| 1600 / 1920 / 2560 | Reports may expose 2XL desktop tables; app content remains `max-w-7xl`; Header may use its frozen `100rem` command canvas |
+
+### Glow-clipping rule
+
+10.9 deliberately uses width containment rather than global overflow clipping.
+
+The new responsive block does **not** add:
+
+- `overflow-x: hidden`;
+- `overflow-x: clip`;
+
+to page, Motion, card, semantic or hierarchy owners.
+
+This preserves the accepted semantic aura/refraction language.
+
+### Regression coverage
+
+Added:
+
+`src/components/Phase109ResponsiveParity.test.ts`
+
+It protects:
+
+- Motion intrinsic-width containment;
+- dense table/report/chart shell bounds;
+- local horizontal-scroll ownership;
+- narrowest-phone Overview composition;
+- narrowest-phone Reports summary composition;
+- short-landscape safe-area behavior;
+- bounded 2XL main content;
+- frozen Phase 9 Header;
+- retained Phase 10.8 modal contract;
+- no new overflow clipping in the 10.9 responsive block.
+
+### External validation
+
+Exact runtime head:
+
+`74741fa9`
+
+**Intraday 1m Migration Smoke #36647092353 — PASSED end-to-end**
+
+Passed stages:
+
+- dependency installation;
+- **TypeScript typecheck**;
+- focused intraday migration regression suite;
+- ACTF/NAPR/ORAS raw-1m rebuild path;
+- current session-relevant portfolio-universe sync.
+
+CodeRabbit also reported success on the runtime commit.
+
+### Remaining validation boundary
+
+10.9 is a source-level parity pass.
+
+It does **not** claim that screenshots were visually inspected at every representative width. That is intentionally the next roadmap pass: the rendered browser regression harness.
+
+That next pass must turn the width matrix into actual browser screenshots/golden states before 10.10 can freeze the visual system.
+
+Representative commit:
+
+- `74741fa9` — responsive containment, narrow-phone summary correction, short-landscape safe-area extension and 10.9 regression contract.
 
 ---
 

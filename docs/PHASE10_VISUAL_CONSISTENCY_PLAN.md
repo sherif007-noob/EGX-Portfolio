@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.7B — OPEN POSITIONS PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. The dedicated Positions page now has one H0 page shell, one page-level creation-action owner, preserved H3→H4→H5 dense hierarchy, canonical row/card semantics, and distinct no-data vs filter-empty states. The 10.7A Overview preview remains isolated and unchanged. Exact-head Intraday 1m Migration Smoke #36510095231 passed end-to-end; full generic Quality Checks/render validation remain pending.**
+**PHASE 10.7C — CLOSED CYCLES PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Closed Cycles now has explicit H0 page ownership, H2 page context, H3 summary support, H4 controls/details, and H5 semantic cycle records; realized summary cards own canonical semantic roles, structural duration/proceeds accents no longer borrow WIN/LOSS colors, expansion state follows the visible result set, and no-data/filter-empty states are distinct. External exact-head runtime/full CI/render validation remains pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -2211,6 +2211,205 @@ Representative commits:
 - `e1c6bf9` — split no-data vs filter-empty states and classify responsive empty state H4.
 - `fc903f5` — Phase 10.7B regression contract.
 - `3046826` — exact-head source-validation trigger; TypeScript and intraday regression stages passed.
+
+---
+
+
+### 10.7C — Closed Cycles
+
+**Status: IMPLEMENTED AT SOURCE LEVEL — external exact-head runtime/full CI/render validation pending.**
+
+Closed Cycles was audited across page hierarchy, summary semantics, controls, repeated records, expanded execution detail, destructive action ergonomics, empty states, and responsive behavior.
+
+#### Findings
+
+1. The page's inner dense structure was already mostly correct:
+   - summary/context above controls;
+   - H4 search/filter/sort toolbar;
+   - H5 repeated cycle records;
+   - H4 expanded execution detail.
+
+2. The page wrapper itself had no explicit H0 ownership, while the top page-context banner and all six KPI cards were both H3.
+   This flattened page context and support metrics onto the same information level.
+
+3. Three summary semantics were inconsistent with the protected Phase 10 contract:
+   - Net Realized P&L used green for zero and had no semantic-card role;
+   - Avg Return / Cycle used green for zero and had no semantic-card role;
+   - Cycle Fees Paid used rose even though fees/cost are intentionally amber.
+
+4. Structural metrics were borrowing financial semantic colors:
+   - Avg Hold Duration used amber;
+   - Net Realized Proceeds used emerald even inside losing cycles.
+
+5. Expand/Collapse All used the **size of the entire expanded-ID set** rather than whether the currently visible filtered cycles were expanded.
+   That could show `Collapse All` when the visible result set was empty or when expansion belonged to another filter state.
+
+6. The empty state always described a filter miss, even when no closed cycles existed at all.
+
+7. The cycle footer and expanded execution rows were too horizontal on narrow layouts, and the destructive delete icon had no explicit accessible label.
+
+#### Implementation
+
+##### A. Explicit H0 → H2 → H3 → H4 → H5 hierarchy
+
+Closed Cycles now maps:
+
+- H0 -> page shell;
+- H2 -> Closed Trade Cycles page context/banner;
+- H3 -> summary KPI cards;
+- H4 -> search/filter/sort/expand controls;
+- H5 -> repeated closed-cycle records;
+- H4 -> nested metrics and expanded execution detail.
+
+No H-level class owns material or semantic intensity.
+
+##### B. Financial summary cards now own semantic-card roles
+
+**Net Realized P&L**
+
+- WIN -> emerald semantic card;
+- LOSS -> rose semantic card;
+- zero -> amber BREAKEVEN semantic card.
+
+**Avg Return / Cycle**
+
+- positive -> emerald;
+- negative -> rose;
+- zero -> amber BREAKEVEN.
+
+Both now use `premium-semantic-card` with the accepted full near/far aura.
+
+Zero no longer receives a plus sign.
+
+##### C. Fees and structural accents are separated correctly
+
+**Cycle Fees Paid**
+
+- `premium-semantic-card`;
+- amber `premium-glow-breakeven`;
+- amber fee icon/value.
+
+This matches the protected cost/fee semantic convention used elsewhere.
+
+Structural information is deliberately non-WIN/LOSS:
+
+- Avg Hold Duration -> cyan;
+- Net Realized Proceeds -> cyan;
+- phased-execution count/page accents -> purple/blue.
+
+This prevents a losing cycle from showing unrelated emerald success cues merely because it produced sale proceeds.
+
+##### D. Canonical H4 controls remain intact
+
+The page retains:
+
+- `premium-dense-search`;
+- canonical filter pills;
+- compact `AnalyticsSelect` sorting;
+- secondary-priority Expand/Collapse All.
+
+No new selector/dropdown material was introduced.
+
+##### E. Expand/Collapse All now follows the visible result set
+
+The control now computes whether **every currently visible cycle** is expanded.
+
+This replaces the incorrect global-size comparison.
+
+Behavior:
+
+- visible cycles not all expanded -> `Expand All Phases`;
+- all visible cycles expanded -> `Collapse All`;
+- zero visible cycles -> control disabled.
+
+This keeps filter state and expansion labeling coherent.
+
+##### F. Repeated H5 semantic records remain protected
+
+Each cycle record explicitly declares H5 and preserves:
+
+`premium-card + premium-semantic-record + premium-semantic-edge + premium-glow-*`.
+
+WIN / LOSS / BREAKEVEN remain local to each closed cycle.
+
+The additive edge does not replace the full aura.
+
+##### G. Destructive action and responsive closure
+
+The delete control now has:
+
+- an explicit cycle-specific `aria-label`;
+- 44px touch geometry on narrow layouts;
+- compact desktop geometry.
+
+The record's P&L/delete area now uses full-width mobile distribution instead of crowding the ticker block.
+
+The execution accordion/footer now stacks on narrow layouts.
+
+Expanded BUY/SELL phase rows also stack on narrow layouts and return to side-by-side metadata alignment on larger screens.
+
+The expanded shell remains H4 beneath the H5 record.
+
+##### H. Empty-state closure
+
+Closed Cycles now distinguishes:
+
+**No completed cycles exist**
+
+- `No closed cycles yet.`
+- explains that cycles appear after a position is fully exited.
+
+**Cycles exist but current search/outcome filter returns zero**
+
+- `No closed cycles match your filters.`
+- provides the filter recovery message;
+- shows the clear-all control only when an active search/outcome filter actually exists.
+
+The empty state is an H4 subordinate surface.
+
+#### Audit gates
+
+Final targeted 10.7C source verification passed **29/29 checks**, covering:
+
+- H0/H2/H3/H4/H5 ownership;
+- semantic summary-card roles;
+- true three-state summary rendering;
+- fee/cost semantics;
+- structural accent separation;
+- canonical controls;
+- visible-set expansion logic;
+- H5 record semantics;
+- accessible/touch-safe delete;
+- responsive accordion/execution rows;
+- H4 expanded detail;
+- distinct no-data/filter-empty states;
+- accounting formulas remaining intact;
+- no Phase 10.7C CSS override;
+- frozen material and Header contracts.
+
+#### Regression coverage
+
+Added `Phase107CClosedCyclesClosure.test.ts`, protecting:
+
+- explicit page/context hierarchy;
+- financial summary semantic roles;
+- BREAKEVEN handling;
+- amber fee semantics;
+- structural cyan duration/proceeds treatment;
+- H4 control family;
+- visible-result Expand/Collapse behavior;
+- H5 semantic-record composition;
+- destructive-action accessibility/touch sizing;
+- responsive execution details;
+- empty-state distinction;
+- existing accounting equations and performance-stat calculation;
+- material/chart/Header boundaries.
+
+Representative commits:
+
+- `fbe5983` — Closed Cycles hierarchy, semantic, controls, responsive, and empty-state closure.
+- `93a0d0b` — cleanup of obsolete local outcome state.
+- `0ac7aee` — Phase 10.7C regression contract.
 
 ---
 

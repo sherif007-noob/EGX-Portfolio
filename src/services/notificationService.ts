@@ -1,4 +1,5 @@
 import { PriceAlertSettings, TriggeredPriceAlert, PriceAlertTriggerType } from '../types';
+import type { SectorClusterAlert } from './sectorMomentum';
 
 const SETTINGS_STORAGE_KEY = 'egx_price_alert_settings_v1';
 const HISTORY_STORAGE_KEY = 'egx_price_alert_history_v1';
@@ -290,6 +291,107 @@ export async function dispatchPriceNotification(
     return true;
   } catch (err) {
     console.error('Failed to trigger push notification:', err);
+    return false;
+  }
+}
+
+
+const SECTOR_CLUSTER_DEDUP_STORAGE_KEY = 'egx_sector_cluster_dedup_v1';
+
+function shouldTriggerSectorCluster(alert: SectorClusterAlert): boolean {
+  try {
+    const now = Date.now();
+    const raw = localStorage.getItem(SECTOR_CLUSTER_DEDUP_STORAGE_KEY);
+    const state: Record<string, { at: number; strength: number }> = raw ? JSON.parse(raw) : {};
+    const previous = state[alert.groupKey];
+
+    // Keep normal alerts quiet for ten minutes, unless the cluster has become
+    // materially stronger since the last notification.
+    if (
+      previous &&
+      now - previous.at < 10 * 60_000 &&
+      alert.strengthScore < previous.strength * 1.25
+    ) {
+      return false;
+    }
+
+    state[alert.groupKey] = { at: now, strength: alert.strengthScore };
+    localStorage.setItem(SECTOR_CLUSTER_DEDUP_STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+export async function dispatchSectorMomentumNotification(
+  alert: SectorClusterAlert,
+): Promise<boolean> {
+  const settings = getAlertSettings();
+  if (!settings.enabled || !shouldTriggerSectorCluster(alert)) return false;
+
+  if (settings.soundEnabled) {
+    playAlertTone('TARGET_APPROACHING');
+  }
+
+  if (settings.vibrateEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate([120, 60, 120]);
+    } catch {}
+  }
+
+  if (!isNotificationSupported() || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  const formatPct = (value: number) =>
+    value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatRvol = (value: number | null) =>
+    value === null ? 'n/a' : `${value.toFixed(2)}x`;
+  const formatTurnover = (value: number) =>
+    value >= 1_000_000
+      ? `EGP ${(value / 1_000_000).toFixed(1)}M`
+      : `EGP ${Math.round(value / 1_000)}K`;
+
+  const leader = alert.leader;
+  const runner = alert.runnerUp;
+  const title = `🔥 ${alert.groupName} sector momentum detected`;
+  const body = runner
+    ? `${leader.ticker} leads +${formatPct(leader.momentumPct)}%/${alert.windowMinutes.toFixed(1)}m (RVOL ${formatRvol(leader.rvol10)}); ${runner.ticker} runner-up +${formatPct(runner.momentumPct)}%. ${alert.memberCount} names aligned, ${formatTurnover(alert.totalWindowTurnover)} window turnover.`
+    : `${leader.ticker} leads +${formatPct(leader.momentumPct)}%/${alert.windowMinutes.toFixed(1)}m. ${alert.memberCount} names aligned, ${formatTurnover(alert.totalWindowTurnover)} window turnover.`;
+
+  const options: NotificationOptions = {
+    body,
+    icon: '/pwa-192x192.png',
+    badge: '/apple-touch-icon.png',
+    tag: `egx-sector-${alert.groupKey}`,
+    requireInteraction: false,
+    silent: !settings.soundEnabled,
+    data: {
+      url: '/',
+      type: 'SECTOR_MOMENTUM',
+      groupKey: alert.groupKey,
+      leader: leader.ticker,
+      detectedAt: alert.detectedAt,
+    },
+  };
+
+  try {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration && 'showNotification' in registration) {
+          await registration.showNotification(title, options);
+          return true;
+        }
+      } catch (error) {
+        console.warn('Sector momentum service-worker notification fallback:', error);
+      }
+    }
+
+    new Notification(title, options);
+    return true;
+  } catch (error) {
+    console.error('Failed to dispatch sector momentum notification:', error);
     return false;
   }
 }

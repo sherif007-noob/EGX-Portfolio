@@ -57,6 +57,7 @@ import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 
+// Phase 10.8 exact-head validation trigger: modal/workflow consistency runtime source.
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [settledTab, setSettledTab] = useState<NavigationTab>('overview');

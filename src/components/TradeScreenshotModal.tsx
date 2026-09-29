@@ -313,6 +313,8 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
+            aria-label="Close trade screenshot scanner"
             onClick={() => {
               resetModal();
               requestClose();

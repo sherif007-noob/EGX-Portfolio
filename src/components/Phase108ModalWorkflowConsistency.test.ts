@@ -77,6 +77,20 @@ describe('Phase 10.8 modal and workflow consistency', () => {
     expect(screenshot).toContain('premium-modal-scroll-body');
   });
 
+  it('keeps icon close affordances accessible across the long-form workflows', () => {
+    expect(readRelative('./AddTradeModal.tsx')).toContain('aria-label="Close add trade"');
+    expect(readRelative('./SellPositionModal.tsx')).toContain('aria-label="Close sell position"');
+    expect(readRelative('./TradeScreenshotModal.tsx')).toContain(
+      'aria-label="Close trade screenshot scanner"',
+    );
+    expect(readRelative('./CashBalanceView.tsx')).toContain(
+      'aria-label="Close cash transaction editor"',
+    );
+    expect(readRelative('./TradingJournal.tsx')).toContain(
+      'aria-label="Close transaction editor"',
+    );
+  });
+
   it('keeps destructive and primary action hierarchy unchanged', () => {
     expect(readRelative('./ConfirmDeleteModal.tsx')).toContain(
       'premium-action premium-action-danger',

@@ -146,7 +146,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       panelClassName="premium-modal premium-modal-viewport w-full max-w-3xl my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel="Python script and schema synchronization"
@@ -166,7 +166,7 @@ export const PythonSchemaSyncModal: React.FC<PythonSchemaSyncModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button type="button" aria-label="Close schema synchronization" onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

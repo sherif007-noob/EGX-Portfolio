@@ -1,7 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
-import { createPortal } from 'react-dom';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
@@ -999,10 +998,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       </div>
 
       {/* Edit Transaction Modal */}
-      {displayEditingTransaction && createPortal((
+      {displayEditingTransaction && (
         <PremiumModalMotion
           isOpen={!!editingTransaction}
-          backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
           panelClassName="premium-modal premium-modal-viewport relative w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
           onBackdropClick={requestCloseCashEdit}
           panelAriaLabel="Edit cash transaction"
@@ -1019,6 +1018,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </div>
               </div>
               <button
+                type="button"
+                aria-label="Close cash transaction editor"
                 onClick={requestCloseCashEdit}
                 className="premium-icon-action p-1.5 rounded-lg"
               >
@@ -1139,7 +1140,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               </div>
             </form>
         </PremiumModalMotion>
-      ), document.body)}
+      )}
     </div>
   );
 };

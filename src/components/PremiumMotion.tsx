@@ -3,6 +3,34 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { computeDropdownViewportGeometry } from '../utils/dropdownGeometry';
 
+interface PremiumVisualViewportRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+let premiumModalBodyLockCount = 0;
+let premiumModalPreviousBodyOverflow = '';
+
+function acquirePremiumModalBodyLock(): void {
+  if (typeof document === 'undefined') return;
+  if (premiumModalBodyLockCount === 0) {
+    premiumModalPreviousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  premiumModalBodyLockCount += 1;
+}
+
+function releasePremiumModalBodyLock(): void {
+  if (typeof document === 'undefined' || premiumModalBodyLockCount === 0) return;
+  premiumModalBodyLockCount -= 1;
+  if (premiumModalBodyLockCount === 0) {
+    document.body.style.overflow = premiumModalPreviousBodyOverflow;
+    premiumModalPreviousBodyOverflow = '';
+  }
+}
+
 export type MotionSwapVariant = 'tab' | 'state';
 
 interface MotionSwapProps {
@@ -168,8 +196,57 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
   panelAriaLabel,
 }) => {
   const reduceMotion = useReducedMotion();
+  const [visualViewportRect, setVisualViewportRect] = React.useState<PremiumVisualViewportRect | null>(null);
 
-  return (
+  React.useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') {
+      setVisualViewportRect(null);
+      return;
+    }
+
+    const updateVisualViewport = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) {
+        setVisualViewportRect(null);
+        return;
+      }
+
+      setVisualViewportRect({
+        top: viewport.offsetTop,
+        left: viewport.offsetLeft,
+        width: viewport.width,
+        height: viewport.height,
+      });
+    };
+
+    updateVisualViewport();
+    window.addEventListener('resize', updateVisualViewport);
+    window.visualViewport?.addEventListener('resize', updateVisualViewport);
+    window.visualViewport?.addEventListener('scroll', updateVisualViewport);
+
+    return () => {
+      window.removeEventListener('resize', updateVisualViewport);
+      window.visualViewport?.removeEventListener('resize', updateVisualViewport);
+      window.visualViewport?.removeEventListener('scroll', updateVisualViewport);
+    };
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (!isOpen || typeof document === 'undefined') return;
+
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    acquirePremiumModalBodyLock();
+
+    return () => {
+      releasePremiumModalBodyLock();
+      if (previouslyFocused?.isConnected) {
+        window.requestAnimationFrame(() => previouslyFocused.focus({ preventScroll: true }));
+      }
+    };
+  }, [isOpen]);
+
+  const modal = (
     <AnimatePresence initial={false}>
       {isOpen && (
         <motion.div
@@ -186,12 +263,27 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
             transition: { duration: reduceMotion ? 0.12 : 0.27, ease: EASE_IN },
           }}
           onMouseDown={onBackdropClick}
+          style={
+            visualViewportRect
+              ? ({
+                  top: visualViewportRect.top,
+                  left: visualViewportRect.left,
+                  right: 'auto',
+                  bottom: 'auto',
+                  width: visualViewportRect.width,
+                  height: visualViewportRect.height,
+                  '--premium-modal-visual-height': `${visualViewportRect.height}px`,
+                } as React.CSSProperties)
+              : undefined
+          }
         >
           <motion.div
             className={panelClassName}
             data-motion-owned="react"
-            role={panelAriaLabel ? 'dialog' : undefined}
+            role="dialog"
+            aria-modal="true"
             aria-label={panelAriaLabel}
+            tabIndex={-1}
             initial={
               reduceMotion
                 ? { opacity: 0 }
@@ -224,6 +316,8 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
       )}
     </AnimatePresence>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modal, document.body) : modal;
 };
 
 interface DropdownPresenceProps {

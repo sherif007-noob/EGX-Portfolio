@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
@@ -1048,7 +1047,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       />
 
       {/* Edit Transaction Modal */}
-      {displayEditingTx && createPortal((
+      {displayEditingTx && (
         <PremiumModalMotion
           isOpen={!!editingTx}
           backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
@@ -1070,6 +1069,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
               </div>
               <button
+                type="button"
+                aria-label="Close transaction editor"
                 onClick={requestCloseEdit}
                 className="premium-icon-action p-1.5 rounded-lg"
               >
@@ -1344,7 +1345,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
             </form>
         </PremiumModalMotion>
-      ), document.body)}
+      )}
     </div>
   );
 };

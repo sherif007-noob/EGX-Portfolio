@@ -283,7 +283,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       panelClassName="premium-modal premium-modal-frame rounded-2xl w-full max-w-3xl overflow-hidden my-0 sm:my-8 flex flex-col"
       onBackdropClick={requestClose}
       panelAriaLabel="Trade screenshot scanner"

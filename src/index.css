@@ -958,27 +958,36 @@ body {
  * composition is not silently rewritten by the shared baseline.
  */
 .premium-modal-viewport {
+  min-height: 0;
   max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
-  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 1rem 5rem;
 }
 
 .premium-modal-scroll-body {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 1rem 5rem;
 }
 
 .premium-modal-frame {
   min-height: 0;
   max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
-  max-height: calc(100dvh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
 }
 
 .premium-modal-backdrop-panel-scroll {
-  overflow-y: auto;
+  overflow-y: hidden !important;
+}
+
+.premium-modal :is(input, textarea, select, [contenteditable='true']) {
+  scroll-margin-block: 1rem 5rem;
 }
 
 .premium-fixed-overlay {
@@ -1354,7 +1363,7 @@ body {
   .premium-modal-frame {
     width: 100%;
     max-height: calc(
-      100dvh
+      var(--premium-modal-visual-height, 100dvh)
       - max(var(--premium-modal-gutter), env(safe-area-inset-top))
       - max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
     );

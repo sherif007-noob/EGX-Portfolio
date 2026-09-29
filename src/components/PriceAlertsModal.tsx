@@ -86,7 +86,7 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       panelClassName="premium-modal premium-modal-frame rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden"
       onBackdropClick={requestClose}
       panelAriaLabel="Price target and push alerts"
@@ -113,6 +113,8 @@ export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
+            aria-label="Close price alerts"
             onClick={requestClose}
             className="premium-icon-action p-1.5 rounded-lg"
           >

@@ -31,13 +31,15 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       panelClassName="premium-modal premium-modal-viewport relative w-full max-w-md p-4 sm:p-6 rounded-2xl space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel={title}
     >
         {/* Close Button */}
         <button
+          type="button"
+          aria-label={`Close ${title}`}
           onClick={requestClose}
           className="premium-icon-action absolute top-4 right-4 p-1.5 rounded-lg"
         >

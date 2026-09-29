@@ -220,7 +220,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button type="button" aria-label="Close add trade" onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

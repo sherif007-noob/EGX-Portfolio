@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.7C — CLOSED CYCLES PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Closed Cycles now has explicit H0 page ownership, H2 page context, H3 summary support, H4 controls/details, and H5 semantic cycle records; realized summary cards own canonical semantic roles, structural duration/proceeds accents no longer borrow WIN/LOSS colors, expansion state follows the visible result set, and no-data/filter-empty states are distinct. External exact-head runtime/full CI/render validation remains pending.**
+**PHASE 10.7C — CLOSED CYCLES PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Closed Cycles now has explicit H0 page ownership, H2 page context, H3 summary support, H4 controls/details, and H5 semantic cycle records; realized summary cards own canonical semantic roles, structural duration/proceeds accents no longer borrow WIN/LOSS colors, expansion state follows the visible result set, and no-data/filter-empty states are distinct. Exact-head Intraday 1m Migration Smoke #36525056735 passed end-to-end; full generic Quality Checks/render validation remain pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -2387,6 +2387,20 @@ Final targeted 10.7C source verification passed **29/29 checks**, covering:
 - no Phase 10.7C CSS override;
 - frozen material and Header contracts.
 
+#### External validation
+
+A harmless `App.tsx` comment update triggered **Intraday 1m Migration Smoke #36525056735** on exact runtime head `3fca20a`.
+
+That run completed successfully end-to-end:
+
+- dependency installation passed;
+- **TypeScript typecheck passed**;
+- intraday migration regression tests passed;
+- configured ACTF/NAPR rebuild passed;
+- current session-relevant portfolio-universe sync passed.
+
+The generic `Quality Checks` workflow still does not run directly on feature-branch pushes, so the complete Vitest suite/build and rendered-device validation remain pending.
+
 #### Regression coverage
 
 Added `Phase107CClosedCyclesClosure.test.ts`, protecting:
@@ -2410,6 +2424,7 @@ Representative commits:
 - `fbe5983` — Closed Cycles hierarchy, semantic, controls, responsive, and empty-state closure.
 - `93a0d0b` — cleanup of obsolete local outcome state.
 - `0ac7aee` — Phase 10.7C regression contract.
+- `3fca20a` — exact-head validation trigger; smoke passed end-to-end.
 
 ---
 

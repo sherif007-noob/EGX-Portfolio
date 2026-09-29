@@ -1,82 +1,83 @@
 # Operations and Deployment
 
-## Runtime model
+## Status
 
-Production runs the built React application and Express server from one Node process.
+Canonical operational reference for the Premium branch.
 
-Build:
+For rollout risks and the next step, see [STATUS.md](STATUS.md).
+
+## Production runtime
+
+Production uses Cloudflare Workers.
+
+`wrangler.jsonc` configures:
+
+- Worker entry: `worker.ts`;
+- Vite output: `./dist`;
+- assets binding: `ASSETS`;
+- SPA fallback;
+- Worker-first execution for `/api/*`;
+- invocation/persisted logs.
+
+Build and deploy:
+
+```bash
+npm run build:cloudflare
+npm run deploy:cloudflare
+```
+
+## Local runtime
+
+Development:
+
+```bash
+npm run dev
+```
+
+This starts the Express/Vite development runtime from `server.ts`.
+
+A production-style local Node build remains available:
 
 ```bash
 npm run build
-```
-
-This produces:
-
-- Vite client assets in `dist/`;
-- bundled Express server at `dist/server.cjs`.
-
-Start:
-
-```bash
 npm start
 ```
 
-The server listens on `PORT` or defaults to `3000`.
+This bundles `server.ts` to `dist/server.cjs`.
 
-## Production environment
+Cloudflare is nevertheless the current deployed web runtime; Express is not the production-topology authority.
 
-Minimum application variables:
+## Environment separation
+
+### Browser build
 
 ```env
-NODE_ENV=production
-PORT=3000
-
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+```
 
+These values are browser-visible by design.
+
+### Server/Worker/automation secrets
+
+```env
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_SECRET_KEY=sb_secret_...
 ```
 
-The `VITE_*` values are compiled into the browser bundle. The secret key must never use the `VITE_` prefix.
+Never place the server secret in a `VITE_*` variable.
 
-## Google Sheets service account
+Cloudflare bindings/secrets and GitHub Actions secrets must be configured independently.
 
-For unattended spreadsheet sync, configure a Google service account.
-
-Either:
-
-```env
-GOOGLE_SERVICE_ACCOUNT_KEY={...json...}
-```
-
-or:
-
-```env
-GOOGLE_SERVICE_ACCOUNT_EMAIL=...
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=...
-GOOGLE_PROJECT_ID=...
-```
-
-Share the target spreadsheet with the service-account email and grant Editor access.
-
-## Health checks
-
-Use:
+## Health check
 
 ```text
 GET /api/health
 ```
 
-Expected response:
+Cloudflare response includes the runtime identifier.
 
-```json
-{ "status": "ok" }
-```
-
-## GitHub Actions
-
-### Quality Checks
+## Quality workflow
 
 File:
 
@@ -87,46 +88,22 @@ File:
 Triggers:
 
 - push to `main`;
-- pull request into `main`.
+- pull request targeting `main`.
 
-Runs:
+Current gate:
 
-1. dependency installation;
-2. TypeScript typecheck;
-3. Vitest;
-4. production build.
+1. Node 22;
+2. npm 11.6;
+3. install;
+4. TypeScript;
+5. Vitest;
+6. production build.
 
-### Historical Prices
+Important: ordinary feature-branch pushes do not receive this complete quality workflow unless another workflow happens to cover the modified runtime files.
 
-File:
+Before promotion, run the exact-head full gate deliberately.
 
-```text
-.github/workflows/historical-prices.yml
-```
-
-Schedule:
-
-```text
-30 12 * * 0-4
-```
-
-This is Sunday through Thursday, matching normal EGX trading days.
-
-Required repository secret:
-
-```text
-SUPABASE_SECRET_KEY
-```
-
-Optional repository variable:
-
-```text
-EGX_PORTFOLIO_ID
-```
-
-The workflow uses the server secret only inside GitHub Actions.
-
-### Intraday 1-minute market data
+## Raw 1m / derived 5m workflow
 
 Primary workflow:
 
@@ -134,77 +111,97 @@ Primary workflow:
 .github/workflows/intraday-1m-sync.yml
 ```
 
-The Premium implementation stages a five-minute ingestion cadence:
+Current Premium cron:
 
 ```text
-*/5 7-12 * * 0-4
+*/5 7-13 * * 0-4
 ```
 
-The cron is deliberately a broad UTC envelope. `scripts/syncIntradayOneMinute.ts` converts the run time through `Africa/Cairo` and only executes scheduled ingestion on Sunday-Thursday from 10:00 through the configured 14:40 Cairo post-close grace window. This avoids hardcoding a UTC+2 or UTC+3 assumption.
+GitHub cron is UTC.
 
-GitHub scheduled workflows execute from the repository default branch. Therefore the schedule in `feature/premium-ui-redesign` is staged until that work is intentionally promoted; do not treat a Premium-only cron edit as already active production scheduling.
+The Node script applies the authoritative `Africa/Cairo` gate and accepts scheduled ingestion through **15:15 Cairo** so delayed final observations and runner delays can be captured.
 
-The job:
+Workflow behavior:
 
-1. discovers session-relevant portfolio tickers;
-2. resolves ticker/canonical/ISIN identity;
-3. retrieves missing/recent TradingView 1m observations in bounded batches;
-4. inserts only missing raw 1m timestamps;
-5. reloads persisted raw rows as the source of truth;
-6. derives deterministic 5m buckets;
-7. keeps only unreconstructible older legacy 5m bootstrap data;
-8. prunes raw 1m >30d and derived 5m >90d;
-9. emits per-ticker and final coverage diagnostics.
+1. discover the session-relevant portfolio universe;
+2. resolve current ticker/history identity including ISIN fallback;
+3. retrieve raw TradingView 1m observations;
+4. insert missing raw timestamps;
+5. reload persisted raw truth;
+6. derive deterministic 5m buckets;
+7. retain only unreconstructible older legacy bootstrap rows where needed;
+8. apply retention;
+9. emit coverage diagnostics.
 
-Manual run:
+Manual:
 
 ```bash
 npm run sync:intraday:1m
 ```
 
-Optional targeted/full-repair variables:
-
-```env
-EGX_INTRADAY_TICKERS=ACTF,NAPR
-EGX_INTRADAY_FULL_REPAIR=true
-```
-
-Read-only diagnostic:
+Diagnostic:
 
 ```bash
 npm run diagnose:intraday:1m
 ```
 
-### Legacy 5-minute repair
+Targeted repair examples use:
 
-File:
+```env
+EGX_INTRADAY_TICKERS=ACTF,NAPR
+EGX_INTRADAY_FULL_REPAIR=true
+EGX_INTRADAY_SKIP_RETENTION=true
+```
+
+Only use non-pruning/full-repair options deliberately.
+
+## Legacy intraday repair
 
 ```text
 .github/workflows/intraday-prices.yml
 ```
 
-This workflow is manual-only. It must not be reintroduced as a competing scheduled 5m producer while derived 5m is being generated from raw 1m.
+is manual-only in the Premium design.
 
-Manual command:
+Do not reintroduce it as a competing scheduled 5m producer while 5m is derived from raw 1m.
+
+Manual:
 
 ```bash
 npm run sync:intraday
 ```
 
-Both intraday workflows use the same concurrency group so raw/derived migration and legacy repair cannot write concurrently.
+## Daily historical coverage
 
-See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md).
-
-### EGX ticker registry
-
-Authoritative security identity is maintained separately from quote snapshots:
+Workflow:
 
 ```text
-public.ticker_registry
-public.ticker_aliases
+.github/workflows/historical-prices.yml
 ```
 
-The existing `public.tickers` table remains the price/technical snapshot table.
+Current Premium schedule:
+
+```text
+17 12-22 * * *
+```
+
+This is a gap-aware repair loop. Healthy coverage can exit before opening a TradingView session.
+
+Manual:
+
+```bash
+npm run sync:historical
+```
+
+Optional targeted controls:
+
+```env
+EGX_HISTORY_TICKERS=...
+EGX_HISTORY_START=YYYY-MM-DD
+EGX_HISTORY_END=YYYY-MM-DD
+```
+
+## Ticker registry
 
 Workflow:
 
@@ -212,113 +209,102 @@ Workflow:
 .github/workflows/ticker-registry.yml
 ```
 
-Manual command:
+Current Premium schedule:
+
+```text
+15 13 * * 0-4
+```
+
+Manual:
 
 ```bash
 npm run sync:ticker-registry
 ```
 
-The reconciliation job:
+The job typechecks and runs focused registry/resolver regressions before writing identity changes.
 
-1. reads the TradingView Egypt Scanner universe;
-2. keeps current live scanner symbols canonical;
-3. normalizes ISIN-shaped scanner aliases back to a known ticker when evidence is unique;
-4. refreshes identity/classification metadata;
-5. detects renames only from previously scanner-verified identities sharing a unique ISIN;
-6. verifies historical TradingView resolution and persists the successful symbol/method;
-7. keeps inactive/retired identities for historical lookup;
-8. emits active, alias, verification and unresolved counts.
+## Production data audit
 
-Static aliases and the bundled dictionary are fallback/bootstrapping data only. They must not override a current registry identity.
-
-Default policy:
-
-```env
-EGX_TICKER_VERIFY_LIMIT=100
-EGX_TICKER_VERIFY_AFTER_DAYS=30
-EGX_TICKER_INACTIVE_AFTER_DAYS=14
-```
-
-The Premium branch stages a post-session Sunday-Thursday registry schedule. As with the 1m workflow, GitHub scheduled workflows execute from the default branch, so this schedule is not production-active until Premium is intentionally promoted.
-
-See [TICKER_REGISTRY.md](TICKER_REGISTRY.md).
-
-### Production Data Audit
-
-File:
+Workflow:
 
 ```text
 .github/workflows/production-data-audit.yml
 ```
 
-Schedule:
+Current schedule:
 
 ```text
 0 14 * * 0-4
 ```
 
-Runs a read-only reconciliation/data-integrity audit.
-
-## Historical-price operations
-
-Manual run:
-
-```bash
-npm run sync:historical
-```
-
-Required:
-
-```env
-SUPABASE_URL=...
-SUPABASE_SECRET_KEY=sb_secret_...
-```
-
-The historical sync:
-
-- determines the portfolio/ticker universe;
-- requests enough TradingView bars to cover the target calendar interval;
-- filters results to exact requested dates;
-- upserts historical rows without modifying accounting transactions.
-
-## Production audit
-
-Manual run:
+Manual equivalent:
 
 ```bash
 npm run verify:production-data
 ```
 
-Use it after:
+The audit is intended to be read-only.
 
-- a migration;
-- duplicate cleanup;
-- accounting code changes;
-- unusual position/cash behavior;
-- historical-price backfills.
+### Known toolchain inconsistency
 
-The audit should not mutate portfolio accounting data.
+The Premium branch uses npm and no longer carries the prior Bun lockfile, but this workflow currently still invokes Bun with `--frozen-lockfile`.
+
+Treat normalization of this workflow as part of the production-convergence stage before declaring the branch CI-clean.
+
+## Scheduled-workflow branch rule
+
+GitHub scheduled workflows execute from the repository default branch.
+
+Therefore:
+
+> a schedule committed only to `feature/premium-ui-redesign` is staged code, not necessarily the active production scheduler.
+
+This is critical for:
+
+- raw 1m ingestion;
+- ticker registry reconciliation;
+- any retirement of the legacy 15m producer.
+
+The September 28 market-data audit demonstrated why deploying the web application without promoting matching workflow logic is unsafe.
+
+## Promotion checklist
+
+Before making a Premium revision production-authoritative:
+
+1. review `main`-only commits;
+2. reconcile branch divergence intentionally;
+3. confirm required migrations exist;
+4. confirm Worker configuration;
+5. confirm Actions secrets/variables;
+6. run exact-head TypeScript + full Vitest + build;
+7. compile/dry-run Worker;
+8. run focused intraday and ticker-registry regressions;
+9. run read-only production data audit;
+10. promote the matching scheduled workflows;
+11. confirm the old scheduled intraday writer is retired;
+12. observe an actual scheduled run;
+13. verify a live EGX session on phone and desktop.
 
 ## Data-change safety
 
-Before any manual production correction:
+Before manual production accounting correction:
 
-1. identify the exact rows to change;
-2. take a read-only before snapshot;
-3. verify references from closed trades/positions;
-4. perform the smallest possible mutation;
-5. recompute/reconcile derived state if needed;
-6. take an after snapshot;
-7. run the production audit;
-8. refresh/reopen the application to confirm persistence.
+1. identify exact rows/events;
+2. capture a read-only before snapshot;
+3. verify related transactions/positions/closed cycles;
+4. change the smallest possible source ledger data;
+5. reconcile;
+6. capture after state;
+7. run production audit;
+8. reopen the app and verify persistence.
 
-Never perform broad financial cleanup using an unreviewed similarity rule.
+Do not repair accounting by broad similarity rules or by directly patching a derived Position when the ledger is the source of truth.
 
 ## Backups
 
-The application contains JSON backup/reconcile functionality in the UI. A backup should be treated as a portable snapshot of financial state.
+The UI backup is a portable portfolio snapshot.
 
-For important corrections, also capture database-side counts before and after:
+For important corrective work also record database-side counts/state for:
 
 - transactions;
 - positions;
@@ -326,67 +312,30 @@ For important corrections, also capture database-side counts before and after:
 - cash;
 - capital deposits.
 
-## PWA/service-worker deployments
+## PWA deployment recovery
 
-Because the project is a PWA, clients can retain a previous application bundle.
+If a device appears to run stale code after deployment:
 
-After a deployment that changes authentication or persistence:
+1. hard refresh;
+2. close/reopen installed PWA/browser;
+3. confirm expected build/behavior;
+4. only if necessary, unregister the service worker and clear site data;
+5. sign in again and verify remote state.
 
-- hard refresh the page;
-- verify the expected commit is deployed;
-- if behavior remains stale, unregister the service worker and clear site data;
-- reopen the app and authenticate again.
+Never “fix” a stale client by changing production accounting rows.
 
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+## Cloudflare / market-data boundary
 
-## Mobile access during development
+Do not move TradingView WebSocket history ingestion into Cloudflare Worker.
 
-The dev server binds to `0.0.0.0`, allowing LAN testing when firewall/network rules permit it.
+Worker responsibilities are request/asset serving and lightweight proxy/API behavior.
 
-For HTTPS testing on iOS, a temporary HTTPS tunnel may be used to forward to:
+Trusted Node automation owns historical ingestion/backfill.
 
-```text
-http://localhost:3000
-```
+Browser startup must not initiate history repair.
 
-Supabase Auth does not require Firebase authorized-domain configuration.
+See:
 
-## Legacy migration operations
-
-The Firestore migration endpoint and scripts remain in the repository for historical/one-time use.
-
-Keep:
-
-```env
-ENABLE_SUPABASE_MIGRATION_UI
-```
-
-unset or false in normal operation.
-
-Do not rerun a migration against an already-live portfolio unless there is a documented recovery plan and a verified reconciliation target.
-
-
-## Final analytics audit checks
-
-Before promoting analytics changes, verify:
-
-- transaction-ledger cash equals stored portfolio cash;
-- transaction-derived shares equal stored positions;
-- no exact duplicate non-cash transaction groups exist;
-- all portfolio trades have execution timestamps when intraday analytics depend on them;
-- every open holding has the latest daily market close;
-- every open holding has intraday coverage for the latest completed session;
-- final-session NAV from 15-minute closes agrees with stored portfolio market value.
-
-The production RLS event-trigger function is intentionally not executable by browser API roles. The remaining Supabase security-advisor item at the time of the analytics audit is leaked-password protection, which should be enabled in Supabase Auth settings when available for the project.
-
-
-## Intraday scheduler rollout and freshness
-
-The September 28 audit confirmed that `main` still scheduled legacy 15m ingestion while `feature/premium-ui-redesign` contained the new 1m workflow. GitHub schedules use the default branch; deploying the web application alone does not activate the feature-branch schedule. Before declaring rollout complete, promote the reviewed Node ingestion workflow and dependencies to the default branch and retire the old scheduled producer. Do not move TradingView WebSockets into the Worker.
-
-The reviewed schedule covers 07:00–13:59 UTC, gated by `Africa/Cairo` through 15:15 local time to accommodate delayed final candles and runner delays. Writers queue rather than cancelling a job mid-universe. GitHub cron is best-effort, not a one-minute service guarantee.
-
-After promotion, inspect a scheduled run (not just a manual dispatch), verify current-session 1m coverage for held/session-traded tickers, and compare derived 5m OHLCV with raw aggregation. An active-session empty Today chart signals missing data; it no longer silently shows the preceding day. A manual 1m selection is strict; Auto may display 5m/15m for the same session when fine coverage is insufficient.
-
-For a non-pruning repair, run `EGX_INTRADAY_SKIP_RETENTION=true npm run sync:intraday:1m` using server-side credentials. The September 28 repair completed successfully; see the dated audit report. No schema migration is required by this code patch.
+- [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md)
+- [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md)
+- [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md)

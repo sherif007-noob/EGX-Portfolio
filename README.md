@@ -1,77 +1,66 @@
 # EGX Portfolio
 
-A private Egyptian Exchange (EGX) portfolio tracker focused on accurate trade accounting, live market prices, cash tracking, closed trade cycles, historical performance, and mobile-friendly trade logging.
+A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct accounting, current and historical market data, transaction-aware analytics, cash tracking, closed trade cycles, and fast personal trade logging.
 
-The application is built with React, TypeScript, Vite, Express, Supabase, and a small number of server-side integrations for TradingView and Google Sheets.
+## Current architecture
 
-## What the app does
+- **Client:** React 19 + TypeScript + Vite PWA.
+- **Production web/API runtime:** Cloudflare Worker (`worker.ts`) serving Vite assets and `/api/*` routes.
+- **Local/development runtime:** Express/Vite (`server.ts`).
+- **Database/auth:** Supabase Postgres + Supabase Auth + RLS.
+- **Market data:** TradingView scanner/history through controlled proxy/Node ingestion paths.
+- **Automation:** GitHub Actions for daily history, raw 1m intraday ingestion, derived 5m history, ticker registry reconciliation, and production data audits.
+- **Optional integration:** Google Sheets.
+- **OCR:** Tesseract.js-assisted trade entry.
 
-- Tracks BUY and SELL transactions and derives open positions from the transaction ledger.
-- Tracks fees, realized P&L, unrealized P&L, cash, capital contributions, closed trade cycles, and portfolio equity.
-- Pulls current EGX market data through server-side TradingView proxy endpoints.
-- Stores portfolio data in Supabase.
-- Uses Supabase email/password authentication for portfolio access.
-- Uses Row Level Security (RLS) to scope portfolio rows to the authenticated user.
-- Stores daily EGX history plus 15-minute intraday bars for transaction-aware analytics.
-- Calculates money-weighted return (MWRR) and drawdown only when sufficient historical data exists.
-- Supports OCR-assisted trade entry and optional Google Sheets synchronization.
-- Includes scheduled GitHub Actions for historical-price synchronization and production-data auditing.
+The transaction ledger is the financial source of truth. Positions, cash and closed cycles are projections of ledger activity.
 
-## Tech stack
+## Market-data model
 
-| Layer | Technology |
-| --- | --- |
-| UI | React 19, TypeScript, Tailwind CSS |
-| Build | Vite 6 |
-| Server | Express 4 |
-| Database | Supabase Postgres |
-| Authentication | Supabase Auth |
-| Charts | Recharts |
-| Market data | TradingView endpoints through the Express server |
-| OCR | Tesseract.js |
-| Optional spreadsheet sync | Google Sheets API |
-| Tests | Vitest |
-| CI | GitHub Actions |
+Current Premium policy:
+
+```text
+TradingView raw 1m
+        ↓
+Supabase intraday_price_history
+        ↓
+deterministic 5m derivation
+        ↓
+Today selector: 1m → 5m → legacy 15m
+```
+
+Daily historical closes remain in `price_history`.
+
+The UI also supports a client-derived 1h Today display from observed intraday data.
 
 ## Quick start
 
-### Requirements
+Requirements:
 
 - Node.js 22+
 - npm 11+
-- A Supabase project with the required tables, RLS policies, and one authenticated portfolio owner
+- configured Supabase project
 
-### Install
+Install and run:
 
 ```bash
-git clone https://github.com/sherif007-noob/EGX-Portfolio.git
-cd EGX-Portfolio
 npm install
+npm run dev
 ```
 
-Create a local environment file with at least:
+The local Express/Vite server uses port 3000 by default.
+
+Minimum local environment:
 
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-SUPABASE_SECRET_KEY=YOUR_SERVER_SECRET_KEY
+SUPABASE_SECRET_KEY=sb_secret_...
 ```
 
-Never expose `SUPABASE_SECRET_KEY` in browser code or a `VITE_*` variable.
-
-Run the application:
-
-```bash
-npm run dev
-```
-
-The Express/Vite development server listens on port 3000 by default:
-
-```text
-http://localhost:3000
-```
+Never expose `SUPABASE_SECRET_KEY` through a `VITE_*` variable.
 
 ## Core commands
 
@@ -81,88 +70,60 @@ npm run lint
 npm test
 npm run build
 npm start
+
+npm run build:cloudflare
+npm run deploy:cloudflare
+
 npm run sync:historical
+npm run sync:intraday:1m
+npm run diagnose:intraday:1m
 npm run sync:intraday
+npm run sync:ticker-registry
 npm run verify:production-data
 ```
 
-Legacy Firestore migration commands are intentionally retained for one-time migration/verification only:
-
-```bash
-npm run migrate:firestore:supabase
-npm run verify:firestore:supabase
-```
-
-## Architecture at a glance
-
-```mermaid
-flowchart LR
-    Browser[React PWA] --> Auth[Supabase Auth]
-    Browser --> DB[Supabase Postgres + RLS]
-    Browser --> Server[Express server]
-    Server --> TV[TradingView]
-    Server --> Sheets[Google Sheets API]
-    Actions[GitHub Actions] --> DB
-    Actions --> TV
-```
-
-The transaction ledger is the accounting source of truth. Positions, cash, and closed trade cycles are reconciled from transactions rather than treated as independent financial records.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
+Legacy Firestore migration commands remain for one-time historical recovery/migration work only.
 
 ## Documentation
 
+Start here:
+
+- [Current status](docs/STATUS.md)
+- [Master stabilization & evolution roadmap](docs/MASTER_STABILIZATION_ROADMAP.md)
+- [Documentation map](docs/README.md)
+
+Canonical domain references include:
+
 - [Architecture](docs/ARCHITECTURE.md)
-- [Development setup](docs/DEVELOPMENT.md)
 - [Data model](docs/DATA_MODEL.md)
-- [API reference](docs/API.md)
 - [Authentication and security](docs/AUTH_AND_SECURITY.md)
-- [Performance analytics](docs/PERFORMANCE_ANALYTICS.md)
-- [Analytics visual system](docs/ANALYTICS_VISUAL_SYSTEM.md)
-- [Premium UI redesign plan](docs/PREMIUM_UI_REDESIGN_PLAN.md)
-- [Premium UI redesign implementation log](docs/PREMIUM_UI_REDESIGN_IMPLEMENTATION.md)
-- [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
+- [Operations](docs/OPERATIONS.md)
 - [Testing](docs/TESTING.md)
-- [Operations and deployment](docs/OPERATIONS.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Changelog](CHANGELOG.md)
+- [Performance analytics](docs/PERFORMANCE_ANALYTICS.md)
+- [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
+- [Ticker registry](docs/TICKER_REGISTRY.md)
+- [Premium visual language](docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md)
 
-## Accounting rules
-
-The project follows several important invariants:
+## Accounting invariants
 
 1. The transaction ledger is authoritative.
-2. A UI mutation is not considered successful until persistence succeeds.
-3. Cash is derived from contributed capital plus ledger cash impacts.
-4. Positions must reconcile to BUY shares minus SELL shares.
-5. Closed cycles are derived from the same ledger.
-6. Historical analytics must not invent missing performance or drawdown values.
-7. Startup hydration is read-only; opening the app must not rewrite accounting data.
-8. Financial data must never be silently deduplicated or rewritten without an explicit operation.
+2. A financial mutation is successful only after authoritative persistence succeeds.
+3. Cash is derived from contributed capital and ledger cash impacts.
+4. Positions reconcile to the ledger.
+5. Closed cycles reconcile to the same ledger.
+6. Historical analytics do not fabricate missing market values.
+7. Startup hydration is read-only.
+8. Financial rows are not silently deduplicated or rewritten.
 
-## Authentication
+The master roadmap records known places where the current implementation still needs to be brought fully into compliance with these invariants.
 
-Portfolio authentication uses Supabase email/password sessions. The browser uses only the Supabase publishable key.
+## Production note
 
-Firebase still exists in the repository for legacy migration utilities and the optional Google OAuth path used by Google Sheets. It is not the primary portfolio authentication system.
+GitHub scheduled workflows execute from the repository default branch.
 
-## CI and automation
+The premium branch contains newer raw-1m/derived-5m and ticker-registry workflows; those schedules are production-authoritative only after reviewed promotion to the default branch.
 
-Pull requests and pushes to `main` run:
-
-- TypeScript typecheck
-- Vitest test suite
-- Production build
-
-Scheduled workflows also:
-
-- synchronize daily historical EGX prices Sunday through Thursday;
-- ingest 15-minute EGX bars during the trading-day window;
-- audit production portfolio data Sunday through Thursday.
-
-See [docs/OPERATIONS.md](docs/OPERATIONS.md).
+See [Operations](docs/OPERATIONS.md) and [Current status](docs/STATUS.md).
 
 ## Disclaimer
 

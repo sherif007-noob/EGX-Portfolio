@@ -2,11 +2,11 @@
 
 ## Status
 
-**DEFERRED — implement only after the complete premium visual overhaul is finished.**
+**SCHEDULED / DEFERRED — integrated as Stage 5 (R1–R8) of `MASTER_STABILIZATION_ROADMAP.md`. Implementation begins only after Phase 10 visual closure, financial mutation integrity, production/automation convergence, and the required architecture ownership work are complete.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
-The current visual-overhaul plan should continue unchanged. This document preserves a later information-architecture redesign for the **Reports & Performance** tab once the visual system, hierarchy, header, consistency, performance, accessibility, and regression work are complete.
+The current visual-overhaul plan should continue unchanged. This document remains the detailed design authority for the later **Reports & Performance** information-architecture redesign. The master roadmap owns sequencing; this file owns the R1–R8 Reports behavior and acceptance details.
 
 ---
 
@@ -657,7 +657,7 @@ The redesign is successful when:
 
 ---
 
-## Deferred implementation rule
+## Master-roadmap integration\n\nRoadmap owner: **Stage 5 — Reports workspace redesign**.\n\nRequired entry gates:\n\n1. Phase 10 closed / CI-clean;\n2. persistence-confirmed financial mutation model closed;\n3. production/default-branch + scheduler convergence closed;\n4. architecture ownership sufficient to move trusted report components without reimplementing analytics.\n\nThe existing R1–R8 sequence in this document is preserved. Benchmarking, risk-dashboard expansion, execution analytics and other new calculations are later roadmap features and must not be smuggled into the workspace restructuring.\n\n---\n\n## Deferred implementation rule
 
 Do not begin this plan until the current premium visual overhaul is formally complete.
 

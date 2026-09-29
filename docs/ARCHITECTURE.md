@@ -1,182 +1,268 @@
 # Architecture
 
-## Overview
+## Status
 
-EGX Portfolio is a React/TypeScript application served by an Express process. Portfolio identity and persistence are handled by Supabase. The Express server remains responsible for integrations that should not be performed directly from the browser, including TradingView proxying and Google Sheets server-side access.
+**Canonical current architecture for the Premium branch.**
 
-## High-level design
+For current rollout gaps and the next implementation step, see [STATUS.md](STATUS.md). For future structural changes, see [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).
+
+## System overview
+
+EGX Portfolio has four operational layers:
 
 ```mermaid
 flowchart TB
-    subgraph Client
-      UI[React UI]
-      State[Portfolio state hook]
-      Storage[Supabase storage adapter]
-      Auth[Supabase Auth client]
+    subgraph Client["React PWA"]
+      UI[UI / charts / workflows]
+      STATE[Portfolio state + feature hooks]
+      BROWSERDB[Supabase browser client]
     end
 
-    subgraph Supabase
+    subgraph Edge["Cloudflare production runtime"]
+      WORKER[worker.ts]
+      ASSETS[Vite static assets]
+      APIPROXY[API proxy routes]
+    end
+
+    subgraph Data["Supabase"]
+      AUTH[Supabase Auth]
       PG[(Postgres)]
       RLS[Row Level Security]
-      SA[Supabase Auth]
+      RPC[Atomic accounting snapshot RPC]
     end
 
-    subgraph Server
-      EX[Express]
-      TVP[TradingView proxy]
-      GSP[Google Sheets proxy]
-      LEG[Legacy migration endpoints]
+    subgraph Automation["Trusted Node automation"]
+      GH[GitHub Actions]
+      HIST[Daily history sync]
+      INTRA[Raw 1m sync + 5m derivation]
+      REG[Ticker registry reconciliation]
+      AUDIT[Production data audit]
     end
 
-    UI --> State
-    State --> Storage
-    Auth --> SA
-    Storage --> PG
-    RLS --> PG
-    UI --> EX
-    EX --> TVP
-    EX --> GSP
-    EX --> LEG
+    subgraph External["External services"]
+      TV[TradingView]
+      GS[Google APIs]
+    end
+
+    UI --> STATE
+    UI --> WORKER
+    UI --> BROWSERDB
+    BROWSERDB --> AUTH
+    BROWSERDB --> PG
+    PG --> RLS
+    STATE --> RPC
+    WORKER --> TV
+    WORKER --> GS
+    GH --> HIST
+    GH --> INTRA
+    GH --> REG
+    GH --> AUDIT
+    HIST --> TV
+    INTRA --> TV
+    REG --> TV
+    HIST --> PG
+    INTRA --> PG
+    REG --> PG
+    AUDIT --> PG
 ```
 
-## Client application
+## Runtime split
 
-Entry point:
+### Production
 
-- `src/main.tsx`
+Cloudflare uses:
 
-The application is wrapped by `SupabaseAuthGate`, which checks the current Supabase session and displays an email/password sign-in form when no session exists.
+- `worker.ts` for `/api/*`;
+- `dist/` Vite assets through the Worker assets binding;
+- SPA fallback for application routes.
 
-The main portfolio state lives in:
+Configuration: `wrangler.jsonc`.
 
-- `src/hooks/usePortfolioState.ts`
+Build/deploy:
 
-The hook coordinates:
-
-- positions;
-- closed trades;
-- transactions;
-- cash;
-- capital deposits;
-- ticker data;
-- trade mutations;
-- ledger reconciliation;
-- persistence.
-
-## Persistence layers
-
-### Browser Supabase client
-
-`src/services/supabaseBrowser.ts` creates a browser-safe Supabase client using:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-
-Sessions are persisted and refreshed automatically.
-
-### Portfolio persistence
-
-`src/services/supabasePersistence.ts` performs authenticated reads and writes directly against Supabase.
-
-The authenticated user is resolved with `supabase.auth.getUser()`, and the portfolio is selected using:
-
-```text
-portfolios.owner_key = auth user UUID
+```bash
+npm run build:cloudflare
+npm run deploy:cloudflare
 ```
 
-Accounting snapshot writes use the database RPC:
+### Local/development
+
+`server.ts` starts Express and Vite middleware for development and local compatibility.
+
+```bash
+npm run dev
+```
+
+The Express runtime is not the description of the currently deployed Cloudflare production topology.
+
+## Authentication and persistence
+
+Primary portfolio authentication is Supabase Auth.
+
+The browser uses:
+
+- `VITE_SUPABASE_URL`;
+- `VITE_SUPABASE_PUBLISHABLE_KEY`.
+
+Portfolio access is scoped through RLS and authenticated ownership.
+
+The financial source of truth is the transaction ledger.
+
+Accounting snapshot persistence uses the database RPC:
 
 ```text
 replace_portfolio_accounting_snapshot(...)
 ```
 
-This writes the portfolio accounting snapshot atomically.
+The RPC atomically replaces the related accounting projection under portfolio ownership checks.
 
-### Storage compatibility layer
+## Storage orchestration
 
-`src/services/supabaseStorage.ts` is the storage orchestration layer.
+`src/services/supabaseStorage.ts` is the compatibility/orchestration layer.
 
-Some exported function names still contain the word `Firestore` for backwards compatibility with older application code, but the implementation now targets Supabase.
+Some public function names still contain `Firestore` from the earlier architecture. They currently route to Supabase and are legacy names, not a second active database.
 
-Important responsibilities:
+Responsibilities include:
 
-- serializing writes through a queue;
-- deriving canonical ledger state before persistence;
-- fingerprinting snapshots to avoid unnecessary writes;
-- polling for newer remote data;
-- ensuring local mutation windows are not overwritten by polling;
-- keeping startup hydration read-only.
+- serialized write queue;
+- ledger-derived canonical snapshot;
+- snapshot fingerprinting;
+- mutation window protection;
+- remote polling/hydration;
+- quote-only update isolation.
 
-## Accounting architecture
+A future architecture pass will separate repository, mutation and presentation responsibilities without rewriting accounting behavior.
 
-The transaction ledger is the financial source of truth.
+## Accounting model
 
 ```mermaid
 flowchart LR
-    TX[Transactions] --> REC[Reconciliation engine]
+    TX[Transaction ledger] --> REC[Reconciliation]
     REC --> POS[Open positions]
-    REC --> CASH[Cash balance]
-    REC --> CT[Closed trades]
-    TX --> PERF[Performance engine]
-    PH[Historical prices] --> PERF
-    PERF --> MWRR[MWRR]
-    PERF --> DD[Drawdown]
+    REC --> CASH[Cash]
+    REC --> CLOSED[Closed cycles]
+    TX --> PERF[Performance engines]
+    DAILY[Daily history] --> PERF
+    INTRA[Intraday history] --> PERF
 ```
 
-Key services include:
+Key services:
 
-- `portfolioAccounting.ts`
-- `portfolioReconciliation.ts`
-- `portfolioPerformance.ts`
-- `performanceEngine.ts`
-- `cashLedger.ts`
+- `portfolioAccounting.ts`;
+- `portfolioReconciliation.ts`;
+- `cashLedger.ts`;
+- `portfolioPerformance.ts`;
+- `unifiedAnalyticsEngine.ts`;
+- `intradayAnalyticsEngine.ts`;
+- `secondaryAnalytics.ts`.
 
-Derived records must reconcile back to the ledger.
-
-## Server architecture
-
-`server.ts` starts Express and uses Vite in middleware mode during development.
-
-Main route groups:
-
-- `/api/health`
-- `/api/egx/*`
-- `/api/tradingview/*`
-- `/api/sheets/*`
-- legacy `/api/supabase/*` bridge endpoints
-- optional legacy migration endpoint
-
-Normal browser portfolio persistence now talks directly to Supabase using RLS. The legacy server-side Supabase portfolio endpoints remain available but are not the primary browser persistence path.
+Known integrity work still pending is documented in the master roadmap, especially persistence-confirmed mutation ordering and removal of direct Position accounting deletion.
 
 ## Market data
 
-Current EGX data is fetched through server endpoints that proxy TradingView. This avoids browser cross-origin restrictions and keeps the market-data implementation isolated from React components.
+### Live/current quote path
 
-Daily historical prices are stored in `price_history` and synchronized by `scripts/syncHistoricalPrices.ts`.
+TradingView Egypt Scanner is proxied through the application API.
 
-15-minute bars are stored separately in `intraday_price_history` and synchronized by `scripts/syncIntradayPrices.ts`. The intraday table is read-only to authenticated browser sessions; writes and retention cleanup are performed by trusted automation. See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md).
+Current quote handling includes timestamp/freshness rules so an older remote read should not overwrite a newer accepted quote.
+
+### Daily history
+
+Table:
+
+```text
+price_history
+```
+
+Trusted Node sync:
+
+```text
+scripts/syncHistoricalPrices.ts
+```
+
+### Intraday history
+
+Table:
+
+```text
+intraday_price_history
+```
+
+Current policy:
+
+- raw 1m TradingView observations;
+- derived 5m from persisted raw observations;
+- legacy 15m fallback;
+- UTC storage;
+- Cairo session interpretation;
+- no fabricated missing candles.
+
+See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md).
+
+## Ticker identity
+
+Security identity is separated from quote snapshots.
+
+Authoritative service-managed tables:
+
+- `ticker_registry`;
+- `ticker_aliases`.
+
+The quote/technical snapshot table remains separate.
+
+Resolution supports current ticker, persisted history symbol, legacy aliases and ISIN fallback according to the documented precedence.
+
+See [TICKER_REGISTRY.md](TICKER_REGISTRY.md).
+
+## Cloudflare API responsibilities
+
+Current Worker route families include:
+
+- `/api/health`;
+- authenticated Supabase portfolio/price/history compatibility routes;
+- `/api/egx/scan`;
+- `/api/tradingview/symbol-search`;
+- Google Sheets OAuth-bearer proxy routes.
+
+Historical repair/ingestion is intentionally **not** performed inside the Worker. Node automation owns market-history writes.
+
+The old intraday-history ensure route is a compatibility no-op for stale PWA clients.
 
 ## Google Sheets
 
 Google Sheets is optional and separate from portfolio authentication.
 
-The server can authenticate to Google using a service account. If no service account is configured, the application can fall back to a user-provided Google OAuth bearer token.
+In Cloudflare production, Sheets requests use the user's Google OAuth bearer flow.
 
-Firebase client code remains only because the existing optional Google sign-in flow still uses Firebase Auth as an OAuth helper.
+Local/Node compatibility may additionally support service-account behavior.
 
-## Legacy migration code
+Firebase code remains only for legacy migration and the optional Google OAuth helper; it is not the portfolio authentication/database architecture.
 
-The repository contains Firestore-to-Supabase migration utilities. These are retained for one-time migration and verification and are not part of normal portfolio persistence.
+## Scanner/alerts
 
-Legacy code must not be mistaken for the current architecture:
+Price alerts and the current sector-momentum detector are client features.
 
-```text
-Current portfolio auth: Supabase Auth
-Current portfolio DB:   Supabase Postgres
-Legacy migration source: Firestore
-Optional Google OAuth:  Firebase helper
-```
+The sector detector currently executes from React during an active market session and stores short-lived history/dedup state in localStorage.
+
+It is therefore not a true background detector. Future server-side operationalization is explicitly deferred in the master roadmap.
 
 ## PWA
 
-The project uses `vite-plugin-pwa`. When debugging stale front-end behavior, remember that an installed service worker can serve an older bundle even after the repository has been updated. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+The application uses `vite-plugin-pwa`.
+
+A stale service worker can make a device appear to run older code after deployment. Use the documented troubleshooting path before assuming persisted portfolio data differs.
+
+## Target structural direction
+
+No rewrite is planned.
+
+After visual, financial and production stabilization, architecture will move incrementally toward:
+
+- domain accounting/performance/market modules;
+- explicit Supabase repository layer;
+- canonical ledger mutation service;
+- feature-owned UI modules;
+- shared Worker/Express request contracts;
+- layered visual CSS ownership.
+
+See Stage 4 in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).

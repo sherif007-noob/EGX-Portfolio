@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.7B — OPEN POSITIONS PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. The dedicated Positions page now has one H0 page shell, one page-level creation-action owner, preserved H3→H4→H5 dense hierarchy, canonical row/card semantics, and distinct no-data vs filter-empty states. The 10.7A Overview preview remains isolated and unchanged. External runtime typecheck/full Quality Checks/render validation remain pending.**
+**PHASE 10.7B — OPEN POSITIONS PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. The dedicated Positions page now has one H0 page shell, one page-level creation-action owner, preserved H3→H4→H5 dense hierarchy, canonical row/card semantics, and distinct no-data vs filter-empty states. The 10.7A Overview preview remains isolated and unchanged. Exact-head runtime TypeScript and intraday regression stages passed; full Quality Checks/render validation remain pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -2174,6 +2174,18 @@ Final targeted 10.7B source verification passed **22/22 checks**, covering:
 - no Phase 10.7B CSS override;
 - frozen material and Header contracts.
 
+#### External validation
+
+A final harmless `App.tsx` comment update triggered **Intraday 1m Migration Smoke #36510095231** on runtime head `3046826`.
+
+On that exact runtime source:
+
+- dependency installation passed;
+- **TypeScript typecheck passed**;
+- the workflow's intraday migration regression-test stage passed.
+
+The workflow's configured live intraday rebuild/sync steps are operational validation rather than Open Positions visual logic. The generic `Quality Checks` workflow still does not run directly on feature-branch pushes, so the complete Vitest suite/build and rendered-device validation remain pending.
+
 #### Regression coverage
 
 Added `Phase107BOpenPositionsClosure.test.ts`, protecting:
@@ -2196,6 +2208,7 @@ Representative commits:
 - `6f787fe` — remove duplicate page-header creation CTA and establish H0 page shell.
 - `e1c6bf9` — split no-data vs filter-empty states and classify responsive empty state H4.
 - `fc903f5` — Phase 10.7B regression contract.
+- `3046826` — exact-head source-validation trigger; TypeScript and intraday regression stages passed.
 
 ---
 

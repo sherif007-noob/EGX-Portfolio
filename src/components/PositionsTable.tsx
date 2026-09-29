@@ -103,6 +103,13 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
     : selectedSector;
   const desktopColumnCount = isOverviewPreview ? 6 : 9;
   const hasHiddenPositions = isOverviewPreview && positions.length > visiblePositions.length;
+  const hasAnyPositions = positions.length > 0;
+  const fullEmptyTitle = hasAnyPositions
+    ? 'No stock positions match your filters.'
+    : 'No open positions yet.';
+  const fullEmptyDetail = hasAnyPositions
+    ? 'Clear the search or sector filter to see your holdings.'
+    : 'Add your first trade from the toolbar to start tracking a position.';
 
   return (
     <div
@@ -400,10 +407,10 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
               <tr>
                 <td colSpan={desktopColumnCount} className="premium-type-helper py-10 text-center text-slate-400">
                   <p className="text-sm font-semibold">
-                    {isOverviewPreview ? 'No open positions yet.' : 'No stock positions match your filters.'}
+                    {isOverviewPreview ? 'No open positions yet.' : fullEmptyTitle}
                   </p>
                   {!isOverviewPreview && (
-                    <p className="text-xs text-slate-500 mt-1">Add a trade or clear the sector filter to see holdings.</p>
+                    <p className="text-xs text-slate-500 mt-1">{fullEmptyDetail}</p>
                   )}
                 </td>
               </tr>
@@ -577,8 +584,13 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
         })}
 
         {visiblePositions.length === 0 && (
-          <div className="premium-inset-glass p-8 text-center rounded-xl text-slate-400 text-sm">
-            {isOverviewPreview ? 'No open positions yet.' : 'No stock positions match your filters.'}
+          <div className="premium-inset-glass premium-hierarchy-h4 p-8 text-center rounded-xl" data-hierarchy="h4">
+            <p className="text-sm font-semibold text-slate-300">
+              {isOverviewPreview ? 'No open positions yet.' : fullEmptyTitle}
+            </p>
+            {!isOverviewPreview && (
+              <p className="premium-type-helper mt-1">{fullEmptyDetail}</p>
+            )}
           </div>
         )}
       </MotionSwap>

@@ -60,7 +60,7 @@ If a functional bug is discovered during redesign work, isolate it unless a chan
 | 7 | Charts | **Complete — device accepted; Quality Checks #767 clean (31/31 files, 190/190 tests, build 6.01s)** |
 | 8 | Visual hierarchy | **In progress — 8.0–8.2 complete; 8.3 systemic visual-language correction CI-clean (#775), device validation pending** |
 | 9 | Header | Not started |
-| 10 | Full consistency sweep | **In progress — 10.0–10.7B implemented at source level; Open Positions exact-head smoke passed end-to-end; full generic Quality Checks/render validation pending** |
+| 10 | Full consistency sweep | **In progress — 10.0–10.7C implemented at source level; Closed Cycles exact-head runtime validation pending; full generic Quality Checks/render validation pending** |
 | 11 | Performance, accessibility & regression QA | Not started |
 
 Phases 4, 5, 6, 6.5, and 7 are complete. **4 planned stages remain**: 8, 9, 10, and 11. Phase 6.5 closed after phone validation, navigation hardening, and Quality Checks #748; its remaining transition-timing polish and final physical desktop/browser smoke are tracked as later QA/motion debt.

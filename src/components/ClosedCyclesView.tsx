@@ -545,7 +545,6 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
           const isExpanded = expandedCycleIds.has(cycle.id);
           const isWin = cycle.outcome === 'WIN';
           const isLoss = cycle.outcome === 'LOSS';
-          const isBreakeven = cycle.outcome === 'BREAKEVEN';
           const hasMultiplePhases = cycle.sellPhases.length > 1 || cycle.buyPhases.length > 1;
 
           return (

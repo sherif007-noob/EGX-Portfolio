@@ -18,6 +18,7 @@ const modalFiles = [
   './ConfirmDeleteModal.tsx',
   './CashBalanceView.tsx',
   './TradingJournal.tsx',
+  './PWAInstallButton.tsx',
 ];
 
 describe('Phase 10.8 modal and workflow consistency', () => {
@@ -60,6 +61,9 @@ describe('Phase 10.8 modal and workflow consistency', () => {
     expect(journal).not.toContain("import { createPortal } from 'react-dom'");
     expect(cash).not.toContain('createPortal((');
     expect(journal).not.toContain('createPortal((');
+    const pwa = readRelative('./PWAInstallButton.tsx');
+    expect(pwa).not.toContain("import { createPortal } from 'react-dom'");
+    expect(pwa).toContain('<PremiumModalMotion');
   });
 
   it('keeps framed modal bodies independently scrollable', () => {
@@ -88,6 +92,9 @@ describe('Phase 10.8 modal and workflow consistency', () => {
     );
     expect(readRelative('./TradingJournal.tsx')).toContain(
       'aria-label="Close transaction editor"',
+    );
+    expect(readRelative('./PWAInstallButton.tsx')).toContain(
+      'aria-label="Close install guide"',
     );
   });
 

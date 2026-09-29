@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Download, Share2, PlusSquare, X, Smartphone, CheckCircle } from 'lucide-react';
+import { PremiumModalMotion } from './PremiumMotion';
 
 export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ variant = 'header' }) => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -48,16 +48,13 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
       </button>
 
       {/* Installation Guide Modal (iOS Safari, iPad, & Browser Instructions) */}
-      {showIOSGuide && typeof document !== 'undefined' && createPortal(
-        <div
-          id="pwa-install-modal"
-          className="premium-modal-backdrop fixed inset-0 z-[99999] flex items-center justify-center overflow-y-auto p-3 sm:p-4"
-          onClick={() => setShowIOSGuide(false)}
-        >
-          <div
-            className="premium-modal premium-modal-frame w-full max-w-md my-auto flex flex-col rounded-2xl text-slate-100 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <PremiumModalMotion
+        isOpen={showIOSGuide}
+        backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4"
+        panelClassName="premium-modal premium-modal-frame w-full max-w-md flex flex-col rounded-2xl text-slate-100 overflow-hidden"
+        onBackdropClick={() => setShowIOSGuide(false)}
+        panelAriaLabel="Install EGX Tracker"
+      >
             <div className="flex min-w-0 items-start justify-between gap-2 border-b border-slate-800 p-4 pb-3 sm:p-5 sm:pb-3 shrink-0">
               <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                 <div className="premium-inset-glass w-11 h-11 rounded-xl flex items-center justify-center p-1.5 overflow-hidden shrink-0">
@@ -70,9 +67,10 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
               </div>
               <button
                 id="close-pwa-guide-btn"
+                type="button"
                 onClick={() => setShowIOSGuide(false)}
                 className="premium-icon-action -mr-1 -mt-1 shrink-0 rounded-lg p-1.5"
-                aria-label="Close modal"
+                aria-label="Close install guide"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -119,16 +117,14 @@ export const PWAInstallButton: React.FC<{ variant?: 'header' | 'banner' }> = ({ 
             <div className="p-4 pt-2 border-t border-slate-800 shrink-0">
               <button
                 id="confirm-pwa-guide-btn"
+                type="button"
                 onClick={() => setShowIOSGuide(false)}
                 className="premium-action premium-action-primary w-full py-2.5 rounded-xl font-medium text-sm"
               >
                 Got it
               </button>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      </PremiumModalMotion>
     </>
   );
 };

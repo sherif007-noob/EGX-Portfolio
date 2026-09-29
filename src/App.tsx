@@ -1018,7 +1018,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab Content Panels — Phase 10 page-closure composition */}
+        {/* Tab Content Panels — Phase 10 page-closure composition; Closed Cycles source validation */}
         <MotionSwap
           motionKey={activeTab}
           variant="tab"

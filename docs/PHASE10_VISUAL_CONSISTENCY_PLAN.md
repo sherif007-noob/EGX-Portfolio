@@ -2,7 +2,7 @@
 
 ## Status
 
-**PHASE 10.7A — OVERVIEW PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. Overview now uses the protected shared PortfolioSummary once, a compact/read-only H5 holdings snapshot instead of the full operational Positions workflow, H2/H3 analytics hierarchy beneath the portfolio hero, and an H4 reconciliation support notice. Reports keeps H1/H2 analytics; the dedicated Positions tab keeps its complete controls/actions. Runtime source typecheck passed in Intraday 1m Migration Smoke #36442599598; full Quality Checks and rendered-device validation remain pending.**
+**PHASE 10.7B — OPEN POSITIONS PAGE CLOSURE IMPLEMENTED AT SOURCE LEVEL. The dedicated Positions page now has one H0 page shell, one page-level creation-action owner, preserved H3→H4→H5 dense hierarchy, canonical row/card semantics, and distinct no-data vs filter-empty states. The 10.7A Overview preview remains isolated and unchanged. External runtime typecheck/full Quality Checks/render validation remain pending.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
@@ -2024,6 +2024,180 @@ Representative commits:
 
 ---
 
+
+
+### 10.7B — Open Positions
+
+**Status: IMPLEMENTED AT SOURCE LEVEL — external runtime/full CI/render validation pending.**
+
+The dedicated Open Positions page was audited across hierarchy, typography, controls, material, semantic state, dense/empty behavior, and responsive composition.
+
+#### Findings
+
+1. The page already had the correct dense hierarchy inside `PositionsTable`:
+   - H3 holdings context/count;
+   - H4 search/filter/create toolbar;
+   - H5 desktop table;
+   - H5 repeated responsive position records;
+   - H4 nested position statistics.
+
+2. Desktop had **two competing creation actions** for the same workflow:
+   - page header: `+ Add Position`;
+   - H4 toolbar: `Add Trade`.
+
+   Because the toolbar is the canonical local action owner for the dense Positions workflow, the page-header action was redundant and made creation appear twice at the same visual priority.
+
+3. Empty-state language did not distinguish:
+   - genuinely having zero open positions;
+   - having positions but filtering all of them out.
+
+   Both states previously read as a filter miss, which gave the wrong recovery instruction when the portfolio was actually empty.
+
+4. The page wrapper itself did not explicitly declare the H0 structural page role even though its internal hierarchy was already correct.
+
+#### Implementation
+
+##### A. One H0 page shell
+
+The dedicated Positions tab now uses an explicit:
+
+`premium-hierarchy-h0 + premium-flow-related`
+
+page shell with `data-page="positions"`.
+
+Its heading remains structural and material-neutral.
+
+##### B. One creation-action owner
+
+Removed the duplicated desktop `+ Add Position` button from the page header.
+
+The H4 toolbar remains the sole page-level creation owner:
+
+`Add Trade`
+
+using the already accepted primary/shimmer action language.
+
+Row-level operations remain local to each H5 record:
+
+- Buy More / DCA;
+- Sell;
+- Edit;
+- Delete;
+- target / stop-loss management.
+
+No action handlers or workflows changed.
+
+##### C. Preserved H3 → H4 → H5 hierarchy
+
+The accepted dense composition is unchanged:
+
+- H3 -> Open Positions context/count;
+- H4 -> search + sector selector + Add Trade;
+- H5 -> desktop table;
+- H5 -> responsive semantic records;
+- H4 -> nested Shares / Avg Buy / Current / Market Value details.
+
+No new CSS layer or hierarchy/material override was added.
+
+##### D. Preserved canonical controls
+
+The page continues to use:
+
+- `premium-dense-search` for search;
+- compact `AnalyticsSelect` for sector filtering;
+- canonical portaled dropdown behavior from 10.3;
+- primary Add Trade action;
+- compact edit/delete icon actions.
+
+##### E. Preserved dense semantic behavior
+
+Desktop true table rows continue to use:
+
+- `premium-row-win`;
+- `premium-row-loss`;
+- `premium-row-breakeven`.
+
+Responsive records continue to compose:
+
+`premium-card + premium-semantic-record + premium-semantic-edge + H5 + premium-glow-*`.
+
+10.7B does not replace row-edge semantics with full row glow and does not weaken mobile card aura.
+
+##### F. Empty-state closure
+
+The page now distinguishes two conditions.
+
+**No positions exist**
+
+- title: `No open positions yet.`
+- recovery: add the first trade from the toolbar.
+
+**Positions exist but filters return zero**
+
+- title: `No stock positions match your filters.`
+- recovery: clear search or sector filtering.
+
+The responsive empty state now explicitly uses an H4 inset/detail surface.
+
+Desktop remains a subordinate empty table row within the H5 data shell.
+
+##### G. Responsive behavior remains intentional
+
+The existing responsive split remains:
+
+- `>=1024px` -> contained 1080px minimum-width table with horizontal overflow;
+- narrower layouts -> repeated semantic position cards;
+- 44px edit/delete touch targets remain preserved;
+- mobile action grid remains local to each record.
+
+The 10.7A Overview preview remains separate:
+
+- maximum four holdings;
+- read-only;
+- no duplicated controls/actions;
+- narrower preview table floor.
+
+#### Audit gates
+
+Final targeted 10.7B source verification passed **22/22 checks**, covering:
+
+- H0 page ownership;
+- single creation CTA ownership;
+- H3/H4/H5 hierarchy;
+- canonical search/filter controls;
+- desktop containment;
+- row semantics;
+- responsive semantic records;
+- touch targets;
+- correct no-data/filter-empty messaging;
+- Overview preview isolation;
+- no Phase 10.7B CSS override;
+- frozen material and Header contracts.
+
+#### Regression coverage
+
+Added `Phase107BOpenPositionsClosure.test.ts`, protecting:
+
+- explicit Positions H0 page shell;
+- removal of duplicate `+ Add Position`;
+- toolbar Add Trade ownership;
+- H3 context / H4 controls / H5 data mapping;
+- canonical search and sector selector;
+- local action priority;
+- table containment and row-edge semantics;
+- responsive semantic-record composition;
+- touch-safe mobile actions;
+- two distinct empty-state paths;
+- isolation from the 10.7A Overview preview;
+- material, semantic, chart, accounting, and Header boundaries.
+
+Representative commits:
+
+- `6f787fe` — remove duplicate page-header creation CTA and establish H0 page shell.
+- `e1c6bf9` — split no-data vs filter-empty states and classify responsive empty state H4.
+- `fc903f5` — Phase 10.7B regression contract.
+
+---
 
 
 ## 10.8 — Modal & workflow consistency

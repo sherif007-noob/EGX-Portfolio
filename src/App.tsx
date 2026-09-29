@@ -34,6 +34,7 @@ import { usePortfolioState } from './hooks/usePortfolioState';
 import { useMarketData } from './hooks/useMarketData';
 import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
 import { usePriceAlerts } from './hooks/usePriceAlerts';
+import { useSectorMomentumAlerts } from './hooks/useSectorMomentumAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
 import { forceFullSyncToFirestore } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
@@ -175,6 +176,9 @@ export default function App() {
     requestPermission: requestAlertPermission,
     sendTestNotification,
   } = usePriceAlerts(positions, tickers, scheduleStatus);
+
+  // Live 5-10 minute sector-cluster detector (e.g. cement rotation).
+  useSectorMomentumAlerts(scheduleStatus);
 
   // Modals & UI States
   const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);

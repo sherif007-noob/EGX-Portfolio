@@ -353,7 +353,7 @@ Result: TypeScript + **447/447 tests** + production build + Worker dry-run + fro
 
 Detailed authority: `FINANCIAL_MUTATION_CONTRACT.md`.
 
-**Next: Pass 2.2 — Convert BUY and SELL.**
+**Historical transition:** Pass 2.2 followed this boundary and is now complete.
 
 ---
 

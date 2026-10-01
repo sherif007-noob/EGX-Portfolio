@@ -28,6 +28,7 @@ The repository accumulated many implementation journals while the application ev
 | [TICKER_REGISTRY.md](TICKER_REGISTRY.md) | security identity/resolver rules |
 | [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) | analytics chart visual contract |
 | [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) | material/semantic/hierarchy visual contract |
+| [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) | canonical financial mutation ordering, persistence and failure semantics |
 
 When a historical phase log conflicts with one of these about current behavior, the canonical document wins.
 

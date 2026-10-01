@@ -201,6 +201,30 @@ The function verifies the portfolio ID/owner key and then writes:
 
 Because the accounting tables are replaced as a coherent snapshot, callers must send a complete canonical ledger state.
 
+## Mutation ordering
+
+Stage 2.1 introduces a canonical mutation boundary above snapshot persistence.
+
+The intended ordering is:
+
+```text
+candidate transaction ledger
+    ↓ normalize
+reconcile canonical projections
+    ↓ validate
+atomic accounting snapshot RPC
+    ↓ success only
+apply local application state
+```
+
+Callers must not treat `positions`, `closed_trades` or `cash_balance` as independent accounting sources.
+
+The mutation service derives them from the candidate ledger before persistence.
+
+A failed authoritative write must leave the previous local financial state intact.
+
+See [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md).
+
 ## Reconciliation invariants
 
 A production data audit should maintain:

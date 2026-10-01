@@ -136,6 +136,52 @@ After a live reconciliation, database acceptance checks should include:
 7. inactive/retired rows remain available for history but do not appear in the active directory;
 8. browser quote sync does not overwrite registry name/ISIN/sector/canonical identity.
 
+## Financial mutation boundary regressions
+
+Stage 2.1 adds:
+
+- `src/services/ledgerMutationService.test.ts`;
+- `src/services/Stage21MutationBoundary.test.ts`.
+
+The suite protects the canonical:
+
+```text
+prepare → validate → persist → apply
+```
+
+ordering.
+
+Current coverage includes:
+
+- accounting projections derived from the candidate ledger rather than caller-provided cash/positions;
+- persistence must complete before local apply;
+- persistence failure leaves local apply untouched;
+- preparation failure;
+- duplicate transaction ID rejection;
+- malformed financial-value rejection;
+- new oversell/reconciliation discrepancy rejection;
+- baseline legacy discrepancy tolerance;
+- global one-mutation-in-flight serialization;
+- persisted-but-local-apply-failed distinction;
+- reconciliation seed behavior;
+- continued use of the atomic `replace_portfolio_accounting_snapshot` Supabase RPC;
+- explicit proof that BUY/SELL were not prematurely converted during 2.1.
+
+Exact-head Stage 2.1 validation:
+
+- runtime: `eb3f776e`;
+- run: **#36924616787**;
+- TypeScript: passed;
+- Vitest: **79 / 79 files, 447 / 447 tests**;
+- production Vite/PWA build: passed;
+- Worker dry-run: passed;
+- frozen visual regression: 12/12 geometry widths and 16/16 screenshots green.
+
+When migrating an individual workflow, add tests for both:
+
+1. successful persisted state;
+2. failed persistence with unchanged local financial state.
+
 ## Manual financial regression checklist
 
 Automated tests are necessary but not sufficient for a portfolio application.

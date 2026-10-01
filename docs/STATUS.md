@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-01  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `50db10b2` — Phase 10 CLOSED / CI CLEAN  
-**Current rendered-baseline verification:** Phase 10 Visual Closure #36921005365 on `50db10b2`  
+**Current validated runtime head:** `eb3f776e` — Stage 2.1 canonical financial mutation executor  
+**Current full exact-head verification:** Phase 10 Visual Closure #36924616787 on `eb3f776e`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -39,9 +39,15 @@ Completed:
 
 Frozen visual contracts now remain protected while the roadmap moves into financial integrity work.
 
+Financial-integrity work has started.
+
+Completed:
+
+- **Stage 2.1 — Canonical financial mutation executor**
+
 Next:
 
-1. **Stage 2.1 — Canonical financial mutation executor**
+1. **Stage 2.2 — Convert BUY and SELL to persist-confirmed mutations**
 
 ---
 
@@ -114,6 +120,47 @@ The closure gate initially exposed four obsolete source-string contracts. They w
 **Visual system state: CLOSED / CI CLEAN.**
 
 Next execution point: **Stage 2.1 — Canonical financial mutation executor.**
+
+---
+
+### Stage 2.1 financial mutation boundary
+
+Runtime head `eb3f776e` introduces:
+
+`src/services/ledgerMutationService.ts`
+
+Canonical ordering is now defined as:
+
+```text
+prepare → validate → persist → apply → report
+```
+
+The executor:
+
+- accepts a candidate source ledger rather than caller-computed accounting projections;
+- rebuilds positions, closed cycles and cash through `reconcilePortfolioFromLedger()`;
+- validates finite/positive financial values and duplicate transaction IDs;
+- rejects newly introduced reconciliation discrepancies;
+- tolerates an already-existing discrepancy long enough for explicit correction;
+- serializes financial mutations so two stale candidate snapshots cannot be in flight concurrently;
+- persists through the existing atomic Supabase accounting snapshot RPC;
+- applies local state only after persistence succeeds;
+- distinguishes a rare post-persistence local apply failure from a failed database write.
+
+Stage 2.1 deliberately does **not** convert BUY/SELL yet. Existing workflow behavior is unchanged until Stage 2.2.
+
+Validation run **#36924616787** passed on the exact runtime head:
+
+- TypeScript;
+- **79 / 79 Vitest files, 447 / 447 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12/12 responsive geometry checks at 0px page overflow;
+- 16/16 frozen golden screenshots at 0.000% diff.
+
+A reconciliation ownership issue surfaced during testing: ticker-directory target/stop values currently take precedence over seeded position target/stop values. It is documented for deliberate later handling and was not changed inside Stage 2.1.
+
+See `FINANCIAL_MUTATION_CONTRACT.md`.
 
 ---
 
@@ -303,11 +350,12 @@ Current domain authorities:
 - `INTRADAY_MARKET_DATA.md`
 - `TICKER_REGISTRY.md`
 - `PREMIUM_VISUAL_LANGUAGE_CONTRACT.md`
+- `FINANCIAL_MUTATION_CONTRACT.md`
 
 ---
 
 ## Next pass
 
-**Stage 2.1 — Canonical financial mutation executor.**
+**Stage 2.2 — Convert BUY and SELL.**
 
-The first post-visual objective is to make every financial mutation persist-confirmed and atomic before the UI applies success state.
+BUY and SELL are the first user-facing workflows to move onto the new executor. Their UI must not mutate financial state, close the workflow, or report success until the canonical accounting snapshot is persisted.

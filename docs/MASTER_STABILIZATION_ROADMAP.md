@@ -303,11 +303,11 @@ Phase 10 is **CLOSED / CI CLEAN**. Its accepted visual contracts are frozen unle
 
 ---
 
-# 5. Stage 2 — Financial mutation & ledger integrity — NEXT
+# 5. Stage 2 — Financial mutation & ledger integrity — ACTIVE
 
 This is the highest-priority non-visual work.
 
-## Pass 2.1 — Canonical mutation executor
+## Pass 2.1 — Canonical mutation executor — COMPLETE / CI GREEN
 
 Introduce one financial mutation boundary, conceptually:
 
@@ -332,6 +332,28 @@ Responsibilities:
 - provide the successfully persisted transaction/result to optional integrations.
 
 No component should need to understand Supabase write ordering.
+
+### 2.1 implementation record
+
+Implemented in `src/services/ledgerMutationService.ts`.
+
+The boundary now:
+
+- derives accounting projections from candidate ledger state;
+- validates malformed rows and finite-value invariants;
+- rejects newly introduced reconciliation discrepancies;
+- serializes all financial mutations through one in-flight gate;
+- persists through the atomic Supabase accounting snapshot RPC;
+- applies local state only after persistence success;
+- returns structured busy/prepare/validate/persist/apply failures.
+
+Exact-head validation: **#36924616787** on `eb3f776e`.
+
+Result: TypeScript + **447/447 tests** + production build + Worker dry-run + frozen visual regression all green.
+
+Detailed authority: `FINANCIAL_MUTATION_CONTRACT.md`.
+
+**Next: Pass 2.2 — Convert BUY and SELL.**
 
 ---
 

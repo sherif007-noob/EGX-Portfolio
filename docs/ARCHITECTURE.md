@@ -131,7 +131,30 @@ Responsibilities include:
 - remote polling/hydration;
 - quote-only update isolation.
 
-A future architecture pass will separate repository, mutation and presentation responsibilities without rewriting accounting behavior.
+## Financial mutation boundary
+
+Stage 2.1 adds:
+
+`src/services/ledgerMutationService.ts`
+
+The canonical financial write path is now:
+
+```text
+workflow prepare
+  → ledger mutation validation
+  → portfolio reconciliation
+  → forceFullSyncToFirestore
+  → replace_portfolio_accounting_snapshot RPC
+  → local state apply
+```
+
+The mutation boundary owns ordering and structured failures.
+
+The database RPC already provides the atomic accounting snapshot write.
+
+Stage 2.1 defines this architecture but does not claim complete workflow adoption. BUY/SELL conversion begins in Stage 2.2; transaction/cash/import workflows follow in Stage 2.3.
+
+A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
 
 ## Accounting model
 
@@ -156,7 +179,7 @@ Key services:
 - `intradayAnalyticsEngine.ts`;
 - `secondaryAnalytics.ts`.
 
-Known integrity work still pending is documented in the master roadmap, especially persistence-confirmed mutation ordering and removal of direct Position accounting deletion.
+The canonical persist-before-apply mutation boundary now exists. Remaining integrity work is workflow adoption: BUY/SELL first, then transaction/cash/import workflows, followed by removal of direct Position accounting deletion and the remaining Stage 2 accounting-semantic cleanup.
 
 ## Market data
 

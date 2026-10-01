@@ -18,6 +18,8 @@ describe('Phase 10 rendered browser regression harness', () => {
     expect(market).toContain('VISUAL_SCHEDULE_STATUS');
     expect(market).toContain('Live sync disabled in visual regression mode');
     expect(app).toContain('if (VISUAL_REGRESSION_MODE)');
+    expect(app).toContain('VISUAL_REGRESSION_HISTORICAL_PRICES');
+    expect(readRelative('./charts/PerformanceTimeframeChart.tsx')).toContain('VISUAL_REGRESSION_MODE');
   });
 
   it('derives representative fixture state through the canonical reconciliation engine', () => {
@@ -26,6 +28,7 @@ describe('Phase 10 rendered browser regression harness', () => {
     expect(fixture).toContain('reconcilePortfolioFromLedger(');
     expect(fixture).toContain('VISUAL_REGRESSION_POSITIONS');
     expect(fixture).toContain('VISUAL_REGRESSION_CLOSED_TRADES');
+    expect(fixture).toContain('VISUAL_REGRESSION_HISTORICAL_PRICES');
     expect(fixture).toContain("cashFlowType: 'DEPOSIT'");
     expect(fixture).toContain("cashFlowType: 'WITHDRAWAL'");
     expect(fixture).toContain("'visual-orhd-sell'");

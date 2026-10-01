@@ -57,6 +57,7 @@ import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
 import { VISUAL_REGRESSION_MODE } from './utils/visualRegressionMode';
+import { VISUAL_REGRESSION_HISTORICAL_PRICES } from './data/visualRegressionFixture';
 
 // Phase 10.8 exact-head validation trigger: complete modal/workflow consistency runtime source.
 // Phase 10.9 exact-head validation trigger: responsive cross-app containment runtime source.
@@ -233,8 +234,24 @@ export default function App() {
 
   useEffect(() => {
     if (VISUAL_REGRESSION_MODE) {
-      setHistoricalDrawdown(null);
-      setHistoricalPriceSeries({});
+      const visualResult = buildUnifiedAnalyticsResult(
+        transactions,
+        VISUAL_REGRESSION_HISTORICAL_PRICES,
+        'ALL',
+        { openingCapital: analyticsCapitalDeposits },
+      );
+      setHistoricalPriceSeries(VISUAL_REGRESSION_HISTORICAL_PRICES);
+      if (
+        visualResult.summary.maxDrawdownPercent != null &&
+        visualResult.summary.maxEquityDrawdownEgp != null
+      ) {
+        setHistoricalDrawdown({
+          maxDrawdownEgp: visualResult.summary.maxEquityDrawdownEgp,
+          maxDrawdownPercent: Math.abs(visualResult.summary.maxDrawdownPercent),
+        });
+      } else {
+        setHistoricalDrawdown(null);
+      }
       setHistoricalAnalyticsLoading(false);
       return;
     }

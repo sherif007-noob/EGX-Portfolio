@@ -1,6 +1,7 @@
 import type { EGXTicker, TradeTransaction } from '../types';
 import { INITIAL_EGX_TICKERS } from './egxTickers';
 import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliation';
+import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 
 const FIXED_PRICE_TIME = '2026-09-30T09:00:00.000Z';
 
@@ -212,3 +213,41 @@ const reconciliation = reconcilePortfolioFromLedger(
 export const VISUAL_REGRESSION_POSITIONS = reconciliation.reconciledPositions;
 export const VISUAL_REGRESSION_CLOSED_TRADES = reconciliation.reconciledClosedTrades;
 export const VISUAL_REGRESSION_CASH_BALANCE = reconciliation.reconciledCashBalance;
+
+
+function buildVisualHistory(startPrice: number, endPrice: number): Array<{
+  date: string;
+  close: number;
+  source: 'other';
+  retrievedAt: string;
+}> {
+  const start = new Date('2026-08-01T12:00:00.000Z');
+  const end = new Date('2026-09-30T12:00:00.000Z');
+  const dayMs = 24 * 60 * 60 * 1000;
+  const totalDays = Math.round((end.getTime() - start.getTime()) / dayMs);
+
+  return Array.from({ length: totalDays + 1 }, (_, index) => {
+    const progress = totalDays === 0 ? 1 : index / totalDays;
+    const seasonal = Math.sin(index / 3.8) * 0.008 + Math.cos(index / 7.1) * 0.004;
+    const close = Math.max(
+      0.01,
+      startPrice + (endPrice - startPrice) * progress + startPrice * seasonal,
+    );
+    const date = new Date(start.getTime() + index * dayMs).toISOString().slice(0, 10);
+    return {
+      date,
+      close: Number(close.toFixed(4)),
+      source: 'other' as const,
+      retrievedAt: FIXED_PRICE_TIME,
+    };
+  });
+}
+
+export const VISUAL_REGRESSION_HISTORICAL_PRICES: HistoricalPriceSeries = {
+  COMI: buildVisualHistory(53.8, 61.5),
+  MASR: buildVisualHistory(7.35, 6.64),
+  TALM: buildVisualHistory(24.8, 27.4),
+  NAPR: buildVisualHistory(9.65, 8.92),
+  ORHD: buildVisualHistory(17.4, 21.1),
+  FWRY: buildVisualHistory(6.15, 5.62),
+};

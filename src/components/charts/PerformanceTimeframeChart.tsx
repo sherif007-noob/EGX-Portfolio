@@ -1,5 +1,6 @@
 import { useChartResourceId } from './ChartSeriesGlow';
 import { useMarketRefresh } from '../../hooks/useMarketRefresh';
+import { VISUAL_REGRESSION_MODE } from '../../utils/visualRegressionMode';
 import { trustedLivePrices } from '../../services/positionQuote';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DropdownPresence } from '../PremiumMotion';
@@ -239,6 +240,15 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   }, [transactions, historicalPrices, timeframe, canonicalCapitalDeposits, marketRefresh]);
 
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) {
+      setIntradayLoading(false);
+      setIntradayError(null);
+      setIntradayResult(null);
+      setLoadedIntradayPrices({});
+      setEffectiveTodayResolution(null);
+      return;
+    }
+
     let cancelled = false;
     setIntradayLoading(true);
     setIntradayError(null);

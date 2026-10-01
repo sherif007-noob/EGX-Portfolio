@@ -2,11 +2,11 @@
 
 ## Status
 
-**PHASE 10.9 — RESPONSIVE CROSS-APP PARITY IMPLEMENTED AT SOURCE LEVEL. Motion/tab wrappers and dense table/chart shells now have explicit intrinsic-width containment without clipping semantic effects; the narrowest phone layout no longer forces high-value financial summaries into cramped two-column cards; short-landscape modals/toasts now respect left/right/bottom safe areas; the existing mobile-record, table-scroll, dropdown portal, chart-selector, modal, Header, and 2XL width contracts were audited and preserved. Exact-head Intraday 1m Migration Smoke #36647092353 passed end-to-end on runtime head `74741fa9`; the next pass is the rendered browser regression harness, so physical screenshot/device parity is not yet claimed.**
+**PHASE 10 PASS 1.3 — RENDERED BROWSER REGRESSION HARNESS COMPLETE / GOLDEN BASELINES GREEN. A deterministic Chromium harness now renders the app without live Supabase/auth/market-data drift, checks page-level geometry at all 12 required responsive widths, and compares 16 inspected golden UI states. The required-baseline comparison run #36918687347 passed 16/16 screenshots at 0.000% diff and all 12 viewport checks at 0px page overflow. The harness caught a Supabase-configuration contamination during bootstrap and it was corrected before any baseline was accepted. Exact runtime smoke #36917666997 also passed on runtime head `ac7703b3`. The next and final visual pass is 10.10.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
-**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is the rendered browser regression harness, followed by 10.10. Business/data/accounting work from later roadmap stages must not be mixed into the remaining Phase 10 closure work.
+**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next and final implementation pass is 10.10. Business/data/accounting work from later roadmap stages must not be mixed into Phase 10.10.
 
 The purpose of Phase 10 is **consistency, not redesign**.
 
@@ -2850,6 +2850,168 @@ That next pass must turn the width matrix into actual browser screenshots/golden
 Representative commit:
 
 - `74741fa9` — responsive containment, narrow-phone summary correction, short-landscape safe-area extension and 10.9 regression contract.
+
+---
+
+## Pass 1.3 — Rendered browser regression harness
+
+**Status: COMPLETE — deterministic Chromium baselines established and required-baseline comparison green.**
+
+### Purpose
+
+The earlier Phase 8–10 tests are intentionally source-contract tests. Pass 1.3 adds the missing rendered evidence layer instead of pretending source strings prove visual output.
+
+### Deterministic visual mode
+
+The browser harness builds with:
+
+`VITE_VISUAL_REGRESSION=true`
+
+This mode exists only for rendered regression and does not alter the normal production path.
+
+It:
+
+- bypasses the Supabase auth gate only in the visual build;
+- initializes a representative test ledger instead of user/live portfolio state;
+- derives positions and closed cycles through the canonical `reconcilePortfolioFromLedger` engine;
+- uses deterministic ticker prices and deterministic local historical price series;
+- computes analytics through the real `buildUnifiedAnalyticsResult` engine;
+- disables live TradingView startup/focus/scheduled quote sync;
+- disables Google Sheets/Firebase background initialization;
+- disables Supabase historical/intraday reads in the visual build;
+- freezes browser time at `2026-09-30T09:00:00.000Z`;
+- uses `Africa/Cairo`, `en-US`, dark mode and reduced motion.
+
+This prevents screenshots from changing because of the real portfolio, current market session, authentication state, network timing or the wall clock.
+
+### Browser geometry matrix
+
+The harness checks actual Chromium document/body geometry at:
+
+- 320 × 740;
+- 359 × 780;
+- 390 × 844;
+- 430 × 932;
+- short landscape 844 × 390;
+- 768 × 1024;
+- 1024 × 900;
+- 1280 × 900;
+- 1440 × 1000;
+- 1600 × 1000;
+- 1920 × 1080;
+- 2560 × 1440.
+
+Acceptance:
+
+> page-level horizontal overflow must be <= 1px.
+
+Required-baseline run #36918687347 reported **0px overflow at all 12 widths**.
+
+### Golden rendered states
+
+Tracked under:
+
+`visual-regression/baseline/`
+
+The current golden matrix contains 16 states:
+
+- Overview — 320 phone;
+- Overview — 390 phone;
+- Overview — short landscape;
+- Overview — 1024 laptop;
+- Overview — 1440 desktop;
+- Overview — 2560 2XL;
+- Open Positions — desktop;
+- Open Positions — phone;
+- Closed Cycles — desktop;
+- Reports — desktop;
+- Journal — desktop;
+- Cash Ledger — desktop;
+- Add Trade modal — phone;
+- Transaction Edit modal — desktop;
+- Data & Tools dropdown — desktop;
+- semantic Overview summary group — desktop.
+
+### Pixel comparison
+
+`scripts/renderedRegression.mjs` compares current PNGs to tracked baselines with Sharp.
+
+Current guard:
+
+- per-channel tolerance: 16;
+- maximum changed-pixel ratio: 1%;
+- dimension mismatch = failure;
+- failing comparisons emit red diff PNGs;
+- missing baselines are failures after bootstrap.
+
+The required-baseline verification run produced:
+
+- **16 / 16 passed**;
+- **0.000% diff for every screenshot**;
+- no rendered-regression errors.
+
+### Workflow
+
+Canonical workflow:
+
+`.github/workflows/rendered-regression.yml`
+
+It:
+
+1. installs the application with npm;
+2. installs pinned Playwright Chromium only inside this visual job;
+3. builds the deterministic visual app;
+4. starts Vite preview;
+5. runs geometry + screenshot capture + pixel comparison;
+6. uploads current screenshots, diffs and `report.json` as a 14-day artifact.
+
+Playwright is intentionally not added to the normal application dependencies.
+
+The workflow contains a one-time bootstrap path: only when no tracked baselines exist may a successful inspected capture be promoted. Once baselines exist, `VISUAL_REQUIRE_BASELINE` resolves true and promotion is skipped.
+
+### Bootstrap audit caught a real harness defect
+
+The first rendered evidence set exposed a visible message in the Overview analytics surface:
+
+`Supabase browser configuration is missing...`
+
+That state was **not** accepted as a baseline.
+
+The harness was corrected so visual-mode analytics uses deterministic local historical data and the intraday loader does not touch Supabase. A second inspected capture showed the intended chart, and only then were golden PNGs promoted.
+
+This is evidence that the rendered layer is functioning as an audit tool rather than blindly snapshotting whatever appears.
+
+### Evidence
+
+Runtime/harness commits:
+
+- `9197a329` — deterministic visual mode + Chromium geometry/screenshot harness;
+- `ac7703b3` — deterministic historical analytics and visual-mode intraday isolation.
+
+Baseline / verification commits:
+
+- `6b61b321` — 16 inspected golden PNGs;
+- `38bc2b4f` — required-baseline verification trigger.
+
+Runs:
+
+- **Intraday 1m Migration Smoke #36917666997 — PASSED** on runtime head `ac7703b3`;
+- first clean deterministic rendered capture #36917666751 — PASSED;
+- baseline promotion run #36918169007 — PASSED;
+- **required-baseline comparison #36918687347 — PASSED**.
+
+### Remaining boundary
+
+Pass 1.3 does not close Phase 10 by itself.
+
+10.10 still owns the final all-system gate:
+
+- TypeScript;
+- complete Vitest suite;
+- production Vite/PWA build;
+- Cloudflare Worker compile/dry-run;
+- required rendered screenshot comparison;
+- final contract freeze.
 
 ---
 

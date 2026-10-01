@@ -8,9 +8,10 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-09-30  
+**Date:** 2026-10-01  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `74741fa9` — Phase 10.9 responsive cross-app parity  
+**Current validated runtime head:** `ac7703b3` — deterministic rendered-regression runtime support  
+**Current rendered-baseline verification head:** `38bc2b4f`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -33,11 +34,11 @@ Completed through:
 - 10.7C Closed Cycles;
 - **10.8 Modal & workflow consistency — source complete, exact-head smoke passed.**
 - **10.9 Responsive cross-app parity — source complete, exact-head smoke passed.**
+- **Rendered browser regression harness — golden baseline established and required-baseline comparison green.**
 
 Next:
 
-1. **Rendered browser regression baseline**
-2. **10.10 — Visual regression closure**
+1. **10.10 — Visual regression closure**
 
 Do not mix accounting/data behavior changes into these passes.
 
@@ -70,6 +71,26 @@ Runtime head `74741fa9` passed **Intraday 1m Migration Smoke #36647092353** end-
 Source parity now explicitly covers the 320/359 narrow-phone tier, 390/430 phone layouts, short landscape, tablet, laptop, desktop and 2XL containment rules without reopening the frozen Header or chart behavior.
 
 The remaining visual evidence gap is intentional: **actual browser screenshots/render comparison**. That is the next pass.
+
+---
+
+### Rendered regression validation
+
+The Phase 10 rendered layer is now active and green.
+
+Deterministic runtime head `ac7703b3` passed **Intraday 1m Migration Smoke #36917666997**.
+
+Tracked golden baselines were established in `6b61b321` only after manual artifact inspection.
+
+Required-baseline Chromium run **#36918687347** on verification head `38bc2b4f` reported:
+
+- **12 / 12 responsive geometry checks at 0px page-level horizontal overflow**;
+- **16 / 16 golden screenshots passed**;
+- **0.000% pixel diff for every golden state**;
+- no rendered-regression errors;
+- baseline promotion correctly skipped because baselines already existed.
+
+The bootstrap capture initially exposed a Supabase-configuration message inside the analytics surface. That image was rejected; deterministic local visual history/intraday isolation was added before the golden set was promoted.
 
 ---
 
@@ -263,6 +284,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Rendered browser regression baseline.**
+**Phase 10.10 — Visual regression closure.**
 
-After that: **Phase 10.10 — Visual regression closure**, then **Stage 2.1 — Canonical financial mutation executor.**
+After 10.10: **Stage 2.1 — Canonical financial mutation executor.**

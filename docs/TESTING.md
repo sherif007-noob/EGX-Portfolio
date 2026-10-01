@@ -193,6 +193,92 @@ npm run sync:historical
 
 Use a test/staging project when possible. Never expose the server secret in command output, screenshots, or committed files.
 
+## Rendered visual regression
+
+Phase 10 adds a real Chromium rendered-regression layer in addition to the existing Vitest source contracts.
+
+Canonical workflow:
+
+`.github/workflows/rendered-regression.yml`
+
+Canonical harness:
+
+`scripts/renderedRegression.mjs`
+
+Golden images:
+
+`visual-regression/baseline/`
+
+### Deterministic build contract
+
+The workflow builds with:
+
+```env
+VITE_VISUAL_REGRESSION=true
+```
+
+That mode is test-only. It bypasses live Supabase authentication and portfolio hydration, disables live market-data/Google-Sheets/Supabase-history side effects, freezes the browser clock, and uses a representative ledger fixture derived through the real reconciliation/analytics engines.
+
+Do not use real production portfolio rows as screenshot fixtures.
+
+### Geometry matrix
+
+Every rendered run checks page-level horizontal overflow at:
+
+- 320;
+- 359;
+- 390;
+- 430;
+- short landscape 844 × 390;
+- 768;
+- 1024;
+- 1280;
+- 1440;
+- 1600;
+- 1920;
+- 2560.
+
+The document/body overflow tolerance is 1px.
+
+### Golden screenshot matrix
+
+The tracked set covers:
+
+- Overview at 320, 390, short landscape, 1024, 1440 and 2560;
+- Open Positions desktop/mobile;
+- Closed Cycles;
+- Reports;
+- Journal;
+- Cash Ledger;
+- Add Trade modal on phone;
+- Transaction Edit modal;
+- Data & Tools dropdown;
+- semantic Overview summary cards.
+
+### Pixel gate
+
+The harness uses Sharp for deterministic PNG comparison.
+
+Defaults:
+
+- channel tolerance: 16;
+- maximum changed-pixel ratio: 1%;
+- dimensions must match exactly;
+- missing baseline = failure after bootstrap;
+- failing states emit a red diff image.
+
+A successful run uploads current screenshots, diffs and `visual-regression/report.json` for 14 days.
+
+The first bootstrap is deliberately special: if no baseline PNGs exist, an inspected successful capture may be promoted. Once baselines exist, `VISUAL_REQUIRE_BASELINE` is true and promotion is skipped.
+
+Current establishment evidence:
+
+- runtime smoke #36917666997 passed on `ac7703b3`;
+- golden PNG commit `6b61b321`;
+- required-baseline comparison #36918687347 passed **16/16 at 0.000% diff** and **12/12 geometry checks at 0px page overflow**.
+
+The bootstrap inspection also caught a Supabase configuration message in the analytics screenshot. That image was rejected and the visual fixture was corrected before baseline promotion. Never refresh baselines merely to make a regression pass; first decide whether the visual change is intentional.
+
 ## CI
 
 GitHub Actions runs Quality Checks on:
@@ -200,7 +286,9 @@ GitHub Actions runs Quality Checks on:
 - pushes to `main`;
 - pull requests targeting `main`.
 
-The job uses Node 22 and currently installs dependencies with npm.
+The Quality job uses Node 22 and currently installs dependencies with npm.
+
+The feature branch also has dedicated migration and rendered-regression workflows. The rendered-regression workflow installs pinned Playwright/Chromium only inside that job so normal application dependencies remain unchanged.
 
 ## Testing principles
 

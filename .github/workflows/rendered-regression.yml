@@ -1,5 +1,7 @@
 name: Rendered Visual Regression
 
+# Golden baselines are mandatory after bootstrap; missing baselines are allowed only for the one-time promotion run.
+
 on:
   push:
     branches:

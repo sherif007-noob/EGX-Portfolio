@@ -1,0 +1,102 @@
+name: Phase 10 Visual Closure
+
+on:
+  push:
+    branches:
+      - feature/premium-ui-redesign
+    paths:
+      - '.github/workflows/phase10-closure.yml'
+      - '.github/workflows/rendered-regression.yml'
+      - 'src/**'
+      - 'scripts/renderedRegression.mjs'
+      - 'visual-regression/baseline/**'
+      - 'worker.ts'
+      - 'wrangler.jsonc'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-phase10-visual-closure
+  cancel-in-progress: true
+
+jobs:
+  closure:
+    name: Typecheck, full tests, production build, Worker dry-run, rendered baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Upgrade npm
+        run: npm install --global npm@11.6.0
+
+      - name: Install application dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Run full Vitest suite
+        run: npm test
+
+      - name: Build production Vite/PWA assets
+        run: npm run build:cloudflare
+
+      - name: Compile Cloudflare Worker deployment bundle
+        run: npx wrangler deploy --dry-run --outdir .wrangler/phase10-closure
+
+      - name: Install pinned Playwright runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Rebuild deterministic visual-regression app
+        env:
+          VITE_VISUAL_REGRESSION: 'true'
+        run: npm run build:cloudflare
+
+      - name: Start Vite preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/egx-phase10-preview.log 2>&1 &
+          echo $! > /tmp/egx-phase10-preview.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/egx-phase10-preview.log
+          exit 1
+
+      - name: Verify required rendered golden baselines
+        env:
+          VISUAL_BASE_URL: http://127.0.0.1:4173
+          VISUAL_REQUIRE_BASELINE: 'true'
+          VISUAL_MAX_DIFF_RATIO: '0.01'
+          VISUAL_CHANNEL_TOLERANCE: '16'
+        run: node scripts/renderedRegression.mjs
+
+      - name: Upload final Phase 10 rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10-visual-closure
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            visual-regression/current/**
+            visual-regression/diff/**
+            visual-regression/report.json
+            /tmp/egx-phase10-preview.log

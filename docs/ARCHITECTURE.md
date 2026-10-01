@@ -152,7 +152,27 @@ The mutation boundary owns ordering and structured failures.
 
 The database RPC already provides the atomic accounting snapshot write.
 
-Stage 2.1 defines this architecture but does not claim complete workflow adoption. BUY/SELL conversion begins in Stage 2.2; transaction/cash/import workflows follow in Stage 2.3.
+Stage 2.1 defined this architecture. Stage 2.2 now routes BUY/SELL through it. Transaction edit/delete, cash, OCR and backup/import workflows remain for Stage 2.3.
+
+### Current BUY/SELL path
+
+```text
+Add Trade / Sell modal
+  → async App handler
+  → usePortfolioState
+  → tradeLedgerMutations.prepare*
+  → ledgerMutationService
+  → portfolioReconciliation
+  → forceFullSyncToFirestore
+  → replace_portfolio_accounting_snapshot RPC
+  → apply canonical React state
+  → success UI
+  → optional Google Sheets mirror
+```
+
+The App and modals therefore do not infer successful money/share state from button submission.
+
+Position thesis metadata has separate ownership from accounting projections: position/BUY-authored target, stop and notes take precedence over ticker-directory defaults, while shares/cost/cash/P&L remain ledger-derived.
 
 A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
 

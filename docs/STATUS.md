@@ -8,10 +8,10 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-10-01  
+**Date:** 2026-10-02  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `eb3f776e` — Stage 2.1 canonical financial mutation executor  
-**Current full exact-head verification:** Phase 10 Visual Closure #36924616787 on `eb3f776e`  
+**Current validated runtime head:** `d012aeff` — Stage 2.2 persist-confirmed BUY/SELL  
+**Current full exact-head verification:** Phase 10 Visual Closure #36941746467 on `d012aeff`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -44,10 +44,11 @@ Financial-integrity work has started.
 Completed:
 
 - **Stage 2.1 — Canonical financial mutation executor**
+- **Stage 2.2 — BUY and SELL persist-confirmed migration**
 
 Next:
 
-1. **Stage 2.2 — Convert BUY and SELL to persist-confirmed mutations**
+1. **Stage 2.3 — Convert transaction edit/delete, cash, OCR, and backup/import workflows**
 
 ---
 
@@ -158,9 +159,84 @@ Validation run **#36924616787** passed on the exact runtime head:
 - 12/12 responsive geometry checks at 0px page overflow;
 - 16/16 frozen golden screenshots at 0.000% diff.
 
-A reconciliation ownership issue surfaced during testing: ticker-directory target/stop values currently take precedence over seeded position target/stop values. It is documented for deliberate later handling and was not changed inside Stage 2.1.
+Stage 2.1 also exposed a target/stop metadata ownership mismatch. That issue was deliberately resolved in Stage 2.2: position/BUY-authored target, stop and notes now take precedence over ticker-directory defaults during canonical reconciliation.
 
 See `FINANCIAL_MUTATION_CONTRACT.md`.
+
+---
+
+### Stage 2.2 persist-confirmed BUY/SELL
+
+Runtime head `d012aeff` converts both user-facing trade mutations onto the canonical executor.
+
+BUY and SELL now:
+
+- prepare a candidate ledger through `tradeLedgerMutations.ts`;
+- execute through the shared `ledgerMutationService`;
+- rebuild positions, closed cycles and cash from the ledger;
+- persist the complete canonical accounting snapshot before local financial state changes;
+- leave the previous local financial state intact when prepare/validate/persist fails;
+- keep Add Trade / Sell modals open on a failed write;
+- disable submit/cancel paths while the mutation is unresolved;
+- close and show success only after authoritative persistence;
+- run the optional Google Sheets mirror only after portfolio persistence has succeeded;
+- serialize against every other executor-backed financial mutation.
+
+The rare `persisted: true / APPLY_FAILED` case is handled distinctly: the user is told the trade is already authoritative and should reload instead of retrying and creating a duplicate.
+
+### Trade-accounting prerequisites fixed
+
+Persist-first BUY exposed a pre-existing projection-metadata ownership bug that optimistic local state had been masking.
+
+Canonical reconciliation now preserves:
+
+```text
+position-authored target/stop/notes
+  → BUY-authored metadata
+  → ticker-directory defaults
+```
+
+Ticker-directory target/stop values are defaults, not owners of portfolio thesis metadata.
+
+Accounting ownership remains unchanged:
+
+- shares;
+- average cost;
+- fees;
+- cash;
+- realized P&L;
+- closed cycles
+
+are still ledger-derived.
+
+### Hidden cash modes during migration
+
+The legacy flags remain in the current UI/API surface until Stage 2.5 removes them completely, but Stage 2.2 no longer permits them to create noncanonical money:
+
+- BUY with `deductFromCash=false` is rejected;
+- SELL with `addToCash=false` is rejected.
+
+A real trade always changes broker cash. Any reconciliation difference must be represented by an explicit ledger event.
+
+### Validation
+
+Exact-head **Phase 10 Visual Closure #36941746467** passed on `d012aeff`:
+
+- TypeScript;
+- **81 / 81 Vitest files, 462 / 462 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker `wrangler deploy --dry-run`;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 frozen golden screenshots at 0.000% diff.
+
+Independent **Intraday 1m Migration Smoke #36941746472** also passed on the same head, including:
+
+- TypeScript;
+- focused intraday regression suite;
+- ACTF/NAPR TradingView 1m rebuild;
+- current session-relevant portfolio-universe sync.
+
+No market-data or visual regression was introduced by the financial mutation migration.
 
 ---
 
@@ -356,6 +432,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.2 — Convert BUY and SELL.**
+**Stage 2.3 — Convert transaction edit/delete, cash workflows, OCR, and backup/import.**
 
-BUY and SELL are the first user-facing workflows to move onto the new executor. Their UI must not mutate financial state, close the workflow, or report success until the canonical accounting snapshot is persisted.
+The goal is to remove the remaining mixed mutation model so every financial ledger write uses the same persist-confirmed executor semantics.

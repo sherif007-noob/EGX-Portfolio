@@ -357,7 +357,7 @@ Detailed authority: `FINANCIAL_MUTATION_CONTRACT.md`.
 
 ---
 
-## Pass 2.2 — Convert BUY and SELL
+## Pass 2.2 — Convert BUY and SELL — COMPLETE / CI GREEN
 
 Current problem:
 
@@ -382,9 +382,42 @@ Regression cases:
 - full close;
 - same-minute executions.
 
+### 2.2 implementation record
+
+Implemented in:
+
+- `src/services/tradeLedgerMutations.ts`;
+- `usePortfolioState.ts`;
+- Add Trade and Sell modal workflows;
+- App-level trade success/failure/Sheets sequencing.
+
+Accepted behavior:
+
+- BUY/SELL are async canonical executor mutations;
+- modal submission is in-flight locked;
+- persistence failure keeps the prior financial state and keeps the modal open;
+- success/close occurs only after Supabase accounting persistence;
+- Google Sheets runs only after authoritative portfolio success and cannot roll it back;
+- persisted-but-local-apply-failed is reported as already-saved rather than retried;
+- partial/full/same-day SELL semantics remain ledger-derived;
+- position/BUY target, stop and notes beat ticker-directory defaults;
+- legacy hidden cash-bypass flags are rejected until their Stage 2.5 UI/API removal.
+
+Exact-head validation:
+
+- runtime: `d012aeff`;
+- Phase 10 Visual Closure **#36941746467**;
+- **81 / 81 test files, 462 / 462 tests**;
+- production build and Worker dry-run green;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 golden screenshots at 0.000% diff;
+- Intraday 1m Migration Smoke **#36941746472** green on the same runtime head.
+
+**Next: Pass 2.3 — transaction edit/delete, cash, OCR and backup/import migration.**
+
 ---
 
-## Pass 2.3 — Convert transaction edit/delete and cash workflows
+## Pass 2.3 — Convert transaction edit/delete and cash workflows — NEXT
 
 Transaction deletion already follows much of the preferred persist-first shape.
 

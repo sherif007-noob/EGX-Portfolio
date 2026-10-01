@@ -94,6 +94,8 @@ Important fields:
 
 Position shares must reconcile to cumulative BUY shares minus SELL shares for the same ticker.
 
+Portfolio-authored position metadata is not an accounting source. For target price, stop loss and notes, canonical reconciliation preserves portfolio/BUY-authored values before using ticker-directory defaults. Shares, average cost, fees and cash remain ledger-derived.
+
 ### closed_trades
 
 Materialized closed-cycle records derived from the ledger.
@@ -222,6 +224,14 @@ Callers must not treat `positions`, `closed_trades` or `cash_balance` as indepen
 The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
+
+As of Stage 2.2, normal BUY and SELL workflows follow this ordering. Remaining financial workflows migrate in Stage 2.3.
+
+### Trade cash effect during Stage 2.2
+
+Canonical BUY and SELL ledger rows always carry their real broker cash effect.
+
+The legacy `deductFromCash=false` / `addToCash=false` paths are rejected during Stage 2.2 rather than persisted as inconsistent accounting. Stage 2.5 owns complete removal of those legacy controls and parameters.
 
 See [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md).
 

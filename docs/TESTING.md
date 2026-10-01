@@ -143,6 +143,11 @@ Stage 2.1 adds:
 - `src/services/ledgerMutationService.test.ts`;
 - `src/services/Stage21MutationBoundary.test.ts`.
 
+Stage 2.2 adds:
+
+- `src/services/tradeLedgerMutations.test.ts`;
+- `src/services/Stage22PersistedTradeMutations.test.ts`.
+
 The suite protects the canonical:
 
 ```text
@@ -165,7 +170,14 @@ Current coverage includes:
 - persisted-but-local-apply-failed distinction;
 - reconciliation seed behavior;
 - continued use of the atomic `replace_portfolio_accounting_snapshot` Supabase RPC;
-- explicit proof that BUY/SELL were not prematurely converted during 2.1.
+- Stage 2.1 boundary isolation;
+- persisted BUY/SELL preparation and sequencing;
+- insufficient-cash and stale-position trade rejection;
+- partial/full/same-day SELL scenarios;
+- in-flight modal submission locking;
+- Sheets-after-persistence source contract;
+- target/stop/notes metadata ownership through canonical reconciliation;
+- explicit rejection of legacy hidden trade cash bypasses.
 
 Exact-head Stage 2.1 validation:
 
@@ -176,6 +188,17 @@ Exact-head Stage 2.1 validation:
 - production Vite/PWA build: passed;
 - Worker dry-run: passed;
 - frozen visual regression: 12/12 geometry widths and 16/16 screenshots green.
+
+### Exact-head Stage 2.2 validation
+
+- runtime: `d012aeff`;
+- Phase 10 Visual Closure: **#36941746467**;
+- TypeScript: passed;
+- Vitest: **81 / 81 files, 462 / 462 tests**;
+- production Vite/PWA build: passed;
+- Worker dry-run: passed;
+- frozen visual regression: **12 / 12 geometries at 0px overflow** and **16 / 16 screenshots at 0.000% diff**;
+- Intraday 1m Migration Smoke **#36941746472**: passed, including live ACTF/NAPR 1m rebuild and session-relevant universe sync.
 
 When migrating an individual workflow, add tests for both:
 

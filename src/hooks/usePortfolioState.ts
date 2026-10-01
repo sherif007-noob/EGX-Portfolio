@@ -461,7 +461,7 @@ export function usePortfolioState() {
     notes?: string;
   }) => {
     const executor = financialMutationExecutorRef.current!;
-    const result = await executor.execute<TradeTransaction>({
+    return executor.execute<TradeTransaction>({
       kind: 'SELL',
       current: currentLedgerSnapshot(),
       prepare: (current) => prepareSellTradeMutation(current, {
@@ -477,21 +477,6 @@ export function usePortfolioState() {
       }),
       apply: (snapshot) => applyLedgerSnapshot(snapshot),
     });
-
-    if (!result.ok) return result;
-
-    const transaction = result.value;
-    const closedTrade = result.snapshot.closedTrades.find((trade) =>
-      trade.sellTransactionIds?.includes(transaction.id),
-    );
-
-    return {
-      ...result,
-      value: {
-        transaction,
-        closedTrade,
-      },
-    };
   }, [currentLedgerSnapshot, applyLedgerSnapshot]);
 
   const editPosition = useCallback((updatedPosition: Position) => {

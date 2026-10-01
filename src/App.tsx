@@ -405,7 +405,7 @@ export default function App() {
       deductFromCash: deductCash,
     });
 
-    if (!result.ok) {
+    if ('error' in result) {
       if (result.persisted) {
         showToast(
           `BUY ${newTradeData.ticker.toUpperCase()} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
@@ -423,6 +423,10 @@ export default function App() {
     }
 
     const newTx = result.value;
+    if (!newTx) {
+      showToast('BUY was persisted but the saved transaction result was unavailable. Reload before entering another trade.', 'error', 7000);
+      return true;
+    }
 
     // Sheets is an optional mirror. It starts only after authoritative portfolio
     // persistence succeeds and its failure never rolls back the saved trade.
@@ -493,7 +497,7 @@ export default function App() {
       notes,
     });
 
-    if (!result.ok) {
+    if ('error' in result) {
       if (result.persisted) {
         showToast(
           `SELL ${pos.ticker} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
@@ -510,7 +514,14 @@ export default function App() {
       return false;
     }
 
-    const { transaction, closedTrade } = result.value;
+    const transaction = result.value;
+    if (!transaction) {
+      showToast('SELL was persisted but the saved transaction result was unavailable. Reload before entering another trade.', 'error', 7000);
+      return true;
+    }
+    const closedTrade = result.snapshot.closedTrades.find((trade) =>
+      trade.sellTransactionIds?.includes(transaction.id),
+    );
 
     // Optional Sheets mirror starts only after authoritative portfolio persistence.
     if (sheetsConfig?.spreadsheetId) {

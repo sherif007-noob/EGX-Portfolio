@@ -33,12 +33,12 @@ When a historical phase log conflicts with one of these about current behavior, 
 
 ---
 
-# Active execution plans
+# Execution plans
 
 | Document | State |
 | --- | --- |
 | [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) | **master sequencing authority** |
-| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | active; rendered regression golden baseline green, 10.10 next |
+| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | **closed Stage 1 reference; visual system CLOSED / CI CLEAN** |
 | [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | scheduled as master-roadmap Stage 5; implementation deferred |
 | [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | migration/rollout reference; remaining promotion evidence still relevant |
 
@@ -77,7 +77,7 @@ They are **historical implementation evidence**, even when some remain physicall
 
 Do not use an old phase recipe to override the canonical visual contract.
 
-Some regression tests intentionally read historical plan files by exact path. That is why these files are not being mass-moved while Phase 10 is still active.
+Some regression tests intentionally read historical plan files by exact path. Phase 10 is now closed, but physical archive moves remain deferred until those path bindings are deliberately removed and updated.
 
 See [archive/README.md](archive/README.md).
 

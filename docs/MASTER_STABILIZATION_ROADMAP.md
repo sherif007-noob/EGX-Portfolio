@@ -167,13 +167,13 @@ First remove or migrate that path ownership during a later closure pass. Then mo
 
 ---
 
-# 4. Stage 1 — Finish Phase 10 visual closure
+# 4. Stage 1 — Finish Phase 10 visual closure — COMPLETE / CLOSED / CI CLEAN
 
 **Owner:** `PHASE10_VISUAL_CONSISTENCY_PLAN.md`
 
 **Business/data behavior remains frozen throughout this stage.**
 
-Current completed point: **Pass 1.3 rendered regression harness — golden baselines established; required-baseline Chromium comparison green.**
+Final completed point: **Pass 1.4 / Phase 10.10 — exact-head closure green on `50db10b2`, run #36921005365.**
 
 ## Pass 1.1 — Phase 10.8: modal & workflow consistency — IMPLEMENTED AT SOURCE LEVEL
 
@@ -268,7 +268,7 @@ The existing Phase 8–10 tests remain **source-contract tests**. They are not r
 
 ---
 
-## Pass 1.4 — Phase 10.10: visual regression closure — NEXT
+## Pass 1.4 — Phase 10.10: visual regression closure — COMPLETE / CI GREEN
 
 Freeze:
 
@@ -290,11 +290,20 @@ Final gate:
 - Cloudflare Worker dry-run/build;
 - rendered-device/screenshot check.
 
-Only then mark Phase 10 **CLOSED / CI CLEAN**.
+Closure evidence:
+
+- TypeScript passed;
+- **77 / 77 Vitest files, 435 / 435 tests passed**;
+- production Vite/PWA build passed;
+- Cloudflare Worker dry-run passed;
+- **12 / 12 geometry widths at 0px page overflow**;
+- **16 / 16 golden screenshots at 0.000% diff**.
+
+Phase 10 is **CLOSED / CI CLEAN**. Its accepted visual contracts are frozen unless explicitly reopened.
 
 ---
 
-# 5. Stage 2 — Financial mutation & ledger integrity
+# 5. Stage 2 — Financial mutation & ledger integrity — NEXT
 
 This is the highest-priority non-visual work.
 

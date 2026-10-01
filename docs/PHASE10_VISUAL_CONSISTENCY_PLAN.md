@@ -2,11 +2,11 @@
 
 ## Status
 
-**PHASE 10 PASS 1.3 — RENDERED BROWSER REGRESSION HARNESS COMPLETE / GOLDEN BASELINES GREEN. A deterministic Chromium harness now renders the app without live Supabase/auth/market-data drift, checks page-level geometry at all 12 required responsive widths, and compares 16 inspected golden UI states. The required-baseline comparison run #36918687347 passed 16/16 screenshots at 0.000% diff and all 12 viewport checks at 0px page overflow. The harness caught a Supabase-configuration contamination during bootstrap and it was corrected before any baseline was accepted. Exact runtime smoke #36917666997 also passed on runtime head `ac7703b3`. The next and final visual pass is 10.10.**
+**PHASE 10 — CLOSED / CI CLEAN. The exact-head Phase 10 Visual Closure run #36921005365 passed on runtime head `50db10b2`: TypeScript, all 77 Vitest files / 435 tests, production Vite/PWA build, Cloudflare Worker `wrangler deploy --dry-run`, deterministic Chromium rebuild, 12/12 responsive geometry checks at 0px page overflow, and 16/16 required golden screenshots at 0.000% diff. Phase 10.10 therefore freezes the accepted hierarchy, material, semantic aura/edge, controls, dropdown/overlay, modal, dense-data, responsive, chart-container, Phase 8 material-reference, and Phase 9 header contracts. Further visual changes require an explicit reopened design-system scope.**
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
-**Master-roadmap ownership:** this plan is Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next and final implementation pass is 10.10. Business/data/accounting work from later roadmap stages must not be mixed into Phase 10.10.
+**Master-roadmap ownership:** this plan is the now-complete Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is **Stage 2.1 — Canonical financial mutation executor**. Phase 10 remains the closure/freeze authority for the accepted visual system.
 
 The purpose of Phase 10 is **consistency, not redesign**.
 
@@ -3017,28 +3017,101 @@ Pass 1.3 does not close Phase 10 by itself.
 
 ## 10.10 — Visual regression closure
 
-No redesign.
+**Status: COMPLETE — PHASE 10 CLOSED / CI CLEAN.**
 
-Freeze:
+No redesign was introduced in 10.10.
 
-- hierarchy model;
-- material contract;
-- semantic contract;
-- control families;
-- dropdown/overlay contract;
-- modal contract;
-- dense-data system;
-- responsive coverage;
-- Phase 8 material reference;
-- Phase 9 header architecture.
+### Frozen visual contracts
 
-Final external gate:
+The following accepted systems are now explicitly frozen:
 
-- typecheck;
-- full tests;
-- production build.
+- H0–H5 hierarchy model and role ownership;
+- premium glass/refraction/material primitives;
+- semantic WIN / LOSS / BREAKEVEN / BUY aura + additive edge behavior;
+- action/control families and priority vocabulary;
+- segmented selectors and compact chart controls;
+- body-portaled dropdown/overlay viewport contract;
+- modal Visual Viewport / one-scroll-owner / safe-area contract;
+- dense table and mobile-record system;
+- responsive containment rules from 320 through 2560 and short landscape;
+- analytics chart container/control visual behavior;
+- Phase 8 Monthly Report material reference;
+- Phase 9 header/navigation architecture.
 
-Only then mark Phase 10 **CLOSED / CI CLEAN**.
+A later stage may consume these systems. It must not silently rewrite them. Any intentional visual-system change must explicitly reopen the relevant primitive/contract and regenerate inspected golden baselines.
+
+### Exact-head closure gate
+
+Canonical workflow:
+
+`.github/workflows/phase10-closure.yml`
+
+Validated runtime head:
+
+`50db10b2`
+
+Run:
+
+**Phase 10 Visual Closure #36921005365 — PASSED**
+
+Passed on the same exact commit:
+
+- TypeScript typecheck;
+- full Vitest suite: **77 / 77 files, 435 / 435 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker compile/deployment bundle via `wrangler deploy --dry-run`;
+- deterministic visual-regression rebuild;
+- Vite preview boot;
+- required Chromium golden-baseline comparison.
+
+Production build evidence:
+
+- Vite build: **passed**;
+- Worker dry-run: **passed**;
+- Wrangler upload bundle: **800.60 KiB / 158.95 KiB gzip**;
+- dry-run exited without deployment.
+
+Rendered evidence:
+
+- 320 × 740: 0px overflow;
+- 359 × 780: 0px overflow;
+- 390 × 844: 0px overflow;
+- 430 × 932: 0px overflow;
+- 844 × 390 short landscape: 0px overflow;
+- 768 × 1024: 0px overflow;
+- 1024 × 900: 0px overflow;
+- 1280 × 900: 0px overflow;
+- 1440 × 1000: 0px overflow;
+- 1600 × 1000: 0px overflow;
+- 1920 × 1080: 0px overflow;
+- 2560 × 1440: 0px overflow.
+
+All 16 tracked golden states passed at **0.000% diff**.
+
+### Closure-run findings
+
+The first 10.10 attempt correctly blocked at the full-suite gate because four historical source-contract tests still asserted superseded implementation strings.
+
+Those failures did **not** justify production visual changes.
+
+The closure repair updated the tests to protect current accepted contracts:
+
+- Phase 10 baseline test no longer binds to the obsolete 10.0 status sentence;
+- DropdownPresence source scanning now understands JSX `>` inside expressions and excludes TypeScript generic syntax;
+- Overview responsive contract now asserts the accepted `items-end` / `positions-preview` composition;
+- Reports hierarchy contract now asserts dynamic `data-hierarchy={mainHierarchyLevel}`.
+
+No business, accounting, market-data, persistence, chart-calculation, or production visual behavior changed in those repairs.
+
+### Exit
+
+Phase 10 is now:
+
+**CLOSED / CI CLEAN**
+
+Next implementation stage:
+
+**Stage 2.1 — Canonical financial mutation executor**
 
 ---
 
@@ -3060,6 +3133,6 @@ Only then mark Phase 10 **CLOSED / CI CLEAN**.
 - [x] Responsive audit widths defined.
 - [x] Source differences explicitly classified as audit candidates rather than automatic defects.
 - [x] Production visual changes prohibited during 10.0.
-- [ ] External CI/typecheck/test/build validation for the connector-written Phase 10 baseline commit.
+- [x] External CI/typecheck/test/build validation completed; final closure is superseded by exact-head Phase 10 Visual Closure #36921005365.
 
-Next implementation pass after the baseline gate: **10.1 — Primitive & token ownership audit.**
+Historical note: this checklist was the original 10.0 baseline gate. All later Phase 10 passes are now complete. Next implementation pass: **Stage 2.1 — Canonical financial mutation executor.**

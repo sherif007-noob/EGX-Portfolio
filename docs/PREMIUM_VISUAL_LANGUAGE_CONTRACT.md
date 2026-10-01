@@ -364,3 +364,67 @@ Device validation should compare at minimum:
 - Monthly Report.
 
 The purpose is to verify that information hierarchy improved without losing the already accepted premium material and semantic identity.
+
+
+---
+
+# 7. Phase 10 closure freeze
+
+Phase 10 is **CLOSED / CI CLEAN** as of October 1, 2026.
+
+Validated exact runtime head:
+
+`50db10b2`
+
+Closure run:
+
+**Phase 10 Visual Closure #36921005365**
+
+The accepted visual system is now a protected contract rather than an active redesign target.
+
+Frozen by default:
+
+- material primitives and refraction/glass behavior;
+- semantic aura + additive edge model;
+- H0–H5 hierarchy ownership;
+- hero/card/record semantic surface roles;
+- action priority and control families;
+- segmented selectors and chart-control shells;
+- dropdown/menu/popover portal geometry and canonical material;
+- modal viewport/safe-area/scroll ownership;
+- dense tables and repeated mobile records;
+- responsive containment from 320 through 2560 and short landscape;
+- Phase 8 Monthly Report material benchmark;
+- Phase 9 header/navigation architecture;
+- accepted analytics chart container/control visual behavior.
+
+## Reopening rule
+
+A later roadmap stage may consume these systems freely.
+
+It may not silently restyle them.
+
+Any intentional visual-system change must:
+
+1. name the primitive/contract being reopened;
+2. explain why existing ownership is insufficient;
+3. preserve accounting/data behavior unless the task explicitly belongs to those domains;
+4. update focused source-contract tests;
+5. run the exact-head production/Worker gate;
+6. inspect rendered output;
+7. deliberately update golden baselines only after the new appearance is accepted.
+
+A failing golden screenshot is therefore a regression signal, not permission to overwrite the baseline automatically.
+
+## Closure evidence
+
+The exact-head gate passed:
+
+- TypeScript;
+- **77 / 77 Vitest files, 435 / 435 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- **12 / 12 geometry widths with 0px page overflow**;
+- **16 / 16 tracked golden states with 0.000% diff**.
+
+This contract now governs later Stage 2+ work unless a future design-system change explicitly reopens it.

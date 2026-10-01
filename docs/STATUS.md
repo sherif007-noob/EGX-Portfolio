@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-01  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `ac7703b3` — deterministic rendered-regression runtime support  
-**Current rendered-baseline verification head:** `38bc2b4f`  
+**Current validated runtime head:** `50db10b2` — Phase 10 CLOSED / CI CLEAN  
+**Current rendered-baseline verification:** Phase 10 Visual Closure #36921005365 on `50db10b2`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -25,22 +25,23 @@ Documentation-only commits may be newer than the runtime baseline above.
 
 ### Visual system
 
-Phase 10 is active.
+**Phase 10 is CLOSED / CI CLEAN.**
 
-Completed through:
+Completed:
 
 - 10.7A Overview;
 - 10.7B Open Positions;
 - 10.7C Closed Cycles;
-- **10.8 Modal & workflow consistency — source complete, exact-head smoke passed.**
-- **10.9 Responsive cross-app parity — source complete, exact-head smoke passed.**
-- **Rendered browser regression harness — golden baseline established and required-baseline comparison green.**
+- 10.8 Modal & workflow consistency;
+- 10.9 Responsive cross-app parity;
+- rendered browser regression harness;
+- **10.10 exact-head visual regression closure.**
+
+Frozen visual contracts now remain protected while the roadmap moves into financial integrity work.
 
 Next:
 
-1. **10.10 — Visual regression closure**
-
-Do not mix accounting/data behavior changes into these passes.
+1. **Stage 2.1 — Canonical financial mutation executor**
 
 ---
 
@@ -55,7 +56,7 @@ Runtime head `d3395be5` passed **Intraday 1m Migration Smoke #36643635140** end-
 
 10.8 standardized all 13 inventoried modal/workflow owners on the shared body-level modal contract, including Visual Viewport keyboard safety and one-scroll-owner behavior.
 
-Full generic Quality Checks and rendered device validation remain pending and are not represented as complete.
+Historical 10.8 note: full-suite/build/rendered closure was intentionally deferred at that pass and is now satisfied by Phase 10.10 run #36921005365.
 
 ---
 
@@ -70,7 +71,7 @@ Runtime head `74741fa9` passed **Intraday 1m Migration Smoke #36647092353** end-
 
 Source parity now explicitly covers the 320/359 narrow-phone tier, 390/430 phone layouts, short landscape, tablet, laptop, desktop and 2XL containment rules without reopening the frozen Header or chart behavior.
 
-The remaining visual evidence gap is intentional: **actual browser screenshots/render comparison**. That is the next pass.
+Historical 10.9 note: the rendered evidence gap was intentionally deferred and is now satisfied by the golden-baseline harness plus Phase 10.10 exact-head closure.
 
 ---
 
@@ -91,6 +92,28 @@ Required-baseline Chromium run **#36918687347** on verification head `38bc2b4f` 
 - baseline promotion correctly skipped because baselines already existed.
 
 The bootstrap capture initially exposed a Supabase-configuration message inside the analytics surface. That image was rejected; deterministic local visual history/intraday isolation was added before the golden set was promoted.
+
+---
+
+### Phase 10.10 final closure
+
+Runtime head `50db10b2` passed **Phase 10 Visual Closure #36921005365** on October 1, 2026.
+
+Same-head results:
+
+- TypeScript: passed;
+- full Vitest: **77 / 77 files, 435 / 435 tests**;
+- production Vite/PWA build: passed;
+- Cloudflare Worker `wrangler deploy --dry-run`: passed;
+- deterministic Chromium required-baseline comparison: passed;
+- responsive geometry: **12 / 12 widths at 0px page overflow**;
+- golden images: **16 / 16 at 0.000% diff**.
+
+The closure gate initially exposed four obsolete source-string contracts. They were updated to assert the current accepted architecture; production visuals/business/data logic were not changed to satisfy stale tests.
+
+**Visual system state: CLOSED / CI CLEAN.**
+
+Next execution point: **Stage 2.1 — Canonical financial mutation executor.**
 
 ---
 
@@ -213,12 +236,13 @@ Do not rewrite this engine during the Reports workspace redesign.
 
 `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` is now integrated into the master roadmap as **Stage 5 / R1–R8**.
 
-It remains deferred until:
+Its visual entry gate is now satisfied because Phase 10 is closed.
 
-1. Phase 10 closes;
-2. financial mutation integrity closes;
-3. production/automation convergence closes;
-4. enough architecture ownership exists to move report components safely.
+It remains deferred until the remaining gates close:
+
+1. financial mutation integrity;
+2. production/automation convergence;
+3. enough architecture ownership exists to move report components safely.
 
 ---
 
@@ -284,6 +308,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Phase 10.10 — Visual regression closure.**
+**Stage 2.1 — Canonical financial mutation executor.**
 
-After 10.10: **Stage 2.1 — Canonical financial mutation executor.**
+The first post-visual objective is to make every financial mutation persist-confirmed and atomic before the UI applies success state.

@@ -279,6 +279,39 @@ Current establishment evidence:
 
 The bootstrap inspection also caught a Supabase configuration message in the analytics screenshot. That image was rejected and the visual fixture was corrected before baseline promotion. Never refresh baselines merely to make a regression pass; first decide whether the visual change is intentional.
 
+## Phase 10 exact-head visual closure gate
+
+The final Phase 10 gate is:
+
+`.github/workflows/phase10-closure.yml`
+
+It runs on the premium branch for runtime/visual-contract changes and intentionally combines the previously separate evidence into one exact-head job:
+
+1. npm dependency installation;
+2. TypeScript typecheck;
+3. the complete Vitest suite;
+4. production Vite/PWA build;
+5. Cloudflare Worker `wrangler deploy --dry-run`;
+6. pinned Playwright Chromium installation;
+7. deterministic visual build;
+8. local Vite preview;
+9. required golden screenshot + responsive geometry comparison.
+
+Do not mark a visual-system closure from independent green runs on different commits when an exact-head closure run is available.
+
+Phase 10 closure evidence:
+
+- runtime head: `50db10b2`;
+- workflow run: **#36921005365**;
+- Vitest: **77 / 77 files, 435 / 435 tests**;
+- production build: passed;
+- Worker dry-run: passed;
+- Wrangler dry-run bundle: **800.60 KiB / 158.95 KiB gzip**;
+- geometry: **12 / 12 at 0px page overflow**;
+- screenshot baselines: **16 / 16 at 0.000% diff**.
+
+The full-suite gate is intentionally authoritative over focused phase smoke tests. During closure it exposed four obsolete source-string assertions even though focused smoke and rendered checks were green; those contracts were repaired before Phase 10 was closed.
+
 ## CI
 
 GitHub Actions runs Quality Checks on:
@@ -288,7 +321,7 @@ GitHub Actions runs Quality Checks on:
 
 The Quality job uses Node 22 and currently installs dependencies with npm.
 
-The feature branch also has dedicated migration and rendered-regression workflows. The rendered-regression workflow installs pinned Playwright/Chromium only inside that job so normal application dependencies remain unchanged.
+The feature branch also has dedicated migration, rendered-regression, and Phase 10 exact-head closure workflows. Playwright/Chromium is installed only inside visual CI jobs so normal application dependencies remain unchanged.
 
 ## Testing principles
 

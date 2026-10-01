@@ -28,11 +28,4 @@ describe('Stage 2.1 canonical mutation boundary contract', () => {
     expect(persistence).toContain('p_cash_balance: data.cashBalance');
   });
 
-  it('does not convert BUY/SELL prematurely inside Stage 2.1', () => {
-    const hook = readRelative('../hooks/usePortfolioState.ts');
-
-    expect(hook).toContain('const addTrade = useCallback');
-    expect(hook).toContain('const sellPosition = useCallback');
-    expect(hook).not.toContain('createLedgerMutationExecutor(');
-  });
 });

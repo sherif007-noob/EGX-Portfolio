@@ -358,7 +358,7 @@ export default function App() {
   };
 
   // Add Position / Buy Trade
-  const handleAddPosition = (
+  const handleAddPosition = async (
     newTradeData: {
       ticker: string;
       companyName: string;
@@ -373,7 +373,7 @@ export default function App() {
       notes?: string;
     },
     deductCash: boolean
-  ) => {
+  ): Promise<boolean> => {
     const valResult = validateTradeInput({
       ticker: newTradeData.ticker,
       shares: newTradeData.shares,
@@ -387,10 +387,10 @@ export default function App() {
 
     if (!valResult.valid) {
       showToast(`Trade Validation Error: ${valResult.errors.join(', ')}`, 'error');
-      return;
+      return false;
     }
 
-    const newTx = executeAddTrade({
+    const result = await executeAddTrade({
       ticker: newTradeData.ticker,
       companyName: newTradeData.companyName,
       sector: newTradeData.sector,
@@ -405,7 +405,27 @@ export default function App() {
       deductFromCash: deductCash,
     });
 
-    // Auto-sync transaction to Google Sheets if connected
+    if (!result.ok) {
+      if (result.persisted) {
+        showToast(
+          `BUY ${newTradeData.ticker.toUpperCase()} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
+          'error',
+          7000,
+        );
+        return true;
+      }
+      showToast(
+        `BUY was not saved: ${result.error.message} Nothing was changed.`,
+        'error',
+        7000,
+      );
+      return false;
+    }
+
+    const newTx = result.value;
+
+    // Sheets is an optional mirror. It starts only after authoritative portfolio
+    // persistence succeeds and its failure never rolls back the saved trade.
     if (sheetsConfig?.spreadsheetId) {
       getAccessToken()
         .then((token) => {
@@ -414,7 +434,7 @@ export default function App() {
             newTx,
             token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync:', err));
+          ).catch((err) => console.warn('Background sheets sync after persisted BUY:', err));
         })
         .catch(() => {
           appendTransactionToSheet(
@@ -422,15 +442,16 @@ export default function App() {
             newTx,
             undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync fallback:', err));
+          ).catch((err) => console.warn('Background sheets sync fallback after persisted BUY:', err));
         });
     }
 
     showToast(`Logged BUY order for ${newTradeData.shares} shares of ${newTradeData.ticker.toUpperCase()}`, 'success');
+    return true;
   };
 
   // Sell Position
-  const handleConfirmSell = (
+  const handleConfirmSell = async (
     positionId: string,
     soldShares: number,
     sellPrice: number,
@@ -438,10 +459,13 @@ export default function App() {
     executedAt: string | undefined,
     sellFees: number,
     notes: string,
-    remainingShares: number
-  ) => {
+    _remainingShares: number
+  ): Promise<boolean> => {
     const pos = positions.find((p) => p.id === positionId);
-    if (!pos) return;
+    if (!pos) {
+      showToast('The position changed before the sale could be prepared. Reload and try again.', 'error');
+      return false;
+    }
 
     const valResult = validateTradeInput({
       ticker: pos.ticker,
@@ -455,10 +479,10 @@ export default function App() {
 
     if (!valResult.valid) {
       showToast(`Sell Validation Error: ${valResult.errors.join(', ')}`, 'error');
-      return;
+      return false;
     }
 
-    const result = executeSellPosition({
+    const result = await executeSellPosition({
       position: pos,
       sharesToSell: soldShares,
       sellPrice,
@@ -469,31 +493,55 @@ export default function App() {
       notes,
     });
 
-    // Auto-sync SELL transaction to Google Sheets if connected
-    if (sheetsConfig?.spreadsheetId && result.transaction) {
+    if (!result.ok) {
+      if (result.persisted) {
+        showToast(
+          `SELL ${pos.ticker} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
+          'error',
+          7000,
+        );
+        return true;
+      }
+      showToast(
+        `SELL was not saved: ${result.error.message} Nothing was changed.`,
+        'error',
+        7000,
+      );
+      return false;
+    }
+
+    const { transaction, closedTrade } = result.value;
+
+    // Optional Sheets mirror starts only after authoritative portfolio persistence.
+    if (sheetsConfig?.spreadsheetId) {
       getAccessToken()
         .then((token) => {
           appendTransactionToSheet(
             sheetsConfig.spreadsheetId,
-            result.transaction,
+            transaction,
             token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync:', err));
+          ).catch((err) => console.warn('Background sheets sync after persisted SELL:', err));
         })
         .catch(() => {
           appendTransactionToSheet(
             sheetsConfig.spreadsheetId,
-            result.transaction,
+            transaction,
             undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync fallback:', err));
+          ).catch((err) => console.warn('Background sheets sync fallback after persisted SELL:', err));
         });
     }
 
-    showToast(
-      `Sold ${soldShares} shares of ${pos.ticker} (${result.closedTrade.realizedPnlEgp >= 0 ? '+' : ''}${result.closedTrade.realizedPnlEgp.toFixed(2)} EGP realized)`,
-      'success'
-    );
+    if (closedTrade) {
+      showToast(
+        `Sold ${soldShares} shares of ${pos.ticker} (${closedTrade.realizedPnlEgp >= 0 ? '+' : ''}${closedTrade.realizedPnlEgp.toFixed(2)} EGP realized)`,
+        'success'
+      );
+    } else {
+      showToast(`Sold ${soldShares} shares of ${pos.ticker} and persisted the updated ledger.`, 'success');
+    }
+    return true;
   };
 
   // Edit Position targets and notes

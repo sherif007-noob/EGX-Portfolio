@@ -153,6 +153,96 @@ describe('portfolio reconciliation', () => {
     expect(afterDelete.reconciledCashBalance - withDuplicate.reconciledCashBalance).toBeCloseTo(8003.8, 2);
   });
 
+  it('preserves position-authored target, stop and notes over ticker-directory defaults', () => {
+    const existing = {
+      id: 'pos-test',
+      ticker: 'TEST',
+      companyName: 'Test',
+      sector: 'Other' as const,
+      shares: 10,
+      avgBuyPrice: 10,
+      currentPrice: 11,
+      buyDate: '2026-01-01',
+      totalFees: 0,
+      targetPrice: 18,
+      stopLoss: 8,
+      notes: 'portfolio thesis',
+    };
+    const ticker = {
+      ticker: 'TEST',
+      nameEn: 'Test',
+      nameAr: '',
+      isin: 'TEST-ISIN',
+      sector: 'Other' as const,
+      lastPrice: 11,
+      change: 0,
+      changePercent: 0,
+      dayLow: 0,
+      dayHigh: 0,
+      yearLow: 0,
+      yearHigh: 0,
+      volume: 0,
+      valueEgp: 0,
+      trendStatus: 'Rangebound Neutral' as const,
+      rsi14: 0,
+      support: 0,
+      resistance: 0,
+      targetPrice: 15,
+      stopLoss: 9,
+      lastUpdated: '2026-01-01',
+    };
+    const report = reconcilePortfolioFromLedger(
+      [tx({ id: 'buy-metadata', targetPrice: 16, stopLoss: 9.5, notes: 'ledger note' })],
+      [ticker],
+      1000,
+      [existing],
+    );
+
+    expect(report.reconciledPositions[0]).toMatchObject({
+      id: 'pos-test',
+      targetPrice: 18,
+      stopLoss: 8,
+      notes: 'portfolio thesis',
+    });
+  });
+
+  it('uses BUY metadata before ticker-directory defaults when opening a new position', () => {
+    const ticker = {
+      ticker: 'TEST',
+      nameEn: 'Test',
+      nameAr: '',
+      isin: 'TEST-ISIN',
+      sector: 'Other' as const,
+      lastPrice: 11,
+      change: 0,
+      changePercent: 0,
+      dayLow: 0,
+      dayHigh: 0,
+      yearLow: 0,
+      yearHigh: 0,
+      volume: 0,
+      valueEgp: 0,
+      trendStatus: 'Rangebound Neutral' as const,
+      rsi14: 0,
+      support: 0,
+      resistance: 0,
+      targetPrice: 15,
+      stopLoss: 9,
+      lastUpdated: '2026-01-01',
+    };
+    const report = reconcilePortfolioFromLedger(
+      [tx({ id: 'buy-new-metadata', targetPrice: 17, stopLoss: 8.5, notes: 'new thesis' })],
+      [ticker],
+      1000,
+    );
+
+    expect(report.reconciledPositions[0]).toMatchObject({
+      targetPrice: 17,
+      stopLoss: 8.5,
+      notes: 'new thesis',
+    });
+  });
+
   it('derives legacy opening capital from authoritative cash plus ledger impacts', () => {
     const transactions = [
       tx({ id: 'buy-capital', shares: 10, price: 50, fees: 0, totalAmount: 500 }),

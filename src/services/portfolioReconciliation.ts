@@ -355,9 +355,12 @@ export function reconcilePortfolioFromLedger(
       currentPrice: Number(currentPrice.toFixed(4)),
       buyDate: sample.date,
       totalFees: Number(totalFees.toFixed(2)),
-      targetPrice: quote?.targetPrice ?? existing?.targetPrice ?? sample.targetPrice,
-      stopLoss: quote?.stopLoss ?? existing?.stopLoss ?? sample.stopLoss,
-      notes: sample.notes || existing?.notes,
+      // Position-authored metadata is portfolio state; ticker-directory target/stop
+      // values are defaults only. Persist-first BUY must not erase explicit position
+      // metadata when the canonical ledger is reconciled.
+      targetPrice: existing?.targetPrice ?? sample.targetPrice ?? quote?.targetPrice,
+      stopLoss: existing?.stopLoss ?? sample.stopLoss ?? quote?.stopLoss,
+      notes: existing?.notes ?? sample.notes,
     });
   });
 

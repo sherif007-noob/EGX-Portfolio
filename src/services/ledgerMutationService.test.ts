@@ -312,7 +312,7 @@ describe('canonical ledger mutation executor', () => {
     });
   });
 
-  it('preserves reconciliation-seed metadata that is not owned by the ticker directory', async () => {
+  it('preserves position-authored metadata through the reconciliation seed', async () => {
     const persist = vi.fn(async () => true);
     const executor = createLedgerMutationExecutor({ persist });
 
@@ -337,11 +337,9 @@ describe('canonical ledger mutation executor', () => {
     if (!result.ok) return;
     expect(result.snapshot.positions[0]).toMatchObject({
       id: 'pos-comi',
+      targetPrice: 18,
+      stopLoss: 8.5,
       notes: 'updated thesis',
     });
-    // Target/stop ownership is intentionally not changed in Stage 2.1:
-    // portfolio reconciliation currently gives ticker-directory values precedence.
-    expect(result.snapshot.positions[0].targetPrice).toBe(0);
-    expect(result.snapshot.positions[0].stopLoss).toBe(0);
   });
 });

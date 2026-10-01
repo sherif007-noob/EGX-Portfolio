@@ -1,0 +1,65 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+
+const readRelative = (relative: string) =>
+  readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
+
+describe('Stage 2.2 persisted BUY/SELL contract', () => {
+  it('routes BUY and SELL through the canonical ledger mutation executor', () => {
+    const hook = readRelative('../hooks/usePortfolioState.ts');
+
+    expect(hook).toContain('createLedgerMutationExecutor()');
+    expect(hook).toContain("kind: 'BUY'");
+    expect(hook).toContain("kind: 'SELL'");
+    expect(hook).toContain('prepareBuyTradeMutation(current');
+    expect(hook).toContain('prepareSellTradeMutation(current');
+    expect(hook).toContain('apply: (snapshot) => applyLedgerSnapshot(snapshot)');
+    expect(hook).not.toContain("savePortfolioToFirestore({ positions: updatedPositions");
+  });
+
+  it('makes both app handlers await authoritative portfolio persistence before Sheets or success UI', () => {
+    const app = readRelative('../App.tsx');
+
+    expect(app).toContain('const result = await executeAddTrade({');
+    expect(app).toContain('const result = await executeSellPosition({');
+    expect(app).toContain('Background sheets sync after persisted BUY');
+    expect(app).toContain('Background sheets sync after persisted SELL');
+    expect(app).toContain('Nothing was changed.');
+  });
+
+  it('keeps Add Trade open and submit-disabled while the persisted BUY is unresolved', () => {
+    const modal = readRelative('../components/AddTradeModal.tsx');
+
+    expect(modal).toContain('const [isSubmitting, setIsSubmitting] = useState(false)');
+    expect(modal).toContain('const shouldClose = await onAddPosition(');
+    expect(modal).toContain('if (shouldClose) runVisualTransition');
+    expect(modal).toContain('disabled={isSubmitting}');
+    expect(modal).toContain("isSubmitting ? 'Saving…'");
+  });
+
+  it('keeps Sell open and submit-disabled while the persisted SELL is unresolved', () => {
+    const modal = readRelative('../components/SellPositionModal.tsx');
+
+    expect(modal).toContain('const [isSubmitting, setIsSubmitting] = useState(false)');
+    expect(modal).toContain('const shouldClose = await onConfirmSell(');
+    expect(modal).toContain('if (shouldClose) runVisualTransition');
+    expect(modal).toContain('disabled={isSubmitting}');
+    expect(modal).toContain("isSubmitting ? 'Saving Sale…'");
+  });
+
+  it('preserves position-authored metadata during canonical BUY reconciliation', () => {
+    const reconciliation = readRelative('./portfolioReconciliation.ts');
+
+    expect(reconciliation).toContain('targetPrice: existing?.targetPrice ?? sample.targetPrice ?? quote?.targetPrice');
+    expect(reconciliation).toContain('stopLoss: existing?.stopLoss ?? sample.stopLoss ?? quote?.stopLoss');
+    expect(reconciliation).toContain('notes: existing?.notes ?? sample.notes');
+  });
+
+  it('temporarily rejects legacy hidden cash bypasses instead of reintroducing local-only accounting', () => {
+    const preparation = readRelative('./tradeLedgerMutations.ts');
+
+    expect(preparation).toContain('BUY cash bypass is not compatible with canonical persisted accounting');
+    expect(preparation).toContain('SELL cash bypass is not compatible with canonical persisted accounting');
+  });
+});

@@ -11,7 +11,6 @@ import {
 } from '../data/initialPortfolio';
 import {
   loadPortfolioFromFirestore,
-  savePortfolioToFirestore,
   debouncedSavePortfolioToFirestore,
   forceFullSyncToFirestore,
   subscribeToPortfolioFromFirestore,
@@ -27,15 +26,18 @@ import {
   getOpenBuyTransactionIdsForTicker,
   ReconciliationReport,
 } from '../services/portfolioReconciliation';
-import {
-  calculateBuyImpact,
-  calculateSellAccounting,
-  calculateHoldingDays,
-} from '../services/portfolioAccounting';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { applyCashLedgerEvent, changeCashLedgerEntry, rebuildAfterLedgerChange } from '../services/cashLedger';
 import { resolveTickerFromDirectory } from '../services/tickerRegistry';
 import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
+import {
+  createLedgerMutationExecutor,
+  type CanonicalLedgerSnapshot,
+} from '../services/ledgerMutationService';
+import {
+  prepareBuyTradeMutation,
+  prepareSellTradeMutation,
+} from '../services/tradeLedgerMutations';
 import {
   VISUAL_REGRESSION_CAPITAL_DEPOSITS,
   VISUAL_REGRESSION_CASH_BALANCE,
@@ -213,6 +215,10 @@ export function usePortfolioState() {
 
   const [isInitialized, setIsInitialized] = useState(VISUAL_REGRESSION_MODE);
   const isRemoteSyncingRef = useRef(false);
+  const financialMutationExecutorRef = useRef<ReturnType<typeof createLedgerMutationExecutor> | null>(null);
+  if (!financialMutationExecutorRef.current) {
+    financialMutationExecutorRef.current = createLedgerMutationExecutor();
+  }
 
   useEffect(() => {
     try {
@@ -400,7 +406,24 @@ export function usePortfolioState() {
     setClosedTrades((prev) => rehydrateClosedTradeMetadata(prev, tickers));
   }, [tickers, rehydratePositionsWithTickers]);
 
-  const addTrade = useCallback((tradeInput: {
+  const applyLedgerSnapshot = useCallback((next: CanonicalLedgerSnapshot) => {
+    setTransactions(next.transactions);
+    setPositions(next.positions);
+    setClosedTrades(next.closedTrades);
+    setCashBalance(next.cashBalance);
+    setCapitalDeposits(next.capitalDeposits);
+  }, []);
+
+  const currentLedgerSnapshot = useCallback((): CanonicalLedgerSnapshot => ({
+    transactions,
+    positions,
+    closedTrades,
+    cashBalance,
+    capitalDeposits,
+    tickers,
+  }), [transactions, positions, closedTrades, cashBalance, capitalDeposits, tickers]);
+
+  const addTrade = useCallback(async (tradeInput: {
     ticker: string;
     companyName: string;
     sector: Sector;
@@ -415,88 +438,19 @@ export function usePortfolioState() {
     deductFromCash?: boolean;
     cycleTag?: string;
   }) => {
-    const tickerKey = resolveTickerFromDirectory(tradeInput.ticker, tickers);
-    const { grossCost, fees, cashOutflow } = calculateBuyImpact(
-      tradeInput.shares,
-      tradeInput.price,
-      tradeInput.fees ?? 0,
-    );
+    const executor = financialMutationExecutorRef.current!;
+    return executor.execute<TradeTransaction>({
+      kind: 'BUY',
+      current: currentLedgerSnapshot(),
+      prepare: (current) => prepareBuyTradeMutation(current, {
+        transactionId: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        ...tradeInput,
+      }),
+      apply: (snapshot) => applyLedgerSnapshot(snapshot),
+    });
+  }, [currentLedgerSnapshot, applyLedgerSnapshot]);
 
-    const maxExistingTradeId = transactions.reduce((max, t) => {
-      const tid = Number(t.tradeId);
-      return !isNaN(tid) && tid > max ? tid : max;
-    }, 0);
-    const nextTradeId = maxExistingTradeId > 0 ? maxExistingTradeId + 1 : transactions.length + 1;
-
-    const newTx: TradeTransaction = {
-      id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: 'BUY',
-      ticker: tickerKey,
-      companyName: tradeInput.companyName,
-      sector: tradeInput.sector,
-      shares: tradeInput.shares,
-      price: tradeInput.price,
-      date: tradeInput.date,
-      executedAt: tradeInput.executedAt,
-      fees,
-      totalAmount: cashOutflow,
-      targetPrice: tradeInput.targetPrice,
-      stopLoss: tradeInput.stopLoss,
-      notes: tradeInput.notes || '',
-      cycleTag: tradeInput.cycleTag,
-      tradeId: nextTradeId,
-      grossTradeValue: grossCost,
-      netCashImpact: -cashOutflow,
-    };
-
-    const updatedTransactions = [newTx, ...transactions];
-    let updatedPositions: Position[];
-    const existingIndex = positions.findIndex((p) => p.ticker.trim().toUpperCase() === tickerKey);
-
-    if (existingIndex >= 0) {
-      const existing = positions[existingIndex];
-      const newTotalShares = existing.shares + tradeInput.shares;
-      const existingGrossCost = existing.shares * existing.avgBuyPrice;
-      const newAvgBuyPrice = (existingGrossCost + grossCost) / newTotalShares;
-      const newTotalFees = (existing.totalFees || 0) + fees;
-      updatedPositions = [...positions];
-      updatedPositions[existingIndex] = {
-        ...existing,
-        shares: newTotalShares,
-        avgBuyPrice: newAvgBuyPrice,
-        totalFees: newTotalFees,
-        targetPrice: tradeInput.targetPrice !== undefined ? tradeInput.targetPrice : existing.targetPrice,
-        stopLoss: tradeInput.stopLoss !== undefined ? tradeInput.stopLoss : existing.stopLoss,
-        notes: tradeInput.notes || existing.notes,
-      };
-    } else {
-      const quoteMatch = tickers.find((t) => t.ticker.trim().toUpperCase() === tickerKey);
-      updatedPositions = [{
-        id: `pos-${tickerKey}-${Date.now()}`,
-        ticker: tickerKey,
-        companyName: tradeInput.companyName,
-        sector: tradeInput.sector,
-        shares: tradeInput.shares,
-        avgBuyPrice: tradeInput.price,
-        currentPrice: quoteMatch && quoteMatch.lastPrice > 0 ? quoteMatch.lastPrice : tradeInput.price,
-        buyDate: tradeInput.date,
-        totalFees: fees,
-        targetPrice: tradeInput.targetPrice,
-        stopLoss: tradeInput.stopLoss,
-        notes: tradeInput.notes,
-      }, ...positions];
-    }
-
-    const newCash = tradeInput.deductFromCash !== false ? cashBalance - cashOutflow : cashBalance;
-    setTransactions(updatedTransactions);
-    setPositions(updatedPositions);
-    setCashBalance(newCash);
-
-    savePortfolioToFirestore({ positions: updatedPositions, closedTrades, transactions: updatedTransactions, cashBalance: newCash, capitalDeposits, tickers }, false, 'trade-added');
-    return newTx;
-  }, [transactions, positions, closedTrades, cashBalance, tickers, capitalDeposits]);
-
-  const sellPosition = useCallback((sellInput: {
+  const sellPosition = useCallback(async (sellInput: {
     position: Position;
     sharesToSell: number;
     sellPrice: number;
@@ -506,57 +460,39 @@ export function usePortfolioState() {
     addToCash?: boolean;
     notes?: string;
   }) => {
-    const { position, sharesToSell, sellPrice, fees = 0, sellDate, executedAt, addToCash = true, notes } = sellInput;
-    const tickerKey = position.ticker.trim().toUpperCase();
-    const accounting = calculateSellAccounting(
-      sharesToSell,
-      sellPrice,
-      fees,
-      position.shares,
-      position.shares * position.avgBuyPrice,
-      position.totalFees || 0,
+    const executor = financialMutationExecutorRef.current!;
+    const result = await executor.execute<TradeTransaction>({
+      kind: 'SELL',
+      current: currentLedgerSnapshot(),
+      prepare: (current) => prepareSellTradeMutation(current, {
+        transactionId: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        positionId: sellInput.position.id,
+        sharesToSell: sellInput.sharesToSell,
+        sellPrice: sellInput.sellPrice,
+        fees: sellInput.fees,
+        sellDate: sellInput.sellDate,
+        executedAt: sellInput.executedAt,
+        addToCash: sellInput.addToCash,
+        notes: sellInput.notes,
+      }),
+      apply: (snapshot) => applyLedgerSnapshot(snapshot),
+    });
+
+    if (!result.ok) return result;
+
+    const transaction = result.value;
+    const closedTrade = result.snapshot.closedTrades.find((trade) =>
+      trade.sellTransactionIds?.includes(transaction.id),
     );
-    const holdingDays = calculateHoldingDays(position.buyDate, sellDate);
 
-    const maxExistingTradeId = transactions.reduce((max, t) => {
-      const tid = Number(t.tradeId);
-      return !isNaN(tid) && tid > max ? tid : max;
-    }, 0);
-    const nextTradeId = maxExistingTradeId > 0 ? maxExistingTradeId + 1 : transactions.length + 1;
-
-    const newTx: TradeTransaction = {
-      id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: 'SELL',
-      ticker: tickerKey,
-      companyName: position.companyName,
-      sector: position.sector,
-      shares: sharesToSell,
-      price: sellPrice,
-      date: sellDate,
-      executedAt,
-      fees,
-      totalAmount: addToCash ? accounting.netProceeds : 0,
-      grossTradeValue: accounting.grossProceeds,
-      netCashImpact: addToCash ? accounting.netProceeds : 0,
-      realizedPnlEgp: accounting.realizedPnlEgp,
-      realizedPnlPercent: accounting.realizedPnlPercent,
-      outcome: accounting.outcome,
-      holdingDays,
-      notes: notes || '',
-      tradeId: nextTradeId,
+    return {
+      ...result,
+      value: {
+        transaction,
+        closedTrade,
+      },
     };
-
-    const updatedTransactions = [newTx, ...transactions];
-    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
-
-    setTransactions(updatedTransactions);
-    setClosedTrades(report.reconciledClosedTrades);
-    setPositions(report.reconciledPositions);
-    setCashBalance(report.reconciledCashBalance);
-
-    updateFirestoreTransactions(updatedTransactions, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance, capitalDeposits);
-    return { transaction: newTx, closedTrade: report.reconciledClosedTrades.find(t => t.ticker === tickerKey) };
-  }, [positions, transactions, tickers, capitalDeposits]);
+  }, [currentLedgerSnapshot, applyLedgerSnapshot]);
 
   const editPosition = useCallback((updatedPosition: Position) => {
     const updated = positions.map((p) => (p.id === updatedPosition.id ? updatedPosition : p));
@@ -582,14 +518,6 @@ export function usePortfolioState() {
     updateFirestoreTransactions(updatedTransactions, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance, capitalDeposits);
     return updatedTransactions;
   }, [positions, transactions, tickers, capitalDeposits]);
-
-  const applyLedgerSnapshot = useCallback((next: ReturnType<typeof rebuildAfterLedgerChange>) => {
-    setTransactions(next.transactions);
-    setPositions(next.positions);
-    setClosedTrades(next.closedTrades);
-    setCashBalance(next.cashBalance);
-    setCapitalDeposits(next.capitalDeposits);
-  }, []);
 
   const editTransaction = useCallback((updatedTx: TradeTransaction) => {
     const normalized = normalizeTransaction(updatedTx);

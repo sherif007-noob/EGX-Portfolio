@@ -20,7 +20,7 @@ interface SellPositionModalProps {
     brokerageFee: number,
     notes: string,
     remainingShares: number
-  ) => void;
+  ) => Promise<boolean>;
 }
 
 export const SellPositionModal: React.FC<SellPositionModalProps> = ({
@@ -29,7 +29,11 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   onClose,
   onConfirmSell,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const requestClose = () => {
+    if (isSubmitting) return;
+    runVisualTransition('modal-close', onClose);
+  };
   const lastPositionRef = useRef<Position | null>(position);
   if (position) lastPositionRef.current = position;
   const displayPosition = position ?? lastPositionRef.current;
@@ -78,21 +82,27 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   const isProfit = realizedPnlEgp >= 0;
   const remainingShares = Math.max(0, displayPosition.shares - sharesToSell);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (sharesToSell <= 0 || sharesToSell > displayPosition.shares || sellPrice <= 0) return;
 
-    onConfirmSell(
-      displayPosition.id,
-      sharesToSell,
-      sellPrice,
-      sellDate,
-      combineExecutionDateTime(sellDate, executionTime),
-      Math.max(0, brokerageFee || 0),
-      notes,
-      remainingShares
-    );
-    requestClose();
+    setIsSubmitting(true);
+    try {
+      const shouldClose = await onConfirmSell(
+        displayPosition.id,
+        sharesToSell,
+        sellPrice,
+        sellDate,
+        combineExecutionDateTime(sellDate, executionTime),
+        Math.max(0, brokerageFee || 0),
+        notes,
+        remainingShares
+      );
+      if (shouldClose) runVisualTransition('modal-close', onClose);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -304,15 +314,17 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             <button
               type="button"
               onClick={requestClose}
-              className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto"
+              disabled={isSubmitting}
+              className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="premium-action premium-action-warning w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto"
+              disabled={isSubmitting}
+              className="premium-action premium-action-warning w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Confirm Sale &amp; Book Net P&amp;L
+              {isSubmitting ? 'Saving Sale…' : 'Confirm Sale & Book Net P&L'}
             </button>
           </div>
         </form>

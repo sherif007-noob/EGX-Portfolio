@@ -27,7 +27,7 @@ interface AddTradeModalProps {
       notes?: string;
     },
     deductFromCash: boolean
-  ) => void;
+  ) => Promise<boolean>;
   tickers: EGXTicker[];
   preselectedTicker?: EGXTicker | null;
   cashBalance: number;
@@ -47,7 +47,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   transactions = [],
   onOpenScreenshotModal,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const requestClose = () => {
+    if (isSubmitting) return;
+    runVisualTransition('modal-close', onClose);
+  };
   const [tickerInput, setTickerInput] = useState<string>('');
   const [selectedTickerData, setSelectedTickerData] = useState<EGXTicker | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -171,28 +175,34 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const existingCost = activeExistingPosition ? activeExistingPosition.shares * activeExistingPosition.avgBuyPrice : 0;
   const newBlendedAvgBuy = combinedShares > 0 ? (existingCost + grossCost) / combinedShares : buyPrice;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const cleanTicker = tickerInput.trim().toUpperCase();
     if (!cleanTicker || shares <= 0 || buyPrice <= 0) return;
 
-    onAddPosition(
-      {
-        ticker: cleanTicker,
-        companyName: companyName || cleanTicker,
-        sector,
-        shares,
-        buyPrice,
-        buyDate,
-        executedAt: combineExecutionDateTime(buyDate, executionTime),
-        brokerageFee: Math.max(0, brokerageFee || 0),
-        targetPrice: targetPrice > 0 ? targetPrice : undefined,
-        stopLoss: stopLoss > 0 ? stopLoss : undefined,
-        notes: notes.trim() || undefined,
-      },
-      deductFromCash
-    );
-    requestClose();
+    setIsSubmitting(true);
+    try {
+      const shouldClose = await onAddPosition(
+        {
+          ticker: cleanTicker,
+          companyName: companyName || cleanTicker,
+          sector,
+          shares,
+          buyPrice,
+          buyDate,
+          executedAt: combineExecutionDateTime(buyDate, executionTime),
+          brokerageFee: Math.max(0, brokerageFee || 0),
+          targetPrice: targetPrice > 0 ? targetPrice : undefined,
+          stopLoss: stopLoss > 0 ? stopLoss : undefined,
+          notes: notes.trim() || undefined,
+        },
+        deductFromCash
+      );
+      if (shouldClose) runVisualTransition('modal-close', onClose);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -570,15 +580,17 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <button
               type="button"
               onClick={requestClose}
-              className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto"
+              disabled={isSubmitting}
+              className="premium-action w-full justify-center px-4 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="premium-action premium-action-primary premium-shimmer-border w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto"
+              disabled={isSubmitting}
+              className="premium-action premium-action-primary premium-shimmer-border w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
+              {isSubmitting ? 'Saving…' : activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
             </button>
           </div>
         </form>

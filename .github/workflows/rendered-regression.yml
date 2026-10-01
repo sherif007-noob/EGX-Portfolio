@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: egx-rendered-visual-regression
@@ -68,10 +68,21 @@ jobs:
       - name: Capture and compare browser states
         env:
           VISUAL_BASE_URL: http://127.0.0.1:4173
-          VISUAL_REQUIRE_BASELINE: 'false'
+          VISUAL_REQUIRE_BASELINE: ${{ hashFiles('visual-regression/baseline/*.png') != '' && 'true' || 'false' }}
           VISUAL_MAX_DIFF_RATIO: '0.01'
           VISUAL_CHANNEL_TOLERANCE: '16'
         run: node scripts/renderedRegression.mjs
+
+      - name: Promote first inspected golden baseline
+        if: ${{ github.event_name == 'push' && hashFiles('visual-regression/baseline/*.png') == '' }}
+        run: |
+          mkdir -p visual-regression/baseline
+          cp visual-regression/current/*.png visual-regression/baseline/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add visual-regression/baseline
+          git commit -m "test: establish rendered visual baselines"
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Upload rendered evidence
         if: always()

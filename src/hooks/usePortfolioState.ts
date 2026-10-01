@@ -35,6 +35,15 @@ import {
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { applyCashLedgerEvent, changeCashLedgerEntry, rebuildAfterLedgerChange } from '../services/cashLedger';
 import { resolveTickerFromDirectory } from '../services/tickerRegistry';
+import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
+import {
+  VISUAL_REGRESSION_CAPITAL_DEPOSITS,
+  VISUAL_REGRESSION_CASH_BALANCE,
+  VISUAL_REGRESSION_CLOSED_TRADES,
+  VISUAL_REGRESSION_POSITIONS,
+  VISUAL_REGRESSION_TICKERS,
+  VISUAL_REGRESSION_TRANSACTIONS,
+} from '../data/visualRegressionFixture';
 
 const STORAGE_KEY_POSITIONS = 'egx_pwa_positions_v3_reconciled';
 const STORAGE_KEY_CLOSED = 'egx_pwa_closed_trades_v3_reconciled';
@@ -102,6 +111,7 @@ function rehydrateClosedTradeMetadata(
 
 export function usePortfolioState() {
   const [tickers, setTickers] = useState<EGXTicker[]>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_TICKERS.map((ticker) => ({ ...ticker }));
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TICKERS);
       return saved ? mergeTickerDirectoryWithBaseline(JSON.parse(saved)) : INITIAL_EGX_TICKERS;
@@ -111,6 +121,7 @@ export function usePortfolioState() {
   });
 
   const [capitalDeposits, setCapitalDeposits] = useState<number>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_CAPITAL_DEPOSITS;
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CAPITAL);
       return saved ? JSON.parse(saved) : INITIAL_CAPITAL_DEPOSITS;
@@ -120,6 +131,7 @@ export function usePortfolioState() {
   });
 
   const [transactions, setTransactions] = useState<TradeTransaction[]>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_TRANSACTIONS.map((transaction) => ({ ...transaction }));
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
       const parsed = saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
@@ -132,6 +144,7 @@ export function usePortfolioState() {
   });
 
   const [positions, setPositions] = useState<Position[]>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_POSITIONS.map((position) => ({ ...position }));
     try {
       const saved = localStorage.getItem(STORAGE_KEY_POSITIONS);
       const parsed = saved ? JSON.parse(saved) : null;
@@ -153,6 +166,7 @@ export function usePortfolioState() {
   });
 
   const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_CLOSED_TRADES.map((trade) => ({ ...trade }));
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CLOSED);
       const parsed = saved ? JSON.parse(saved) : null;
@@ -174,6 +188,7 @@ export function usePortfolioState() {
   });
 
   const [cashBalance, setCashBalance] = useState<number>(() => {
+    if (VISUAL_REGRESSION_MODE) return VISUAL_REGRESSION_CASH_BALANCE;
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CASH);
       const parsed = saved !== null ? JSON.parse(saved) : null;
@@ -196,7 +211,7 @@ export function usePortfolioState() {
     }
   });
 
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(VISUAL_REGRESSION_MODE);
   const isRemoteSyncingRef = useRef(false);
 
   useEffect(() => {
@@ -213,6 +228,8 @@ export function usePortfolioState() {
   }, [positions, closedTrades, transactions, cashBalance, tickers, capitalDeposits]);
 
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) return;
+
     let activeUnsubscribe: (() => void) | null = null;
     let isMounted = true;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;

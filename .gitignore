@@ -5,3 +5,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Generated browser visual-regression output (golden baselines remain tracked)
+visual-regression/current/
+visual-regression/diff/
+visual-regression/report.json

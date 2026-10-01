@@ -2,8 +2,14 @@ import React, { FormEvent, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import App from '../App';
 import { getSupabaseBrowserClient } from '../services/supabaseBrowser';
+import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
 
 export function SupabaseAuthGate() {
+  if (VISUAL_REGRESSION_MODE) return <App />;
+  return <SupabaseSessionGate />;
+}
+
+function SupabaseSessionGate() {
   const supabase = getSupabaseBrowserClient();
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);

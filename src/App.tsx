@@ -56,6 +56,7 @@ import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
 import { runVisualTransition } from './utils/visualTransition';
+import { VISUAL_REGRESSION_MODE } from './utils/visualRegressionMode';
 
 // Phase 10.8 exact-head validation trigger: complete modal/workflow consistency runtime source.
 // Phase 10.9 exact-head validation trigger: responsive cross-app containment runtime source.
@@ -231,6 +232,13 @@ export default function App() {
   const historicalBackfillAttemptsRef = useRef(new Set<string>());
 
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) {
+      setHistoricalDrawdown(null);
+      setHistoricalPriceSeries({});
+      setHistoricalAnalyticsLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setHistoricalDrawdown(null);
     setHistoricalPriceSeries({});

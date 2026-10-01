@@ -13,6 +13,7 @@ import {
   fetchServiceAccountStatus,
 } from '../services/googleSheets';
 import { User } from 'firebase/auth';
+import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
 
 const STORAGE_KEY_SHEETS = 'egx_pwa_sheets_config_v1';
 
@@ -52,6 +53,7 @@ export function useGoogleSheetsSync(
 
   // Check Service Account status on load
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) return;
     fetchServiceAccountStatus().then((status) => {
       setIsServiceAccountActive(status.configured);
     });
@@ -59,6 +61,7 @@ export function useGoogleSheetsSync(
 
   // Initialize Firebase Auth listener
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) return;
     const unsubscribe = initAuth((user) => {
       setAuthUser(user);
     });

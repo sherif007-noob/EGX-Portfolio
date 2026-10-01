@@ -7,11 +7,20 @@ import {
   EGXScheduleStatus,
 } from '../services/marketPriceSync';
 import { savePriceTickToFirestore } from '../services/firestoreStorage';
+import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
 
 const MARKET_SYNC_INTERVAL_MS = 15 * 60 * 1000;
 const CLOSING_HOUR_CAIRO = 15;
 const CLOSING_MINUTE_CAIRO = 15;
 const CLOSING_WINDOW_MINUTES = 15;
+
+const VISUAL_SCHEDULE_STATUS: EGXScheduleStatus = {
+  isSessionActive: false,
+  cairoTimeString: '12:00 PM',
+  cairoDateString: '09/30/2026',
+  millisUntilNextTick: 15 * 60 * 1000,
+  nextTickLabel: '12:15 PM',
+};
 
 export function useMarketData(
   positions: Position[],
@@ -22,9 +31,9 @@ export function useMarketData(
   ready = true
 ) {
   const [isSyncingPrices, setIsSyncingPrices] = useState(false);
-  const [lastPriceSyncTime, setLastPriceSyncTime] = useState<string | null>(null);
+  const [lastPriceSyncTime, setLastPriceSyncTime] = useState<string | null>(VISUAL_REGRESSION_MODE ? '11:45:00 AM' : null);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [scheduleStatus, setScheduleStatus] = useState<EGXScheduleStatus>(() => getEGXSessionStatus());
+  const [scheduleStatus, setScheduleStatus] = useState<EGXScheduleStatus>(() => VISUAL_REGRESSION_MODE ? VISUAL_SCHEDULE_STATUS : getEGXSessionStatus());
 
   const positionsRef = useRef(positions);
   const tickersRef = useRef(tickers);
@@ -37,6 +46,7 @@ export function useMarketData(
 
   // UI countdown only. It does not trigger market-data requests or Firestore writes.
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) return;
     const updateSchedule = () => setScheduleStatus(getEGXSessionStatus());
     updateSchedule();
     const timer = setInterval(updateSchedule, 10000);
@@ -44,6 +54,7 @@ export function useMarketData(
   }, []);
 
   const syncLivePrices = useCallback(async (manual = false, forcePersist = false) => {
+    if (VISUAL_REGRESSION_MODE) return { success: false, error: 'Live sync disabled in visual regression mode.' };
     if (!ready) return { success: false, error: 'Portfolio is still loading.' };
     if (isSyncingRef.current) return { success: false, error: 'Price sync already in progress.' };
 
@@ -97,7 +108,7 @@ export function useMarketData(
   // Wait for the authoritative portfolio before fetching/applying quotes. Failed
   // startup requests retry, and suspended/offline tabs recover without a reload.
   useEffect(() => {
-    if (!ready) return;
+    if (VISUAL_REGRESSION_MODE || !ready) return;
     let cancelled = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const refresh = async () => {
@@ -126,6 +137,8 @@ export function useMarketData(
   // aligned to quarter-hour boundaries. The 3:15 PM closing write is a separate deliberate
   // accounting event and is allowed even though the regular market session has ended.
   useEffect(() => {
+    if (VISUAL_REGRESSION_MODE) return;
+
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 

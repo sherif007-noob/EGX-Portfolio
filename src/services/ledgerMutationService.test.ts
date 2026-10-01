@@ -197,7 +197,7 @@ describe('canonical ledger mutation executor', () => {
       stage: 'validate',
       code: 'VALIDATION_FAILED',
     });
-    if (result.ok) throw new Error('Expected duplicate transaction validation to fail.');
+    if (!('error' in result)) throw new Error('Expected duplicate transaction validation to fail.');
     expect(result.error.message).toContain('Duplicate transaction id');
     expect(persist).not.toHaveBeenCalled();
   });
@@ -220,7 +220,7 @@ describe('canonical ledger mutation executor', () => {
       stage: 'validate',
       code: 'VALIDATION_FAILED',
     });
-    if (result.ok) throw new Error('Expected oversell validation to fail.');
+    if (!('error' in result)) throw new Error('Expected oversell validation to fail.');
     expect(result.error.message).toContain('introduces reconciliation discrepancies');
     expect(persist).not.toHaveBeenCalled();
   });

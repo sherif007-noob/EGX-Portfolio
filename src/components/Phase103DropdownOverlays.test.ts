@@ -16,6 +16,13 @@ const collectDropdownPresenceOpeningTags = (source: string): string[] => {
     const start = source.indexOf('<DropdownPresence', cursor);
     if (start < 0) break;
 
+    const tokenEnd = start + '<DropdownPresence'.length;
+    const nextChar = source[tokenEnd];
+    if (nextChar && /[A-Za-z0-9_$]/.test(nextChar)) {
+      cursor = tokenEnd;
+      continue;
+    }
+
     let braceDepth = 0;
     let quote: '"' | "'" | '`' | null = null;
     let escaped = false;

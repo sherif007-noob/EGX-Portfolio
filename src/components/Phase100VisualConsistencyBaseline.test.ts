@@ -85,8 +85,8 @@ describe('Phase 10.0 visual consistency baseline freeze', () => {
   it('documents audit-before-change and no-redesign rules for Phase 10', () => {
     const plan = readRelative('../../docs/PHASE10_VISUAL_CONSISTENCY_PLAN.md');
 
-    expect(plan).toContain('PHASE 10.0 — BASELINE FREEZE + VISUAL INVENTORY COMPLETE AT SOURCE LEVEL');
-    expect(plan).toContain('10.0 makes no production visual changes');
+    expect(plan).toContain('# Phase 10 — Full-App Visual Consistency & System Closure');
+    expect(plan).toContain('The purpose of Phase 10 is **consistency, not redesign**.');
     expect(plan).toContain('Audit before implementation');
     expect(plan).toContain('A source difference is an audit candidate, not automatically a defect');
     expect(plan).toContain('Phase 9 header/navigation is frozen');

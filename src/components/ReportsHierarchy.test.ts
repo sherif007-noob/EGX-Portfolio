@@ -10,8 +10,9 @@ describe('Phase 8.2 Reports composition hierarchy', () => {
     const primary = readRelative('./charts/PerformanceTimeframeChart.tsx');
     expect(primary).toContain('premium-report-main-analytics');
     expect(primary).toContain("visualContext = 'reports'");
+    expect(primary).toContain("const mainHierarchyLevel = visualContext === 'overview' ? 'h2' : 'h1'");
     expect(primary).toContain("visualContext === 'overview' ? 'premium-hierarchy-h2' : 'premium-hierarchy-h1'");
-    expect(primary).toContain('data-hierarchy="h1"');
+    expect(primary).toContain('data-hierarchy={mainHierarchyLevel}');
   });
 
   it('keeps supporting visualizations below the main analytics hero', () => {

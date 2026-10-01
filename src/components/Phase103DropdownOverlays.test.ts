@@ -8,6 +8,61 @@ const readRelative = (relative: string) =>
 
 const componentsDir = fileURLToPath(new URL('./', import.meta.url));
 
+const collectDropdownPresenceOpeningTags = (source: string): string[] => {
+  const tags: string[] = [];
+  let cursor = 0;
+
+  while (cursor < source.length) {
+    const start = source.indexOf('<DropdownPresence', cursor);
+    if (start < 0) break;
+
+    let braceDepth = 0;
+    let quote: '"' | "'" | '`' | null = null;
+    let escaped = false;
+    let closed = false;
+
+    for (let index = start; index < source.length; index += 1) {
+      const char = source[index];
+
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+        if (char === quote) quote = null;
+        continue;
+      }
+
+      if (char === '"' || char === "'" || char === '`') {
+        quote = char;
+        continue;
+      }
+      if (char === '{') {
+        braceDepth += 1;
+        continue;
+      }
+      if (char === '}') {
+        braceDepth = Math.max(0, braceDepth - 1);
+        continue;
+      }
+      if (char === '>' && braceDepth === 0) {
+        tags.push(source.slice(start, index + 1));
+        cursor = index + 1;
+        closed = true;
+        break;
+      }
+    }
+
+    if (!closed) break;
+  }
+
+  return tags;
+};
+
 const collectTsx = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = join(dir, entry.name);
@@ -39,7 +94,7 @@ describe('Phase 10.3 dropdowns, menus, popovers and overlays', () => {
 
     for (const file of collectTsx(componentsDir)) {
       const source = readFileSync(file, 'utf8');
-      const tags = source.match(/<DropdownPresence[\s\S]*?>/g) ?? [];
+      const tags = collectDropdownPresenceOpeningTags(source);
       if (tags.length === 0) continue;
 
       owners.push(file);

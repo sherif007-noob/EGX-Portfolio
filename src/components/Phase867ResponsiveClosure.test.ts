@@ -55,7 +55,8 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
     const overview = readRelative('./PortfolioSummary.tsx');
 
     expect(app).toContain('premium-flow-control');
-    expect(app).toContain('flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between');
+    expect(app).toContain('data-overview-section="positions-preview"');
+    expect(app).toContain('flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between');
     expect(app).toContain('premium-type-section-title');
 
     expect(overview).toContain('premium-hierarchy-h1');

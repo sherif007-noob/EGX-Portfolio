@@ -56,13 +56,14 @@ export function validateTradeInput(input: {
     }
   }
 
-  // Validate BUY cash constraint
+  // BUY always debits broker cash. The canonical service rejects an outlay
+  // above authoritative cash, so pre-validation must fail the same way.
   if (input.type === 'BUY' && input.availableCash !== undefined) {
     const grossCost = input.shares * input.price;
     const totalOutlay = grossCost + (input.fees || 0);
     if (totalOutlay > input.availableCash) {
-      warnings.push(
-        `Trade outlay (${totalOutlay.toFixed(2)} EGP) exceeds available cash (${input.availableCash.toFixed(2)} EGP). Cash balance will become negative.`
+      errors.push(
+        `Insufficient cash: trade requires ${totalOutlay.toFixed(2)} EGP but only ${input.availableCash.toFixed(2)} EGP is available.`
       );
     }
   }

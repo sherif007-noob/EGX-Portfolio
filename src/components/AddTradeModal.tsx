@@ -565,7 +565,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             <div className="min-w-0 text-xs">
               <div className="font-semibold text-slate-200">Broker cash effect</div>
               <p className="mt-0.5 text-slate-400">
-                This BUY will debit <strong className="font-mono text-white">{netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong> including fees from broker cash.
+                This BUY will debit <strong className="font-mono text-white">{netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong> including fees from broker cash. Any real cash discrepancy should be recorded separately in the Cash Ledger.
               </p>
               <p className="mt-0.5 font-mono text-[11px] text-slate-500">
                 Available: {cashBalance.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP

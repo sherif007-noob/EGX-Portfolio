@@ -32,7 +32,7 @@ describe('Stage 2.5 canonical trade cash effect', () => {
     expect(modal).not.toContain('premium-checkbox');
   });
 
-  it('always validates BUY outlay against available broker cash when supplied', () => {
+  it('rejects a BUY before submission when broker cash is insufficient', () => {
     const result = validateTradeInput({
       ticker: 'COMI',
       shares: 100,
@@ -43,7 +43,11 @@ describe('Stage 2.5 canonical trade cash effect', () => {
       availableCash: 100,
     });
 
-    expect(result.warnings).toContain(
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      'Insufficient cash: trade requires 1005.00 EGP but only 100.00 EGP is available.',
+    );
+    expect(result.warnings).not.toContain(
       'Trade outlay (1005.00 EGP) exceeds available cash (100.00 EGP). Cash balance will become negative.',
     );
   });

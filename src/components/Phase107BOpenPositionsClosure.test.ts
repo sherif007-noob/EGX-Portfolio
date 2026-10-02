@@ -69,15 +69,16 @@ describe('Phase 10.7B Open Positions closure', () => {
     expect(positions).toContain("value: 'ALL', label: `All Sectors (${positions.length})`");
   });
 
-  it('keeps row actions local and secondary/destructive controls compact', () => {
+  it('keeps row actions local and correction controls compact', () => {
     const positions = readRelative('./PositionsTable.tsx');
 
     expect(positions).toContain('title="Buy more shares of this stock (DCA / Accumulate)"');
     expect(positions).toContain('title="Sell Shares / Book P&L"');
     expect(positions).toContain('premium-icon-action premium-icon-edit');
-    expect(positions).toContain('premium-icon-action premium-icon-delete');
     expect(positions).toContain('aria-label={`Edit ${pos.ticker} position`}');
-    expect(positions).toContain('aria-label={`Delete ${pos.ticker} position`}');
+    expect(positions).toContain('aria-label={`Review source ledger for ${pos.ticker}`}');
+    expect(positions).toContain('title="Review source ledger transactions"');
+    expect(positions).not.toContain('premium-icon-action premium-icon-delete');
   });
 
   it('keeps desktop table containment and semantic row-edge behavior', () => {

@@ -50,8 +50,9 @@ describe('Phase 10.7A Overview closure', () => {
     expect(positions).toContain('placeholder="Search ticker (e.g. COMI) or company..."');
     expect(positions).toContain('<span>Add Trade</span>');
     expect(positions).toContain('title="Sell Shares / Book P&L"');
-    expect(positions).toContain('title="Delete position"');
-    expect(positions).toContain('ConfirmDeleteModal');
+    expect(positions).toContain('title="Review source ledger transactions"');
+    expect(positions).toContain('onCorrectLedger: (position: Position) => void');
+    expect(positions).not.toContain('ConfirmDeleteModal');
 
     const app = readRelative('../App.tsx');
     const positionsTabStart = app.indexOf("{activeTab === 'positions'");

@@ -106,16 +106,18 @@ describe('Phase 10.7C Closed Cycles closure', () => {
     expect(cycles).toContain("'premium-glow-breakeven'");
   });
 
-  it('keeps destructive cycle actions local, labeled and touch-safe', () => {
+  it('keeps cycle source-correction actions local, labeled and touch-safe', () => {
     const cycles = readRelative('./ClosedCyclesView.tsx');
 
     expect(cycles).toContain(
-      'aria-label={`Delete ${cycle.ticker} closed cycle`}',
+      'aria-label={`Review source ledger for ${cycle.ticker} closed cycle`}',
     );
     expect(cycles).toContain(
-      'premium-icon-action premium-icon-delete flex h-11 w-11',
+      'premium-icon-action flex h-11 w-11',
     );
+    expect(cycles).toContain('title="Review source ledger transactions"');
     expect(cycles).toContain('sm:h-9 sm:w-9');
+    expect(cycles).not.toContain('premium-icon-delete');
   });
 
   it('keeps expanded execution content subordinate and responsive', () => {

@@ -221,6 +221,28 @@ Closed Cycles prefer their persisted `buyTransactionIds` / `sellTransactionIds` 
 
 The old FIFO deletion helper, Position delete mutation and local Closed Cycle delete action have been removed.
 
+### Trade cash-effect ownership — Stage 2.5 closed
+
+BUY/SELL no longer exposes a compatibility mode that can suppress broker-cash movement.
+
+```text
+Add Trade
+  → required BUY cash debit
+  → canonical ledger row
+
+Sell Position
+  → required SELL cash credit
+  → canonical ledger row
+```
+
+The UI may preview the cash effect, but it does not decide whether the effect exists.
+
+That rule is encoded in `tradeLedgerMutations.ts` and the resulting transaction's `netCashImpact`.
+
+BUY pre-validation and canonical mutation preparation now enforce the same insufficient-cash rule.
+
+Cash reconciliation remains a separate ledger workflow; it is not a trade option.
+
 A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
 
 ## Accounting model

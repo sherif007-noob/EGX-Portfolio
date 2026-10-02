@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-02  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `7a5d8bde` — Stage 2.4 projection ownership / ledger-correction workflow  
-**Current full exact-head verification:** Phase 10 Visual Closure #36957879472 on `7a5d8bde`  
+**Current validated runtime head:** `208aa5e9` — Stage 2.5 canonical trade cash effect / validation alignment  
+**Current full exact-head verification:** Phase 10 Visual Closure #37048999587 on `208aa5e9`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -47,10 +47,11 @@ Completed:
 - **Stage 2.2 — BUY and SELL persist-confirmed migration**
 - **Stage 2.3 — Transaction/cash/OCR/import/reconciliation workflow migration**
 - **Stage 2.4 — Derived Position / Closed Cycle projection ownership**
+- **Stage 2.5 — Hidden trade cash-mode removal**
 
 Next:
 
-1. **Stage 2.5 — Remove hidden trade cash modes**
+1. **Stage 2.6 — Freeze one canonical cost-basis method**
 
 ---
 
@@ -213,10 +214,9 @@ are still ledger-derived.
 
 ### Hidden cash modes during migration
 
-The legacy flags remain in the current UI/API surface until Stage 2.5 removes them completely, but Stage 2.2 no longer permits them to create noncanonical money:
+Historical Stage 2.2 behavior temporarily rejected the legacy BUY/SELL cash-bypass flags while the surrounding UI/API still exposed them.
 
-- BUY with `deductFromCash=false` is rejected;
-- SELL with `addToCash=false` is rejected.
+**Stage 2.5 has now removed those flags and the BUY checkbox entirely.**
 
 A real trade always changes broker cash. Any reconciliation difference must be represented by an explicit ledger event.
 
@@ -454,6 +454,78 @@ The first Stage 2.4 full-suite run correctly failed only because three Phase 10 
 
 ---
 
+### Stage 2.5 canonical trade cash effect
+
+Runtime head `208aa5e9` removes the final BUY/SELL cash-bypass compatibility surface and aligns pre-submit BUY validation with the same broker-cash invariant enforced by canonical persistence.
+
+Removed from runtime:
+
+- BUY `deductFromCash`;
+- SELL `addToCash`;
+- Add Trade's **Deduct from cash** checkbox;
+- App forwarding booleans;
+- hook compatibility fields;
+- preparation-layer bypass branches.
+
+The trade APIs can no longer express a real BUY/SELL that avoids its broker-cash effect.
+
+#### BUY
+
+The Add Trade modal now shows a non-interactive **Broker cash effect** notice with:
+
+- exact total debit including fees;
+- current available broker cash;
+- guidance that any real discrepancy belongs in the Cash Ledger.
+
+Canonical preparation always writes:
+
+```text
+totalAmount   = gross cost + fees
+netCashImpact = -totalAmount
+```
+
+If the outlay exceeds available broker cash, pre-validation now fails immediately with an **Insufficient cash** error, matching the canonical mutation service rather than allowing a warning followed by a later rejection.
+
+#### SELL
+
+SELL preparation no longer accepts an `addToCash` option.
+
+Canonical preparation always writes:
+
+```text
+totalAmount   = net sale proceeds
+netCashImpact = +net sale proceeds
+```
+
+#### Cash differences
+
+A real broker-cash discrepancy must be represented by its actual explicit ledger event rather than hidden inside trade behavior.
+
+Stage 2.7 will further split the semantics of generic `CASH_ADJUSTMENT`.
+
+#### Validation
+
+Exact-head **Phase 10 Visual Closure #37048999587** passed on `208aa5e9`:
+
+- TypeScript: passed;
+- **87 / 87 Vitest files, 487 / 487 tests**;
+- production Vite/PWA build: passed;
+- Cloudflare Worker dry-run: passed;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states passed.
+
+Separate **Rendered Visual Regression #37048999583** also passed on the same exact head.
+
+Rendered output introduced no new Stage 2.5 regression. Existing accepted Stage 2.4 action deltas remain:
+
+- Positions desktop: 0.021%;
+- Closed Cycles desktop: 0.012%;
+- all other tracked states, including Add Trade phone: 0.000%.
+
+The Stage 2.5 predecessor runtime `33fb9871` also passed **Intraday 1m Migration Smoke #37048671583** before the validation-only tightening in `208aa5e9`.
+
+---
+
 ## Highest-priority post-visual work
 
 ### P0 — financial mutation integrity
@@ -646,6 +718,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.5 — Remove hidden trade cash modes.**
+**Stage 2.6 — Freeze one canonical cost-basis method.**
 
-The next pass removes the remaining `deductFromCash` / `addToCash` UI/API compatibility flags so every real BUY/SELL always records its actual broker cash effect without a hidden bypass.
+The next pass audits every remaining helper, report, correction path and accounting projection for cost-basis semantics and freezes weighted-average / proportional remaining cost as the explicit tested contract, with no FIFO ownership inference.

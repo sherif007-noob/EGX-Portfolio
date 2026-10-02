@@ -161,6 +161,10 @@ Stage 2.4 adds:
 - `src/services/ledgerProjectionOwnership.test.ts`;
 - `src/services/Stage24ProjectionOwnership.test.ts`.
 
+Stage 2.5 adds:
+
+- `src/services/Stage25CanonicalTradeCashEffect.test.ts`.
+
 The suite protects the canonical:
 
 ```text
@@ -205,7 +209,11 @@ Current coverage includes:
 - full-close/reopen correction-scope reset;
 - Closed Cycle source ID ownership;
 - absence of Position/Closed Cycle direct accounting delete actions;
-- Journal correction scoping to source transaction IDs.
+- Journal correction scoping to source transaction IDs;
+- removal of BUY/SELL hidden cash-mode flags;
+- required BUY broker-cash effect display;
+- insufficient BUY cash rejected during pre-validation;
+- canonical BUY debit / SELL credit transaction fields.
 
 Exact-head Stage 2.1 validation:
 
@@ -256,6 +264,21 @@ The first Stage 2.3 CI run exposed a real legacy-opening-capital regression in t
 - Intraday 1m Migration Smoke **#36957765990**: passed on runtime commit `95c6b13a`.
 
 The first full-suite run failed three historical Phase 10 source-string expectations that required destructive Position/Closed Cycle controls. Those contracts were updated to preserve the visual/action geometry while requiring the new ledger-correction semantics.
+
+### Exact-head Stage 2.5 validation
+
+- runtime: `208aa5e9`;
+- Phase 10 Visual Closure: **#37048999587**;
+- TypeScript: passed;
+- Vitest: **87 / 87 files, 487 / 487 tests**;
+- production Vite/PWA build: passed;
+- Worker dry-run: passed;
+- responsive geometry: **12 / 12 widths at 0px page overflow**;
+- rendered matrix: **16 / 16 states passed**;
+- Rendered Visual Regression **#37048999583**: passed;
+- no new Stage 2.5 screenshot regression.
+
+The predecessor Stage 2.5 runtime `33fb9871` passed Intraday 1m Migration Smoke **#37048671583** before the validation-only tightening.
 
 When migrating an individual workflow, add tests for both:
 

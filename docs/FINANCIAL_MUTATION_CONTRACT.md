@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion. Current validated runtime head: `7a5d8bde`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes. Current validated runtime head: `208aa5e9`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -16,8 +16,9 @@ Current adoption sequence:
 2. **2.2 — BUY/SELL migration — complete**
 3. **2.3 — transaction/cash/OCR/import/reconciliation migration — complete**
 4. **2.4 — derived Position / Closed Cycle deletion ownership — complete**
-5. **2.5 — hidden trade cash-mode removal — next**
-6. later Stage 2 passes remove remaining accounting ambiguities
+5. **2.5 — hidden trade cash-mode removal — complete**
+6. **2.6 — canonical cost-basis freeze — next**
+7. later Stage 2 passes remove remaining accounting ambiguities
 
 ---
 
@@ -404,14 +405,11 @@ If persistence succeeds but applying local state throws:
 
 ### Legacy hidden cash modes
 
-Stage 2.2 refuses:
+Historical Stage 2.2 temporarily **rejected** the old cash-bypass flags while the API/UI surface still contained them.
 
-- BUY `deductFromCash=false`;
-- SELL `addToCash=false`.
+Stage 2.5 has now removed those controls and parameters completely.
 
-This prevents the persist-first migration from reproducing the old local-only cash illusion.
-
-Stage 2.5 still owns complete removal of those legacy controls/API flags.
+The canonical BUY/SELL API has no cash-bypass mode.
 
 ### Stage 2.2 regression coverage
 
@@ -743,6 +741,79 @@ Intentional screenshot deltas:
 **Rendered Visual Regression #36957879457** passed on the same head.
 
 **Intraday 1m Migration Smoke #36957765990** passed on the Stage 2.4 runtime commit `95c6b13a`.
+
+---
+
+## Stage 2.5 — canonical trade cash effect
+
+The canonical trade API no longer accepts optional cash behavior.
+
+### BUY invariant
+
+```text
+grossTradeValue = shares × price
+totalAmount     = grossTradeValue + fees
+netCashImpact   = -totalAmount
+```
+
+There is no `deductFromCash` field.
+
+The Add Trade UI presents this debit as a required broker-cash effect, not a checkbox.
+
+When authoritative cash is below the outlay, pre-validation fails with the same invariant as canonical preparation.
+
+### SELL invariant
+
+```text
+grossTradeValue = shares × price
+totalAmount     = grossTradeValue - sell fees
+netCashImpact   = +totalAmount
+```
+
+There is no `addToCash` field.
+
+### Validation and persistence
+
+No trade path may encode a cash discrepancy by suppressing its normal BUY/SELL cash movement.
+
+Any real discrepancy must become an explicit ledger event with its own semantics.
+
+### Stage 2.5 regression coverage
+
+Added:
+
+- `src/services/Stage25CanonicalTradeCashEffect.test.ts`.
+
+Updated:
+
+- `tradeLedgerMutations.test.ts`;
+- `Stage22PersistedTradeMutations.test.ts`;
+- BUY pre-validation.
+
+Coverage requires:
+
+- no hidden trade cash flags in the runtime path;
+- no Add Trade checkbox;
+- visible required BUY cash-effect information;
+- insufficient BUY cash rejected before submission;
+- canonical negative BUY cash impact;
+- canonical positive SELL cash impact;
+- explicit cash-adjustment workflow remains the correction path.
+
+Exact-head validation:
+
+**Phase 10 Visual Closure #37048999587** on `208aa5e9`
+
+Passed:
+
+- TypeScript;
+- **87 / 87 Vitest files, 487 / 487 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states.
+
+**Rendered Visual Regression #37048999583** also passed on the same head.
 
 ---
 

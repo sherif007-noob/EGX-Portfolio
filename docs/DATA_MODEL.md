@@ -281,11 +281,22 @@ Stage 2.3 derives candidate contributed capital from the candidate cash-flow led
 
 In particular, deleting the final legacy opening-capital materialization must not cause the fallback opening capital to be silently re-seeded.
 
-### Trade cash effect during Stage 2.2
+### Trade cash effect
 
 Canonical BUY and SELL ledger rows always carry their real broker cash effect.
 
-The legacy `deductFromCash=false` / `addToCash=false` paths are rejected during Stage 2.2 rather than persisted as inconsistent accounting. Stage 2.5 owns complete removal of those legacy controls and parameters.
+Stage 2.5 removed the legacy `deductFromCash` / `addToCash` controls and parameters entirely.
+
+The legal transaction model is:
+
+```text
+BUY  net_cash_impact < 0  (gross purchase + fees)
+SELL net_cash_impact > 0  (gross proceeds - sell fees)
+```
+
+Insufficient BUY cash is rejected both in App pre-validation and canonical mutation preparation.
+
+A cash discrepancy is represented by a separate explicit cash-ledger event; it is never encoded by suppressing a trade's cash effect.
 
 See [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md).
 

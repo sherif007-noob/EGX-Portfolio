@@ -555,7 +555,7 @@ Exact-head validation:
 
 ---
 
-## Pass 2.5 — Remove hidden trade cash modes
+## Pass 2.5 — Remove hidden trade cash modes — COMPLETE / CI GREEN
 
 Remove/retire:
 
@@ -567,6 +567,49 @@ from normal portfolio accounting.
 A trade always records its real broker cash effect.
 
 If cash differs from broker reality, record the real reason as a separate ledger event.
+
+### 2.5 implementation record
+
+Removed end-to-end:
+
+- Add Trade cash-deduction checkbox;
+- `deductFromCash` from modal/App/hook/preparation/validation contracts;
+- `addToCash` from App/hook/preparation contracts;
+- temporary Stage 2.2 rejection branches for those compatibility flags.
+
+The Add Trade workflow keeps the cash impact visible as information, but no longer makes accounting optional.
+
+Canonical trade rows now have one legal cash model:
+
+```text
+BUY  → negative broker cash impact including fees
+SELL → positive broker cash impact net of fees
+```
+
+BUY pre-validation now rejects insufficient broker cash directly, matching the canonical persistence service.
+
+Cash discrepancies must use an explicit ledger event.
+
+Regression coverage:
+
+- `Stage25CanonicalTradeCashEffect.test.ts`;
+- Stage 2.2 source contract updated to require absence of bypass branches;
+- BUY cash-availability validation always runs when authoritative cash is provided.
+
+Exact-head validation:
+
+- runtime: `208aa5e9`;
+- Phase 10 Visual Closure **#37048999587**;
+- TypeScript passed;
+- **87 / 87 test files, 487 / 487 tests**;
+- production build and Worker dry-run green;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states passed;
+- Rendered Visual Regression **#37048999583** passed.
+
+The predecessor Stage 2.5 runtime `33fb9871` passed Intraday 1m Migration Smoke **#37048671583** before the validation-only follow-up commit.
+
+**Next: Pass 2.6 — freeze weighted-average / proportional remaining cost as the single accounting basis.**
 
 ---
 

@@ -3,14 +3,13 @@ import { runVisualTransition } from '../utils/visualTransition';
 import { MotionSwap } from './PremiumMotion';
 import { Position } from '../types';
 import { StockLogo } from './StockLogo';
-import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import {
   TrendingUp,
   TrendingDown,
   DollarSign,
   Edit2,
-  Trash2,
+  BookOpen,
   Target,
   ShieldAlert,
   ArrowUpRight,
@@ -52,7 +51,7 @@ interface PositionsTableProps {
   positions: Position[];
   onSellPosition: (position: Position) => void;
   onEditPosition: (position: Position) => void;
-  onDeletePosition: (positionId: string) => void;
+  onCorrectLedger: (position: Position) => void;
   onAddNewTrade: () => void;
   onBuyMore: (position: Position) => void;
   onOpenPriceAlerts?: () => void;
@@ -64,7 +63,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   positions,
   onSellPosition,
   onEditPosition,
-  onDeletePosition,
+  onCorrectLedger,
   onAddNewTrade,
   onBuyMore,
   onOpenPriceAlerts,
@@ -73,7 +72,6 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
-  const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
   const isDesktop = useDesktopLayout();
   const isOverviewPreview = variant === 'overview';
 
@@ -389,11 +387,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                       </button>
 
                       <button
-                        onClick={() => setPositionToDelete(pos)}
-                        title="Delete Position Record"
-                        className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
+                        onClick={() => onCorrectLedger(pos)}
+                        aria-label={`Review source ledger for ${pos.ticker}`}
+                        title="Review source ledger transactions"
+                        className="premium-icon-action p-1.5 rounded-lg"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <BookOpen className="w-3.5 h-3.5 text-cyan-300" />
                       </button>
                     </div>
                       </td>
@@ -569,12 +568,12 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => setPositionToDelete(pos)}
-                    className="premium-icon-action premium-icon-delete w-11 h-11 p-0 rounded-lg"
-                    aria-label={`Delete ${pos.ticker} position`}
-                    title="Delete position"
+                    onClick={() => onCorrectLedger(pos)}
+                    className="premium-icon-action w-11 h-11 p-0 rounded-lg"
+                    aria-label={`Review source ledger for ${pos.ticker}`}
+                    title="Review source ledger transactions"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <BookOpen className="w-3.5 h-3.5 text-cyan-300" />
                   </button>
                 </div>
                   </>
@@ -602,34 +601,6 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
         </div>
       )}
 
-      {!isOverviewPreview && (
-        <>
-        {/* Confirm Delete Position Modal */}
-        <ConfirmDeleteModal
-          isOpen={!!positionToDelete}
-          onClose={() => setPositionToDelete(null)}
-          onConfirm={() => {
-            if (positionToDelete) {
-              onDeletePosition(positionToDelete.id);
-              setPositionToDelete(null);
-            }
-          }}
-          title="Delete Open Position"
-          description="Are you sure you want to delete this open position? This will remove the position holding from your portfolio dashboard."
-          itemDetails={
-            positionToDelete
-              ? {
-                  ticker: positionToDelete.ticker,
-                  type: 'OPEN POSITION',
-                  shares: positionToDelete.shares,
-                  amount: `${(positionToDelete.shares * positionToDelete.avgBuyPrice).toFixed(2)} EGP Cost Basis`,
-                  date: positionToDelete.buyDate,
-                }
-              : undefined
-          }
-        />
-          </>
-      )}
     </div>
   );
 };

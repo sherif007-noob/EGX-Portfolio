@@ -39,14 +39,23 @@ import {
   ChevronsRight
 } from 'lucide-react';
 
+export interface JournalLedgerFocus {
+  key: string;
+  source: 'POSITION' | 'CLOSED_CYCLE';
+  ticker: string;
+  transactionIds: string[];
+  title: string;
+  detail: string;
+}
+
 interface TradingJournalProps {
   transactions: TradeTransaction[];
   closedTrades: ClosedTrade[];
   positions: Position[];
   onDeleteTransaction: (id: string) => Promise<boolean>;
   onEditTransaction?: (updatedTx: TradeTransaction) => Promise<boolean>;
-  onDeleteTrade?: (id: string) => void;
-  onDeletePosition?: (id: string) => void;
+  ledgerFocus?: JournalLedgerFocus | null;
+  onClearLedgerFocus?: () => void;
   onOpenScreenshotModal?: () => void;
   onSyncToSheets?: () => void;
   isSyncingToSheets?: boolean;
@@ -60,8 +69,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   positions,
   onDeleteTransaction,
   onEditTransaction,
-  onDeleteTrade,
-  onDeletePosition,
+  ledgerFocus,
+  onClearLedgerFocus,
   onOpenScreenshotModal,
   onSyncToSheets,
   isSyncingToSheets,
@@ -82,6 +91,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterMode, sortOrder, pageSize]);
+
+  useEffect(() => {
+    if (!ledgerFocus) return;
+    setSearchQuery('');
+    setFilterMode('ALL');
+    setSortOrder('asc');
+    setCurrentPage(1);
+  }, [ledgerFocus?.key]);
 
   // Edit Transaction State
   const [editingTx, setEditingTx] = useState<TradeTransaction | null>(null);
@@ -226,10 +243,22 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     [transactions]
   );
 
+  const ledgerFocusIds = useMemo(
+    () => new Set(ledgerFocus?.transactionIds || []),
+    [ledgerFocus],
+  );
+
   // Sort and filter transactions chronologically
   const filteredAndSortedTransactions = useMemo(() => {
     return transactions
       .filter((tx) => {
+        if (ledgerFocus) {
+          const matchesLedgerScope = ledgerFocusIds.size > 0
+            ? ledgerFocusIds.has(tx.id)
+            : tx.ticker.toUpperCase() === ledgerFocus.ticker.toUpperCase();
+          if (!matchesLedgerScope) return false;
+        }
+
         const q = searchQuery.toLowerCase().trim();
         const matchesSearch =
           !q ||
@@ -304,7 +333,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         return 0;
       });
-  }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet, closedTrades]);
+  }, [transactions, searchQuery, filterMode, sortOrder, openTickersSet, closedTrades, ledgerFocus, ledgerFocusIds]);
 
   const totalFilteredCount = filteredAndSortedTransactions.length;
   const showAllRows = pageSize === 'ALL';
@@ -529,6 +558,31 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
         </div>
       </div>
+
+      {ledgerFocus && (
+        <div
+          className="premium-panel premium-hierarchy-h4 premium-pad-h4 flex flex-col gap-3 rounded-2xl border-cyan-500/30 sm:flex-row sm:items-center sm:justify-between"
+          data-ledger-correction-focus={ledgerFocus.source}
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-cyan-300">
+              <BookOpen className="h-4 w-4 shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wide">Ledger correction scope</span>
+            </div>
+            <div className="mt-1 text-sm font-semibold text-white">{ledgerFocus.title}</div>
+            <p className="premium-type-helper mt-1">
+              {ledgerFocus.detail} Edit or delete the erroneous source execution here; the derived position/cycle will rebuild automatically after persistence.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClearLedgerFocus}
+            className="premium-action premium-action-priority-secondary w-full shrink-0 justify-center px-3 py-1.5 rounded-xl text-xs font-semibold sm:w-auto"
+          >
+            Show Full Ledger
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Controls Bar */}
       <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control flex flex-col md:flex-row md:items-center justify-between rounded-2xl" data-hierarchy="h4">

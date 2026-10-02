@@ -21,7 +21,6 @@ import {
   Calendar,
   DollarSign,
   Receipt,
-  Trash2,
   ChevronDown,
   ArrowUpRight,
   ArrowDownRight,
@@ -33,7 +32,7 @@ import {
 interface ClosedCyclesViewProps {
   closedTrades: ClosedTrade[];
   transactions: TradeTransaction[];
-  onDeleteTrade?: (id: string) => void;
+  onCorrectLedger: (cycle: ClosedTrade, transactionIds: string[]) => void;
 }
 
 export interface CycleExecutionPhase {
@@ -63,7 +62,7 @@ export interface EnrichedClosedCycle extends ClosedTrade {
 export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
   closedTrades,
   transactions,
-  onDeleteTrade,
+  onCorrectLedger,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN'>('ALL');
@@ -112,27 +111,29 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
     return closedTrades.map((ct) => {
       const tickerUpper = ct.ticker.toUpperCase();
 
-      // Find matching buy transactions
+      // Canonical reconciled cycles carry exact source execution IDs. Prefer
+      // those links and use the bounded legacy fallback only for older data.
       const buyTime = new Date(ct.buyDate).getTime();
       const sellTime = new Date(ct.sellDate).getTime();
+      const explicitBuyIds = new Set(ct.buyTransactionIds || []);
+      const explicitSellIds = new Set(ct.sellTransactionIds || []);
 
       const matchingBuys = transactions.filter((t) => {
         if (t.type !== 'BUY') return false;
+        if (explicitBuyIds.size > 0) return explicitBuyIds.has(t.id);
         if (t.ticker.toUpperCase() !== tickerUpper) return false;
         if (ct.cycleTag && t.cycleTag && ct.cycleTag === t.cycleTag) return true;
         if (ct.tradeCycle && t.tradeCycle && ct.tradeCycle === t.tradeCycle) return true;
-        // Bounded date fallback: lot purchased between cycle buyDate and sellDate
         const tTime = new Date(t.date).getTime();
         return tTime >= buyTime - 86400000 && tTime <= sellTime;
       });
 
-      // Find matching sell transactions
       const matchingSells = transactions.filter((t) => {
         if (t.type !== 'SELL') return false;
+        if (explicitSellIds.size > 0) return explicitSellIds.has(t.id);
         if (t.ticker.toUpperCase() !== tickerUpper) return false;
         if (ct.cycleTag && t.cycleTag && ct.cycleTag === t.cycleTag) return true;
         if (ct.tradeCycle && t.tradeCycle && ct.tradeCycle === t.tradeCycle) return true;
-        // Bounded date fallback: within 1 day of sell date
         return Math.abs(new Date(t.date).getTime() - sellTime) <= 86400000;
       });
 
@@ -274,11 +275,6 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
     summary.totalRealizedPnl > 0 ? 'WIN' : summary.totalRealizedPnl < 0 ? 'LOSS' : 'BREAKEVEN';
   const avgReturnState =
     summary.avgReturnPct > 0 ? 'WIN' : summary.avgReturnPct < 0 ? 'LOSS' : 'BREAKEVEN';
-
-  const handleDelete = (cycle: EnrichedClosedCycle) => {
-    if (!onDeleteTrade) return;
-    onDeleteTrade(cycle.id);
-  };
 
   return (
     <section
@@ -611,7 +607,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                   </div>
                 </div>
 
-                {/* Realized Gains & Delete Action */}
+                {/* Realized gains & source-ledger correction action */}
                 <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end">
                   <div className="text-left sm:text-right">
                     <div
@@ -649,16 +645,17 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
                     </div>
                   </div>
 
-                  {onDeleteTrade && (
-                    <button
-                      onClick={() => handleDelete(cycle)}
-                      aria-label={`Delete ${cycle.ticker} closed cycle`}
-                      title="Delete this closed cycle"
-                      className="premium-icon-action premium-icon-delete flex h-11 w-11 shrink-0 items-center justify-center rounded-xl p-0 sm:h-9 sm:w-9"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => onCorrectLedger(
+                      cycle,
+                      [...cycle.buyPhases, ...cycle.sellPhases].map((phase) => phase.id),
+                    )}
+                    aria-label={`Review source ledger for ${cycle.ticker} closed cycle`}
+                    title="Review source ledger transactions"
+                    className="premium-icon-action flex h-11 w-11 shrink-0 items-center justify-center rounded-xl p-0 sm:h-9 sm:w-9"
+                  >
+                    <Receipt className="w-4 h-4 text-cyan-300" />
+                  </button>
                 </div>
               </div>
 

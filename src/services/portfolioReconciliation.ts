@@ -422,30 +422,3 @@ export function deriveCanonicalCapitalDeposits(
     ).toFixed(2),
   );
 }
-
-export function getOpenBuyTransactionIdsForTicker(transactions: TradeTransaction[], ticker: string): string[] {
-  const targetSym = ticker.trim().toUpperCase();
-  if (!Array.isArray(transactions) || transactions.length === 0) return [];
-  const chronologicalTxs = sortTransactions(transactions);
-  const openLots: { id: string; shares: number }[] = [];
-
-  chronologicalTxs.forEach((tx) => {
-    if (tx.ticker.trim().toUpperCase() !== targetSym) return;
-    if (tx.type === 'BUY') {
-      openLots.push({ id: tx.id, shares: tx.shares });
-      return;
-    }
-    if (tx.type === 'SELL') {
-      let remaining = tx.shares;
-      while (remaining > EPSILON && openLots.length > 0) {
-        const lot = openLots[0];
-        const sold = Math.min(remaining, lot.shares);
-        lot.shares -= sold;
-        remaining -= sold;
-        if (lot.shares <= EPSILON) openLots.shift();
-      }
-    }
-  });
-
-  return openLots.map((lot) => lot.id);
-}

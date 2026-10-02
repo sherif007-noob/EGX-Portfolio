@@ -16,7 +16,7 @@ import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
 import { PerformanceReports } from './components/PerformanceReports';
-import { TradingJournal } from './components/TradingJournal';
+import { TradingJournal, type JournalLedgerFocus } from './components/TradingJournal';
 import { TickerDirectoryView } from './components/TickerDirectoryView';
 import { CashBalanceView } from './components/CashBalanceView';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
@@ -49,6 +49,10 @@ import { RotateCcw } from 'lucide-react';
 import {
   deriveCanonicalCapitalDeposits,
 } from './services/portfolioReconciliation';
+import {
+  getActivePositionLedgerTransactionIds,
+  getClosedCycleLedgerTransactionIds,
+} from './services/ledgerProjectionOwnership';
 import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
@@ -61,8 +65,10 @@ import { VISUAL_REGRESSION_HISTORICAL_PRICES } from './data/visualRegressionFixt
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [settledTab, setSettledTab] = useState<NavigationTab>('overview');
+  const [ledgerCorrectionFocus, setLedgerCorrectionFocus] = useState<JournalLedgerFocus | null>(null);
 
   const handleTabChange = (nextTab: NavigationTab) => {
+    if (nextTab !== 'journal') setLedgerCorrectionFocus(null);
     if (nextTab === activeTab) return;
 
     const desktopMotionTarget =
@@ -99,7 +105,6 @@ export default function App() {
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
     editPosition: executeEditPosition,
-    deletePosition: executeDeletePosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
     addCashTransaction,
@@ -581,40 +586,39 @@ export default function App() {
     showToast(`Updated targets & notes for ${pos.ticker}`, 'success');
   };
 
-  // Delete Position
-  const handleDeletePosition = (id: string) => {
-    const pos = positions.find((p) => p.id === id);
-    if (!pos) return;
-
-    setUndoState({
-      previousState: { positions, closedTrades, transactions, cashBalance, capitalDeposits },
-      message: `Deleted ${pos.ticker} position`,
+  const openPositionLedgerCorrection = useCallback((position: Position) => {
+    const transactionIds = getActivePositionLedgerTransactionIds(transactions, position.ticker);
+    setLedgerCorrectionFocus({
+      key: `position:${position.id}:${Date.now()}`,
+      source: 'POSITION',
+      ticker: position.ticker,
+      transactionIds,
+      title: `${position.ticker} open-position source executions`,
+      detail: transactionIds.length > 0
+        ? `Showing the ${transactionIds.length} execution(s) in the active weighted-average trade cycle.`
+        : 'No explicit active-cycle IDs were resolved, so the journal is scoped to this ticker.',
     });
+    handleTabChange('journal');
+  }, [transactions]);
 
-    const updatedTxs = executeDeletePosition(id);
-    showToast(`Deleted position ${pos.ticker}`, 'success');
-
-    // Auto-sync updated transactions to Google Sheets to clear deleted rows
-    if (sheetsConfig?.spreadsheetId && updatedTxs) {
-      getAccessToken()
-        .then((token) => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            updatedTxs,
-            token || undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync:', err));
-        })
-        .catch(() => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            updatedTxs,
-            undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync fallback:', err));
-        });
-    }
-  };
+  const openClosedCycleLedgerCorrection = useCallback((
+    cycle: ClosedTrade,
+    renderedTransactionIds: string[],
+  ) => {
+    const canonicalIds = getClosedCycleLedgerTransactionIds(cycle);
+    const transactionIds = canonicalIds.length > 0 ? canonicalIds : renderedTransactionIds;
+    setLedgerCorrectionFocus({
+      key: `closed-cycle:${cycle.id}:${Date.now()}`,
+      source: 'CLOSED_CYCLE',
+      ticker: cycle.ticker,
+      transactionIds,
+      title: `${cycle.ticker} closed-cycle source executions`,
+      detail: transactionIds.length > 0
+        ? `Showing ${transactionIds.length} BUY/SELL source execution(s) linked to this derived cycle.`
+        : 'No explicit source IDs were stored for this legacy cycle, so the journal is scoped to this ticker.',
+    });
+    handleTabChange('journal');
+  }, []);
 
   // Delete Transaction
   const handleDeleteTransaction = async (id: string): Promise<boolean> => {
@@ -704,21 +708,6 @@ export default function App() {
         });
     }
     return true;
-  };
-
-  // Delete Closed Trade Cycle
-  const handleDeleteTrade = (id: string) => {
-    const trade = closedTrades.find((t) => t.id === id);
-    if (!trade) return;
-
-    setUndoState({
-      previousState: { positions, closedTrades, transactions, cashBalance, capitalDeposits },
-      message: `Deleted ${trade.ticker} closed trade cycle`,
-    });
-
-    const nextClosed = closedTrades.filter((t) => t.id !== id);
-    setClosedTrades(nextClosed);
-    showToast(`Deleted closed trade cycle for ${trade.ticker}`, 'success');
   };
 
   // AI Screenshot Single Transaction
@@ -1023,7 +1012,7 @@ export default function App() {
                   setIsAddTradeModalOpen(true);
                 }}
                 onEditPosition={(pos) => setEditingPosition(pos)}
-                onDeletePosition={handleDeletePosition}
+                onCorrectLedger={openPositionLedgerCorrection}
                 onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
                 onAddNewTrade={() => {
                   setSelectedTickerForTrade(null);
@@ -1068,7 +1057,7 @@ export default function App() {
                 setIsAddTradeModalOpen(true);
               }}
               onEditPosition={(pos) => setEditingPosition(pos)}
-              onDeletePosition={handleDeletePosition}
+              onCorrectLedger={openPositionLedgerCorrection}
               onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
               onAddNewTrade={() => {
                 setSelectedTickerForTrade(null);
@@ -1082,7 +1071,7 @@ export default function App() {
           <ClosedCyclesView
             closedTrades={closedTrades}
             transactions={transactions}
-            onDeleteTrade={handleDeleteTrade}
+            onCorrectLedger={openClosedCycleLedgerCorrection}
           />
         )}
 
@@ -1108,8 +1097,8 @@ export default function App() {
             positions={positions}
             onDeleteTransaction={handleDeleteTransaction}
             onEditTransaction={handleEditTransaction}
-            onDeleteTrade={handleDeleteTrade}
-            onDeletePosition={handleDeletePosition}
+            ledgerFocus={ledgerCorrectionFocus}
+            onClearLedgerFocus={() => setLedgerCorrectionFocus(null)}
             onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
             onSyncToSheets={syncToSheets}
             isSyncingToSheets={isSyncingToSheets}

@@ -15,13 +15,11 @@ import {
   subscribeToPortfolioFromFirestore,
   updateFirestorePositions,
   updateFirestoreTickers,
-  updateFirestoreTransactions,
   flushPendingWriteQueue,
 } from '../services/firestoreStorage';
 import { getSupabaseBrowserClient } from '../services/supabaseBrowser';
 import {
   reconcilePortfolioFromLedger,
-  getOpenBuyTransactionIdsForTicker,
 } from '../services/portfolioReconciliation';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import {
@@ -498,25 +496,6 @@ export function usePortfolioState() {
     updateFirestorePositions(updated);
   }, [positions]);
 
-  const deletePosition = useCallback((positionId: string) => {
-    const targetPos = positions.find((p) => p.id === positionId);
-    if (!targetPos) {
-      const updated = positions.filter((p) => p.id !== positionId);
-      setPositions(updated);
-      updateFirestorePositions(updated);
-      return transactions;
-    }
-    const openBuyTxIds = getOpenBuyTransactionIdsForTicker(transactions, targetPos.ticker);
-    const updatedTransactions = transactions.filter((t) => !openBuyTxIds.includes(t.id));
-    const report = reconcilePortfolioFromLedger(updatedTransactions, tickers, capitalDeposits);
-    setTransactions(updatedTransactions);
-    setPositions(report.reconciledPositions);
-    setClosedTrades(report.reconciledClosedTrades);
-    setCashBalance(report.reconciledCashBalance);
-    updateFirestoreTransactions(updatedTransactions, report.reconciledPositions, report.reconciledClosedTrades, report.reconciledCashBalance, capitalDeposits);
-    return updatedTransactions;
-  }, [positions, transactions, tickers, capitalDeposits]);
-
   const editTransaction = useCallback((updatedTx: TradeTransaction) => executePreparedMutation(
     'EDIT_TRANSACTION',
     (current) => prepareTransactionEditMutation(current, updatedTx),
@@ -669,7 +648,6 @@ export function usePortfolioState() {
     addTrade,
     sellPosition,
     editPosition,
-    deletePosition,
     editTransaction,
     deleteTransaction,
     addCashTransaction,

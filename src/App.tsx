@@ -381,8 +381,7 @@ export default function App() {
       targetPrice?: number;
       stopLoss?: number;
       notes?: string;
-    },
-    deductCash: boolean
+    }
   ): Promise<boolean> => {
     const valResult = validateTradeInput({
       ticker: newTradeData.ticker,
@@ -392,7 +391,6 @@ export default function App() {
       type: 'BUY',
       date: newTradeData.buyDate,
       availableCash: cashBalance,
-      deductFromCash: deductCash,
     });
 
     if (!valResult.valid) {
@@ -412,7 +410,6 @@ export default function App() {
       targetPrice: newTradeData.targetPrice,
       stopLoss: newTradeData.stopLoss,
       notes: newTradeData.notes,
-      deductFromCash: deductCash,
     });
 
     if ('error' in result) {
@@ -503,7 +500,6 @@ export default function App() {
       fees: sellFees,
       sellDate,
       executedAt,
-      addToCash: true,
       notes,
     });
 
@@ -742,20 +738,17 @@ export default function App() {
     }
 
     if (parsedTx.type === 'BUY') {
-      return handleAddPosition(
-        {
-          ticker: parsedTx.ticker,
-          companyName: parsedTx.companyName,
-          sector: parsedTx.sector,
-          shares: parsedTx.shares,
-          buyPrice: parsedTx.price,
-          buyDate: parsedTx.date,
-          executedAt: parsedTx.executedAt,
-          brokerageFee: parsedTx.fees,
-          notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-        },
-        true
-      );
+      return handleAddPosition({
+        ticker: parsedTx.ticker,
+        companyName: parsedTx.companyName,
+        sector: parsedTx.sector,
+        shares: parsedTx.shares,
+        buyPrice: parsedTx.price,
+        buyDate: parsedTx.date,
+        executedAt: parsedTx.executedAt,
+        brokerageFee: parsedTx.fees,
+        notes: parsedTx.notes || 'Logged via Screenshot Scanner',
+      });
     }
 
     const pos = positions.find((position) =>

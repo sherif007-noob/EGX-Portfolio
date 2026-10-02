@@ -19,7 +19,6 @@ export interface PrepareBuyTradeInput {
   targetPrice?: number;
   stopLoss?: number;
   notes?: string;
-  deductFromCash?: boolean;
   cycleTag?: string;
 }
 
@@ -31,7 +30,6 @@ export interface PrepareSellTradeInput {
   fees?: number;
   sellDate: string;
   executedAt?: string;
-  addToCash?: boolean;
   notes?: string;
 }
 
@@ -68,12 +66,6 @@ export function prepareBuyTradeMutation(
   current: Readonly<CanonicalLedgerSnapshot>,
   input: PrepareBuyTradeInput,
 ): LedgerMutationPreparation<TradeTransaction> {
-  if (input.deductFromCash === false) {
-    throw new Error(
-      'BUY cash bypass is not compatible with canonical persisted accounting. Keep cash deduction enabled; cash corrections must be recorded separately.',
-    );
-  }
-
   const ticker = resolveTickerFromDirectory(input.ticker, current.tickers);
   const { grossCost, fees, cashOutflow } = calculateBuyImpact(
     input.shares,
@@ -119,12 +111,6 @@ export function prepareSellTradeMutation(
   current: Readonly<CanonicalLedgerSnapshot>,
   input: PrepareSellTradeInput,
 ): LedgerMutationPreparation<TradeTransaction> {
-  if (input.addToCash === false) {
-    throw new Error(
-      'SELL cash bypass is not compatible with canonical persisted accounting. Sale proceeds must enter broker cash.',
-    );
-  }
-
   const position = current.positions.find((candidate) => candidate.id === input.positionId);
   if (!position) {
     throw new Error('The position changed before the sale could be saved. Reload and try again.');

@@ -15,7 +15,6 @@ export function validateTradeInput(input: {
   date: string;
   existingPosition?: Position;
   availableCash?: number;
-  deductFromCash?: boolean;
 }): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -58,7 +57,7 @@ export function validateTradeInput(input: {
   }
 
   // Validate BUY cash constraint
-  if (input.type === 'BUY' && input.deductFromCash && input.availableCash !== undefined) {
+  if (input.type === 'BUY' && input.availableCash !== undefined) {
     const grossCost = input.shares * input.price;
     const totalOutlay = grossCost + (input.fees || 0);
     if (totalOutlay > input.availableCash) {

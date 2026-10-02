@@ -56,10 +56,12 @@ describe('Stage 2.2 persisted BUY/SELL contract', () => {
     expect(reconciliation).toContain('notes: existing?.notes ?? sample.notes');
   });
 
-  it('temporarily rejects legacy hidden cash bypasses instead of reintroducing local-only accounting', () => {
+  it('keeps canonical BUY/SELL preparation free of hidden cash-bypass branches after Stage 2.5', () => {
     const preparation = readRelative('./tradeLedgerMutations.ts');
 
-    expect(preparation).toContain('BUY cash bypass is not compatible with canonical persisted accounting');
-    expect(preparation).toContain('SELL cash bypass is not compatible with canonical persisted accounting');
+    expect(preparation).not.toContain('deductFromCash');
+    expect(preparation).not.toContain('addToCash');
+    expect(preparation).toContain('netCashImpact: -cashOutflow');
+    expect(preparation).toContain('netCashImpact: accounting.netProceeds');
   });
 });

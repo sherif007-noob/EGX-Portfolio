@@ -446,7 +446,6 @@ export function usePortfolioState() {
     targetPrice?: number;
     stopLoss?: number;
     notes?: string;
-    deductFromCash?: boolean;
     cycleTag?: string;
   }) => {
     const executor = financialMutationExecutorRef.current!;
@@ -468,7 +467,6 @@ export function usePortfolioState() {
     fees?: number;
     sellDate: string;
     executedAt?: string;
-    addToCash?: boolean;
     notes?: string;
   }) => {
     const executor = financialMutationExecutorRef.current!;
@@ -483,7 +481,6 @@ export function usePortfolioState() {
         fees: sellInput.fees,
         sellDate: sellInput.sellDate,
         executedAt: sellInput.executedAt,
-        addToCash: sellInput.addToCash,
         notes: sellInput.notes,
       }),
       apply: (snapshot) => applyLedgerSnapshot(snapshot),

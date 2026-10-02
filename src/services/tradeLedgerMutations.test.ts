@@ -133,19 +133,6 @@ describe('BUY/SELL ledger mutation preparation', () => {
     )).toThrow('Insufficient cash');
   });
 
-  it('rejects the legacy BUY cash-bypass mode instead of creating local-only money', () => {
-    expect(() => prepareBuyTradeMutation(snapshot(), {
-      transactionId: 'buy-no-cash',
-      ticker: 'COMI',
-      companyName: ticker.nameEn,
-      sector: 'Banking',
-      shares: 1,
-      price: 12,
-      date: '2026-10-02',
-      deductFromCash: false,
-    })).toThrow('BUY cash bypass');
-  });
-
   it('prepares a proportional partial SELL with canonical proceeds and realized P&L', () => {
     const prepared = prepareSellTradeMutation(snapshot(), {
       transactionId: 'sell-1',
@@ -234,14 +221,4 @@ describe('BUY/SELL ledger mutation preparation', () => {
     )).toThrow('position changed');
   });
 
-  it('rejects the legacy SELL cash-bypass mode', () => {
-    expect(() => prepareSellTradeMutation(snapshot(), {
-      transactionId: 'sell-no-cash',
-      positionId: 'pos-comi',
-      sharesToSell: 10,
-      sellPrice: 13,
-      sellDate: '2026-10-02',
-      addToCash: false,
-    })).toThrow('SELL cash bypass');
-  });
 });

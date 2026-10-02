@@ -25,8 +25,7 @@ interface AddTradeModalProps {
       targetPrice?: number;
       stopLoss?: number;
       notes?: string;
-    },
-    deductFromCash: boolean
+    }
   ) => Promise<boolean>;
   tickers: EGXTicker[];
   preselectedTicker?: EGXTicker | null;
@@ -67,7 +66,6 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const [targetPrice, setTargetPrice] = useState<number>(0);
   const [stopLoss, setStopLoss] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
-  const [deductFromCash, setDeductFromCash] = useState<boolean>(true);
 
   const feeEstimate = useMemo(() => estimateBrokerageFeeRate(transactions), [transactions]);
   const learnedFeePercent = feeEstimate.rate * 100;
@@ -183,22 +181,19 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const shouldClose = await onAddPosition(
-        {
-          ticker: cleanTicker,
-          companyName: companyName || cleanTicker,
-          sector,
-          shares,
-          buyPrice,
-          buyDate,
-          executedAt: combineExecutionDateTime(buyDate, executionTime),
-          brokerageFee: Math.max(0, brokerageFee || 0),
-          targetPrice: targetPrice > 0 ? targetPrice : undefined,
-          stopLoss: stopLoss > 0 ? stopLoss : undefined,
-          notes: notes.trim() || undefined,
-        },
-        deductFromCash
-      );
+      const shouldClose = await onAddPosition({
+        ticker: cleanTicker,
+        companyName: companyName || cleanTicker,
+        sector,
+        shares,
+        buyPrice,
+        buyDate,
+        executedAt: combineExecutionDateTime(buyDate, executionTime),
+        brokerageFee: Math.max(0, brokerageFee || 0),
+        targetPrice: targetPrice > 0 ? targetPrice : undefined,
+        stopLoss: stopLoss > 0 ? stopLoss : undefined,
+        notes: notes.trim() || undefined,
+      });
       if (shouldClose) runVisualTransition('modal-close', onClose);
     } finally {
       setIsSubmitting(false);
@@ -561,18 +556,21 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             />
           </div>
 
-          {/* Cash Deduction Option */}
-          <div className="premium-modal-section flex items-center gap-2 p-3 rounded-xl">
-            <input
-              type="checkbox"
-              id="deductCash"
-              checked={deductFromCash}
-              onChange={(e) => setDeductFromCash(e.target.checked)}
-              className="premium-checkbox"
-            />
-            <label htmlFor="deductCash" className="text-slate-300 text-xs select-none">
-              Deduct <strong className="text-white font-mono">{netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong> (including fees) from cash balance ({cashBalance.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP available)
-            </label>
+          {/* Canonical broker cash effect — informational, not optional. */}
+          <div
+            className="premium-modal-section flex items-start gap-2.5 p-3 rounded-xl"
+            data-trade-cash-effect="required"
+          >
+            <DollarSign className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
+            <div className="min-w-0 text-xs">
+              <div className="font-semibold text-slate-200">Broker cash effect</div>
+              <p className="mt-0.5 text-slate-400">
+                This BUY will debit <strong className="font-mono text-white">{netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</strong> including fees from broker cash.
+              </p>
+              <p className="mt-0.5 font-mono text-[11px] text-slate-500">
+                Available: {cashBalance.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP
+              </p>
+            </div>
           </div>
 
           {/* Form Actions */}

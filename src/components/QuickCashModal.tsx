@@ -8,7 +8,7 @@ interface QuickCashModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentCash: number;
-  onUpdateCash: (newAmount: number) => void;
+  onUpdateCash: (newAmount: number) => Promise<boolean>;
 }
 
 export const QuickCashModal: React.FC<QuickCashModalProps> = ({
@@ -17,17 +17,27 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
   currentCash,
   onUpdateCash,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isSaving, setIsSaving] = useState(false);
+  const requestClose = () => {
+    if (isSaving) return;
+    runVisualTransition('modal-close', onClose);
+  };
   const [amount, setAmount] = useState<number>(currentCash);
 
   const handleAdjust = (delta: number) => {
     setAmount((prev) => Math.max(0, prev + delta));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateCash(amount);
-    requestClose();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const saved = await onUpdateCash(amount);
+      if (saved) runVisualTransition('modal-close', onClose);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -96,9 +106,10 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
 
           <button
             type="submit"
-            className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 rounded-xl font-bold text-sm"
+            disabled={isSaving}
+            className="premium-action premium-action-success premium-shimmer-border w-full py-2.5 rounded-xl font-bold text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Update Cash Balance
+            {isSaving ? 'Saving…' : 'Update Cash Balance'}
           </button>
         </form>
     </PremiumModalMotion>

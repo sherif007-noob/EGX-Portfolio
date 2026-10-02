@@ -50,7 +50,7 @@ interface TradeScreenshotModalProps {
     executedAt?: string;
     fees: number;
     notes?: string;
-  }) => void;
+  }) => Promise<boolean>;
   onAddBatchTransactions?: (txs: Array<{
     ticker: string;
     companyName: string;
@@ -62,7 +62,7 @@ interface TradeScreenshotModalProps {
     executedAt?: string;
     fees: number;
     notes?: string;
-  }>) => void;
+  }>) => Promise<boolean>;
 }
 
 export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
@@ -72,7 +72,11 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
   onAddTransaction,
   onAddBatchTransactions,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isSavingTrades, setIsSavingTrades] = useState(false);
+  const requestClose = () => {
+    if (isSavingTrades) return;
+    runVisualTransition('modal-close', onClose);
+  };
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
   const [batchTrades, setBatchTrades] = useState<ParsedTradeItem[]>([]);
@@ -220,7 +224,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
     }
   };
 
-  const handleConfirmAll = () => {
+  const handleConfirmAll = async () => {
     if (batchTrades.length === 0) return;
 
     // A single failed OCR image must not block valid screenshots in the same batch.
@@ -249,20 +253,28 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
       notes: t.notes || `Imported via ${t.brokerName || 'Telda'}`,
     }));
 
-    if (onAddBatchTransactions && validTrades.length > 1) {
-      onAddBatchTransactions(payload);
-    } else {
-      payload.forEach((t) => onAddTransaction(t));
-    }
+    setIsSavingTrades(true);
+    try {
+      const saved = onAddBatchTransactions && validTrades.length > 1
+        ? await onAddBatchTransactions(payload)
+        : await onAddTransaction(payload[0]);
 
-    if (invalidTrades.length > 0) {
-      setBatchTrades(invalidTrades);
-      setErrorMsg(`${invalidTrades.length} screenshot(s) could not be read. The ${validTrades.length} valid trade(s) were logged; please correct the remaining item(s) and log them separately.`);
-      return;
-    }
+      if (!saved) {
+        setErrorMsg('The trade ledger was not saved. Nothing was changed; review the items and try again.');
+        return;
+      }
 
-    resetModal();
-    requestClose();
+      if (invalidTrades.length > 0) {
+        setBatchTrades(invalidTrades);
+        setErrorMsg(`${invalidTrades.length} screenshot(s) could not be read. The ${validTrades.length} valid trade(s) were persisted; please correct the remaining item(s) and log them separately.`);
+        return;
+      }
+
+      resetModal();
+      runVisualTransition('modal-close', onClose);
+    } finally {
+      setIsSavingTrades(false);
+    }
   };
 
   const resetModal = () => {
@@ -316,10 +328,12 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
             type="button"
             aria-label="Close trade screenshot scanner"
             onClick={() => {
+              if (isSavingTrades) return;
               resetModal();
               requestClose();
             }}
-            className="premium-icon-action p-1.5 rounded-lg"
+            disabled={isSavingTrades}
+            className="premium-icon-action p-1.5 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
             <X className="w-5 h-5" />
           </button>
@@ -616,13 +630,16 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmAll}
-                className="premium-action premium-action-success premium-shimmer-border flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:w-auto"
+                disabled={isSavingTrades}
+                className="premium-action premium-action-success premium-shimmer-border disabled:cursor-not-allowed disabled:opacity-60 flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:w-auto"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
-                  {batchTrades.length > 1
-                    ? `Log All ${batchTrades.length} Trades to Portfolio`
-                    : 'Log Trade to Portfolio'}
+                  {isSavingTrades
+                    ? 'Saving Ledger…'
+                    : batchTrades.length > 1
+                      ? `Log All ${batchTrades.length} Trades to Portfolio`
+                      : 'Log Trade to Portfolio'}
                 </span>
               </button>
             </div>

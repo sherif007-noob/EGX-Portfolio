@@ -16,14 +16,20 @@ function validateCashDate(date: string) {
   }
 }
 
-/** Apply a cash event and rebuild every projection from the resulting ledger. */
-export function applyCashLedgerEvent(
+export interface PreparedCashLedgerChange {
+  transactions: TradeTransaction[];
+  capitalDeposits: number;
+  transaction?: TradeTransaction;
+}
+
+/** Build a cash-ledger candidate without applying derived portfolio state. */
+export function prepareCashLedgerEvent(
   state: CashLedgerState,
   kind: Extract<CashFlowType, 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT'>,
   amount: number,
   notes = '',
   date = new Date().toISOString().slice(0, 10),
-) {
+): PreparedCashLedgerChange {
   validateCashDate(date);
   if (!Number.isFinite(amount) || (kind !== 'CASH_ADJUSTMENT' && amount <= 0)) {
     throw new Error('Cash amount must be finite and positive (adjustments may be signed).');
@@ -59,9 +65,29 @@ export function applyCashLedgerEvent(
   transactions.unshift(transaction);
   const capitalDeposits = Number((state.capitalDeposits
     + (kind === 'DEPOSIT' ? value : kind === 'WITHDRAWAL' ? -value : 0)).toFixed(2));
-  const report = reconcilePortfolioFromLedger(transactions, state.tickers, capitalDeposits, state.positions);
+  return { transaction, transactions, capitalDeposits };
+}
+
+/** Apply a cash event and rebuild every projection from the resulting ledger. */
+export function applyCashLedgerEvent(
+  state: CashLedgerState,
+  kind: Extract<CashFlowType, 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT'>,
+  amount: number,
+  notes = '',
+  date = new Date().toISOString().slice(0, 10),
+) {
+  const prepared = prepareCashLedgerEvent(state, kind, amount, notes, date);
+  const report = reconcilePortfolioFromLedger(
+    prepared.transactions,
+    state.tickers,
+    prepared.capitalDeposits,
+    state.positions,
+  );
   return {
-    transaction, transactions, capitalDeposits, tickers: state.tickers,
+    transaction: prepared.transaction!,
+    transactions: prepared.transactions,
+    capitalDeposits: prepared.capitalDeposits,
+    tickers: state.tickers,
     positions: report.reconciledPositions,
     closedTrades: report.reconciledClosedTrades,
     cashBalance: report.reconciledCashBalance,
@@ -94,13 +120,26 @@ function withOpeningCapital(state: CashLedgerState): TradeTransaction[] {
   return transactions;
 }
 
-export function rebuildAfterLedgerChange(state: CashLedgerState, transactions: TradeTransaction[]) {
-  const before = state.transactions.map(normalizeTransaction);
-  const normalized = transactions.map(normalizeTransaction);
+export function deriveCapitalDepositsAfterLedgerChange(
+  beforeTransactions: TradeTransaction[],
+  candidateTransactions: TradeTransaction[],
+  fallbackCapitalDeposits: number,
+): number {
+  const before = beforeTransactions.map(normalizeTransaction);
+  const normalized = candidateTransactions.map(normalizeTransaction);
   // Deleting the last external flow must not resurrect it as implicit capital.
-  const capitalDeposits = before.some(externalKind) || normalized.some(externalKind)
+  return before.some(externalKind) || normalized.some(externalKind)
     ? Number(normalized.reduce((sum, tx) => sum + capitalContribution(tx), 0).toFixed(2))
-    : state.capitalDeposits;
+    : fallbackCapitalDeposits;
+}
+
+export function rebuildAfterLedgerChange(state: CashLedgerState, transactions: TradeTransaction[]) {
+  const normalized = transactions.map(normalizeTransaction);
+  const capitalDeposits = deriveCapitalDepositsAfterLedgerChange(
+    state.transactions,
+    normalized,
+    state.capitalDeposits,
+  );
   const report = reconcilePortfolioFromLedger(normalized, state.tickers, capitalDeposits, state.positions);
   return {
     transactions: normalized, capitalDeposits, tickers: state.tickers,
@@ -109,7 +148,11 @@ export function rebuildAfterLedgerChange(state: CashLedgerState, transactions: T
   };
 }
 
-export function changeCashLedgerEntry(state: CashLedgerState, id: string, changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null) {
+export function prepareCashLedgerChange(
+  state: CashLedgerState,
+  id: string,
+  changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null,
+): PreparedCashLedgerChange {
   const transactions = withOpeningCapital(state);
   const existing = transactions.find((tx) => tx.id === id);
   if (!existing || !externalKind(existing)) throw new Error('Cash ledger entry was not found. Reload and try again.');
@@ -125,7 +168,19 @@ export function changeCashLedgerEntry(state: CashLedgerState, id: string, change
     executedAt: changes.date === tx.date ? tx.executedAt : undefined,
     notes: changes.notes,
   } : tx) : transactions.filter((tx) => tx.id !== id);
-  return rebuildAfterLedgerChange({ ...state, transactions }, updated);
+  return {
+    transactions: updated.map(normalizeTransaction),
+    capitalDeposits: deriveCapitalDepositsAfterLedgerChange(
+      transactions,
+      updated,
+      state.capitalDeposits,
+    ),
+  };
+}
+
+export function changeCashLedgerEntry(state: CashLedgerState, id: string, changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null) {
+  const prepared = prepareCashLedgerChange(state, id, changes);
+  return rebuildAfterLedgerChange(state, prepared.transactions);
 }
 
 /** Existing deposit/withdrawal history is a read-only projection of the ledger. */

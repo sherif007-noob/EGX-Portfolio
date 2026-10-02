@@ -11,23 +11,34 @@ import {
 } from '../data/initialPortfolio';
 import {
   loadPortfolioFromFirestore,
-  debouncedSavePortfolioToFirestore,
   forceFullSyncToFirestore,
   subscribeToPortfolioFromFirestore,
   updateFirestorePositions,
   updateFirestoreTickers,
   updateFirestoreTransactions,
   flushPendingWriteQueue,
-  markLocalMutation,
 } from '../services/firestoreStorage';
 import { getSupabaseBrowserClient } from '../services/supabaseBrowser';
 import {
   reconcilePortfolioFromLedger,
   getOpenBuyTransactionIdsForTicker,
-  ReconciliationReport,
 } from '../services/portfolioReconciliation';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
-import { applyCashLedgerEvent, changeCashLedgerEntry, rebuildAfterLedgerChange } from '../services/cashLedger';
+import {
+  prepareCashBalanceAdjustmentMutation,
+  prepareCashEntryMutation,
+  prepareCashEventMutation,
+  prepareLedgerReconciliationMutation,
+  prepareLedgerSnapshotRestoreMutation,
+  preparePortfolioRestoreMutation,
+  prepareTransactionDeleteMutation,
+  prepareTransactionEditMutation,
+  type PortfolioRestoreInput,
+} from '../services/ledgerWorkflowMutations';
+import {
+  prepareOcrBatchMutation,
+  type OcrTradeInput,
+} from '../services/ocrLedgerMutations';
 import { resolveTickerFromDirectory } from '../services/tickerRegistry';
 import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
 import {
@@ -351,22 +362,6 @@ export function usePortfolioState() {
     };
   }, []);
 
-  const reconcileLedger = useCallback((): ReconciliationReport => {
-    const report = reconcilePortfolioFromLedger(transactions, tickers, capitalDeposits, positions);
-    setPositions(report.reconciledPositions);
-    setClosedTrades(report.reconciledClosedTrades);
-    setCashBalance(report.reconciledCashBalance);
-    debouncedSavePortfolioToFirestore({
-      positions: report.reconciledPositions,
-      closedTrades: report.reconciledClosedTrades,
-      transactions,
-      cashBalance: report.reconciledCashBalance,
-      capitalDeposits,
-      tickers,
-    }, 300);
-    return report;
-  }, [transactions, tickers, capitalDeposits, positions]);
-
   const rehydratePositionsWithTickers = useCallback((posList: Position[], tickerList: EGXTicker[]): Position[] => {
     if (!tickerList?.length || !posList?.length) return posList;
     const tickerMap = new Map(tickerList.map((t) => [t.ticker.trim().toUpperCase(), t]));
@@ -422,6 +417,24 @@ export function usePortfolioState() {
     capitalDeposits,
     tickers,
   }), [transactions, positions, closedTrades, cashBalance, capitalDeposits, tickers]);
+
+  const executePreparedMutation = useCallback(async <T,>(
+    kind: string,
+    prepare: (current: Readonly<CanonicalLedgerSnapshot>) => import('../services/ledgerMutationService').LedgerMutationPreparation<T>,
+  ) => {
+    const executor = financialMutationExecutorRef.current!;
+    return executor.execute<T>({
+      kind,
+      current: currentLedgerSnapshot(),
+      prepare,
+      apply: (snapshot) => applyLedgerSnapshot(snapshot),
+    });
+  }, [currentLedgerSnapshot, applyLedgerSnapshot]);
+
+  const reconcileLedger = useCallback(() => executePreparedMutation(
+    'RECONCILE_LEDGER',
+    (current) => prepareLedgerReconciliationMutation(current),
+  ), [executePreparedMutation]);
 
   const addTrade = useCallback(async (tradeInput: {
     ticker: string;
@@ -504,138 +517,105 @@ export function usePortfolioState() {
     return updatedTransactions;
   }, [positions, transactions, tickers, capitalDeposits]);
 
-  const editTransaction = useCallback((updatedTx: TradeTransaction) => {
-    const normalized = normalizeTransaction(updatedTx);
-    const updated = transactions.map((t) => t.id === normalized.id ? normalized : t);
-    const next = rebuildAfterLedgerChange({ transactions, positions, tickers, capitalDeposits }, updated);
-    applyLedgerSnapshot(next);
-    void forceFullSyncToFirestore(next);
-    return next.transactions;
-  }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
+  const editTransaction = useCallback((updatedTx: TradeTransaction) => executePreparedMutation(
+    'EDIT_TRANSACTION',
+    (current) => prepareTransactionEditMutation(current, updatedTx),
+  ), [executePreparedMutation]);
 
-  const deleteTransaction = useCallback(async (txId: string): Promise<TradeTransaction[] | null> => {
-    const next = rebuildAfterLedgerChange(
-      { transactions, positions, tickers, capitalDeposits },
-      transactions.filter((t) => t.id !== txId),
-    );
+  const deleteTransaction = useCallback((transactionId: string) => executePreparedMutation(
+    'DELETE_TRANSACTION',
+    (current) => prepareTransactionDeleteMutation(current, transactionId),
+  ), [executePreparedMutation]);
 
-    const saved = await forceFullSyncToFirestore(next);
-    if (!saved) {
-      console.error('[Supabase] Transaction delete was not persisted; keeping current local state.', txId);
-      return null;
-    }
+  const commitCashEvent = useCallback((
+    kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT',
+    amount: number,
+    notes?: string,
+    date?: string,
+  ) => executePreparedMutation(
+    `CASH_${kind}`,
+    (current) => prepareCashEventMutation(current, kind, amount, notes, date),
+  ), [executePreparedMutation]);
 
-    applyLedgerSnapshot(next);
-    return next.transactions;
-  }, [transactions, positions, tickers, capitalDeposits, applyLedgerSnapshot]);
-
-  const cashSaveInFlight = useRef(false);
-  const persistCashSnapshot = useCallback(async (next: ReturnType<typeof rebuildAfterLedgerChange>) => {
-    if (cashSaveInFlight.current) return false;
-    cashSaveInFlight.current = true;
-    markLocalMutation();
-    try {
-      const saved = await forceFullSyncToFirestore(next);
-      if (saved) applyLedgerSnapshot(next);
-      return saved;
-    } catch {
+  const addCashTransaction = useCallback(async (
+    amount: number,
+    type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND',
+    notes?: string,
+    date?: string,
+  ): Promise<boolean> => {
+    const result = await commitCashEvent(type === 'WITHDRAW' ? 'WITHDRAWAL' : type, amount, notes, date);
+    if ('error' in result) {
+      console.error('[Financial mutation] Cash add failed:', result.error);
       return false;
-    } finally {
-      cashSaveInFlight.current = false;
     }
-  }, [applyLedgerSnapshot]);
-
-  const commitCashEvent = useCallback((kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT', amount: number, notes?: string, date?: string) => {
-    const { transaction: _transaction, ...next } = applyCashLedgerEvent({ transactions, positions, tickers, capitalDeposits }, kind, amount, notes, date);
-    return persistCashSnapshot(next);
-  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
-
-  const addCashTransaction = useCallback((amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => {
-    return commitCashEvent(type === 'WITHDRAW' ? 'WITHDRAWAL' : type, amount, notes, date);
+    return true;
   }, [commitCashEvent]);
 
-  const editCashTransaction = useCallback((tx: CashTransaction) => {
-    return persistCashSnapshot(changeCashLedgerEntry({ transactions, positions, tickers, capitalDeposits }, tx.id, tx));
-  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
+  const editCashTransaction = useCallback(async (transaction: CashTransaction): Promise<boolean> => {
+    const result = await executePreparedMutation(
+      'EDIT_CASH_TRANSACTION',
+      (current) => prepareCashEntryMutation(current, transaction.id, transaction),
+    );
+    if ('error' in result) {
+      console.error('[Financial mutation] Cash edit failed:', result.error);
+      return false;
+    }
+    return true;
+  }, [executePreparedMutation]);
 
-  const deleteCashTransaction = useCallback((id: string) => {
-    return persistCashSnapshot(changeCashLedgerEntry({ transactions, positions, tickers, capitalDeposits }, id, null));
-  }, [transactions, positions, tickers, capitalDeposits, persistCashSnapshot]);
+  const deleteCashTransaction = useCallback(async (transactionId: string): Promise<boolean> => {
+    const result = await executePreparedMutation(
+      'DELETE_CASH_TRANSACTION',
+      (current) => prepareCashEntryMutation(current, transactionId, null),
+    );
+    if ('error' in result) {
+      console.error('[Financial mutation] Cash delete failed:', result.error);
+      return false;
+    }
+    return true;
+  }, [executePreparedMutation]);
 
-  const importBackup = useCallback(async (backup: {
+  const importBackup = useCallback((backup: PortfolioRestoreInput) => executePreparedMutation(
+    'RESTORE_PORTFOLIO',
+    (current) => preparePortfolioRestoreMutation(current, backup),
+  ), [executePreparedMutation]);
+
+  const importOcrBatch = useCallback((trades: OcrTradeInput[]) => executePreparedMutation(
+    'OCR_BATCH_IMPORT',
+    (current) => prepareOcrBatchMutation(current, trades),
+  ), [executePreparedMutation]);
+
+  const restoreLedgerSnapshot = useCallback((restore: {
+    transactions: TradeTransaction[];
+    capitalDeposits: number;
     positions?: Position[];
-    closedTrades?: ClosedTrade[];
-    transactions?: TradeTransaction[];
-    cashBalance?: number;
-    capitalDeposits?: number;
-    tickers?: EGXTicker[];
-  }) => {
-    let importedTxs = Array.isArray(backup.transactions) ? backup.transactions.map(normalizeTransaction) : transactions;
-    let importedPositions = Array.isArray(backup.positions) ? backup.positions : [];
-    let importedClosed = Array.isArray(backup.closedTrades) ? backup.closedTrades : [];
-    let importedCash = typeof backup.cashBalance === 'number' ? backup.cashBalance : cashBalance;
-    let importedCapital = typeof backup.capitalDeposits === 'number' && backup.capitalDeposits >= 0 ? backup.capitalDeposits : capitalDeposits;
-    let importedTickers = Array.isArray(backup.tickers) && backup.tickers.length > 0 ? backup.tickers : tickers;
+  }) => executePreparedMutation(
+    'RESTORE_LEDGER_SNAPSHOT',
+    (current) => prepareLedgerSnapshotRestoreMutation(current, restore),
+  ), [executePreparedMutation]);
 
-    if (importedTxs.length > 0 && (importedPositions.length === 0 || importedClosed.length === 0)) {
-      const report = reconcilePortfolioFromLedger(importedTxs, importedTickers, importedCapital, importedPositions);
-      if (importedPositions.length === 0) importedPositions = report.reconciledPositions;
-      if (importedClosed.length === 0) importedClosed = report.reconciledClosedTrades;
-      if (importedCash === 0) importedCash = report.reconciledCashBalance;
-    }
-
-    setPositions(importedPositions);
-    setClosedTrades(importedClosed);
-    setTransactions(importedTxs);
-    setCashBalance(importedCash);
-    setCapitalDeposits(importedCapital);
-    if (Array.isArray(backup.tickers) && backup.tickers.length > 0) setTickers(importedTickers);
-
-    try {
-      localStorage.setItem(STORAGE_KEY_POSITIONS, JSON.stringify(importedPositions));
-      localStorage.setItem(STORAGE_KEY_CLOSED, JSON.stringify(importedClosed));
-      localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(importedTxs));
-      localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(importedCash));
-      localStorage.setItem(STORAGE_KEY_CAPITAL, JSON.stringify(importedCapital));
-      if (Array.isArray(backup.tickers) && backup.tickers.length > 0) localStorage.setItem(STORAGE_KEY_TICKERS, JSON.stringify(importedTickers));
-    } catch (e) {
-      console.warn('LocalStorage save failed on import:', e);
-    }
-
-    markLocalMutation(4000);
-    await forceFullSyncToFirestore({ positions: importedPositions, closedTrades: importedClosed, transactions: importedTxs, cashBalance: importedCash, capitalDeposits: importedCapital, tickers: importedTickers });
-  }, [transactions, positions, closedTrades, cashBalance, tickers, capitalDeposits]);
-
-  const restoreInitialState = useCallback(async () => {
-    setPositions(INITIAL_POSITIONS);
-    setClosedTrades(INITIAL_CLOSED_TRADES);
-    setTransactions(INITIAL_TRANSACTIONS);
-    setCashBalance(INITIAL_CASH_BALANCE);
-    setTickers(INITIAL_EGX_TICKERS);
-    setCapitalDeposits(INITIAL_CAPITAL_DEPOSITS);
-    try {
-      localStorage.setItem(STORAGE_KEY_POSITIONS, JSON.stringify(INITIAL_POSITIONS));
-      localStorage.setItem(STORAGE_KEY_CLOSED, JSON.stringify(INITIAL_CLOSED_TRADES));
-      localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(INITIAL_TRANSACTIONS));
-      localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(INITIAL_CASH_BALANCE));
-      localStorage.setItem(STORAGE_KEY_TICKERS, JSON.stringify(INITIAL_EGX_TICKERS));
-      localStorage.setItem(STORAGE_KEY_CAPITAL, JSON.stringify(INITIAL_CAPITAL_DEPOSITS));
-    } catch (e) {
-      console.warn('LocalStorage reset failed:', e);
-    }
-    markLocalMutation(4000);
-    await forceFullSyncToFirestore({ positions: INITIAL_POSITIONS, closedTrades: INITIAL_CLOSED_TRADES, transactions: INITIAL_TRANSACTIONS, cashBalance: INITIAL_CASH_BALANCE, capitalDeposits: INITIAL_CAPITAL_DEPOSITS, tickers: INITIAL_EGX_TICKERS });
-  }, []);
+  const restoreInitialState = useCallback(() => importBackup({
+    positions: INITIAL_POSITIONS,
+    closedTrades: INITIAL_CLOSED_TRADES,
+    transactions: INITIAL_TRANSACTIONS,
+    cashBalance: INITIAL_CASH_BALANCE,
+    capitalDeposits: INITIAL_CAPITAL_DEPOSITS,
+    tickers: INITIAL_EGX_TICKERS,
+  }), [importBackup]);
 
   const updateTickers = useCallback((newTickers: EGXTicker[]) => setTickers(newTickers), []);
 
-  const updateCashBalance = useCallback((newCash: number) => {
-    if (!Number.isFinite(newCash)) return;
-    const current = reconcilePortfolioFromLedger(transactions, tickers, capitalDeposits, positions);
-    const delta = Number((newCash - current.reconciledCashBalance).toFixed(2));
-    if (delta === 0) return;
-    return commitCashEvent('CASH_ADJUSTMENT', delta, 'Manual cash balance adjustment');
-  }, [transactions, tickers, capitalDeposits, positions, commitCashEvent]);
+  const updateCashBalance = useCallback(async (newCash: number): Promise<boolean> => {
+    const result = await executePreparedMutation(
+      'CASH_ADJUSTMENT',
+      (current) => prepareCashBalanceAdjustmentMutation(current, newCash),
+    );
+    if ('error' in result) {
+      console.error('[Financial mutation] Cash adjustment failed:', result.error);
+      return false;
+    }
+    return true;
+  }, [executePreparedMutation]);
 
   const forceSync = useCallback(async () => {
     try {
@@ -697,6 +677,8 @@ export function usePortfolioState() {
     deleteCashTransaction,
     reconcileLedger,
     importBackup,
+    importOcrBatch,
+    restoreLedgerSnapshot,
     restoreInitialState,
     updateTickers,
     forceSync,

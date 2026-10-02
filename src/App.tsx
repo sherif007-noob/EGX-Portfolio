@@ -36,7 +36,6 @@ import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
 import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { useSectorMomentumAlerts } from './hooks/useSectorMomentumAlerts';
 import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
-import { forceFullSyncToFirestore } from './services/firestoreStorage';
 import { validateTradeInput } from './utils/portfolioValidation';
 import { findStrongDuplicateExecution } from './utils/tradeExecutionIdentity';
 import { getAccessToken } from './services/firebaseAuth';
@@ -49,9 +48,7 @@ import {
 import { RotateCcw } from 'lucide-react';
 import {
   deriveCanonicalCapitalDeposits,
-  reconcilePortfolioFromLedger,
 } from './services/portfolioReconciliation';
-import { calculateBuyImpact, calculateSellAccounting, calculateHoldingDays } from './services/portfolioAccounting';
 import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
 import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
@@ -110,6 +107,8 @@ export default function App() {
     deleteCashTransaction,
     reconcileLedger,
     importBackup,
+    importOcrBatch,
+    restoreLedgerSnapshot,
     updateTickers,
   } = usePortfolioState();
 
@@ -204,6 +203,7 @@ export default function App() {
       closedTrades: ClosedTrade[];
       transactions: TradeTransaction[];
       cashBalance: number;
+      capitalDeposits: number;
     };
     message: string;
   } | null>(null);
@@ -346,13 +346,18 @@ export default function App() {
   }, [closedTrades, positions, historicalDrawdown]);
 
   // Execute Undo Action
-  const executeUndo = () => {
+  const executeUndo = async () => {
     if (!undoState) return;
     const { previousState, message } = undoState;
-    setPositions(previousState.positions);
-    setClosedTrades(previousState.closedTrades);
-    setTransactions(previousState.transactions);
-    setCashBalance(previousState.cashBalance);
+    const result = await restoreLedgerSnapshot({
+      transactions: previousState.transactions,
+      capitalDeposits: previousState.capitalDeposits,
+      positions: previousState.positions,
+    });
+    if ('error' in result) {
+      showToast(`Undo was not saved: ${result.error.message}`, 'error', 6000);
+      return;
+    }
     setUndoState(null);
     showToast(`Restored state: ${message}`, 'success', 4000);
   };
@@ -582,7 +587,7 @@ export default function App() {
     if (!pos) return;
 
     setUndoState({
-      previousState: { positions, closedTrades, transactions, cashBalance },
+      previousState: { positions, closedTrades, transactions, cashBalance, capitalDeposits },
       message: `Deleted ${pos.ticker} position`,
     });
 
@@ -613,14 +618,14 @@ export default function App() {
 
   // Delete Transaction
   const handleDeleteTransaction = async (id: string): Promise<boolean> => {
-    const tx = transactions.find((t) => t.id === id);
+    const tx = transactions.find((transaction) => transaction.id === id);
     if (!tx) return false;
 
-    const previousState = { positions, closedTrades, transactions, cashBalance };
-    const updatedTxs = await executeDeleteTransaction(id);
+    const previousState = { positions, closedTrades, transactions, cashBalance, capitalDeposits };
+    const result = await executeDeleteTransaction(id);
 
-    if (!updatedTxs) {
-      showToast(`Could not delete ${tx.type} ${tx.ticker}: Supabase save failed. Nothing was changed.`, 'error');
+    if ('error' in result) {
+      showToast(`Could not delete ${tx.type} ${tx.ticker}: ${result.error.message} Nothing was changed.`, 'error', 6500);
       return false;
     }
 
@@ -628,26 +633,26 @@ export default function App() {
       previousState,
       message: `Deleted ${tx.type} ${tx.ticker} transaction`,
     });
-    showToast(`Deleted ${tx.type} ${tx.ticker} transaction and updated portfolio balances`, 'success');
+    showToast(`Deleted ${tx.type} ${tx.ticker} transaction and persisted reconciled balances`, 'success');
 
-    // Only mirror to Google Sheets after the authoritative Supabase delete succeeds.
     if (sheetsConfig?.spreadsheetId) {
+      const persistedTransactions = result.snapshot.transactions;
       getAccessToken()
         .then((token) => {
           syncTransactionsLedgerToSheet(
             sheetsConfig.spreadsheetId,
-            updatedTxs,
+            persistedTransactions,
             token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync:', err));
+          ).catch((err) => console.warn('Background sheets delete sync after persisted delete:', err));
         })
         .catch(() => {
           syncTransactionsLedgerToSheet(
             sheetsConfig.spreadsheetId,
-            updatedTxs,
+            persistedTransactions,
             undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync fallback:', err));
+          ).catch((err) => console.warn('Background sheets delete sync fallback after persisted delete:', err));
         });
     }
 
@@ -655,7 +660,7 @@ export default function App() {
   };
 
   // Edit Transaction
-  const handleEditTransaction = (updatedTx: TradeTransaction) => {
+  const handleEditTransaction = async (updatedTx: TradeTransaction): Promise<boolean> => {
     const valResult = validateTradeInput({
       ticker: updatedTx.ticker,
       shares: updatedTx.shares,
@@ -667,32 +672,38 @@ export default function App() {
 
     if (!valResult.valid) {
       showToast(`Edit Transaction Error: ${valResult.errors.join(', ')}`, 'error');
-      return;
+      return false;
     }
 
-    const updatedTxs = executeEditTransaction(updatedTx);
-    showToast(`Updated ${updatedTx.type} ${updatedTx.ticker} transaction record`, 'success');
+    const result = await executeEditTransaction(updatedTx);
+    if ('error' in result) {
+      showToast(`Transaction edit was not saved: ${result.error.message} Nothing was changed.`, 'error', 6500);
+      return false;
+    }
 
-    // Auto-sync updated transactions to Google Sheets
-    if (sheetsConfig?.spreadsheetId && updatedTxs) {
+    showToast(`Updated ${updatedTx.type} ${updatedTx.ticker} transaction and persisted reconciled balances`, 'success');
+
+    if (sheetsConfig?.spreadsheetId) {
+      const persistedTransactions = result.snapshot.transactions;
       getAccessToken()
         .then((token) => {
           syncTransactionsLedgerToSheet(
             sheetsConfig.spreadsheetId,
-            updatedTxs,
+            persistedTransactions,
             token || undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets edit sync:', err));
+          ).catch((err) => console.warn('Background sheets edit sync after persisted edit:', err));
         })
         .catch(() => {
           syncTransactionsLedgerToSheet(
             sheetsConfig.spreadsheetId,
-            updatedTxs,
+            persistedTransactions,
             undefined,
             sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets edit sync fallback:', err));
+          ).catch((err) => console.warn('Background sheets edit sync fallback after persisted edit:', err));
         });
     }
+    return true;
   };
 
   // Delete Closed Trade Cycle
@@ -701,7 +712,7 @@ export default function App() {
     if (!trade) return;
 
     setUndoState({
-      previousState: { positions, closedTrades, transactions, cashBalance },
+      previousState: { positions, closedTrades, transactions, cashBalance, capitalDeposits },
       message: `Deleted ${trade.ticker} closed trade cycle`,
     });
 
@@ -711,7 +722,7 @@ export default function App() {
   };
 
   // AI Screenshot Single Transaction
-  const handleAIScreenshotAddTransaction = (parsedTx: {
+  const handleAIScreenshotAddTransaction = async (parsedTx: {
     ticker: string;
     companyName: string;
     sector: Sector;
@@ -722,7 +733,7 @@ export default function App() {
     executedAt?: string;
     fees: number;
     notes?: string;
-  }) => {
+  }): Promise<boolean> => {
     const duplicate = findStrongDuplicateExecution(transactions, {
       type: parsedTx.type,
       ticker: parsedTx.ticker,
@@ -738,11 +749,11 @@ export default function App() {
         'error',
         5500,
       );
-      return;
+      return false;
     }
 
     if (parsedTx.type === 'BUY') {
-      handleAddPosition(
+      return handleAddPosition(
         {
           ticker: parsedTx.ticker,
           companyName: parsedTx.companyName,
@@ -756,207 +767,75 @@ export default function App() {
         },
         true
       );
-    } else {
-      const pos = positions.find((p) => p.ticker.toUpperCase() === parsedTx.ticker.toUpperCase());
-      if (pos) {
-        handleConfirmSell(
-          pos.id,
-          parsedTx.shares,
-          parsedTx.price,
-          parsedTx.date,
-          parsedTx.executedAt,
-          parsedTx.fees,
-          parsedTx.notes || 'Logged via Screenshot Scanner',
-          Math.max(0, pos.shares - parsedTx.shares)
-        );
-      } else {
-        showToast(
-          `Could not log SELL ${parsedTx.ticker.toUpperCase()}: no matching open position exists. Import the corresponding BUY first or use batch import.`,
-          'error',
-          6500,
-        );
-      }
     }
+
+    const pos = positions.find((position) =>
+      position.ticker.toUpperCase() === parsedTx.ticker.toUpperCase(),
+    );
+    if (!pos) {
+      showToast(
+        `Could not log SELL ${parsedTx.ticker.toUpperCase()}: no matching open position exists. Import the corresponding BUY first or use batch import.`,
+        'error',
+        6500,
+      );
+      return false;
+    }
+
+    return handleConfirmSell(
+      pos.id,
+      parsedTx.shares,
+      parsedTx.price,
+      parsedTx.date,
+      parsedTx.executedAt,
+      parsedTx.fees,
+      parsedTx.notes || 'Logged via Screenshot Scanner',
+      Math.max(0, pos.shares - parsedTx.shares)
+    );
   };
 
-  // AI Screenshot Batch Transactions
-  // Process the entire OCR batch as one working ledger. Exact execution timestamps
-  // are honored when present; only timestamp-missing same-day ties fall back to
-  // BUY-before-SELL ordering so dependent sells can still reconcile safely.
-  const handleAIScreenshotAddBatchTransactions = (
-    parsedTxs: Array<{
-      ticker: string;
-      companyName: string;
-      sector: Sector;
-      type: 'BUY' | 'SELL';
-      shares: number;
-      price: number;
-      date: string;
-      executedAt?: string;
-      fees: number;
-      notes?: string;
-    }>
-  ) => {
-    if (parsedTxs.length === 0) return;
+  // OCR batch is persisted as one canonical ledger mutation so valid dependent
+  // BUY/SELL executions cannot be half-applied locally.
+  const handleAIScreenshotAddBatchTransactions = async (parsedTxs: Array<{
+    ticker: string;
+    companyName: string;
+    sector: Sector;
+    type: 'BUY' | 'SELL';
+    shares: number;
+    price: number;
+    date: string;
+    executedAt?: string;
+    fees: number;
+    notes?: string;
+  }>): Promise<boolean> => {
+    if (parsedTxs.length === 0) return false;
 
-    const orderedTxs = parsedTxs
-      .map((tx, index) => ({ tx, index }))
-      .sort((a, b) => {
-        const aTime = new Date(a.tx.executedAt || a.tx.date).getTime();
-        const bTime = new Date(b.tx.executedAt || b.tx.date).getTime();
-        const dateDiff = aTime - bTime;
-        if (Number.isFinite(dateDiff) && dateDiff !== 0) return dateDiff;
-        const sameTicker = a.tx.ticker.trim().toUpperCase() === b.tx.ticker.trim().toUpperCase();
-        if (sameTicker && a.tx.type !== b.tx.type) {
-          return a.tx.type === 'BUY' ? -1 : 1;
-        }
-        return a.index - b.index;
-      })
-      .map(({ tx }) => tx);
-
-    let workingTransactions = [...transactions];
-    let workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
-    let processedCount = 0;
-    let skippedCount = 0;
-    let duplicateCount = 0;
-    const pending = [...orderedTxs];
-
-    // Keep retrying blocked SELLs after later BUYs have been applied. This makes
-    // the batch dependency-aware instead of treating upload order as execution order.
-    while (pending.length > 0) {
-      let progressed = false;
-
-      for (let i = 0; i < pending.length; i++) {
-        const parsedTx = pending[i];
-        const ticker = parsedTx.ticker.toUpperCase().trim();
-        const shares = Number(parsedTx.shares);
-        const price = Number(parsedTx.price);
-        const fees = Number(parsedTx.fees) || 0;
-
-        if (!ticker || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) {
-          pending.splice(i, 1);
-          i--;
-          skippedCount++;
-          continue;
-        }
-
-        const duplicate = findStrongDuplicateExecution(workingTransactions, {
-          type: parsedTx.type,
-          ticker,
-          shares,
-          price,
-          date: parsedTx.date,
-          executedAt: parsedTx.executedAt,
-          fees,
-        });
-        if (duplicate) {
-          pending.splice(i, 1);
-          i--;
-          duplicateCount++;
-          progressed = true;
-          continue;
-        }
-
-        const maxTradeId = workingTransactions.reduce((max, t) => {
-          const id = Number(t.tradeId);
-          return Number.isFinite(id) && id > max ? id : max;
-        }, 0);
-        const tradeId = maxTradeId > 0 ? maxTradeId + 1 : workingTransactions.length + 1;
-
-        if (parsedTx.type === 'SELL') {
-          const position = workingReport.reconciledPositions.find((p) => p.ticker.toUpperCase() === ticker);
-          if (!position || shares > position.shares) {
-            continue;
-          }
-
-          const accounting = calculateSellAccounting(
-            shares,
-            price,
-            fees,
-            position.shares,
-            position.shares * position.avgBuyPrice,
-            position.totalFees || 0
-          );
-          const tx: TradeTransaction = {
-            id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            tradeId,
-            type: 'SELL',
-            ticker,
-            companyName: position.companyName || parsedTx.companyName || ticker,
-            sector: position.sector || parsedTx.sector,
-            shares,
-            price,
-            date: parsedTx.date,
-            executedAt: parsedTx.executedAt,
-            fees,
-            totalAmount: accounting.netProceeds,
-            grossTradeValue: accounting.grossProceeds,
-            netCashImpact: accounting.netProceeds,
-            realizedPnlEgp: accounting.realizedPnlEgp,
-            realizedPnlPercent: accounting.realizedPnlPercent,
-            outcome: accounting.outcome,
-            holdingDays: calculateHoldingDays(position.buyDate, parsedTx.date),
-            notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-          };
-          workingTransactions = [tx, ...workingTransactions];
-        } else {
-          const impact = calculateBuyImpact(shares, price, fees);
-          const tx: TradeTransaction = {
-            id: `tx-ocr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            tradeId,
-            type: 'BUY',
-            ticker,
-            companyName: parsedTx.companyName || ticker,
-            sector: parsedTx.sector,
-            shares,
-            price,
-            date: parsedTx.date,
-            executedAt: parsedTx.executedAt,
-            fees,
-            totalAmount: impact.cashOutflow,
-            grossTradeValue: impact.grossCost,
-            netCashImpact: -impact.cashOutflow,
-            notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-          };
-          workingTransactions = [tx, ...workingTransactions];
-        }
-
-        pending.splice(i, 1);
-        i--;
-        progressed = true;
-        processedCount++;
-        workingReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
-      }
-
-      if (!progressed) {
-        skippedCount += pending.length;
-        break;
-      }
+    const result = await importOcrBatch(parsedTxs);
+    if ('error' in result) {
+      showToast(`OCR batch was not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
+      return false;
     }
 
-    const finalReport = reconcilePortfolioFromLedger(workingTransactions, tickers, capitalDeposits);
-    setTransactions(workingTransactions);
-    setPositions(finalReport.reconciledPositions);
-    setClosedTrades(finalReport.reconciledClosedTrades);
-    setCashBalance(finalReport.reconciledCashBalance);
-    void forceFullSyncToFirestore({
-      positions: finalReport.reconciledPositions,
-      closedTrades: finalReport.reconciledClosedTrades,
-      transactions: workingTransactions,
-      cashBalance: finalReport.reconciledCashBalance,
-      capitalDeposits,
-      tickers,
-    });
+    const summary = result.value;
+    if (!summary) {
+      showToast('OCR batch persisted but no import summary was returned.', 'error', 6000);
+      return true;
+    }
 
-    if (skippedCount > 0 || duplicateCount > 0) {
-      const details = [
-        duplicateCount > 0 ? `${duplicateCount} duplicate execution(s) blocked` : '',
-        skippedCount > 0 ? `${skippedCount} unreconciled trade(s) skipped` : '',
-      ].filter(Boolean).join('; ');
-      showToast(`Logged ${processedCount} OCR trades. ${details}.`, skippedCount > 0 ? 'error' : 'success', 6500);
+    const details = [
+      summary.duplicateCount > 0 ? `${summary.duplicateCount} duplicate execution(s) blocked` : '',
+      summary.skippedCount > 0 ? `${summary.skippedCount} unreconciled trade(s) skipped` : '',
+    ].filter(Boolean).join('; ');
+
+    if (details) {
+      showToast(
+        `Persisted ${summary.processedCount} OCR trade(s). ${details}.`,
+        summary.skippedCount > 0 ? 'error' : 'success',
+        6500,
+      );
     } else {
-      showToast(`Successfully processed all ${processedCount} OCR trades!`, 'success');
+      showToast(`Successfully persisted all ${summary.processedCount} OCR trades!`, 'success');
     }
+    return true;
   };
 
   // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)
@@ -993,12 +872,17 @@ export default function App() {
     setIsQuickCashModalOpen(true);
   }, []);
 
-  const handleOverviewReconcile = useCallback(() => {
-    const report = reconcileLedger();
+  const handleOverviewReconcile = useCallback(async (): Promise<boolean> => {
+    const result = await reconcileLedger();
+    if ('error' in result) {
+      showToast(`Ledger reconciliation was not saved: ${result.error.message}`, 'error', 6500);
+      return false;
+    }
     showToast(
-      `Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`,
+      `Reconciled and persisted ${result.snapshot.transactions.length} transactions: ${result.snapshot.positions.length} open positions, ${result.snapshot.closedTrades.length} closed cycles.`,
       'success',
     );
+    return true;
   }, [reconcileLedger, showToast]);
 
   return (
@@ -1097,10 +981,7 @@ export default function App() {
               </span>
             </div>
             <button
-              onClick={() => {
-                const report = reconcileLedger();
-                showToast(`Reconciled ${report.transactionsProcessed} transactions: ${report.reconciledPositions.length} open positions, ${report.reconciledClosedTrades.length} closed cycles.`, 'success');
-              }}
+              onClick={() => { void handleOverviewReconcile(); }}
               className="premium-action premium-action-primary px-3.5 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap"
             >
               ⚡ Reconcile Portfolio Now
@@ -1250,10 +1131,7 @@ export default function App() {
             onAddCashTransaction={addCashTransaction}
             onEditCashTransaction={editCashTransaction}
             onDeleteCashTransaction={deleteCashTransaction}
-            onReconcileLedger={() => {
-              const report = reconcileLedger();
-              showToast(`Reconciled ${report.transactionsProcessed} transactions: Cash adjusted to ${report.reconciledCashBalance.toLocaleString()} EGP.`, 'success');
-            }}
+            onReconcileLedger={handleOverviewReconcile}
           />
         )}
 
@@ -1299,12 +1177,21 @@ export default function App() {
           updateSheetsConfig(cfg);
           showToast(`Google Sheets connection saved (${cfg.autoSync !== false ? 'Auto Sync ON' : 'Auto Sync OFF'})!`);
         }}
-        onImportData={(importedPositions, importedClosedTrades, config, importedTransactions) => {
-          if (importedPositions?.length) setPositions(importedPositions);
-          if (importedClosedTrades?.length) setClosedTrades(importedClosedTrades);
-          if (importedTransactions?.length) setTransactions(importedTransactions);
+        onImportData={async (importedPositions, importedClosedTrades, config, importedTransactions) => {
+          const result = await importBackup({
+            positions: importedPositions,
+            closedTrades: importedClosedTrades,
+            transactions: importedTransactions || [],
+            capitalDeposits,
+            tickers,
+          });
+          if ('error' in result) {
+            showToast(`Google Sheets import was not saved: ${result.error.message}`, 'error', 7000);
+            return false;
+          }
           updateSheetsConfig(config);
-          showToast(`Imported records from Google Sheet "${config.sheetName || 'Transaction Logger'}"!`);
+          showToast(`Imported and persisted ${result.snapshot.transactions.length} ledger records from Google Sheet "${config.sheetName || 'Transaction Logger'}"!`);
+          return true;
         }}
         currentConfig={sheetsConfig || undefined}
         authUser={authUser}
@@ -1319,10 +1206,7 @@ export default function App() {
         closedTrades={closedTrades}
         transactions={transactions}
         tickers={tickers}
-        onReconcileFromLedger={() => {
-          reconcileLedger();
-          showToast('Audited and reconciled portfolio from transaction ledger', 'success');
-        }}
+        onReconcileFromLedger={handleOverviewReconcile}
       />
 
       <PythonSchemaSyncModal
@@ -1372,9 +1256,14 @@ export default function App() {
         isOpen={isQuickCashModalOpen}
         onClose={() => setIsQuickCashModalOpen(false)}
         currentCash={cashBalance}
-        onUpdateCash={(newCash) => {
-          updateCashBalance(newCash);
-          showToast(`Cash balance adjusted to ${newCash.toLocaleString()} EGP and saved.`, 'success');
+        onUpdateCash={async (newCash) => {
+          const saved = await updateCashBalance(newCash);
+          if (!saved) {
+            showToast('Cash balance adjustment was not saved. Nothing was changed.', 'error', 6000);
+            return false;
+          }
+          showToast(`Cash balance adjusted to ${newCash.toLocaleString()} EGP and persisted.`, 'success');
+          return true;
         }}
       />
 
@@ -1388,13 +1277,15 @@ export default function App() {
         capitalDeposits={capitalDeposits}
         tickers={tickers}
         onRestoreBackup={async (restored) => {
-          await importBackup(restored);
-          showToast('Portfolio successfully restored from backup file & synced to cloud!', 'success');
+          const result = await importBackup(restored);
+          if ('error' in result) {
+            showToast(`Portfolio restore was not saved: ${result.error.message}`, 'error', 7000);
+            return false;
+          }
+          showToast(`Portfolio ledger restored and persisted (${result.snapshot.transactions.length} transactions).`, 'success');
+          return true;
         }}
-        onReconcileLedger={() => {
-          reconcileLedger();
-          showToast('Portfolio reconciled against trade transactions ledger', 'success');
-        }}
+        onReconcileLedger={handleOverviewReconcile}
       />
 
       {/* Offline PWA Indicator */}

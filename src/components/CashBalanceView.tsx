@@ -34,7 +34,7 @@ import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliatio
 interface CashBalanceViewProps {
   cashBalance: number;
   totalPortfolioValue: number;
-  onUpdateCashBalance: (newBalance: number) => void;
+  onUpdateCashBalance: (newBalance: number) => Promise<boolean>;
   positions?: Position[];
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
@@ -42,7 +42,7 @@ interface CashBalanceViewProps {
   onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => Promise<boolean>;
   onEditCashTransaction: (tx: CashTransaction) => Promise<boolean>;
   onDeleteCashTransaction: (id: string) => Promise<boolean>;
-  onReconcileLedger?: () => void;
+  onReconcileLedger?: () => Promise<boolean>;
 }
 
 export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
@@ -531,11 +531,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               )}
               <button
                 onClick={() => {
-                  if (onReconcileLedger) {
-                    onReconcileLedger();
-                  } else {
-                    onUpdateCashBalance(auditedLiquidCash);
-                  }
+                  void saveCashChange(() =>
+                    onReconcileLedger
+                      ? onReconcileLedger()
+                      : onUpdateCashBalance(auditedLiquidCash)
+                  );
                   setFeedbackMessage({
                     text: `Cash balance reconciled to ledger-derived amount of ${formatEgp(auditedLiquidCash)} EGP.`,
                     type: 'success',

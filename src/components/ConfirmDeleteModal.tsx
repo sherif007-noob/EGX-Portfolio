@@ -6,7 +6,7 @@ import { AlertTriangle, Trash2, X, ShieldAlert } from 'lucide-react';
 interface ConfirmDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | boolean | Promise<void | boolean>;
   title: string;
   description: string;
   itemDetails?: {
@@ -26,7 +26,21 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   description,
   itemDetails,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const requestClose = () => {
+    if (isSubmitting) return;
+    runVisualTransition('modal-close', onClose);
+  };
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const result = await onConfirm();
+      if (result !== false) runVisualTransition('modal-close', onClose);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <PremiumModalMotion
@@ -102,20 +116,19 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
           <button
             onClick={requestClose}
-            className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
+            disabled={isSubmitting}
+            className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
 
           <button
-            onClick={() => {
-              onConfirm();
-              requestClose();
-            }}
-            className="premium-action premium-action-danger flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
+            onClick={handleConfirm}
+            disabled={isSubmitting}
+            className="premium-action premium-action-danger flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Confirm & Delete</span>
+            <span>{isSubmitting ? 'Deleting…' : 'Confirm & Delete'}</span>
           </button>
         </div>
     </PremiumModalMotion>

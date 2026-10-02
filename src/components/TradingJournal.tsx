@@ -44,7 +44,7 @@ interface TradingJournalProps {
   closedTrades: ClosedTrade[];
   positions: Position[];
   onDeleteTransaction: (id: string) => Promise<boolean>;
-  onEditTransaction?: (updatedTx: TradeTransaction) => void;
+  onEditTransaction?: (updatedTx: TradeTransaction) => Promise<boolean>;
   onDeleteTrade?: (id: string) => void;
   onDeletePosition?: (id: string) => void;
   onOpenScreenshotModal?: () => void;
@@ -104,6 +104,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const [editOutcome, setEditOutcome] = useState<'WIN' | 'LOSS' | 'BREAKEVEN'>('WIN');
   const [editRealizedPnlEgp, setEditRealizedPnlEgp] = useState<string>('');
   const [editFeedback, setEditFeedback] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const changeFilterMode = (mode: JournalFilterMode) => {
     if (mode === filterMode) return;
@@ -111,6 +112,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const requestCloseEdit = () => {
+    if (isSavingEdit) return;
     runVisualTransition('modal-close', () => setEditingTx(null));
   };
 
@@ -350,7 +352,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     setEditFeedback(null);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTx) return;
 
@@ -413,10 +415,22 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       outcome: editType === 'SELL' ? outcome : undefined,
     };
 
-    if (onEditTransaction) {
-      onEditTransaction(updatedTx);
+    if (!onEditTransaction) {
+      setEditFeedback('Transaction editing is unavailable.');
+      return;
     }
-    requestCloseEdit();
+
+    setIsSavingEdit(true);
+    try {
+      const saved = await onEditTransaction(updatedTx);
+      if (!saved) {
+        setEditFeedback('Transaction was not saved. Nothing was changed.');
+        return;
+      }
+      runVisualTransition('modal-close', () => setEditingTx(null));
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   return (
@@ -1025,11 +1039,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           if (!txToDelete) return;
           const ticker = txToDelete.ticker;
           const deleted = await onDeleteTransaction(txToDelete.id);
-          if (deleted) {
-            setDeletedIdToast(ticker);
-            setTimeout(() => setDeletedIdToast(null), 3000);
-            setTxToDelete(null);
-          }
+          if (!deleted) return false;
+          setDeletedIdToast(ticker);
+          setTimeout(() => setDeletedIdToast(null), 3000);
+          return true;
         }}
         title="Delete Transaction Record"
         description="Are you sure you want to permanently delete this trade record from your journal? This will update your position calculations and cash history."
@@ -1072,7 +1085,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 type="button"
                 aria-label="Close transaction editor"
                 onClick={requestCloseEdit}
-                className="premium-icon-action p-1.5 rounded-lg"
+                disabled={isSavingEdit}
+                className="premium-icon-action p-1.5 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X className="w-5 h-5" />
               </button>

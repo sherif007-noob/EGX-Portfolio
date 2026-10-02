@@ -45,8 +45,8 @@ interface PortfolioBackupModalProps {
     cashBalance: number;
     capitalDeposits?: number;
     tickers?: EGXTicker[];
-  }) => Promise<void> | void;
-  onReconcileLedger: () => void;
+  }) => Promise<boolean>;
+  onReconcileLedger: () => Promise<boolean>;
 }
 
 /**
@@ -130,7 +130,11 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   onRestoreBackup,
   onReconcileLedger,
 }) => {
-  const requestClose = () => runVisualTransition('modal-close', onClose);
+  const [isReconciling, setIsReconciling] = useState(false);
+  const requestClose = () => {
+    if (isRestoring || isReconciling) return;
+    runVisualTransition('modal-close', onClose);
+  };
   const [importPreview, setImportPreview] = useState<ParsedBackupData | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -272,7 +276,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
     setImportError(null);
 
     try {
-      await onRestoreBackup({
+      const restored = await onRestoreBackup({
         positions: importPreview.positions,
         closedTrades: importPreview.closedTrades,
         transactions: importPreview.transactions,
@@ -280,8 +284,9 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         capitalDeposits: importPreview.capitalDeposits,
         tickers: importPreview.tickers || tickers,
       });
+      if (!restored) throw new Error('Authoritative portfolio restore failed. Nothing was changed.');
 
-      setSuccessMsg('Portfolio state restored and synced to Supabase successfully!');
+      setSuccessMsg('Portfolio ledger restored and synced to Supabase successfully!');
       setImportPreview(null);
       setTimeout(() => {
         setIsRestoring(false);
@@ -290,6 +295,22 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
     } catch (err: any) {
       setIsRestoring(false);
       setImportError(err.message || 'Failed to apply backup to application state.');
+    }
+  };
+
+  const handleReconcile = async () => {
+    if (isReconciling) return;
+    setIsReconciling(true);
+    setImportError(null);
+    try {
+      const saved = await onReconcileLedger();
+      if (!saved) throw new Error('Ledger reconciliation was not persisted.');
+      setSuccessMsg('Ledger reconciliation persisted successfully.');
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Ledger reconciliation failed.');
+    } finally {
+      setIsReconciling(false);
     }
   };
 
@@ -340,10 +361,11 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
               <span className="font-bold text-white text-xs">Reconcile Ledger & Portfolio Math</span>
             </div>
             <button
-              onClick={onReconcileLedger}
-              className="premium-action premium-filter-active-cyan w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto"
+              onClick={handleReconcile}
+              disabled={isReconciling || isRestoring}
+              className="premium-action premium-filter-active-cyan w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Run Reconciliation
+              {isReconciling ? 'Reconciling…' : 'Run Reconciliation'}
             </button>
           </div>
           <p className="text-[11px] text-slate-400 leading-normal">

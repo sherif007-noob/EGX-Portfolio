@@ -49,7 +49,7 @@ interface GoogleSheetsModalProps {
     closedTrades: ClosedTrade[],
     config: GoogleSheetsConfig,
     transactions?: TradeTransaction[]
-  ) => void;
+  ) => Promise<boolean>;
   currentConfig?: GoogleSheetsConfig;
   authUser: User | null;
   onAuthSuccess: (user: User) => void;
@@ -58,7 +58,7 @@ interface GoogleSheetsModalProps {
   closedTrades?: ClosedTrade[];
   transactions?: TradeTransaction[];
   tickers?: EGXTicker[];
-  onReconcileFromLedger?: () => void;
+  onReconcileFromLedger?: () => Promise<boolean>;
 }
 
 export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
@@ -305,12 +305,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
         autoSync,
       };
 
-      onImportData(
+      const imported = await onImportData(
         result.positions || [],
         result.closedTrades || [],
         config,
         importedTxs
       );
+      if (!imported) throw new Error('Authoritative portfolio import failed. Nothing was changed.');
 
       setSuccessMsg(
         `Successfully imported ${importedTxs.length} transactions from "${result.sheetTitle}". Portfolio positions & metrics reconstructed!`

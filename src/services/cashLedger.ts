@@ -180,7 +180,20 @@ export function prepareCashLedgerChange(
 
 export function changeCashLedgerEntry(state: CashLedgerState, id: string, changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null) {
   const prepared = prepareCashLedgerChange(state, id, changes);
-  return rebuildAfterLedgerChange(state, prepared.transactions);
+  const report = reconcilePortfolioFromLedger(
+    prepared.transactions,
+    state.tickers,
+    prepared.capitalDeposits,
+    state.positions,
+  );
+  return {
+    transactions: prepared.transactions,
+    capitalDeposits: prepared.capitalDeposits,
+    tickers: state.tickers,
+    positions: report.reconciledPositions,
+    closedTrades: report.reconciledClosedTrades,
+    cashBalance: report.reconciledCashBalance,
+  };
 }
 
 /** Existing deposit/withdrawal history is a read-only projection of the ledger. */

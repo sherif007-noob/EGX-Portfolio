@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 has now migrated transaction, cash, OCR, restore/import and reconciliation workflows. Current validated runtime head: `d069f62d`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion. Current validated runtime head: `7a5d8bde`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -15,8 +15,9 @@ Current adoption sequence:
 1. **2.1 — boundary implemented — complete**
 2. **2.2 — BUY/SELL migration — complete**
 3. **2.3 — transaction/cash/OCR/import/reconciliation migration — complete**
-4. **2.4 — derived Position / Closed Cycle deletion ownership — next**
-5. later Stage 2 passes remove remaining accounting ambiguities
+4. **2.4 — derived Position / Closed Cycle deletion ownership — complete**
+5. **2.5 — hidden trade cash-mode removal — next**
+6. later Stage 2 passes remove remaining accounting ambiguities
 
 ---
 
@@ -609,16 +610,139 @@ Passed:
 
 **Rendered Visual Regression #36944695986** also passed on the same runtime head.
 
-### Remaining exception boundary
+### Stage 2.4 closure transition
 
-The ordinary source-ledger mutation paths are now unified.
+The ordinary source-ledger mutation paths were unified in Stage 2.3.
 
-Two derived-record operations remain deliberately outside this completion claim:
+Stage 2.4 then removed the final derived-record deletion exceptions:
 
 - direct Position deletion;
 - direct/local Closed Cycle deletion.
 
-These are not valid independent accounting records. Stage 2.4 removes their projection-as-source behavior.
+Positions and Closed Cycles are now navigation/projection surfaces for correction, not independent accounting records.
+
+---
+
+## Stage 2.4 — projection ownership and correction routing
+
+Stage 2.4 closes the mismatch between the ledger-authoritative accounting model and destructive actions exposed on derived records.
+
+### Position is projection-only
+
+The retired flow was:
+
+```text
+Delete Position
+  → infer "open BUY rows"
+  → delete inferred rows
+  → rebuild ledger
+```
+
+That inference used FIFO lot consumption even though canonical sell accounting uses weighted-average / proportional remaining cost.
+
+The helper `getOpenBuyTransactionIdsForTicker()` has been removed.
+
+The replacement is:
+
+```text
+Open Position
+  → Review source ledger
+  → scope Journal to active cycle executions
+  → explicitly edit/delete erroneous source transaction
+  → canonical executor persists
+  → reconciliation rebuilds Position
+```
+
+### Active-cycle ownership
+
+`getActivePositionLedgerTransactionIds()` tracks aggregate running shares.
+
+It does **not** assign economic ownership to FIFO lots.
+
+For:
+
+```text
+BUY 100 @ 10
+BUY 100 @ 20
+SELL 100
+```
+
+the current open cycle links all three executions.
+
+This matches the accounting model: the remaining position is the projection of the whole active weighted-average cycle.
+
+When running shares reach zero, that cycle ends. A later BUY starts a new correction scope.
+
+### Closed Cycle is projection-only
+
+Closed Cycle delete is also retired.
+
+The correction action navigates to its contributing source executions.
+
+Canonical source links:
+
+- `buyTransactionIds`;
+- `sellTransactionIds`
+
+are preferred.
+
+Legacy date/cycle matching remains only to render/navigate older records that lack those IDs; it is not allowed to delete accounting rows automatically.
+
+### Journal correction scope
+
+The Journal accepts a temporary `JournalLedgerFocus`.
+
+It can scope to:
+
+- active Position source IDs;
+- Closed Cycle source IDs.
+
+The scope resets Journal filters to chronological/all and explains that correction must happen at the source execution.
+
+Normal transaction edit/delete remains persist-confirmed through the Stage 2.3 executor.
+
+### Stage 2.4 regression coverage
+
+Added:
+
+- `src/services/ledgerProjectionOwnership.test.ts`;
+- `src/services/Stage24ProjectionOwnership.test.ts`.
+
+Coverage includes:
+
+- DCA + proportional partial sell;
+- full close + reopen cycle reset;
+- fully closed ticker has no active Position scope;
+- Closed Cycle source ID deduplication;
+- removal of FIFO ownership helper;
+- removal of hook/App derived-delete mutations;
+- replacement Position/Closed Cycle correction actions;
+- Journal source-ID scoping.
+
+Three older Phase 10 source tests initially failed because they explicitly required the retired delete controls. They were updated to protect the same compact/touch-safe geometry while asserting the new correction semantics.
+
+Exact-head validation:
+
+**Phase 10 Visual Closure #36957879472** on `7a5d8bde`
+
+Passed:
+
+- TypeScript;
+- **86 / 86 Vitest files, 484 / 484 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states.
+
+Intentional screenshot deltas:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- every other state: **0.000%**.
+
+**Rendered Visual Regression #36957879457** passed on the same head.
+
+**Intraday 1m Migration Smoke #36957765990** passed on the Stage 2.4 runtime commit `95c6b13a`.
 
 ---
 

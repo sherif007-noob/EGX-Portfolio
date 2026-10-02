@@ -156,6 +156,11 @@ Stage 2.3 adds:
 
 It also relies on the existing `cashLedger.test.ts` suite as a compatibility/invariant gate.
 
+Stage 2.4 adds:
+
+- `src/services/ledgerProjectionOwnership.test.ts`;
+- `src/services/Stage24ProjectionOwnership.test.ts`.
+
 The suite protects the canonical:
 
 ```text
@@ -194,7 +199,13 @@ Current coverage includes:
 - duplicate OCR execution blocking;
 - unreconcilable OCR SELL rejection;
 - persistence-aware Journal/OCR/Cash/Backup/Sheets UI contracts;
-- persisted Undo source contract.
+- persisted Undo source contract;
+- aggregate-share active-cycle source ownership instead of FIFO deletion ownership;
+- DCA + partial-sell correction scope;
+- full-close/reopen correction-scope reset;
+- Closed Cycle source ID ownership;
+- absence of Position/Closed Cycle direct accounting delete actions;
+- Journal correction scoping to source transaction IDs.
 
 Exact-head Stage 2.1 validation:
 
@@ -229,6 +240,22 @@ Exact-head Stage 2.1 validation:
 - Rendered Visual Regression **#36944695986**: passed.
 
 The first Stage 2.3 CI run exposed a real legacy-opening-capital regression in the cash compatibility wrapper. The failure was fixed; the exact-head run above includes the repaired behavior.
+
+### Exact-head Stage 2.4 validation
+
+- runtime/test head: `7a5d8bde`;
+- Phase 10 Visual Closure: **#36957879472**;
+- TypeScript: passed;
+- Vitest: **86 / 86 files, 484 / 484 tests**;
+- production Vite/PWA build: passed;
+- Worker dry-run: passed;
+- responsive geometry: **12 / 12 widths at 0px page overflow**;
+- rendered matrix: **16 / 16 states passed**;
+- intended visual delta: Positions desktop **0.021%**, Closed Cycles desktop **0.012%**, all others **0.000%**;
+- Rendered Visual Regression **#36957879457**: passed;
+- Intraday 1m Migration Smoke **#36957765990**: passed on runtime commit `95c6b13a`.
+
+The first full-suite run failed three historical Phase 10 source-string expectations that required destructive Position/Closed Cycle controls. Those contracts were updated to preserve the visual/action geometry while requiring the new ledger-correction semantics.
 
 When migrating an individual workflow, add tests for both:
 

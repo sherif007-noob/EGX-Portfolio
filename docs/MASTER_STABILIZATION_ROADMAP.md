@@ -475,7 +475,7 @@ CI also caught a real compatibility regression during the pass: legacy opening c
 
 ---
 
-## Pass 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle
+## Pass 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle — COMPLETE / CI GREEN
 
 Positions and Closed Cycles are projections, not independent accounting records.
 
@@ -515,6 +515,43 @@ Acceptance:
 - no derived Position action silently deletes source ledger history;
 - no derived Closed Cycle action hides/removes accounting history independently of the ledger;
 - DCA + partial-sell correction behavior is deterministic and regression-tested.
+
+### 2.4 implementation record
+
+Implemented in:
+
+- `src/services/ledgerProjectionOwnership.ts`;
+- Open Positions correction action;
+- Closed Cycles correction action;
+- scoped Trading Journal correction mode;
+- App navigation ownership cleanup;
+- removal of the FIFO deletion helper and hook mutation.
+
+Accepted behavior:
+
+- Position/Closed Cycle no longer expose independent accounting deletion;
+- Position correction scopes the **active aggregate-share cycle**, not FIFO lots;
+- DCA + partial sell includes every execution in the active cycle;
+- full close + reopen starts a fresh correction scope;
+- Closed Cycle correction prefers canonical stored transaction IDs;
+- legacy closed-cycle date/cycle matching is navigation fallback only;
+- source transaction edit/delete remains the only way to correct accounting history;
+- derived projections rebuild automatically after persisted ledger correction.
+
+Exact-head validation:
+
+- runtime/test head: `7a5d8bde`;
+- Phase 10 Visual Closure **#36957879472**;
+- TypeScript passed;
+- **86 / 86 test files, 484 / 484 tests**;
+- production build and Worker dry-run green;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states passed;
+- only intended visual changes: Positions desktop **0.021%**, Closed Cycles desktop **0.012%**;
+- Rendered Visual Regression **#36957879457** passed;
+- Intraday 1m Migration Smoke **#36957765990** passed on runtime commit `95c6b13a`.
+
+**Next: Pass 2.5 — remove hidden trade cash modes.**
 
 ---
 

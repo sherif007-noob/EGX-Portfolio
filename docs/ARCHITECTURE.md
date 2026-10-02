@@ -198,14 +198,28 @@ The executor is intentionally shared. A cash edit cannot race a BUY, an OCR batc
 
 Backup and Google Sheets imports do not trust imported positions/closed cycles/cash as independent accounting sources. Their transaction ledger is reconciled into one canonical snapshot before persistence.
 
-### Remaining derived-record ownership debt
+### Derived-record ownership — Stage 2.4 closed
 
-Two legacy actions still treat projections too independently:
+Position and Closed Cycle are now projection/navigation surfaces, not independent accounting records.
 
-- Position deletion infers source BUY rows and deletes them;
-- Closed Cycle deletion hides a derived projection locally.
+Their correction path is:
 
-These are isolated to Stage 2.4. Ordinary source-ledger edit/import/cash/trade mutations are already on the canonical boundary.
+```text
+derived Position / Closed Cycle
+  → resolve source execution IDs
+  → scoped Transaction Journal
+  → explicit source transaction edit/delete
+  → shared ledger mutation executor
+  → reconciliation rebuild
+```
+
+`ledgerProjectionOwnership.ts` owns active-position correction scoping.
+
+It tracks aggregate running shares and active-cycle boundaries. It does not allocate remaining ownership through FIFO lots.
+
+Closed Cycles prefer their persisted `buyTransactionIds` / `sellTransactionIds` source links.
+
+The old FIFO deletion helper, Position delete mutation and local Closed Cycle delete action have been removed.
 
 A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
 

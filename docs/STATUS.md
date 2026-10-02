@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-02  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `d069f62d` — Stage 2.3 unified persisted ledger workflows  
-**Current full exact-head verification:** Phase 10 Visual Closure #36944695939 on `d069f62d`  
+**Current validated runtime head:** `7a5d8bde` — Stage 2.4 projection ownership / ledger-correction workflow  
+**Current full exact-head verification:** Phase 10 Visual Closure #36957879472 on `7a5d8bde`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -46,10 +46,11 @@ Completed:
 - **Stage 2.1 — Canonical financial mutation executor**
 - **Stage 2.2 — BUY and SELL persist-confirmed migration**
 - **Stage 2.3 — Transaction/cash/OCR/import/reconciliation workflow migration**
+- **Stage 2.4 — Derived Position / Closed Cycle projection ownership**
 
 Next:
 
-1. **Stage 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle projections**
+1. **Stage 2.5 — Remove hidden trade cash modes**
 
 ---
 
@@ -358,6 +359,101 @@ They move together into **Stage 2.4**.
 
 ---
 
+### Stage 2.4 projection ownership and ledger correction
+
+Runtime head `7a5d8bde` removes the remaining user-facing projection-as-source deletion paths.
+
+Positions and Closed Cycles are now treated as what the accounting model says they are:
+
+> deterministic projections of the source transaction ledger.
+
+#### Open Position correction
+
+The old **Delete Position Record** action and its confirmation modal are gone.
+
+The replacement action opens the Transaction Ledger in a scoped correction mode.
+
+For an active position, `ledgerProjectionOwnership.ts` finds the current active trade cycle by **aggregate running shares**, not FIFO lot ownership.
+
+Example:
+
+```text
+BUY 100 @ 10
+BUY 100 @ 20
+SELL 100
+```
+
+The open 100-share position's correction scope contains **all three source executions**.
+
+It does not treat the second BUY as the sole remaining owner.
+
+After a full close and later reopen, the scope resets to only the new active cycle.
+
+#### Closed Cycle correction
+
+Closed Cycle cards no longer expose an independent delete action.
+
+Their replacement action opens the Journal scoped to the cycle's source executions.
+
+Canonical `buyTransactionIds` / `sellTransactionIds` are preferred when available. The existing bounded legacy matching path remains only for old data that lacks those links.
+
+Editing or deleting a source execution through the Journal then rebuilds the derived Closed Cycle through the normal canonical executor/reconciliation path.
+
+#### Journal correction mode
+
+The Transaction Ledger now accepts a temporary correction scope:
+
+- Position;
+- Closed Cycle.
+
+It:
+
+- filters to the linked source execution IDs;
+- switches to chronological ordering;
+- explains that the derived record cannot be deleted independently;
+- keeps normal persisted transaction edit/delete controls;
+- can return to the full ledger with **Show Full Ledger**.
+
+Leaving the Journal clears the temporary correction scope.
+
+#### Removed accounting debt
+
+Removed:
+
+- `getOpenBuyTransactionIdsForTicker()` FIFO ownership helper;
+- `usePortfolioState.deletePosition()`;
+- App-level `handleDeletePosition()`;
+- App-level local-only `handleDeleteTrade()`;
+- Position delete confirmation UI;
+- Closed Cycle delete UI;
+- obsolete derived-delete callback props in Trading Journal.
+
+#### Validation
+
+Exact-head **Phase 10 Visual Closure #36957879472** passed on `7a5d8bde`:
+
+- TypeScript: passed;
+- **86 / 86 Vitest files, 484 / 484 tests**;
+- production Vite/PWA build: passed;
+- Cloudflare Worker dry-run: passed;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states passed.
+
+Intentional visual deltas were limited to the two affected desktop actions:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**.
+
+Every other golden state remained **0.000%** different.
+
+Separate **Rendered Visual Regression #36957879457** passed on the same exact head.
+
+Because the runtime accounting change itself landed in `95c6b13a`, **Intraday 1m Migration Smoke #36957765990** also passed on that runtime commit.
+
+The first Stage 2.4 full-suite run correctly failed only because three Phase 10 source tests still required the retired destructive buttons. Those tests were updated to preserve the accepted compact action geometry while asserting ledger-correction semantics; no accounting behavior was reverted.
+
+---
+
 ## Highest-priority post-visual work
 
 ### P0 — financial mutation integrity
@@ -550,6 +646,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle projections.**
+**Stage 2.5 — Remove hidden trade cash modes.**
 
-The next pass removes the remaining projection-as-source behavior, including the FIFO-vs-proportional Position deletion mismatch and local-only Closed Cycle deletion.
+The next pass removes the remaining `deductFromCash` / `addToCash` UI/API compatibility flags so every real BUY/SELL always records its actual broker cash effect without a hidden bypass.

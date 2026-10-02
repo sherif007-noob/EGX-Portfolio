@@ -225,7 +225,29 @@ The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
 
-As of Stage 2.3, BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation and portfolio restore/import follow this ordering. Direct deletion of derived Position / Closed Cycle records remains a Stage 2.4 ownership cleanup.
+As of Stage 2.4, BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation and portfolio restore/import follow this ordering, and derived Position / Closed Cycle records no longer expose independent accounting deletion.
+
+### Derived Position / Closed Cycle ownership
+
+`positions` and `closed_trades` are persisted projections for fast read/display and metadata continuity.
+
+They are not independent source records that may be deleted to change accounting history.
+
+Stage 2.4 enforces:
+
+```text
+financial correction
+  = edit/delete the source transaction ledger row
+  ≠ delete a Position or Closed Cycle projection
+```
+
+For open positions, correction scope is defined by the current active aggregate-share cycle.
+
+This intentionally avoids FIFO ownership inference.
+
+For closed cycles, persisted `buyTransactionIds` and `sellTransactionIds` are the canonical source links.
+
+Legacy cycle/date matching may be used to navigate old data that lacks source IDs, but it must never become automatic accounting deletion logic.
 
 ### Transaction edit source fields
 

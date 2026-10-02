@@ -1120,9 +1120,14 @@ export default function App() {
           <CashBalanceView
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
-            onUpdateCashBalance={(newBal) => {
-              updateCashBalance(newBal);
-              showToast(`Cash balance updated to ${newBal.toLocaleString()} EGP and synced.`, 'success');
+            onUpdateCashBalance={async (newBal) => {
+              const saved = await updateCashBalance(newBal);
+              if (!saved) {
+                showToast('Cash balance update was not saved. Nothing was changed.', 'error', 6000);
+                return false;
+              }
+              showToast(`Cash balance updated to ${newBal.toLocaleString()} EGP and persisted.`, 'success');
+              return true;
             }}
             positions={positions}
             closedTrades={closedTrades}

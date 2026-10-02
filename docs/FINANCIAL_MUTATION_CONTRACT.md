@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 has now migrated BUY/SELL onto it. Current validated runtime head: `d012aeff`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 has now migrated transaction, cash, OCR, restore/import and reconciliation workflows. Current validated runtime head: `d069f62d`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -14,8 +14,9 @@ Current adoption sequence:
 
 1. **2.1 — boundary implemented — complete**
 2. **2.2 — BUY/SELL migration — complete**
-3. **2.3 — transaction/cash/OCR/import workflow migration — next**
-4. later Stage 2 passes remove remaining accounting ambiguities
+3. **2.3 — transaction/cash/OCR/import/reconciliation migration — complete**
+4. **2.4 — derived Position / Closed Cycle deletion ownership — next**
+5. later Stage 2 passes remove remaining accounting ambiguities
 
 ---
 
@@ -448,6 +449,176 @@ Passed:
 Independent market-data validation:
 
 **Intraday 1m Migration Smoke #36941746472 — PASSED** on the same runtime head.
+
+---
+
+## Stage 2.3 — source-ledger workflow adoption
+
+Stage 2.3 extends the executor beyond BUY/SELL.
+
+Preparation ownership is split into:
+
+- `ledgerWorkflowMutations.ts` for edit/delete, cash, reconciliation and restore/import;
+- `ocrLedgerMutations.ts` for dependency-aware batch execution import;
+- `cashLedger.ts` pure preparation helpers for cash rows and contributed-capital changes.
+
+All of these are invoked through the same executor instance held by `usePortfolioState`.
+
+### Transaction edit
+
+A transaction edit is source-ledger correction, not an edit of derived accounting snapshots.
+
+The preparation step recomputes canonical financial fields.
+
+BUY source fields:
+
+```text
+grossTradeValue = shares × price
+totalAmount     = grossTradeValue + fees
+netCashImpact   = -totalAmount
+```
+
+SELL source fields:
+
+```text
+grossTradeValue = shares × price
+totalAmount     = max(0, grossTradeValue - fees)
+netCashImpact   = totalAmount
+```
+
+Stored/editable SELL:
+
+- realized P&L;
+- realized P&L percent;
+- outcome;
+- holding days
+
+are cleared as source facts and rebuilt by ledger reconciliation.
+
+This prevents an edited share/price/fee row from retaining stale cash/P&L snapshots.
+
+### Transaction delete and persisted Undo
+
+General transaction deletion now:
+
+1. prepares the ledger without the row;
+2. recalculates contributed capital where required;
+3. persists the canonical snapshot;
+4. applies local state;
+5. only then exposes success / Sheets mirror.
+
+The Undo record stores the previous source ledger plus capital and position metadata seed.
+
+Undo itself is another executor mutation. It no longer restores React financial state without restoring Supabase.
+
+### Cash events
+
+Deposit, withdrawal, dividend, cash adjustment, cash-row edit and cash-row deletion use the same global executor.
+
+The old cash-specific in-flight lock is removed.
+
+Cash preparation is pure:
+
+- candidate transactions;
+- candidate contributed capital;
+- optional source cash transaction result.
+
+The executor remains responsible for reconciliation, persistence and apply.
+
+### OCR
+
+Single OCR execution delegates to the canonical Stage 2.2 BUY/SELL handlers.
+
+A multi-row OCR batch is prepared as **one candidate ledger**.
+
+Preparation:
+
+- orders executions by explicit execution time;
+- uses BUY-before-SELL only for timestamp ties on the same ticker;
+- blocks strong duplicate executions;
+- applies accepted BUY rows to the working ledger;
+- allows later dependent SELLs to reconcile against those BUYs;
+- skips unreconcilable SELLs rather than creating orphan local rows.
+
+The resulting candidate ledger is persisted once.
+
+### Backup and Google Sheets import
+
+Restore/import is ledger-authoritative.
+
+Required source:
+
+`transactions`
+
+Imported derived values are not independently authoritative:
+
+- positions may seed stable position metadata/IDs;
+- closed trades are rebuilt;
+- cash is rebuilt;
+- realized P&L is rebuilt.
+
+A backup with meaningful financial projections but no transaction ledger is rejected.
+
+This avoids replacing ledger accounting with a stale exported projection.
+
+### Reconciliation
+
+Manual reconciliation itself now runs through the executor.
+
+Therefore “Reconcile” success means the canonical rebuilt snapshot has been persisted, not merely recomputed in React.
+
+### Persistence-aware UI
+
+Stage 2.3 extends the no-premature-success contract to:
+
+- transaction edit;
+- transaction delete confirmation;
+- OCR import;
+- Quick Cash;
+- cash reconciliation;
+- backup restore;
+- backup reconciliation;
+- Google Sheets import.
+
+A failed authoritative write leaves the workflow open where appropriate and does not report financial success.
+
+### Stage 2.3 regression coverage
+
+Added:
+
+- `src/services/ledgerWorkflowMutations.test.ts`;
+- `src/services/ocrLedgerMutations.test.ts`;
+- `src/services/Stage23WorkflowMigration.test.ts`.
+
+The existing `cashLedger.test.ts` suite also remains authoritative.
+
+During CI it caught a real migration regression: a deleted legacy synthetic opening-capital row was correctly prepared with zero contributed capital, but the compatibility wrapper initially reintroduced the old fallback capital. The wrapper was corrected to reconcile using the prepared capital value.
+
+Exact-head validation:
+
+**Phase 10 Visual Closure #36944695939** on `d069f62d`
+
+Passed:
+
+- TypeScript;
+- **84 / 84 Vitest files, 475 / 475 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometry checks at 0px page overflow;
+- 16 / 16 frozen golden screenshots at 0.000% diff.
+
+**Rendered Visual Regression #36944695986** also passed on the same runtime head.
+
+### Remaining exception boundary
+
+The ordinary source-ledger mutation paths are now unified.
+
+Two derived-record operations remain deliberately outside this completion claim:
+
+- direct Position deletion;
+- direct/local Closed Cycle deletion.
+
+These are not valid independent accounting records. Stage 2.4 removes their projection-as-source behavior.
 
 ---
 

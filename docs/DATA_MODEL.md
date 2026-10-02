@@ -225,7 +225,39 @@ The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
 
-As of Stage 2.2, normal BUY and SELL workflows follow this ordering. Remaining financial workflows migrate in Stage 2.3.
+As of Stage 2.3, BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation and portfolio restore/import follow this ordering. Direct deletion of derived Position / Closed Cycle records remains a Stage 2.4 ownership cleanup.
+
+### Transaction edit source fields
+
+When a BUY/SELL transaction is corrected, cached financial fields are not trusted.
+
+The corrected row recomputes gross/total/net cash fields from shares, price and fees.
+
+SELL realized P&L, realized percent, outcome and holding days are treated as projections of the surrounding ledger and are rebuilt by reconciliation.
+
+### Restore/import authority
+
+Backup and Google Sheets restore paths require the transaction ledger as the financial source of truth.
+
+Imported:
+
+- `positions`;
+- `closedTrades`;
+- `cashBalance`
+
+cannot independently replace accounting state.
+
+Position rows may be used as reconciliation metadata/identity seeds, but canonical shares/cost/cash/P&L are rebuilt from transactions.
+
+A projection-only backup with meaningful financial values but no transaction ledger is rejected.
+
+### Contributed-capital edits
+
+Deleting or changing a deposit/withdrawal can change contributed capital.
+
+Stage 2.3 derives candidate contributed capital from the candidate cash-flow ledger before reconciliation.
+
+In particular, deleting the final legacy opening-capital materialization must not cause the fallback opening capital to be silently re-seeded.
 
 ### Trade cash effect during Stage 2.2
 

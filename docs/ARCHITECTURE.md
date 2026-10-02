@@ -152,7 +152,7 @@ The mutation boundary owns ordering and structured failures.
 
 The database RPC already provides the atomic accounting snapshot write.
 
-Stage 2.1 defined this architecture. Stage 2.2 now routes BUY/SELL through it. Transaction edit/delete, cash, OCR and backup/import workflows remain for Stage 2.3.
+Stage 2.1 defined this architecture. Stage 2.2 routes BUY/SELL through it. Stage 2.3 now routes transaction edit/delete, cash, OCR, reconciliation and restore/import workflows through the same executor instance.
 
 ### Current BUY/SELL path
 
@@ -173,6 +173,39 @@ Add Trade / Sell modal
 The App and modals therefore do not infer successful money/share state from button submission.
 
 Position thesis metadata has separate ownership from accounting projections: position/BUY-authored target, stop and notes take precedence over ticker-directory defaults, while shares/cost/cash/P&L remain ledger-derived.
+
+### Current broader ledger-workflow path
+
+```text
+Journal / Cash / OCR / Backup / Sheets / Reconcile
+  → async workflow handler
+  → workflow-specific pure prepare function
+  → shared ledgerMutationService executor
+  → portfolioReconciliation
+  → atomic Supabase accounting snapshot RPC
+  → apply canonical React state
+  → success UI / optional integration mirror
+```
+
+Key preparation modules:
+
+- `tradeLedgerMutations.ts` — BUY/SELL;
+- `ledgerWorkflowMutations.ts` — transaction correction, cash, reconciliation, restore/import;
+- `ocrLedgerMutations.ts` — dependency-aware batch import;
+- `cashLedger.ts` — cash-ledger construction/capital helpers.
+
+The executor is intentionally shared. A cash edit cannot race a BUY, an OCR batch cannot race a transaction delete, and restore cannot race a SELL through separate workflow-specific locks.
+
+Backup and Google Sheets imports do not trust imported positions/closed cycles/cash as independent accounting sources. Their transaction ledger is reconciled into one canonical snapshot before persistence.
+
+### Remaining derived-record ownership debt
+
+Two legacy actions still treat projections too independently:
+
+- Position deletion infers source BUY rows and deletes them;
+- Closed Cycle deletion hides a derived projection locally.
+
+These are isolated to Stage 2.4. Ordinary source-ledger edit/import/cash/trade mutations are already on the canonical boundary.
 
 A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
 

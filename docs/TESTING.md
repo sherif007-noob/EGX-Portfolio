@@ -148,6 +148,14 @@ Stage 2.2 adds:
 - `src/services/tradeLedgerMutations.test.ts`;
 - `src/services/Stage22PersistedTradeMutations.test.ts`.
 
+Stage 2.3 adds:
+
+- `src/services/ledgerWorkflowMutations.test.ts`;
+- `src/services/ocrLedgerMutations.test.ts`;
+- `src/services/Stage23WorkflowMigration.test.ts`.
+
+It also relies on the existing `cashLedger.test.ts` suite as a compatibility/invariant gate.
+
 The suite protects the canonical:
 
 ```text
@@ -177,7 +185,16 @@ Current coverage includes:
 - in-flight modal submission locking;
 - Sheets-after-persistence source contract;
 - target/stop/notes metadata ownership through canonical reconciliation;
-- explicit rejection of legacy hidden trade cash bypasses.
+- explicit rejection of legacy hidden trade cash bypasses;
+- transaction-edit cash-field canonicalization;
+- cash-flow capital recalculation on general transaction deletion;
+- cash add/edit/delete candidate preparation;
+- restore/import ledger-authority rejection rules;
+- dependency-aware OCR batch construction;
+- duplicate OCR execution blocking;
+- unreconcilable OCR SELL rejection;
+- persistence-aware Journal/OCR/Cash/Backup/Sheets UI contracts;
+- persisted Undo source contract.
 
 Exact-head Stage 2.1 validation:
 
@@ -199,6 +216,19 @@ Exact-head Stage 2.1 validation:
 - Worker dry-run: passed;
 - frozen visual regression: **12 / 12 geometries at 0px overflow** and **16 / 16 screenshots at 0.000% diff**;
 - Intraday 1m Migration Smoke **#36941746472**: passed, including live ACTF/NAPR 1m rebuild and session-relevant universe sync.
+
+### Exact-head Stage 2.3 validation
+
+- runtime: `d069f62d`;
+- Phase 10 Visual Closure: **#36944695939**;
+- TypeScript: passed;
+- Vitest: **84 / 84 files, 475 / 475 tests**;
+- production Vite/PWA build: passed;
+- Worker dry-run: passed;
+- frozen visual regression: **12 / 12 geometries at 0px overflow** and **16 / 16 screenshots at 0.000% diff**;
+- Rendered Visual Regression **#36944695986**: passed.
+
+The first Stage 2.3 CI run exposed a real legacy-opening-capital regression in the cash compatibility wrapper. The failure was fixed; the exact-head run above includes the repaired behavior.
 
 When migrating an individual workflow, add tests for both:
 

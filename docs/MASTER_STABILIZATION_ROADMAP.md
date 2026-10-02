@@ -413,11 +413,11 @@ Exact-head validation:
 - 16 / 16 golden screenshots at 0.000% diff;
 - Intraday 1m Migration Smoke **#36941746472** green on the same runtime head.
 
-**Next: Pass 2.3 — transaction edit/delete, cash, OCR and backup/import migration.**
+**Historical transition:** Pass 2.3 followed and is now complete.
 
 ---
 
-## Pass 2.3 — Convert transaction edit/delete and cash workflows — NEXT
+## Pass 2.3 — Convert transaction edit/delete and cash workflows — COMPLETE / CI GREEN
 
 Transaction deletion already follows much of the preferred persist-first shape.
 
@@ -433,13 +433,51 @@ Bring all of these onto the same executor:
 - OCR batch;
 - backup restore/reconciliation.
 
-No mixed optimistic/persist-first financial model remains.
+No mixed optimistic/persist-first financial model remains **inside these source-ledger workflows**.
+
+### 2.3 implementation record
+
+Implemented through:
+
+- `src/services/ledgerWorkflowMutations.ts`;
+- `src/services/ocrLedgerMutations.ts`;
+- pure cash-ledger preparation helpers;
+- one shared executor helper in `usePortfolioState.ts`;
+- persistence-aware Journal/OCR/Cash/Backup/Sheets UI contracts.
+
+Accepted behavior:
+
+- transaction edit/delete is persist-before-apply;
+- edited BUY/SELL source cash fields are recomputed instead of retaining stale values;
+- derived SELL P&L/outcome/holding data is rebuilt by reconciliation;
+- cash add/edit/delete/dividend/adjustment shares the global mutation gate;
+- OCR single uses canonical BUY/SELL and OCR batch persists as one candidate snapshot;
+- backup and Sheets imports are ledger-authoritative;
+- projection-only financial restores without a ledger are rejected;
+- reconciliation itself persists its canonical result before success UI;
+- transaction Undo persists the prior source ledger rather than reverting React state only;
+- async destructive/edit/import modals do not claim success before persistence.
+
+Exact-head validation:
+
+- runtime: `d069f62d`;
+- Phase 10 Visual Closure **#36944695939**;
+- TypeScript passed;
+- **84 / 84 test files, 475 / 475 tests**;
+- production build and Worker dry-run green;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 golden screenshots at 0.000% diff;
+- Rendered Visual Regression **#36944695986** passed on the same runtime head.
+
+CI also caught a real compatibility regression during the pass: legacy opening capital could be re-seeded after deleting it. The wrapper now honors the prepared capital value and the original cash-ledger regression test is green again.
+
+**Next: Pass 2.4 — derived Position / Closed Cycle deletion ownership.**
 
 ---
 
-## Pass 2.4 — Remove direct accounting deletion from Position
+## Pass 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle
 
-A Position is a projection, not an independent financial record.
+Positions and Closed Cycles are projections, not independent accounting records.
 
 Replace **Delete Position Record** with a correction-oriented workflow:
 
@@ -470,9 +508,12 @@ FIFO deletion logic treats the first BUY as fully consumed and the second as ope
 
 The two models cannot both define accounting history.
 
+Also remove independent/local-only deletion of a derived Closed Cycle. A closed cycle may only change when its contributing ledger executions change.
+
 Acceptance:
 
 - no derived Position action silently deletes source ledger history;
+- no derived Closed Cycle action hides/removes accounting history independently of the ledger;
 - DCA + partial-sell correction behavior is deterministic and regression-tested.
 
 ---

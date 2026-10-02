@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-02  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `d012aeff` — Stage 2.2 persist-confirmed BUY/SELL  
-**Current full exact-head verification:** Phase 10 Visual Closure #36941746467 on `d012aeff`  
+**Current validated runtime head:** `d069f62d` — Stage 2.3 unified persisted ledger workflows  
+**Current full exact-head verification:** Phase 10 Visual Closure #36944695939 on `d069f62d`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -45,10 +45,11 @@ Completed:
 
 - **Stage 2.1 — Canonical financial mutation executor**
 - **Stage 2.2 — BUY and SELL persist-confirmed migration**
+- **Stage 2.3 — Transaction/cash/OCR/import/reconciliation workflow migration**
 
 Next:
 
-1. **Stage 2.3 — Convert transaction edit/delete, cash, OCR, and backup/import workflows**
+1. **Stage 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle projections**
 
 ---
 
@@ -237,6 +238,123 @@ Independent **Intraday 1m Migration Smoke #36941746472** also passed on the same
 - current session-relevant portfolio-universe sync.
 
 No market-data or visual regression was introduced by the financial mutation migration.
+
+---
+
+### Stage 2.3 unified persisted ledger workflows
+
+Runtime head `d069f62d` removes the remaining in-scope mixed optimistic/persist-first ledger workflows.
+
+All of the following now execute through the **same** `ledgerMutationService` instance used by BUY/SELL:
+
+- transaction edit;
+- transaction delete;
+- cash deposit;
+- cash withdrawal;
+- dividend;
+- cash adjustment;
+- cash-ledger edit/delete;
+- manual ledger reconciliation;
+- OCR single trade through the Stage 2.2 BUY/SELL path;
+- OCR batch as one candidate-ledger mutation;
+- JSON backup restore;
+- Google Sheets ledger import;
+- persisted Undo of transaction changes.
+
+### Transaction edit integrity
+
+Editing a trade now rebuilds source financial fields from shares/price/fees instead of retaining stale cached values.
+
+For BUY:
+
+- gross value;
+- total outlay;
+- negative net cash impact
+
+are recomputed.
+
+For SELL:
+
+- gross proceeds;
+- net proceeds
+
+are recomputed, while editable/stored `realizedPnlEgp`, `realizedPnlPercent`, `outcome` and `holdingDays` are cleared as source facts and re-derived by reconciliation.
+
+### OCR batch integrity
+
+OCR batch import no longer mutates App financial state row-by-row.
+
+The complete candidate batch is prepared first, including:
+
+- duplicate execution blocking;
+- dependency-aware BUY-before-SELL handling;
+- proportional SELL accounting;
+- unreconcilable SELL skipping.
+
+One canonical snapshot is then persisted. A failed write leaves the previous financial state untouched.
+
+### Restore/import integrity
+
+Backup and Google Sheets imports now treat the transaction ledger as authority.
+
+Imported:
+
+- positions;
+- closed trades;
+- cash balance
+
+are **not** independent accounting sources.
+
+Positions may seed stable IDs / portfolio metadata, but shares, cost, cash, realized P&L and closed cycles are rebuilt from the imported ledger.
+
+Projection-only backups containing financial state but no transaction ledger are rejected rather than allowed to overwrite ledger-authoritative accounting.
+
+### Cash workflow consolidation
+
+The old cash-specific in-flight/write path is gone.
+
+Cash add/edit/delete/adjustment now uses the global executor lock and the same persistence ordering as trades.
+
+The migration exposed and fixed one regression during CI: deleting legacy synthetic opening capital could be accidentally re-seeded by a compatibility wrapper. The corrected wrapper reconciles using the **prepared capital value**, preserving a real deletion.
+
+### Workflow UI behavior
+
+Persistence-aware UI now includes:
+
+- transaction editor stays open while save is unresolved and on failure;
+- async transaction delete confirmation stays open if deletion fails;
+- OCR scanner locks while saving;
+- Quick Cash closes only after persistence;
+- Backup restore/reconciliation waits for persistence;
+- Google Sheets import reports success only after the authoritative portfolio snapshot succeeds.
+
+### Validation
+
+Exact-head **Phase 10 Visual Closure #36944695939** passed on `d069f62d`:
+
+- TypeScript: passed;
+- **84 / 84 Vitest files, 475 / 475 tests**;
+- production Vite/PWA build: passed;
+- Cloudflare Worker `wrangler deploy --dry-run`: passed;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 frozen golden screenshots at 0.000% diff.
+
+Separate **Rendered Visual Regression #36944695986** also passed on the same runtime head.
+
+The Stage 2.3 changes do not touch the market-data ingestion implementation.
+
+### Remaining financial mutation exceptions
+
+Stage 2.3 intentionally does **not** normalize derived-record deletion.
+
+Current legacy exceptions are now isolated for the next pass:
+
+- Position deletion still infers/deletes contributing BUY rows through `getOpenBuyTransactionIdsForTicker()`;
+- Closed-cycle deletion can still hide a derived closed-trade projection locally.
+
+Those are projection-ownership problems, not ordinary ledger edit/import workflows.
+
+They move together into **Stage 2.4**.
 
 ---
 
@@ -432,6 +550,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.3 — Convert transaction edit/delete, cash workflows, OCR, and backup/import.**
+**Stage 2.4 — Remove direct accounting deletion from derived Position / Closed Cycle projections.**
 
-The goal is to remove the remaining mixed mutation model so every financial ledger write uses the same persist-confirmed executor semantics.
+The next pass removes the remaining projection-as-source behavior, including the FIFO-vs-proportional Position deletion mismatch and local-only Closed Cycle deletion.

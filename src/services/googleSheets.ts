@@ -1,6 +1,7 @@
 import { Position, ClosedTrade, Sector, TradeTransaction, EGXTicker } from '../types';
 import { EGX_STOCK_DICTIONARY, INITIAL_EGX_TICKERS } from '../data/egxTickers';
 import { reconcilePortfolioFromLedger, sortTransactions } from './portfolioReconciliation';
+import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
 
 export const TRANSACTION_LOGGER_HEADERS = [
   'Trade ID',
@@ -13,6 +14,8 @@ export const TRANSACTION_LOGGER_HEADERS = [
   'Gross Trade Value',
   'Brokerage Fee',
   'Net Cash Impact',
+  'Cash Flow Type',
+  'Cash Flow Amount',
   'Strategy / Notes',
   'Running Shares',
   'Trade Cycle',
@@ -72,6 +75,8 @@ export function findColIndexBySynonyms(headers: string[], standardHeaderName: st
     'Gross Trade Value': ['gross trade value', 'gross value', 'gross', 'gross amount', 'قيمة التداول', 'إجمالي القيمة'],
     'Brokerage Fee': ['brokerage fee', 'fee', 'fees', 'commission', 'commissions', 'عمولة', 'مصاريف', 'العمولة', 'مصاريف البورصة'],
     'Net Cash Impact': ['net cash impact', 'net cash', 'net impact', 'cash impact', 'صافي النقد', 'الصافي'],
+    'Cash Flow Type': ['cash flow type', 'cashflow type', 'cash_flow_type', 'cash event type'],
+    'Cash Flow Amount': ['cash flow amount', 'cashflow amount', 'cash_flow_amount', 'cash event amount'],
     'Strategy / Notes': ['strategy / notes', 'strategy/notes', 'strategy', 'notes', 'comment', 'comments', 'remarks', 'ملاحظات', 'استراتيجية'],
     'Running Shares': ['running shares', 'remaining shares', 'balance shares', 'الأسهم المتبقية', 'المتبقي', 'رصيد الأسهم'],
     'Trade Cycle': ['trade cycle', 'cycle', 'دورة التداول', 'الدورة', 'cycle #'],
@@ -105,6 +110,14 @@ export function findColIndexBySynonyms(headers: string[], standardHeaderName: st
   return -1;
 }
 
+function withCashSemanticHeaders(headers: string[]): string[] {
+  const next = [...headers];
+  for (const header of ['Cash Flow Type', 'Cash Flow Amount']) {
+    if (findColIndexBySynonyms(next, header) === -1) next.push(header);
+  }
+  return next;
+}
+
 /**
  * Enriches transactions with calculated running shares, trade cycles, gross trade value, and net cash impact.
  */
@@ -130,9 +143,27 @@ export function enrichTransactionsForLedger(transactions: TradeTransaction[]): T
     const sequentialTradeId = idx + 1;
     const gross = Math.round(tx.shares * tx.price * 100) / 100;
     const fees = Math.round((tx.fees || 0) * 100) / 100;
-    // Net Cash Impact: negative for BUY, positive for SELL
-    const netCash = tx.type === 'BUY' ? -(gross + fees) : (gross - fees);
 
+    if (ticker === 'CASH') {
+      const semanticCashImpact = cashFlowSignedImpact(
+        tx.cashFlowType,
+        tx.cashFlowAmount ?? tx.totalAmount,
+      );
+      const netCash = semanticCashImpact
+        ?? (Number.isFinite(tx.netCashImpact) ? Number(tx.netCashImpact) : tx.type === 'BUY' ? gross : -gross);
+      return {
+        ...tx,
+        tradeId: sequentialTradeId,
+        grossTradeValue: Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount ?? gross)),
+        netCashImpact: Math.round(netCash * 100) / 100,
+        runningShares: undefined,
+        tradeCycle: undefined,
+        cycleTag: undefined,
+      };
+    }
+
+    // Net Cash Impact: negative for BUY, positive for SELL.
+    const netCash = tx.type === 'BUY' ? -(gross + fees) : (gross - fees);
     const prevShares = runningSharesMap[ticker] || 0;
     let newShares = prevShares;
     let cycle = activeCycleMap[ticker] || 1;
@@ -148,7 +179,6 @@ export function enrichTransactionsForLedger(transactions: TradeTransaction[]): T
     }
 
     runningSharesMap[ticker] = newShares;
-
     const cycleTag = tx.cycleTag || `${ticker}-C${cycle}`;
 
     return {
@@ -158,7 +188,7 @@ export function enrichTransactionsForLedger(transactions: TradeTransaction[]): T
       netCashImpact: Math.round(netCash * 100) / 100,
       runningShares: newShares,
       tradeCycle: tx.tradeCycle || cycle,
-      cycleTag
+      cycleTag,
     };
   });
 }
@@ -684,6 +714,8 @@ export function parseSheetRows(
   const grossIdx = getCol(['gross trade value', 'gross value', 'gross', 'قيمة التداول', 'إجمالي القيمة']);
   const feesIdx = getCol(['brokerage fee', 'fee', 'fees', 'commission', 'commissions', 'عمولة', 'مصاريف', 'العمولة']);
   const netCashIdx = getCol(['net cash impact', 'net cash', 'net impact', 'صافي النقد']);
+  const cashFlowTypeIdx = getCol(['cash flow type', 'cashflow type', 'cash_flow_type', 'cash event type']);
+  const cashFlowAmountIdx = getCol(['cash flow amount', 'cashflow amount', 'cash_flow_amount', 'cash event amount']);
   const notesIdx = getCol(['strategy / notes', 'strategy/notes', 'strategy', 'notes', 'comment', 'comments', 'remarks', 'ملاحظات', 'استراتيجية']);
   const runningSharesIdx = getCol(['running shares', 'remaining shares', 'balance shares', 'الأسهم المتبقية', 'المتبقي']);
   const tradeCycleIdx = getCol(['trade cycle', 'cycle', 'دورة التداول', 'الدورة']);
@@ -758,16 +790,32 @@ export function parseSheetRows(
     const rawSector = sectorIdx !== -1 && row[sectorIdx] ? String(row[sectorIdx]).trim() : (dict?.sector || 'Other');
     const sector: Sector = (rawSector as Sector) || 'Other';
 
-    const shares = sharesIdx !== -1 ? Math.abs(parseSheetNumber(row[sharesIdx], 0)) : 0;
+    const cashFlowType = cashFlowTypeIdx !== -1
+      ? normalizeCashFlowType(row[cashFlowTypeIdx])
+      : undefined;
+    const parsedCashFlowAmount = cashFlowAmountIdx !== -1
+      ? parseSheetNumber(row[cashFlowAmountIdx], Number.NaN)
+      : Number.NaN;
+    const semanticCashImpact = cashFlowType
+      ? cashFlowSignedImpact(cashFlowType, parsedCashFlowAmount)
+      : null;
+
+    let shares = sharesIdx !== -1 ? Math.abs(parseSheetNumber(row[sharesIdx], 0)) : 0;
+    if (shares === 0 && cashFlowType && Number.isFinite(parsedCashFlowAmount)) {
+      shares = Math.abs(parsedCashFlowAmount);
+    }
     if (shares === 0) continue;
 
-    const price = priceIdx !== -1 ? parseSheetNumber(row[priceIdx], 0) : (currentPriceIdx !== -1 ? parseSheetNumber(row[currentPriceIdx], 0) : 0);
+    let price = priceIdx !== -1 ? parseSheetNumber(row[priceIdx], 0) : (currentPriceIdx !== -1 ? parseSheetNumber(row[currentPriceIdx], 0) : 0);
+    if (price === 0 && cashFlowType) price = 1;
     if (price === 0) continue;
 
     const dateStr = dateIdx !== -1 && row[dateIdx] ? parseSheetDate(row[dateIdx]) : new Date().toISOString().split('T')[0];
     const fees = feesIdx !== -1 ? Math.abs(parseSheetNumber(row[feesIdx], 0)) : 0;
     const rawAction = actionIdx !== -1 && row[actionIdx] ? String(row[actionIdx]).trim().toLowerCase() : '';
-    const isSell = rawAction.includes('sell') || rawAction.includes('بيع') || rawAction.includes('خروج') || rawAction.includes('exit');
+    const isSell = semanticCashImpact !== null
+      ? semanticCashImpact < 0
+      : rawAction.includes('sell') || rawAction.includes('بيع') || rawAction.includes('خروج') || rawAction.includes('exit');
     const type: 'BUY' | 'SELL' = isSell ? 'SELL' : 'BUY';
 
     const parsedTradeId = tradeIdIdx !== -1 ? parseSheetNumber(row[tradeIdIdx], 0) : 0;
@@ -779,7 +827,12 @@ export function parseSheetRows(
 
     const runningShares = runningSharesIdx !== -1 ? parseSheetNumber(row[runningSharesIdx], 0) : undefined;
     const grossTradeValue = grossIdx !== -1 ? Math.abs(parseSheetNumber(row[grossIdx], shares * price)) : (shares * price);
-    const netCashImpact = netCashIdx !== -1 ? parseSheetNumber(row[netCashIdx], type === 'BUY' ? -(grossTradeValue + fees) : (grossTradeValue - fees)) : (type === 'BUY' ? -(grossTradeValue + fees) : (grossTradeValue - fees));
+    const defaultNetCashImpact = semanticCashImpact !== null
+      ? semanticCashImpact
+      : type === 'BUY' ? -(grossTradeValue + fees) : (grossTradeValue - fees);
+    const netCashImpact = netCashIdx !== -1
+      ? parseSheetNumber(row[netCashIdx], defaultNetCashImpact)
+      : defaultNetCashImpact;
 
     const notes = notesIdx !== -1 && row[notesIdx] ? String(row[notesIdx]).trim() : undefined;
     const targetPrice = targetIdx !== -1 ? parseSheetNumber(row[targetIdx], 0) || undefined : undefined;
@@ -802,6 +855,8 @@ export function parseSheetRows(
       runningShares,
       grossTradeValue,
       netCashImpact,
+      cashFlowType,
+      cashFlowAmount: cashFlowType && Number.isFinite(parsedCashFlowAmount) ? parsedCashFlowAmount : undefined,
       targetPrice,
       stopLoss,
       notes
@@ -1148,18 +1203,34 @@ export async function appendTransactionToSheet(
         const l = h.toLowerCase();
         return l.includes('trade') || l.includes('ticker') || l.includes('date') || l.includes('action');
       });
+    const effectiveHeaders = hasHeader ? withCashSemanticHeaders(headers) : stdHeaders;
 
-    // Build column index map for standard 14 headers
-    const colMap: Record<string, number> = {};
-    if (hasHeader) {
-      stdHeaders.forEach((stdH) => {
-        colMap[stdH] = findColIndexBySynonyms(headers, stdH);
-      });
-    } else {
-      stdHeaders.forEach((stdH, i) => {
-        colMap[stdH] = i;
-      });
+    if (hasHeader && effectiveHeaders.length !== headers.length) {
+      const headerRange = `${targetTab}!A${headerRowIdx + 1}:${colToLetter(effectiveHeaders.length - 1)}${headerRowIdx + 1}`;
+      const headerRes = await fetchWithSheetsProxy(
+        '/api/sheets/values',
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            spreadsheetId: cleanId,
+            range: headerRange,
+            values: [effectiveHeaders],
+          }),
+        },
+        accessToken,
+      );
+      if (!headerRes.ok) throw new Error('Could not extend Transaction Logger cash-flow columns.');
     }
+
+    const colMap: Record<string, number> = {};
+    effectiveHeaders.forEach((_header, index) => {
+      const standard = stdHeaders.find((stdH) => findColIndexBySynonyms([effectiveHeaders[index]], stdH) === 0);
+      if (standard) colMap[standard] = index;
+    });
+    stdHeaders.forEach((stdH, i) => {
+      if (colMap[stdH] === undefined) colMap[stdH] = hasHeader ? findColIndexBySynonyms(effectiveHeaders, stdH) : i;
+    });
 
     // Scan existing rows for duplicate row match and highest existing Trade ID in sheet
     let maxSheetTradeId = 0;
@@ -1269,6 +1340,8 @@ export async function appendTransactionToSheet(
     setVal('Gross Trade Value', Math.round(gross * 100) / 100);
     setVal('Brokerage Fee', Math.round(fee * 100) / 100);
     setVal('Net Cash Impact', Math.round(netCash * 100) / 100);
+    setVal('Cash Flow Type', tx.cashFlowType || '');
+    setVal('Cash Flow Amount', tx.cashFlowAmount ?? '');
     setVal('Strategy / Notes', tx.notes || '');
     setVal('Running Shares', tx.runningShares !== undefined ? tx.runningShares : '');
     setVal('Trade Cycle', tx.tradeCycle || 1);
@@ -1602,7 +1675,7 @@ export async function syncTransactionsLedgerToSheet(
 
     await ensureSheetTabExists(cleanId, targetTab, accessToken);
 
-    const existingRows = await fetchSheetValues(cleanId, `${targetTab}!A1:N500`, accessToken).catch(() => []);
+    const existingRows = await fetchSheetValues(cleanId, `${targetTab}!A1:Z500`, accessToken).catch(() => []);
     
     let headerRowIdx = 0;
     if (existingRows.length > 0) {
@@ -1612,12 +1685,18 @@ export async function syncTransactionsLedgerToSheet(
 
     const rawHeaders =
       existingRows[headerRowIdx] && existingRows[headerRowIdx].some((c) => String(c || '').trim().length > 0)
-        ? existingRows[headerRowIdx]
+        ? existingRows[headerRowIdx].map((c) => String(c || '').trim())
         : TRANSACTION_LOGGER_HEADERS;
+    const outputHeaders = withCashSemanticHeaders(rawHeaders);
 
     const enrichedTxs = enrichTransactionsForLedger(transactions);
 
     const txRows = enrichedTxs.map((tx) => {
+      const row = new Array(outputHeaders.length).fill('');
+      const setVal = (headerName: string, value: unknown) => {
+        const index = findColIndexBySynonyms(outputHeaders, headerName);
+        if (index >= 0) row[index] = value ?? '';
+      };
       const gross = tx.grossTradeValue !== undefined ? tx.grossTradeValue : Math.round(tx.shares * tx.price * 100) / 100;
       const fee = tx.fees || 0;
       const netCash =
@@ -1627,22 +1706,23 @@ export async function syncTransactionsLedgerToSheet(
           ? -(gross + fee)
           : gross - fee;
 
-      return [
-        tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : tx.id,
-        tx.date,
-        tx.type,
-        tx.ticker.toUpperCase(),
-        tx.companyName,
-        tx.shares,
-        tx.price,
-        Math.round(gross * 100) / 100,
-        Math.round(fee * 100) / 100,
-        Math.round(netCash * 100) / 100,
-        tx.notes || '',
-        tx.runningShares !== undefined ? tx.runningShares : '',
-        tx.tradeCycle || 1,
-        tx.cycleTag || `${tx.ticker}-C${tx.tradeCycle || 1}`,
-      ];
+      setVal('Trade ID', tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : tx.id);
+      setVal('Date', tx.date);
+      setVal('Action', tx.type);
+      setVal('Ticker', tx.ticker.toUpperCase());
+      setVal('Company Name', tx.companyName);
+      setVal('Shares', tx.shares);
+      setVal('Price / Share', tx.price);
+      setVal('Gross Trade Value', Math.round(gross * 100) / 100);
+      setVal('Brokerage Fee', Math.round(fee * 100) / 100);
+      setVal('Net Cash Impact', Math.round(netCash * 100) / 100);
+      setVal('Cash Flow Type', tx.cashFlowType || '');
+      setVal('Cash Flow Amount', tx.cashFlowAmount ?? '');
+      setVal('Strategy / Notes', tx.notes || '');
+      setVal('Running Shares', tx.runningShares !== undefined ? tx.runningShares : '');
+      setVal('Trade Cycle', tx.tradeCycle || '');
+      setVal('Cycle Tag', tx.cycleTag || '');
+      return row;
     });
 
     // Count previous trade rows in sheet and find any Total/Summary row
@@ -1740,12 +1820,12 @@ export async function syncTransactionsLedgerToSheet(
       }
     }
 
-    const tableRows: any[][] = [rawHeaders, ...txRows];
+    const tableRows: any[][] = [outputHeaders, ...txRows];
     // If no Total row was present, pad any remaining deleted trade rows with empty strings
     if (totalRowIdx < 0) {
       const targetRowCount = Math.max(txRows.length, previousTradeRowsCount);
       while (tableRows.length <= targetRowCount) {
-        tableRows.push(new Array(14).fill(''));
+        tableRows.push(new Array(outputHeaders.length).fill(''));
       }
     }
 
@@ -1759,7 +1839,7 @@ export async function syncTransactionsLedgerToSheet(
         },
         body: JSON.stringify({
           spreadsheetId: cleanId,
-          range: `${targetTab}!A${startRow}:N${endRow}`,
+          range: `${targetTab}!A${startRow}:${colToLetter(outputHeaders.length - 1)}${endRow}`,
           values: tableRows,
         }),
       },

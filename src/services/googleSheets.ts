@@ -1,5 +1,6 @@
 import { Position, ClosedTrade, Sector, TradeTransaction, EGXTicker } from '../types';
-import { EGX_STOCK_DICTIONARY } from '../data/egxTickers';
+import { EGX_STOCK_DICTIONARY, INITIAL_EGX_TICKERS } from '../data/egxTickers';
+import { reconcilePortfolioFromLedger, sortTransactions } from './portfolioReconciliation';
 
 export const TRANSACTION_LOGGER_HEADERS = [
   'Trade ID',
@@ -571,253 +572,69 @@ export function reconstructPortfolioFromTransactions(
   transactions: TradeTransaction[],
   livePrices: Record<string, number> = {}
 ): { positions: Position[]; closedTrades: ClosedTrade[]; transactions: TradeTransaction[] } {
-  // Sort transactions chronologically (oldest to newest: Date -> TradeId -> BUY before SELL)
-  const sortedTx = [...transactions].sort((a, b) => {
-    const dateA = new Date(a.date || '').getTime() || 0;
-    const dateB = new Date(b.date || '').getTime() || 0;
-    if (dateA !== dateB) {
-      return dateA - dateB;
-    }
-    const tradeIdA = typeof a.tradeId === 'number' ? a.tradeId : parseFloat(String(a.tradeId || '')) || 0;
-    const tradeIdB = typeof b.tradeId === 'number' ? b.tradeId : parseFloat(String(b.tradeId || '')) || 0;
-    if (tradeIdA && tradeIdB && tradeIdA !== tradeIdB) {
-      return tradeIdA - tradeIdB;
-    }
-    // Critical lot integrity: BUY must always precede SELL when dates are identical
-    if (a.type === 'BUY' && b.type === 'SELL') return -1;
-    if (a.type === 'SELL' && b.type === 'BUY') return 1;
-    return 0;
-  });
+  const sortedTransactions = sortTransactions(transactions);
 
-  interface OpenLot {
-    shares: number;
-    price: number;
-    date: string;
-    fees: number;
-    notes?: string;
-    targetPrice?: number;
-    stopLoss?: number;
-    tradeCycle?: number;
-    cycleTag?: string;
+  const latestTransactionByTicker = new Map<string, TradeTransaction>();
+  for (const transaction of sortedTransactions) {
+    const ticker = transaction.ticker.trim().toUpperCase();
+    if (!ticker || ticker === 'CASH') continue;
+    latestTransactionByTicker.set(ticker, transaction);
   }
 
-  const openLotsByTicker: Record<string, OpenLot[]> = {};
-  
-  interface ClosedCycleAccumulator {
-    id: string;
-    ticker: string;
-    companyName: string;
-    sector: Sector;
-    shares: number;
-    totalCostBasis: number;
-    totalGrossProceeds: number;
-    buyFees: number;
-    sellFees: number;
-    firstBuyDate: string;
-    lastSellDate: string;
-    notes?: string;
-    tradeCycle?: number;
-    cycleTag?: string;
-  }
+  const tickerDirectory: EGXTicker[] = Array.from(latestTransactionByTicker.entries()).map(
+    ([ticker, sourceTransaction]) => {
+      const baseline = INITIAL_EGX_TICKERS.find(
+        (candidate) => candidate.ticker.trim().toUpperCase() === ticker,
+      );
+      const dictionary = EGX_STOCK_DICTIONARY[ticker];
+      const livePrice = Number(livePrices[ticker]);
+      const currentPrice = Number.isFinite(livePrice) && livePrice > 0
+        ? livePrice
+        : baseline?.lastPrice || sourceTransaction.price || 0;
 
-  const closedCyclesMap: Record<string, ClosedCycleAccumulator> = {};
-
-  for (let idx = 0; idx < sortedTx.length; idx++) {
-    const tx = sortedTx[idx];
-    const ticker = tx.ticker.toUpperCase();
-
-    if (!openLotsByTicker[ticker]) {
-      openLotsByTicker[ticker] = [];
-    }
-
-    if (tx.type === 'BUY') {
-      const isDcaLot = openLotsByTicker[ticker].length > 0;
-      tx.isDCA = isDcaLot;
-      tx.outcome = undefined;
-
-      openLotsByTicker[ticker].push({
-        shares: tx.shares,
-        price: tx.price,
-        date: tx.date,
-        fees: tx.fees || 0,
-        notes: tx.notes,
-        targetPrice: tx.targetPrice,
-        stopLoss: tx.stopLoss,
-        tradeCycle: tx.tradeCycle,
-        cycleTag: tx.cycleTag
-      });
-    } else if (tx.type === 'SELL') {
-      let sharesToSell = tx.shares;
-      let totalCostBasis = 0;
-      let totalAllocatedBuyFees = 0;
-      let firstBuyDate = tx.date;
-      let cycleTag = tx.cycleTag;
-      let tradeCycle = tx.tradeCycle;
-
-      const lots = openLotsByTicker[ticker];
-      while (sharesToSell > 0 && lots.length > 0) {
-        const lot = lots[0];
-        if (lot.date && (!firstBuyDate || firstBuyDate === tx.date)) {
-          firstBuyDate = lot.date;
-        }
-        if (lot.cycleTag && !cycleTag) {
-          cycleTag = lot.cycleTag;
-        }
-        if (lot.tradeCycle && !tradeCycle) {
-          tradeCycle = lot.tradeCycle;
-        }
-
-        if (lot.shares <= sharesToSell) {
-          totalCostBasis += lot.shares * lot.price;
-          totalAllocatedBuyFees += lot.fees;
-          sharesToSell -= lot.shares;
-          lots.shift(); // fully consumed lot
-        } else {
-          // Partially consumed lot
-          const feePortion = (sharesToSell / lot.shares) * lot.fees;
-          totalCostBasis += sharesToSell * lot.price;
-          totalAllocatedBuyFees += feePortion;
-          lot.shares -= sharesToSell;
-          lot.fees = Math.max(0, lot.fees - feePortion);
-          sharesToSell = 0;
-        }
-      }
-
-      // If sell shares exceed recorded buy lots (e.g. historical short or missing earlier buy rows), fallback cost
-      if (sharesToSell > 0) {
-        const estimatedUnitCost = tx.price; // fallback to avoid artificial 100% gain
-        totalCostBasis += sharesToSell * estimatedUnitCost;
-      }
-
-      const grossProceeds = tx.shares * tx.price;
-      const sellFees = tx.fees || 0;
-      const netProceeds = grossProceeds - sellFees;
-      const netOutlay = totalCostBasis + totalAllocatedBuyFees;
-      const txRealizedPnlEgp = netProceeds - netOutlay;
-      const txRealizedPnlPercent = netOutlay > 0 ? (txRealizedPnlEgp / netOutlay) * 100 : 0;
-      const txOutcome: 'WIN' | 'LOSS' | 'BREAKEVEN' =
-        txRealizedPnlEgp > 0.01 ? 'WIN' : txRealizedPnlEgp < -0.01 ? 'LOSS' : 'BREAKEVEN';
-
-      const buyTime = new Date(firstBuyDate).getTime();
-      const sellTime = new Date(tx.date).getTime();
-      const diffDays = Math.round((sellTime - buyTime) / (1000 * 60 * 60 * 24));
-      const holdingDays = Math.max(1, isNaN(diffDays) ? 7 : diffDays);
-
-      // Populate transaction with calculated financial outcome
-      tx.realizedPnlEgp = Math.round(txRealizedPnlEgp * 100) / 100;
-      tx.realizedPnlPercent = Math.round(txRealizedPnlPercent * 100) / 100;
-      tx.outcome = txOutcome;
-      tx.holdingDays = holdingDays;
-      tx.totalAmount = netProceeds;
-
-      const cycleKey = cycleTag || `${ticker}-C${tradeCycle || idx}`;
-
-      if (closedCyclesMap[cycleKey]) {
-        // Aggregate into existing cycle (e.g. TAQA-C1 with multiple partial sell orders)
-        const c = closedCyclesMap[cycleKey];
-        c.shares += tx.shares;
-        c.totalCostBasis += totalCostBasis;
-        c.totalGrossProceeds += grossProceeds;
-        c.buyFees += totalAllocatedBuyFees;
-        c.sellFees += sellFees;
-        c.lastSellDate = tx.date;
-      } else {
-        closedCyclesMap[cycleKey] = {
-          id: `ct-${cycleKey}`,
-          ticker,
-          companyName: tx.companyName,
-          sector: tx.sector,
-          shares: tx.shares,
-          totalCostBasis,
-          totalGrossProceeds: grossProceeds,
-          buyFees: totalAllocatedBuyFees,
-          sellFees,
-          firstBuyDate,
-          lastSellDate: tx.date,
-          notes: tx.notes,
-          tradeCycle,
-          cycleTag: cycleKey
+      if (baseline) {
+        return {
+          ...baseline,
+          lastPrice: currentPrice,
         };
       }
-    }
-  }
 
-  // Convert closedCyclesMap to closedTrades
-  const closedTrades: ClosedTrade[] = Object.values(closedCyclesMap).map((c) => {
-    const totalFees = c.buyFees + c.sellFees;
-    const avgBuyPrice = c.shares > 0 ? c.totalCostBasis / c.shares : 0;
-    const avgSellPrice = c.shares > 0 ? c.totalGrossProceeds / c.shares : 0;
-    const netProceeds = c.totalGrossProceeds - c.sellFees;
-    const netOutlay = c.totalCostBasis + c.buyFees;
-    const realizedPnlEgp = netProceeds - netOutlay;
-    const realizedPnlPercent = netOutlay > 0 ? (realizedPnlEgp / netOutlay) * 100 : 0;
-    const outcome = realizedPnlEgp > 0 ? 'WIN' : realizedPnlEgp < 0 ? 'LOSS' : 'BREAKEVEN';
+      return {
+        ticker,
+        nameEn: sourceTransaction.companyName || dictionary?.nameEn || `${ticker} Corp`,
+        nameAr: dictionary?.nameAr || '',
+        isin: dictionary?.isin || '',
+        sector: sourceTransaction.sector || dictionary?.sector || 'Other',
+        lastPrice: currentPrice,
+        change: 0,
+        changePercent: 0,
+        dayLow: 0,
+        dayHigh: 0,
+        yearLow: 0,
+        yearHigh: 0,
+        volume: 0,
+        valueEgp: 0,
+        trendStatus: 'Rangebound Neutral',
+        rsi14: 0,
+        support: 0,
+        resistance: 0,
+        targetPrice: sourceTransaction.targetPrice || 0,
+        stopLoss: sourceTransaction.stopLoss || 0,
+        lastUpdated: new Date().toISOString(),
+      };
+    },
+  );
 
-    const buyTime = new Date(c.firstBuyDate).getTime();
-    const sellTime = new Date(c.lastSellDate).getTime();
-    const diffDays = Math.round((sellTime - buyTime) / (1000 * 60 * 60 * 24));
-    const holdingDays = Math.max(1, isNaN(diffDays) ? 14 : diffDays);
+  const reconciliation = reconcilePortfolioFromLedger(
+    sortedTransactions,
+    tickerDirectory,
+  );
 
-    return {
-      id: c.id,
-      ticker: c.ticker,
-      companyName: c.companyName,
-      sector: c.sector,
-      shares: c.shares,
-      buyPrice: Math.round(avgBuyPrice * 100) / 100,
-      sellPrice: Math.round(avgSellPrice * 100) / 100,
-      buyDate: c.firstBuyDate,
-      sellDate: c.lastSellDate,
-      holdingDays,
-      buyFees: Math.round(c.buyFees * 100) / 100,
-      sellFees: Math.round(c.sellFees * 100) / 100,
-      totalFees: Math.round(totalFees * 100) / 100,
-      realizedPnlEgp: Math.round(realizedPnlEgp * 100) / 100,
-      realizedPnlPercent: Math.round(realizedPnlPercent * 100) / 100,
-      outcome,
-      tradeType: 'Swing',
-      tradeCycle: c.tradeCycle,
-      cycleTag: c.cycleTag,
-      notes: c.notes
-    };
-  });
-
-  // Generate active positions from remaining open lots
-  const positions: Position[] = [];
-
-  for (const [ticker, lots] of Object.entries(openLotsByTicker)) {
-    const remainingLots = lots.filter(l => l.shares > 0);
-    if (remainingLots.length === 0) continue;
-
-    const totalShares = remainingLots.reduce((acc, l) => acc + l.shares, 0);
-    const totalCost = remainingLots.reduce((acc, l) => acc + (l.shares * l.price), 0);
-    const totalUnallocatedFees = remainingLots.reduce((acc, l) => acc + l.fees, 0);
-    const avgBuyPrice = totalShares > 0 ? totalCost / totalShares : remainingLots[0].price;
-
-    const firstLot = remainingLots[0];
-    const lastLot = remainingLots[remainingLots.length - 1];
-    const dict = EGX_STOCK_DICTIONARY[ticker];
-    const companyName = dict?.nameEn || `${ticker} Corp`;
-    const sector = dict?.sector || 'Other';
-    const currentPrice = livePrices[ticker] || avgBuyPrice;
-
-    positions.push({
-      id: `pos-${ticker}-${Date.now()}`,
-      ticker,
-      companyName,
-      sector,
-      shares: totalShares,
-      avgBuyPrice: Math.round(avgBuyPrice * 100) / 100,
-      currentPrice,
-      buyDate: firstLot.date,
-      totalFees: Math.round(totalUnallocatedFees * 100) / 100,
-      targetPrice: lastLot.targetPrice,
-      stopLoss: lastLot.stopLoss,
-      notes: remainingLots.length > 1 ? `Consolidated ${remainingLots.length} DCA tranches` : firstLot.notes
-    });
-  }
-
-  return { positions, closedTrades, transactions: sortedTx };
+  return {
+    positions: reconciliation.reconciledPositions,
+    closedTrades: reconciliation.reconciledClosedTrades,
+    transactions: sortedTransactions,
+  };
 }
 
 /**

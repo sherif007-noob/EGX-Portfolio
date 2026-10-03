@@ -2,6 +2,15 @@ import { ClosedTrade, Position, TradeTransaction } from '../types';
 
 export const ACCOUNTING_EPSILON = 0.000001;
 
+/**
+ * Canonical portfolio cost-basis contract.
+ *
+ * Open cost is weighted-average economic exposure. A SELL allocates the same
+ * proportion of every open BUY tranche's gross cost and remaining buy fees,
+ * rather than consuming FIFO/LIFO lots.
+ */
+export const CANONICAL_COST_BASIS_METHOD = 'WEIGHTED_AVERAGE_PROPORTIONAL' as const;
+
 export interface SellAccounting {
   grossProceeds: number;
   netProceeds: number;
@@ -33,6 +42,10 @@ export function calculateBuyImpact(shares: number, price: number, fees = 0) {
   };
 }
 
+/**
+ * Allocates realized cost proportionally across the complete open position.
+ * This function is the accounting authority for partial SELL cost allocation.
+ */
 export function calculateSellAccounting(
   sharesToSell: number,
   sellPrice: number,

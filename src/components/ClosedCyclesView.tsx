@@ -161,37 +161,24 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         phaseNumber: idx + 1,
       }));
 
-      // Calculate weighted averages
+      // Execution phases are traceability only. Realized economics come from
+      // the canonical reconciled ClosedTrade projection so a partial SELL does
+      // not treat every source BUY share as realized cost.
       const totalBuyShares = buyPhases.length > 0
         ? buyPhases.reduce((acc, p) => acc + p.shares, 0)
         : ct.shares;
-
-      const grossBuyCost = buyPhases.length > 0
-        ? buyPhases.reduce((acc, p) => acc + p.shares * p.price, 0)
-        : ct.shares * ct.buyPrice;
-
-      const totalBuyFees = buyPhases.length > 0
-        ? buyPhases.reduce((acc, p) => acc + p.fees, 0)
-        : (ct.buyFees || 0);
-
-      const weightedAvgBuyPrice = totalBuyShares > 0 ? grossBuyCost / totalBuyShares : ct.buyPrice;
-
       const totalSellShares = sellPhases.length > 0
         ? sellPhases.reduce((acc, p) => acc + p.shares, 0)
         : ct.shares;
 
-      const grossSellProceeds = sellPhases.length > 0
-        ? sellPhases.reduce((acc, p) => acc + p.shares * p.price, 0)
-        : ct.shares * ct.sellPrice;
-
-      const totalSellFees = sellPhases.length > 0
-        ? sellPhases.reduce((acc, p) => acc + p.fees, 0)
-        : (ct.sellFees || 0);
-
-      const weightedAvgSellPrice = totalSellShares > 0 ? grossSellProceeds / totalSellShares : ct.sellPrice;
-
+      const weightedAvgBuyPrice = ct.buyPrice;
+      const weightedAvgSellPrice = ct.sellPrice;
+      const totalBuyFees = ct.buyFees || 0;
+      const totalSellFees = ct.sellFees || 0;
+      const grossSellProceeds = ct.shares * ct.sellPrice;
       const netProceeds = grossSellProceeds - totalSellFees;
-      const netOutlay = grossBuyCost + totalBuyFees;
+      const netOutlay = netProceeds - ct.realizedPnlEgp;
+      const grossBuyCost = Math.max(0, netOutlay - totalBuyFees);
 
       return {
         ...ct,

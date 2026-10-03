@@ -111,6 +111,19 @@ describe('Stage 2.6 canonical cost-basis contract', () => {
     });
   });
 
+  it('preserves the Sheets no-live-quote fallback to weighted-average entry price', () => {
+    const reconstructed = reconstructPortfolioFromTransactions(
+      dcaPartialSellLedger,
+      {},
+    );
+
+    expect(reconstructed.positions[0]).toMatchObject({
+      ticker: 'COMI',
+      avgBuyPrice: 15,
+      currentPrice: 15,
+    });
+  });
+
   it('removes the duplicate FIFO accounting path from Google Sheets', () => {
     const sheets = readRelative('./googleSheets.ts');
 

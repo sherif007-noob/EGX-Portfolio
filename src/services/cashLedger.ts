@@ -1,6 +1,7 @@
-import { EGXTicker, Position, TradeTransaction, CashFlowType, CashTransaction } from '../types';
+import { EGXTicker, Position, TradeTransaction, CanonicalCashFlowType, CashTransaction } from '../types';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { reconcilePortfolioFromLedger, sortTransactions } from './portfolioReconciliation';
+import { cashFlowSignedImpact, isCapitalCashFlowType } from './cashFlowSemantics';
 
 interface CashLedgerState {
   transactions: TradeTransaction[];
@@ -25,28 +26,29 @@ export interface PreparedCashLedgerChange {
 /** Build a cash-ledger candidate without applying derived portfolio state. */
 export function prepareCashLedgerEvent(
   state: CashLedgerState,
-  kind: Extract<CashFlowType, 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT'>,
+  kind: CanonicalCashFlowType,
   amount: number,
   notes = '',
   date = new Date().toISOString().slice(0, 10),
 ): PreparedCashLedgerChange {
   validateCashDate(date);
-  if (!Number.isFinite(amount) || (kind !== 'CASH_ADJUSTMENT' && amount <= 0)) {
-    throw new Error('Cash amount must be finite and positive (adjustments may be signed).');
+  const signedAdjustment = kind === 'RECONCILIATION_ADJUSTMENT';
+  if (!Number.isFinite(amount) || (!signedAdjustment && amount <= 0)) {
+    throw new Error('Cash amount must be finite and positive (reconciliation adjustments may be signed).');
   }
   if (!Number.isFinite(state.capitalDeposits)) throw new Error('Capital must be finite.');
   const value = Number(amount.toFixed(2));
   if (value === 0) throw new Error('Cash amount must be at least 0.01 EGP.');
   const transactions = state.transactions.map(normalizeTransaction);
-  const external = kind === 'DEPOSIT' || kind === 'WITHDRAWAL';
+  const external = isCapitalCashFlowType(kind);
   const hasExternal = transactions.some((tx) =>
     tx.cashFlowType === 'DEPOSIT' || tx.cashFlowType === 'WITHDRAWAL'
     || (tx.ticker === 'CASH' && !tx.cashFlowType),
   );
 
-  const cashRow = (cashKind: CashFlowType, cashAmount: number, cashDate: string, cashNotes: string): TradeTransaction => ({
+  const cashRow = (cashKind: CanonicalCashFlowType, cashAmount: number, cashDate: string, cashNotes: string): TradeTransaction => ({
     id: `tx-cash-${crypto.randomUUID()}`,
-    type: cashKind === 'WITHDRAWAL' || cashAmount < 0 ? 'SELL' : 'BUY',
+    type: (cashFlowSignedImpact(cashKind, cashAmount) ?? 0) < 0 ? 'SELL' : 'BUY',
     ticker: 'CASH', companyName: 'Cash Balance', sector: 'Liquid Buying Power',
     shares: Math.abs(cashAmount), price: 1, fees: 0,
     date: cashDate, totalAmount: Math.abs(cashAmount),
@@ -71,7 +73,7 @@ export function prepareCashLedgerEvent(
 /** Apply a cash event and rebuild every projection from the resulting ledger. */
 export function applyCashLedgerEvent(
   state: CashLedgerState,
-  kind: Extract<CashFlowType, 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT'>,
+  kind: CanonicalCashFlowType,
   amount: number,
   notes = '',
   date = new Date().toISOString().slice(0, 10),

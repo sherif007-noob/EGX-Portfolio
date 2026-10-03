@@ -185,7 +185,17 @@ export function normalizeTransaction(tx: any): TradeTransaction {
   const normalizedShares = isCash && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
   const normalizedPrice = isCash ? 1 : price;
   const totalAmount = isCash ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount)) : typeof tx.totalAmount === 'number' ? tx.totalAmount : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
-  const cashFlowAmount = inferredCashFlowType === 'RECONCILIATION_ADJUSTMENT' && Number.isFinite(rawCashAmount) ? rawCashAmount : isCash ? totalAmount : undefined;
+  const cashFlowAmount = inferredCashFlowType === 'RECONCILIATION_ADJUSTMENT'
+    ? Number.isFinite(rawCashAmount)
+      ? rawCashAmount
+      : Number.isFinite(explicitAmount)
+        ? explicitAmount
+        : normalizedType === 'SELL'
+          ? -totalAmount
+          : totalAmount
+    : isCash
+      ? totalAmount
+      : undefined;
   return { id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, type: normalizedType as 'BUY' | 'SELL', ticker: normalizedTicker, companyName: isCash ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''), sector: isCash ? 'Liquid Buying Power' : (tx.sector || 'Other'), shares: normalizedShares, price: normalizedPrice, date: tx.date || tx.transactionDate || tx.transaction_date || new Date().toISOString().split('T')[0], executedAt:
     typeof tx.executedAt === 'string' && tx.executedAt.trim()
       ? tx.executedAt

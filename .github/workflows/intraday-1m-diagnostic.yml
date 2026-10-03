@@ -15,7 +15,7 @@ on:
         type: string
   push:
     branches:
-      - feature/premium-ui-redesign
+      - main
     paths:
       - '.github/workflows/intraday-1m-diagnostic.yml'
       - 'scripts/diagnoseIntradayOneMinute.ts'

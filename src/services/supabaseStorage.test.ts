@@ -92,7 +92,7 @@ describe('ledger storage mutations', () => {
       storage.updateFirestoreCashBalance(900),
     ]);
     expect(remote.transactions).toHaveLength(3);
-    expect(remote.transactions.find((tx) => tx.cashFlowType === 'CASH_ADJUSTMENT')?.cashFlowAmount).toBe(102);
+    expect(remote.transactions.find((tx) => tx.cashFlowType === 'RECONCILIATION_ADJUSTMENT')?.cashFlowAmount).toBe(102);
     expect(remote.cashBalance).toBe(900);
     expect(remote.capitalDeposits).toBe(1000);
   });

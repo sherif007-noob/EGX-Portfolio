@@ -224,7 +224,20 @@ export interface CashTransaction {
   balanceAfter: number;
 }
 
-export type CashFlowType = 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE' | 'CASH_ADJUSTMENT';
+export type CanonicalCashFlowType =
+  | 'DEPOSIT'
+  | 'WITHDRAWAL'
+  | 'DIVIDEND'
+  | 'FEE'
+  | 'OTHER_INCOME'
+  | 'OTHER_EXPENSE'
+  | 'RECONCILIATION_ADJUSTMENT';
+
+/**
+ * CASH_ADJUSTMENT is retained as a read-compatibility alias for legacy rows.
+ * New runtime writes must emit RECONCILIATION_ADJUSTMENT instead.
+ */
+export type CashFlowType = CanonicalCashFlowType | 'CASH_ADJUSTMENT';
 
 export interface TradeTransaction {
   id: string;

@@ -124,6 +124,23 @@ describe('Stage 2.7 explicit cash-flow semantics', () => {
     );
   });
 
+  it('preserves signed reconciliation amounts even when imports omit cashFlowAmount', () => {
+    const normalized = normalizeTransaction({
+      id: 'legacy-signed-import',
+      type: 'CASH_ADJUSTMENT',
+      amount: -75,
+      date: '2026-02-01',
+    });
+
+    expect(normalized).toMatchObject({
+      type: 'SELL',
+      ticker: 'CASH',
+      cashFlowType: 'RECONCILIATION_ADJUSTMENT',
+      cashFlowAmount: -75,
+      totalAmount: 75,
+    });
+  });
+
   it('normalizes expense-like cash events to SELL-shaped ledger rows', () => {
     const fee = normalizeTransaction({
       id: 'fee-import',

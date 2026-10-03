@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-03  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `70ad1148` — Stage 2.8 financial acceptance suite / Stage 2 exit closure  
-**Current full exact-head verification:** Phase 10 Visual Closure #37121788769 on `70ad1148`  
+**Current validated runtime head:** `6a842b7d` — Stage 3.1 reviewed branch convergence  
+**Current full exact-head verification:** Phase 10 Visual Closure #37123523107 on `6a842b7d`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -39,7 +39,7 @@ Completed:
 
 Frozen visual contracts now remain protected while the roadmap moves into financial integrity work.
 
-Financial-integrity work has started.
+Financial integrity is closed; production/CI/market-data convergence is now active.
 
 Completed:
 
@@ -54,9 +54,13 @@ Completed:
 
 **Stage 2 is CLOSED / CI CLEAN.**
 
+Stage 3 completed:
+
+- **Stage 3.1 — Reviewed branch divergence reconciliation**
+
 Next:
 
-1. **Stage 3.1 — Reconcile branch divergence**
+1. **Stage 3.2 — Make the default production branch authoritative**
 
 ---
 
@@ -763,6 +767,63 @@ The registry schedule is also subject to the default-branch promotion rule.
 
 ---
 
+### Stage 3.1 reviewed branch convergence
+
+The old 12-commit `main` divergence is resolved.
+
+Before integration:
+
+```text
+feature/premium-ui-redesign
+  ahead of main:  1,466
+  behind main:       12
+```
+
+All 12 main-only commits were reviewed individually in `docs/STAGE3_BRANCH_DIVERGENCE_REVIEW.md`:
+
+- **1 required** — the missing unified-analytics `missingTickers` repair-signal regression test;
+- **9 superseded by premium** — historical repair service/route/client/App/docs/date-authority work already exists in newer premium architecture;
+- **2 obsolete** — the Render deployment blueprint and the old merge commit as independent content;
+- **0 unresolved conflicts**.
+
+The required test was restored in `1c212324`.
+
+Reviewed graph integration was then created in merge commit `356740d5` with:
+
+- premium as first parent;
+- `main` head `3259bb67` as second parent;
+- premium tree preserved intentionally;
+- no `render.yaml` imported.
+
+A Stage 3.1 convergence guard was added at runtime head `6a842b7d`.
+
+After integration:
+
+```text
+feature/premium-ui-redesign
+  behind main: 0
+  status:      ahead
+```
+
+Exact-head validation on `6a842b7d`:
+
+- **Phase 10 Visual Closure #37123523107** — passed;
+- TypeScript — passed;
+- **91 / 91 Vitest files, 517 / 517 tests** — passed;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometries at 0px page overflow** — passed;
+- **16 / 16 rendered states** — passed;
+- **Rendered Visual Regression #37123523123** — passed.
+
+Rendered differences remain at the accepted frozen baseline:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+---
+
 ## Analytics state
 
 Strong/current foundation:
@@ -862,6 +923,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 3.1 — Reconcile branch divergence.**
+**Stage 3.2 — Make the default production branch authoritative.**
 
-Review the main-only commits against `feature/premium-ui-redesign` individually, classify each as required/superseded/conflicting/obsolete, and produce one reviewed integration result rather than blind-merging branch history.
+Promote one production truth so application code, Cloudflare Worker, migrations, 1m ingestion, ticker registry, quality checks and production audit all execute from the same default branch. Feature branches should return to temporary development branches.

@@ -52,6 +52,7 @@ These documents capture what was observed/fixed at a point in time. They support
 | Document | Purpose |
 | --- | --- |
 | [READINESS_AUDIT.md](READINESS_AUDIT.md) | earlier cross-app readiness snapshot |
+| [STAGE3_BRANCH_DIVERGENCE_REVIEW.md](STAGE3_BRANCH_DIVERGENCE_REVIEW.md) | Stage 3.1 commit-by-commit main/premium divergence review and integration decision |
 | [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) | September 28 intraday/valuation root-cause audit |
 | [CHART_RENDERING_FIX_2026_09_28.md](CHART_RENDERING_FIX_2026_09_28.md) | dated chart-rendering incident/fix record |
 | [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) | evolution history for analytics market data |

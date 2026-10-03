@@ -783,25 +783,51 @@ Validated runtime:
 
 # 6. Stage 3 — Production, CI & market-data convergence
 
-## Pass 3.1 — Reconcile branch divergence
+## Pass 3.1 — Reconcile branch divergence — COMPLETE / CI GREEN
 
-At the 2026-09-30 audit baseline:
+The live pre-integration comparison on 2026-10-03 was:
 
-- `feature/premium-ui-redesign` was **1,388 commits ahead of `main`**;
-- it was **12 commits behind `main`**.
+- `feature/premium-ui-redesign` **1,466 commits ahead of `main`**;
+- **12 commits behind `main`**;
+- merge base `ce142a02`;
+- `main` head `3259bb67`.
 
-Review the 12 main-only commits individually.
+All 12 main-only commits were reviewed individually and recorded in:
 
-Do not blind-merge and hope.
+- `docs/STAGE3_BRANCH_DIVERGENCE_REVIEW.md`.
 
-Classify each as:
+Classification result:
 
-- required;
-- superseded by premium;
-- conflict requiring manual reconciliation;
-- obsolete.
+- **1 required** — restore the missing unified-analytics history-gap signal test;
+- **9 superseded by premium** — the useful historical-repair implementation already exists in newer premium form;
+- **2 obsolete** — Render deployment blueprint and the old merge node as independent content;
+- **0 unresolved conflicts**.
 
-Produce one reviewed integration result.
+Integration sequence:
+
+1. restored the required test in `1c212324`;
+2. created reviewed two-parent merge `356740d5`, preserving the premium tree while making `main` a parent;
+3. added `Stage31BranchConvergence.test.ts` to guard retained historical repair behavior and Cloudflare deployment authority.
+
+Post-integration comparison:
+
+- **0 commits behind `main`**;
+- branch status: **ahead**;
+- obsolete `render.yaml` remains absent.
+
+Validated runtime:
+
+- `6a842b7d`;
+- Phase 10 Visual Closure **#37123523107**;
+- TypeScript passed;
+- **91 / 91 test files, 517 / 517 tests**;
+- production Vite/PWA build passed;
+- Cloudflare Worker dry-run passed;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37123523123** passed.
+
+**Next: Pass 3.2 — make the default production branch authoritative.**
 
 ---
 

@@ -3,7 +3,7 @@ name: Phase 10 Visual Closure
 on:
   push:
     branches:
-      - feature/premium-ui-redesign
+      - main
     paths:
       - '.github/workflows/phase10-closure.yml'
       - '.github/workflows/rendered-regression.yml'

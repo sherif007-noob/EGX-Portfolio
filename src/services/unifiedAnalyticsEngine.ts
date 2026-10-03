@@ -104,6 +104,12 @@ function sumPortfolioFlows(flows: MWRRCashFlow[]): number {
   return flows.reduce((sum, flow) => sum + portfolioFlow(flow), 0);
 }
 
+function sumCapitalFlows(flows: MWRRCashFlow[]): number {
+  return flows
+    .filter((flow) => flow.type === 'DEPOSIT' || flow.type === 'WITHDRAWAL')
+    .reduce((sum, flow) => sum + portfolioFlow(flow), 0);
+}
+
 function selectValuationWindow(
   valuations: PortfolioValuationPoint[],
   window: AnalyticsWindow,
@@ -252,7 +258,7 @@ function buildPoints(
   let equityPeak = initialBaseline ?? anchor.equity;
 
   return valuations.map((point, index) => {
-    const netDeposits = sumPortfolioFlows(
+    const netDeposits = sumCapitalFlows(
       allExternalFlows.filter((flow) => flowOnOrBefore(flow, point.date)),
     );
 

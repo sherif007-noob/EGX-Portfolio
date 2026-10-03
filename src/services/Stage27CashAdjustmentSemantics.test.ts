@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { TradeTransaction } from '../types';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
+import { parseSheetRows, TRANSACTION_LOGGER_HEADERS } from './googleSheets';
 import {
   buildExternalCashFlows,
   buildHistoricalEquityCurve,
@@ -104,6 +105,44 @@ describe('Stage 2.7 explicit cash-flow semantics', () => {
 
     const report = reconcilePortfolioFromLedger([legacy], [], 1000);
     expect(report.reconciledCashBalance).toBe(925);
+  });
+
+  it('round-trips reconciliation semantics through the Google Sheets ledger schema', () => {
+    expect(TRANSACTION_LOGGER_HEADERS).toContain('Cash Flow Type');
+    expect(TRANSACTION_LOGGER_HEADERS).toContain('Cash Flow Amount');
+
+    const row = TRANSACTION_LOGGER_HEADERS.map((header) => {
+      switch (header) {
+        case 'Trade ID': return '1';
+        case 'Date': return '2026-04-01';
+        case 'Action': return 'SELL';
+        case 'Ticker': return 'CASH';
+        case 'Company Name': return 'Cash Reconciliation Adjustment';
+        case 'Shares': return '75';
+        case 'Price / Share': return '1';
+        case 'Gross Trade Value': return '75';
+        case 'Brokerage Fee': return '0';
+        case 'Net Cash Impact': return '-75';
+        case 'Cash Flow Type': return 'RECONCILIATION_ADJUSTMENT';
+        case 'Cash Flow Amount': return '-75';
+        case 'Strategy / Notes': return 'Broker statement correction';
+        default: return '';
+      }
+    });
+
+    const parsed = parseSheetRows(
+      [TRANSACTION_LOGGER_HEADERS, row],
+      'Transaction Logger',
+    );
+
+    expect(parsed.transactions).toHaveLength(1);
+    expect(parsed.transactions[0]).toMatchObject({
+      type: 'SELL',
+      ticker: 'CASH',
+      cashFlowType: 'RECONCILIATION_ADJUSTMENT',
+      cashFlowAmount: -75,
+      netCashImpact: -75,
+    });
   });
 
   it('prevents new runtime writers from emitting the legacy ambiguous type', () => {

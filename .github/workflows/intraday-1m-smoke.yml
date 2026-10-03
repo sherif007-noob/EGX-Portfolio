@@ -22,9 +22,11 @@ on:
 permissions:
   contents: read
 
+# This workflow writes production intraday bars, so it must serialize with
+# the scheduled 1m writer and the manual legacy 5m repair.
 concurrency:
-  group: egx-intraday-1m-smoke
-  cancel-in-progress: true
+  group: egx-intraday-market-data
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -56,8 +58,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Upgrade npm
+        run: npm install --global npm@11.6.0
+
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck
         run: npm run lint

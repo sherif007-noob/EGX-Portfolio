@@ -257,13 +257,19 @@ export function buildExternalCashFlows(
     })
     .filter((flow): flow is MWRRCashFlow => !!flow);
 
-  if (flows.length > 0) return flows;
+  const hasExplicitInvestorCapitalFlow = flows.some(
+    (flow) => flow.type === 'DEPOSIT' || flow.type === 'WITHDRAWAL',
+  );
+  if (hasExplicitInvestorCapitalFlow) return flows;
 
   const legacyOpeningCapital = Number.isFinite(openingCapital) && openingCapital > 0 ? openingCapital : 0;
   const fallbackDate = dayKey(openingDate || ordered[0]?.date || '');
-  return legacyOpeningCapital > 0 && fallbackDate
-    ? [{ date: fallbackDate, amount: -legacyOpeningCapital, type: 'DEPOSIT' }]
-    : [];
+  if (legacyOpeningCapital <= 0 || !fallbackDate) return flows;
+
+  return [
+    { date: fallbackDate, amount: -legacyOpeningCapital, type: 'DEPOSIT' as const },
+    ...flows,
+  ].sort((a, b) => dateMs(a.date) - dateMs(b.date));
 }
 
 function xnpv(rate: number, flows: MWRRCashFlow[]): number {

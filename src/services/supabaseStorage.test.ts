@@ -51,6 +51,53 @@ describe('ledger storage mutations', () => {
     stop();
   });
 
+  it('rebases an accounting write on the latest remote quote instead of rolling a fresher device backward', async () => {
+    remote.tickers = [{
+      ticker: 'TEST',
+      lastPrice: 11,
+      priceUpdatedAt: '2026-01-02T10:00:00Z',
+    } as any];
+    remote.positions = [{
+      id: 'pos-test',
+      ticker: 'TEST',
+      companyName: 'Test',
+      sector: 'Other',
+      shares: 10,
+      avgBuyPrice: 10,
+      currentPrice: 11,
+      buyDate: '2026-01-01',
+      totalFees: 1,
+      priceUpdatedAt: '2026-01-02T10:00:00Z',
+    }];
+
+    const staleLocal = await storage.loadPortfolioFromFirestore();
+    expect(staleLocal?.positions[0].currentPrice).toBe(11);
+
+    remote.tickers = [{
+      ticker: 'TEST',
+      lastPrice: 15,
+      priceUpdatedAt: '2026-01-02T11:00:00Z',
+    } as any];
+    remote.positions = [{
+      ...remote.positions[0],
+      currentPrice: 15,
+      priceUpdatedAt: '2026-01-02T11:00:00Z',
+    }];
+    remote.updatedAt = '2026-01-02T11:00:00Z';
+
+    const edited = {
+      ...buy(),
+      notes: 'accounting edit from stale device',
+    };
+    expect(await storage.updateFirestoreTransactions([edited])).toBe(true);
+
+    expect(remote.transactions[0].notes).toBe('accounting edit from stale device');
+    expect(remote.tickers?.[0].lastPrice).toBe(15);
+    expect(remote.tickers?.[0].priceUpdatedAt).toBe('2026-01-02T11:00:00Z');
+    expect(remote.positions[0].currentPrice).toBe(15);
+    expect(remote.positions[0].priceUpdatedAt).toBe('2026-01-02T11:00:00Z');
+  });
+
   it('persists same-ID date and note edits even when all balances are unchanged', async () => {
     await storage.loadPortfolioFromFirestore();
     const edited = { ...buy(), date: '2026-01-03', notes: 'Corrected execution' };

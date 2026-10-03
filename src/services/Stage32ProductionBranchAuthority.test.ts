@@ -52,6 +52,11 @@ describe('Stage 3.2 default production branch authority', () => {
     expect(audit).not.toContain('feature/premium-ui-redesign');
   });
 
+  it('keeps contributor and security policy anchored on main', () => {
+    expect(read('CONTRIBUTING.md')).toContain('branch from current `main`');
+    expect(read('SECURITY.md')).toContain('current `main` branch');
+  });
+
   it('keeps Cloudflare Worker and migrations in the same repository production tree', () => {
     expect(read('wrangler.jsonc')).toContain('"main": "worker.ts"');
     expect(read('worker.ts')).toContain('/api/');

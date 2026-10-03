@@ -101,6 +101,34 @@ describe('secondary analytics', () => {
     const analytics = buildSecondaryAnalytics(transactions, {}, {}, result);
     expect(analytics.summary.feesInPeriodEgp).toBe(3);
   });
+
+  it('includes performance cash events in realized P&L but excludes capital and reconciliation flows', () => {
+    const transactions: TradeTransaction[] = [
+      tx({
+        id: 'dividend', type: 'BUY', ticker: 'CASH', shares: 10, price: 1, totalAmount: 10,
+        cashFlowType: 'DIVIDEND', cashFlowAmount: 10, date: '2026-01-02',
+      }),
+      tx({
+        id: 'income', type: 'BUY', ticker: 'CASH', shares: 5, price: 1, totalAmount: 5,
+        cashFlowType: 'OTHER_INCOME', cashFlowAmount: 5, date: '2026-01-02',
+      }),
+      tx({
+        id: 'expense', type: 'SELL', ticker: 'CASH', shares: 4, price: 1, totalAmount: 4,
+        cashFlowType: 'OTHER_EXPENSE', cashFlowAmount: 4, date: '2026-01-02',
+      }),
+      tx({
+        id: 'recon', type: 'BUY', ticker: 'CASH', shares: 100, price: 1, totalAmount: 100,
+        cashFlowType: 'RECONCILIATION_ADJUSTMENT', cashFlowAmount: 100, date: '2026-01-02',
+      }),
+      tx({
+        id: 'deposit-2', type: 'BUY', ticker: 'CASH', shares: 50, price: 1, totalAmount: 50,
+        cashFlowType: 'DEPOSIT', cashFlowAmount: 50, date: '2026-01-02',
+      }),
+    ];
+
+    const analytics = buildSecondaryAnalytics(transactions, {}, {}, result);
+    expect(analytics.summary.realizedPnlEgp).toBe(11);
+  });
 });
 
 it('uses the primary live endpoint market value rather than stale intraday closes', () => {

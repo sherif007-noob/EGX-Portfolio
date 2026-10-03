@@ -124,6 +124,34 @@ describe('Stage 2.7 explicit cash-flow semantics', () => {
     );
   });
 
+  it('normalizes expense-like cash events to SELL-shaped ledger rows', () => {
+    const fee = normalizeTransaction({
+      id: 'fee-import',
+      type: 'FEE',
+      amount: 12,
+      date: '2026-03-01',
+    });
+    const expense = normalizeTransaction({
+      id: 'expense-import',
+      type: 'OTHER_EXPENSE',
+      amount: 20,
+      date: '2026-03-02',
+    });
+
+    expect(fee).toMatchObject({
+      type: 'SELL',
+      ticker: 'CASH',
+      cashFlowType: 'FEE',
+      cashFlowAmount: 12,
+    });
+    expect(expense).toMatchObject({
+      type: 'SELL',
+      ticker: 'CASH',
+      cashFlowType: 'OTHER_EXPENSE',
+      cashFlowAmount: 20,
+    });
+  });
+
   it('keeps OTHER_INCOME and OTHER_EXPENSE out of external investor flows', () => {
     const flows = buildExternalCashFlows([
       cashTx('income-only', 'OTHER_INCOME', 250, '2026-02-01'),

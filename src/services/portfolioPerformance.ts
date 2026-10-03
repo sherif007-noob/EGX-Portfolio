@@ -1,20 +1,52 @@
 import { ClosedTrade, Position, TradeTransaction } from '../types';
 import { ACCOUNTING_EPSILON, calculatePortfolioValue, calculatePositionUnrealizedPnl } from './portfolioAccounting';
+import { cashFlowPerformancePnl, cashFlowReturnNeutralPortfolioFlow, cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from './cashFlowSemantics';
 
 export interface EquityBridge {
   netCapitalContributed: number;
+  tradingRealizedPnl: number;
+  cashPerformancePnl: number;
   realizedPnl: number;
   unrealizedPnl: number;
+  reconciliationAdjustments: number;
   endingEquity: number;
   reconciliationDelta: number;
 }
 
-export function calculateEquityBridge(netCapitalContributed: number, closedTrades: ClosedTrade[], positions: Position[], cashBalance: number): EquityBridge {
+export function calculateEquityBridge(
+  netCapitalContributed: number,
+  closedTrades: ClosedTrade[],
+  positions: Position[],
+  cashBalance: number,
+  transactions: TradeTransaction[] = [],
+): EquityBridge {
   const capital = Number.isFinite(netCapitalContributed) ? netCapitalContributed : 0;
-  const realizedPnl = closedTrades.reduce((sum, trade) => sum + (Number.isFinite(trade.realizedPnlEgp) ? trade.realizedPnlEgp : 0), 0);
+  const tradingRealizedPnl = closedTrades.reduce(
+    (sum, trade) => sum + (Number.isFinite(trade.realizedPnlEgp) ? trade.realizedPnlEgp : 0),
+    0,
+  );
+  const cashPerformancePnl = transactions
+    .filter((tx) => normalizePerformanceTicker(tx.ticker) === 'CASH')
+    .reduce((sum, tx) => sum + cashFlowPerformancePnl(tx.cashFlowType, tx.cashFlowAmount ?? tx.totalAmount), 0);
+  const reconciliationAdjustments = transactions
+    .filter((tx) => normalizePerformanceTicker(tx.ticker) === 'CASH' && isReconciliationCashFlowType(tx.cashFlowType))
+    .reduce((sum, tx) => sum + (cashFlowSignedImpact(tx.cashFlowType, tx.cashFlowAmount ?? tx.totalAmount) ?? 0), 0);
+  const realizedPnl = tradingRealizedPnl + cashPerformancePnl;
   const unrealizedPnl = positions.reduce((sum, position) => sum + calculatePositionUnrealizedPnl(position), 0);
   const endingEquity = calculatePortfolioValue(cashBalance, positions);
-  return { netCapitalContributed: capital, realizedPnl, unrealizedPnl, endingEquity, reconciliationDelta: endingEquity - (capital + realizedPnl + unrealizedPnl) };
+  const reconciliationDelta = endingEquity - (
+    capital + realizedPnl + unrealizedPnl + reconciliationAdjustments
+  );
+  return {
+    netCapitalContributed: capital,
+    tradingRealizedPnl,
+    cashPerformancePnl,
+    realizedPnl,
+    unrealizedPnl,
+    reconciliationAdjustments,
+    endingEquity,
+    reconciliationDelta,
+  };
 }
 
 export function isEquityBridgeBalanced(bridge: EquityBridge, tolerance = 0.01): boolean {
@@ -68,7 +100,7 @@ export interface PortfolioValuationPoint {
   missingTickers?: string[];
 }
 
-export interface MWRRCashFlow { date: string; amount: number; type?: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE'; }
+export interface MWRRCashFlow { date: string; amount: number; type?: 'DEPOSIT' | 'WITHDRAWAL' | 'RECONCILIATION_ADJUSTMENT'; }
 export interface MWRRPoint extends PortfolioValuationPoint { mwrrPercent: number | null; }
 export interface PerformanceSnapshot extends MWRRPoint {
   externalCashFlow: number;
@@ -82,8 +114,8 @@ export interface PerformanceSnapshot extends MWRRPoint {
 function dayKey(date: string): string { return String(date || '').slice(0, 10); }
 function dateMs(date: string): number { const n = new Date(date).getTime(); return Number.isFinite(n) ? n : NaN; }
 function normalizePerformanceTicker(ticker: string): string { return String(ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''); }
-function cashFlowKind(tx: TradeTransaction): string | undefined {
-  return typeof tx.cashFlowType === 'string' ? tx.cashFlowType.trim().toUpperCase() : undefined;
+function cashFlowKind(tx: TradeTransaction) {
+  return normalizeCashFlowType(tx.cashFlowType);
 }
 function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
   return transactions.some((tx) => {
@@ -155,11 +187,14 @@ export function buildHistoricalEquityCurve(
       const ticker = normalizePerformanceTicker(tx.ticker);
       if (ticker === 'CASH') {
         const kind = cashFlowKind(tx);
-        const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
-        if (!Number.isFinite(amount)) continue;
-        if (kind === 'DIVIDEND' || kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) cash += amount;
-        else if (kind === 'FEE' || kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) cash -= amount;
-        else if (kind === 'CASH_ADJUSTMENT') cash += Number(tx.cashFlowAmount ?? tx.totalAmount);
+        if (kind) {
+          const impact = cashFlowSignedImpact(kind, tx.cashFlowAmount ?? tx.totalAmount);
+          if (impact !== null) cash += impact;
+        } else {
+          const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
+          if (!Number.isFinite(amount)) continue;
+          cash += tx.type === 'BUY' ? amount : -amount;
+        }
         continue;
       }
       const gross = Number.isFinite(tx.grossTradeValue) ? Number(tx.grossTradeValue) : tx.shares * tx.price;
@@ -198,10 +233,26 @@ export function buildExternalCashFlows(
     .filter((tx) => normalizePerformanceTicker(tx.ticker) === 'CASH')
     .map((tx) => {
       const rawType = cashFlowKind(tx);
+      if (rawType) {
+        const portfolioFlow = cashFlowReturnNeutralPortfolioFlow(
+          rawType,
+          tx.cashFlowAmount ?? tx.totalAmount,
+        );
+        if (!Number.isFinite(portfolioFlow) || Math.abs(portfolioFlow) <= ACCOUNTING_EPSILON) return null;
+        if (!isCapitalCashFlowType(rawType) && !isReconciliationCashFlowType(rawType)) return null;
+        const type = isReconciliationCashFlowType(rawType)
+          ? 'RECONCILIATION_ADJUSTMENT'
+          : rawType;
+        return {
+          date: tx.executedAt || tx.date,
+          amount: -portfolioFlow,
+          type,
+        } as MWRRCashFlow;
+      }
+
       const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
       if (!Number.isFinite(amount) || amount === 0) return null;
-      if (rawType === 'DIVIDEND' || rawType === 'FEE' || rawType === 'CASH_ADJUSTMENT') return null;
-      const type = rawType === 'WITHDRAWAL' || (!rawType && tx.type === 'SELL') ? 'WITHDRAWAL' : 'DEPOSIT';
+      const type = tx.type === 'SELL' ? 'WITHDRAWAL' : 'DEPOSIT';
       return { date: tx.executedAt || tx.date, amount: type === 'DEPOSIT' ? -amount : amount, type } as MWRRCashFlow;
     })
     .filter((flow): flow is MWRRCashFlow => !!flow);

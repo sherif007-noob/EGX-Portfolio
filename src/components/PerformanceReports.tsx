@@ -93,7 +93,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
     closedTrades,
     positions,
     cashBalance,
-  ), [capitalDeposits, closedTrades, positions, cashBalance]);
+    transactions,
+  ), [capitalDeposits, closedTrades, positions, cashBalance, transactions]);
 
   const sectorData = useMemo(() => {
     const map: Record<string, { value: number; count: number }> = {};
@@ -165,6 +166,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
       { name: 'Net Capital Contributed', delta: performanceBridge.netCapitalContributed, total: true },
       { name: 'Realized P&L', delta: performanceBridge.realizedPnl, total: false },
       { name: 'Unrealized P&L', delta: performanceBridge.unrealizedPnl, total: false },
+      ...(Math.abs(performanceBridge.reconciliationAdjustments) >= 0.005
+        ? [{ name: 'Bookkeeping Reconciliation', delta: performanceBridge.reconciliationAdjustments, total: false }]
+        : []),
       { name: 'Ending Equity / NAV', delta: performanceBridge.endingEquity, total: true },
     ];
     let level = 0;

@@ -3,6 +3,7 @@ import { Position, ClosedTrade, TradeTransaction, EGXTicker, Sector } from '../t
 import { INITIAL_CAPITAL_DEPOSITS } from '../data/initialPortfolio';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact, calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
+import { normalizeCashFlowType } from './cashFlowSemantics';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];
@@ -70,8 +71,8 @@ export function sortTransactions(transactions: TradeTransaction[]): TradeTransac
   });
 }
 
-function cashFlowKind(tx: TradeTransaction): string | undefined {
-  return typeof tx.cashFlowType === 'string' ? tx.cashFlowType.trim().toUpperCase() : undefined;
+function cashFlowKind(tx: TradeTransaction) {
+  return normalizeCashFlowType(tx.cashFlowType);
 }
 
 /**
@@ -92,8 +93,8 @@ export function reconcilePortfolioFromLedger(
   const openingCapital = Number.isFinite(totalCapitalDeposited) && totalCapitalDeposited >= 0 ? totalCapitalDeposited : 0;
 
   // Explicit contributed-capital events replace the legacy implicit opening-capital
-  // model. Dividends, fees, and CASH_ADJUSTMENT modify cash without redefining
-  // contributed capital, so they must preserve the opening-capital baseline.
+  // model. Performance cash events and reconciliation adjustments modify cash
+  // without redefining contributed capital, so they preserve the opening baseline.
   const hasExternalCashFlow = chronologicalTxs.some((tx) => {
     const kind = cashFlowKind(tx);
     const ticker = tx.ticker.trim().toUpperCase();
@@ -152,9 +153,9 @@ export function reconcilePortfolioFromLedger(
     const tickerKey = tx.ticker.trim().toUpperCase();
     const kind = cashFlowKind(tx);
 
-    if (kind === 'CASH_ADJUSTMENT') {
+    if (kind === 'RECONCILIATION_ADJUSTMENT') {
       const amount = Number(tx.cashFlowAmount ?? tx.totalAmount);
-      if (!Number.isFinite(amount)) discrepancies.push(`CASH_ADJUSTMENT ${tx.id} has an invalid amount.`);
+      if (!Number.isFinite(amount)) discrepancies.push(`RECONCILIATION_ADJUSTMENT ${tx.id} has an invalid amount.`);
       else runningCash += amount;
       continue;
     }
@@ -174,16 +175,16 @@ export function reconcilePortfolioFromLedger(
       continue;
     }
 
-    if (kind === 'DIVIDEND') {
+    if (kind === 'DIVIDEND' || kind === 'OTHER_INCOME') {
       const amount = Number(tx.cashFlowAmount ?? tx.totalAmount);
-      if (!Number.isFinite(amount) || amount < 0) discrepancies.push(`DIVIDEND ${tx.id} has an invalid amount.`);
+      if (!Number.isFinite(amount) || amount < 0) discrepancies.push(`${kind} ${tx.id} has an invalid amount.`);
       else runningCash += amount;
       continue;
     }
 
-    if (kind === 'FEE') {
+    if (kind === 'FEE' || kind === 'OTHER_EXPENSE') {
       const amount = Number(tx.cashFlowAmount ?? tx.totalAmount ?? tx.fees);
-      if (!Number.isFinite(amount) || amount < 0) discrepancies.push(`FEE ${tx.id} has an invalid amount.`);
+      if (!Number.isFinite(amount) || amount < 0) discrepancies.push(`${kind} ${tx.id} has an invalid amount.`);
       else runningCash -= amount;
       continue;
     }

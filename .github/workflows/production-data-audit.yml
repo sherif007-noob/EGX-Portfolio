@@ -5,9 +5,17 @@ on:
   schedule:
     - cron: '0 14 * * 0-4'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-production-data-audit
+  cancel-in-progress: true
+
 jobs:
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,17 +29,20 @@ jobs:
             exit 1
           fi
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 22
+
+      - name: Upgrade npm
+        run: npm install --global npm@11.6.0
 
       - name: Install locked dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci --no-audit --no-fund
 
       - name: Audit production portfolio data
         env:
           SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
-        run: bun run verify:production-data
+        run: npm run verify:production-data

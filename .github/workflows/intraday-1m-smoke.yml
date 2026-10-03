@@ -3,7 +3,7 @@ name: Intraday 1m Migration Smoke
 on:
   push:
     branches:
-      - feature/premium-ui-redesign
+      - main
     paths:
       - '.github/workflows/intraday-1m-smoke.yml'
       - 'scripts/syncIntradayOneMinute.ts'

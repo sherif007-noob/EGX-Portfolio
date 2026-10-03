@@ -880,32 +880,81 @@ Deferred intentionally to Pass 3.3:
 
 ---
 
-## Pass 3.3 — Automation normalization
+## Pass 3.3 — Automation normalization — COMPLETE / CI GREEN
 
-Current premium workflow facts:
+Automation now follows one production contract.
 
-- raw 1m sync: `*/5 7-13 * * 0-4`, Cairo-gated through 15:15;
-- ticker registry: `15 13 * * 0-4`;
-- production audit: `0 14 * * 0-4`;
-- historical repair: `17 12-22 * * *`;
-- legacy direct 5m workflow is manual-only.
+### Canonical toolchain
 
-Required cleanup:
+All production workflows use:
 
-- retire any default-branch legacy scheduled 15m producer;
-- confirm one shared intraday writer concurrency policy;
-- standardize dependency installation.
+- Node **22**;
+- npm **11.6.0**;
+- committed `package-lock.json`;
+- `npm ci --no-audit --no-fund`.
 
-### Known workflow inconsistency
+The previous Bun-only production-audit path is removed.
 
-The premium branch removed `bun.lock` and declares npm as the package manager, but `production-data-audit.yml` still runs:
+### Intraday writer ownership
+
+Every workflow that persists intraday bars shares:
 
 ```text
-bun install --frozen-lockfile
-bun run verify:production-data
+group: egx-intraday-market-data
+cancel-in-progress: false
 ```
 
-Convert that workflow to the canonical npm/Node toolchain or deliberately restore/own a Bun lockfile. Do not leave it ambiguous.
+This includes:
+
+- scheduled raw 1m / derived 5m sync;
+- production-writing 1m migration smoke;
+- manual legacy direct 5m repair.
+
+The diagnostic workflow does not join the writer lock because it does not persist bars.
+
+### Legacy producer containment
+
+`.github/workflows/intraday-prices.yml` is manual-only:
+
+- `workflow_dispatch` only;
+- no schedule;
+- no push trigger.
+
+Only `.github/workflows/intraday-1m-sync.yml` is a scheduled intraday bar writer.
+
+### Regression guard
+
+Added:
+
+- `src/services/Stage33AutomationNormalization.test.ts`.
+
+It guards:
+
+- Node/npm/lockfile ownership;
+- removal of Bun workflow commands;
+- shared writer concurrency;
+- manual-only legacy 5m repair;
+- exactly one scheduled intraday writer;
+- read-only production-audit permissions and canonical npm command.
+
+Validated runtime:
+
+- `main@15f47190`;
+- PR #39 Quality Checks **#37149643306** passed;
+- main Quality Checks **#37149729081** passed;
+- Intraday 1m Diagnostic **#37149729036** passed;
+- Intraday 1m Migration Smoke **#37149729061** passed;
+- EGX Ticker Registry **#37149729046** passed;
+- Phase 10 Visual Closure **#37149729005** passed;
+- **93 / 93 test files, 527 / 527 tests**;
+- production build and Worker dry-run green;
+- **12 / 12** geometries at 0px overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37149729076** passed.
+
+The live read-only production-data audit itself is intentionally part of Pass 3.4's final exact-head candidate gate.
+
+**Next: Pass 3.4 — exact-head quality gate.**
 
 ---
 

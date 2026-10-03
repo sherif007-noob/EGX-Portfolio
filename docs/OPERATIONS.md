@@ -121,7 +121,7 @@ Current gate:
 
 1. Node 22;
 2. npm 11.6;
-3. install;
+3. locked install with `npm ci`;
 4. TypeScript;
 5. Vitest;
 6. production build.
@@ -138,7 +138,7 @@ Primary workflow:
 .github/workflows/intraday-1m-sync.yml
 ```
 
-Current Premium cron:
+Current production cron:
 
 ```text
 */5 7-13 * * 0-4
@@ -188,9 +188,18 @@ Only use non-pruning/full-repair options deliberately.
 .github/workflows/intraday-prices.yml
 ```
 
-is manual-only in the Premium design.
+is manual-only in the production design.
 
 Do not reintroduce it as a competing scheduled 5m producer while 5m is derived from raw 1m.
+
+All workflows that actually persist intraday bars serialize through:
+
+```text
+group: egx-intraday-market-data
+cancel-in-progress: false
+```
+
+This includes the scheduled 1m writer, the production-writing 1m migration smoke, and this manual legacy 5m repair. Diagnostics do not use the writer lock because they do not persist bars.
 
 Manual:
 
@@ -206,7 +215,7 @@ Workflow:
 .github/workflows/historical-prices.yml
 ```
 
-Current Premium schedule:
+Current production schedule:
 
 ```text
 17 12-22 * * *
@@ -272,11 +281,18 @@ npm run verify:production-data
 
 The audit is intended to be read-only.
 
-### Known toolchain inconsistency
+### Canonical audit toolchain
 
-The Premium branch uses npm and no longer carries the prior Bun lockfile, but this workflow currently still invokes Bun with `--frozen-lockfile`.
+The production audit uses the same repository toolchain as the rest of automation:
 
-Treat normalization of this workflow as part of the production-convergence stage before declaring the branch CI-clean.
+```text
+Node 22
+npm 11.6.0
+npm ci --no-audit --no-fund
+npm run verify:production-data
+```
+
+The workflow is read-only, has `contents: read`, and uses its own non-overlapping audit concurrency group. The former Bun path has been removed.
 
 ## Scheduled-workflow branch rule
 

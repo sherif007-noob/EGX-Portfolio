@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-03  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `00afd739` — Stage 3.2 default production branch authority  
-**Current full exact-head verification:** Phase 10 Visual Closure #37131157044 on `00afd739`  
+**Current validated runtime head:** `15f47190` — Stage 3.3 automation normalization  
+**Current full exact-head verification:** Phase 10 Visual Closure #37149729005 on `15f47190`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -59,10 +59,11 @@ Stage 3 completed:
 
 - **Stage 3.1 — Reviewed branch divergence reconciliation**
 - **Stage 3.2 — Default production branch authority**
+- **Stage 3.3 — Automation normalization**
 
 Next:
 
-1. **Stage 3.3 — Automation normalization**
+1. **Stage 3.4 — Exact-head quality gate**
 
 ---
 
@@ -868,6 +869,39 @@ Stage 3.2 deliberately does **not** normalize the Bun-based production audit or 
 
 ---
 
+### Stage 3.3 automation normalization
+
+Production automation now has one explicit toolchain and one intraday-writer serialization policy.
+
+Implemented through PR **#39**, merged as `15f47190`:
+
+- production audit migrated from Bun to **Node 22 + npm 11.6 + npm ci**;
+- all production workflows now install from the committed `package-lock.json` using `npm ci --no-audit --no-fund`;
+- scheduled raw 1m ingestion, production-writing 1m migration smoke, and manual legacy 5m repair all share:
+  - `group: egx-intraday-market-data`;
+  - `cancel-in-progress: false`;
+- legacy direct 5m repair remains **workflow_dispatch-only** with no schedule or push trigger;
+- only the raw 1m workflow is a scheduled intraday bar writer;
+- `Stage33AutomationNormalization.test.ts` guards the toolchain, writer lock, manual-only legacy path and read-only audit contract.
+
+Validation on `main@15f47190`:
+
+- PR Quality Checks **#37149643306 — passed**;
+- main Quality Checks **#37149729081 — passed**;
+- Intraday 1m Diagnostic **#37149729036 — passed**;
+- Intraday 1m Migration Smoke **#37149729061 — passed**;
+- EGX Ticker Registry **#37149729046 — passed**;
+- Phase 10 Visual Closure **#37149729005 — passed**;
+- **93 / 93 Vitest files, 527 / 527 tests**;
+- production build and Worker dry-run passed;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37149729076 — passed**.
+
+The production-data audit workflow configuration is normalized in this pass. Executing the read-only audit against the final production candidate remains an explicit Stage 3.4 exact-head gate rather than being silently conflated with the automation refactor.
+
+---
+
 ## Analytics state
 
 Strong/current foundation:
@@ -967,6 +1001,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 3.3 — Automation normalization.**
+**Stage 3.4 — Exact-head quality gate.**
 
-Retire/contain legacy automation, unify the intraday writer concurrency contract, and normalize the remaining Bun-based production audit onto the repository's canonical npm/Node toolchain.
+Run the complete production-candidate gate on one exact head: locked clean install, TypeScript, full Vitest, Vite/PWA build, Worker dry-run, focused intraday and ticker-registry regressions, read-only production-data audit, and repository diff hygiene.

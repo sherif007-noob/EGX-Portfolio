@@ -5,6 +5,7 @@ import { normalizeIntradayTicker } from './intradayPriceStore';
 import { sortPerformanceTransactions } from './portfolioPerformance';
 import type { UnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
 import { calculateSellAccounting } from './portfolioAccounting';
+import { cashFlowPerformancePnl } from './cashFlowSemantics';
 
 const EPSILON = 1e-8;
 
@@ -65,7 +66,13 @@ function applyTrade(
   states: Map<string, OpenCostState>,
 ): number {
   const ticker = normalizeIntradayTicker(tx.ticker);
-  if (!ticker || ticker === 'CASH') return 0;
+  if (!ticker) return 0;
+  if (ticker === 'CASH') {
+    return cashFlowPerformancePnl(
+      tx.cashFlowType,
+      tx.cashFlowAmount ?? tx.totalAmount,
+    );
+  }
 
   const shares = Number(tx.shares);
   const price = Number(tx.price);

@@ -64,6 +64,6 @@ describe('Stage 2.5 canonical trade cash effect', () => {
   it('keeps cash discrepancies explicit rather than as hidden trade modes', () => {
     const workflow = readRelative('./ledgerWorkflowMutations.ts');
 
-    expect(workflow).toContain("'CASH_ADJUSTMENT'");
+    expect(workflow).toContain("'RECONCILIATION_ADJUSTMENT'");
   });
 });

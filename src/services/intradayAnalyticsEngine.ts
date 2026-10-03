@@ -5,6 +5,7 @@ import { cairoDateKey, normalizeIntradayTicker } from './intradayPriceStore';
 import { resolveAnalyticsWindow } from './analyticsTimeframes';
 import { egxCairoSessionClock } from './egxTradingSession';
 import { INTRADAY_POLICY } from './intradayPolicy';
+import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
 import {
   buildExternalCashFlows,
   sortPerformanceTransactions,
@@ -28,8 +29,8 @@ function parseMs(value: string | undefined): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-function cashFlowKind(tx: TradeTransaction): string | undefined {
-  return typeof tx.cashFlowType === 'string' ? tx.cashFlowType.trim().toUpperCase() : undefined;
+function cashFlowKind(tx: TradeTransaction) {
+  return normalizeCashFlowType(tx.cashFlowType);
 }
 
 function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
@@ -45,16 +46,13 @@ function transactionCashImpact(tx: TradeTransaction): number {
 
   if (ticker === 'CASH') {
     const kind = cashFlowKind(tx);
-    if (kind === 'CASH_ADJUSTMENT') {
-      const signed = Number(tx.cashFlowAmount ?? tx.totalAmount);
-      return Number.isFinite(signed) ? signed : 0;
+    if (kind) {
+      return cashFlowSignedImpact(kind, tx.cashFlowAmount ?? tx.totalAmount) ?? 0;
     }
 
     const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
     if (!Number.isFinite(amount)) return 0;
-    if (kind === 'DIVIDEND' || kind === 'DEPOSIT' || (!kind && tx.type === 'BUY')) return amount;
-    if (kind === 'FEE' || kind === 'WITHDRAWAL' || (!kind && tx.type === 'SELL')) return -amount;
-    return 0;
+    return tx.type === 'BUY' ? amount : -amount;
   }
 
   const shares = Number(tx.shares);

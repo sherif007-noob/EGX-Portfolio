@@ -504,7 +504,7 @@ export function usePortfolioState() {
   ), [executePreparedMutation]);
 
   const commitCashEvent = useCallback((
-    kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT',
+    kind: 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'FEE' | 'OTHER_INCOME' | 'OTHER_EXPENSE' | 'RECONCILIATION_ADJUSTMENT',
     amount: number,
     notes?: string,
     date?: string,
@@ -515,7 +515,7 @@ export function usePortfolioState() {
 
   const addCashTransaction = useCallback(async (
     amount: number,
-    type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND',
+    type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND' | 'FEE' | 'OTHER_INCOME' | 'OTHER_EXPENSE',
     notes?: string,
     date?: string,
   ): Promise<boolean> => {
@@ -583,7 +583,7 @@ export function usePortfolioState() {
 
   const updateCashBalance = useCallback(async (newCash: number): Promise<boolean> => {
     const result = await executePreparedMutation(
-      'CASH_ADJUSTMENT',
+      'RECONCILIATION_ADJUSTMENT',
       (current) => prepareCashBalanceAdjustmentMutation(current, newCash),
     );
     if ('error' in result) {

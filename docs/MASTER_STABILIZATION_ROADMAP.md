@@ -727,31 +727,57 @@ Validated runtime:
 
 ---
 
-## Pass 2.8 — Financial acceptance suite
+## Pass 2.8 — Financial acceptance suite — COMPLETE / CI GREEN
 
-Add scenario tests for:
+Stage 2.8 closes Stage 2 with cross-workflow acceptance coverage rather than adding a second accounting implementation.
+
+Implemented:
+
+- `src/services/Stage28FinancialAcceptance.test.ts`;
+- stale-device accounting-write quote safety coverage in `src/services/supabaseStorage.test.ts`.
+
+Acceptance scenarios now cover:
 
 - multiple DCA buys;
 - proportional partial sells;
 - repeated partial sells;
 - full close and reopen;
-- correction after partial sell;
-- failed write at every mutation type;
-- duplicate execution import;
-- deposit/withdrawal during a selected performance period;
-- dividends;
-- fees;
-- reconciliation adjustment;
-- same-day round trip;
-- cross-device stale quote/write interaction.
+- source BUY correction after partial sell;
+- failed authoritative persistence across every Stage 2 mutation family;
+- duplicate OCR execution import;
+- dated deposit/withdrawal inside the selected performance period;
+- dividends and fees as portfolio performance;
+- reconciliation adjustment as return-neutral bookkeeping;
+- deterministic same-day round trip ordering;
+- stale-device accounting write rebased on the latest remote quote;
+- Stage 2 source-contract guards for persist-before-apply, projection ownership, canonical cost basis and hidden cash-mode removal.
 
-### Stage 2 exit gate
+### Stage 2 exit gate — CLOSED
 
-- every financial mutation is persistence-confirmed;
-- Position is projection-only for accounting;
-- one cost-basis method is canonical;
+Verified:
+
+- every financial mutation is persistence-confirmed before local apply;
+- Position / Closed Cycle are projection-only for accounting;
+- `WEIGHTED_AVERAGE_PROPORTIONAL` is the canonical cost-basis method;
 - hidden cash modes are gone;
-- failure never leaves the UI claiming unpersisted money/shares.
+- persistence failure leaves previous local financial state intact;
+- capital/performance/reconciliation cash semantics stay distinct;
+- accepted visual behavior remains frozen.
+
+Validated runtime:
+
+- `70ad1148`;
+- Phase 10 Visual Closure **#37121788769**;
+- TypeScript passed;
+- **90 / 90 test files, 513 / 513 tests**;
+- production build and Worker dry-run green;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37121788757** passed.
+
+**Stage 2 is complete.**
+
+**Next: Pass 3.1 — reconcile branch divergence.**
 
 ---
 

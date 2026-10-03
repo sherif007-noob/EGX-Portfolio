@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-03  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `899bb4fa` — Stage 2.7 explicit cash-flow semantics / return-neutral reconciliation  
-**Current full exact-head verification:** Phase 10 Visual Closure #37099343374 on `899bb4fa`  
+**Current validated runtime head:** `70ad1148` — Stage 2.8 financial acceptance suite / Stage 2 exit closure  
+**Current full exact-head verification:** Phase 10 Visual Closure #37121788769 on `70ad1148`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -50,10 +50,13 @@ Completed:
 - **Stage 2.5 — Hidden trade cash-mode removal**
 - **Stage 2.6 — Canonical weighted-average / proportional cost-basis freeze**
 - **Stage 2.7 — Explicit cash-flow semantics / return-neutral reconciliation**
+- **Stage 2.8 — Financial acceptance suite / Stage 2 exit closure**
+
+**Stage 2 is CLOSED / CI CLEAN.**
 
 Next:
 
-1. **Stage 2.8 — Financial acceptance suite**
+1. **Stage 3.1 — Reconcile branch divergence**
 
 ---
 
@@ -629,20 +632,77 @@ Rendered differences remain at the accepted baseline:
 
 ---
 
+### Stage 2.8 financial acceptance suite / Stage 2 closure
+
+Stage 2.8 is the cross-workflow exit gate for the financial architecture established in Stages 2.1–2.7.
+
+Primary acceptance coverage is in:
+
+- `src/services/Stage28FinancialAcceptance.test.ts`;
+- supporting stale-device persistence coverage in `src/services/supabaseStorage.test.ts`.
+
+The suite now exercises:
+
+- multiple DCA BUYs;
+- weighted-average / proportional partial SELL allocation;
+- repeated partial SELLs;
+- full close and later reopen as a new cycle;
+- source BUY correction after a partial SELL, including recomputed realized and remaining cost;
+- duplicate OCR execution rejection while allowing a distinct execution in the same import;
+- dated deposit/withdrawal behavior inside a performance period;
+- dividend and fee performance treatment;
+- return-neutral reconciliation adjustments;
+- exact same-day round trips ordered by execution timestamp;
+- authoritative-persistence failure across BUY, SELL, edit, delete, cash event/edit/reconciliation, OCR, restore, snapshot restore and ledger reconciliation;
+- stale-device accounting edits rebased on the latest remote quote;
+- source-level Stage 2 exit guards for persist-before-apply, canonical cost basis, projection ownership and removal of hidden cash modes.
+
+### Stage 2 exit gate — CLOSED
+
+The following are now enforced and acceptance-tested:
+
+- every financial mutation is persistence-confirmed before local financial state is applied;
+- Position and Closed Cycle remain derived accounting projections;
+- `WEIGHTED_AVERAGE_PROPORTIONAL` is the single cost-basis method;
+- hidden BUY/SELL cash modes are absent;
+- persistence failure leaves the prior local money/share state untouched;
+- cash semantics distinguish investor capital, portfolio performance and bookkeeping repair;
+- stale quote interaction does not override fresher remote quote state in the tested accounting-write path.
+
+Exact-head validation on runtime `70ad1148`:
+
+- **Phase 10 Visual Closure #37121788769** — passed;
+- TypeScript — passed;
+- **90 / 90 Vitest files, 513 / 513 tests** — passed;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometries at 0px page overflow** — passed;
+- **16 / 16 rendered states** — passed;
+- **Rendered Visual Regression #37121788757** — passed.
+
+Rendered differences remain at the accepted frozen baseline:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+---
+
 ## Highest-priority post-visual work
 
 ### Completed — Stage 2 financial mutation/accounting foundation
 
-Stages 2.1–2.7 now enforce:
+Stages 2.1–2.8 now enforce:
 
 - persistence-confirmed financial mutations;
 - ledger-authoritative transaction/cash/OCR/import/reconciliation workflows;
 - Position and Closed Cycle correction through source ledger executions rather than destructive projection deletion;
 - mandatory broker cash effect for BUY/SELL;
 - one weighted-average / proportional remaining-cost method across reconciliation, Sheets reconstruction, secondary analytics and Closed Cycles reporting;
-- explicit separation of investor capital flows, portfolio income/expense, and return-neutral bookkeeping reconciliation.
+- explicit separation of investor capital flows, portfolio income/expense, and return-neutral bookkeeping reconciliation;
+- cross-workflow acceptance coverage proving the full Stage 2 contract under DCA, repeated partial exits, correction, import, persistence failure, dated cash flows, same-day execution and stale-device quote interaction.
 
-Stage 2.8 is the remaining Stage 2 exit pass: the cross-workflow financial acceptance suite.
+Stage 2 is closed. The roadmap now moves to production/CI/market-data convergence in Stage 3.
 
 ### P0 — branch/automation convergence
 
@@ -802,6 +862,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.8 — Financial acceptance suite.**
+**Stage 3.1 — Reconcile branch divergence.**
 
-The next pass exercises the complete Stage 2 accounting contract across DCA, repeated partial exits, close/reopen, failed writes, duplicate imports, dated capital flows, dividends/fees, reconciliation corrections, same-day round trips and stale cross-device interactions.
+Review the main-only commits against `feature/premium-ui-redesign` individually, classify each as required/superseded/conflicting/obsolete, and produce one reviewed integration result rather than blind-merging branch history.

@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics. Current validated runtime head: `899bb4fa`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics; Stage 2.8 closed the stage with cross-workflow financial acceptance coverage. Current validated runtime head: `70ad1148`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -19,7 +19,9 @@ Current adoption sequence:
 5. **2.5 — hidden trade cash-mode removal — complete**
 6. **2.6 — canonical cost-basis freeze — complete**
 7. **2.7 — cash-adjustment semantics — complete**
-8. **2.8 — financial acceptance suite — next**
+8. **2.8 — financial acceptance suite — complete**
+
+**Stage 2 — complete / CI green**
 
 ---
 
@@ -1014,6 +1016,87 @@ Passed:
 - 16 / 16 rendered states.
 
 **Rendered Visual Regression #37099343371** also passed on the same exact runtime head.
+
+---
+
+## Stage 2.8 — financial acceptance and exit contract
+
+Stage 2.8 validates the combined behavior of the Stage 2 architecture rather than introducing another financial path.
+
+### Acceptance coverage
+
+`src/services/Stage28FinancialAcceptance.test.ts` covers:
+
+- DCA through repeated partial exits;
+- proportional remaining cost and fee ownership;
+- full close and reopen;
+- correction of a source BUY after partial realization;
+- duplicate OCR suppression;
+- deposit/withdrawal, dividend, fee and reconciliation semantics in performance;
+- exact same-day round trips;
+- persistence failure across the full mutation family;
+- canonical Stage 2 source guards;
+- fresh quote precedence during accounting reconstruction.
+
+`src/services/supabaseStorage.test.ts` additionally verifies that a stale device performing an accounting edit reloads the latest remote quote before persisting the canonical snapshot.
+
+### Persistence failure acceptance
+
+For every tested mutation family:
+
+```text
+prepare succeeds
+validation succeeds
+authoritative persist fails
+→ apply is not called
+→ persisted = false
+→ previous local snapshot remains unchanged
+```
+
+The matrix includes:
+
+- BUY;
+- SELL;
+- transaction edit;
+- transaction delete;
+- cash event;
+- cash-entry edit;
+- cash reconciliation;
+- ledger reconciliation;
+- OCR batch;
+- portfolio restore;
+- snapshot restore.
+
+### Stage 2 exit contract
+
+The stage is closed only while all of these remain true:
+
+1. financial mutation order is prepare → validate → persist → apply;
+2. Position / Closed Cycle cannot independently own accounting truth;
+3. the single cost-basis method is `WEIGHTED_AVERAGE_PROPORTIONAL`;
+4. BUY/SELL cannot bypass broker-cash impact with hidden toggles;
+5. capital, performance cash and bookkeeping reconciliation are distinct;
+6. persistence failure cannot leave the UI claiming unpersisted money or shares;
+7. stale quote interaction cannot roll a fresher remote quote backward in the tested storage mutation path.
+
+### Stage 2.8 validation
+
+Exact-head verification on `70ad1148`:
+
+**Phase 10 Visual Closure #37121788769**
+
+Passed:
+
+- TypeScript;
+- **90 / 90 Vitest files, 513 / 513 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states.
+
+**Rendered Visual Regression #37121788757** also passed on the same exact runtime head.
+
+Stage 2 is complete. Further accounting changes must preserve this contract or deliberately reopen the relevant stage invariant.
 
 ---
 

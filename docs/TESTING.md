@@ -34,7 +34,7 @@ Covers rebuilding positions, cash, and closed cycles from transactions.
 
 `src/services/cashLedger.test.ts`
 
-Covers deposit/withdrawal/dividend/cash-adjustment events plus editing/deletion of cash history.
+Covers capital cash events, performance cash events, reconciliation adjustments, and editing/deletion of cash history.
 
 ### Persistence/storage
 
@@ -59,6 +59,39 @@ Covers equity bridges and fee-aware portfolio performance math.
 `src/utils/portfolioMetrics.test.ts`
 
 Covers summary metrics such as denominators used for day-change calculations.
+
+## Stage 2 financial acceptance suite
+
+Stage 2's exit suite is:
+
+- `src/services/Stage28FinancialAcceptance.test.ts`.
+
+It chains the financial subsystems together and covers:
+
+- DCA + repeated proportional partial sells;
+- full close/reopen cycle boundaries;
+- correction after partial realization;
+- duplicate OCR execution suppression;
+- dated deposit/withdrawal performance behavior;
+- dividend/fee/reconciliation semantics;
+- same-day round trips;
+- persistence failure across all Stage 2 mutation families;
+- stale quote precedence during accounting reconstruction;
+- source guards for persist-before-apply, projection ownership, canonical cost basis and hidden cash-mode removal.
+
+`src/services/supabaseStorage.test.ts` adds the cross-device case where a stale local view performs an accounting edit after a newer remote quote arrives; the persisted canonical state must retain the newer quote.
+
+Stage 2 final exact-head validation on `70ad1148`:
+
+- Phase 10 Visual Closure **#37121788769**;
+- **90 / 90 Vitest files, 513 / 513 tests**;
+- production build passed;
+- Worker dry-run passed;
+- 12 / 12 responsive geometries had 0px overflow;
+- 16 / 16 rendered states passed;
+- Rendered Visual Regression **#37121788757** passed.
+
+---
 
 ## Intraday migration regression suite
 

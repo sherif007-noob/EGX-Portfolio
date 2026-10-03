@@ -588,14 +588,17 @@ export function reconstructPortfolioFromTransactions(
       );
       const dictionary = EGX_STOCK_DICTIONARY[ticker];
       const livePrice = Number(livePrices[ticker]);
-      const currentPrice = Number.isFinite(livePrice) && livePrice > 0
-        ? livePrice
-        : baseline?.lastPrice || sourceTransaction.price || 0;
+      // Preserve the previous Sheets reconstruction quote contract: use an
+      // explicitly supplied live quote, otherwise let reconciliation fall back
+      // to the reconstructed weighted-average entry price. Do not inject a
+      // static directory quote as if it were live.
+      const currentPrice = Number.isFinite(livePrice) && livePrice > 0 ? livePrice : 0;
 
       if (baseline) {
         return {
           ...baseline,
           lastPrice: currentPrice,
+          priceUpdatedAt: undefined,
         };
       }
 

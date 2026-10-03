@@ -564,9 +564,10 @@ export function findHeaderRowIndex(rows: string[][]): number {
 }
 
 /**
- * Reconstructs accurate Active Positions and Closed Trades from a raw transaction ledger (e.g. from Transaction logger tab).
- * Uses chronological lot matching to compute accurate DCA average buy costs and realized P&L.
- * Consolidates closed cycles (15 cycles) and calculates open positions (3 active holdings).
+ * Reconstructs Active Positions and Closed Trades from a raw transaction ledger
+ * through the same weighted-average/proportional reconciliation engine used by
+ * normal portfolio accounting. Google Sheets is an import surface, not a second
+ * cost-basis engine.
  */
 export function reconstructPortfolioFromTransactions(
   transactions: TradeTransaction[],

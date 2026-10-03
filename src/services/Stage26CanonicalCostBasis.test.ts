@@ -121,6 +121,16 @@ describe('Stage 2.6 canonical cost-basis contract', () => {
     expect(sheets).not.toContain('estimatedUnitCost = tx.price');
   });
 
+  it('reuses canonical sell allocation in secondary analytics instead of cloning the formula', () => {
+    const analytics = readRelative('./secondaryAnalytics.ts');
+
+    expect(analytics).toContain('calculateSellAccounting(');
+    expect(analytics).toContain('accounting.allocatedGrossCost');
+    expect(analytics).toContain('accounting.allocatedBuyFees');
+    expect(analytics).not.toContain('const allocatedGrossCost = state.grossCost * ratio');
+    expect(analytics).not.toContain('const allocatedBuyFees = state.buyFees * ratio');
+  });
+
   it('keeps Closed Cycles source phases for traceability without re-pricing realized cost', () => {
     const view = readRelative('../components/ClosedCyclesView.tsx');
 

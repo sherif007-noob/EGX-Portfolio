@@ -1,5 +1,5 @@
 import type {
-  CashFlowType,
+  CanonicalCashFlowType,
   CashTransaction,
   ClosedTrade,
   EGXTicker,
@@ -113,7 +113,7 @@ export function prepareTransactionDeleteMutation(
 
 export function prepareCashEventMutation(
   current: Readonly<CanonicalLedgerSnapshot>,
-  kind: Extract<CashFlowType, 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'CASH_ADJUSTMENT'>,
+  kind: CanonicalCashFlowType,
   amount: number,
   notes?: string,
   date?: string,
@@ -185,7 +185,7 @@ export function prepareCashBalanceAdjustmentMutation(
   }
   return prepareCashEventMutation(
     current,
-    'CASH_ADJUSTMENT',
+    'RECONCILIATION_ADJUSTMENT',
     delta,
     'Manual cash balance adjustment',
   );

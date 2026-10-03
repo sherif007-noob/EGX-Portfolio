@@ -65,22 +65,35 @@ NPV(cash flows, rate) = 0
 
 The chart can calculate a money-weighted return at each historical valuation date.
 
-### External investor flows
+### External investor flows and return-neutral bookkeeping flows
 
-Examples of external flows:
+True investor capital flows are:
 
-- deposits;
-- withdrawals.
+- `DEPOSIT`;
+- `WITHDRAWAL`.
 
-Internal portfolio activity is not an external investor flow:
+They are the only cash events counted in contributed capital and the chart's `netDeposits` series.
 
-- stock purchases;
-- stock sales;
-- dividends;
-- fees;
-- cash adjustments used to correct internal bookkeeping.
+Internal portfolio performance remains performance rather than investor flow:
 
-Legacy portfolios that began with a capital balance but do not contain explicit deposit rows may use a synthetic analytical opening deposit. This is for performance math only and must not be persisted as a new financial transaction.
+- stock purchases/sales;
+- `DIVIDEND`;
+- `OTHER_INCOME`;
+- `FEE`;
+- `OTHER_EXPENSE`.
+
+`RECONCILIATION_ADJUSTMENT` is a third class. It changes recorded cash to repair bookkeeping, so return math must neutralize its mechanical equity jump. TWR/MWRR therefore include its signed effect as a return-neutral portfolio flow, while `netDeposits` and contributed capital exclude it.
+
+This distinction prevents both failure modes:
+
+```text
+bookkeeping repair ≠ investment performance
+bookkeeping repair ≠ investor contribution
+```
+
+Legacy `CASH_ADJUSTMENT` is normalized to `RECONCILIATION_ADJUSTMENT`.
+
+Legacy portfolios that began with a capital balance but do not contain explicit deposit/withdrawal rows may use a synthetic analytical opening deposit. A reconciliation row does not suppress that synthetic opening-capital fallback. The synthetic flow is for performance math only and must not be persisted as a new financial transaction.
 
 ## Drawdown
 

@@ -10,8 +10,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 **Date:** 2026-10-03  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `c12e7404` — Stage 2.6 canonical weighted-average / proportional cost-basis freeze  
-**Current full exact-head verification:** Phase 10 Visual Closure #37096359624 on `c12e7404`  
+**Current validated runtime head:** `899bb4fa` — Stage 2.7 explicit cash-flow semantics / return-neutral reconciliation  
+**Current full exact-head verification:** Phase 10 Visual Closure #37099343374 on `899bb4fa`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -49,10 +49,11 @@ Completed:
 - **Stage 2.4 — Derived Position / Closed Cycle projection ownership**
 - **Stage 2.5 — Hidden trade cash-mode removal**
 - **Stage 2.6 — Canonical weighted-average / proportional cost-basis freeze**
+- **Stage 2.7 — Explicit cash-flow semantics / return-neutral reconciliation**
 
 Next:
 
-1. **Stage 2.7 — Clarify cash-adjustment semantics**
+1. **Stage 2.8 — Financial acceptance suite**
 
 ---
 
@@ -571,19 +572,77 @@ Rendered differences remain at the already accepted visual baseline:
 
 ---
 
+### Stage 2.7 explicit cash-flow semantics
+
+The ambiguous generic cash-adjustment model is retired from new runtime writes.
+
+Canonical cash events are now separated into three economic classes:
+
+```text
+investor capital:
+  DEPOSIT
+  WITHDRAWAL
+
+portfolio performance:
+  DIVIDEND
+  FEE
+  OTHER_INCOME
+  OTHER_EXPENSE
+
+bookkeeping / return-neutral:
+  RECONCILIATION_ADJUSTMENT
+```
+
+Legacy `CASH_ADJUSTMENT` remains read-compatible only. Normalization maps it to `RECONCILIATION_ADJUSTMENT`, while normal runtime writers no longer emit the legacy value.
+
+Accounting and analytics now agree on the consequences:
+
+- only deposits/withdrawals change contributed capital;
+- dividends/income/fees/expenses remain portfolio performance;
+- reconciliation adjustments change ledger cash but do not become investment P&L;
+- TWR/MWRR neutralize reconciliation corrections without counting them as net deposits;
+- the equity bridge shows known bookkeeping reconciliation separately instead of labeling it unexplained performance or accounting error;
+- secondary realized-P&L analytics include performance cash events;
+- Today/intraday replay uses the same signed cash semantics;
+- synthetic opening capital remains available for legacy portfolios even if a reconciliation adjustment is the first explicit cash row.
+
+Google Sheets transaction-ledger round-trip now preserves `Cash Flow Type` and `Cash Flow Amount`. Existing older logger headers are extended when the app writes the ledger, and CASH rows no longer receive fake stock running-share/cycle metadata.
+
+Regression coverage is centered in `src/services/Stage27CashAdjustmentSemantics.test.ts`, with supporting tests in performance, analytics, cash-ledger and storage suites.
+
+Exact-head validation on runtime `899bb4fa`:
+
+- **Phase 10 Visual Closure #37099343374** — passed;
+- TypeScript — passed;
+- **89 / 89 Vitest files, 504 / 504 tests** — passed;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometries at 0px page overflow** — passed;
+- **16 / 16 rendered states** — passed;
+- **Rendered Visual Regression #37099343371** — passed.
+
+Rendered differences remain at the accepted baseline:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+---
+
 ## Highest-priority post-visual work
 
 ### Completed — Stage 2 financial mutation/accounting foundation
 
-Stages 2.1–2.6 now enforce:
+Stages 2.1–2.7 now enforce:
 
 - persistence-confirmed financial mutations;
 - ledger-authoritative transaction/cash/OCR/import/reconciliation workflows;
 - Position and Closed Cycle correction through source ledger executions rather than destructive projection deletion;
 - mandatory broker cash effect for BUY/SELL;
-- one weighted-average / proportional remaining-cost method across reconciliation, Sheets reconstruction, secondary analytics and Closed Cycles reporting.
+- one weighted-average / proportional remaining-cost method across reconciliation, Sheets reconstruction, secondary analytics and Closed Cycles reporting;
+- explicit separation of investor capital flows, portfolio income/expense, and return-neutral bookkeeping reconciliation.
 
-Remaining Stage 2 work begins with cash-adjustment semantics in Stage 2.7, then the broader financial acceptance suite in Stage 2.8.
+Stage 2.8 is the remaining Stage 2 exit pass: the cross-workflow financial acceptance suite.
 
 ### P0 — branch/automation convergence
 
@@ -743,6 +802,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.7 — Clarify cash-adjustment semantics.**
+**Stage 2.8 — Financial acceptance suite.**
 
-The next pass splits generic `CASH_ADJUSTMENT` meaning so bookkeeping reconciliation, portfolio income/expense, fees, dividends and true external contributions cannot be conflated in performance or capital-flow logic.
+The next pass exercises the complete Stage 2 accounting contract across DCA, repeated partial exits, close/reopen, failed writes, duplicate imports, dated capital flows, dividends/fees, reconciliation corrections, same-day round trips and stale cross-device interactions.

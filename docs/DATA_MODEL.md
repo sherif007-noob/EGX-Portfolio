@@ -69,12 +69,29 @@ Important fields include:
 - holding period;
 - position reference.
 
-Cash events also live in the ledger by using ticker `CASH` and a `cash_flow_type` such as:
+Cash events also live in the ledger by using ticker `CASH`.
 
-- `DEPOSIT`
-- `WITHDRAWAL`
-- `DIVIDEND`
-- `CASH_ADJUSTMENT`
+Canonical `cash_flow_type` values are:
+
+- `DEPOSIT` — external capital in;
+- `WITHDRAWAL` — external capital out;
+- `DIVIDEND` — portfolio income;
+- `FEE` — portfolio expense;
+- `OTHER_INCOME` — non-trade portfolio income;
+- `OTHER_EXPENSE` — non-trade portfolio expense;
+- `RECONCILIATION_ADJUSTMENT` — signed bookkeeping correction that is return-neutral and does not alter contributed capital.
+
+Legacy `CASH_ADJUSTMENT` rows remain readable, but normalization converts them to `RECONCILIATION_ADJUSTMENT`. New runtime writes must not create the legacy type.
+
+Economic classes are intentionally separate:
+
+```text
+contributed capital = DEPOSIT / WITHDRAWAL only
+cash performance    = DIVIDEND / FEE / OTHER_INCOME / OTHER_EXPENSE
+book repair         = RECONCILIATION_ADJUSTMENT
+```
+
+For Google Sheets ledger round-trip, `Cash Flow Type` and `Cash Flow Amount` are persisted as explicit Transaction Logger columns.
 
 ### positions
 

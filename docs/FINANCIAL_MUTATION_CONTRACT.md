@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost as the canonical cost-basis method. Current validated runtime head: `c12e7404`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics. Current validated runtime head: `899bb4fa`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -18,8 +18,8 @@ Current adoption sequence:
 4. **2.4 — derived Position / Closed Cycle deletion ownership — complete**
 5. **2.5 — hidden trade cash-mode removal — complete**
 6. **2.6 — canonical cost-basis freeze — complete**
-7. **2.7 — cash-adjustment semantics — next**
-8. later Stage 2 passes remove remaining accounting ambiguities
+7. **2.7 — cash-adjustment semantics — complete**
+8. **2.8 — financial acceptance suite — next**
 
 ---
 
@@ -905,6 +905,115 @@ Passed:
 - 16 / 16 rendered states.
 
 **Rendered Visual Regression #37096359625** also passed on the same runtime head.
+
+---
+
+## Stage 2.7 — explicit cash-flow semantics
+
+Stage 2.7 defines the economic meaning of every non-trade cash row before it enters reconciliation or performance math.
+
+### Canonical taxonomy
+
+```text
+DEPOSIT                    external investor capital in
+WITHDRAWAL                 external investor capital out
+
+DIVIDEND                   portfolio performance income
+OTHER_INCOME               portfolio performance income
+FEE                        portfolio performance expense
+OTHER_EXPENSE              portfolio performance expense
+
+RECONCILIATION_ADJUSTMENT  bookkeeping correction, return-neutral
+```
+
+`CASH_ADJUSTMENT` is a legacy compatibility alias only.
+
+Normalization converts:
+
+```text
+CASH_ADJUSTMENT → RECONCILIATION_ADJUSTMENT
+```
+
+No normal runtime writer is allowed to emit the legacy ambiguous type.
+
+### Capital rule
+
+Only `DEPOSIT` and `WITHDRAWAL` redefine contributed capital.
+
+Dividends, fees, other income/expense and reconciliation corrections change cash without changing contributed capital.
+
+### Performance rule
+
+Cash performance is:
+
+```text
++ DIVIDEND
++ OTHER_INCOME
+- FEE
+- OTHER_EXPENSE
+```
+
+This cash performance is included in realized performance composition and in the equity bridge.
+
+A bookkeeping reconciliation is not performance.
+
+### Return-neutral reconciliation rule
+
+A reconciliation correction changes ledger equity mechanically. To prevent that book repair from being interpreted as return, TWR/MWRR treat its signed amount as a return-neutral portfolio flow.
+
+That does **not** make it investor capital:
+
+- return calculations neutralize it;
+- `netDeposits` excludes it;
+- contributed capital excludes it;
+- equity bridge reports it separately as bookkeeping reconciliation.
+
+Legacy synthetic opening capital remains synthesized when required even if reconciliation rows already exist.
+
+### Import and direction rule
+
+Cash-row BUY/SELL shape is derived from signed economic impact:
+
+- positive cash event → BUY-shaped CASH row;
+- negative cash event → SELL-shaped CASH row.
+
+For reconciliation imports, signed amount precedence is:
+
+1. explicit `cashFlowAmount`;
+2. signed generic `amount`;
+3. BUY/SELL direction applied to absolute total amount.
+
+### Google Sheets rule
+
+The Transaction Logger now preserves:
+
+- `Cash Flow Type`;
+- `Cash Flow Amount`.
+
+Old logger sheets that lack those columns are extended when the app writes to them.
+
+Import remains tolerant of older rows with no semantic columns. New semantic rows round-trip without degrading into ordinary trades.
+
+### Stage 2.7 validation
+
+Primary regression file:
+
+- `src/services/Stage27CashAdjustmentSemantics.test.ts`.
+
+Exact-head verification on `899bb4fa`:
+
+**Phase 10 Visual Closure #37099343374**
+
+Passed:
+
+- TypeScript;
+- **89 / 89 Vitest files, 504 / 504 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states.
+
+**Rendered Visual Regression #37099343371** also passed on the same exact runtime head.
 
 ---
 

@@ -662,22 +662,68 @@ No FIFO helper remains in an accounting/import path for remaining-cost ownership
 
 ---
 
-## Pass 2.7 — Clarify cash-adjustment semantics
+## Pass 2.7 — Clarify cash-adjustment semantics — COMPLETE / CI GREEN
 
-Current `CASH_ADJUSTMENT` can represent conceptually different events.
+Stage 2.7 replaces one ambiguous cash-adjustment meaning with an explicit semantic taxonomy.
 
-Split semantics so performance calculations can distinguish:
+Canonical classes:
 
-- reconciliation/bookkeeping correction;
-- other portfolio income;
-- other portfolio expense;
-- explicit fee;
-- dividend;
-- external deposit/withdrawal.
+```text
+capital:
+  DEPOSIT
+  WITHDRAWAL
 
-A reconciliation correction should repair state without pretending investment performance occurred.
+performance:
+  DIVIDEND
+  FEE
+  OTHER_INCOME
+  OTHER_EXPENSE
 
-Migration/backward-compatibility rules must be explicit.
+bookkeeping / return-neutral:
+  RECONCILIATION_ADJUSTMENT
+```
+
+Implemented:
+
+- added `cashFlowSemantics.ts` as the normalization/sign/classification authority;
+- changed new manual cash-balance correction writes to `RECONCILIATION_ADJUSTMENT`;
+- retained `CASH_ADJUSTMENT` as read-only backward compatibility and normalize it to the canonical reconciliation type;
+- limited contributed-capital changes to DEPOSIT/WITHDRAWAL;
+- kept dividends, fees and other income/expense inside portfolio performance;
+- neutralized reconciliation adjustments in TWR/MWRR without adding them to `netDeposits`;
+- separated trading realized P&L, cash performance P&L and bookkeeping reconciliation in the equity bridge;
+- added cash performance to secondary realized-P&L replay;
+- applied the same semantics to Today/intraday reconstruction;
+- preserved synthetic opening capital when reconciliation is the only explicit neutral cash flow;
+- normalized imported cash rows to BUY/SELL direction according to semantic signed impact;
+- preserved signed legacy reconciliation imports;
+- extended Google Sheets Transaction Logger with `Cash Flow Type` / `Cash Flow Amount` and made old headers upgrade on write;
+- made Cash Ledger audit copy acknowledge full canonical ledger replay when extended cash semantics exist.
+
+Regression coverage includes:
+
+- capital/performance/reconciliation separation;
+- legacy `CASH_ADJUSTMENT` migration;
+- signed reconciliation import;
+- OTHER_INCOME / OTHER_EXPENSE / FEE direction;
+- return-neutral reconciliation with capital-only net deposits;
+- legacy opening-capital + reconciliation interaction;
+- secondary realized-P&L composition;
+- Sheets semantic round-trip;
+- source guard preventing new normal runtime writers from emitting legacy `CASH_ADJUSTMENT`.
+
+Validated runtime:
+
+- `899bb4fa`;
+- Phase 10 Visual Closure **#37099343374**;
+- TypeScript passed;
+- **89 / 89 test files, 504 / 504 tests**;
+- production build and Worker dry-run green;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37099343371** passed.
+
+**Next: Pass 2.8 — financial acceptance suite.**
 
 ---
 

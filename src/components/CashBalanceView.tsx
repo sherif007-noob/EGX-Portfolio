@@ -170,6 +170,17 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     );
   }, [tradeTransactions, capitalDeposits, positions]);
   const auditedLiquidCash = ledgerAudit?.reconciledCashBalance ?? cashBalance;
+  const hasExtendedCashSemantics = useMemo(
+    () => tradeTransactions.some((tx) => [
+      'DIVIDEND',
+      'FEE',
+      'OTHER_INCOME',
+      'OTHER_EXPENSE',
+      'RECONCILIATION_ADJUSTMENT',
+      'CASH_ADJUSTMENT',
+    ].includes(String(tx.cashFlowType || '').trim().toUpperCase())),
+    [tradeTransactions],
+  );
 
   // 5. Audited Portfolio Equity (NAV)
   const auditedPortfolioNav = auditedLiquidCash + totalOpenPositionsMarketValue;
@@ -433,7 +444,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 )}
               </h3>
               <p className="premium-type-helper mt-0.5">
-                Exact mathematical breakdown of account cash from your deposits, open positions cost outlays, and realized trade gains.
+                {hasExtendedCashSemantics
+                  ? 'Canonical ledger replay including capital flows, trades, income, expenses, fees, dividends, and bookkeeping reconciliation.'
+                  : 'Exact mathematical breakdown of account cash from your deposits, open positions cost outlays, and realized trade gains.'}
               </p>
             </div>
           </div>
@@ -488,7 +501,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
             </span>
             <div className="premium-type-metric premium-type-metric-dense font-mono text-emerald-400">{formatEgp(auditedLiquidCash)} <span className="premium-type-unit">EGP</span></div>
             <span className="premium-type-metadata block text-emerald-500/80">
-              (1) - (2) + (3)
+              {hasExtendedCashSemantics ? 'Canonical ledger replay' : '(1) - (2) + (3)'}
             </span>
           </div>
 
@@ -514,7 +527,15 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   Cash Balance Variance: {formatEgp(Math.abs(cashDiscrepancy))} EGP
                 </span>
                 <p className="premium-type-helper mt-0.5 text-amber-200/80">
-                  Recorded cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Net capital deposited ({formatEgp(netCapitalDeposited)} EGP) minus active holdings cost ({formatEgp(totalOpenPositionsCost)} EGP) plus realized gains ({totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP) indicates true liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
+                  {hasExtendedCashSemantics ? (
+                    <>
+                      Recorded cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Canonical ledger replay, including non-trade cash events and bookkeeping reconciliation, produces <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
+                    </>
+                  ) : (
+                    <>
+                      Recorded cash is <strong>{formatEgp(cashBalance)} EGP</strong>. Net capital deposited ({formatEgp(netCapitalDeposited)} EGP) minus active holdings cost ({formatEgp(totalOpenPositionsCost)} EGP) plus realized gains ({totalRealizedPnl >= 0 ? '+' : ''}{formatEgp(totalRealizedPnl)} EGP) indicates true liquid cash is <strong>{formatEgp(auditedLiquidCash)} EGP</strong>.
+                    </>
+                  )}
                 </p>
               </div>
             </div>

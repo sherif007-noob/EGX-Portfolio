@@ -42,7 +42,7 @@ jobs:
         run: npm install --global npm@11.6.0
 
       - name: Install application dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Install pinned Playwright runtime
         run: |

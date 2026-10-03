@@ -25,6 +25,7 @@ import { prepareOcrBatchMutation } from './ocrLedgerMutations';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import { buildUnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
 import { calculateEquityBridge, isEquityBridgeBalanced } from './portfolioPerformance';
+import { CANONICAL_COST_BASIS_METHOD } from './portfolioAccounting';
 
 const readRelative = (relative: string) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
@@ -549,6 +550,48 @@ describe('Stage 2.8 financial acceptance suite', () => {
       expect(apply).not.toHaveBeenCalled();
       expect(testCase.current).toEqual(before);
     }
+  });
+
+  it('locks the complete Stage 2 exit contract at the runtime boundaries', () => {
+    expect(CANONICAL_COST_BASIS_METHOD).toBe('WEIGHTED_AVERAGE_PROPORTIONAL');
+
+    const executor = readRelative('./ledgerMutationService.ts');
+    const hooks = readRelative('../hooks/usePortfolioState.ts');
+    const app = readRelative('../App.tsx');
+    const workflow = readRelative('./ledgerWorkflowMutations.ts');
+
+    expect(executor.indexOf('persisted = await persist(candidate.snapshot)'))
+      .toBeLessThan(executor.indexOf('request.apply(candidate.snapshot, candidate.value)'));
+
+    expect(hooks).toContain('createLedgerMutationExecutor');
+    for (const preparation of [
+      'prepareBuyTradeMutation',
+      'prepareSellTradeMutation',
+      'prepareTransactionEditMutation',
+      'prepareTransactionDeleteMutation',
+      'prepareCashEventMutation',
+      'prepareCashEntryMutation',
+      'prepareCashBalanceAdjustmentMutation',
+      'prepareOcrBatchMutation',
+      'preparePortfolioRestoreMutation',
+      'prepareLedgerSnapshotRestoreMutation',
+      'prepareLedgerReconciliationMutation',
+    ]) {
+      expect(hooks).toContain(preparation);
+    }
+
+    const tradeRuntime = [
+      hooks,
+      readRelative('../components/AddTradeModal.tsx'),
+      readRelative('./tradeLedgerMutations.ts'),
+    ].join('\n');
+    expect(tradeRuntime).not.toContain('deductFromCash');
+    expect(tradeRuntime).not.toContain('addToCash');
+    expect(tradeRuntime).not.toContain('setDeductFromCash');
+
+    expect(app).toContain('getActivePositionLedgerTransactionIds');
+    expect(app).toContain('getClosedCycleLedgerTransactionIds');
+    expect(workflow).toContain("'RECONCILIATION_ADJUSTMENT'");
   });
 
   it('keeps fresher remote quote precedence protected during accounting writes', () => {

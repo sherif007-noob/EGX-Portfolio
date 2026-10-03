@@ -468,12 +468,10 @@ describe('Stage 2.8 financial acceptance suite', () => {
           current,
           cashRow.id,
           {
-            id: cashRow.id,
             type: 'WITHDRAWAL',
             amount: 50,
             date: '2026-05-04',
             notes: 'must not apply',
-            balanceAfter: 0,
           },
         ),
       },

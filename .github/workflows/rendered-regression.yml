@@ -5,7 +5,7 @@ name: Rendered Visual Regression
 on:
   push:
     branches:
-      - feature/premium-ui-redesign
+      - main
     paths:
       - 'src/**'
       - 'scripts/renderedRegression.mjs'

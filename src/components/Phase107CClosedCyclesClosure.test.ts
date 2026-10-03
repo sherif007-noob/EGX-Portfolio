@@ -158,7 +158,7 @@ describe('Phase 10.7C Closed Cycles closure', () => {
     expect(cycles).toContain('hasClosedCycles && hasActiveFilters');
   });
 
-  it('does not reopen accounting, material, chart, or Header ownership', () => {
+  it('keeps visual, material, chart, and Header ownership while using canonical cycle economics', () => {
     const cycles = readRelative('./ClosedCyclesView.tsx');
     const css = readRelative('../index.css');
     const contract = readRelative('../../docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md');
@@ -167,7 +167,8 @@ describe('Phase 10.7C Closed Cycles closure', () => {
 
     expect(cycles).toContain('calculatePerformanceStats(enrichedCycles)');
     expect(cycles).toContain('grossSellProceeds - totalSellFees');
-    expect(cycles).toContain('grossBuyCost + totalBuyFees');
+    expect(cycles).toContain('const weightedAvgBuyPrice = ct.buyPrice;');
+    expect(cycles).toContain('netProceeds - ct.realizedPnlEgp');
     expect(css).not.toContain('Phase 10.7C');
     expect(contract).toContain('Hierarchy classes must never redefine material');
     expect(chart).toContain('weeklyLineInterpolator');

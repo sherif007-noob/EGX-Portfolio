@@ -3,7 +3,7 @@ name: EGX Ticker Registry
 on:
   push:
     branches:
-      - feature/premium-ui-redesign
+      - main
     paths:
       - '.github/workflows/ticker-registry.yml'
       - 'scripts/syncTickerRegistry.ts'

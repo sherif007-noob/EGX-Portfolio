@@ -73,6 +73,36 @@ describe('unified analytics engine', () => {
     expect(result.summary.mwrrPercent).not.toBeCloseTo(result.summary.twrPercent ?? 0, 2);
   });
 
+  it('neutralizes reconciliation corrections without counting them as net deposits', () => {
+    const transactions: TradeTransaction[] = [
+      cash('dep', '2026-01-01', 1000, 'DEPOSIT'),
+      {
+        id: 'recon',
+        type: 'BUY',
+        ticker: 'CASH',
+        companyName: 'Cash',
+        sector: 'Liquid Buying Power',
+        shares: 100,
+        price: 1,
+        date: '2026-01-02',
+        fees: 0,
+        totalAmount: 100,
+        cashFlowType: 'RECONCILIATION_ADJUSTMENT',
+        cashFlowAmount: 100,
+      },
+    ];
+
+    const result = buildUnifiedAnalyticsResult(transactions, {}, 'ALL', {
+      latestSessionDate: '2026-01-02',
+    });
+
+    expect(result.points.at(-1)?.equity).toBe(1100);
+    expect(result.points.at(-1)?.netDeposits).toBe(1000);
+    expect(result.summary.netExternalFlow).toBe(100);
+    expect(result.summary.pnlEgp).toBe(0);
+    expect(result.summary.twrPercent).toBeCloseTo(0, 8);
+  });
+
   it('includes first trading-day performance when legacy opening capital is the inception baseline', () => {
     const transactions = [
       buy('buy-1', '2026-09-02', 10, 50),

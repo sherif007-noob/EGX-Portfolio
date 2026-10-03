@@ -8,10 +8,10 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-10-02  
+**Date:** 2026-10-03  
 **Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `208aa5e9` — Stage 2.5 canonical trade cash effect / validation alignment  
-**Current full exact-head verification:** Phase 10 Visual Closure #37048999587 on `208aa5e9`  
+**Current validated runtime head:** `c12e7404` — Stage 2.6 canonical weighted-average / proportional cost-basis freeze  
+**Current full exact-head verification:** Phase 10 Visual Closure #37096359624 on `c12e7404`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -48,10 +48,11 @@ Completed:
 - **Stage 2.3 — Transaction/cash/OCR/import/reconciliation workflow migration**
 - **Stage 2.4 — Derived Position / Closed Cycle projection ownership**
 - **Stage 2.5 — Hidden trade cash-mode removal**
+- **Stage 2.6 — Canonical weighted-average / proportional cost-basis freeze**
 
 Next:
 
-1. **Stage 2.6 — Freeze one canonical cost-basis method**
+1. **Stage 2.7 — Clarify cash-adjustment semantics**
 
 ---
 
@@ -526,39 +527,63 @@ The Stage 2.5 predecessor runtime `33fb9871` also passed **Intraday 1m Migration
 
 ---
 
+### Stage 2.6 canonical cost-basis freeze
+
+The accounting method is now explicit and tested:
+
+> **Open cost allocation uses weighted-average / proportional remaining cost.**
+
+For a SELL with ratio `r = sold shares / open shares`:
+
+```text
+allocated gross cost = open gross cost × r
+allocated buy fees   = open buy fees × r
+remaining gross cost = open gross cost × (1 - r)
+remaining buy fees   = open buy fees × (1 - r)
+```
+
+Stage 2.6 removed the remaining conflicting or duplicated paths:
+
+- `portfolioAccounting.ts` exposes `CANONICAL_COST_BASIS_METHOD = WEIGHTED_AVERAGE_PROPORTIONAL`;
+- Google Sheets reconstruction no longer consumes FIFO lots and now delegates to `reconcilePortfolioFromLedger()`;
+- the Sheets no-live-quote fallback remains the reconstructed weighted-average entry price rather than a stale directory quote;
+- secondary analytics reuses `calculateSellAccounting()` instead of cloning the allocation formula;
+- Closed Cycles keeps all contributing BUY/SELL executions for traceability, but financial outlay/average values come from the canonical reconciled `ClosedTrade` projection rather than summing all linked BUY shares.
+
+Regression coverage is in `src/services/Stage26CanonicalCostBasis.test.ts`.
+
+Exact-head validation on runtime `c12e7404`:
+
+- **Phase 10 Visual Closure #37096359624** — passed;
+- TypeScript — passed;
+- **88 / 88 Vitest files, 493 / 493 tests** — passed;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometries at 0px page overflow** — passed;
+- **16 / 16 rendered states** — passed;
+- **Rendered Visual Regression #37096359625** — passed.
+
+Rendered differences remain at the already accepted visual baseline:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+---
+
 ## Highest-priority post-visual work
 
-### P0 — financial mutation integrity
+### Completed — Stage 2 financial mutation/accounting foundation
 
-Known inconsistency:
+Stages 2.1–2.6 now enforce:
 
-- cash deletion already follows a persist-first pattern;
-- BUY, SELL, transaction edit, position edit and position deletion can update local financial state before the authoritative save is confirmed.
+- persistence-confirmed financial mutations;
+- ledger-authoritative transaction/cash/OCR/import/reconciliation workflows;
+- Position and Closed Cycle correction through source ledger executions rather than destructive projection deletion;
+- mandatory broker cash effect for BUY/SELL;
+- one weighted-average / proportional remaining-cost method across reconciliation, Sheets reconstruction, secondary analytics and Closed Cycles reporting.
 
-Target invariant:
-
-> no financial success state before persistence succeeds.
-
-### P0 — Position deletion semantics
-
-Open positions are derived from the transaction ledger, but the UI still allows direct position deletion that removes inferred “open BUY” rows.
-
-The helper used for that inference is FIFO-like while reconciliation uses proportional/weighted-average cost allocation after partial sells.
-
-Target:
-
-- remove direct accounting deletion from Position;
-- correct the source ledger explicitly;
-- freeze one cost-basis method.
-
-### P0 — trade cash semantics
-
-Normal BUY/SELL must not have optional hidden cash behavior.
-
-Retire normal-accounting use of:
-
-- `deductFromCash=false`;
-- `addToCash=false`.
+Remaining Stage 2 work begins with cash-adjustment semantics in Stage 2.7, then the broader financial acceptance suite in Stage 2.8.
 
 ### P0 — branch/automation convergence
 
@@ -718,6 +743,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 2.6 — Freeze one canonical cost-basis method.**
+**Stage 2.7 — Clarify cash-adjustment semantics.**
 
-The next pass audits every remaining helper, report, correction path and accounting projection for cost-basis semantics and freezes weighted-average / proportional remaining cost as the explicit tested contract, with no FIFO ownership inference.
+The next pass splits generic `CASH_ADJUSTMENT` meaning so bookkeeping reconciliation, portfolio income/expense, fees, dividends and true external contributions cannot be conflated in performance or capital-flow logic.

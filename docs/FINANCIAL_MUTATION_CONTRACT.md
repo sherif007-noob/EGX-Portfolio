@@ -4,7 +4,7 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes. Current validated runtime head: `208aa5e9`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost as the canonical cost-basis method. Current validated runtime head: `c12e7404`.
 
 This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
 
@@ -17,8 +17,9 @@ Current adoption sequence:
 3. **2.3 — transaction/cash/OCR/import/reconciliation migration — complete**
 4. **2.4 — derived Position / Closed Cycle deletion ownership — complete**
 5. **2.5 — hidden trade cash-mode removal — complete**
-6. **2.6 — canonical cost-basis freeze — next**
-7. later Stage 2 passes remove remaining accounting ambiguities
+6. **2.6 — canonical cost-basis freeze — complete**
+7. **2.7 — cash-adjustment semantics — next**
+8. later Stage 2 passes remove remaining accounting ambiguities
 
 ---
 
@@ -814,6 +815,96 @@ Passed:
 - 16 / 16 rendered states.
 
 **Rendered Visual Regression #37048999583** also passed on the same head.
+
+---
+
+## Stage 2.6 — canonical weighted-average / proportional cost basis
+
+Stage 2.6 freezes one economic ownership rule for open cost and realized cost allocation.
+
+### Canonical method
+
+`CANONICAL_COST_BASIS_METHOD` is:
+
+```text
+WEIGHTED_AVERAGE_PROPORTIONAL
+```
+
+For a valid partial SELL:
+
+```text
+ratio                  = sold shares / open shares
+allocated gross cost   = open gross cost × ratio
+allocated buy fees     = open buy fees × ratio
+remaining gross cost   = open gross cost - allocated gross cost
+remaining buy fees     = open buy fees - allocated buy fees
+realized P&L           = net sell proceeds - allocated gross cost - allocated buy fees
+```
+
+A proportional partial SELL therefore does not consume a first or last BUY lot economically. The remaining position continues to represent the same blended open exposure until another BUY changes the weighted average.
+
+### One accounting authority
+
+`calculateSellAccounting()` is the canonical partial-SELL allocation helper.
+
+It is used by:
+
+- normal SELL mutation preparation;
+- OCR SELL mutation preparation;
+- secondary analytics replay.
+
+`reconcilePortfolioFromLedger()` uses the same proportional rule when rebuilding Positions and Closed Trades.
+
+### Import and report rule
+
+Google Sheets remains an import surface, not a second accounting engine.
+
+Its legacy FIFO reconstruction path was removed. It now sorts the imported ledger and delegates Position / Closed Trade derivation to `reconcilePortfolioFromLedger()`.
+
+Closed Cycles may show every contributing BUY/SELL execution for auditability. Those source phases are traceability metadata; they must not be summed as realized economic cost for a partial cycle. Displayed realized economics come from the canonical `ClosedTrade` projection.
+
+### Quote-preservation rule
+
+Changing the Sheets accounting path must not invent quote freshness.
+
+When Sheets reconstruction receives no explicit live quote, the resulting Position falls back to its reconstructed weighted-average entry price, preserving the prior no-live-price behavior instead of injecting a static ticker-directory price.
+
+### Stage 2.6 regression coverage
+
+Added:
+
+- `src/services/Stage26CanonicalCostBasis.test.ts`.
+
+Updated:
+
+- `src/components/Phase107CClosedCyclesClosure.test.ts` to preserve the visual/material contract while accepting the corrected canonical accounting source;
+- secondary analytics to call the shared sell-accounting helper.
+
+Coverage locks:
+
+- explicit canonical method identifier;
+- DCA + partial SELL allocation;
+- proportional remaining open shares/cost/fees;
+- Google Sheets parity with canonical reconciliation;
+- removal of FIFO `lots.shift()` / first-lot consumption;
+- no-live-quote weighted-average fallback;
+- secondary analytics helper reuse;
+- Closed Cycles traceability without source-leg repricing of realized cost.
+
+Exact-head validation on `c12e7404`:
+
+**Phase 10 Visual Closure #37096359624**
+
+Passed:
+
+- TypeScript;
+- **88 / 88 Vitest files, 493 / 493 tests**;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- 12 / 12 responsive geometries at 0px page overflow;
+- 16 / 16 rendered states.
+
+**Rendered Visual Regression #37096359625** also passed on the same runtime head.
 
 ---
 

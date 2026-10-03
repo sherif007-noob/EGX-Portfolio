@@ -249,6 +249,35 @@ For closed cycles, persisted `buyTransactionIds` and `sellTransactionIds` are th
 
 Legacy cycle/date matching may be used to navigate old data that lacks source IDs, but it must never become automatic accounting deletion logic.
 
+### Canonical cost-basis method
+
+Stage 2.6 freezes the portfolio accounting method as:
+
+```text
+WEIGHTED_AVERAGE_PROPORTIONAL
+```
+
+For a partial SELL, realized gross cost and remaining buy fees are allocated by the sold-share ratio across the full open exposure:
+
+```text
+ratio                  = sold shares / open shares
+allocated gross cost   = open gross cost × ratio
+allocated buy fees     = open buy fees × ratio
+remaining gross cost   = open gross cost × (1 - ratio)
+remaining buy fees     = open buy fees × (1 - ratio)
+```
+
+Consequences:
+
+- FIFO/LIFO lot consumption is not accounting ownership;
+- a partial SELL leaves the remaining blended average cost unchanged until another BUY changes it;
+- all source BUY executions may still be linked to an active/closed cycle for audit traceability;
+- linked source phases must not be summed to re-price realized cost;
+- Google Sheets reconstruction delegates to the canonical ledger reconciler;
+- secondary analytics reuses the canonical sell-allocation helper.
+
+A future FIFO view is allowed only as an explicitly separate analytical view. It must not write or redefine portfolio accounting state.
+
 ### Transaction edit source fields
 
 When a BUY/SELL transaction is corrected, cached financial fields are not trusted.

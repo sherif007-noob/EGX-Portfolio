@@ -613,15 +613,52 @@ The predecessor Stage 2.5 runtime `33fb9871` passed Intraday 1m Migration Smoke 
 
 ---
 
-## Pass 2.6 — Freeze one cost-basis method
+## Pass 2.6 — Freeze one cost-basis method — COMPLETE / CI GREEN
 
-Document and test:
+Canonical contract:
 
 > **EGX Portfolio open-cost allocation uses weighted-average/proportional remaining cost.**
 
-Every helper, closed-cycle calculation, correction tool, report, and future corporate-action path must honor the same method.
+Implemented:
 
-No FIFO helper may be used to infer remaining accounting ownership unless FIFO becomes an explicitly separate analytical view.
+- added the explicit `WEIGHTED_AVERAGE_PROPORTIONAL` accounting method identifier;
+- retained `calculateSellAccounting()` as the shared partial-SELL allocation authority;
+- removed the independent FIFO reconstruction engine from Google Sheets;
+- routed Sheets Position / Closed Trade reconstruction through `reconcilePortfolioFromLedger()`;
+- preserved the Sheets no-live-price fallback to reconstructed weighted-average entry price;
+- routed secondary analytics SELL replay through `calculateSellAccounting()`;
+- corrected Closed Cycles so source BUY/SELL phases remain traceability-only while realized economics come from the canonical `ClosedTrade` projection;
+- added `Stage26CanonicalCostBasis.test.ts` and aligned the frozen Closed Cycles source-contract test with the corrected accounting ownership.
+
+Acceptance scenario:
+
+```text
+BUY 100 @ 10, buy fee 10
+BUY 100 @ 20, buy fee 20
+SELL 100 @ 30, sell fee 30
+
+canonical allocated gross cost = 1,500
+canonical allocated buy fees  = 15
+remaining shares              = 100
+remaining average buy price   = 15
+remaining buy fees            = 15
+realized P&L                  = 1,455
+```
+
+Validated runtime:
+
+- `c12e7404`;
+- Phase 10 Visual Closure **#37096359624**;
+- TypeScript passed;
+- **88 / 88 test files, 493 / 493 tests**;
+- production build and Worker dry-run green;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37096359625** passed.
+
+No FIFO helper remains in an accounting/import path for remaining-cost ownership.
+
+**Next: Pass 2.7 — clarify cash-adjustment semantics.**
 
 ---
 

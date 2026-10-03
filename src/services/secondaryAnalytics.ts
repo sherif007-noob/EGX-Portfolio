@@ -4,6 +4,7 @@ import type { IntradayPriceSeries } from './intradayPriceStore';
 import { normalizeIntradayTicker } from './intradayPriceStore';
 import { sortPerformanceTransactions } from './portfolioPerformance';
 import type { UnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
+import { calculateSellAccounting } from './portfolioAccounting';
 
 const EPSILON = 1e-8;
 
@@ -91,21 +92,29 @@ function applyTrade(
   }
 
   const sellShares = Math.min(shares, state.shares);
-  const ratio = sellShares / state.shares;
-  const allocatedGrossCost = state.grossCost * ratio;
-  const allocatedBuyFees = state.buyFees * ratio;
-  const netProceeds = sellShares * price - fees;
-  const realized = netProceeds - allocatedGrossCost - allocatedBuyFees;
 
-  state.shares = Math.max(0, state.shares - sellShares);
-  state.grossCost = Math.max(0, state.grossCost - allocatedGrossCost);
-  state.buyFees = Math.max(0, state.buyFees - allocatedBuyFees);
-  state.lastExecutionPrice = price;
+  try {
+    const accounting = calculateSellAccounting(
+      sellShares,
+      price,
+      fees,
+      state.shares,
+      state.grossCost,
+      state.buyFees,
+    );
 
-  if (state.shares <= EPSILON) states.delete(ticker);
-  else states.set(ticker, state);
+    state.shares = Math.max(0, state.shares - sellShares);
+    state.grossCost = Math.max(0, state.grossCost - accounting.allocatedGrossCost);
+    state.buyFees = Math.max(0, state.buyFees - accounting.allocatedBuyFees);
+    state.lastExecutionPrice = price;
 
-  return realized;
+    if (state.shares <= EPSILON) states.delete(ticker);
+    else states.set(ticker, state);
+
+    return accounting.realizedPnlEgp;
+  } catch {
+    return 0;
+  }
 }
 
 function pointIncludesTransaction(

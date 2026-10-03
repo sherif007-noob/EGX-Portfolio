@@ -172,19 +172,19 @@ export function updateFirestoreCashBalance(cashBalance: number, capitalDeposits?
     // A manual cash correction is an auditable ledger event, not a mutation of a
     // derived balance. It changes cash only; it does not change contributed capital.
     const adjustment: TradeTransaction = {
-      id: `tx-cash-adjustment-${crypto.randomUUID()}`,
+      id: `tx-reconciliation-adjustment-${crypto.randomUUID()}`,
       type: delta >= 0 ? 'BUY' : 'SELL',
       ticker: 'CASH',
-      companyName: 'Cash Balance Adjustment',
+      companyName: 'Cash Reconciliation Adjustment',
       sector: 'Liquid Buying Power',
       shares: Math.abs(delta),
       price: 1,
       date: new Date().toISOString().slice(0, 10),
       fees: 0,
       totalAmount: Math.abs(delta),
-      cashFlowType: 'CASH_ADJUSTMENT',
+      cashFlowType: 'RECONCILIATION_ADJUSTMENT',
       cashFlowAmount: delta,
-      notes: 'Manual cash balance adjustment',
+      notes: 'Manual cash reconciliation adjustment',
     };
 
     return persistSnapshot({

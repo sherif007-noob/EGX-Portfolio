@@ -82,6 +82,17 @@ describe('Stage 2.7 explicit cash-flow semantics', () => {
     expect(curve.at(-1)?.equity).toBe(1150);
   });
 
+  it('keeps synthetic legacy opening capital when reconciliation is the only explicit neutral flow', () => {
+    const reconciliationOnly = [
+      cashTx('recon-only', 'RECONCILIATION_ADJUSTMENT', 100, '2026-01-02'),
+    ];
+
+    expect(buildExternalCashFlows(reconciliationOnly, 1000, '2026-01-01')).toEqual([
+      { date: '2026-01-01', amount: -1000, type: 'DEPOSIT' },
+      { date: '2026-01-02', amount: -100, type: 'RECONCILIATION_ADJUSTMENT' },
+    ]);
+  });
+
   it('migrates legacy CASH_ADJUSTMENT rows to reconciliation semantics on normalization', () => {
     const legacy = normalizeTransaction({
       ...cashTx('legacy', 'CASH_ADJUSTMENT', -75, '2026-01-07'),

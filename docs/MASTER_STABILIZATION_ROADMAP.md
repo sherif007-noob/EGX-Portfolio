@@ -831,21 +831,52 @@ Validated runtime:
 
 ---
 
-## Pass 3.2 — Make the default production branch authoritative
+## Pass 3.2 — Make the default production branch authoritative — COMPLETE / CI GREEN
 
-After review:
+`main` is now the repository production/default authority.
 
-- application code;
-- Cloudflare Worker;
-- database migrations;
-- 1m ingestion;
-- ticker registry workflow;
-- quality workflow;
-- production audit;
+Implemented:
 
-must all be sourced from the same production truth.
+- changed all branch-scoped production/diagnostic workflow triggers from `feature/premium-ui-redesign` to `main`;
+- preserved schedule-only workflows as default-branch consumers;
+- added `src/services/Stage32ProductionBranchAuthority.test.ts`;
+- fast-forward promoted `main` to the reviewed premium production tree without force or history rewrite;
+- made the exact-head contract commit directly on `main`;
+- mirrored the old premium branch to `main` only for compatibility, removing it as an independent production truth.
 
-Feature branches return to temporary work branches.
+Promotion evidence from `main`:
+
+- Intraday 1m Diagnostic **#37131125252** — success;
+- Intraday 1m Migration Smoke **#37131125291** — success;
+- EGX Ticker Registry **#37131125243** — success;
+- Quality Checks **#37131157043** — success.
+
+Supabase production verification confirmed:
+
+- project status **ACTIVE_HEALTHY**;
+- `replace_portfolio_accounting_snapshot` exists;
+- `price_history` exists;
+- `intraday_price_history` exists;
+- `ticker_registry` exists;
+- current intraday/ticker-registry migrations are recorded in production migration history.
+
+Validated runtime:
+
+- `main@00afd739`;
+- Phase 10 Visual Closure **#37131157044**;
+- TypeScript passed;
+- **92 / 92 test files, 522 / 522 tests**;
+- production build and Worker dry-run green;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed;
+- Rendered Visual Regression **#37131157017** passed.
+
+Deferred intentionally to Pass 3.3:
+
+- npm/Bun production-audit normalization;
+- final legacy automation retirement/concurrency cleanup.
+
+**Next: Pass 3.3 — automation normalization.**
 
 ---
 

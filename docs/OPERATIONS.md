@@ -2,9 +2,36 @@
 
 ## Status
 
-Canonical operational reference for the Premium branch.
+Canonical operational reference for the production/default `main` branch.
 
 For rollout risks and the next step, see [STATUS.md](STATUS.md).
+
+## Production branch authority
+
+The repository default branch **`main`** is the only production source of truth.
+
+Production-owned artifacts on `main` include:
+
+- application/runtime code;
+- `worker.ts` and `wrangler.jsonc`;
+- Supabase migrations;
+- raw 1m and derived 5m ingestion;
+- historical price repair;
+- ticker registry reconciliation;
+- quality and rendered-regression workflows;
+- production data audit.
+
+GitHub scheduled workflows execute from the default branch, so production schedules inherit `main` automatically.
+
+Branch-scoped workflow validation targets `main`, not a long-lived feature branch.
+
+The former `feature/premium-ui-redesign` branch is retained only as a compatibility mirror at Stage 3.2 closure. New work branches from current `main` and returns through the normal review/validation path.
+
+Stage 3.2 production verification confirmed the live Supabase project's accounting RPC plus `price_history`, `intraday_price_history`, and `ticker_registry` production objects.
+
+The remaining automation/toolchain normalization is owned by Stage 3.3.
+
+---
 
 ## Production runtime
 

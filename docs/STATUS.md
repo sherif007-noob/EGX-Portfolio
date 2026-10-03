@@ -9,9 +9,10 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 ## Snapshot
 
 **Date:** 2026-10-03  
-**Active development branch:** `feature/premium-ui-redesign`  
-**Current validated runtime head:** `6a842b7d` — Stage 3.1 reviewed branch convergence  
-**Current full exact-head verification:** Phase 10 Visual Closure #37123523107 on `6a842b7d`  
+**Authoritative production/default branch:** `main`  
+**Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
+**Current validated runtime head:** `00afd739` — Stage 3.2 default production branch authority  
+**Current full exact-head verification:** Phase 10 Visual Closure #37131157044 on `00afd739`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -57,10 +58,11 @@ Completed:
 Stage 3 completed:
 
 - **Stage 3.1 — Reviewed branch divergence reconciliation**
+- **Stage 3.2 — Default production branch authority**
 
 Next:
 
-1. **Stage 3.2 — Make the default production branch authoritative**
+1. **Stage 3.3 — Automation normalization**
 
 ---
 
@@ -824,6 +826,48 @@ Rendered differences remain at the accepted frozen baseline:
 
 ---
 
+### Stage 3.2 default production branch authority
+
+`main` is now the production/default source of truth.
+
+Promotion sequence:
+
+1. branch-scoped production workflows were changed from `feature/premium-ui-redesign` to `main`;
+2. `Stage32ProductionBranchAuthority.test.ts` was added to guard against feature-branch production coupling;
+3. `main` was fast-forwarded from old head `3259bb67` to the reviewed premium production tree;
+4. exact-head contract commit `00afd739` was made directly on `main`;
+5. the old premium branch was fast-forwarded to the same commit as a compatibility mirror, not as production authority.
+
+Production-facing workflows confirmed from `main` during promotion:
+
+- **Intraday 1m Diagnostic #37131125252 — passed**;
+- **Intraday 1m Migration Smoke #37131125291 — passed**;
+- **EGX Ticker Registry #37131125243 — passed**;
+- **Quality Checks #37131157043 — passed**.
+
+The live Supabase project was verified **ACTIVE_HEALTHY**. The canonical accounting RPC and the daily/intraday/ticker-registry objects required by the repository are present.
+
+Exact-head validation on `main@00afd739`:
+
+- **Phase 10 Visual Closure #37131157044 — passed**;
+- TypeScript — passed;
+- **92 / 92 Vitest files, 522 / 522 tests** — passed;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometries at 0px page overflow** — passed;
+- **16 / 16 rendered states** — passed;
+- **Rendered Visual Regression #37131157017 — passed**.
+
+Accepted frozen visual deltas remain unchanged:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+Stage 3.2 deliberately does **not** normalize the Bun-based production audit or alter the legacy manual 5m repair workflow; those belong to Stage 3.3.
+
+---
+
 ## Analytics state
 
 Strong/current foundation:
@@ -923,6 +967,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 3.2 — Make the default production branch authoritative.**
+**Stage 3.3 — Automation normalization.**
 
-Promote one production truth so application code, Cloudflare Worker, migrations, 1m ingestion, ticker registry, quality checks and production audit all execute from the same default branch. Feature branches should return to temporary development branches.
+Retire/contain legacy automation, unify the intraday writer concurrency contract, and normalize the remaining Bun-based production audit onto the repository's canonical npm/Node toolchain.

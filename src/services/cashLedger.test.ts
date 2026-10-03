@@ -59,13 +59,13 @@ describe('cash ledger events', () => {
   });
 
   it('retains adjustments across later deposits and reconciliation', () => {
-    const adjusted = applyCashLedgerEvent(legacy(), 'CASH_ADJUSTMENT', -100);
+    const adjusted = applyCashLedgerEvent(legacy(), 'RECONCILIATION_ADJUSTMENT', -100);
     expect(adjusted.cashBalance).toBe(699);
     expect(adjusted.capitalDeposits).toBe(1000);
     const deposited = applyCashLedgerEvent(adjusted, 'DEPOSIT', 200);
     expect(deposited.cashBalance).toBe(899);
     expect(deposited.capitalDeposits).toBe(1200);
-    expect(deposited.transactions.find((tx) => tx.cashFlowType === 'CASH_ADJUSTMENT')?.cashFlowAmount).toBe(-100);
+    expect(deposited.transactions.find((tx) => tx.cashFlowType === 'RECONCILIATION_ADJUSTMENT')?.cashFlowAmount).toBe(-100);
     expectReloadStable(deposited);
   });
 
@@ -98,7 +98,7 @@ describe('cash history editing and deletion', () => {
     const next = changeCashLedgerEntry(state, state.transaction.id, { type: 'DEPOSIT', amount: 300, date: '2026-01-06', notes: 'Corrected' });
     expect(next.transactions).toHaveLength(state.transactions.length);
     expect(next.transactions.find(tx => tx.id === state.transaction.id)).toMatchObject({ totalAmount: 300, date: '2026-01-06', notes: 'Corrected' });
-    expect(next.transactions.some(tx => tx.cashFlowType === 'CASH_ADJUSTMENT')).toBe(false);
+    expect(next.transactions.some(tx => tx.cashFlowType === 'RECONCILIATION_ADJUSTMENT')).toBe(false);
     expect(next.capitalDeposits).toBe(1300);
     expect(next.cashBalance).toBe(1099);
     expectReloadStable({ ...next, transaction: next.transactions[0] });

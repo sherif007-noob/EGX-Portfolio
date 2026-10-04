@@ -1247,8 +1247,8 @@ Validation on the original broad PR #48 was green, but Stage 4.3 is now being ac
 Granular acceptance sequence:
 
 - **4.3.1 — local state + compatibility cache — ACCEPTED / CI GREEN** via PR #50 at `main@b0ecb4b7`; Quality Checks #37229492006 passed TypeScript, **103 / 103 test files, 566 / 566 tests**, and production build.
-- **4.3.2 — remote hydration/subscription ownership — NEXT**
-- 4.3.3 — canonical ledger mutation ownership
+- **4.3.2 — remote hydration/subscription ownership — ACCEPTED / CI GREEN** via PR #51 at `main@dce45fc6`; Quality Checks #37230637442 passed TypeScript, **104 / 104 test files, 571 / 571 tests**, and production build.
+- **4.3.3 — canonical ledger mutation ownership — NEXT**
 - 4.3.4 — repository/persistence action ownership
 - 4.3.5 — facade cleanup + regression closure
 

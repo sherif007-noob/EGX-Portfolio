@@ -5,12 +5,36 @@ import type { PortfolioLocalState } from '../state/usePortfolioLocalState';
 import { portfolioRepository } from './portfolioRepository';
 
 export function usePortfolioRepositoryActions(state: PortfolioLocalState) {
-  const editPosition = useCallback((updatedPosition: Position) => {
-    const updated = state.positions.map((position) =>
+  const editPosition = useCallback(async (updatedPosition: Position): Promise<boolean> => {
+    const existing = state.positions.find((position) => position.id === updatedPosition.id);
+    if (!existing) return false;
+
+    const candidate = state.positions.map((position) =>
       position.id === updatedPosition.id ? updatedPosition : position
     );
-    state.setPositions(updated);
-    void portfolioRepository.updatePositions(updated);
+
+    try {
+      const saved = await portfolioRepository.updatePositions(candidate);
+      if (!saved) return false;
+
+      // Apply only editable position metadata to the latest local row. Market quotes
+      // and canonical ledger-derived shares/cost may have advanced while persistence
+      // was in flight and must not be overwritten by the pre-save snapshot.
+      state.setPositions((current) => current.map((position) =>
+        position.id === updatedPosition.id
+          ? {
+              ...position,
+              targetPrice: updatedPosition.targetPrice,
+              stopLoss: updatedPosition.stopLoss,
+              notes: updatedPosition.notes,
+            }
+          : position
+      ));
+      return true;
+    } catch (error) {
+      console.error('Position metadata persistence failed:', error);
+      return false;
+    }
   }, [state.positions, state.setPositions]);
 
   const updateTickers = useCallback((newTickers: EGXTicker[]) => {

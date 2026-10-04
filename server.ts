@@ -7,6 +7,7 @@ import {
   parseIntradayEnsureRequest,
   parsePriceTickRequest,
   requireTickerList,
+  requireSymbolSearchText,
 } from './src/api/contracts';
 import express from "express";
 import path from "path";
@@ -62,11 +63,11 @@ async function startServer() {
   }));
   app.post(API_ROUTES.supabasePriceHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const { targets } = parseHistoricalEnsureRequest(req.body);
-    return { data: await ensurePortfolioHistoricalPrices(uid, targets as any[]) };
+    return { data: await ensurePortfolioHistoricalPrices(uid, targets) };
   }));
   app.post(API_ROUTES.supabaseIntradayHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const { targets } = parseIntradayEnsureRequest(req.body);
-    return { data: await ensurePortfolioIntradayPrices(uid, targets as any[]) };
+    return { data: await ensurePortfolioIntradayPrices(uid, targets) };
   }));
 
   app.post(API_ROUTES.firestoreSupabaseMigration, async (req, res) => {
@@ -104,8 +105,12 @@ async function startServer() {
   });
   app.get(API_ROUTES.tradingViewSymbolSearch, async (req, res) => {
     try {
-      const query = String(req.query.text || "").trim();
-      if (!query) return res.status(400).json({ error: "Query parameter 'text' is required" });
+      let query: string;
+      try {
+        query = requireSymbolSearchText(req.query.text);
+      } catch (error) {
+        return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+      }
       const searchUrl = `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
       const tvResponse = await fetch(searchUrl, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", Accept: "application/json" } });
       if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });

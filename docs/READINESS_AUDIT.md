@@ -65,12 +65,17 @@ The screenshot/OCR import paths therefore use strong execution-level duplicate d
 - price;
 - fees.
 
-Date-only OCR entries are not automatically deduplicated because two legitimate fills can otherwise appear identical. Manual entry is also not auto-blocked by this heuristic, preserving a path for legitimate same-minute split fills.
+Date-only OCR entries are not automatically deduplicated because two legitimate fills can otherwise appear identical. Manual entry is also not auto-blocked by this heuristic.
 
-The OCR batch importer also deduplicates against:
+For OCR batches, strong duplicate detection is applied against the **pre-existing ledger**, not against rows newly accepted earlier in the same batch. This is deliberate: two distinct broker executions can legitimately share ticker, side, quantity, price, fee and displayed execution minute.
 
-- the existing ledger; and
-- transactions already accepted earlier in the same batch.
+To keep duplicate-image protection without collapsing legitimate split fills:
+
+- exact duplicate screenshot bytes are filtered before OCR;
+- distinct screenshots remain distinct batch rows;
+- re-importing an already-persisted timestamped execution is still blocked by the ledger-level strong duplicate check.
+
+The OCR parser also scores all clock-like values and prefers the broker execution-time context over status-bar/device clocks. Execution time is visible and editable in the OCR review UI before the batch is committed.
 
 ## OCR SELL safety
 
@@ -78,7 +83,7 @@ A single scanned SELL without a matching open position is rejected.
 
 The app no longer creates an orphan local-only SELL row or changes cash when the ledger cannot reconcile the sale.
 
-Batch imports remain dependency-aware: valid BUYs can be applied before dependent SELLs when needed.
+Batch imports remain dependency-aware: an unreconcilable SELL is deferred and retried after other accepted rows, so prerequisite BUYs can satisfy it without globally reordering legitimate same-ticker close/reopen sequences.
 
 ## Analytics consistency
 

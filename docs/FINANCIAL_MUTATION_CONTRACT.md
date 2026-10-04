@@ -535,12 +535,17 @@ A multi-row OCR batch is prepared as **one candidate ledger**.
 
 Preparation:
 
-- orders executions by explicit execution time;
-- uses BUY-before-SELL only for timestamp ties on the same ticker;
-- blocks strong duplicate executions;
+- orders executions by explicit broker execution time when available;
+- preserves source/screenshot order when timestamps tie or are ambiguous;
+- relies on the dependency-aware retry loop instead of forcing BUY-before-SELL for same-ticker ties, preserving legitimate close → reopen sequences;
+- blocks strong duplicate executions against the ledger that existed before the batch;
+- does not collapse distinct rows inside one batch merely because ticker/side/size/price/fee/minute match;
+- filters exact duplicate image uploads in the scanner UI before OCR;
 - applies accepted BUY rows to the working ledger;
 - allows later dependent SELLs to reconcile against those BUYs;
 - skips unreconcilable SELLs rather than creating orphan local rows.
+
+OCR execution-time extraction prefers the broker trade-row time over unrelated device/status-bar clocks, and the batch review exposes execution time as an editable field before persistence.
 
 The resulting candidate ledger is persisted once.
 

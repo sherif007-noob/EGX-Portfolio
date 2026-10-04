@@ -91,7 +91,7 @@ The pass also corrected two ownership defects inside the hydration boundary:
 Next: **4.3.3 — canonical ledger mutation ownership**.
 
 
-## 4.3.3 — Canonical ledger mutation ownership — VALIDATION IN PROGRESS
+## 4.3.3 — Canonical ledger mutation ownership — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -121,4 +121,16 @@ Next: **4.3.3 — canonical ledger mutation ownership**.
 - the public compatibility facade delegates financial writes to the ledger owner;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.3.4 — repository/persistence action ownership**.
+### 4.3.3 acceptance record
+
+Accepted through PR #52 at `main@87a10cd4`.
+
+Quality Checks #37231285634 passed:
+
+- TypeScript;
+- **105 / 105 test files, 577 / 577 tests**;
+- production build.
+
+The pass also closed a mutation-freshness race at the ownership boundary: after a financial mutation persists, `usePortfolioLedgerMutations.ts` now advances its internal canonical snapshot before React's batched state setters. An immediately-following mutation therefore prepares from the just-persisted ledger rather than the previous render. Newly authored BUY/SELL IDs now use `crypto.randomUUID()`.
+
+Next: **4.3.4 — repository/persistence action ownership**.

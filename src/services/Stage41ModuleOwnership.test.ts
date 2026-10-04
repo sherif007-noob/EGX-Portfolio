@@ -44,7 +44,7 @@ describe('Stage 4.1 module ownership', () => {
     expect(supabase).toContain("../../services/supabaseBrowser");
     expect(sheets).toContain("../../services/googleSheets");
     expect(ocr).toContain("../../services/ocrLedgerMutations");
-    expect(portfolio).toContain("../../hooks/usePortfolioState");
+    expect(portfolio).toContain("./usePortfolioState");
     expect(reports).toContain("../../components/PerformanceReports");
   });
 });

@@ -40,11 +40,11 @@ import { usePortfolioWorkflows } from './features/app-shell/usePortfolioWorkflow
 // Phase 10.8 exact-head validation trigger: complete modal/workflow consistency runtime source.
 // Phase 10.9 exact-head validation trigger: responsive cross-app containment runtime source.
 export default function App() {
-  // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
+  // Portfolio feature facade: state projections + explicit mutation/persistence operations.
   const {
     isInitialized,
     positions,
-    setPositions,
+    updateMarketPositions,
     closedTrades,
     transactions,
     cashBalance,
@@ -134,7 +134,7 @@ export default function App() {
     lastPriceSyncTime,
     scheduleStatus,
     syncLivePrices,
-  } = useMarketData(positions, tickers, setPositions, updateTickers, handleLivePricesSynced, isInitialized);
+  } = useMarketData(positions, tickers, updateMarketPositions, updateTickers, handleLivePricesSynced, isInitialized);
 
   // Price Target & Web Push Alerts Hook (PWA service worker push notifications & thresholds)
   const {

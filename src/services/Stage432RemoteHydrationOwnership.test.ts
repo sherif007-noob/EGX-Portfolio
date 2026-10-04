@@ -51,7 +51,7 @@ describe('Stage 4.3.2 remote hydration ownership', () => {
 
   it('does not let hydration own local cache or financial mutation implementation', () => {
     const hydration = read('src/features/portfolio/hydration/usePortfolioHydration.ts');
-    const facade = read('src/hooks/usePortfolioState.ts');
+    const facade = read('src/features/portfolio/usePortfolioState.ts');
 
     for (const forbidden of [
       'localStorage.',

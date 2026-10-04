@@ -6,8 +6,9 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 describe('Stage 4.3 portfolio state ownership split', () => {
-  it('keeps usePortfolioState as a compatibility facade', () => {
-    const hook = read('src/hooks/usePortfolioState.ts');
+  it('keeps usePortfolioState as the owned application facade', () => {
+    const hook = read('src/features/portfolio/usePortfolioState.ts');
+    const legacyShim = read('src/hooks/usePortfolioState.ts');
 
     expect(hook).toContain('usePortfolioLocalState()');
     expect(hook).toContain('usePortfolioHydration(state)');
@@ -19,6 +20,8 @@ describe('Stage 4.3 portfolio state ownership split', () => {
     expect(hook).not.toContain('subscribeToPortfolioFromFirestore');
     expect(hook).not.toContain('forceFullSyncToFirestore');
     expect(hook).not.toContain('prepareBuyTradeMutation');
+    expect(legacyShim).toContain("from '../features/portfolio/usePortfolioState'");
+    expect(legacyShim).not.toContain('usePortfolioLocalState()');
   });
 
   it('separates compatibility cache, remote hydration, persistence and ledger mutation ownership', () => {
@@ -43,8 +46,8 @@ describe('Stage 4.3 portfolio state ownership split', () => {
     expect(ledger).toContain('prepareOcrBatchMutation');
   });
 
-  it('preserves the application-facing compatibility API while internals migrate', () => {
-    const hook = read('src/hooks/usePortfolioState.ts');
+  it('preserves the application-facing operation API while hiding raw financial setters', () => {
+    const hook = read('src/features/portfolio/usePortfolioState.ts');
 
     for (const name of [
       'positions',
@@ -54,6 +57,7 @@ describe('Stage 4.3 portfolio state ownership split', () => {
       'tickers',
       'capitalDeposits',
       'isInitialized',
+      'updateMarketPositions',
       'addTrade',
       'sellPosition',
       'editPosition',
@@ -70,6 +74,16 @@ describe('Stage 4.3 portfolio state ownership split', () => {
       'forceSync',
     ]) {
       expect(hook).toContain(name);
+    }
+
+    for (const rawSetter of [
+      'setClosedTrades:',
+      'setTransactions:',
+      'setCashBalance:',
+      'setTickers:',
+      'setCapitalDeposits:',
+    ]) {
+      expect(hook).not.toContain(rawSetter);
     }
   });
 });

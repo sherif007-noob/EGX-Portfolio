@@ -5,6 +5,7 @@ import {
   createHealthResponse,
   parsePriceTickRequest,
   requireTickerList,
+  requireSymbolSearchText,
 } from './src/api/contracts';
 import {
   configureSupabaseServer,
@@ -173,8 +174,12 @@ async function handleApi(request: Request): Promise<Response> {
   }
 
   if (path === API_ROUTES.tradingViewSymbolSearch && request.method === "GET") {
-    const query = (url.searchParams.get("text") || "").trim();
-    if (!query) return json({ error: "Query parameter 'text' is required" }, 400);
+    let query: string;
+    try {
+      query = requireSymbolSearchText(url.searchParams.get("text"));
+    } catch (error) {
+      return errorJson(error, 400);
+    }
     try {
       const searchUrl =
         `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;

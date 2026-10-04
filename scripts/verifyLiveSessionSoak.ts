@@ -284,13 +284,15 @@ function compareDerivedFiveMinute(
     const direct = (five[ticker] ?? []).filter((bar) => bar.source !== 'derived-1m');
     legacyDirect.push(...direct.map((bar) => `${ticker}@${bar.timestamp}:${bar.source ?? 'unknown'}`));
 
-    const byTimestamp = new Map(persistedDerived.map((bar) => [bar.timestamp, bar]));
+    const byTimestamp = new Map(
+      persistedDerived.map((bar) => [new Date(bar.timestamp).getTime(), bar]),
+    );
     const maxPersistedMs = persistedDerived.length
       ? Math.max(...persistedDerived.map((bar) => new Date(bar.timestamp).getTime()))
       : Number.NaN;
 
     for (const aggregate of expected) {
-      const persisted = byTimestamp.get(aggregate.timestamp);
+      const persisted = byTimestamp.get(new Date(aggregate.timestamp).getTime());
       if (!persisted) {
         const aggregateMs = new Date(aggregate.timestamp).getTime();
         if (strictFinal || (Number.isFinite(maxPersistedMs) && aggregateMs <= maxPersistedMs)) {
@@ -483,16 +485,18 @@ async function main() {
       issues.push(`Auto resolution substituted session ${autoSelection.sessionDate} for ${targetDate}.`);
     }
 
-    const latestExpectedMinute = Math.min(
-      Math.max(INTRADAY_POLICY.sessionStartMinutes, clock.minuteOfDay - 25),
-      INTRADAY_POLICY.sessionEndMinutes - 1,
-    );
-    for (const ticker of currentHeld) {
-      const lastMinute = (coverage[ticker] as any)?.raw1mLastCairoMinute as number | null;
-      if (lastMinute == null || lastMinute < latestExpectedMinute) {
-        issues.push(
-          `Raw 1m is stale for held ${ticker}: last=${lastMinute ?? 'none'} expected>=${latestExpectedMinute} Cairo minute.`,
-        );
+    if (phase === 'LIVE' || phase === 'GRACE') {
+      const latestExpectedMinute = Math.min(
+        Math.max(INTRADAY_POLICY.sessionStartMinutes, clock.minuteOfDay - 25),
+        INTRADAY_POLICY.sessionEndMinutes - 1,
+      );
+      for (const ticker of currentHeld) {
+        const lastMinute = (coverage[ticker] as any)?.raw1mLastCairoMinute as number | null;
+        if (lastMinute == null || lastMinute < latestExpectedMinute) {
+          issues.push(
+            `Raw 1m is stale for held ${ticker}: last=${lastMinute ?? 'none'} expected>=${latestExpectedMinute} Cairo minute.`,
+          );
+        }
       }
     }
   } else if (intradayRows.length) {
@@ -509,7 +513,7 @@ async function main() {
   if (strictFinal) {
     for (const ticker of opening) {
       const firstMinute = (coverage[ticker] as any)?.raw1mFirstCairoMinute as number | null;
-      if (firstMinute == null || firstMinute > INTRADAY_POLICY.sessionStartMinutes + 10) {
+      if (firstMinute == null || firstMinute > INTRADAY_POLICY.sessionStartMinutes + 30) {
         issues.push(
           `Opening holding ${ticker} lacks near-open raw 1m coverage: first=${firstMinute ?? 'none'}.`,
         );

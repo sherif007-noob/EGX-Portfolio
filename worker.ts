@@ -12,6 +12,7 @@ import {
   parseHistoricalPriceQuery,
   parsePortfolioSaveRequest,
   parsePriceTickRequest,
+  requireUnavailableRuntimeCapabilityResponse,
   requireSymbolSearchText,
 } from './src/api/contracts';
 import {
@@ -168,25 +169,21 @@ async function handleApi(request: Request): Promise<Response> {
 
   if (path === API_ROUTES.supabaseIntradayHistoryEnsure && request.method === "POST") {
     // Backward compatibility for an older PWA bundle that requested repair on
-    // app startup. The current client no longer calls this route. Returning a
-    // successful no-op prevents already-open/cached clients from generating
-    // error loops while TradingView ingestion stays in the Node workflow.
-    return json({
-      data: {
-        requestedTickers: [],
-        backfilledTickers: [],
-        writtenRows: 0,
-        failures: [],
-      },
-      deprecated: true,
-    });
+    // app startup. The current client no longer calls this route. The shared
+    // capability policy deliberately preserves a successful deprecated no-op.
+    const unavailable = requireUnavailableRuntimeCapabilityResponse(
+      "cloudflare-workers",
+      "intradayHistoryRepair",
+    );
+    return json(unavailable.body, unavailable.status);
   }
 
   if (path === API_ROUTES.supabasePriceHistoryEnsure && request.method === "POST") {
-    return json(createApiErrorResponse(
-      "On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.",
-      { retryable: true },
-    ), 503);
+    const unavailable = requireUnavailableRuntimeCapabilityResponse(
+      "cloudflare-workers",
+      "dailyHistoryRepair",
+    );
+    return json(unavailable.body, unavailable.status);
   }
 
   if (path === API_ROUTES.egxScan && request.method === "POST") {
@@ -246,11 +243,11 @@ async function handleApi(request: Request): Promise<Response> {
   // token. Service-account auth stays on the Node server and is intentionally
   // not exposed or emulated in this first Worker deployment.
   if (path === API_ROUTES.sheetsServiceAccountStatus && request.method === "GET") {
-    return json({
-      configured: false,
-      serviceAccountEmail: null,
-      instruction: "Cloudflare deployment uses Google OAuth bearer authentication for Sheets.",
-    });
+    const unavailable = requireUnavailableRuntimeCapabilityResponse(
+      "cloudflare-workers",
+      "googleServiceAccount",
+    );
+    return json(unavailable.body, unavailable.status);
   }
 
   if (path.startsWith(SHEETS_API_PREFIX)) {
@@ -360,7 +357,11 @@ async function handleApi(request: Request): Promise<Response> {
 
   // Legacy migration is intentionally unavailable on the public Worker.
   if (path === API_ROUTES.firestoreSupabaseMigration) {
-    return errorJson("Migration endpoint is disabled.", 404);
+    const unavailable = requireUnavailableRuntimeCapabilityResponse(
+      "cloudflare-workers",
+      "firestoreMigration",
+    );
+    return json(unavailable.body, unavailable.status);
   }
 
   return errorJson("Not found", 404);

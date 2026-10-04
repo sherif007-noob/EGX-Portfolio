@@ -1258,7 +1258,7 @@ The broad Stage 4.4 implementation already exists on `main`, but its acceptance 
 
 ---
 
-## Pass 4.4 — Shared Worker/Express API contracts — COMPLETE / CI GREEN
+## Pass 4.4 — Shared Worker/Express API contracts — IMPLEMENTATION LANDED / GRANULAR ACCEPTANCE ACTIVE
 
 Production uses Cloudflare Worker + static assets. Express remains valuable for local development and compatibility.
 
@@ -1287,13 +1287,18 @@ Implemented:
 - intentional runtime capability differences are explicit rather than silent: Node owns on-demand history repair, service-account Sheets and migration; Worker keeps compatibility/no-op or unavailable behavior where designed;
 - Stage 3 route guards now follow the shared route authority.
 
-Validation on PR #49 Quality Checks #37229111809:
+Validation on the original broad PR #49 Quality Checks #37229111809:
 
 - TypeScript passed;
 - **102 / 102 test files, 563 / 563 tests passed**;
 - production build passed.
 
-**Next: Pass 4.5 — CSS ownership consolidation.**
+The broad implementation is now being revalidated through smaller acceptance gates:
+
+- **4.4.1 — shared route/request contract authority — ACCEPTED / CI GREEN** via PR #55 at `main@895dc351`; Quality Checks #37242757469 passed TypeScript, **108 / 108 test files, 593 / 593 tests**, and production build.
+- **4.4.2 — auth/error response contract parity — NEXT**
+
+Do not advance Stage 4.4 as fully accepted merely because later broad implementation code already exists on `main`.
 
 ---
 

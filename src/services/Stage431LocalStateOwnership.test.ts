@@ -7,7 +7,7 @@ const read = (relative: string) =>
 
 describe('Stage 4.3.1 local state and compatibility ownership', () => {
   it('keeps localStorage compatibility behind one owned module', () => {
-    const facade = read('src/hooks/usePortfolioState.ts');
+    const facade = read('src/features/portfolio/usePortfolioState.ts');
     const localState = read('src/features/portfolio/state/usePortfolioLocalState.ts');
     const compatibility = read('src/features/portfolio/state/portfolioCompatibility.ts');
 

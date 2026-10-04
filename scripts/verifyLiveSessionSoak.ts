@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import type { Position, Sector, TradeTransaction } from '../src/types';
-import { EGX_SCANNER_PAYLOAD } from '../src/services/scannerRequest';
 import { egxCairoSessionClock } from '../src/services/egxTradingSession';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
 import {

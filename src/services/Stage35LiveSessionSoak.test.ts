@@ -61,6 +61,9 @@ describe('Stage 3.5 live-session soak contract', () => {
     expect(script).toContain('Closing holding');
     expect(script).toContain('Daily history has not advanced');
     expect(script).toContain('Competing direct 5m rows found');
+    expect(script).toContain('new Date(bar.timestamp).getTime()');
+    expect(script).toContain('INTRADAY_POLICY.sessionStartMinutes + 30');
+    expect(script).toContain("phase === 'LIVE' || phase === 'GRACE'");
     expect(script).toContain('Today endpoint does not converge on scanner NAV');
     expect(script).toContain('Auto resolution substituted session');
     expect(script).toContain('Manual 1m selection substituted session');

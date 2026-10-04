@@ -1296,9 +1296,11 @@ Validation on the original broad PR #49 Quality Checks #37229111809:
 The broad implementation is now being revalidated through smaller acceptance gates:
 
 - **4.4.1 — shared route/request contract authority — ACCEPTED / CI GREEN** via PR #55 at `main@895dc351`; Quality Checks #37242757469 passed TypeScript, **108 / 108 test files, 593 / 593 tests**, and production build.
-- **4.4.2 — auth/error response contract parity — NEXT**
+- **4.4.2 — auth/error response contract parity — ACCEPTED / CI GREEN** via PR #56 at `main@41f37430`; Quality Checks #37243628532 passed TypeScript, **109 / 109 test files, 599 / 599 tests**, and production build.
 
 Do not advance Stage 4.4 as fully accepted merely because later broad implementation code already exists on `main`.
+
+- **4.4.3 — runtime capability/deprecation contract validation — NEXT**
 
 ---
 

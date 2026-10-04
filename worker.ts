@@ -4,8 +4,10 @@ import {
   API_ROUTES,
   SHEETS_API_PREFIX,
   allowedApiMethodsForPath,
-  classifyAuthErrorStatus,
+  createApiErrorResponse,
+  createClassifiedAuthErrorResponse,
   createHealthResponse,
+  isAuthHttpStatus,
   isApiRouteMethodAllowed,
   parseHistoricalPriceQuery,
   parsePortfolioSaveRequest,
@@ -33,21 +35,31 @@ const json = (data: unknown, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
   });
 
-const errorJson = (error: unknown, status = 500) =>
-  json({ error: error instanceof Error ? error.message : String(error) }, status);
+const errorJson = (
+  error: unknown,
+  status = 500,
+  options: Parameters<typeof createApiErrorResponse>[1] = {},
+) => json(createApiErrorResponse(error, options), status);
 
 async function withSupabaseUser(
   request: Request,
   handler: (uid: string) => Promise<unknown>,
 ): Promise<Response> {
+  let uid: string;
   try {
-    const uid = await verifySupabaseBearerToken(request.headers.get("authorization") || undefined);
+    uid = await verifySupabaseBearerToken(request.headers.get("authorization") || undefined);
+  } catch (error) {
+    const classified = createClassifiedAuthErrorResponse(error);
+    console.error("[Supabase API auth]", classified.body.error);
+    return json(classified.body, classified.status);
+  }
+
+  try {
     return json(await handler(uid));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const status = classifyAuthErrorStatus(error);
-    console.error("[Supabase API]", message);
-    return json({ error: message }, status);
+    const body = createApiErrorResponse(error, { isAuthError: false });
+    console.error("[Supabase API handler]", body.error);
+    return json(body, 500);
   }
 }
 
@@ -74,9 +86,11 @@ async function googleJson(url: string, token: string, init: RequestInit = {}): P
   try { body = text ? JSON.parse(text) : {}; } catch { body = { error: text }; }
   if (!response.ok) {
     return json({
-      error: `Google API error (${response.status})`,
-      details: body,
-      isAuthError: response.status === 401 || response.status === 403,
+      ...createApiErrorResponse(`Google API error (${response.status})`, {
+        details: body,
+        isAuthError: isAuthHttpStatus(response.status),
+        authSource: "oauth_bearer",
+      }),
     }, response.status);
   }
   return json(body);
@@ -89,7 +103,7 @@ async function handleApi(request: Request): Promise<Response> {
 
   if (allowedMethods && !isApiRouteMethodAllowed(path, request.method)) {
     return new Response(
-      JSON.stringify({ error: `Method ${request.method} is not allowed for ${path}.` }),
+      JSON.stringify(createApiErrorResponse(`Method ${request.method} is not allowed for ${path}.`)),
       {
         status: 405,
         headers: {
@@ -164,10 +178,10 @@ async function handleApi(request: Request): Promise<Response> {
   }
 
   if (path === API_ROUTES.supabasePriceHistoryEnsure && request.method === "POST") {
-    return json({
-      error: "On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.",
-      retryable: true,
-    }, 503);
+    return json(createApiErrorResponse(
+      "On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.",
+      { retryable: true },
+    ), 503);
   }
 
   if (path === API_ROUTES.egxScan && request.method === "POST") {
@@ -183,7 +197,7 @@ async function handleApi(request: Request): Promise<Response> {
       });
       if (!tvResponse.ok) {
         return json(
-          { error: `TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}` },
+          createApiErrorResponse(`TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}`),
           tvResponse.status,
         );
       }
@@ -211,7 +225,7 @@ async function handleApi(request: Request): Promise<Response> {
         headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
       });
       if (!tvResponse.ok) {
-        return json({ error: `TradingView Symbol Search status ${tvResponse.status}` }, tvResponse.status);
+        return json(createApiErrorResponse(`TradingView Symbol Search status ${tvResponse.status}`), tvResponse.status);
       }
       return new Response(tvResponse.body, {
         status: tvResponse.status,
@@ -240,12 +254,21 @@ async function handleApi(request: Request): Promise<Response> {
 
       if (path === API_ROUTES.sheetsMetadata && request.method === "GET") {
         const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
-        if (!spreadsheetId) return json({ error: 'Missing required query parameter "spreadsheetId"' }, 400);
+        if (!spreadsheetId) return errorJson('Missing required query parameter "spreadsheetId"', 400);
         const upstream = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data: any = await upstream.json();
-        if (!upstream.ok) return json({ error: data, isAuthError: upstream.status === 401 || upstream.status === 403 }, upstream.status);
+        if (!upstream.ok) {
+          return json(createApiErrorResponse(
+            `Google Sheets API error (${upstream.status})`,
+            {
+              details: data,
+              isAuthError: isAuthHttpStatus(upstream.status),
+              authSource: "oauth_bearer",
+            },
+          ), upstream.status);
+        }
         return json({
           title: data.properties?.title || "",
           sheets: (data.sheets || []).map((s: any) => s.properties?.title || "").filter(Boolean),
@@ -260,7 +283,7 @@ async function handleApi(request: Request): Promise<Response> {
       if (path === API_ROUTES.sheetsValues && request.method === "GET") {
         const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
         const range = (url.searchParams.get("range") || "").trim();
-        if (!spreadsheetId || !range) return json({ error: 'Missing "spreadsheetId" or "range"' }, 400);
+        if (!spreadsheetId || !range) return errorJson('Missing "spreadsheetId" or "range"', 400);
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`,
           token,
@@ -270,7 +293,7 @@ async function handleApi(request: Request): Promise<Response> {
       if (path === API_ROUTES.sheetsValues && request.method === "PUT") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
-          return json({ error: "Missing spreadsheetId, range, or values array" }, 400);
+          return errorJson("Missing spreadsheetId, range, or values array", 400);
         }
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}?valueInputOption=${encodeURIComponent(body.valueInputOption || "USER_ENTERED")}`,
@@ -286,7 +309,7 @@ async function handleApi(request: Request): Promise<Response> {
       if (path === API_ROUTES.sheetsAppend && request.method === "POST") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
-          return json({ error: "Missing spreadsheetId, range, or values" }, 400);
+          return errorJson("Missing spreadsheetId, range, or values", 400);
         }
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}:append?valueInputOption=${encodeURIComponent(body.valueInputOption || "USER_ENTERED")}&insertDataOption=${encodeURIComponent(body.insertDataOption || "INSERT_ROWS")}`,
@@ -302,7 +325,7 @@ async function handleApi(request: Request): Promise<Response> {
       if (path === API_ROUTES.sheetsBatchUpdate && request.method === "POST") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !Array.isArray(body?.requests)) {
-          return json({ error: "Missing spreadsheetId or requests array" }, 400);
+          return errorJson("Missing spreadsheetId or requests array", 400);
         }
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}:batchUpdate`,
@@ -323,16 +346,17 @@ async function handleApi(request: Request): Promise<Response> {
         );
       }
     } catch (error) {
-      return errorJson(error, /bearer|oauth/i.test(String(error)) ? 401 : 500);
+      const classified = createClassifiedAuthErrorResponse(error);
+      return json(classified.body, classified.status);
     }
   }
 
   // Legacy migration is intentionally unavailable on the public Worker.
   if (path === API_ROUTES.firestoreSupabaseMigration) {
-    return json({ error: "Migration endpoint is disabled." }, 404);
+    return errorJson("Migration endpoint is disabled.", 404);
   }
 
-  return json({ error: "Not found" }, 404);
+  return errorJson("Not found", 404);
 }
 
 export default {

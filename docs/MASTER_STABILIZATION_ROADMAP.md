@@ -1007,7 +1007,7 @@ Supporting same-head workflows:
 
 ---
 
-## Pass 3.5 — Live-session soak — FAILED / REMEDIATION REQUIRED
+## Pass 3.5 — Live-session soak — FAILED / DEFERRED TECHNICAL DEBT
 
 The soak harness is deployed on `main@7299c623`.
 
@@ -1050,9 +1050,11 @@ Still requires one physical-app observation:
 
 Do not close this pass from CI alone. Close only after the strict post-close run and device-parity observation are recorded.
 
+**Deferral record — 2026-10-04:** the failed scheduler-ingestion soak is intentionally carried as technical debt for one session while Stage 3.6 proceeds. Retry is scheduled for **2026-10-05**. Stage 3.5 remains open and cannot be silently closed by Stage 3.6.
+
 ---
 
-## Pass 3.6 — Data Health Center
+## Pass 3.6 — Data Health Center — ACTIVE
 
 Add a compact trust surface answering:
 
@@ -1073,6 +1075,22 @@ On failure, show the affected ticker/source and stale timestamp.
 This is a diagnostic surface, not another analytics dashboard.
 
 The app should detect market-data degradation before the user notices a suspicious graph.
+
+### 3.6 implementation record — in progress
+
+Branch: `stage3-6-data-health-center`.
+
+Implemented source direction:
+
+- read-only `dataHealth.ts` authority derives one held-universe health snapshot from Supabase;
+- the frozen Header Settings affordance opens `DataHealthCenterModal` without adding a new primary Header action;
+- health checks distinguish expected EGX session from the latest persisted raw-1m session so an older complete session cannot look healthy;
+- derived 5m tail alignment is checked against each held ticker's latest raw 1m five-minute bucket;
+- daily history, live quote freshness, ticker registry resolution, portfolio sync age and last ingestion are visible;
+- Vite embeds the exact build commit for the diagnostics surface;
+- the surface is diagnostic only: no accounting writes and no synthetic market data.
+
+Stage 3.6 does **not** waive the Stage 3.5 live-session gate.
 
 ### Stage 3 exit gate
 

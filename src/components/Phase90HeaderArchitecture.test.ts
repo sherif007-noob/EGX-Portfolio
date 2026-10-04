@@ -26,7 +26,7 @@ describe('Phase 9.0–9.1 header architecture', () => {
     }
   });
 
-  it('keeps Add Trade as primary while Settings remains a subordinate future affordance', () => {
+  it('keeps Add Trade as primary while Settings remains a subordinate diagnostics affordance', () => {
     const header = readRelative('./Header.tsx');
 
     const addStart = header.indexOf('id="header-add-trade-btn"');
@@ -40,7 +40,7 @@ describe('Phase 9.0–9.1 header architecture', () => {
     expect(addBlock).toContain('premium-action-primary');
     expect(settingsBlock).toContain('premium-header-utility-action');
     expect(settingsBlock).not.toContain('premium-action-primary');
-    expect(settingsBlock).toContain('reserved for a future phase');
+    expect(settingsBlock).toContain('Data Health Center & diagnostics');
   });
 
   it('separates utilities from creation actions without removing existing callbacks', () => {

@@ -6,20 +6,20 @@ on:
       session_date:
         description: 'Cairo EGX session date (YYYY-MM-DD)'
         required: false
-        default: '2026-10-04'
+        default: '2026-10-05'
         type: string
       now_override:
         description: 'Optional ISO timestamp for diagnostics only'
         required: false
         type: string
   schedule:
-    # One-session Stage 3.5 soak for Sunday 2026-10-04.
+    # One-session Stage 3.5 retry for Monday 2026-10-05.
     # Cairo is UTC+3 on this date.
-    - cron: '45 6 4 10 *'  # 09:45 Cairo — pre-open baseline
-    - cron: '20 7 4 10 *'  # 10:20 Cairo — early session
-    - cron: '0 9 4 10 *'   # 12:00 Cairo — mid-session
-    - cron: '20 11 4 10 *' # 14:20 Cairo — near close
-    - cron: '20 12 4 10 *' # 15:20 Cairo — post-grace strict verdict
+    - cron: '45 6 5 10 *'  # 09:45 Cairo — pre-open baseline
+    - cron: '20 7 5 10 *'  # 10:20 Cairo — early session
+    - cron: '0 9 5 10 *'   # 12:00 Cairo — mid-session
+    - cron: '20 11 5 10 *' # 14:20 Cairo — near close
+    - cron: '20 12 5 10 *' # 15:20 Cairo — post-grace strict verdict
 
 permissions:
   contents: read
@@ -71,7 +71,7 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
           EGX_PRODUCTION_URL: https://egx-portfolio.sherif-nader07.workers.dev
-          EGX_LIVE_SOAK_DATE: ${{ inputs.session_date || '2026-10-04' }}
+          EGX_LIVE_SOAK_DATE: ${{ inputs.session_date || '2026-10-05' }}
           EGX_LIVE_SOAK_NOW: ${{ inputs.now_override || '' }}
           EGX_LIVE_SOAK_OUTPUT: live-session-soak.json
         run: npm run verify:live-session-soak

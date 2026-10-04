@@ -130,6 +130,35 @@ Important: ordinary feature-branch pushes do not receive this complete quality w
 
 Before promotion, run the exact-head full gate deliberately.
 
+## Production candidate gate
+
+Canonical workflow:
+
+```text
+.github/workflows/production-candidate-gate.yml
+```
+
+This is the non-writing exact-head release gate.
+
+It combines on one commit:
+
+1. Node 22 + npm 11.6;
+2. clean locked `npm ci`;
+3. candidate-delta `git diff --check`;
+4. TypeScript;
+5. full Vitest;
+6. focused intraday regressions;
+7. focused ticker-registry regressions;
+8. Vite/PWA production build;
+9. Cloudflare Worker dry-run;
+10. live read-only production-data audit.
+
+The workflow never runs market-data synchronization, ticker-registry mutation, or a real Cloudflare deployment.
+
+On push, diff hygiene covers the promoted candidate delta. On a manual run, supply `base_sha` when a wider candidate range should be checked.
+
+Stage 3.4 validated this contract on `main@ce60f932` with Production Candidate Gate **#37180662256**. The production audit returned zero issues.
+
 ## Raw 1m / derived 5m workflow
 
 Primary workflow:
@@ -245,7 +274,7 @@ Workflow:
 .github/workflows/ticker-registry.yml
 ```
 
-Current Premium schedule:
+Current production schedule:
 
 ```text
 15 13 * * 0-4
@@ -300,7 +329,7 @@ GitHub scheduled workflows execute from the repository default branch.
 
 Therefore:
 
-> a schedule committed only to `feature/premium-ui-redesign` is staged code, not necessarily the active production scheduler.
+> a schedule committed only to a non-default feature branch is staged code, not the active production scheduler.
 
 This is critical for:
 
@@ -312,7 +341,7 @@ The September 28 market-data audit demonstrated why deploying the web applicatio
 
 ## Promotion checklist
 
-Before making a Premium revision production-authoritative:
+Before promoting a production candidate:
 
 1. review `main`-only commits;
 2. reconcile branch divergence intentionally;

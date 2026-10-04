@@ -44,7 +44,7 @@ The acceptance guard confirms that legacy localStorage access is contained in `p
 Next: **4.3.2 — remote hydration/subscription ownership**.
 
 
-## 4.3.2 — Remote hydration/subscription ownership — VALIDATION IN PROGRESS
+## 4.3.2 — Remote hydration/subscription ownership — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -73,4 +73,19 @@ Next: **4.3.2 — remote hydration/subscription ownership**.
 - hydration contains no localStorage or canonical financial mutation implementation;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.3.3 — canonical ledger mutation ownership**.
+### 4.3.2 acceptance record
+
+Accepted through PR #51 at `main@dce45fc6`.
+
+Quality Checks #37230637442 passed:
+
+- TypeScript;
+- **104 / 104 test files, 571 / 571 tests**;
+- production build.
+
+The pass also corrected two ownership defects inside the hydration boundary:
+
+- long-lived subscription fallbacks now read the latest local ticker/capital/cash state without recreating the mount-only subscription;
+- asynchronous polling errors are surfaced through the repository subscription error callback, separately from synchronous subscription setup failures.
+
+Next: **4.3.3 — canonical ledger mutation ownership**.

@@ -493,6 +493,16 @@ export function usePortfolioWorkflows({
     return true;
   }, [portfolio, showToast]);
 
+  const handleQuickCashBalanceUpdate = useCallback(async (newBalance: number): Promise<boolean> => {
+    const saved = await portfolio.updateCashBalance(newBalance);
+    if (!saved) {
+      showToast('Cash balance adjustment was not saved. Nothing was changed.', 'error', 6000);
+      return false;
+    }
+    showToast(`Cash balance adjusted to ${newBalance.toLocaleString()} EGP and persisted.`, 'success');
+    return true;
+  }, [portfolio, showToast]);
+
   return {
     handleAddPosition,
     handleConfirmSell,
@@ -505,5 +515,6 @@ export function usePortfolioWorkflows({
     handlePushPricesToSheetDirectly,
     handleOverviewReconcile,
     handleCashBalanceUpdate,
+    handleQuickCashBalanceUpdate,
   };
 }

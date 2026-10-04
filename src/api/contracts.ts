@@ -67,10 +67,21 @@ export interface ApiHealthResponse {
   contractVersion: typeof API_CONTRACT_VERSION;
 }
 
+export type ApiAuthSource = 'service_account' | 'oauth_bearer';
+
 export interface ApiErrorResponse {
   error: string;
   retryable?: boolean;
   isAuthError?: boolean;
+  details?: unknown;
+  authSource?: ApiAuthSource;
+}
+
+export interface ApiErrorOptions {
+  retryable?: boolean;
+  isAuthError?: boolean;
+  details?: unknown;
+  authSource?: ApiAuthSource;
 }
 
 export interface PriceTickRequest {
@@ -105,13 +116,56 @@ export function createHealthResponse(runtime: ApiRuntime): ApiHealthResponse {
 }
 
 export function apiErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (error instanceof Error) return error.message;
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    return (error as { message: string }).message;
+  }
+  return String(error);
+}
+
+export function isAuthHttpStatus(status: number): boolean {
+  return status === 401 || status === 403;
 }
 
 export function classifyAuthErrorStatus(error: unknown): 401 | 500 {
-  return /token|authorization|unauthenticated|invalid/i.test(apiErrorMessage(error))
+  const message = apiErrorMessage(error);
+  return /(?:supabase|google|oauth|authorization|auth(?:entication)?|bearer|jwt|session|credential)[\s\S]{0,48}(?:token|missing|invalid|expired|denied|required|unauthenticated|credential)|(?:missing|invalid|expired)[\s\S]{0,32}(?:access token|bearer token|authorization)/i.test(message)
     ? 401
     : 500;
+}
+
+export function createApiErrorResponse(
+  error: unknown,
+  options: ApiErrorOptions = {},
+): ApiErrorResponse {
+  const body: ApiErrorResponse = {
+    error: apiErrorMessage(error),
+  };
+
+  if (options.retryable !== undefined) body.retryable = options.retryable;
+  if (options.isAuthError !== undefined) body.isAuthError = options.isAuthError;
+  if (options.details !== undefined) body.details = options.details;
+  if (options.authSource !== undefined) body.authSource = options.authSource;
+
+  return body;
+}
+
+export function createClassifiedAuthErrorResponse(error: unknown): {
+  status: 401 | 500;
+  body: ApiErrorResponse;
+} {
+  const status = classifyAuthErrorStatus(error);
+  return {
+    status,
+    body: createApiErrorResponse(error, {
+      isAuthError: status === 401,
+    }),
+  };
 }
 
 export function parsePortfolioSaveRequest(body: unknown): PortfolioSaveRequest {

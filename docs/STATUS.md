@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `98ca8653` — Stage 4.3.5 facade/regression closure
-**Current full verification:** PR #54 Quality Checks #37241869884 — TypeScript + **107 / 107 test files, 588 / 588 tests** + production build
+**Current validated runtime head:** `895dc351` — Stage 4.4.1 shared route/request contract authority
+**Current full verification:** PR #55 Quality Checks #37242757469 — TypeScript + **108 / 108 test files, 593 / 593 tests** + production build
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -80,16 +80,17 @@ Stage 4 accepted:
 - **Stage 4.3.3 — canonical ledger mutation ownership — accepted / CI green**
 - **Stage 4.3.4 — repository/persistence action ownership — accepted / CI green**
 - **Stage 4.3.5 — compatibility facade cleanup + regression closure — accepted / CI green**
+- **Stage 4.4.1 — shared route/request contract authority — accepted / CI green**
 
 `Stage 4.3` is now fully accepted and closed through granular gates. The earlier broad Stage 4.4 implementation remains present on `main`, but it will be revalidated in similarly small sub-passes before Stage 4.5 or Stage 5.
 
 Stage 4 active:
 
-- **Stage 4.4 granular acceptance — next sub-pass: 4.4.1**
+- **Stage 4.4 granular acceptance — next sub-pass: 4.4.2**
 
 Next:
 
-1. **Stage 4.4.1 — shared route/request contract authority validation**
+1. **Stage 4.4.2 — auth/error response contract parity**
 2. Continue Stage 4.4 in similarly small sub-passes
 3. Stage 4.5 granular CSS ownership work
 4. Stage 5 Reports workspace redesign

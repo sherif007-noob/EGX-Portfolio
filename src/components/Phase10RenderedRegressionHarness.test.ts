@@ -10,15 +10,15 @@ describe('Phase 10 rendered browser regression harness', () => {
     const gate = readRelative('./SupabaseAuthGate.tsx');
     const portfolio = readRelative('../hooks/usePortfolioState.ts');
     const market = readRelative('../hooks/useMarketData.ts');
-    const app = readRelative('../App.tsx');
+    const historicalAnalytics = readRelative('../features/app-shell/useHistoricalPortfolioAnalytics.ts');
 
     expect(gate).toContain('VISUAL_REGRESSION_MODE');
     expect(portfolio).toContain('VISUAL_REGRESSION_TRANSACTIONS');
     expect(portfolio).toContain('if (VISUAL_REGRESSION_MODE) return;');
     expect(market).toContain('VISUAL_SCHEDULE_STATUS');
     expect(market).toContain('Live sync disabled in visual regression mode');
-    expect(app).toContain('if (VISUAL_REGRESSION_MODE)');
-    expect(app).toContain('VISUAL_REGRESSION_HISTORICAL_PRICES');
+    expect(historicalAnalytics).toContain('if (VISUAL_REGRESSION_MODE)');
+    expect(historicalAnalytics).toContain('VISUAL_REGRESSION_HISTORICAL_PRICES');
     expect(readRelative('./charts/PerformanceTimeframeChart.tsx')).toContain('VISUAL_REGRESSION_MODE');
   });
 

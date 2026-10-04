@@ -288,6 +288,47 @@ npm run sync:ticker-registry
 
 The job typechecks and runs focused registry/resolver regressions before writing identity changes.
 
+## Live-session soak
+
+Stage 3.5 uses:
+
+```text
+.github/workflows/live-session-soak.yml
+scripts/verifyLiveSessionSoak.ts
+npm run verify:live-session-soak
+```
+
+The soak is read-only and is separate from the intraday writer concurrency group because it never persists bars.
+
+For the 2026-10-04 acceptance session it records five checkpoints:
+
+```text
+09:45 Cairo  pre-open
+10:20 Cairo  early session
+12:00 Cairo  mid-session
+14:20 Cairo  near close
+15:20 Cairo  strict post-grace verdict
+```
+
+Each run uploads `live-session-soak.json`.
+
+The strict final verdict requires:
+
+- source-ledger cash/position reconciliation;
+- current-session raw 1m coverage near the open and close;
+- exact overlap between persisted derived 5m and fresh aggregation of persisted 1m;
+- no direct 5m competitor in the target session;
+- Auto bound to the requested session;
+- manual 1m not silently replaced;
+- target-session daily history for held tickers;
+- healthy production scanner proxy;
+- complete held-ticker live reference;
+- Today end equity matching scanner-derived reference NAV.
+
+The verifier must remain read-only. Do not add inserts, upserts, updates, deletes, RPC writes, sync commands or real deploys to this workflow.
+
+Physical phone/desktop display parity remains a manual observation because authenticated device rendering cannot be truthfully inferred from a server-side soak.
+
 ## Production data audit
 
 Workflow:

@@ -62,9 +62,13 @@ Stage 3 completed:
 - **Stage 3.3 — Automation normalization**
 - **Stage 3.4 — Exact-head quality gate**
 
-Next:
+Stage 3 active:
 
-1. **Stage 3.5 — Live-session soak**
+- **Stage 3.5 — Live-session soak — ACTIVE / 2026-10-04 observation scheduled**
+
+Next after soak closure:
+
+1. **Stage 3.6 — Data Health Center**
 
 ---
 
@@ -965,6 +969,73 @@ Accepted frozen visual deltas remain unchanged:
 
 ---
 
+### Stage 3.5 live-session soak — ACTIVE / OBSERVING
+
+Implementation head:
+
+- `main@7299c623`;
+- PR **#42** — merged;
+- PR Quality Checks **#37181674408** — passed;
+- main Quality Checks **#37181737852** — passed;
+- Phase 10 Visual Closure **#37181737863** — passed;
+- Rendered Visual Regression **#37181737872** — passed.
+
+Added:
+
+- `scripts/verifyLiveSessionSoak.ts`;
+- `.github/workflows/live-session-soak.yml`;
+- `npm run verify:live-session-soak`;
+- `Stage35LiveSessionSoak.test.ts`.
+
+The soak is **read-only**. It does not run a market-data writer, ticker-registry writer, accounting mutation, database RPC, or real Cloudflare deployment.
+
+Five checkpoints are scheduled for the real Sunday **2026-10-04** session:
+
+- ~09:45 Cairo — pre-open baseline;
+- ~10:20 Cairo — early-session ingestion;
+- ~12:00 Cairo — mid-session advancement;
+- ~14:20 Cairo — near-close coverage;
+- ~15:20 Cairo — post-ingestion-grace strict verdict.
+
+Every run uploads a JSON evidence artifact.
+
+Automated checks include:
+
+- source-ledger cash/position reconciliation;
+- current session-relevant ticker universe;
+- raw 1m advancement;
+- duplicate timestamp detection;
+- exact persisted 1m → derived 5m OHLCV reconstruction;
+- absence of competing direct-5m rows in the strict final session;
+- Auto resolution restricted to the requested session;
+- manual 1m remaining strict rather than silently falling back;
+- daily-history advancement after close;
+- production `/api/egx/scan` proxy availability;
+- complete held-ticker scanner snapshot;
+- in-memory reference NAV from the same live-price application path used by the app;
+- Today endpoint convergence on that scanner-derived NAV.
+
+Pre-open production baseline captured before the session:
+
+- open positions: **8** — ACTF, ETEL, KORA, MASR, MPCO, ORAS, ORHD, TALM;
+- stored cash: **EGP 12,301.85**;
+- latest completed daily session: **2026-10-01**;
+- latest persisted intraday session: **2026-10-01**;
+- all eight current holdings had previous-session raw 1m coverage from **10:00 through 14:29 Cairo**;
+- previous-session derived 5m coverage extended through **14:25 Cairo**.
+
+This makes the October 4 soak a meaningful regression comparison rather than an arbitrary completeness threshold.
+
+One criterion remains intentionally manual:
+
+- **phone vs desktop displayed snapshot parity**.
+
+CI can prove that both clients consume the same authoritative persisted/live-data contracts, but it cannot honestly prove two physical logged-in devices rendered the same number. That observation must be recorded from the actual app rather than simulated.
+
+Stage 3.5 is not closed until the post-close strict verdict and device-parity observation exist.
+
+---
+
 ## Analytics state
 
 Strong/current foundation:
@@ -1062,8 +1133,8 @@ Current domain authorities:
 
 ---
 
-## Next pass
+## Current pass
 
-**Stage 3.5 — Live-session soak.**
+**Stage 3.5 — Live-session soak — ACTIVE.**
 
-Observe a complete real EGX session on the promoted production truth and verify startup valuation, phone/PC snapshot parity, advancing raw 1m coverage, post-close completion, deterministic derived 5m, same-session fallback, Today NAV convergence, daily-history advancement and absence of competing writers.
+The read-only production soak is deployed on `main` for the real **2026-10-04** EGX session. Completion requires the strict post-close checkpoint plus one real phone/PC display-parity observation.

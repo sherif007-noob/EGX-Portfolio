@@ -1007,23 +1007,48 @@ Supporting same-head workflows:
 
 ---
 
-## Pass 3.5 — Live-session soak
+## Pass 3.5 — Live-session soak — ACTIVE / 2026-10-04 OBSERVATION
 
-Observe at least one complete real EGX session after promotion.
+The soak harness is deployed on `main@7299c623`.
 
-Verify:
+Canonical implementation:
 
-- startup value matches broker/reference without manual sync;
-- phone and PC use the same authoritative snapshot;
-- 1m coverage advances during session;
-- post-close final observations arrive;
-- derived 5m matches raw aggregation;
-- manual 1m remains strict;
-- Auto fallback stays on the same session;
-- Today endpoint converges on authoritative current NAV;
-- no prior-session substitution;
-- daily history advances;
-- no competing writers.
+- `scripts/verifyLiveSessionSoak.ts`;
+- `.github/workflows/live-session-soak.yml`;
+- `npm run verify:live-session-soak`;
+- `src/services/Stage35LiveSessionSoak.test.ts`.
+
+Five read-only checkpoints cover pre-open, early session, mid-session, near close and post-grace close for **2026-10-04**.
+
+The verifier reuses the production authorities rather than reimplementing them:
+
+- `resolveIntradaySessionTickers()`;
+- `aggregateIntradayBars()`;
+- `selectBestIntradayResolution()`;
+- `reconcilePortfolioFromLedger()`;
+- `applyLivePricesToPortfolio()`;
+- `buildIntradayAnalyticsResult()`.
+
+Automated acceptance covers:
+
+- accounting snapshot reconciliation;
+- advancing 1m session coverage;
+- exact 1m → derived 5m reconstruction;
+- no competing direct 5m producer in the target session;
+- strict manual 1m behavior;
+- same-session Auto selection;
+- production scanner proxy health;
+- complete held-ticker live reference;
+- Today/reference NAV convergence;
+- post-close daily history advancement.
+
+The previous completed session, **2026-10-01**, provides a calibrated baseline: all eight current holdings had 1m observations from 10:00 through 14:29 Cairo and derived 5m through 14:25.
+
+Still requires one physical-app observation:
+
+- phone and desktop show the same authoritative portfolio snapshot/value.
+
+Do not close this pass from CI alone. Close only after the strict post-close run and device-parity observation are recorded.
 
 ---
 

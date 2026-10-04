@@ -1,12 +1,14 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
   API_ROUTES,
+  allowedApiMethodsForPath,
   classifyAuthErrorStatus,
   createHealthResponse,
   parseHistoricalEnsureRequest,
+  parseHistoricalPriceQuery,
   parseIntradayEnsureRequest,
+  parsePortfolioSaveRequest,
   parsePriceTickRequest,
-  requireTickerList,
   requireSymbolSearchText,
 } from './src/api/contracts';
 import express from "express";
@@ -52,14 +54,18 @@ async function startServer() {
   // Supabase authenticates the browser. The server verifies that Supabase access token,
   // scopes by Supabase user ID, and uses the Supabase secret key server-side only.
   app.get(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
-  app.put(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
+  app.put(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, parsePortfolioSaveRequest(req.body)) })));
   app.post(API_ROUTES.supabasePriceTick, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const body = parsePriceTickRequest(req.body);
     return { saved: await saveSupabasePriceTick(uid, body.positions as any[], body.tickers as any[], body.force) };
   }));
   app.get(API_ROUTES.supabasePriceHistory, (req, res) => withSupabaseUser(req, res, async (uid) => {
-    const tickers = requireTickerList(req.query.tickers);
-    return { data: await loadHistoricalPrices(uid, tickers, String(req.query.startDate || '') || undefined, String(req.query.endDate || '') || undefined) };
+    const query = parseHistoricalPriceQuery({
+      tickers: req.query.tickers,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+    });
+    return { data: await loadHistoricalPrices(uid, query.tickers, query.startDate, query.endDate) };
   }));
   app.post(API_ROUTES.supabasePriceHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const { targets } = parseHistoricalEnsureRequest(req.body);
@@ -116,6 +122,18 @@ async function startServer() {
       if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Symbol Search:", err); res.status(500).json({ error: err.message || "Failed to search TradingView symbols" }); }
+  });
+
+  // Every known API route shares one method authority. Specific handlers above
+  // process allowed methods; this fallback turns any other method into an
+  // explicit 405 instead of silently drifting into a generic 404/static route.
+  app.all(Object.values(API_ROUTES), (req, res) => {
+    const allowedMethods = allowedApiMethodsForPath(req.path);
+    if (!allowedMethods) return res.status(404).json({ error: "Not found" });
+    res.setHeader("Allow", allowedMethods.join(", "));
+    return res.status(405).json({
+      error: `Method ${req.method} is not allowed for ${req.path}.`,
+    });
   });
 
   const migrationPage = path.join(process.cwd(), "public", "supabase-migration.html");

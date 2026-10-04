@@ -1054,7 +1054,7 @@ Do not close this pass from CI alone. Close only after the strict post-close run
 
 ---
 
-## Pass 3.6 — Data Health Center — ACTIVE
+## Pass 3.6 — Data Health Center — IMPLEMENTED / CI GREEN
 
 Add a compact trust surface answering:
 
@@ -1076,9 +1076,9 @@ This is a diagnostic surface, not another analytics dashboard.
 
 The app should detect market-data degradation before the user notices a suspicious graph.
 
-### 3.6 implementation record — in progress
+### 3.6 implementation record
 
-Branch: `stage3-6-data-health-center`.
+Merged through PR #45 at `main@f5ae6ad6`. PR Quality Checks passed TypeScript, **98 / 98 test files, 550 / 550 tests**, and the production build.
 
 Implemented source direction:
 

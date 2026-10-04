@@ -47,8 +47,9 @@ describe('Stage 4.4 shared Worker/Express API contracts', () => {
       expect(runtime).toContain('API_ROUTES.supabaseIntradayHistoryEnsure');
       expect(runtime).toContain('API_ROUTES.egxScan');
       expect(runtime).toContain('API_ROUTES.tradingViewSymbolSearch');
+      expect(runtime).toContain('parsePortfolioSaveRequest');
       expect(runtime).toContain('parsePriceTickRequest');
-      expect(runtime).toContain('requireTickerList');
+      expect(runtime).toContain('parseHistoricalPriceQuery');
       expect(runtime).toContain('requireSymbolSearchText');
       expect(runtime).toContain('classifyAuthErrorStatus');
       expect(runtime).toContain('createHealthResponse');

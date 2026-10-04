@@ -3,10 +3,13 @@ import {
   API_PREFIX,
   API_ROUTES,
   SHEETS_API_PREFIX,
+  allowedApiMethodsForPath,
   classifyAuthErrorStatus,
   createHealthResponse,
+  isApiRouteMethodAllowed,
+  parseHistoricalPriceQuery,
+  parsePortfolioSaveRequest,
   parsePriceTickRequest,
-  requireTickerList,
   requireSymbolSearchText,
 } from './src/api/contracts';
 import {
@@ -82,6 +85,21 @@ async function googleJson(url: string, token: string, init: RequestInit = {}): P
 async function handleApi(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
+  const allowedMethods = allowedApiMethodsForPath(path);
+
+  if (allowedMethods && !isApiRouteMethodAllowed(path, request.method)) {
+    return new Response(
+      JSON.stringify({ error: `Method ${request.method} is not allowed for ${path}.` }),
+      {
+        status: 405,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "allow": allowedMethods.join(", "),
+        },
+      },
+    );
+  }
 
   if (path === API_ROUTES.health && request.method === "GET") {
     return json(createHealthResponse("cloudflare-workers"));
@@ -93,7 +111,7 @@ async function handleApi(request: Request): Promise<Response> {
 
   if (path === API_ROUTES.supabasePortfolio && request.method === "PUT") {
     return withSupabaseUser(request, async (uid) => ({
-      data: await saveSupabasePortfolio(uid, await request.json()),
+      data: await saveSupabasePortfolio(uid, parsePortfolioSaveRequest(await request.json())),
     }));
   }
 
@@ -113,13 +131,17 @@ async function handleApi(request: Request): Promise<Response> {
 
   if (path === API_ROUTES.supabasePriceHistory && request.method === "GET") {
     return withSupabaseUser(request, async (uid) => {
-      const tickers = requireTickerList(url.searchParams.get("tickers"));
+      const query = parseHistoricalPriceQuery({
+        tickers: url.searchParams.get("tickers"),
+        startDate: url.searchParams.get("startDate"),
+        endDate: url.searchParams.get("endDate"),
+      });
       return {
         data: await loadHistoricalPrices(
           uid,
-          tickers,
-          url.searchParams.get("startDate") || undefined,
-          url.searchParams.get("endDate") || undefined,
+          query.tickers,
+          query.startDate,
+          query.endDate,
         ),
       };
     });

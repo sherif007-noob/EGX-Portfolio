@@ -1,12 +1,15 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
   API_ROUTES,
+  allowedApiMethodsForPath,
   classifyAuthErrorStatus,
   createHealthResponse,
+  isApiRouteMethodAllowed,
   parseHistoricalEnsureRequest,
+  parseHistoricalPriceQuery,
   parseIntradayEnsureRequest,
+  parsePortfolioSaveRequest,
   parsePriceTickRequest,
-  requireTickerList,
   requireSymbolSearchText,
 } from './src/api/contracts';
 import express from "express";
@@ -27,6 +30,18 @@ async function startServer() {
   let migrationCompleted = false;
   const server = http.createServer(app);
   app.use(express.json({ limit: "10mb" }));
+
+  // Enforce the shared method contract before Express can apply implicit
+  // behavior such as treating HEAD as GET.
+  app.use((req, res, next) => {
+    const allowedMethods = allowedApiMethodsForPath(req.path);
+    if (!allowedMethods || isApiRouteMethodAllowed(req.path, req.method)) return next();
+
+    res.setHeader("Allow", allowedMethods.join(", "));
+    return res.status(405).json({
+      error: `Method ${req.method} is not allowed for ${req.path}.`,
+    });
+  });
 
   app.get(API_ROUTES.health, (_req, res) => res.json(createHealthResponse("express-vite")));
   app.get(API_ROUTES.sheetsServiceAccountStatus, handleGetServiceAccountStatus);
@@ -52,14 +67,18 @@ async function startServer() {
   // Supabase authenticates the browser. The server verifies that Supabase access token,
   // scopes by Supabase user ID, and uses the Supabase secret key server-side only.
   app.get(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
-  app.put(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
+  app.put(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, parsePortfolioSaveRequest(req.body)) })));
   app.post(API_ROUTES.supabasePriceTick, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const body = parsePriceTickRequest(req.body);
     return { saved: await saveSupabasePriceTick(uid, body.positions as any[], body.tickers as any[], body.force) };
   }));
   app.get(API_ROUTES.supabasePriceHistory, (req, res) => withSupabaseUser(req, res, async (uid) => {
-    const tickers = requireTickerList(req.query.tickers);
-    return { data: await loadHistoricalPrices(uid, tickers, String(req.query.startDate || '') || undefined, String(req.query.endDate || '') || undefined) };
+    const query = parseHistoricalPriceQuery({
+      tickers: req.query.tickers,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+    });
+    return { data: await loadHistoricalPrices(uid, query.tickers, query.startDate, query.endDate) };
   }));
   app.post(API_ROUTES.supabasePriceHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
     const { targets } = parseHistoricalEnsureRequest(req.body);

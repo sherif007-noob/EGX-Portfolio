@@ -38,6 +38,27 @@ export const API_ROUTE_METHODS = {
   firestoreSupabaseMigration: ['POST'],
 } as const satisfies Record<keyof typeof API_ROUTES, readonly string[]>;
 
+export type ApiRouteKey = keyof typeof API_ROUTES;
+export type ApiMethod = typeof API_ROUTE_METHODS[ApiRouteKey][number];
+
+const API_ROUTE_KEYS_BY_PATH = Object.fromEntries(
+  Object.entries(API_ROUTES).map(([key, path]) => [path, key]),
+) as Record<string, ApiRouteKey>;
+
+export function apiRouteKeyForPath(path: string): ApiRouteKey | null {
+  return API_ROUTE_KEYS_BY_PATH[path] ?? null;
+}
+
+export function allowedApiMethodsForPath(path: string): readonly ApiMethod[] | null {
+  const key = apiRouteKeyForPath(path);
+  return key ? API_ROUTE_METHODS[key] : null;
+}
+
+export function isApiRouteMethodAllowed(path: string, method: string): boolean {
+  const allowed = allowedApiMethodsForPath(path);
+  return Boolean(allowed?.includes(method.toUpperCase() as ApiMethod));
+}
+
 export type ApiRuntime = 'cloudflare-workers' | 'express-vite';
 
 export interface ApiHealthResponse {
@@ -56,6 +77,14 @@ export interface PriceTickRequest {
   positions: unknown[];
   tickers: unknown[];
   force: boolean;
+}
+
+export type PortfolioSaveRequest = Record<string, unknown>;
+
+export interface HistoricalPriceQuery {
+  tickers: string[];
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface HistoricalBackfillTargetContract {
@@ -85,6 +114,12 @@ export function classifyAuthErrorStatus(error: unknown): 401 | 500 {
     : 500;
 }
 
+export function parsePortfolioSaveRequest(body: unknown): PortfolioSaveRequest {
+  return body && typeof body === 'object' && !Array.isArray(body)
+    ? body as Record<string, unknown>
+    : {};
+}
+
 export function parsePriceTickRequest(body: unknown): PriceTickRequest {
   const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
   return {
@@ -105,6 +140,20 @@ export function requireTickerList(value: unknown): string[] {
   const tickers = parseTickerList(value);
   if (!tickers.length) throw new Error('At least one ticker is required.');
   return tickers;
+}
+
+export function parseHistoricalPriceQuery(input: {
+  tickers: unknown;
+  startDate?: unknown;
+  endDate?: unknown;
+}): HistoricalPriceQuery {
+  const startDate = String(input.startDate ?? '').trim();
+  const endDate = String(input.endDate ?? '').trim();
+  return {
+    tickers: requireTickerList(input.tickers),
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
+  };
 }
 
 function parseBackfillTargets(

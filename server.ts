@@ -4,6 +4,7 @@ import {
   allowedApiMethodsForPath,
   classifyAuthErrorStatus,
   createHealthResponse,
+  isApiRouteMethodAllowed,
   parseHistoricalEnsureRequest,
   parseHistoricalPriceQuery,
   parseIntradayEnsureRequest,
@@ -29,6 +30,18 @@ async function startServer() {
   let migrationCompleted = false;
   const server = http.createServer(app);
   app.use(express.json({ limit: "10mb" }));
+
+  // Enforce the shared method contract before Express can apply implicit
+  // behavior such as treating HEAD as GET.
+  app.use((req, res, next) => {
+    const allowedMethods = allowedApiMethodsForPath(req.path);
+    if (!allowedMethods || isApiRouteMethodAllowed(req.path, req.method)) return next();
+
+    res.setHeader("Allow", allowedMethods.join(", "));
+    return res.status(405).json({
+      error: `Method ${req.method} is not allowed for ${req.path}.`,
+    });
+  });
 
   app.get(API_ROUTES.health, (_req, res) => res.json(createHealthResponse("express-vite")));
   app.get(API_ROUTES.sheetsServiceAccountStatus, handleGetServiceAccountStatus);
@@ -122,18 +135,6 @@ async function startServer() {
       if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Symbol Search:", err); res.status(500).json({ error: err.message || "Failed to search TradingView symbols" }); }
-  });
-
-  // Every known API route shares one method authority. Specific handlers above
-  // process allowed methods; this fallback turns any other method into an
-  // explicit 405 instead of silently drifting into a generic 404/static route.
-  app.all(Object.values(API_ROUTES), (req, res) => {
-    const allowedMethods = allowedApiMethodsForPath(req.path);
-    if (!allowedMethods) return res.status(404).json({ error: "Not found" });
-    res.setHeader("Allow", allowedMethods.join(", "));
-    return res.status(405).json({
-      error: `Method ${req.method} is not allowed for ${req.path}.`,
-    });
   });
 
   const migrationPage = path.join(process.cwd(), "public", "supabase-migration.html");

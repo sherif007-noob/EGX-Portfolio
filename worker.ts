@@ -1,5 +1,15 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
+  API_PREFIX,
+  API_ROUTES,
+  SHEETS_API_PREFIX,
+  classifyAuthErrorStatus,
+  createHealthResponse,
+  parsePriceTickRequest,
+  requireTickerList,
+  requireSymbolSearchText,
+} from './src/api/contracts';
+import {
   configureSupabaseServer,
   verifySupabaseBearerToken,
   loadSupabasePortfolio,
@@ -32,7 +42,7 @@ async function withSupabaseUser(
     return json(await handler(uid));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const status = /token|authorization|unauthenticated|invalid/i.test(message) ? 401 : 500;
+    const status = classifyAuthErrorStatus(error);
     console.error("[Supabase API]", message);
     return json({ error: message }, status);
   }
@@ -73,41 +83,37 @@ async function handleApi(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
 
-  if (path === "/api/health" && request.method === "GET") {
-    return json({ status: "ok", runtime: "cloudflare-workers" });
+  if (path === API_ROUTES.health && request.method === "GET") {
+    return json(createHealthResponse("cloudflare-workers"));
   }
 
-  if (path === "/api/supabase/portfolio" && request.method === "GET") {
+  if (path === API_ROUTES.supabasePortfolio && request.method === "GET") {
     return withSupabaseUser(request, async (uid) => ({ data: await loadSupabasePortfolio(uid) }));
   }
 
-  if (path === "/api/supabase/portfolio" && request.method === "PUT") {
+  if (path === API_ROUTES.supabasePortfolio && request.method === "PUT") {
     return withSupabaseUser(request, async (uid) => ({
       data: await saveSupabasePortfolio(uid, await request.json()),
     }));
   }
 
-  if (path === "/api/supabase/price-tick" && request.method === "POST") {
+  if (path === API_ROUTES.supabasePriceTick && request.method === "POST") {
     return withSupabaseUser(request, async (uid) => {
-      const body: any = await request.json();
+      const body = parsePriceTickRequest(await request.json());
       return {
         saved: await saveSupabasePriceTick(
           uid,
-          body?.positions || [],
-          body?.tickers || [],
-          body?.force === true,
+          body.positions as any[],
+          body.tickers as any[],
+          body.force,
         ),
       };
     });
   }
 
-  if (path === "/api/supabase/price-history" && request.method === "GET") {
+  if (path === API_ROUTES.supabasePriceHistory && request.method === "GET") {
     return withSupabaseUser(request, async (uid) => {
-      const tickers = (url.searchParams.get("tickers") || "")
-        .split(",")
-        .map((ticker) => ticker.trim())
-        .filter(Boolean);
-      if (!tickers.length) throw new Error("At least one ticker is required.");
+      const tickers = requireTickerList(url.searchParams.get("tickers"));
       return {
         data: await loadHistoricalPrices(
           uid,
@@ -119,7 +125,7 @@ async function handleApi(request: Request): Promise<Response> {
     });
   }
 
-  if (path === "/api/supabase/intraday-history/ensure" && request.method === "POST") {
+  if (path === API_ROUTES.supabaseIntradayHistoryEnsure && request.method === "POST") {
     // Backward compatibility for an older PWA bundle that requested repair on
     // app startup. The current client no longer calls this route. Returning a
     // successful no-op prevents already-open/cached clients from generating
@@ -135,14 +141,14 @@ async function handleApi(request: Request): Promise<Response> {
     });
   }
 
-  if (path === "/api/supabase/price-history/ensure" && request.method === "POST") {
+  if (path === API_ROUTES.supabasePriceHistoryEnsure && request.method === "POST") {
     return json({
       error: "On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.",
       retryable: true,
     }, 503);
   }
 
-  if (path === "/api/egx/scan" && request.method === "POST") {
+  if (path === API_ROUTES.egxScan && request.method === "POST") {
     try {
       const payload = EGX_SCANNER_PAYLOAD;
       const tvResponse = await fetch("https://scanner.tradingview.com/egypt/scan", {
@@ -169,9 +175,13 @@ async function handleApi(request: Request): Promise<Response> {
     }
   }
 
-  if (path === "/api/tradingview/symbol-search" && request.method === "GET") {
-    const query = (url.searchParams.get("text") || "").trim();
-    if (!query) return json({ error: "Query parameter 'text' is required" }, 400);
+  if (path === API_ROUTES.tradingViewSymbolSearch && request.method === "GET") {
+    let query: string;
+    try {
+      query = requireSymbolSearchText(url.searchParams.get("text"));
+    } catch (error) {
+      return errorJson(error, 400);
+    }
     try {
       const searchUrl =
         `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
@@ -194,7 +204,7 @@ async function handleApi(request: Request): Promise<Response> {
   // Google Sheets remains available through the browser's Google OAuth bearer
   // token. Service-account auth stays on the Node server and is intentionally
   // not exposed or emulated in this first Worker deployment.
-  if (path === "/api/sheets/service-account-status" && request.method === "GET") {
+  if (path === API_ROUTES.sheetsServiceAccountStatus && request.method === "GET") {
     return json({
       configured: false,
       serviceAccountEmail: null,
@@ -202,11 +212,11 @@ async function handleApi(request: Request): Promise<Response> {
     });
   }
 
-  if (path.startsWith("/api/sheets/")) {
+  if (path.startsWith(SHEETS_API_PREFIX)) {
     try {
       const token = googleBearer(request);
 
-      if (path === "/api/sheets/metadata" && request.method === "GET") {
+      if (path === API_ROUTES.sheetsMetadata && request.method === "GET") {
         const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
         if (!spreadsheetId) return json({ error: 'Missing required query parameter "spreadsheetId"' }, 400);
         const upstream = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
@@ -225,7 +235,7 @@ async function handleApi(request: Request): Promise<Response> {
         });
       }
 
-      if (path === "/api/sheets/values" && request.method === "GET") {
+      if (path === API_ROUTES.sheetsValues && request.method === "GET") {
         const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
         const range = (url.searchParams.get("range") || "").trim();
         if (!spreadsheetId || !range) return json({ error: 'Missing "spreadsheetId" or "range"' }, 400);
@@ -235,7 +245,7 @@ async function handleApi(request: Request): Promise<Response> {
         );
       }
 
-      if (path === "/api/sheets/values" && request.method === "PUT") {
+      if (path === API_ROUTES.sheetsValues && request.method === "PUT") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
           return json({ error: "Missing spreadsheetId, range, or values array" }, 400);
@@ -251,7 +261,7 @@ async function handleApi(request: Request): Promise<Response> {
         );
       }
 
-      if (path === "/api/sheets/append" && request.method === "POST") {
+      if (path === API_ROUTES.sheetsAppend && request.method === "POST") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
           return json({ error: "Missing spreadsheetId, range, or values" }, 400);
@@ -267,7 +277,7 @@ async function handleApi(request: Request): Promise<Response> {
         );
       }
 
-      if (path === "/api/sheets/batchUpdate" && request.method === "POST") {
+      if (path === API_ROUTES.sheetsBatchUpdate && request.method === "POST") {
         const body: any = await request.json();
         if (!body?.spreadsheetId || !Array.isArray(body?.requests)) {
           return json({ error: "Missing spreadsheetId or requests array" }, 400);
@@ -283,7 +293,7 @@ async function handleApi(request: Request): Promise<Response> {
         );
       }
 
-      if (path === "/api/sheets/drive-files" && request.method === "GET") {
+      if (path === API_ROUTES.sheetsDriveFiles && request.method === "GET") {
         const q = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
         return googleJson(
           `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,webViewLink)&orderBy=modifiedTime desc&pageSize=30`,
@@ -296,7 +306,7 @@ async function handleApi(request: Request): Promise<Response> {
   }
 
   // Legacy migration is intentionally unavailable on the public Worker.
-  if (path === "/api/migration/firestore-to-supabase") {
+  if (path === API_ROUTES.firestoreSupabaseMigration) {
     return json({ error: "Migration endpoint is disabled." }, 404);
   }
 
@@ -320,7 +330,7 @@ export default {
       supabaseSecretPresent ? env.SUPABASE_SECRET_KEY.trim() : undefined,
     );
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) return handleApi(request);
+    if (url.pathname.startsWith(API_PREFIX)) return handleApi(request);
     return env.ASSETS.fetch(request);
   },
 };

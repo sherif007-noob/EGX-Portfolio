@@ -1,1 +1,4 @@
-export { usePortfolioState } from '../../hooks/usePortfolioState';
+export {
+  usePortfolioState,
+  type PortfolioStateFacade,
+} from './usePortfolioState';

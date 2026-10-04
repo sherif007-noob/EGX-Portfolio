@@ -1202,7 +1202,7 @@ Validation on PR #47 Quality Checks #37228318969:
 
 ---
 
-## Pass 4.3 — Split `usePortfolioState` — COMPLETE / CI GREEN
+## Pass 4.3 — Split `usePortfolioState` — IMPLEMENTATION LANDED / GRANULAR ACCEPTANCE ACTIVE
 
 Separate:
 
@@ -1242,13 +1242,17 @@ The legacy `usePortfolioState()` return shape remains as a compatibility facade,
 
 Older Stage 2 and visual source-contract tests now follow the canonical owners instead of forcing implementation back into the compatibility hook.
 
-Validation on PR #48 Quality Checks #37228707949:
+Validation on the original broad PR #48 was green, but Stage 4.3 is now being accepted in smaller gates to avoid oversized implementation passes.
 
-- TypeScript passed;
-- **101 / 101 test files, 559 / 559 tests passed**;
-- production build passed.
+Granular acceptance sequence:
 
-**Next: Pass 4.4 — shared Worker/Express API contracts.**
+- **4.3.1 — local state + compatibility cache — ACCEPTED / CI GREEN** via PR #50 at `main@b0ecb4b7`; Quality Checks #37229492006 passed TypeScript, **103 / 103 test files, 566 / 566 tests**, and production build.
+- **4.3.2 — remote hydration/subscription ownership — NEXT**
+- 4.3.3 — canonical ledger mutation ownership
+- 4.3.4 — repository/persistence action ownership
+- 4.3.5 — facade cleanup + regression closure
+
+Do not advance the acceptance point merely because later broad implementation code already exists on `main`.
 
 ---
 

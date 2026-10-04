@@ -18,6 +18,72 @@ export interface ParsedOcrTrade {
   rawOcrText?: string;
 }
 
+interface OcrTimeCandidate {
+  index: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  meridiem?: string;
+  score: number;
+}
+
+function normalizeCandidateTime(candidate: OcrTimeCandidate, date: string): string | undefined {
+  let hours = candidate.hours;
+  if (candidate.meridiem === 'PM' && hours < 12) hours += 12;
+  if (candidate.meridiem === 'AM' && hours === 12) hours = 0;
+  if (
+    hours < 0 ||
+    hours > 23 ||
+    candidate.minutes < 0 ||
+    candidate.minutes > 59 ||
+    candidate.seconds < 0 ||
+    candidate.seconds > 59
+  ) {
+    return undefined;
+  }
+  return `${date}T${String(hours).padStart(2, '0')}:${String(candidate.minutes).padStart(2, '0')}:${String(candidate.seconds).padStart(2, '0')}`;
+}
+
+/**
+ * Prefer the broker execution time over unrelated device/status-bar clocks.
+ *
+ * Telda screenshots commonly contain an iPhone status-bar time near the top and
+ * the actual transaction time beside the trade row. The old parser took the
+ * first clock-looking token, which could give several screenshots the same
+ * capture time and corrupt same-ticker ordering/deduplication.
+ */
+export function extractTradeExecutionTime(text: string, date: string): string | undefined {
+  const matches = [...text.matchAll(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?\b/gi)];
+  if (!matches.length) return undefined;
+
+  const candidates: OcrTimeCandidate[] = matches.map((match) => {
+    const index = match.index ?? 0;
+    const meridiem = match[4]?.toUpperCase();
+    const contextStart = Math.max(0, index - 120);
+    const contextEnd = Math.min(text.length, index + match[0].length + 80);
+    const context = text.slice(contextStart, contextEnd);
+
+    let score = 0;
+    if (meridiem) score += 100;
+    if (/\b(executed|execution|filled|fulfilled|completed|trade\s*time|order\s*time)\b/i.test(context)) score += 80;
+    if (/\b(buy|sell)\b/i.test(context)) score += 35;
+    if (/\b(shares?|qty|quantity|egp)\b/i.test(context)) score += 20;
+    if (index < 100 && !meridiem) score -= 80;
+
+    return {
+      index,
+      hours: Number(match[1]),
+      minutes: Number(match[2]),
+      seconds: match[3] ? Number(match[3]) : 0,
+      meridiem,
+      score,
+    };
+  });
+
+  candidates.sort((a, b) => b.score - a.score || b.index - a.index);
+  return normalizeCandidateTime(candidates[0], date);
+}
+
 export function parseTradeText(rawText: string, tickers: EGXTicker[]): Partial<ParsedOcrTrade> | null {
   if (!rawText || rawText.trim().length === 0) return null;
   const text = rawText.replace(/\r\n/g, '\n').replace(/[ⓘℹ️©®]/g, ' ').replace(/\b(E6P|EGR|ECP)\b/gi, 'EGP');
@@ -96,19 +162,7 @@ export function parseTradeText(rawText: string, tickers: EGXTicker[]): Partial<P
   else if (dmyMatch) date = dmyToIso(dmyMatch[1]);
   else if (isoMatch) date = dmyToIso(isoMatch[1]);
 
-  let executedAt: string | undefined;
-  const timeMatch = text.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?\b/i);
-  if (timeMatch) {
-    let hours = Number(timeMatch[1]);
-    const minutes = Number(timeMatch[2]);
-    const seconds = timeMatch[3] ? Number(timeMatch[3]) : 0;
-    const meridiem = timeMatch[4]?.toUpperCase();
-    if (meridiem === 'PM' && hours < 12) hours += 12;
-    if (meridiem === 'AM' && hours === 12) hours = 0;
-    if (hours >= 0 && hours <= 23 && minutes <= 59 && seconds <= 59) {
-      executedAt = `${date}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-  }
+  const executedAt = extractTradeExecutionTime(text, date);
 
   if (!detectedTicker && shares === 0 && price === 0) return null;
   return {

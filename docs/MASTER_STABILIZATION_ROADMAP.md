@@ -1102,7 +1102,7 @@ One promoted production truth, one active ingestion model, exact-head CI clean, 
 
 This is a **refactor, not a rewrite**.
 
-## Pass 4.1 — Establish module ownership
+## Pass 4.1 — Establish module ownership — COMPLETE / CI GREEN
 
 Target direction:
 
@@ -1135,9 +1135,24 @@ src/
 
 Move gradually. Preserve behavior through tests.
 
+### 4.1 implementation record
+
+Merged through PR #46 at `main@9d43f7c5`.
+
+Implemented:
+
+- canonical source-level ownership map;
+- accounting, performance and market domain facades;
+- Supabase data boundary;
+- Google Sheets and OCR integration facades;
+- Portfolio and Reports feature facades;
+- regression coverage preventing business logic from being duplicated into the facade layer.
+
+Quality Checks passed before merge.
+
 ---
 
-## Pass 4.2 — Reduce App orchestration
+## Pass 4.2 — Reduce App orchestration — COMPLETE / CI GREEN
 
 `App.tsx` should become primarily composition:
 
@@ -1158,6 +1173,32 @@ Extract:
 - analytics-history loading;
 - notifications;
 - scanner lifecycle.
+
+### 4.2 implementation record
+
+Merged through PR #47 at `main@e8b74f24`.
+
+Implemented:
+
+- `usePortfolioNavigation()` owns tab transitions and ledger-correction routing;
+- `useAppOverlayState()` owns modal/overlay state;
+- `useAppNotifications()` owns toast timing and persisted Undo orchestration;
+- `useHistoricalPortfolioAnalytics()` owns history loading, trustworthy backfill and visual-regression isolation;
+- `useLivePriceSheetMirror()` owns live-price Google Sheets mirroring/throttling;
+- `usePortfolioWorkflows()` owns BUY/SELL, edit/delete, OCR, reconciliation, cash and post-persistence Sheets sequencing;
+- existing scanner/alert lifecycle remains isolated in its dedicated hooks rather than returning to App;
+- App moved onto Stage 4.1 Portfolio/Reports/domain facades where applicable;
+- older Stage 2/3 source-contract tests were migrated to the new owners instead of reintroducing orchestration into App.
+
+Validation on PR #47 Quality Checks #37228318969:
+
+- TypeScript passed;
+- **100 / 100 test files, 556 / 556 tests passed**;
+- production build passed.
+
+`App.tsx` no longer owns `useState`, `useEffect`, or `useRef` workflow state machines.
+
+**Next: Pass 4.3 — split `usePortfolioState`.**
 
 ---
 

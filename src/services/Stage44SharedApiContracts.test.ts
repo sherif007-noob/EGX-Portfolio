@@ -6,6 +6,8 @@ import {
   API_ROUTES,
   API_ROUTE_METHODS,
   API_RUNTIME_CAPABILITIES,
+  API_RUNTIME_CAPABILITY_ROUTES,
+  API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES,
   classifyAuthErrorStatus,
   createHealthResponse,
   parseHistoricalEnsureRequest,
@@ -118,9 +120,33 @@ describe('Stage 4.4 shared Worker/Express API contracts', () => {
       firestoreMigration: true,
     });
 
+    expect(API_RUNTIME_CAPABILITY_ROUTES).toEqual({
+      dailyHistoryRepair: 'supabasePriceHistoryEnsure',
+      intradayHistoryRepair: 'supabaseIntradayHistoryEnsure',
+      googleServiceAccount: 'sheetsServiceAccountStatus',
+      firestoreMigration: 'firestoreSupabaseMigration',
+    });
+
+    expect(API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES['cloudflare-workers']).toMatchObject({
+      dailyHistoryRepair: {
+        status: 503,
+        body: { retryable: true },
+      },
+      intradayHistoryRepair: {
+        status: 200,
+        body: { deprecated: true },
+      },
+      googleServiceAccount: {
+        status: 200,
+        body: { configured: false },
+      },
+      firestoreMigration: {
+        status: 404,
+        body: { error: 'Migration endpoint is disabled.' },
+      },
+    });
+
     const worker = read('worker.ts');
-    expect(worker).toContain('deprecated: true');
-    expect(worker).toContain('Daily history is maintained by the Node-based scheduled ingestion workflow.');
-    expect(worker).toContain('Migration endpoint is disabled.');
+    expect(worker).toContain('requireUnavailableRuntimeCapabilityResponse');
   });
 });

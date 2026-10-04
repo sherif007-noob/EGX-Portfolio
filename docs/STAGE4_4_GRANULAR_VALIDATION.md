@@ -97,3 +97,35 @@ The pass closed two concrete parity defects:
 Google Sheets/Drive upstream HTTP 401/403 responses now share the same `isAuthError` semantics, and missing Google credentials are auth-classified consistently.
 
 Next: **4.4.3 — runtime capability/deprecation contract validation**.
+
+
+## 4.4.3 — Runtime capability/deprecation contract validation — VALIDATION IN PROGRESS
+
+**Scope**
+
+- runtime capability meaning and ownership;
+- capability-to-route mapping;
+- Cloudflare Worker unavailable-capability responses;
+- Express implementation-support coverage;
+- explicit preservation of the legacy intraday repair no-op;
+- distinction between runtime support and current configuration/enabling.
+
+**Explicitly out of scope**
+
+- Google Sheets request payload schema consolidation;
+- scanner success-response schema;
+- route/request normalization already accepted in 4.4.1;
+- auth/error semantics already accepted in 4.4.2;
+- Stage 4.5 CSS ownership.
+
+**Acceptance**
+
+- `API_RUNTIME_CAPABILITIES` means implementation support, not current feature configuration;
+- every capability maps to one canonical route key;
+- every unsupported Worker capability has an explicit shared unavailable-response contract;
+- Worker handlers consume those shared contracts instead of hard-coding deprecation/disabled behavior;
+- Express declares support only for capabilities for which it owns real handlers;
+- the existing intraday Worker `200 + deprecated no-op` remains explicit and regression-protected for old cached clients;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.4.4 — Google Sheets payload/response contract consolidation**.

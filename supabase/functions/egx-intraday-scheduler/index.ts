@@ -369,21 +369,27 @@ Deno.serve(async (req: Request) => {
     }, { status: failures.length === 0 ? 200 : 500 });
   } catch (error) {
     if (!dryRun) {
-      await sb.from("market_data_ingestion_runs").update({
-        status: "failed",
-        finished_at: new Date().toISOString(),
-        ticker_count: tickers.length,
-        raw_rows_written: rawRowsWritten,
-        derived_rows_written: derivedRowsWritten,
-        daily_rows_written: dailyRowsWritten,
-        failures: [{ ticker: "*", error: error instanceof Error ? error.message : String(error) }, ...failures],
-      }).eq("id", runId).catch(() => undefined);
+      try {
+        await sb.from("market_data_ingestion_runs").update({
+          status: "failed",
+          finished_at: new Date().toISOString(),
+          ticker_count: tickers.length,
+          raw_rows_written: rawRowsWritten,
+          derived_rows_written: derivedRowsWritten,
+          daily_rows_written: dailyRowsWritten,
+          failures: [{ ticker: "*", error: error instanceof Error ? error.message : String(error) }, ...failures],
+        }).eq("id", runId);
+      } catch {
+        // Preserve the original ingestion error.
+      }
     }
     return Response.json({ ok: false, runId, error: error instanceof Error ? error.message : String(error), failures }, { status: 500 });
   } finally {
-    if (session) await session.close().catch(() => undefined);
+    if (session) {
+      try { await session.close(); } catch { /* best-effort cleanup */ }
+    }
     if (lease) {
-      await sb.rpc("release_intraday_writer_lease", { p_owner: runId }).catch(() => undefined);
+      try { await sb.rpc("release_intraday_writer_lease", { p_owner: runId }); } catch { /* lease expires automatically */ }
     }
   }
 });

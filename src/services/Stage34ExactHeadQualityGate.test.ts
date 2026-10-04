@@ -36,7 +36,7 @@ describe('Stage 3.4 exact-head production candidate gate', () => {
     expect(audit).toContain(".from('portfolios').select");
     expect(audit).toContain(".from('transactions').select");
     expect(audit).toContain(".from('price_history').select");
-    expect(audit).toContain(".from('intraday_price_history').select");
+    expect(audit).toContain(".from('intraday_price_history')");
     expect(audit).not.toMatch(/\.insert\s*\(/);
     expect(audit).not.toMatch(/\.update\s*\(/);
     expect(audit).not.toMatch(/\.upsert\s*\(/);

@@ -214,6 +214,47 @@ async function loadSessionRaw(sb: any, ticker: string, targetDate: string) {
   return (data ?? []).filter((row: any) => cairoDateKey(String(row.bar_timestamp)) === targetDate);
 }
 
+async function createDenoTradingViewSession() {
+  // @ch99q/twc detects Node by looking for globalThis.process. Supabase Edge
+  // exposes a Node-compat process shim even though WebSocket is the native Deno
+  // implementation. That makes twc pass a Node ws options object as the second
+  // WebSocket constructor argument, which Deno treats as a protocol list and
+  // rejects with "Invalid protocol value".
+  //
+  // Hide only the process shim for the duration of createSession() so twc takes
+  // its documented native WebSocket path. Restore it immediately afterwards.
+  const globalObject = globalThis as typeof globalThis & { process?: unknown };
+  const previousProcess = globalObject.process;
+  const hadProcess = "process" in globalObject;
+
+  try {
+    try {
+      Object.defineProperty(globalObject, "process", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+    } catch {
+      globalObject.process = undefined;
+    }
+    return await createSession();
+  } finally {
+    try {
+      if (hadProcess) {
+        Object.defineProperty(globalObject, "process", {
+          value: previousProcess,
+          configurable: true,
+          writable: true,
+        });
+      } else {
+        delete globalObject.process;
+      }
+    } catch {
+      globalObject.process = previousProcess;
+    }
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("POST required", { status: 405 });
 
@@ -287,7 +328,7 @@ Deno.serve(async (req: Request) => {
     if (registryError) throw new Error(`Ticker registry read failed: ${registryError.message}`);
     const registryByTicker = new Map((registryRows ?? []).map((row: any) => [cleanTicker(row.ticker), row]));
 
-    session = await createSession();
+    session = await createDenoTradingViewSession();
     const chart = await createChart(session);
     const retrievedAt = new Date().toISOString();
     const nowMs = now.getTime();

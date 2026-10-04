@@ -76,21 +76,21 @@ Stage 4 accepted:
 - **Stage 4.1 — module ownership — merged / CI green**
 - **Stage 4.2 — App orchestration extraction — merged / CI green**
 - **Stage 4.3.1 — local state + compatibility cache — accepted / CI green**
+- **Stage 4.3.2 — remote hydration/subscription ownership — accepted / CI green**
 
 Granular Stage 4.3 acceptance is now authoritative. The earlier broad Stage 4.3 and Stage 4.4 implementations are present on `main`, but they are not treated as newly accepted sequencing gates until their smaller sub-passes are individually validated.
 
 Stage 4 active:
 
-- **Stage 4.3.2 — remote hydration/subscription ownership**
+- **Stage 4.3.3 — canonical ledger mutation ownership**
 
 Next:
 
-1. **Stage 4.3.2 — remote hydration/subscription ownership**
-2. **Stage 4.3.3 — canonical ledger mutation ownership**
-3. **Stage 4.3.4 — repository/persistence action ownership**
-4. **Stage 4.3.5 — facade cleanup + regression closure**
-5. Continue Stage 4 in similarly small sub-passes before Stage 5
-6. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
+1. **Stage 4.3.3 — canonical ledger mutation ownership**
+2. **Stage 4.3.4 — repository/persistence action ownership**
+3. **Stage 4.3.5 — facade cleanup + regression closure**
+4. Continue Stage 4 in similarly small sub-passes before Stage 5
+5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 
 ---
 

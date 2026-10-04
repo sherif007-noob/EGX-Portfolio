@@ -8,11 +8,11 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-10-04  
+**Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `4653347c` — Stage 4.3.4 repository/persistence action ownership
-**Current full verification:** PR #53 Quality Checks #37240842829 — TypeScript + **106 / 106 test files, 583 / 583 tests** + production build
+**Current validated runtime head:** `98ca8653` — Stage 4.3.5 facade/regression closure
+**Current full verification:** PR #54 Quality Checks #37241869884 — TypeScript + **107 / 107 test files, 588 / 588 tests** + production build
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -79,18 +79,21 @@ Stage 4 accepted:
 - **Stage 4.3.2 — remote hydration/subscription ownership — accepted / CI green**
 - **Stage 4.3.3 — canonical ledger mutation ownership — accepted / CI green**
 - **Stage 4.3.4 — repository/persistence action ownership — accepted / CI green**
+- **Stage 4.3.5 — compatibility facade cleanup + regression closure — accepted / CI green**
 
-Granular Stage 4.3 acceptance is now authoritative. The earlier broad Stage 4.3 and Stage 4.4 implementations are present on `main`, but they are not treated as newly accepted sequencing gates until their smaller sub-passes are individually validated.
+`Stage 4.3` is now fully accepted and closed through granular gates. The earlier broad Stage 4.4 implementation remains present on `main`, but it will be revalidated in similarly small sub-passes before Stage 4.5 or Stage 5.
 
 Stage 4 active:
 
-- **Stage 4.3.5 — compatibility facade cleanup + regression closure**
+- **Stage 4.4 granular acceptance — next sub-pass: 4.4.1**
 
 Next:
 
-1. **Stage 4.3.5 — compatibility facade cleanup + regression closure**
-2. Continue Stage 4 in similarly small sub-passes before Stage 5
-3. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
+1. **Stage 4.4.1 — shared route/request contract authority validation**
+2. Continue Stage 4.4 in similarly small sub-passes
+3. Stage 4.5 granular CSS ownership work
+4. Stage 5 Reports workspace redesign
+5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 
 ---
 

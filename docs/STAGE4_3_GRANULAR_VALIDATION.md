@@ -134,3 +134,33 @@ Quality Checks #37231285634 passed:
 The pass also closed a mutation-freshness race at the ownership boundary: after a financial mutation persists, `usePortfolioLedgerMutations.ts` now advances its internal canonical snapshot before React's batched state setters. An immediately-following mutation therefore prepares from the just-persisted ledger rather than the previous render. Newly authored BUY/SELL IDs now use `crypto.randomUUID()`.
 
 Next: **4.3.4 — repository/persistence action ownership**.
+
+
+## 4.3.4 — Repository/persistence action ownership — VALIDATION IN PROGRESS
+
+**Scope**
+
+- Supabase-backed portfolio repository adapter;
+- persisted position metadata updates;
+- explicit force-sync orchestration;
+- persistence success/failure propagation to the Edit Position workflow;
+- remote ticker-directory precedence during force-sync.
+
+**Explicitly out of scope**
+
+- canonical financial ledger mutation execution;
+- remote hydration/subscription lifecycle;
+- public compatibility-facade cleanup;
+- Stage 4.4/4.5 work.
+
+**Acceptance**
+
+- repository actions depend on `portfolioRepository`, not raw Supabase/storage functions;
+- `portfolioRepository` binds directly to Supabase storage instead of the legacy Firestore-name compatibility shim;
+- position target/stop/notes edits are persistence-confirmed before local success is applied;
+- failed position metadata persistence leaves the modal open and does not show success;
+- successful metadata application preserves any fresher local market/accounting fields that advanced while the save was in flight;
+- explicit force-sync does not overwrite authoritative remote ticker metadata with stale local duplicates;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.3.5 — compatibility facade cleanup + regression closure**.

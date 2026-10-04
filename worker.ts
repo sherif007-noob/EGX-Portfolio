@@ -1,6 +1,8 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
+  API_PREFIX,
   API_ROUTES,
+  SHEETS_API_PREFIX,
   classifyAuthErrorStatus,
   createHealthResponse,
   parsePriceTickRequest,
@@ -210,7 +212,7 @@ async function handleApi(request: Request): Promise<Response> {
     });
   }
 
-  if (path.startsWith("/api/sheets/")) {
+  if (path.startsWith(SHEETS_API_PREFIX)) {
     try {
       const token = googleBearer(request);
 
@@ -328,7 +330,7 @@ export default {
       supabaseSecretPresent ? env.SUPABASE_SECRET_KEY.trim() : undefined,
     );
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) return handleApi(request);
+    if (url.pathname.startsWith(API_PREFIX)) return handleApi(request);
     return env.ASSETS.fetch(request);
   },
 };

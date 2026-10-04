@@ -11,6 +11,8 @@ import { portfolioRepository } from '../persistence/portfolioRepository';
 
 export function usePortfolioHydration(state: PortfolioLocalState) {
   const isRemoteSyncingRef = useRef(false);
+  const latestStateRef = useRef(state);
+  latestStateRef.current = state;
 
   useEffect(() => {
     if (VISUAL_REGRESSION_MODE) return;
@@ -25,6 +27,7 @@ export function usePortfolioHydration(state: PortfolioLocalState) {
         if (!remoteData) throw new Error('Authoritative portfolio is unavailable.');
 
         if (isMounted) {
+          const latestState = latestStateRef.current;
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
@@ -37,15 +40,15 @@ export function usePortfolioHydration(state: PortfolioLocalState) {
           let loadedCash =
             typeof remoteData.cashBalance === 'number'
               ? remoteData.cashBalance
-              : state.cashBalance;
+              : latestState.cashBalance;
           const loadedCapital =
             typeof remoteData.capitalDeposits === 'number' && remoteData.capitalDeposits >= 0
               ? remoteData.capitalDeposits
-              : state.capitalDeposits;
+              : latestState.capitalDeposits;
           const loadedTickers = mergeTickerDirectoryWithBaseline(
             Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
               ? remoteData.tickers
-              : state.tickers,
+              : latestState.tickers,
           );
           loadedTransactions = rehydrateTransactionMetadata(loadedTransactions, loadedTickers);
 
@@ -95,13 +98,14 @@ export function usePortfolioHydration(state: PortfolioLocalState) {
         activeUnsubscribe = portfolioRepository.subscribe((remoteData) => {
           if (!remoteData || !isMounted) return;
 
+          const latestState = latestStateRef.current;
           isRemoteSyncingRef.current = true;
           let loadedPositions = Array.isArray(remoteData.positions) ? remoteData.positions : [];
           let loadedClosed = Array.isArray(remoteData.closedTrades) ? remoteData.closedTrades : [];
           const loadedTickers = mergeTickerDirectoryWithBaseline(
             Array.isArray(remoteData.tickers) && remoteData.tickers.length > 0
               ? remoteData.tickers
-              : state.tickers,
+              : latestState.tickers,
           );
           const loadedTransactions = rehydrateTransactionMetadata(
             Array.isArray(remoteData.transactions)
@@ -117,7 +121,7 @@ export function usePortfolioHydration(state: PortfolioLocalState) {
             const report = reconcilePortfolioFromLedger(
               loadedTransactions,
               loadedTickers,
-              state.capitalDeposits,
+              latestState.capitalDeposits,
               loadedPositions,
             );
             if (loadedPositions.length === 0) loadedPositions = report.reconciledPositions;
@@ -180,9 +184,12 @@ export function usePortfolioHydration(state: PortfolioLocalState) {
           setTimeout(() => {
             isRemoteSyncingRef.current = false;
           }, 150);
+        }, (error) => {
+          if (!isMounted) return;
+          console.warn('Supabase portfolio subscription poll failed:', error);
         });
       } catch (error) {
-        console.warn('Supabase portfolio subscription failed:', error);
+        console.warn('Supabase portfolio subscription setup failed:', error);
       }
     };
 

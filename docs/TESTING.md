@@ -233,7 +233,12 @@ Current coverage includes:
 - cash add/edit/delete candidate preparation;
 - restore/import ledger-authority rejection rules;
 - dependency-aware OCR batch construction;
-- duplicate OCR execution blocking;
+- broker trade-row time extraction when a screenshot also contains a device/status-bar clock;
+- repeated same-ticker OCR round trips;
+- same-time close → reopen ordering;
+- legitimate same-minute split fills inside one batch;
+- exact duplicate screenshot filtering in the review UI;
+- duplicate OCR execution blocking against the pre-existing ledger;
 - unreconcilable OCR SELL rejection;
 - persistence-aware Journal/OCR/Cash/Backup/Sheets UI contracts;
 - persisted Undo source contract;

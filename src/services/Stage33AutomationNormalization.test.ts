@@ -51,15 +51,21 @@ describe('Stage 3.3 automation normalization', () => {
     expect(legacy).toContain('npm run sync:intraday');
   });
 
-  it('keeps exactly one scheduled intraday bar writer', () => {
+  it('keeps GitHub intraday writers manual-only after Stage 3.5 remediation', () => {
     const oneMinute = read('.github/workflows/intraday-1m-sync.yml');
     const legacy = read('.github/workflows/intraday-prices.yml');
     const smoke = read('.github/workflows/intraday-1m-smoke.yml');
+    const schedulerMigration = read('supabase/migrations/20261004_intraday_edge_scheduler.sql');
 
-    expect(oneMinute).toContain('schedule:');
+    expect(oneMinute).toContain('workflow_dispatch:');
+    expect(oneMinute).not.toContain('schedule:');
     expect(oneMinute).toContain('npm run sync:intraday:1m');
     expect(legacy).not.toContain('schedule:');
     expect(smoke).not.toContain('schedule:');
+
+    expect(schedulerMigration).toContain("'egx-intraday-edge-sync'");
+    expect(schedulerMigration).toContain("'*/5 7-13 * * 0-4'");
+    expect(schedulerMigration).toContain("'/functions/v1/egx-intraday-scheduler'");
   });
 
   it('keeps the production audit read-only and on the canonical npm script', () => {

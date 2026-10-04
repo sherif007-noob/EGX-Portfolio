@@ -50,7 +50,8 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
 
     expect(persistIndex).toBeGreaterThan(-1);
     expect(applyIndex).toBeGreaterThan(persistIndex);
-    expect(executor).toContain("code: 'BUSY'");
+    expect(executor).toContain("'BUSY'");
+    expect(executor).toContain("'busy'");
     expect(executor).toContain('inFlightKind = kind');
     expect(executor).toContain('inFlightKind = null');
   });

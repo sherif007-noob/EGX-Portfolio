@@ -95,7 +95,7 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
   });
 
   it('keeps the public compatibility facade delegating financial writes to the ledger owner', () => {
-    const facade = read('src/hooks/usePortfolioState.ts');
+    const facade = read('src/features/portfolio/usePortfolioState.ts');
 
     expect(facade).toContain('const ledger = usePortfolioLedgerMutations(state)');
     for (const delegation of [

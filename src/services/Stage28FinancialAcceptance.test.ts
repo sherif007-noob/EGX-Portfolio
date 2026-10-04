@@ -557,7 +557,7 @@ describe('Stage 2.8 financial acceptance suite', () => {
 
     const executor = readRelative('./ledgerMutationService.ts');
     const hooks = readRelative('../hooks/usePortfolioState.ts');
-    const app = readRelative('../App.tsx');
+    const navigation = readRelative('../features/app-shell/usePortfolioNavigation.ts');
     const workflow = readRelative('./ledgerWorkflowMutations.ts');
 
     expect(executor.indexOf('persisted = await persist(candidate.snapshot)'))
@@ -589,8 +589,8 @@ describe('Stage 2.8 financial acceptance suite', () => {
     expect(tradeRuntime).not.toContain('addToCash');
     expect(tradeRuntime).not.toContain('setDeductFromCash');
 
-    expect(app).toContain('getActivePositionLedgerTransactionIds');
-    expect(app).toContain('getClosedCycleLedgerTransactionIds');
+    expect(navigation).toContain('getActivePositionLedgerTransactionIds');
+    expect(navigation).toContain('getClosedCycleLedgerTransactionIds');
     expect(workflow).toContain("'RECONCILIATION_ADJUSTMENT'");
   });
 

@@ -19,13 +19,14 @@ describe('Stage 2.2 persisted BUY/SELL contract', () => {
   });
 
   it('makes both app handlers await authoritative portfolio persistence before Sheets or success UI', () => {
-    const app = readRelative('../App.tsx');
+    const workflows = readRelative('../features/app-shell/usePortfolioWorkflows.ts');
 
-    expect(app).toContain('const result = await executeAddTrade({');
-    expect(app).toContain('const result = await executeSellPosition({');
-    expect(app).toContain('Background sheets sync after persisted BUY');
-    expect(app).toContain('Background sheets sync after persisted SELL');
-    expect(app).toContain('Nothing was changed.');
+    expect(workflows).toContain('const result = await portfolio.addTrade({');
+    expect(workflows).toContain('const result = await portfolio.sellPosition({');
+    expect(workflows).toContain('appendPersistedTransactionToSheet(transaction)');
+    expect(workflows.indexOf('await portfolio.addTrade({'))
+      .toBeLessThan(workflows.indexOf('appendPersistedTransactionToSheet(transaction)'));
+    expect(workflows).toContain('Nothing was changed.');
   });
 
   it('keeps Add Trade open and submit-disabled while the persisted BUY is unresolved', () => {

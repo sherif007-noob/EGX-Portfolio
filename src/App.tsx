@@ -1,22 +1,12 @@
-import { useMarketRefresh } from './hooks/useMarketRefresh';
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import {
-  Position,
-  ClosedTrade,
-  EGXTicker,
-  PortfolioMetrics,
-  PerformanceStats,
-  GoogleSheetsConfig,
-  Sector,
-  TradeTransaction,
-} from './types';
-import { Header, NavigationTab } from './components/Header';
+import { useMemo } from 'react';
+import type { PerformanceStats, PortfolioMetrics } from './types';
+import { Header } from './components/Header';
 import { PortfolioSummary } from './components/PortfolioSummary';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
-import { PerformanceReports } from './components/PerformanceReports';
-import { TradingJournal, type JournalLedgerFocus } from './components/TradingJournal';
+import { PerformanceReports } from './features/reports';
+import { TradingJournal } from './components/TradingJournal';
 import { TickerDirectoryView } from './components/TickerDirectoryView';
 import { CashBalanceView } from './components/CashBalanceView';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
@@ -26,83 +16,41 @@ import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { DataHealthCenterModal } from './components/DataHealthCenterModal';
-import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { PriceAlertsModal } from './components/PriceAlertsModal';
 import { PerformanceTimeframeChart } from './components/charts/PerformanceTimeframeChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { usePortfolioState } from './hooks/usePortfolioState';
+import { usePortfolioState } from './features/portfolio';
 import { useMarketData } from './hooks/useMarketData';
 import { useGoogleSheetsSync } from './hooks/useGoogleSheetsSync';
 import { usePriceAlerts } from './hooks/usePriceAlerts';
 import { useSectorMomentumAlerts } from './hooks/useSectorMomentumAlerts';
-import { calculatePortfolioMetrics, calculatePerformanceStats } from './utils/portfolioMetrics';
-import { validateTradeInput } from './utils/portfolioValidation';
-import { findStrongDuplicateExecution } from './utils/tradeExecutionIdentity';
-import { getAccessToken } from './services/firebaseAuth';
-import {
-  appendTransactionToSheet,
-  updateStockDirectoryInSheet,
-  syncTransactionsLedgerToSheet,
-  syncStockPricesToSheet,
-} from './services/googleSheets';
-import { RotateCcw } from 'lucide-react';
-import {
-  deriveCanonicalCapitalDeposits,
-} from './services/portfolioReconciliation';
-import {
-  getActivePositionLedgerTransactionIds,
-  getClosedCycleLedgerTransactionIds,
-} from './services/ledgerProjectionOwnership';
-import { ensureHistoricalPriceCoverage, getHistoricalPricesForTransactions, type HistoricalPriceSeries } from './services/historicalPriceStore';
-import { buildUnifiedAnalyticsResult } from './services/unifiedAnalyticsEngine';
+import { useMarketRefresh } from './hooks/useMarketRefresh';
+import { calculatePortfolioMetrics, calculatePerformanceStats } from './domain/performance';
+import { deriveCanonicalCapitalDeposits } from './domain/accounting';
 import { MotionSwap, SurfacePresence } from './components/PremiumMotion';
-import { runVisualTransition } from './utils/visualTransition';
-import { VISUAL_REGRESSION_MODE } from './utils/visualRegressionMode';
-import { VISUAL_REGRESSION_HISTORICAL_PRICES } from './data/visualRegressionFixture';
+import { RotateCcw } from 'lucide-react';
+import { useAppOverlayState } from './features/app-shell/useAppOverlayState';
+import { useAppNotifications } from './features/app-shell/useAppNotifications';
+import { usePortfolioNavigation } from './features/app-shell/usePortfolioNavigation';
+import { useHistoricalPortfolioAnalytics } from './features/app-shell/useHistoricalPortfolioAnalytics';
+import { useLivePriceSheetMirror } from './features/app-shell/useLivePriceSheetMirror';
+import { usePortfolioWorkflows } from './features/app-shell/usePortfolioWorkflows';
 
 // Phase 10.8 exact-head validation trigger: complete modal/workflow consistency runtime source.
 // Phase 10.9 exact-head validation trigger: responsive cross-app containment runtime source.
 export default function App() {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
-  const [settledTab, setSettledTab] = useState<NavigationTab>('overview');
-  const [ledgerCorrectionFocus, setLedgerCorrectionFocus] = useState<JournalLedgerFocus | null>(null);
-
-  const handleTabChange = (nextTab: NavigationTab) => {
-    if (nextTab !== 'journal') setLedgerCorrectionFocus(null);
-    if (nextTab === activeTab) return;
-
-    const desktopMotionTarget =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches;
-
-    const update = () => runVisualTransition('tab', () => setActiveTab(nextTab));
-
-    if (desktopMotionTarget) {
-      React.startTransition(update);
-      return;
-    }
-
-    setSettledTab(nextTab);
-    update();
-  };
-
   // Portfolio State Hook (Encapsulates LocalStorage, Supabase sync, and CRUD)
   const {
     isInitialized,
     positions,
     setPositions,
     closedTrades,
-    setClosedTrades,
     transactions,
-    setTransactions,
     cashBalance,
-    setCashBalance,
     updateCashBalance,
     tickers,
-    setTickers,
     capitalDeposits,
-    setCapitalDeposits,
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
     editPosition: executeEditPosition,
@@ -118,6 +66,50 @@ export default function App() {
     updateTickers,
   } = usePortfolioState();
 
+  const {
+    activeTab,
+    settledTab,
+    setSettledTab,
+    ledgerCorrectionFocus,
+    setLedgerCorrectionFocus,
+    handleTabChange,
+    openPositionLedgerCorrection,
+    openClosedCycleLedgerCorrection,
+  } = usePortfolioNavigation(transactions);
+
+  const {
+    isSheetsModalOpen,
+    setIsSheetsModalOpen,
+    isSchemaModalOpen,
+    setIsSchemaModalOpen,
+    isAddTradeModalOpen,
+    isQuickCashModalOpen,
+    setIsQuickCashModalOpen,
+    isBackupModalOpen,
+    setIsBackupModalOpen,
+    isDataHealthModalOpen,
+    setIsDataHealthModalOpen,
+    isScreenshotModalOpen,
+    setIsScreenshotModalOpen,
+    isPriceAlertsModalOpen,
+    setIsPriceAlertsModalOpen,
+    sellingPosition,
+    setSellingPosition,
+    editingPosition,
+    setEditingPosition,
+    selectedTickerForTrade,
+    openAddTrade,
+    closeAddTrade,
+  } = useAppOverlayState();
+
+  const {
+    toastNotification,
+    showToast,
+    undoState,
+    setUndoState,
+    executeUndo,
+  } = useAppNotifications({ restoreLedgerSnapshot });
+
   // Google Sheets Sync Hook (Encapsulates OAuth, full sync, price sync, and token expiration)
   const {
     sheetsConfig,
@@ -130,40 +122,11 @@ export default function App() {
     handleLogout,
   } = useGoogleSheetsSync(positions, closedTrades, transactions, cashBalance, tickers);
 
-  const sheetsConfigRef = useRef(sheetsConfig);
-  sheetsConfigRef.current = sheetsConfig;
-  const lastSheetAutoPushRef = useRef<number>(0);
-
-  // Auto-sync or push live market quotes to Google Sheet
-  const handleLivePricesSynced = useCallback(
-    async (updatedPositions: Position[], updatedTickers: EGXTicker[], manual: boolean) => {
-      const config = sheetsConfigRef.current;
-      if (!config?.spreadsheetId) return;
-
-      const now = Date.now();
-      // Manual sync pushes immediately; auto-sync throttles to once every 45s
-      const shouldPush = manual || (config.autoSync !== false && now - lastSheetAutoPushRef.current > 45000);
-
-      if (shouldPush) {
-        lastSheetAutoPushRef.current = now;
-        try {
-          const res = await syncPricesOnlyToSheets(updatedTickers, updatedPositions);
-          if (res.success && res.updatedTabs && res.updatedTabs.length > 0) {
-            if (manual) {
-              setToastNotification({
-                message: `Live prices updated & synced to Excel / Google Sheet (${res.updatedTabs.join(' & ')})!`,
-                type: 'success',
-              });
-              setTimeout(() => setToastNotification(null), 4500);
-            }
-          }
-        } catch (err) {
-          console.warn('Auto-sync prices to Google Sheet failed:', err);
-        }
-      }
-    },
-    [syncPricesOnlyToSheets]
-  );
+  const handleLivePricesSynced = useLivePriceSheetMirror({
+    sheetsConfig,
+    syncPricesOnlyToSheets,
+    showToast,
+  });
 
   // Market Price Sync Hook (Encapsulates TradingView scanner & Cairo session scheduling)
   const {
@@ -189,36 +152,6 @@ export default function App() {
   // Live 5-10 minute sector-cluster detector (e.g. cement rotation).
   useSectorMomentumAlerts(scheduleStatus);
 
-  // Modals & UI States
-  const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
-  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
-  const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
-  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-  const [isDataHealthModalOpen, setIsDataHealthModalOpen] = useState(false);
-  const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
-  const [isPriceAlertsModalOpen, setIsPriceAlertsModalOpen] = useState(false);
-  const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
-  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
-  const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
-
-  // Notification Toast & Undo State
-  const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [undoState, setUndoState] = useState<{
-    previousState: {
-      positions: Position[];
-      closedTrades: ClosedTrade[];
-      transactions: TradeTransaction[];
-      cashBalance: number;
-      capitalDeposits: number;
-    };
-    message: string;
-  } | null>(null);
-
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success', duration = 5000) => {
-    setToastNotification({ message, type });
-    setTimeout(() => setToastNotification(null), duration);
-  }, []);
 
   // Performance Metrics & Indicators (Centralized calculation engine)
   const metrics: PortfolioMetrics = useMemo(() => {
@@ -230,121 +163,17 @@ export default function App() {
     [transactions, cashBalance, capitalDeposits],
   );
 
-  const [historicalDrawdown, setHistoricalDrawdown] = useState<{
-    maxDrawdownEgp: number;
-    maxDrawdownPercent: number;
-  } | null>(null);
-  const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
-  const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
   const marketRefresh = useMarketRefresh();
-  const historicalBackfillAttemptsRef = useRef(new Set<string>());
-
-  useEffect(() => {
-    if (VISUAL_REGRESSION_MODE) {
-      const visualResult = buildUnifiedAnalyticsResult(
-        transactions,
-        VISUAL_REGRESSION_HISTORICAL_PRICES,
-        'ALL',
-        { openingCapital: analyticsCapitalDeposits },
-      );
-      setHistoricalPriceSeries(VISUAL_REGRESSION_HISTORICAL_PRICES);
-      if (
-        visualResult.summary.maxDrawdownPercent != null &&
-        visualResult.summary.maxEquityDrawdownEgp != null
-      ) {
-        setHistoricalDrawdown({
-          maxDrawdownEgp: visualResult.summary.maxEquityDrawdownEgp,
-          maxDrawdownPercent: Math.abs(visualResult.summary.maxDrawdownPercent),
-        });
-      } else {
-        setHistoricalDrawdown(null);
-      }
-      setHistoricalAnalyticsLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setHistoricalDrawdown(null);
-    setHistoricalPriceSeries({});
-    setHistoricalAnalyticsLoading(true);
-
-    const loadHistoricalPerformance = async () => {
-      if (!isInitialized) { setHistoricalAnalyticsLoading(false); return; }
-      const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
-      if (!hasMarketTransactions) {
-        if (!cancelled) setHistoricalAnalyticsLoading(false);
-        return;
-      }
-
-      try {
-        let historicalPrices = await getHistoricalPricesForTransactions(transactions);
-        let result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
-          openingCapital: analyticsCapitalDeposits,
-        });
-
-        const normalizeHistoryTicker = (ticker: string) =>
-          ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
-
-        const repairTargets = result.dataQuality.missingTickers
-          .map(normalizeHistoryTicker)
-          .filter((ticker) => ticker && !historicalBackfillAttemptsRef.current.has(ticker))
-          .map((ticker) => ({
-            ticker,
-            startDate: transactions
-              .filter((tx) => normalizeHistoryTicker(tx.ticker) === ticker)
-              .map((tx) => String(tx.date || '').slice(0, 10))
-              .filter(Boolean)
-              .sort()[0],
-          }));
-
-        if (repairTargets.length) {
-          for (const target of repairTargets) historicalBackfillAttemptsRef.current.add(target.ticker);
-          try {
-            const repair = await ensureHistoricalPriceCoverage(repairTargets);
-            for (const failure of repair.failures) {
-              historicalBackfillAttemptsRef.current.delete(normalizeHistoryTicker(failure.ticker));
-            }
-            historicalPrices = await getHistoricalPricesForTransactions(transactions);
-            result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
-              openingCapital: analyticsCapitalDeposits,
-            });
-          } catch (backfillError) {
-            for (const target of repairTargets) historicalBackfillAttemptsRef.current.delete(target.ticker);
-            console.warn('Automatic historical-price backfill failed; keeping the existing trustworthy analytics range.', backfillError);
-          }
-        }
-
-        if (!cancelled) {
-          setHistoricalPriceSeries(historicalPrices);
-          if (
-            result.dataQuality.hasUsableRange &&
-            result.summary.maxDrawdownPercent != null &&
-            result.summary.maxEquityDrawdownEgp != null
-          ) {
-            setHistoricalDrawdown({
-              // Performance percentage is external-flow-neutral TWR drawdown.
-              // The EGP companion remains the nominal equity peak-to-trough gap.
-              maxDrawdownEgp: result.summary.maxEquityDrawdownEgp,
-              maxDrawdownPercent: Math.abs(result.summary.maxDrawdownPercent),
-            });
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setHistoricalDrawdown(null);
-          setHistoricalPriceSeries({});
-        }
-        console.warn('Unified historical analytics are unavailable; drawdown will remain N/A.', error);
-      } finally {
-        if (!cancelled) setHistoricalAnalyticsLoading(false);
-      }
-    };
-
-    void loadHistoricalPerformance();
-    return () => {
-      cancelled = true;
-    };
-  }, [transactions, analyticsCapitalDeposits, marketRefresh, isInitialized]);
+  const {
+    historicalDrawdown,
+    historicalPriceSeries,
+    historicalAnalyticsLoading,
+  } = useHistoricalPortfolioAnalytics({
+    transactions,
+    openingCapital: analyticsCapitalDeposits,
+    isInitialized,
+    marketRefresh,
+  });
 
 
   const stats: PerformanceStats = useMemo(() => {
@@ -352,522 +181,55 @@ export default function App() {
     return historicalDrawdown ? { ...baseStats, ...historicalDrawdown } : baseStats;
   }, [closedTrades, positions, historicalDrawdown]);
 
-  // Execute Undo Action
-  const executeUndo = async () => {
-    if (!undoState) return;
-    const { previousState, message } = undoState;
-    const result = await restoreLedgerSnapshot({
-      transactions: previousState.transactions,
-      capitalDeposits: previousState.capitalDeposits,
-      positions: previousState.positions,
-    });
-    if ('error' in result) {
-      showToast(`Undo was not saved: ${result.error.message}`, 'error', 6000);
-      return;
-    }
-    setUndoState(null);
-    showToast(`Restored state: ${message}`, 'success', 4000);
-  };
+  const portfolioWorkflowActions = useMemo(() => ({
+    addTrade: executeAddTrade,
+    sellPosition: executeSellPosition,
+    editPosition: executeEditPosition,
+    editTransaction: executeEditTransaction,
+    deleteTransaction: executeDeleteTransaction,
+    reconcileLedger,
+    importOcrBatch,
+    updateCashBalance,
+  }), [
+    executeAddTrade,
+    executeSellPosition,
+    executeEditPosition,
+    executeEditTransaction,
+    executeDeleteTransaction,
+    reconcileLedger,
+    importOcrBatch,
+    updateCashBalance,
+  ]);
 
-  // Add Position / Buy Trade
-  const handleAddPosition = async (
-    newTradeData: {
-      ticker: string;
-      companyName: string;
-      sector: Sector;
-      shares: number;
-      buyPrice: number;
-      buyDate: string;
-      executedAt?: string;
-      brokerageFee: number;
-      targetPrice?: number;
-      stopLoss?: number;
-      notes?: string;
-    }
-  ): Promise<boolean> => {
-    const valResult = validateTradeInput({
-      ticker: newTradeData.ticker,
-      shares: newTradeData.shares,
-      price: newTradeData.buyPrice,
-      fees: newTradeData.brokerageFee,
-      type: 'BUY',
-      date: newTradeData.buyDate,
-      availableCash: cashBalance,
-    });
+  const {
+    handleAddPosition,
+    handleConfirmSell,
+    handleSavePositionEdit,
+    handleDeleteTransaction,
+    handleEditTransaction,
+    handleAIScreenshotAddTransaction,
+    handleAIScreenshotAddBatchTransactions,
+    handleSyncPrices,
+    handlePushPricesToSheetDirectly,
+    handleOverviewReconcile,
+    handleCashBalanceUpdate,
+    handleQuickCashBalanceUpdate,
+  } = usePortfolioWorkflows({
+    positions,
+    closedTrades,
+    transactions,
+    cashBalance,
+    capitalDeposits,
+    portfolio: portfolioWorkflowActions,
+    sheetsConfig,
+    syncPricesOnlyToSheets,
+    syncLivePrices,
+    openSheetsModal: () => setIsSheetsModalOpen(true),
+    showToast,
+    setUndoState,
+  });
 
-    if (!valResult.valid) {
-      showToast(`Trade Validation Error: ${valResult.errors.join(', ')}`, 'error');
-      return false;
-    }
-
-    const result = await executeAddTrade({
-      ticker: newTradeData.ticker,
-      companyName: newTradeData.companyName,
-      sector: newTradeData.sector,
-      shares: newTradeData.shares,
-      price: newTradeData.buyPrice,
-      fees: newTradeData.brokerageFee,
-      date: newTradeData.buyDate,
-      executedAt: newTradeData.executedAt,
-      targetPrice: newTradeData.targetPrice,
-      stopLoss: newTradeData.stopLoss,
-      notes: newTradeData.notes,
-    });
-
-    if ('error' in result) {
-      if (result.persisted) {
-        showToast(
-          `BUY ${newTradeData.ticker.toUpperCase()} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
-          'error',
-          7000,
-        );
-        return true;
-      }
-      showToast(
-        `BUY was not saved: ${result.error.message} Nothing was changed.`,
-        'error',
-        7000,
-      );
-      return false;
-    }
-
-    const newTx = result.value;
-    if (!newTx) {
-      showToast('BUY was persisted but the saved transaction result was unavailable. Reload before entering another trade.', 'error', 7000);
-      return true;
-    }
-
-    // Sheets is an optional mirror. It starts only after authoritative portfolio
-    // persistence succeeds and its failure never rolls back the saved trade.
-    if (sheetsConfig?.spreadsheetId) {
-      getAccessToken()
-        .then((token) => {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            newTx,
-            token || undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync after persisted BUY:', err));
-        })
-        .catch(() => {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            newTx,
-            undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync fallback after persisted BUY:', err));
-        });
-    }
-
-    showToast(`Logged BUY order for ${newTradeData.shares} shares of ${newTradeData.ticker.toUpperCase()}`, 'success');
-    return true;
-  };
-
-  // Sell Position
-  const handleConfirmSell = async (
-    positionId: string,
-    soldShares: number,
-    sellPrice: number,
-    sellDate: string,
-    executedAt: string | undefined,
-    sellFees: number,
-    notes: string,
-    _remainingShares: number
-  ): Promise<boolean> => {
-    const pos = positions.find((p) => p.id === positionId);
-    if (!pos) {
-      showToast('The position changed before the sale could be prepared. Reload and try again.', 'error');
-      return false;
-    }
-
-    const valResult = validateTradeInput({
-      ticker: pos.ticker,
-      shares: soldShares,
-      price: sellPrice,
-      fees: sellFees,
-      type: 'SELL',
-      date: sellDate,
-      existingPosition: pos,
-    });
-
-    if (!valResult.valid) {
-      showToast(`Sell Validation Error: ${valResult.errors.join(', ')}`, 'error');
-      return false;
-    }
-
-    const result = await executeSellPosition({
-      position: pos,
-      sharesToSell: soldShares,
-      sellPrice,
-      fees: sellFees,
-      sellDate,
-      executedAt,
-      notes,
-    });
-
-    if ('error' in result) {
-      if (result.persisted) {
-        showToast(
-          `SELL ${pos.ticker} was saved to Supabase, but this screen could not refresh. Reload before entering another trade.`,
-          'error',
-          7000,
-        );
-        return true;
-      }
-      showToast(
-        `SELL was not saved: ${result.error.message} Nothing was changed.`,
-        'error',
-        7000,
-      );
-      return false;
-    }
-
-    const transaction = result.value;
-    if (!transaction) {
-      showToast('SELL was persisted but the saved transaction result was unavailable. Reload before entering another trade.', 'error', 7000);
-      return true;
-    }
-    const closedTrade = result.snapshot.closedTrades.find((trade) =>
-      trade.sellTransactionIds?.includes(transaction.id),
-    );
-
-    // Optional Sheets mirror starts only after authoritative portfolio persistence.
-    if (sheetsConfig?.spreadsheetId) {
-      getAccessToken()
-        .then((token) => {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            transaction,
-            token || undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync after persisted SELL:', err));
-        })
-        .catch(() => {
-          appendTransactionToSheet(
-            sheetsConfig.spreadsheetId,
-            transaction,
-            undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets sync fallback after persisted SELL:', err));
-        });
-    }
-
-    if (closedTrade) {
-      showToast(
-        `Sold ${soldShares} shares of ${pos.ticker} (${closedTrade.realizedPnlEgp >= 0 ? '+' : ''}${closedTrade.realizedPnlEgp.toFixed(2)} EGP realized)`,
-        'success'
-      );
-    } else {
-      showToast(`Sold ${soldShares} shares of ${pos.ticker} and persisted the updated ledger.`, 'success');
-    }
-    return true;
-  };
-
-  // Edit Position targets and notes
-  const handleSavePositionEdit = (updated: {
-    id: string;
-    targetPrice?: number;
-    stopLoss?: number;
-    notes?: string;
-  }) => {
-    const pos = positions.find((p) => p.id === updated.id);
-    if (!pos) return;
-
-    const updatedPos: Position = {
-      ...pos,
-      targetPrice: updated.targetPrice,
-      stopLoss: updated.stopLoss,
-      notes: updated.notes,
-    };
-
-    executeEditPosition(updatedPos);
-    showToast(`Updated targets & notes for ${pos.ticker}`, 'success');
-  };
-
-  const openPositionLedgerCorrection = useCallback((position: Position) => {
-    const transactionIds = getActivePositionLedgerTransactionIds(transactions, position.ticker);
-    setLedgerCorrectionFocus({
-      key: `position:${position.id}:${Date.now()}`,
-      source: 'POSITION',
-      ticker: position.ticker,
-      transactionIds,
-      title: `${position.ticker} open-position source executions`,
-      detail: transactionIds.length > 0
-        ? `Showing the ${transactionIds.length} execution(s) in the active weighted-average trade cycle.`
-        : 'No explicit active-cycle IDs were resolved, so the journal is scoped to this ticker.',
-    });
-    handleTabChange('journal');
-  }, [transactions]);
-
-  const openClosedCycleLedgerCorrection = useCallback((
-    cycle: ClosedTrade,
-    renderedTransactionIds: string[],
-  ) => {
-    const canonicalIds = getClosedCycleLedgerTransactionIds(cycle);
-    const transactionIds = canonicalIds.length > 0 ? canonicalIds : renderedTransactionIds;
-    setLedgerCorrectionFocus({
-      key: `closed-cycle:${cycle.id}:${Date.now()}`,
-      source: 'CLOSED_CYCLE',
-      ticker: cycle.ticker,
-      transactionIds,
-      title: `${cycle.ticker} closed-cycle source executions`,
-      detail: transactionIds.length > 0
-        ? `Showing ${transactionIds.length} BUY/SELL source execution(s) linked to this derived cycle.`
-        : 'No explicit source IDs were stored for this legacy cycle, so the journal is scoped to this ticker.',
-    });
-    handleTabChange('journal');
-  }, []);
-
-  // Delete Transaction
-  const handleDeleteTransaction = async (id: string): Promise<boolean> => {
-    const tx = transactions.find((transaction) => transaction.id === id);
-    if (!tx) return false;
-
-    const previousState = { positions, closedTrades, transactions, cashBalance, capitalDeposits };
-    const result = await executeDeleteTransaction(id);
-
-    if ('error' in result) {
-      showToast(`Could not delete ${tx.type} ${tx.ticker}: ${result.error.message} Nothing was changed.`, 'error', 6500);
-      return false;
-    }
-
-    setUndoState({
-      previousState,
-      message: `Deleted ${tx.type} ${tx.ticker} transaction`,
-    });
-    showToast(`Deleted ${tx.type} ${tx.ticker} transaction and persisted reconciled balances`, 'success');
-
-    if (sheetsConfig?.spreadsheetId) {
-      const persistedTransactions = result.snapshot.transactions;
-      getAccessToken()
-        .then((token) => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            persistedTransactions,
-            token || undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync after persisted delete:', err));
-        })
-        .catch(() => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            persistedTransactions,
-            undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets delete sync fallback after persisted delete:', err));
-        });
-    }
-
-    return true;
-  };
-
-  // Edit Transaction
-  const handleEditTransaction = async (updatedTx: TradeTransaction): Promise<boolean> => {
-    const valResult = validateTradeInput({
-      ticker: updatedTx.ticker,
-      shares: updatedTx.shares,
-      price: updatedTx.price,
-      fees: updatedTx.fees || 0,
-      type: updatedTx.type,
-      date: updatedTx.date,
-    });
-
-    if (!valResult.valid) {
-      showToast(`Edit Transaction Error: ${valResult.errors.join(', ')}`, 'error');
-      return false;
-    }
-
-    const result = await executeEditTransaction(updatedTx);
-    if ('error' in result) {
-      showToast(`Transaction edit was not saved: ${result.error.message} Nothing was changed.`, 'error', 6500);
-      return false;
-    }
-
-    showToast(`Updated ${updatedTx.type} ${updatedTx.ticker} transaction and persisted reconciled balances`, 'success');
-
-    if (sheetsConfig?.spreadsheetId) {
-      const persistedTransactions = result.snapshot.transactions;
-      getAccessToken()
-        .then((token) => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            persistedTransactions,
-            token || undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets edit sync after persisted edit:', err));
-        })
-        .catch(() => {
-          syncTransactionsLedgerToSheet(
-            sheetsConfig.spreadsheetId,
-            persistedTransactions,
-            undefined,
-            sheetsConfig.sheetName || 'Transaction Logger'
-          ).catch((err) => console.warn('Background sheets edit sync fallback after persisted edit:', err));
-        });
-    }
-    return true;
-  };
-
-  // AI Screenshot Single Transaction
-  const handleAIScreenshotAddTransaction = async (parsedTx: {
-    ticker: string;
-    companyName: string;
-    sector: Sector;
-    type: 'BUY' | 'SELL';
-    shares: number;
-    price: number;
-    date: string;
-    executedAt?: string;
-    fees: number;
-    notes?: string;
-  }): Promise<boolean> => {
-    const duplicate = findStrongDuplicateExecution(transactions, {
-      type: parsedTx.type,
-      ticker: parsedTx.ticker,
-      shares: parsedTx.shares,
-      price: parsedTx.price,
-      date: parsedTx.date,
-      executedAt: parsedTx.executedAt,
-      fees: parsedTx.fees,
-    });
-    if (duplicate) {
-      showToast(
-        `Duplicate screenshot execution blocked: ${parsedTx.type} ${parsedTx.ticker.toUpperCase()} already exists at this execution time.`,
-        'error',
-        5500,
-      );
-      return false;
-    }
-
-    if (parsedTx.type === 'BUY') {
-      return handleAddPosition({
-        ticker: parsedTx.ticker,
-        companyName: parsedTx.companyName,
-        sector: parsedTx.sector,
-        shares: parsedTx.shares,
-        buyPrice: parsedTx.price,
-        buyDate: parsedTx.date,
-        executedAt: parsedTx.executedAt,
-        brokerageFee: parsedTx.fees,
-        notes: parsedTx.notes || 'Logged via Screenshot Scanner',
-      });
-    }
-
-    const pos = positions.find((position) =>
-      position.ticker.toUpperCase() === parsedTx.ticker.toUpperCase(),
-    );
-    if (!pos) {
-      showToast(
-        `Could not log SELL ${parsedTx.ticker.toUpperCase()}: no matching open position exists. Import the corresponding BUY first or use batch import.`,
-        'error',
-        6500,
-      );
-      return false;
-    }
-
-    return handleConfirmSell(
-      pos.id,
-      parsedTx.shares,
-      parsedTx.price,
-      parsedTx.date,
-      parsedTx.executedAt,
-      parsedTx.fees,
-      parsedTx.notes || 'Logged via Screenshot Scanner',
-      Math.max(0, pos.shares - parsedTx.shares)
-    );
-  };
-
-  // OCR batch is persisted as one canonical ledger mutation so valid dependent
-  // BUY/SELL executions cannot be half-applied locally.
-  const handleAIScreenshotAddBatchTransactions = async (parsedTxs: Array<{
-    ticker: string;
-    companyName: string;
-    sector: Sector;
-    type: 'BUY' | 'SELL';
-    shares: number;
-    price: number;
-    date: string;
-    executedAt?: string;
-    fees: number;
-    notes?: string;
-  }>): Promise<boolean> => {
-    if (parsedTxs.length === 0) return false;
-
-    const result = await importOcrBatch(parsedTxs);
-    if ('error' in result) {
-      showToast(`OCR batch was not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
-      return false;
-    }
-
-    const summary = result.value;
-    if (!summary) {
-      showToast('OCR batch persisted but no import summary was returned.', 'error', 6000);
-      return true;
-    }
-
-    const details = [
-      summary.duplicateCount > 0 ? `${summary.duplicateCount} duplicate execution(s) blocked` : '',
-      summary.skippedCount > 0 ? `${summary.skippedCount} unreconciled trade(s) skipped` : '',
-    ].filter(Boolean).join('; ');
-
-    if (details) {
-      showToast(
-        `Persisted ${summary.processedCount} OCR trade(s). ${details}.`,
-        summary.skippedCount > 0 ? 'error' : 'success',
-        6500,
-      );
-    } else {
-      showToast(`Successfully persisted all ${summary.processedCount} OCR trades!`, 'success');
-    }
-    return true;
-  };
-
-  // Manual trigger for Live Price Sync (TradingView -> App -> Google Sheet)
-  const handleSyncPrices = useCallback(async () => {
-    const result = await syncLivePrices(true);
-    if (result && result.success) {
-      if (!sheetsConfig?.spreadsheetId) {
-        showToast(`Live quotes updated for ${result.count || ''} EGX equities.`, 'success', 3500);
-      }
-    } else {
-      showToast(result?.error || 'Failed updating market prices', 'error', 4000);
-    }
-  }, [syncLivePrices, sheetsConfig?.spreadsheetId, showToast]);
-
-  // Push prices to connected Google Sheet
-  const handlePushPricesToSheetDirectly = async () => {
-    if (!sheetsConfig?.spreadsheetId) {
-      setIsSheetsModalOpen(true);
-      return;
-    }
-    const token = await getAccessToken();
-    if (!token) {
-      setIsSheetsModalOpen(true);
-      return;
-    }
-    const res = await syncPricesOnlyToSheets();
-    if (!res.success) {
-      throw new Error(res.message);
-    }
-    showToast(`Updated market quotes in Google Sheets (${res.updatedTabs?.join(' & ') || 'Directory & Positions'})`, 'success');
-  };
-
-  const handleQuickAddCash = useCallback(() => {
-    setIsQuickCashModalOpen(true);
-  }, []);
-
-  const handleOverviewReconcile = useCallback(async (): Promise<boolean> => {
-    const result = await reconcileLedger();
-    if ('error' in result) {
-      showToast(`Ledger reconciliation was not saved: ${result.error.message}`, 'error', 6500);
-      return false;
-    }
-    showToast(
-      `Reconciled and persisted ${result.snapshot.transactions.length} transactions: ${result.snapshot.positions.length} open positions, ${result.snapshot.closedTrades.length} closed cycles.`,
-      'success',
-    );
-    return true;
-  }, [reconcileLedger, showToast]);
+  const handleQuickAddCash = () => setIsQuickCashModalOpen(true);
 
   return (
     <div className="premium-page min-h-[100dvh] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -876,10 +238,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
-        onOpenAddTrade={() => {
-          setSelectedTickerForTrade(null);
-          setIsAddTradeModalOpen(true);
-        }}
+        onOpenAddTrade={() => openAddTrade()}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
@@ -1002,17 +361,11 @@ export default function App() {
               <PositionsTable
                 positions={positions}
                 onSellPosition={(pos) => setSellingPosition(pos)}
-                onBuyMore={(pos) => {
-                  setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
-                  setIsAddTradeModalOpen(true);
-                }}
+                onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
                 onEditPosition={(pos) => setEditingPosition(pos)}
                 onCorrectLedger={openPositionLedgerCorrection}
                 onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
-                onAddNewTrade={() => {
-                  setSelectedTickerForTrade(null);
-                  setIsAddTradeModalOpen(true);
-                }}
+                onAddNewTrade={() => openAddTrade()}
                 variant="overview"
                 overviewLimit={4}
               />
@@ -1047,17 +400,11 @@ export default function App() {
             <PositionsTable
               positions={positions}
               onSellPosition={(pos) => setSellingPosition(pos)}
-              onBuyMore={(pos) => {
-                setSelectedTickerForTrade(tickers.find((t) => t.ticker === pos.ticker) || null);
-                setIsAddTradeModalOpen(true);
-              }}
+              onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
               onEditPosition={(pos) => setEditingPosition(pos)}
               onCorrectLedger={openPositionLedgerCorrection}
               onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
-              onAddNewTrade={() => {
-                setSelectedTickerForTrade(null);
-                setIsAddTradeModalOpen(true);
-              }}
+              onAddNewTrade={() => openAddTrade()}
             />
           </section>
         )}
@@ -1104,15 +451,7 @@ export default function App() {
           <CashBalanceView
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
-            onUpdateCashBalance={async (newBal) => {
-              const saved = await updateCashBalance(newBal);
-              if (!saved) {
-                showToast('Cash balance update was not saved. Nothing was changed.', 'error', 6000);
-                return false;
-              }
-              showToast(`Cash balance updated to ${newBal.toLocaleString()} EGP and persisted.`, 'success');
-              return true;
-            }}
+            onUpdateCashBalance={handleCashBalanceUpdate}
             positions={positions}
             closedTrades={closedTrades}
             tradeTransactions={transactions}
@@ -1127,10 +466,7 @@ export default function App() {
         {activeTab === 'directory' && (
           <TickerDirectoryView
             tickers={tickers}
-            onSelectTickerForTrade={(t) => {
-              setSelectedTickerForTrade(t);
-              setIsAddTradeModalOpen(true);
-            }}
+            onSelectTickerForTrade={(ticker) => openAddTrade(ticker)}
             onOpenSchemaSync={() => setIsSchemaModalOpen(true)}
             onSyncLivePrices={handleSyncPrices}
             isSyncingPrices={isSyncingPrices}
@@ -1206,10 +542,7 @@ export default function App() {
 
       <AddTradeModal
         isOpen={isAddTradeModalOpen}
-        onClose={() => {
-          setIsAddTradeModalOpen(false);
-          setSelectedTickerForTrade(null);
-        }}
+        onClose={closeAddTrade}
         onAddPosition={handleAddPosition}
         tickers={tickers}
         preselectedTicker={selectedTickerForTrade}
@@ -1245,15 +578,7 @@ export default function App() {
         isOpen={isQuickCashModalOpen}
         onClose={() => setIsQuickCashModalOpen(false)}
         currentCash={cashBalance}
-        onUpdateCash={async (newCash) => {
-          const saved = await updateCashBalance(newCash);
-          if (!saved) {
-            showToast('Cash balance adjustment was not saved. Nothing was changed.', 'error', 6000);
-            return false;
-          }
-          showToast(`Cash balance adjusted to ${newCash.toLocaleString()} EGP and persisted.`, 'success');
-          return true;
-        }}
+        onUpdateCash={handleQuickCashBalanceUpdate}
       />
 
       <PortfolioBackupModal

@@ -50,12 +50,16 @@ export function prepareOcrBatchMutation(
       const aTime = new Date(a.trade.executedAt || a.trade.date).getTime();
       const bTime = new Date(b.trade.executedAt || b.trade.date).getTime();
       if (Number.isFinite(aTime) && Number.isFinite(bTime) && aTime !== bTime) return aTime - bTime;
-      const sameTicker = a.trade.ticker.trim().toUpperCase() === b.trade.ticker.trim().toUpperCase();
-      if (sameTicker && a.trade.type !== b.trade.type) return a.trade.type === 'BUY' ? -1 : 1;
+
+      // Preserve screenshot/source order for timestamp ties or ambiguous times.
+      // The dependency-aware retry loop below is sufficient to defer an orphan
+      // SELL until a prerequisite BUY is accepted. Forcing BUY-before-SELL here
+      // corrupts legitimate close->reopen sequences for the same ticker.
       return a.index - b.index;
     })
     .map(({ trade }) => trade);
 
+  const baselineTransactions = [...current.transactions];
   let workingTransactions = [...current.transactions];
   let workingReport = reconcilePortfolioFromLedger(
     workingTransactions,
@@ -96,7 +100,11 @@ export function prepareOcrBatchMutation(
         continue;
       }
 
-      if (findStrongDuplicateExecution(workingTransactions, {
+      // Deduplicate against the ledger that existed before this batch. Distinct
+      // screenshots inside one batch are separate executions even when their
+      // economics happen to be identical within the same displayed minute.
+      // Exact duplicate image uploads are filtered in the scanner UI.
+      if (findStrongDuplicateExecution(baselineTransactions, {
         type: parsed.type,
         ticker,
         shares,

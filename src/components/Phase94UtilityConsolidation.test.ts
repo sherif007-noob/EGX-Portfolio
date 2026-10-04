@@ -40,7 +40,7 @@ describe('Phase 9.4 utility/data-management consolidation', () => {
     expect(header).toContain('Google Sheets connected');
   });
 
-  it('keeps Settings a visible direct premium utility affordance', () => {
+  it('keeps Settings a visible direct premium diagnostics affordance', () => {
     const header = readRelative('./Header.tsx');
     const start = header.indexOf('id="header-settings-btn"');
     const block = header.slice(start, start + 800);
@@ -48,7 +48,7 @@ describe('Phase 9.4 utility/data-management consolidation', () => {
     expect(start).toBeGreaterThanOrEqual(0);
     expect(block).toContain('premium-header-action');
     expect(block).toContain('premium-header-action-neutral');
-    expect(block).toContain('Settings — reserved for a future phase');
+    expect(block).toContain('Data Health Center & diagnostics');
   });
 
   it('uses premium glass/refraction for the data cluster and menu items', () => {

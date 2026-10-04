@@ -9,12 +9,12 @@ describe('Stage 3.5 live-session soak contract', () => {
   it('runs five read-only checkpoints across the target EGX session', () => {
     const workflow = read('.github/workflows/live-session-soak.yml');
 
-    expect(workflow).toContain("cron: '45 6 4 10 *'");
-    expect(workflow).toContain("cron: '20 7 4 10 *'");
-    expect(workflow).toContain("cron: '0 9 4 10 *'");
-    expect(workflow).toContain("cron: '20 11 4 10 *'");
-    expect(workflow).toContain("cron: '20 12 4 10 *'");
-    expect(workflow).toContain("EGX_LIVE_SOAK_DATE: ${{ inputs.session_date || '2026-10-04' }}");
+    expect(workflow).toContain("cron: '45 6 5 10 *'");
+    expect(workflow).toContain("cron: '20 7 5 10 *'");
+    expect(workflow).toContain("cron: '0 9 5 10 *'");
+    expect(workflow).toContain("cron: '20 11 5 10 *'");
+    expect(workflow).toContain("cron: '20 12 5 10 *'");
+    expect(workflow).toContain("EGX_LIVE_SOAK_DATE: ${{ inputs.session_date || '2026-10-05' }}");
     expect(workflow).toContain('npm run verify:live-session-soak');
     expect(workflow).toContain('actions/upload-artifact@v4');
   });

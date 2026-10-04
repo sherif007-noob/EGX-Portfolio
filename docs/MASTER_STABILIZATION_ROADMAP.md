@@ -1202,7 +1202,7 @@ Validation on PR #47 Quality Checks #37228318969:
 
 ---
 
-## Pass 4.3 — Split `usePortfolioState`
+## Pass 4.3 — Split `usePortfolioState` — COMPLETE / CI GREEN
 
 Separate:
 
@@ -1226,6 +1226,29 @@ portfolio.refreshQuotes()
 ```
 
 Components should not care whether a save is an RPC, queue, or future implementation.
+
+### 4.3 implementation record
+
+Merged through PR #48 at `main@38e1986c`.
+
+The legacy `usePortfolioState()` return shape remains as a compatibility facade, while implementation ownership is now split into:
+
+- `state/usePortfolioLocalState.ts` — React-facing portfolio state;
+- `state/portfolioCompatibility.ts` — localStorage/legacy initialization and metadata rehydration;
+- `hydration/usePortfolioHydration.ts` — initial authoritative load, retry and subscription lifecycle;
+- `persistence/portfolioRepository.ts` — Supabase-backed repository adapter;
+- `persistence/usePortfolioRepositoryActions.ts` — direct repository actions/force sync;
+- `ledger/usePortfolioLedgerMutations.ts` — canonical persisted ledger mutation execution.
+
+Older Stage 2 and visual source-contract tests now follow the canonical owners instead of forcing implementation back into the compatibility hook.
+
+Validation on PR #48 Quality Checks #37228707949:
+
+- TypeScript passed;
+- **101 / 101 test files, 559 / 559 tests passed**;
+- production build passed.
+
+**Next: Pass 4.4 — shared Worker/Express API contracts.**
 
 ---
 

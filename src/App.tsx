@@ -25,6 +25,7 @@ import { AddTradeModal } from './components/AddTradeModal';
 import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
+import { DataHealthCenterModal } from './components/DataHealthCenterModal';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { PriceAlertsModal } from './components/PriceAlertsModal';
@@ -194,6 +195,7 @@ export default function App() {
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
   const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isDataHealthModalOpen, setIsDataHealthModalOpen] = useState(false);
   const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
   const [isPriceAlertsModalOpen, setIsPriceAlertsModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
@@ -887,7 +889,7 @@ export default function App() {
         isTokenExpired={isSheetsTokenExpired}
         onSyncLivePrices={handleSyncPrices}
         isSyncingPrices={isSyncingPrices}
-        onOpenSettings={() => showToast('Settings are reserved for a future phase.', 'info')}
+        onOpenSettings={() => setIsDataHealthModalOpen(true)}
       />
 
       {/* Undo Toast Notification */}
@@ -1273,6 +1275,12 @@ export default function App() {
           return true;
         }}
         onReconcileLedger={handleOverviewReconcile}
+      />
+
+      <DataHealthCenterModal
+        isOpen={isDataHealthModalOpen}
+        onClose={() => setIsDataHealthModalOpen(false)}
+        heldTickers={positions.map((position) => position.ticker)}
       />
 
       {/* Offline PWA Indicator */}

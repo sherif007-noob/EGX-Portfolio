@@ -42,3 +42,35 @@ Quality Checks #37229492006 passed:
 The acceptance guard confirms that legacy localStorage access is contained in `portfolioCompatibility.ts`, local presentation state is free of remote persistence and ledger-mutation concerns, existing storage keys remain unchanged, and visual/ticker rehydration behavior remains represented.
 
 Next: **4.3.2 — remote hydration/subscription ownership**.
+
+
+## 4.3.2 — Remote hydration/subscription ownership — VALIDATION IN PROGRESS
+
+**Scope**
+
+- initial authoritative portfolio load;
+- retry when the authoritative portfolio is temporarily unavailable;
+- pending-write flush before steady-state polling;
+- remote portfolio subscription lifecycle;
+- subscription cleanup on unmount;
+- remote accounting-state application while preserving fresher local quote timestamps;
+- asynchronous subscription error visibility.
+
+**Explicitly out of scope**
+
+- canonical BUY/SELL/cash/OCR mutation execution;
+- direct repository write actions such as force-sync and position metadata persistence;
+- public compatibility-facade cleanup;
+- Stage 4.4/4.5 work.
+
+**Acceptance**
+
+- `usePortfolioHydration.ts` owns load/retry/subscribe/cleanup behavior;
+- hydration talks to persistence through `portfolioRepository`, not raw Supabase/storage functions;
+- the long-lived subscription uses current local fallback state without being recreated on every render;
+- both subscription setup errors and later polling errors are surfaced;
+- fresher local quote timestamps remain protected when remote accounting snapshots arrive;
+- hydration contains no localStorage or canonical financial mutation implementation;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.3.3 — canonical ledger mutation ownership**.

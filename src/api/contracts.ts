@@ -1,4 +1,6 @@
 export const API_CONTRACT_VERSION = 1 as const;
+export const API_PREFIX = '/api/' as const;
+export const SHEETS_API_PREFIX = '/api/sheets/' as const;
 
 export const API_ROUTES = {
   health: '/api/health',

@@ -17,6 +17,7 @@ import {
 import { DateInput } from './DateInput';
 import { recognizeTradeScreenshot, parseTradeText } from '../services/ocrParser';
 import { getTodayISO } from '../utils/dateUtils';
+import { combineExecutionDateTime, executionTimeInputValue } from '../utils/executionTime';
 
 export interface ParsedTradeItem {
   id: string;
@@ -121,12 +122,28 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
         base64List.push({ base64, mime: file.type || 'image/jpeg', name: file.name, file });
       }
 
+      // Exact duplicate images are never separate executions. Filter them before
+      // OCR so repeated same-ticker screenshots cannot create duplicate ledger
+      // rows, while distinct screenshots with identical economics remain valid.
+      const seenImages = new Set(
+        batchTrades
+          .map((trade) => trade.imagePreview)
+          .filter((preview): preview is string => Boolean(preview)),
+      );
+      const uniqueBase64List = base64List.filter((item) => {
+        if (seenImages.has(item.base64)) return false;
+        seenImages.add(item.base64);
+        return true;
+      });
+      const duplicateImageCount = base64List.length - uniqueBase64List.length;
+
       const parsedItems: ParsedTradeItem[] = [];
+      setScanProgress({ current: 0, total: uniqueBase64List.length });
 
       // FREE CLIENT-SIDE OCR ENGINE (Tesseract.js)
-      for (let i = 0; i < base64List.length; i++) {
-        setScanProgress({ current: i + 1, total: base64List.length });
-        const item = base64List[i];
+      for (let i = 0; i < uniqueBase64List.length; i++) {
+        setScanProgress({ current: i + 1, total: uniqueBase64List.length });
+        const item = uniqueBase64List[i];
         try {
           const ocrText = await recognizeTradeScreenshot(item.file);
           const parsed = parseTradeText(ocrText, tickers);
@@ -188,6 +205,11 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
       }
 
       setBatchTrades((prev) => [...prev, ...parsedItems]);
+      if (duplicateImageCount > 0) {
+        setErrorMsg(
+          `Skipped ${duplicateImageCount} exact duplicate screenshot${duplicateImageCount === 1 ? '' : 's'}. Distinct executions were kept.`,
+        );
+      }
       if (parsedItems.length === 1 && batchTrades.length === 0) {
         setActiveSingleIndex(0);
       } else {
@@ -524,7 +546,7 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                       </div>
 
                       {/* Middle Row: Editable Inputs */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-1">
                             Shares
@@ -559,7 +581,29 @@ export const TradeScreenshotModal: React.FC<TradeScreenshotModalProps> = ({
                           </label>
                           <DateInput
                             value={trade.date}
-                            onChange={(d) => updateTradeItem(idx, { date: d })}
+                            onChange={(d) => {
+                              const time = executionTimeInputValue(trade.executedAt);
+                              updateTradeItem(idx, {
+                                date: d,
+                                executedAt: time ? combineExecutionDateTime(d, time) : undefined,
+                              });
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            Execution time
+                          </label>
+                          <input
+                            type="time"
+                            value={executionTimeInputValue(trade.executedAt)}
+                            onChange={(e) => updateTradeItem(idx, {
+                              executedAt: e.target.value
+                                ? combineExecutionDateTime(trade.date, e.target.value)
+                                : undefined,
+                            })}
+                            className="premium-field w-full rounded-xl px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none"
                           />
                         </div>
 

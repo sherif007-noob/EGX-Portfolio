@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-04  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `ce60f932` — Stage 3.4 exact-head production candidate gate  
-**Current full exact-head verification:** Production Candidate Gate #37180662256 on `ce60f932`  
+**Current validated runtime head:** `87a10cd4` — Stage 4.3.3 canonical ledger mutation ownership
+**Current full verification:** PR #52 Quality Checks #37231285634 — TypeScript + **105 / 105 test files, 577 / 577 tests** + production build
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -77,20 +77,20 @@ Stage 4 accepted:
 - **Stage 4.2 — App orchestration extraction — merged / CI green**
 - **Stage 4.3.1 — local state + compatibility cache — accepted / CI green**
 - **Stage 4.3.2 — remote hydration/subscription ownership — accepted / CI green**
+- **Stage 4.3.3 — canonical ledger mutation ownership — accepted / CI green**
 
 Granular Stage 4.3 acceptance is now authoritative. The earlier broad Stage 4.3 and Stage 4.4 implementations are present on `main`, but they are not treated as newly accepted sequencing gates until their smaller sub-passes are individually validated.
 
 Stage 4 active:
 
-- **Stage 4.3.3 — canonical ledger mutation ownership**
+- **Stage 4.3.4 — repository/persistence action ownership**
 
 Next:
 
-1. **Stage 4.3.3 — canonical ledger mutation ownership**
-2. **Stage 4.3.4 — repository/persistence action ownership**
-3. **Stage 4.3.5 — facade cleanup + regression closure**
-4. Continue Stage 4 in similarly small sub-passes before Stage 5
-5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
+1. **Stage 4.3.4 — repository/persistence action ownership**
+2. **Stage 4.3.5 — facade cleanup + regression closure**
+3. Continue Stage 4 in similarly small sub-passes before Stage 5
+4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 
 ---
 

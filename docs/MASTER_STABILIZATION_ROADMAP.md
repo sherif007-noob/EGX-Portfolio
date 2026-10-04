@@ -1300,7 +1300,8 @@ The broad implementation is now being revalidated through smaller acceptance gat
 
 Do not advance Stage 4.4 as fully accepted merely because later broad implementation code already exists on `main`.
 
-- **4.4.3 — runtime capability/deprecation contract validation — NEXT**
+- **4.4.3 — runtime capability/deprecation contract validation — ACCEPTED / CI GREEN** via PR #57 at `main@406c171d`; Quality Checks #37245209262 passed TypeScript, **110 / 110 test files, 606 / 606 tests**, and production build.
+- **4.4.4 — Google Sheets payload/response contract consolidation — NEXT**
 
 ---
 

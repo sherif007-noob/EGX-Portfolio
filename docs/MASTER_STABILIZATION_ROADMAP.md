@@ -1249,8 +1249,8 @@ Granular acceptance sequence:
 - **4.3.1 — local state + compatibility cache — ACCEPTED / CI GREEN** via PR #50 at `main@b0ecb4b7`; Quality Checks #37229492006 passed TypeScript, **103 / 103 test files, 566 / 566 tests**, and production build.
 - **4.3.2 — remote hydration/subscription ownership — ACCEPTED / CI GREEN** via PR #51 at `main@dce45fc6`; Quality Checks #37230637442 passed TypeScript, **104 / 104 test files, 571 / 571 tests**, and production build.
 - **4.3.3 — canonical ledger mutation ownership — ACCEPTED / CI GREEN** via PR #52 at `main@87a10cd4`; Quality Checks #37231285634 passed TypeScript, **105 / 105 test files, 577 / 577 tests**, and production build.
-- **4.3.4 — repository/persistence action ownership — NEXT**
-- 4.3.5 — facade cleanup + regression closure
+- **4.3.4 — repository/persistence action ownership — ACCEPTED / CI GREEN** via PR #53 at `main@4653347c`; Quality Checks #37240842829 passed TypeScript, **106 / 106 test files, 583 / 583 tests**, and production build.
+- **4.3.5 — compatibility facade cleanup + regression closure — NEXT**
 
 Do not advance the acceptance point merely because later broad implementation code already exists on `main`.
 

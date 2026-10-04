@@ -49,10 +49,11 @@ describe('Stage 2.4 projection ownership contract', () => {
 
   it('routes both projection correction actions to the Journal', () => {
     const app = readRelative('../App.tsx');
+    const navigation = readRelative('../features/app-shell/usePortfolioNavigation.ts');
 
-    expect(app).toContain('getActivePositionLedgerTransactionIds');
-    expect(app).toContain('getClosedCycleLedgerTransactionIds');
-    expect(app).toContain("handleTabChange('journal')");
+    expect(navigation).toContain('getActivePositionLedgerTransactionIds');
+    expect(navigation).toContain('getClosedCycleLedgerTransactionIds');
+    expect(navigation).toContain("handleTabChange('journal')");
     expect(app).toContain('ledgerFocus={ledgerCorrectionFocus}');
     expect(app).not.toContain('handleDeletePosition');
     expect(app).not.toContain('handleDeleteTrade');

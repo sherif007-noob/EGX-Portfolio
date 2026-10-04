@@ -99,7 +99,7 @@ Google Sheets/Drive upstream HTTP 401/403 responses now share the same `isAuthEr
 Next: **4.4.3 — runtime capability/deprecation contract validation**.
 
 
-## 4.4.3 — Runtime capability/deprecation contract validation — VALIDATION IN PROGRESS
+## 4.4.3 — Runtime capability/deprecation contract validation — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -128,4 +128,25 @@ Next: **4.4.3 — runtime capability/deprecation contract validation**.
 - the existing intraday Worker `200 + deprecated no-op` remains explicit and regression-protected for old cached clients;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.4.4 — Google Sheets payload/response contract consolidation**.
+### 4.4.3 acceptance record
+
+Accepted through PR #57 at `main@406c171d`.
+
+Quality Checks #37245209262 passed:
+
+- TypeScript;
+- **110 / 110 test files, 606 / 606 tests**;
+- production build.
+
+The pass made runtime capability differences executable instead of leaving them as comments/tests only. Each capability now maps to one canonical route, and every unsupported Cloudflare capability has one shared response contract.
+
+Existing public behavior is intentionally preserved:
+
+- daily-history repair: HTTP 503 + retryable;
+- intraday repair: HTTP 200 deprecated no-op for old cached clients;
+- Google service-account status: configured=false on Worker;
+- Firestore→Supabase migration: HTTP 404 disabled on Worker.
+
+Express remains the runtime that implements all four capabilities; the capability boolean means runtime implementation support, not whether an optional feature is currently configured or enabled.
+
+Next: **4.4.4 — Google Sheets payload/response contract consolidation**.

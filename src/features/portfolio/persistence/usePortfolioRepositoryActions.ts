@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import type { EGXTicker, Position } from '../../../types';
 import { normalizeTransaction } from '../../../utils/portfolioMetrics';
+import { mergeTickerDirectoryWithBaseline } from '../../../data/egxTickers';
 import type { PortfolioLocalState } from '../state/usePortfolioLocalState';
 import { portfolioRepository } from './portfolioRepository';
 
@@ -51,7 +52,7 @@ export function usePortfolioRepositoryActions(state: PortfolioLocalState) {
       let mergedClosed = state.closedTrades;
       let mergedTransactions = state.transactions;
       let mergedCash = state.cashBalance;
-      const mergedTickers = state.tickers;
+      let mergedTickers = state.tickers;
       let mergedCapital = state.capitalDeposits;
 
       if (remote) {
@@ -71,12 +72,22 @@ export function usePortfolioRepositoryActions(state: PortfolioLocalState) {
         ) {
           mergedCapital = remote.capitalDeposits;
         }
+        if (Array.isArray(remote.tickers) && remote.tickers.length > 0) {
+          // Keep locally discovered symbols, but let the authoritative remote
+          // directory win duplicate metadata instead of overwriting it with a
+          // stale local copy during an explicit force-sync.
+          mergedTickers = mergeTickerDirectoryWithBaseline([
+            ...state.tickers,
+            ...remote.tickers,
+          ]);
+        }
 
         state.setTransactions(mergedTransactions);
         state.setPositions(mergedPositions);
         state.setClosedTrades(mergedClosed);
         state.setCashBalance(mergedCash);
         state.setCapitalDeposits(mergedCapital);
+        state.setTickers(mergedTickers);
       }
 
       return await portfolioRepository.saveSnapshot({
@@ -103,6 +114,7 @@ export function usePortfolioRepositoryActions(state: PortfolioLocalState) {
     state.setClosedTrades,
     state.setPositions,
     state.setTransactions,
+    state.setTickers,
   ]);
 
   return {

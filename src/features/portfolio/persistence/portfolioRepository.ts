@@ -5,7 +5,7 @@ import {
   subscribeToPortfolioFromFirestore,
   updateFirestorePositions,
   updateFirestoreTickers,
-} from '../../../services/firestoreStorage';
+} from '../../../services/supabaseStorage';
 import { getSupabaseBrowserClient } from '../../../data/supabase';
 
 export const portfolioRepository = {

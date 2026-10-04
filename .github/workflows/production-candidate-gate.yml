@@ -1,0 +1,100 @@
+name: Production Candidate Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/production-candidate-gate.yml'
+      - 'src/services/Stage34ExactHeadQualityGate.test.ts'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egx-production-candidate-gate
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Exact-head production candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate production audit configuration
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SECRET_KEY" ]; then
+            echo "::error::SUPABASE_SECRET_KEY is not configured in repository Actions secrets."
+            exit 1
+          fi
+          case "$SUPABASE_SECRET_KEY" in
+            sb_secret_*) ;;
+            *)
+              echo "::error::SUPABASE_SECRET_KEY must be a current sb_secret_ server key."
+              exit 1
+              ;;
+          esac
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Upgrade npm
+        run: npm install --global npm@11.6.0
+
+      - name: Clean locked install
+        run: npm ci --no-audit --no-fund
+
+      - name: Repository diff hygiene
+        run: |
+          EMPTY_TREE="$(git hash-object -t tree /dev/null)"
+          git diff --check "$EMPTY_TREE" HEAD
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Full Vitest suite
+        run: npm test
+
+      - name: Focused intraday regressions
+        run: >-
+          npx vitest run
+          src/services/intradayPolicy.test.ts
+          src/services/intradayBackfillPlan.test.ts
+          src/services/intradayAggregation.test.ts
+          src/services/intradayTickerUniverse.test.ts
+          src/services/intradayResolution.test.ts
+          src/services/tradingViewSymbolResolver.test.ts
+          src/services/tickerRegistry.test.ts
+          src/services/intradayAnalyticsEngine.test.ts
+          src/services/egxTradingSession.test.ts
+
+      - name: Focused ticker-registry regressions
+        run: >-
+          npx vitest run
+          src/services/tickerRegistry.test.ts
+          src/services/tradingViewSymbolResolver.test.ts
+          src/services/marketPriceSync.test.ts
+
+      - name: Build production Vite/PWA assets
+        run: npm run build:cloudflare
+
+      - name: Compile Cloudflare Worker deployment bundle
+        run: npx wrangler deploy --dry-run --outdir .wrangler/production-candidate
+
+      - name: Read-only production data audit
+        env:
+          SUPABASE_URL: https://jhubsrbfiqjxdgngnwaq.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
+        run: npm run verify:production-data

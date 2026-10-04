@@ -69,10 +69,24 @@ Stage 3 active:
 
 Stage 3.6 is merged on `main@f5ae6ad6`. PR #45 Quality Checks passed TypeScript, **98 / 98 test files, 550 / 550 tests**, and the production build. It exposes a read-only production trust surface from the existing Settings affordance. It reports held-universe quote health, expected vs selected EGX session, latest raw 1m coverage, derived 5m tail alignment, daily-history coverage, ticker resolution, Supabase portfolio sync age, last raw-ingestion age, and the build commit. It does not mutate accounting or manufacture missing market data.
 
+Stage 3.5 remains deferred technical debt for the scheduled 2026-10-05 live-session retry.
+
+Stage 4 completed:
+
+- **Stage 4.1 — module ownership — merged / CI green**
+- **Stage 4.2 — App orchestration extraction — merged / CI green**
+
+Stage 4 active:
+
+- **Stage 4.3 — split `usePortfolioState`**
+
 Next:
 
-1. **2026-10-05: remediate/retry Stage 3.5 live-session soak and close its deferred debt only after strict post-close + device-parity evidence**
-2. **Close the Stage 3 exit gate only after the deferred live-session verification is green**
+1. **Stage 4.3 — separate portfolio state, persistence/hydration, ledger mutations and compatibility concerns**
+2. **Stage 4.4 — shared Worker/Express API contracts**
+3. **Stage 4.5 — CSS ownership consolidation**
+4. **Stage 5 R1 — Reports workspace architecture**, after Stage 4 closes
+5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 
 ---
 

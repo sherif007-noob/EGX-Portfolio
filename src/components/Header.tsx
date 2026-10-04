@@ -511,13 +511,13 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
               </div>
 
-              {/* Settings entry point is reserved for future functionality; Phase 9 adds the affordance only. */}
+              {/* Stage 3.6 reuses the frozen Settings affordance for production data-health diagnostics. */}
               <button
                 id="header-settings-btn"
                 onClick={onOpenSettings}
                 aria-label="Settings"
                 className="premium-action premium-header-action premium-header-action-neutral premium-header-utility-action flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
-                title="Settings — reserved for a future phase"
+                title="Data Health Center & diagnostics"
               >
                 <Settings2 className="h-3.5 w-3.5 text-slate-300" />
                 <span className="premium-header-action-label hidden 2xl:inline">Settings</span>

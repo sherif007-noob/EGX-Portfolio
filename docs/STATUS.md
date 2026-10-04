@@ -64,11 +64,12 @@ Stage 3 completed:
 
 Stage 3 active:
 
-- **Stage 3.5 — Live-session soak — ACTIVE / 2026-10-04 observation scheduled**
+- **Stage 3.5 — Live-session soak — FAILED / scheduler-ingestion remediation required**
 
-Next after soak closure:
+Next:
 
-1. **Stage 3.6 — Data Health Center**
+1. **Stage 3.5 remediation — restore dependable in-session scheduled ingestion and repeat the soak**
+2. **Stage 3.6 — Data Health Center**
 
 ---
 
@@ -1135,6 +1136,6 @@ Current domain authorities:
 
 ## Current pass
 
-**Stage 3.5 — Live-session soak — ACTIVE.**
+**Stage 3.5 — Live-session soak — FAILED / REMEDIATION REQUIRED.**
 
-The read-only production soak is deployed on `main` for the real **2026-10-04** EGX session. Completion requires the strict post-close checkpoint plus one real phone/PC display-parity observation.
+The October 4 production soak failed because no target-session 1m/5m bars were persisted and daily history had not advanced past October 1. The production scanner proxy remained healthy. The only scheduled 1m writer run recorded for October 4 started at 15:53 Cairo and explicitly skipped outside the 15:15 ingestion window, so it wrote no bars. Repeat Stage 3.5 only after scheduled ingestion reliability is repaired.

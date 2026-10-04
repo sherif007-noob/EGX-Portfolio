@@ -44,11 +44,12 @@ describe('Stage 3.4 exact-head production candidate gate', () => {
     expect(audit).not.toMatch(/\.rpc\s*\(/);
   });
 
-  it('checks the entire current tree for whitespace errors', () => {
+  it('checks candidate changes for whitespace errors without rewriting historical debt', () => {
     const workflow = read('.github/workflows/production-candidate-gate.yml');
 
-    expect(workflow).toContain("git hash-object -t tree /dev/null");
-    expect(workflow).toContain('git diff --check "$EMPTY_TREE" HEAD');
+    expect(workflow).toContain('CANDIDATE_BASE');
+    expect(workflow).toContain('github.event.before');
+    expect(workflow).toContain('git diff --check "$BASE" HEAD');
     expect(workflow).toContain('fetch-depth: 0');
   });
 });

@@ -273,3 +273,91 @@ export const API_RUNTIME_CAPABILITIES = {
   googleServiceAccount: boolean;
   firestoreMigration: boolean;
 }>;
+
+/**
+ * "Capability" means the runtime contains the implementation. It does not mean
+ * an optional feature is currently enabled/configured (for example the local
+ * migration UI or a Google service account).
+ */
+export type ApiRuntimeCapability =
+  keyof typeof API_RUNTIME_CAPABILITIES['cloudflare-workers'];
+
+export const API_RUNTIME_CAPABILITY_ROUTES = {
+  dailyHistoryRepair: 'supabasePriceHistoryEnsure',
+  intradayHistoryRepair: 'supabaseIntradayHistoryEnsure',
+  googleServiceAccount: 'sheetsServiceAccountStatus',
+  firestoreMigration: 'firestoreSupabaseMigration',
+} as const satisfies Record<ApiRuntimeCapability, ApiRouteKey>;
+
+export interface RuntimeCapabilityResponse {
+  status: number;
+  body: unknown;
+}
+
+export const API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES = {
+  'cloudflare-workers': {
+    dailyHistoryRepair: {
+      status: 503,
+      body: createApiErrorResponse(
+        'On-demand TradingView daily-history repair is not executed in the Cloudflare Worker. Daily history is maintained by the Node-based scheduled ingestion workflow.',
+        { retryable: true },
+      ),
+    },
+    intradayHistoryRepair: {
+      status: 200,
+      body: {
+        data: {
+          requestedTickers: [],
+          backfilledTickers: [],
+          writtenRows: 0,
+          failures: [],
+        },
+        deprecated: true,
+      },
+    },
+    googleServiceAccount: {
+      status: 200,
+      body: {
+        configured: false,
+        serviceAccountEmail: null,
+        instruction: 'Cloudflare deployment uses Google OAuth bearer authentication for Sheets.',
+      },
+    },
+    firestoreMigration: {
+      status: 404,
+      body: createApiErrorResponse('Migration endpoint is disabled.'),
+    },
+  },
+  'express-vite': {},
+} as const satisfies Record<
+  ApiRuntime,
+  Partial<Record<ApiRuntimeCapability, RuntimeCapabilityResponse>>
+>;
+
+export function runtimeSupportsCapability(
+  runtime: ApiRuntime,
+  capability: ApiRuntimeCapability,
+): boolean {
+  return API_RUNTIME_CAPABILITIES[runtime][capability];
+}
+
+export function unavailableRuntimeCapabilityResponse(
+  runtime: ApiRuntime,
+  capability: ApiRuntimeCapability,
+): RuntimeCapabilityResponse | null {
+  if (runtimeSupportsCapability(runtime, capability)) return null;
+  return API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES[runtime][capability] ?? null;
+}
+
+export function requireUnavailableRuntimeCapabilityResponse(
+  runtime: ApiRuntime,
+  capability: ApiRuntimeCapability,
+): RuntimeCapabilityResponse {
+  const response = unavailableRuntimeCapabilityResponse(runtime, capability);
+  if (!response) {
+    throw new Error(
+      `Missing unavailable-capability response contract for ${runtime}:${capability}.`,
+    );
+  }
+  return response;
+}

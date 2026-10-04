@@ -20,7 +20,8 @@
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
     "diagnose:intraday:1m": "tsx scripts/diagnoseIntradayOneMinute.ts",
     "sync:intraday:1m": "tsx scripts/syncIntradayOneMinute.ts",
-    "sync:ticker-registry": "tsx scripts/syncTickerRegistry.ts"
+    "sync:ticker-registry": "tsx scripts/syncTickerRegistry.ts",
+    "verify:live-session-soak": "tsx scripts/verifyLiveSessionSoak.ts"
   },
   "dependencies": {
     "@ch99q/twc": "^0.1.4",

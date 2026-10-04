@@ -64,12 +64,15 @@ Stage 3 completed:
 
 Stage 3 active:
 
-- **Stage 3.5 — Live-session soak — FAILED / scheduler-ingestion remediation required**
+- **Stage 3.5 — Live-session soak — FAILED / deferred technical debt; retry scheduled for the 2026-10-05 live session**
+- **Stage 3.6 — Data Health Center — ACTIVE / implementation branch `stage3-6-data-health-center`**
+
+Stage 3.6 implementation now exposes a read-only production trust surface from the existing Settings affordance. It reports held-universe quote health, expected vs selected EGX session, latest raw 1m coverage, derived 5m tail alignment, daily-history coverage, ticker resolution, Supabase portfolio sync age, last raw-ingestion age, and the build commit. It does not mutate accounting or manufacture missing market data.
 
 Next:
 
-1. **Stage 3.5 remediation — restore dependable in-session scheduled ingestion and repeat the soak**
-2. **Stage 3.6 — Data Health Center**
+1. **Validate and merge Stage 3.6 Data Health Center**
+2. **2026-10-05: remediate/retry Stage 3.5 live-session soak and close its deferred debt only after strict post-close + device-parity evidence**
 
 ---
 

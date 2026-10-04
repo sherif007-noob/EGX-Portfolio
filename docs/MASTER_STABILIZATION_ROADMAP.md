@@ -1252,7 +1252,7 @@ Validation on PR #48 Quality Checks #37228707949:
 
 ---
 
-## Pass 4.4 — Shared Worker/Express API contracts
+## Pass 4.4 — Shared Worker/Express API contracts — COMPLETE / CI GREEN
 
 Production uses Cloudflare Worker + static assets. Express remains valuable for local development and compatibility.
 
@@ -1265,6 +1265,29 @@ Prevent route drift by sharing:
 - route constants where practical.
 
 No two runtimes should silently implement different field lists again.
+
+### 4.4 implementation record
+
+Merged through PR #49 at `main@b2e15e6a`.
+
+Implemented:
+
+- `src/api/contracts.ts` as the shared API route/method/request/error/health contract;
+- Cloudflare Worker and Express/Vite now consume the same route constants;
+- shared price-tick, ticker-list, symbol-search and backfill request parsing;
+- shared auth-error classification;
+- health responses now share one versioned shape while preserving runtime identity;
+- the existing EGX scanner request payload remains a shared authority;
+- intentional runtime capability differences are explicit rather than silent: Node owns on-demand history repair, service-account Sheets and migration; Worker keeps compatibility/no-op or unavailable behavior where designed;
+- Stage 3 route guards now follow the shared route authority.
+
+Validation on PR #49 Quality Checks #37229111809:
+
+- TypeScript passed;
+- **102 / 102 test files, 563 / 563 tests passed**;
+- production build passed.
+
+**Next: Pass 4.5 — CSS ownership consolidation.**
 
 ---
 

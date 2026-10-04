@@ -71,22 +71,26 @@ Stage 3.6 is merged on `main@f5ae6ad6`. PR #45 Quality Checks passed TypeScript,
 
 Stage 3.5 remains deferred technical debt for the scheduled 2026-10-05 live-session retry.
 
-Stage 4 completed:
+Stage 4 accepted:
 
 - **Stage 4.1 — module ownership — merged / CI green**
 - **Stage 4.2 — App orchestration extraction — merged / CI green**
-- **Stage 4.3 — portfolio state ownership split — merged / CI green**
-- **Stage 4.4 — shared Worker/Express API contracts — merged / CI green**
+- **Stage 4.3.1 — local state + compatibility cache — accepted / CI green**
+
+Granular Stage 4.3 acceptance is now authoritative. The earlier broad Stage 4.3 and Stage 4.4 implementations are present on `main`, but they are not treated as newly accepted sequencing gates until their smaller sub-passes are individually validated.
 
 Stage 4 active:
 
-- **Stage 4.5 — CSS ownership consolidation**
+- **Stage 4.3.2 — remote hydration/subscription ownership**
 
 Next:
 
-1. **Stage 4.5 — CSS ownership consolidation**
-4. **Stage 5 R1 — Reports workspace architecture**, after Stage 4 closes
-5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
+1. **Stage 4.3.2 — remote hydration/subscription ownership**
+2. **Stage 4.3.3 — canonical ledger mutation ownership**
+3. **Stage 4.3.4 — repository/persistence action ownership**
+4. **Stage 4.3.5 — facade cleanup + regression closure**
+5. Continue Stage 4 in similarly small sub-passes before Stage 5
+6. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 
 ---
 

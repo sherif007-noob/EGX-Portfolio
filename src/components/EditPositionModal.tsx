@@ -14,7 +14,7 @@ interface EditPositionModalProps {
     targetPrice?: number;
     stopLoss?: number;
     notes?: string;
-  }) => void;
+  }) => Promise<boolean>;
 }
 
 export const EditPositionModal: React.FC<EditPositionModalProps> = ({
@@ -31,6 +31,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
   const [targetPrice, setTargetPrice] = useState<string>('');
   const [stopLoss, setStopLoss] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (position) {
@@ -42,18 +43,25 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
 
   if (!displayPosition) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const tpNum = targetPrice ? parseFloat(targetPrice) : undefined;
     const slNum = stopLoss ? parseFloat(stopLoss) : undefined;
 
-    onSave({
-      id: displayPosition.id,
-      targetPrice: tpNum && !isNaN(tpNum) && tpNum > 0 ? tpNum : undefined,
-      stopLoss: slNum && !isNaN(slNum) && slNum > 0 ? slNum : undefined,
-      notes: notes.trim() || undefined,
-    });
-    requestClose();
+    setIsSubmitting(true);
+    try {
+      const saved = await onSave({
+        id: displayPosition.id,
+        targetPrice: tpNum && !isNaN(tpNum) && tpNum > 0 ? tpNum : undefined,
+        stopLoss: slNum && !isNaN(slNum) && slNum > 0 ? slNum : undefined,
+        notes: notes.trim() || undefined,
+      });
+      if (saved) requestClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const currentPrice = displayPosition.currentPrice || displayPosition.avgBuyPrice;
@@ -184,16 +192,18 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             <button
               type="button"
               onClick={requestClose}
+              disabled={isSubmitting}
               className="premium-action w-full justify-center px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
             >
               <Save className="w-3.5 h-3.5" />
-              Save Targets
+              {isSubmitting ? 'Saving…' : 'Save Targets'}
             </button>
           </div>
         </form>

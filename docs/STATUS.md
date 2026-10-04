@@ -65,14 +65,14 @@ Stage 3 completed:
 Stage 3 active:
 
 - **Stage 3.5 — Live-session soak — FAILED / deferred technical debt; retry scheduled for the 2026-10-05 live session**
-- **Stage 3.6 — Data Health Center — ACTIVE / implementation branch `stage3-6-data-health-center`**
+- **Stage 3.6 — Data Health Center — IMPLEMENTED / PR CI GREEN / merged to `main`**
 
-Stage 3.6 implementation now exposes a read-only production trust surface from the existing Settings affordance. It reports held-universe quote health, expected vs selected EGX session, latest raw 1m coverage, derived 5m tail alignment, daily-history coverage, ticker resolution, Supabase portfolio sync age, last raw-ingestion age, and the build commit. It does not mutate accounting or manufacture missing market data.
+Stage 3.6 is merged on `main@f5ae6ad6`. PR #45 Quality Checks passed TypeScript, **98 / 98 test files, 550 / 550 tests**, and the production build. It exposes a read-only production trust surface from the existing Settings affordance. It reports held-universe quote health, expected vs selected EGX session, latest raw 1m coverage, derived 5m tail alignment, daily-history coverage, ticker resolution, Supabase portfolio sync age, last raw-ingestion age, and the build commit. It does not mutate accounting or manufacture missing market data.
 
 Next:
 
-1. **Validate and merge Stage 3.6 Data Health Center**
-2. **2026-10-05: remediate/retry Stage 3.5 live-session soak and close its deferred debt only after strict post-close + device-parity evidence**
+1. **2026-10-05: remediate/retry Stage 3.5 live-session soak and close its deferred debt only after strict post-close + device-parity evidence**
+2. **Close the Stage 3 exit gate only after the deferred live-session verification is green**
 
 ---
 

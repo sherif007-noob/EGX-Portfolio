@@ -2,7 +2,7 @@
 
 The original Stage 4.3 implementation landed as one broad refactor before the work was re-sequenced into smaller sub-passes. From this point forward, Stage 4.3 is validated and accepted in granular gates.
 
-## 4.3.1 — Local state + compatibility cache
+## 4.3.1 — Local state + compatibility cache — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -29,4 +29,16 @@ The original Stage 4.3 implementation landed as one broad refactor before the wo
 - ticker metadata rehydration remains owned locally;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.3.2 — remote hydration/subscription ownership**.
+### 4.3.1 acceptance record
+
+Accepted through PR #50 at `main@b0ecb4b7`.
+
+Quality Checks #37229492006 passed:
+
+- TypeScript;
+- **103 / 103 test files, 566 / 566 tests**;
+- production build.
+
+The acceptance guard confirms that legacy localStorage access is contained in `portfolioCompatibility.ts`, local presentation state is free of remote persistence and ledger-mutation concerns, existing storage keys remain unchanged, and visual/ticker rehydration behavior remains represented.
+
+Next: **4.3.2 — remote hydration/subscription ownership**.

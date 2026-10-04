@@ -556,14 +556,14 @@ describe('Stage 2.8 financial acceptance suite', () => {
     expect(CANONICAL_COST_BASIS_METHOD).toBe('WEIGHTED_AVERAGE_PROPORTIONAL');
 
     const executor = readRelative('./ledgerMutationService.ts');
-    const hooks = readRelative('../hooks/usePortfolioState.ts');
+    const ledgerRuntime = readRelative('../features/portfolio/ledger/usePortfolioLedgerMutations.ts');
     const navigation = readRelative('../features/app-shell/usePortfolioNavigation.ts');
     const workflow = readRelative('./ledgerWorkflowMutations.ts');
 
     expect(executor.indexOf('persisted = await persist(candidate.snapshot)'))
       .toBeLessThan(executor.indexOf('request.apply(candidate.snapshot, candidate.value)'));
 
-    expect(hooks).toContain('createLedgerMutationExecutor');
+    expect(ledgerRuntime).toContain('createLedgerMutationExecutor');
     for (const preparation of [
       'prepareBuyTradeMutation',
       'prepareSellTradeMutation',
@@ -577,11 +577,11 @@ describe('Stage 2.8 financial acceptance suite', () => {
       'prepareLedgerSnapshotRestoreMutation',
       'prepareLedgerReconciliationMutation',
     ]) {
-      expect(hooks).toContain(preparation);
+      expect(ledgerRuntime).toContain(preparation);
     }
 
     const tradeRuntime = [
-      hooks,
+      ledgerRuntime,
       readRelative('../components/AddTradeModal.tsx'),
       readRelative('./tradeLedgerMutations.ts'),
     ].join('\n');

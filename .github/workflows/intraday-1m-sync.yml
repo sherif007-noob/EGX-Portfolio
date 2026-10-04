@@ -12,12 +12,9 @@ on:
         required: false
         default: false
         type: boolean
-  schedule:
-    # GitHub cron is UTC and scheduled workflows run from the default branch.
-    # 07:00-13:59 UTC covers Cairo's session and delayed close across DST
-    # changes. The Node script applies the authoritative Africa/Cairo session
-    # gate through 15:15 Cairo for delayed final bars and runner delays.
-    - cron: '*/5 7-13 * * 0-4'
+  # Stage 3.5 remediation: production scheduling moved to Supabase pg_cron
+  # + egx-intraday-scheduler Edge Function. This workflow is manual-only and
+  # remains available for deep repair / operator diagnostics.
 
 permissions:
   contents: read
@@ -72,5 +69,5 @@ jobs:
           EGX_PORTFOLIO_ID: ${{ vars.EGX_PORTFOLIO_ID }}
           EGX_INTRADAY_TICKERS: ${{ inputs.tickers }}
           EGX_INTRADAY_FULL_REPAIR: ${{ inputs.full_repair }}
-          EGX_INTRADAY_SCHEDULED: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+          EGX_INTRADAY_SCHEDULED: 'false'
         run: npm run sync:intraday:1m

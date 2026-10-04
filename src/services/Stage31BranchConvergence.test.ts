@@ -10,11 +10,11 @@ describe('Stage 3.1 reviewed branch convergence contract', () => {
     const server = read('server.ts');
     const historicalStore = read('src/services/historicalPriceStore.ts');
     const portfolioServer = read('src/services/supabasePortfolioServer.ts');
-    const app = read('src/App.tsx');
+    const historicalAnalytics = read('src/features/app-shell/useHistoricalPortfolioAnalytics.ts');
 
     expect(server).toContain('/api/supabase/price-history/ensure');
     expect(historicalStore).toContain('ensureHistoricalPriceCoverage');
-    expect(app).toContain('ensureHistoricalPriceCoverage');
+    expect(historicalAnalytics).toContain('ensureHistoricalPriceCoverage');
     expect(portfolioServer).toContain('const startDate = ledgerDate ?? hintedDate;');
   });
 

@@ -21,7 +21,7 @@ type ShowToast = (message: string, type?: ToastKind, duration?: number) => void;
 interface PortfolioActions {
   addTrade: (trade: any) => Promise<any>;
   sellPosition: (sell: any) => Promise<any>;
-  editPosition: (position: Position) => void;
+  editPosition: (position: Position) => Promise<boolean>;
   editTransaction: (transaction: TradeTransaction) => Promise<any>;
   deleteTransaction: (id: string) => Promise<any>;
   reconcileLedger: () => Promise<any>;
@@ -265,21 +265,31 @@ export function usePortfolioWorkflows({
     return true;
   }, [appendPersistedTransactionToSheet, portfolio, positions, showToast]);
 
-  const handleSavePositionEdit = useCallback((updated: {
+  const handleSavePositionEdit = useCallback(async (updated: {
     id: string;
     targetPrice?: number;
     stopLoss?: number;
     notes?: string;
-  }) => {
+  }): Promise<boolean> => {
     const position = positions.find((candidate) => candidate.id === updated.id);
-    if (!position) return;
-    portfolio.editPosition({
+    if (!position) {
+      showToast('The position changed before its targets could be saved. Reload and try again.', 'error');
+      return false;
+    }
+
+    const saved = await portfolio.editPosition({
       ...position,
       targetPrice: updated.targetPrice,
       stopLoss: updated.stopLoss,
       notes: updated.notes,
     });
+    if (!saved) {
+      showToast(`Targets & notes for ${position.ticker} were not saved. Nothing was changed.`, 'error', 6500);
+      return false;
+    }
+
     showToast(`Updated targets & notes for ${position.ticker}`, 'success');
+    return true;
   }, [portfolio, positions, showToast]);
 
   const handleDeleteTransaction = useCallback(async (id: string): Promise<boolean> => {

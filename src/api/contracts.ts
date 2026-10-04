@@ -56,8 +56,13 @@ export interface PriceTickRequest {
   force: boolean;
 }
 
+export interface HistoricalBackfillTargetContract {
+  ticker: string;
+  startDate?: string;
+}
+
 export interface HistoricalEnsureRequest {
-  targets: unknown[];
+  targets: HistoricalBackfillTargetContract[];
 }
 
 export function createHealthResponse(runtime: ApiRuntime): ApiHealthResponse {
@@ -100,22 +105,42 @@ export function requireTickerList(value: unknown): string[] {
   return tickers;
 }
 
-export function parseHistoricalEnsureRequest(body: unknown): HistoricalEnsureRequest {
+function parseBackfillTargets(
+  body: unknown,
+  emptyMessage: string,
+): HistoricalBackfillTargetContract[] {
   const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
-  const targets = Array.isArray(input.targets) ? input.targets : [];
-  if (!targets.length) {
-    throw new Error('At least one historical backfill target is required.');
-  }
-  return { targets };
+  const rawTargets = Array.isArray(input.targets) ? input.targets : [];
+  const targets = rawTargets
+    .filter((target): target is Record<string, unknown> => Boolean(target && typeof target === 'object'))
+    .map((target) => ({
+      ticker: String(target.ticker ?? '').trim(),
+      ...(String(target.startDate ?? '').trim()
+        ? { startDate: String(target.startDate).trim() }
+        : {}),
+    }))
+    .filter((target) => Boolean(target.ticker));
+
+  if (!targets.length) throw new Error(emptyMessage);
+  return targets;
+}
+
+export function parseHistoricalEnsureRequest(body: unknown): HistoricalEnsureRequest {
+  return {
+    targets: parseBackfillTargets(
+      body,
+      'At least one historical backfill target is required.',
+    ),
+  };
 }
 
 export function parseIntradayEnsureRequest(body: unknown): HistoricalEnsureRequest {
-  const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
-  const targets = Array.isArray(input.targets) ? input.targets : [];
-  if (!targets.length) {
-    throw new Error('At least one intraday backfill target is required.');
-  }
-  return { targets };
+  return {
+    targets: parseBackfillTargets(
+      body,
+      'At least one intraday backfill target is required.',
+    ),
+  };
 }
 
 export function requireSymbolSearchText(value: unknown): string {

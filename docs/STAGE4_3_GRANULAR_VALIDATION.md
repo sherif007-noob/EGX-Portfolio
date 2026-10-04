@@ -136,7 +136,7 @@ The pass also closed a mutation-freshness race at the ownership boundary: after 
 Next: **4.3.4 — repository/persistence action ownership**.
 
 
-## 4.3.4 — Repository/persistence action ownership — VALIDATION IN PROGRESS
+## 4.3.4 — Repository/persistence action ownership — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -163,4 +163,21 @@ Next: **4.3.4 — repository/persistence action ownership**.
 - explicit force-sync does not overwrite authoritative remote ticker metadata with stale local duplicates;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.3.5 — compatibility facade cleanup + regression closure**.
+### 4.3.4 acceptance record
+
+Accepted through PR #53 at `main@4653347c`.
+
+Quality Checks #37240842829 passed:
+
+- TypeScript;
+- **106 / 106 test files, 583 / 583 tests**;
+- production build.
+
+The pass also corrected two persistence-boundary defects:
+
+- Edit Position target/stop/notes updates are now persistence-confirmed; failed saves keep the modal open and no longer report false success;
+- explicit force-sync no longer lets stale local ticker metadata overwrite authoritative remote duplicates.
+
+The repository adapter now binds directly to Supabase storage rather than the legacy Firestore-name compatibility shim.
+
+Next: **4.3.5 — compatibility facade cleanup + regression closure**.

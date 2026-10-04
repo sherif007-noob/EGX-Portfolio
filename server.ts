@@ -2,7 +2,8 @@ import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
 import {
   API_ROUTES,
   allowedApiMethodsForPath,
-  classifyAuthErrorStatus,
+  createApiErrorResponse,
+  createClassifiedAuthErrorResponse,
   createHealthResponse,
   isApiRouteMethodAllowed,
   parseHistoricalEnsureRequest,
@@ -38,9 +39,9 @@ async function startServer() {
     if (!allowedMethods || isApiRouteMethodAllowed(req.path, req.method)) return next();
 
     res.setHeader("Allow", allowedMethods.join(", "));
-    return res.status(405).json({
-      error: `Method ${req.method} is not allowed for ${req.path}.`,
-    });
+    return res.status(405).json(
+      createApiErrorResponse(`Method ${req.method} is not allowed for ${req.path}.`),
+    );
   });
 
   app.get(API_ROUTES.health, (_req, res) => res.json(createHealthResponse("express-vite")));
@@ -52,15 +53,26 @@ async function startServer() {
   app.post(API_ROUTES.sheetsBatchUpdate, handleBatchUpdate);
   app.get(API_ROUTES.sheetsDriveFiles, handleListDriveSpreadsheets);
 
-  const withSupabaseUser = async (req: express.Request, res: express.Response, handler: (uid: string) => Promise<unknown>) => {
+  const withSupabaseUser = async (
+    req: express.Request,
+    res: express.Response,
+    handler: (uid: string) => Promise<unknown>,
+  ) => {
+    let uid: string;
     try {
-      const uid = await verifySupabaseBearerToken(req.headers.authorization);
-      res.json(await handler(uid));
+      uid = await verifySupabaseBearerToken(req.headers.authorization);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const status = classifyAuthErrorStatus(error);
-      console.error("[Supabase API]", message);
-      res.status(status).json({ error: message });
+      const classified = createClassifiedAuthErrorResponse(error);
+      console.error("[Supabase API auth]", classified.body.error);
+      return res.status(classified.status).json(classified.body);
+    }
+
+    try {
+      return res.json(await handler(uid));
+    } catch (error) {
+      const body = createApiErrorResponse(error, { isAuthError: false });
+      console.error("[Supabase API handler]", body.error);
+      return res.status(500).json(body);
     }
   };
 
@@ -118,9 +130,14 @@ async function startServer() {
       const payload = EGX_SCANNER_PAYLOAD;
       res.setHeader("Cache-Control", "no-store");
       const tvResponse = await fetch(tvUrl, { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, signal: AbortSignal.timeout(12_000), body: JSON.stringify(payload) });
-      if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}` });
+      if (!tvResponse.ok) return res.status(tvResponse.status).json(
+        createApiErrorResponse(`TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}`),
+      );
       res.json(await tvResponse.json());
-    } catch (err: any) { console.error("Error proxying to TradingView Scanner:", err); res.status(500).json({ error: err.message || "Failed to fetch prices from TradingView" }); }
+    } catch (err: any) {
+      console.error("Error proxying to TradingView Scanner:", err);
+      res.status(500).json(createApiErrorResponse(err?.message || "Failed to fetch prices from TradingView"));
+    }
   });
   app.get(API_ROUTES.tradingViewSymbolSearch, async (req, res) => {
     try {
@@ -128,13 +145,18 @@ async function startServer() {
       try {
         query = requireSymbolSearchText(req.query.text);
       } catch (error) {
-        return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+        return res.status(400).json(createApiErrorResponse(error));
       }
       const searchUrl = `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
       const tvResponse = await fetch(searchUrl, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", Accept: "application/json" } });
-      if (!tvResponse.ok) return res.status(tvResponse.status).json({ error: `TradingView Symbol Search status ${tvResponse.status}` });
+      if (!tvResponse.ok) return res.status(tvResponse.status).json(
+        createApiErrorResponse(`TradingView Symbol Search status ${tvResponse.status}`),
+      );
       res.json(await tvResponse.json());
-    } catch (err: any) { console.error("Error proxying to TradingView Symbol Search:", err); res.status(500).json({ error: err.message || "Failed to search TradingView symbols" }); }
+    } catch (err: any) {
+      console.error("Error proxying to TradingView Symbol Search:", err);
+      res.status(500).json(createApiErrorResponse(err?.message || "Failed to search TradingView symbols"));
+    }
   });
 
   const migrationPage = path.join(process.cwd(), "public", "supabase-migration.html");

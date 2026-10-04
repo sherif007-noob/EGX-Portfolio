@@ -1,5 +1,11 @@
 import { JWT, GoogleAuth } from 'google-auth-library';
 import type { Request, Response } from 'express';
+import {
+  classifyAuthErrorStatus,
+  createApiErrorResponse,
+  isAuthHttpStatus,
+  type ApiAuthSource,
+} from '../api/contracts';
 
 const SHEETS_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
@@ -91,6 +97,46 @@ export async function getServerSheetsAccessToken(req?: Request): Promise<{ token
   );
 }
 
+function sendApiError(
+  res: Response,
+  status: number,
+  error: unknown,
+  options: Parameters<typeof createApiErrorResponse>[1] = {},
+) {
+  return res.status(status).json(createApiErrorResponse(error, options));
+}
+
+function sendGoogleUpstreamError(
+  res: Response,
+  status: number,
+  apiName: string,
+  details: unknown,
+  authSource: ApiAuthSource,
+) {
+  return sendApiError(
+    res,
+    status,
+    `${apiName} API error (${status})`,
+    {
+      details,
+      authSource,
+      isAuthError: isAuthHttpStatus(status),
+    },
+  );
+}
+
+function sendGoogleHandlerError(
+  res: Response,
+  error: unknown,
+  fallbackMessage: string,
+) {
+  const normalized = error instanceof Error && error.message ? error : new Error(fallbackMessage);
+  const status = classifyAuthErrorStatus(normalized);
+  return sendApiError(res, status, normalized, {
+    isAuthError: status === 401,
+  });
+}
+
 // --------------------------------------------------------------------------
 // EXPRESS ENDPOINT HANDLERS
 // --------------------------------------------------------------------------
@@ -110,7 +156,7 @@ export async function handleGetSpreadsheetMetadata(req: Request, res: Response) 
   try {
     const spreadsheetId = String(req.query.spreadsheetId || '').trim();
     if (!spreadsheetId) {
-      return res.status(400).json({ error: 'Missing required query parameter "spreadsheetId"' });
+      return sendApiError(res, 400, 'Missing required query parameter "spreadsheetId"');
     }
 
     const { token, source } = await getServerSheetsAccessToken(req);
@@ -122,11 +168,13 @@ export async function handleGetSpreadsheetMetadata(req: Request, res: Response) 
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Sheets API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Sheets',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
@@ -143,7 +191,7 @@ export async function handleGetSpreadsheetMetadata(req: Request, res: Response) 
     });
   } catch (err: any) {
     console.error('[Google Sheets Server] Get metadata error:', err);
-    res.status(500).json({ error: err.message || 'Failed to fetch spreadsheet metadata' });
+    return sendGoogleHandlerError(res, err, 'Failed to fetch spreadsheet metadata');
   }
 }
 
@@ -152,7 +200,7 @@ export async function handleGetSheetValues(req: Request, res: Response) {
     const spreadsheetId = String(req.query.spreadsheetId || '').trim();
     const range = String(req.query.range || '').trim();
     if (!spreadsheetId || !range) {
-      return res.status(400).json({ error: 'Missing "spreadsheetId" or "range"' });
+      return sendApiError(res, 400, 'Missing "spreadsheetId" or "range"');
     }
 
     const { token, source } = await getServerSheetsAccessToken(req);
@@ -168,11 +216,13 @@ export async function handleGetSheetValues(req: Request, res: Response) {
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Sheets API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Sheets',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
@@ -183,7 +233,7 @@ export async function handleGetSheetValues(req: Request, res: Response) {
     });
   } catch (err: any) {
     console.error('[Google Sheets Server] Get values error:', err);
-    res.status(500).json({ error: err.message || 'Failed to get sheet values' });
+    return sendGoogleHandlerError(res, err, 'Failed to get sheet values');
   }
 }
 
@@ -191,7 +241,7 @@ export async function handlePutSheetValues(req: Request, res: Response) {
   try {
     const { spreadsheetId, range, values, valueInputOption = 'USER_ENTERED' } = req.body;
     if (!spreadsheetId || !range || !Array.isArray(values)) {
-      return res.status(400).json({ error: 'Missing spreadsheetId, range, or values array' });
+      return sendApiError(res, 400, 'Missing spreadsheetId, range, or values array');
     }
 
     const { token, source } = await getServerSheetsAccessToken(req);
@@ -210,18 +260,20 @@ export async function handlePutSheetValues(req: Request, res: Response) {
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Sheets API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Sheets',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
     res.json({ success: true, updatedCells: data.updatedCells, authSource: source });
   } catch (err: any) {
     console.error('[Google Sheets Server] Put values error:', err);
-    res.status(500).json({ error: err.message || 'Failed to update sheet values' });
+    return sendGoogleHandlerError(res, err, 'Failed to update sheet values');
   }
 }
 
@@ -229,7 +281,7 @@ export async function handleAppendSheetValues(req: Request, res: Response) {
   try {
     const { spreadsheetId, range, values, valueInputOption = 'USER_ENTERED', insertDataOption = 'INSERT_ROWS' } = req.body;
     if (!spreadsheetId || !range || !Array.isArray(values)) {
-      return res.status(400).json({ error: 'Missing spreadsheetId, range, or values' });
+      return sendApiError(res, 400, 'Missing spreadsheetId, range, or values');
     }
 
     const { token, source } = await getServerSheetsAccessToken(req);
@@ -248,18 +300,20 @@ export async function handleAppendSheetValues(req: Request, res: Response) {
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Sheets API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Sheets',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
     res.json({ success: true, updates: data.updates, authSource: source });
   } catch (err: any) {
     console.error('[Google Sheets Server] Append values error:', err);
-    res.status(500).json({ error: err.message || 'Failed to append sheet values' });
+    return sendGoogleHandlerError(res, err, 'Failed to append sheet values');
   }
 }
 
@@ -267,7 +321,7 @@ export async function handleBatchUpdate(req: Request, res: Response) {
   try {
     const { spreadsheetId, requests } = req.body;
     if (!spreadsheetId || !Array.isArray(requests)) {
-      return res.status(400).json({ error: 'Missing spreadsheetId or requests array' });
+      return sendApiError(res, 400, 'Missing spreadsheetId or requests array');
     }
 
     const { token, source } = await getServerSheetsAccessToken(req);
@@ -282,18 +336,20 @@ export async function handleBatchUpdate(req: Request, res: Response) {
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Sheets API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Sheets',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
     res.json({ success: true, replies: data.replies, authSource: source });
   } catch (err: any) {
     console.error('[Google Sheets Server] Batch update error:', err);
-    res.status(500).json({ error: err.message || 'Failed to execute batch update' });
+    return sendGoogleHandlerError(res, err, 'Failed to execute batch update');
   }
 }
 
@@ -311,17 +367,19 @@ export async function handleListDriveSpreadsheets(req: Request, res: Response) {
 
     if (!googleRes.ok) {
       const errText = await googleRes.text();
-      return res.status(googleRes.status).json({
-        error: `Google Drive API error (${googleRes.status}): ${errText}`,
-        authSource: source,
-        isAuthError: googleRes.status === 401 || googleRes.status === 403,
-      });
+      return sendGoogleUpstreamError(
+        res,
+        googleRes.status,
+        'Google Drive',
+        errText,
+        source,
+      );
     }
 
     const data = await googleRes.json();
     res.json({ files: data.files || [], authSource: source });
   } catch (err: any) {
     console.error('[Google Sheets Server] List drive spreadsheets error:', err);
-    res.status(500).json({ error: err.message || 'Failed to list drive spreadsheets' });
+    return sendGoogleHandlerError(res, err, 'Failed to list drive spreadsheets');
   }
 }

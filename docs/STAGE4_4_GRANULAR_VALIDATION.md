@@ -49,3 +49,34 @@ The pass closed the main route-authority gap left by the broad Stage 4.4 impleme
 Portfolio-save and historical-price query normalization are also shared through `src/api/contracts.ts`, and regression coverage verifies every Express registration against the canonical method matrix plus every Worker route against the canonical path map.
 
 Next: **4.4.2 — auth/error response contract parity**.
+
+
+## 4.4.2 — Auth/error response contract parity — VALIDATION IN PROGRESS
+
+**Scope**
+
+- canonical API error body construction;
+- Supabase authentication error classification;
+- separation of authentication failures from authenticated handler failures;
+- Worker/Express proxy error shape parity;
+- Google Sheets/Drive upstream auth flags and error metadata;
+- missing Google credentials behavior.
+
+**Explicitly out of scope**
+
+- runtime capability/no-op semantics;
+- Google Sheets request payload schema consolidation;
+- scanner success-response schema;
+- Stage 4.5 CSS ownership.
+
+**Acceptance**
+
+- every shared API error exposes a string `error` field;
+- optional `retryable`, `isAuthError`, `details`, and `authSource` fields are built through the shared contract;
+- arbitrary business/data errors containing words such as “invalid” cannot be misclassified as authentication failures;
+- Supabase token verification failures are separated from authenticated handler failures in both runtimes;
+- HTTP 401/403 upstream Google responses consistently set `isAuthError: true`;
+- missing Google credentials are auth-classified instead of generic HTTP 500 failures;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.4.3 — runtime capability/deprecation contract validation**.

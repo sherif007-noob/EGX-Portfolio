@@ -75,16 +75,16 @@ Stage 4 completed:
 
 - **Stage 4.1 — module ownership — merged / CI green**
 - **Stage 4.2 — App orchestration extraction — merged / CI green**
+- **Stage 4.3 — portfolio state ownership split — merged / CI green**
 
 Stage 4 active:
 
-- **Stage 4.3 — split `usePortfolioState`**
+- **Stage 4.4 — shared Worker/Express API contracts**
 
 Next:
 
-1. **Stage 4.3 — separate portfolio state, persistence/hydration, ledger mutations and compatibility concerns**
-2. **Stage 4.4 — shared Worker/Express API contracts**
-3. **Stage 4.5 — CSS ownership consolidation**
+1. **Stage 4.4 — shared Worker/Express API contracts**
+2. **Stage 4.5 — CSS ownership consolidation**
 4. **Stage 5 R1 — Reports workspace architecture**, after Stage 4 closes
 5. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 

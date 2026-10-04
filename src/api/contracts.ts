@@ -346,7 +346,9 @@ export function unavailableRuntimeCapabilityResponse(
   capability: ApiRuntimeCapability,
 ): RuntimeCapabilityResponse | null {
   if (runtimeSupportsCapability(runtime, capability)) return null;
-  return API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES[runtime][capability] ?? null;
+  const responses = API_RUNTIME_UNAVAILABLE_CAPABILITY_RESPONSES[runtime] as
+    Partial<Record<ApiRuntimeCapability, RuntimeCapabilityResponse>>;
+  return responses[capability] ?? null;
 }
 
 export function requireUnavailableRuntimeCapabilityResponse(

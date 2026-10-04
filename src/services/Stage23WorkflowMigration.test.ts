@@ -23,8 +23,10 @@ describe('Stage 2.3 canonical workflow migration contract', () => {
 
   it('removes App-level OCR local financial apply and direct full persistence', () => {
     const app = readRelative('../App.tsx');
+    const workflows = readRelative('../features/app-shell/usePortfolioWorkflows.ts');
 
-    expect(app).toContain('const result = await importOcrBatch(parsedTxs)');
+    expect(workflows).toContain('const result = await portfolio.importOcrBatch(parsedTxs)');
+    expect(workflows).not.toContain('setTransactions(workingTransactions)');
     expect(app).not.toContain('setTransactions(workingTransactions)');
     expect(app).not.toContain('void forceFullSyncToFirestore({');
   });

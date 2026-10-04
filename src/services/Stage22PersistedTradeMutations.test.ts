@@ -7,15 +7,15 @@ const readRelative = (relative: string) =>
 
 describe('Stage 2.2 persisted BUY/SELL contract', () => {
   it('routes BUY and SELL through the canonical ledger mutation executor', () => {
-    const hook = readRelative('../hooks/usePortfolioState.ts');
+    const ledger = readRelative('../features/portfolio/ledger/usePortfolioLedgerMutations.ts');
 
-    expect(hook).toContain('createLedgerMutationExecutor()');
-    expect(hook).toContain("kind: 'BUY'");
-    expect(hook).toContain("kind: 'SELL'");
-    expect(hook).toContain('prepareBuyTradeMutation(current');
-    expect(hook).toContain('prepareSellTradeMutation(current');
-    expect(hook).toContain('apply: (snapshot) => applyLedgerSnapshot(snapshot)');
-    expect(hook).not.toContain("savePortfolioToFirestore({ positions: updatedPositions");
+    expect(ledger).toContain('createLedgerMutationExecutor()');
+    expect(ledger).toContain("'BUY'");
+    expect(ledger).toContain("'SELL'");
+    expect(ledger).toContain('prepareBuyTradeMutation(current');
+    expect(ledger).toContain('prepareSellTradeMutation(current');
+    expect(ledger).toContain('apply: (snapshot) => applyLedgerSnapshot(snapshot)');
+    expect(ledger).not.toContain("savePortfolioToFirestore({ positions: updatedPositions");
   });
 
   it('makes both app handlers await authoritative portfolio persistence before Sheets or success UI', () => {

@@ -51,7 +51,7 @@ Portfolio-save and historical-price query normalization are also shared through 
 Next: **4.4.2 — auth/error response contract parity**.
 
 
-## 4.4.2 — Auth/error response contract parity — VALIDATION IN PROGRESS
+## 4.4.2 — Auth/error response contract parity — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -79,4 +79,21 @@ Next: **4.4.2 — auth/error response contract parity**.
 - missing Google credentials are auth-classified instead of generic HTTP 500 failures;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.4.3 — runtime capability/deprecation contract validation**.
+### 4.4.2 acceptance record
+
+Accepted through PR #56 at `main@41f37430`.
+
+Quality Checks #37243628532 passed:
+
+- TypeScript;
+- **109 / 109 test files, 599 / 599 tests**;
+- production build.
+
+The pass closed two concrete parity defects:
+
+- shared API errors now always expose a string `error`; Worker Google upstream payloads move raw provider data into `details` rather than placing an object in `error`;
+- Supabase token verification errors are separated from authenticated handler failures, so ordinary data/business errors containing words such as “invalid” cannot be mislabeled as HTTP 401.
+
+Google Sheets/Drive upstream HTTP 401/403 responses now share the same `isAuthError` semantics, and missing Google credentials are auth-classified consistently.
+
+Next: **4.4.3 — runtime capability/deprecation contract validation**.

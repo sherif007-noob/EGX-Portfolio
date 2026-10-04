@@ -73,7 +73,12 @@ function googleBearer(request: Request): string {
   return token;
 }
 
-async function googleJson(url: string, token: string, init: RequestInit = {}): Promise<Response> {
+async function googleJson(
+  url: string,
+  token: string,
+  init: RequestInit = {},
+  apiName = "Google Sheets",
+): Promise<Response> {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -86,7 +91,7 @@ async function googleJson(url: string, token: string, init: RequestInit = {}): P
   try { body = text ? JSON.parse(text) : {}; } catch { body = { error: text }; }
   if (!response.ok) {
     return json({
-      ...createApiErrorResponse(`Google API error (${response.status})`, {
+      ...createApiErrorResponse(`${apiName} API error (${response.status})`, {
         details: body,
         isAuthError: isAuthHttpStatus(response.status),
         authSource: "oauth_bearer",
@@ -343,6 +348,8 @@ async function handleApi(request: Request): Promise<Response> {
         return googleJson(
           `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,webViewLink)&orderBy=modifiedTime desc&pageSize=30`,
           token,
+          {},
+          "Google Drive",
         );
       }
     } catch (error) {

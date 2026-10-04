@@ -183,7 +183,7 @@ The repository adapter now binds directly to Supabase storage rather than the le
 Next: **4.3.5 — compatibility facade cleanup + regression closure**.
 
 
-## 4.3.5 — Compatibility facade cleanup + regression closure — VALIDATION IN PROGRESS
+## 4.3.5 — Compatibility facade cleanup + regression closure — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -213,4 +213,23 @@ Next: **4.3.5 — compatibility facade cleanup + regression closure**.
 - all 4.3.1–4.3.5 ownership guards pass together;
 - TypeScript, full tests, and production build are green.
 
-Passing this gate closes **Stage 4.3**.
+### 4.3.5 acceptance record
+
+Accepted through PR #54 at `main@98ca8653`.
+
+Quality Checks #37241869884 passed:
+
+- TypeScript;
+- **107 / 107 test files, 588 / 588 tests**;
+- production build.
+
+Closure results:
+
+- the owned `usePortfolioState()` implementation now lives under `src/features/portfolio`;
+- `src/hooks/usePortfolioState.ts` is a legacy re-export shim only;
+- raw React setters for positions, closed cycles, transactions, cash, tickers and contributed capital are no longer exposed through the application facade;
+- App uses explicit `updateMarketPositions` for market projection refreshes;
+- earlier Stage 4.3 ownership guards now follow the feature-owned facade;
+- a source-boundary scan prevents application code from regressing to the legacy hook import path.
+
+**Stage 4.3 is CLOSED / CI GREEN.**

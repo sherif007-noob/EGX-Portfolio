@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import WebSocket from "npm:ws@8.18.3";
 import { createChart, createSeries } from "npm:@ch99q/twc@0.1.4";
 
 const TZ = "Africa/Cairo";
@@ -222,16 +223,13 @@ class SessionEmitter {
     this.listeners.get(event)!.add(listener);
     return this;
   }
-
   off(event: string, listener: (...args: any[]) => void) {
     this.listeners.get(event)?.delete(listener);
     return this;
   }
-
   removeListener(event: string, listener: (...args: any[]) => void) {
     return this.off(event, listener);
   }
-
   once(event: string, listener: (...args: any[]) => void) {
     const wrapped = (...args: any[]) => {
       this.off(event, wrapped);
@@ -239,20 +237,14 @@ class SessionEmitter {
     };
     return this.on(event, wrapped);
   }
-
   emit(event: string, ...args: any[]) {
     for (const listener of this.listeners.get(event) ?? []) listener(...args);
   }
 }
 
 async function createDenoTradingViewSession() {
-  const WebSocketStreamCtor = (globalThis as any).WebSocketStream;
-  if (typeof WebSocketStreamCtor !== "function") {
-    throw new Error("Supabase Edge runtime does not expose WebSocketStream.");
-  }
-
   const emitter = new SessionEmitter();
-  const stream = new WebSocketStreamCtor(
+  const socket = new WebSocket(
     "wss://data.tradingview.com/socket.io/websocket?&type=chart",
     {
       headers: {
@@ -261,103 +253,107 @@ async function createDenoTradingViewSession() {
         "Cache-Control": "no-cache",
         Pragma: "no-cache",
       },
+      followRedirects: true,
     },
   );
 
-  const opened = await stream.opened;
-  const writer = opened.writable.getWriter();
   let closed = false;
   let protocol: Record<string, unknown> | undefined;
 
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("TradingView WebSocket connection timeout.")), 10_000);
+    socket.once("open", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    socket.once("error", (error) => {
+      clearTimeout(timeout);
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
+  });
+
   const send = async (event: string, payload: any): Promise<void> => {
-    if (closed) throw new Error("Cannot send on closed TradingView session.");
+    if (closed || socket.readyState !== WebSocket.OPEN) {
+      throw new Error("Cannot send on closed TradingView session.");
+    }
     const message = typeof payload === "string"
       ? payload
       : (() => {
           const json = JSON.stringify({ m: event, p: payload });
           return `~m~${json.length}~m~${json}`;
         })();
-    await writer.write(message);
+    await new Promise<void>((resolve, reject) => {
+      socket.send(message, (error) => error ? reject(error) : resolve());
+    });
   };
 
   const close = async () => {
     if (closed) return;
     closed = true;
-    try { stream.close({ closeCode: 1000, reason: "done" }); } catch { /* best effort */ }
-    try { await writer.close(); } catch { /* best effort */ }
+    try { socket.close(); } catch { /* best effort */ }
     emitter.emit("close");
   };
 
   const session = Object.assign(emitter, {
     protocol: protocol ?? {},
-    socket: { readyState: 1 },
+    socket,
     send,
     close,
   });
 
   const protocolReady = new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("TradingView protocol negotiation timeout.")), 10_000);
+    const timeout = setTimeout(() => reject(new Error("TradingView protocol negotiation timeout.")), 10_000);
 
-    void (async () => {
-      const reader = opened.readable.getReader();
-      try {
-        while (!closed) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          const text = typeof value === "string"
-            ? value
-            : new TextDecoder().decode(value);
-          const packets = text.split("~m~").filter(Boolean).reduce((acc: string[], packet: string, index: number) => {
-            if (index % 2 === 0) acc.push("~m~" + packet);
-            else acc[acc.length - 1] += "~m~" + packet;
-            return acc;
-          }, []);
+    socket.on("message", (data) => {
+      const text = typeof data === "string" ? data : data.toString();
+      const packets = text.split("~m~").filter(Boolean).reduce((acc: string[], packet: string, index: number) => {
+        if (index % 2 === 0) acc.push("~m~" + packet);
+        else acc[acc.length - 1] += "~m~" + packet;
+        return acc;
+      }, []);
 
-          for (const raw of packets) {
-            if (raw.includes("~m~~h~")) {
-              const match = raw.match(/~m~(\d+)~m~~h~(\d+)/);
-              if (match) await send("heartbeat", `~m~${match[1]}~m~~h~${match[2]}`);
-              continue;
-            }
-
-            if (raw.includes('~m~{"session_id"')) {
-              const match = raw.match(/~m~(\d+)~m~(.+)/);
-              if (match) {
-                protocol = JSON.parse(match[2]);
-                (session as any).protocol = protocol;
-                emitter.emit("protocol", protocol);
-                clearTimeout(timer);
-                resolve();
-              }
-              continue;
-            }
-
-            const match = raw.match(/~m~(\d+)~m~(.+)/);
-            if (!match) continue;
-            const message = JSON.parse(match[2]);
-            const event = message.m;
-            const payload = message.p;
-            emitter.emit("message", { event, payload });
-            if (event && typeof event === "string") {
-              if (event.includes("error")) emitter.emit("error", event, payload);
-              else emitter.emit(event, payload);
-            }
-          }
+      for (const raw of packets) {
+        if (raw.includes("~m~~h~")) {
+          const match = raw.match(/~m~(\d+)~m~~h~(\d+)/);
+          if (match) void send("heartbeat", `~m~${match[1]}~m~~h~${match[2]}`);
+          continue;
         }
-      } catch (error) {
-        clearTimeout(timer);
-        emitter.emit("error", error);
-        reject(error);
-      } finally {
-        reader.releaseLock();
+
+        if (raw.includes('~m~{"session_id"')) {
+          const match = raw.match(/~m~(\d+)~m~(.+)/);
+          if (match) {
+            protocol = JSON.parse(match[2]);
+            (session as any).protocol = protocol;
+            emitter.emit("protocol", protocol);
+            clearTimeout(timeout);
+            resolve();
+          }
+          continue;
+        }
+
+        const match = raw.match(/~m~(\d+)~m~(.+)/);
+        if (!match) continue;
+        const message = JSON.parse(match[2]);
+        const event = message.m;
+        const payload = message.p;
+        emitter.emit("message", { event, payload });
+        if (event && typeof event === "string") {
+          if (event.includes("error")) emitter.emit("error", event, payload);
+          else emitter.emit(event, payload);
+        }
       }
-    })();
+    });
+
+    socket.on("error", (error) => {
+      emitter.emit("error", error);
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
+    socket.on("close", () => void close());
   });
 
   await protocolReady;
   await send("set_auth_token", ["unauthorized_user_token"]);
   await send("set_locale", ["en", "US"]);
-
   return session as any;
 }
 

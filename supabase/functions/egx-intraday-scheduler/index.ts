@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { createChart, createSeries, createSession } from "npm:@ch99q/twc@0.1.4";
+import { createChart, createSeries } from "npm:@ch99q/twc@0.1.4";
 
 const TZ = "Africa/Cairo";
 const SESSION_START_MINUTE = 10 * 60;
@@ -214,45 +214,151 @@ async function loadSessionRaw(sb: any, ticker: string, targetDate: string) {
   return (data ?? []).filter((row: any) => cairoDateKey(String(row.bar_timestamp)) === targetDate);
 }
 
-async function createDenoTradingViewSession() {
-  // @ch99q/twc detects Node by looking for globalThis.process. Supabase Edge
-  // exposes a Node-compat process shim even though WebSocket is the native Deno
-  // implementation. That makes twc pass a Node ws options object as the second
-  // WebSocket constructor argument, which Deno treats as a protocol list and
-  // rejects with "Invalid protocol value".
-  //
-  // Hide only the process shim for the duration of createSession() so twc takes
-  // its documented native WebSocket path. Restore it immediately afterwards.
-  const globalObject = globalThis as typeof globalThis & { process?: unknown };
-  const previousProcess = globalObject.process;
-  const hadProcess = "process" in globalObject;
+class SessionEmitter {
+  private listeners = new Map<string, Set<(...args: any[]) => void>>();
 
-  try {
-    try {
-      Object.defineProperty(globalObject, "process", {
-        value: undefined,
-        configurable: true,
-        writable: true,
-      });
-    } catch {
-      globalObject.process = undefined;
-    }
-    return await createSession();
-  } finally {
-    try {
-      if (hadProcess) {
-        Object.defineProperty(globalObject, "process", {
-          value: previousProcess,
-          configurable: true,
-          writable: true,
-        });
-      } else {
-        delete globalObject.process;
-      }
-    } catch {
-      globalObject.process = previousProcess;
-    }
+  on(event: string, listener: (...args: any[]) => void) {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event)!.add(listener);
+    return this;
   }
+
+  off(event: string, listener: (...args: any[]) => void) {
+    this.listeners.get(event)?.delete(listener);
+    return this;
+  }
+
+  removeListener(event: string, listener: (...args: any[]) => void) {
+    return this.off(event, listener);
+  }
+
+  once(event: string, listener: (...args: any[]) => void) {
+    const wrapped = (...args: any[]) => {
+      this.off(event, wrapped);
+      listener(...args);
+    };
+    return this.on(event, wrapped);
+  }
+
+  emit(event: string, ...args: any[]) {
+    for (const listener of this.listeners.get(event) ?? []) listener(...args);
+  }
+}
+
+async function createDenoTradingViewSession() {
+  const WebSocketStreamCtor = (globalThis as any).WebSocketStream;
+  if (typeof WebSocketStreamCtor !== "function") {
+    throw new Error("Supabase Edge runtime does not expose WebSocketStream.");
+  }
+
+  const emitter = new SessionEmitter();
+  const stream = new WebSocketStreamCtor(
+    "wss://data.tradingview.com/socket.io/websocket?&type=chart",
+    {
+      headers: {
+        Origin: "https://www.tradingview.com",
+        "User-Agent": "Mozilla/5.0",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    },
+  );
+
+  const opened = await stream.opened;
+  const writer = opened.writable.getWriter();
+  let closed = false;
+  let protocol: Record<string, unknown> | undefined;
+
+  const send = async (event: string, payload: any): Promise<void> => {
+    if (closed) throw new Error("Cannot send on closed TradingView session.");
+    const message = typeof payload === "string"
+      ? payload
+      : (() => {
+          const json = JSON.stringify({ m: event, p: payload });
+          return `~m~${json.length}~m~${json}`;
+        })();
+    await writer.write(message);
+  };
+
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    try { stream.close({ closeCode: 1000, reason: "done" }); } catch { /* best effort */ }
+    try { await writer.close(); } catch { /* best effort */ }
+    emitter.emit("close");
+  };
+
+  const session = Object.assign(emitter, {
+    protocol: protocol ?? {},
+    socket: { readyState: 1 },
+    send,
+    close,
+  });
+
+  const protocolReady = new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("TradingView protocol negotiation timeout.")), 10_000);
+
+    void (async () => {
+      const reader = opened.readable.getReader();
+      try {
+        while (!closed) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const text = typeof value === "string"
+            ? value
+            : new TextDecoder().decode(value);
+          const packets = text.split("~m~").filter(Boolean).reduce((acc: string[], packet: string, index: number) => {
+            if (index % 2 === 0) acc.push("~m~" + packet);
+            else acc[acc.length - 1] += "~m~" + packet;
+            return acc;
+          }, []);
+
+          for (const raw of packets) {
+            if (raw.includes("~m~~h~")) {
+              const match = raw.match(/~m~(\d+)~m~~h~(\d+)/);
+              if (match) await send("heartbeat", `~m~${match[1]}~m~~h~${match[2]}`);
+              continue;
+            }
+
+            if (raw.includes('~m~{"session_id"')) {
+              const match = raw.match(/~m~(\d+)~m~(.+)/);
+              if (match) {
+                protocol = JSON.parse(match[2]);
+                (session as any).protocol = protocol;
+                emitter.emit("protocol", protocol);
+                clearTimeout(timer);
+                resolve();
+              }
+              continue;
+            }
+
+            const match = raw.match(/~m~(\d+)~m~(.+)/);
+            if (!match) continue;
+            const message = JSON.parse(match[2]);
+            const event = message.m;
+            const payload = message.p;
+            emitter.emit("message", { event, payload });
+            if (event && typeof event === "string") {
+              if (event.includes("error")) emitter.emit("error", event, payload);
+              else emitter.emit(event, payload);
+            }
+          }
+        }
+      } catch (error) {
+        clearTimeout(timer);
+        emitter.emit("error", error);
+        reject(error);
+      } finally {
+        reader.releaseLock();
+      }
+    })();
+  });
+
+  await protocolReady;
+  await send("set_auth_token", ["unauthorized_user_token"]);
+  await send("set_locale", ["en", "US"]);
+
+  return session as any;
 }
 
 Deno.serve(async (req: Request) => {

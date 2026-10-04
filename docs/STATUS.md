@@ -8,11 +8,11 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-10-03  
+**Date:** 2026-10-04  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `15f47190` — Stage 3.3 automation normalization  
-**Current full exact-head verification:** Phase 10 Visual Closure #37149729005 on `15f47190`  
+**Current validated runtime head:** `ce60f932` — Stage 3.4 exact-head production candidate gate  
+**Current full exact-head verification:** Production Candidate Gate #37180662256 on `ce60f932`  
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -60,10 +60,11 @@ Stage 3 completed:
 - **Stage 3.1 — Reviewed branch divergence reconciliation**
 - **Stage 3.2 — Default production branch authority**
 - **Stage 3.3 — Automation normalization**
+- **Stage 3.4 — Exact-head quality gate**
 
 Next:
 
-1. **Stage 3.4 — Exact-head quality gate**
+1. **Stage 3.5 — Live-session soak**
 
 ---
 
@@ -902,6 +903,68 @@ The production-data audit workflow configuration is normalized in this pass. Exe
 
 ---
 
+### Stage 3.4 exact-head production candidate gate
+
+A dedicated non-writing production gate now binds the release checks to one exact commit:
+
+- workflow: `.github/workflows/production-candidate-gate.yml`;
+- runtime candidate: `main@ce60f932`;
+- Production Candidate Gate **#37180662256 — passed**.
+
+The gate proves on the same SHA:
+
+- Node 22 + npm 11.6;
+- clean locked `npm ci`;
+- candidate-delta `git diff --check`;
+- TypeScript;
+- full Vitest;
+- focused intraday regressions;
+- focused ticker-registry regressions;
+- production Vite/PWA build;
+- Cloudflare Worker dry-run;
+- live read-only production-data audit.
+
+Exact results:
+
+- **94 / 94 Vitest files, 531 / 531 tests**;
+- focused intraday: **9 / 9 files, 49 / 49 tests**;
+- focused ticker registry: **3 / 3 files, 22 / 22 tests**;
+- production build — passed;
+- Worker dry-run — passed;
+- production audit — **passed with zero issues**.
+
+Production audit snapshot at the gate:
+
+- transactions: **79**;
+- stored/rebuilt positions: **8 / 8**;
+- stored/rebuilt cash: **EGP 12,301.85 / EGP 12,301.85**;
+- duplicate-equivalent ledger groups: **0**;
+- market trades missing `executedAt`: **0**;
+- stored/rebuilt closed trades: **30 / 30**;
+- stored/rebuilt realized P&L: **EGP 116.72 / EGP 116.72**;
+- latest daily history date: **2026-10-01**;
+- open tickers missing latest daily history: **0**;
+- latest intraday date: **2026-10-01**;
+- open tickers missing latest intraday session: **0**.
+
+The first candidate run `d868fd42` intentionally failed before runtime checks because an initial whole-tree whitespace scan exposed unrelated pre-existing whitespace debt. The gate was corrected to inspect the **candidate delta**, matching the intended `git diff --check` release contract without mass-editing accepted historical/UI code.
+
+Supporting exact-head evidence on `ce60f932` is also green:
+
+- Quality Checks **#37180662247**;
+- Phase 10 Visual Closure **#37180662178**;
+- Rendered Visual Regression **#37180662271**;
+- **12 / 12** responsive geometries at 0px page overflow;
+- **16 / 16** rendered states passed.
+
+Accepted frozen visual deltas remain unchanged:
+
+- Positions desktop: **0.021%**;
+- Closed Cycles desktop: **0.012%**;
+- all other tracked states: **0.000%**.
+
+---
+
 ## Analytics state
 
 Strong/current foundation:
@@ -1001,6 +1064,6 @@ Current domain authorities:
 
 ## Next pass
 
-**Stage 3.4 — Exact-head quality gate.**
+**Stage 3.5 — Live-session soak.**
 
-Run the complete production-candidate gate on one exact head: locked clean install, TypeScript, full Vitest, Vite/PWA build, Worker dry-run, focused intraday and ticker-registry regressions, read-only production-data audit, and repository diff hygiene.
+Observe a complete real EGX session on the promoted production truth and verify startup valuation, phone/PC snapshot parity, advancing raw 1m coverage, post-close completion, deterministic derived 5m, same-session fallback, Today NAV convergence, daily-history advancement and absence of competing writers.

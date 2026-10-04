@@ -958,21 +958,52 @@ The live read-only production-data audit itself is intentionally part of Pass 3.
 
 ---
 
-## Pass 3.4 — Exact-head quality gate
+## Pass 3.4 — Exact-head quality gate — COMPLETE / CI GREEN
 
-For the final candidate commit:
+Canonical workflow:
 
-- clean install;
-- TypeScript;
-- full Vitest;
-- Vite/PWA build;
-- Worker compile/dry run;
-- focused intraday tests;
-- ticker-registry tests;
-- read-only production data audit;
-- `git diff --check`.
+- `.github/workflows/production-candidate-gate.yml`.
 
-A smoke workflow is not a substitute for this complete gate.
+The gate is intentionally non-writing and manually reusable after its initial `main` promotion run.
+
+Validated candidate:
+
+- `main@ce60f932`;
+- Production Candidate Gate **#37180662256 — success**.
+
+Same-head checks:
+
+- clean `npm ci` — passed;
+- candidate-delta `git diff --check` — passed;
+- TypeScript — passed;
+- full Vitest — **94 / 94 files, 531 / 531 tests**;
+- focused intraday — **9 / 9 files, 49 / 49 tests**;
+- focused ticker registry — **3 / 3 files, 22 / 22 tests**;
+- Vite/PWA production build — passed;
+- Cloudflare Worker dry-run — passed;
+- live read-only production-data audit — passed.
+
+Production audit returned:
+
+- **0 issues**;
+- stored/rebuilt positions **8 / 8**;
+- stored/rebuilt cash **EGP 12,301.85 / EGP 12,301.85**;
+- duplicate-equivalent transactions **0**;
+- missing market execution timestamps **0**;
+- stored/rebuilt closed trades **30 / 30**;
+- stored/rebuilt realized P&L **EGP 116.72 / EGP 116.72**;
+- latest daily history **2026-10-01**, no open-ticker gaps;
+- latest intraday session **2026-10-01**, no open-ticker gaps.
+
+The initial candidate `d868fd42` exposed historical whole-tree whitespace debt because the first implementation compared the repository against an empty tree. That was a gate-scope error, not a runtime failure. PR #41 corrected the check to the candidate delta; no unrelated accepted source was rewritten.
+
+Supporting same-head workflows:
+
+- Quality Checks **#37180662247** — success;
+- Phase 10 Visual Closure **#37180662178** — success;
+- Rendered Visual Regression **#37180662271** — success.
+
+**Next: Pass 3.5 — live-session soak.**
 
 ---
 

@@ -365,6 +365,51 @@ The audit is designed to detect issues such as:
 
 The audit should be treated as read-only verification.
 
+## Stage 3.4 production candidate gate
+
+Canonical workflow:
+
+```text
+.github/workflows/production-candidate-gate.yml
+```
+
+This is the release-quality gate for one exact production candidate. It is deliberately non-writing.
+
+It runs:
+
+1. Node 22 / npm 11.6;
+2. clean locked `npm ci`;
+3. candidate-delta `git diff --check`;
+4. TypeScript;
+5. full Vitest;
+6. focused intraday regressions;
+7. focused ticker-registry regressions;
+8. production Vite/PWA build;
+9. Cloudflare Worker dry-run;
+10. live read-only production-data audit.
+
+For push runs, diff hygiene compares `github.event.before..HEAD`. For manual runs, an optional `base_sha` may define the lower bound; otherwise the workflow falls back to `HEAD^`.
+
+Do not redefine this as a whole-repository whitespace rewrite. Historical whitespace debt is separate from release-candidate diff hygiene.
+
+Stage 3.4 closure evidence:
+
+- candidate: `ce60f932`;
+- Production Candidate Gate **#37180662256**;
+- full Vitest: **94 / 94 files, 531 / 531 tests**;
+- focused intraday: **49 / 49 tests**;
+- focused ticker registry: **22 / 22 tests**;
+- production build: passed;
+- Worker dry-run: passed;
+- production data audit: **passed, zero issues**.
+
+Supporting same-head visual closure:
+
+- Phase 10 Visual Closure **#37180662178**;
+- Rendered Visual Regression **#37180662271**;
+- **12 / 12** geometry checks at 0px overflow;
+- **16 / 16** rendered states passed.
+
 ## Historical-price sync verification
 
 After changing historical-price ingestion:
@@ -467,7 +512,7 @@ The final Phase 10 gate is:
 
 `.github/workflows/phase10-closure.yml`
 
-It runs on the premium branch for runtime/visual-contract changes and intentionally combines the previously separate evidence into one exact-head job:
+It runs on `main` for runtime/visual-contract changes and intentionally combines the previously separate evidence into one exact-head job:
 
 1. npm dependency installation;
 2. TypeScript typecheck;
@@ -503,7 +548,7 @@ GitHub Actions runs Quality Checks on:
 
 The Quality job uses Node 22 and currently installs dependencies with npm.
 
-The feature branch also has dedicated migration, rendered-regression, and Phase 10 exact-head closure workflows. Playwright/Chromium is installed only inside visual CI jobs so normal application dependencies remain unchanged.
+`main` also has dedicated migration, rendered-regression, Phase 10 closure, and Production Candidate Gate workflows. Playwright/Chromium is installed only inside visual CI jobs so normal application dependencies remain unchanged.
 
 ## Testing principles
 

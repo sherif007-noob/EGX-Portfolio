@@ -37,7 +37,13 @@ describe('Stage 4.3.4 repository and persistence action ownership', () => {
     expect(actions).toContain('targetPrice: updatedPosition.targetPrice');
     expect(actions).toContain('stopLoss: updatedPosition.stopLoss');
     expect(actions).toContain('notes: updatedPosition.notes');
-    expect(actions).not.toContain('position.id === updatedPosition.id ? updatedPosition : position');
+
+    const persistIndex = actions.indexOf('await portfolioRepository.updatePositions(candidate)');
+    const localApplyIndex = actions.indexOf('state.setPositions((current) => current.map');
+    const localApplyBlock = actions.slice(localApplyIndex);
+
+    expect(localApplyIndex).toBeGreaterThan(persistIndex);
+    expect(localApplyBlock).not.toContain('position.id === updatedPosition.id ? updatedPosition : position');
   });
 
   it('keeps the Edit Position workflow open and submit-disabled until persistence succeeds', () => {

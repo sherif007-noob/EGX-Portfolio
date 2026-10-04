@@ -89,3 +89,36 @@ The pass also corrected two ownership defects inside the hydration boundary:
 - asynchronous polling errors are surfaced through the repository subscription error callback, separately from synchronous subscription setup failures.
 
 Next: **4.3.3 — canonical ledger mutation ownership**.
+
+
+## 4.3.3 — Canonical ledger mutation ownership — VALIDATION IN PROGRESS
+
+**Scope**
+
+- BUY and SELL mutation orchestration;
+- transaction edit/delete;
+- cash add/edit/delete and reconciliation adjustment;
+- ledger reconciliation;
+- OCR batch import;
+- backup/ledger restore;
+- persisted-snapshot application into local portfolio state;
+- freshness of the in-memory mutation source between consecutive persisted mutations.
+
+**Explicitly out of scope**
+
+- direct repository actions such as position metadata persistence and force-sync;
+- remote hydration/subscription;
+- compatibility-facade cleanup beyond delegation checks;
+- Stage 4.4/4.5 work.
+
+**Acceptance**
+
+- every financial mutation family enters through `usePortfolioLedgerMutations.ts`;
+- the canonical executor persists before applying local financial state;
+- no raw storage, Supabase, Google Sheets or localStorage mechanics live in the ledger owner;
+- successful mutation application advances the mutation source synchronously before React's batched setters, preventing an immediately-following mutation from using the previous render's stale ledger;
+- newly authored BUY/SELL transaction IDs use collision-resistant UUIDs;
+- the public compatibility facade delegates financial writes to the ledger owner;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.3.4 — repository/persistence action ownership**.

@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type {
   CashTransaction,
-  EGXTicker,
   Position,
   Sector,
   TradeTransaction,
@@ -65,7 +64,23 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const executorRef = useRef<ReturnType<typeof createLedgerMutationExecutor> | null>(null);
   if (!executorRef.current) executorRef.current = createLedgerMutationExecutor();
 
+  const renderedSnapshot: CanonicalLedgerSnapshot = {
+    transactions: state.transactions,
+    positions: state.positions,
+    closedTrades: state.closedTrades,
+    cashBalance: state.cashBalance,
+    capitalDeposits: state.capitalDeposits,
+    tickers: state.tickers,
+  };
+  const latestLedgerSnapshotRef = useRef<CanonicalLedgerSnapshot>(renderedSnapshot);
+  latestLedgerSnapshotRef.current = renderedSnapshot;
+
   const applyLedgerSnapshot = useCallback((next: CanonicalLedgerSnapshot) => {
+    // Advance the mutation source synchronously. React state application is batched,
+    // so a caller can legitimately await one mutation and start another before the
+    // next render. The second mutation must prepare from the persisted first snapshot,
+    // never the stale render that preceded it.
+    latestLedgerSnapshotRef.current = next;
     state.setTransactions(next.transactions);
     state.setPositions(next.positions);
     state.setClosedTrades(next.closedTrades);
@@ -79,21 +94,10 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     state.setTransactions,
   ]);
 
-  const currentLedgerSnapshot = useCallback((): CanonicalLedgerSnapshot => ({
-    transactions: state.transactions,
-    positions: state.positions,
-    closedTrades: state.closedTrades,
-    cashBalance: state.cashBalance,
-    capitalDeposits: state.capitalDeposits,
-    tickers: state.tickers,
-  }), [
-    state.transactions,
-    state.positions,
-    state.closedTrades,
-    state.cashBalance,
-    state.capitalDeposits,
-    state.tickers,
-  ]);
+  const currentLedgerSnapshot = useCallback(
+    (): CanonicalLedgerSnapshot => latestLedgerSnapshotRef.current,
+    [],
+  );
 
   const executePreparedMutation = useCallback(async <T,>(
     kind: string,
@@ -113,7 +117,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const addTrade = useCallback((tradeInput: BuyTradeInput) => executePreparedMutation<TradeTransaction>(
     'BUY',
     (current) => prepareBuyTradeMutation(current, {
-      transactionId: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      transactionId: `tx-${crypto.randomUUID()}`,
       ...tradeInput,
     }),
   ), [executePreparedMutation]);
@@ -121,7 +125,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const sellPosition = useCallback((sellInput: SellTradeInput) => executePreparedMutation<TradeTransaction>(
     'SELL',
     (current) => prepareSellTradeMutation(current, {
-      transactionId: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      transactionId: `tx-${crypto.randomUUID()}`,
       positionId: sellInput.position.id,
       sharesToSell: sellInput.sharesToSell,
       sellPrice: sellInput.sellPrice,

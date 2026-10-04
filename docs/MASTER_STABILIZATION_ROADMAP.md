@@ -1202,7 +1202,7 @@ Validation on PR #47 Quality Checks #37228318969:
 
 ---
 
-## Pass 4.3 — Split `usePortfolioState` — IMPLEMENTATION LANDED / GRANULAR ACCEPTANCE ACTIVE
+## Pass 4.3 — Split `usePortfolioState` — COMPLETE / CI GREEN
 
 Separate:
 
@@ -1250,9 +1250,11 @@ Granular acceptance sequence:
 - **4.3.2 — remote hydration/subscription ownership — ACCEPTED / CI GREEN** via PR #51 at `main@dce45fc6`; Quality Checks #37230637442 passed TypeScript, **104 / 104 test files, 571 / 571 tests**, and production build.
 - **4.3.3 — canonical ledger mutation ownership — ACCEPTED / CI GREEN** via PR #52 at `main@87a10cd4`; Quality Checks #37231285634 passed TypeScript, **105 / 105 test files, 577 / 577 tests**, and production build.
 - **4.3.4 — repository/persistence action ownership — ACCEPTED / CI GREEN** via PR #53 at `main@4653347c`; Quality Checks #37240842829 passed TypeScript, **106 / 106 test files, 583 / 583 tests**, and production build.
-- **4.3.5 — compatibility facade cleanup + regression closure — NEXT**
+- **4.3.5 — compatibility facade cleanup + regression closure — ACCEPTED / CI GREEN** via PR #54 at `main@98ca8653`; Quality Checks #37241869884 passed TypeScript, **107 / 107 test files, 588 / 588 tests**, and production build.
 
-Do not advance the acceptance point merely because later broad implementation code already exists on `main`.
+Stage 4.3 is now fully closed through the granular acceptance sequence.
+
+The broad Stage 4.4 implementation already exists on `main`, but its acceptance will likewise be broken into small validation sub-passes before Stage 4.5. The next execution point is **4.4.1 — shared route/request contract authority validation**.
 
 ---
 

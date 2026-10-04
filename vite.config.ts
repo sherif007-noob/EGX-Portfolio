@@ -1,11 +1,34 @@
+import {execFileSync} from 'node:child_process';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
+function resolveBuildCommit(): string {
+  const environmentCommit =
+    process.env.VITE_BUILD_COMMIT ||
+    process.env.GITHUB_SHA ||
+    process.env.CF_PAGES_COMMIT_SHA ||
+    process.env.COMMIT_SHA;
+
+  if (environmentCommit) return environmentCommit.slice(0, 8);
+
+  try {
+    return execFileSync('git', ['rev-parse', '--short=8', 'HEAD'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
 export default defineConfig(() => {
   return {
+    define: {
+      'import.meta.env.VITE_BUILD_COMMIT': JSON.stringify(resolveBuildCommit()),
+    },
     plugins: [
       react(),
       tailwindcss(),

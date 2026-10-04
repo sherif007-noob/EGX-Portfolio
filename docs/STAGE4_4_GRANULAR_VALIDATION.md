@@ -2,7 +2,7 @@
 
 The original Stage 4.4 implementation landed before the roadmap was re-sequenced into smaller acceptance gates. Stage 4.4 is therefore revalidated in focused sub-passes. Later implementation already present on `main` does not count as accepted merely because it exists.
 
-## 4.4.1 — Shared route/request contract authority — VALIDATION IN PROGRESS
+## 4.4.1 — Shared route/request contract authority — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -34,4 +34,18 @@ The original Stage 4.4 implementation landed before the roadmap was re-sequenced
 - existing shared request parsers remain in use;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.4.2 — auth/error response contract parity**.
+### 4.4.1 acceptance record
+
+Accepted through PR #55 at `main@895dc351`.
+
+Quality Checks #37242757469 passed:
+
+- TypeScript;
+- **108 / 108 test files, 593 / 593 tests**;
+- production build.
+
+The pass closed the main route-authority gap left by the broad Stage 4.4 implementation: `API_ROUTE_METHODS` is now executable in both runtimes rather than documentation-only. Known API paths reject unsupported methods with HTTP 405 plus an `Allow` header before Express implicit routing or Worker handlers can diverge.
+
+Portfolio-save and historical-price query normalization are also shared through `src/api/contracts.ts`, and regression coverage verifies every Express registration against the canonical method matrix plus every Worker route against the canonical path map.
+
+Next: **4.4.2 — auth/error response contract parity**.

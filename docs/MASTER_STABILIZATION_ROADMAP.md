@@ -1007,7 +1007,7 @@ Supporting same-head workflows:
 
 ---
 
-## Pass 3.5 — Live-session soak — ACTIVE / 2026-10-04 OBSERVATION
+## Pass 3.5 — Live-session soak — FAILED / REMEDIATION REQUIRED
 
 The soak harness is deployed on `main@7299c623`.
 

@@ -8,13 +8,13 @@ const readRelative = (relative: string) =>
 describe('Phase 10 rendered browser regression harness', () => {
   it('uses an explicit visual-only mode instead of live production data', () => {
     const gate = readRelative('./SupabaseAuthGate.tsx');
-    const portfolio = readRelative('../hooks/usePortfolioState.ts');
+    const portfolioCompatibility = readRelative('../features/portfolio/state/portfolioCompatibility.ts');
     const market = readRelative('../hooks/useMarketData.ts');
     const historicalAnalytics = readRelative('../features/app-shell/useHistoricalPortfolioAnalytics.ts');
 
     expect(gate).toContain('VISUAL_REGRESSION_MODE');
-    expect(portfolio).toContain('VISUAL_REGRESSION_TRANSACTIONS');
-    expect(portfolio).toContain('if (VISUAL_REGRESSION_MODE) return;');
+    expect(portfolioCompatibility).toContain('VISUAL_REGRESSION_TRANSACTIONS');
+    expect(portfolioCompatibility).toContain('if (VISUAL_REGRESSION_MODE)');
     expect(market).toContain('VISUAL_SCHEDULE_STATUS');
     expect(market).toContain('Live sync disabled in visual regression mode');
     expect(historicalAnalytics).toContain('if (VISUAL_REGRESSION_MODE)');

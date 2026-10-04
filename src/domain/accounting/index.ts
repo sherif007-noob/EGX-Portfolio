@@ -11,6 +11,7 @@ export {
 export {
   createLedgerMutationExecutor,
   type CanonicalLedgerSnapshot,
+  type LedgerMutationPreparation,
 } from '../../services/ledgerMutationService';
 
 export {

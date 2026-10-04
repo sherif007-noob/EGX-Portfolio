@@ -7,18 +7,18 @@ const readRelative = (relative: string) =>
 
 describe('Stage 2.3 canonical workflow migration contract', () => {
   it('routes transaction edit/delete, cash, reconciliation, restore and OCR batch through one executor helper', () => {
-    const hook = readRelative('../hooks/usePortfolioState.ts');
+    const ledger = readRelative('../features/portfolio/ledger/usePortfolioLedgerMutations.ts');
 
-    expect(hook).toContain("executePreparedMutation(");
-    expect(hook).toContain("'EDIT_TRANSACTION'");
-    expect(hook).toContain("'DELETE_TRANSACTION'");
-    expect(hook).toContain("'EDIT_CASH_TRANSACTION'");
-    expect(hook).toContain("'DELETE_CASH_TRANSACTION'");
-    expect(hook).toContain("'RECONCILE_LEDGER'");
-    expect(hook).toContain("'RESTORE_PORTFOLIO'");
-    expect(hook).toContain("'OCR_BATCH_IMPORT'");
-    expect(hook).not.toContain('cashSaveInFlight');
-    expect(hook).not.toContain('persistCashSnapshot');
+    expect(ledger).toContain("executePreparedMutation");
+    expect(ledger).toContain("'EDIT_TRANSACTION'");
+    expect(ledger).toContain("'DELETE_TRANSACTION'");
+    expect(ledger).toContain("'EDIT_CASH_TRANSACTION'");
+    expect(ledger).toContain("'DELETE_CASH_TRANSACTION'");
+    expect(ledger).toContain("'RECONCILE_LEDGER'");
+    expect(ledger).toContain("'RESTORE_PORTFOLIO'");
+    expect(ledger).toContain("'OCR_BATCH_IMPORT'");
+    expect(ledger).not.toContain('cashSaveInFlight');
+    expect(ledger).not.toContain('persistCashSnapshot');
   });
 
   it('removes App-level OCR local financial apply and direct full persistence', () => {

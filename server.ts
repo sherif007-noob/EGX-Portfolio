@@ -1,4 +1,13 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
+import {
+  API_ROUTES,
+  classifyAuthErrorStatus,
+  createHealthResponse,
+  parseHistoricalEnsureRequest,
+  parseIntradayEnsureRequest,
+  parsePriceTickRequest,
+  requireTickerList,
+} from './src/api/contracts';
 import express from "express";
 import path from "path";
 import http from "http";
@@ -18,14 +27,14 @@ async function startServer() {
   const server = http.createServer(app);
   app.use(express.json({ limit: "10mb" }));
 
-  app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
-  app.get("/api/sheets/service-account-status", handleGetServiceAccountStatus);
-  app.get("/api/sheets/metadata", handleGetSpreadsheetMetadata);
-  app.get("/api/sheets/values", handleGetSheetValues);
-  app.put("/api/sheets/values", handlePutSheetValues);
-  app.post("/api/sheets/append", handleAppendSheetValues);
-  app.post("/api/sheets/batchUpdate", handleBatchUpdate);
-  app.get("/api/sheets/drive-files", handleListDriveSpreadsheets);
+  app.get(API_ROUTES.health, (_req, res) => res.json(createHealthResponse("express-vite")));
+  app.get(API_ROUTES.sheetsServiceAccountStatus, handleGetServiceAccountStatus);
+  app.get(API_ROUTES.sheetsMetadata, handleGetSpreadsheetMetadata);
+  app.get(API_ROUTES.sheetsValues, handleGetSheetValues);
+  app.put(API_ROUTES.sheetsValues, handlePutSheetValues);
+  app.post(API_ROUTES.sheetsAppend, handleAppendSheetValues);
+  app.post(API_ROUTES.sheetsBatchUpdate, handleBatchUpdate);
+  app.get(API_ROUTES.sheetsDriveFiles, handleListDriveSpreadsheets);
 
   const withSupabaseUser = async (req: express.Request, res: express.Response, handler: (uid: string) => Promise<unknown>) => {
     try {
@@ -33,7 +42,7 @@ async function startServer() {
       res.json(await handler(uid));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const status = /token|authorization|unauthenticated|invalid/i.test(message) ? 401 : 500;
+      const status = classifyAuthErrorStatus(error);
       console.error("[Supabase API]", message);
       res.status(status).json({ error: message });
     }
@@ -41,26 +50,26 @@ async function startServer() {
 
   // Supabase authenticates the browser. The server verifies that Supabase access token,
   // scopes by Supabase user ID, and uses the Supabase secret key server-side only.
-  app.get("/api/supabase/portfolio", (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
-  app.put("/api/supabase/portfolio", (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
-  app.post("/api/supabase/price-tick", (req, res) => withSupabaseUser(req, res, async (uid) => ({ saved: await saveSupabasePriceTick(uid, req.body?.positions || [], req.body?.tickers || [], req.body?.force === true) })));
-  app.get("/api/supabase/price-history", (req, res) => withSupabaseUser(req, res, async (uid) => {
-    const tickers = String(req.query.tickers || '').split(',').map((t) => t.trim()).filter(Boolean);
-    if (!tickers.length) throw new Error("At least one ticker is required.");
+  app.get(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await loadSupabasePortfolio(uid) })));
+  app.put(API_ROUTES.supabasePortfolio, (req, res) => withSupabaseUser(req, res, async (uid) => ({ data: await saveSupabasePortfolio(uid, req.body || {}) })));
+  app.post(API_ROUTES.supabasePriceTick, (req, res) => withSupabaseUser(req, res, async (uid) => {
+    const body = parsePriceTickRequest(req.body);
+    return { saved: await saveSupabasePriceTick(uid, body.positions as any[], body.tickers as any[], body.force) };
+  }));
+  app.get(API_ROUTES.supabasePriceHistory, (req, res) => withSupabaseUser(req, res, async (uid) => {
+    const tickers = requireTickerList(req.query.tickers);
     return { data: await loadHistoricalPrices(uid, tickers, String(req.query.startDate || '') || undefined, String(req.query.endDate || '') || undefined) };
   }));
-  app.post("/api/supabase/price-history/ensure", (req, res) => withSupabaseUser(req, res, async (uid) => {
-    const targets = Array.isArray(req.body?.targets) ? req.body.targets : [];
-    if (!targets.length) throw new Error("At least one historical backfill target is required.");
-    return { data: await ensurePortfolioHistoricalPrices(uid, targets) };
+  app.post(API_ROUTES.supabasePriceHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
+    const { targets } = parseHistoricalEnsureRequest(req.body);
+    return { data: await ensurePortfolioHistoricalPrices(uid, targets as any[]) };
   }));
-  app.post("/api/supabase/intraday-history/ensure", (req, res) => withSupabaseUser(req, res, async (uid) => {
-    const targets = Array.isArray(req.body?.targets) ? req.body.targets : [];
-    if (!targets.length) throw new Error("At least one intraday backfill target is required.");
-    return { data: await ensurePortfolioIntradayPrices(uid, targets) };
+  app.post(API_ROUTES.supabaseIntradayHistoryEnsure, (req, res) => withSupabaseUser(req, res, async (uid) => {
+    const { targets } = parseIntradayEnsureRequest(req.body);
+    return { data: await ensurePortfolioIntradayPrices(uid, targets as any[]) };
   }));
 
-  app.post("/api/migration/firestore-to-supabase", async (req, res) => {
+  app.post(API_ROUTES.firestoreSupabaseMigration, async (req, res) => {
     if (process.env.ENABLE_SUPABASE_MIGRATION_UI !== "true") return res.status(404).json({ error: "Migration endpoint is disabled." });
     if (migrationCompleted) return res.status(409).json({ error: "This server instance has already completed the migration." });
     if (migrationRunning) return res.status(409).json({ error: "A migration is already running." });
@@ -83,7 +92,7 @@ async function startServer() {
     } finally { migrationRunning = false; }
   });
 
-  app.post("/api/egx/scan", async (_req, res) => {
+  app.post(API_ROUTES.egxScan, async (_req, res) => {
     try {
       const tvUrl = "https://scanner.tradingview.com/egypt/scan";
       const payload = EGX_SCANNER_PAYLOAD;
@@ -93,7 +102,7 @@ async function startServer() {
       res.json(await tvResponse.json());
     } catch (err: any) { console.error("Error proxying to TradingView Scanner:", err); res.status(500).json({ error: err.message || "Failed to fetch prices from TradingView" }); }
   });
-  app.get("/api/tradingview/symbol-search", async (req, res) => {
+  app.get(API_ROUTES.tradingViewSymbolSearch, async (req, res) => {
     try {
       const query = String(req.query.text || "").trim();
       if (!query) return res.status(400).json({ error: "Query parameter 'text' is required" });

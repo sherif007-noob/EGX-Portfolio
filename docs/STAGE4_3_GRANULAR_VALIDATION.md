@@ -181,3 +181,36 @@ The pass also corrected two persistence-boundary defects:
 The repository adapter now binds directly to Supabase storage rather than the legacy Firestore-name compatibility shim.
 
 Next: **4.3.5 — compatibility facade cleanup + regression closure**.
+
+
+## 4.3.5 — Compatibility facade cleanup + regression closure — VALIDATION IN PROGRESS
+
+**Scope**
+
+- move the application-facing `usePortfolioState()` implementation under `src/features/portfolio`;
+- retain `src/hooks/usePortfolioState.ts` only as a legacy import shim;
+- stop exposing raw React setters for financial/portfolio state;
+- replace App's raw `setPositions` access with the explicit market-projection operation `updateMarketPositions`;
+- migrate Stage 4.3 source contracts to the owned feature facade;
+- add a final boundary scan preventing new application imports from the legacy hook path.
+
+**Explicitly out of scope**
+
+- new accounting behavior;
+- remote hydration behavior changes;
+- repository persistence behavior changes;
+- Stage 4.4/4.5 work;
+- Stage 5 Reports redesign.
+
+**Acceptance**
+
+- the owned feature facade is the only implementation of `usePortfolioState()`;
+- the old hook path is a re-export shim only;
+- App imports through `features/portfolio`;
+- no raw setters for positions, transactions, cash, closed cycles, tickers or contributed capital are exposed through the application facade;
+- live market projection updates use a named operation rather than a raw React setter;
+- ledger and repository operations remain explicit;
+- all 4.3.1–4.3.5 ownership guards pass together;
+- TypeScript, full tests, and production build are green.
+
+Passing this gate closes **Stage 4.3**.

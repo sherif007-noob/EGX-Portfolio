@@ -8,11 +8,13 @@ const read = (relative: string) => readFileSync(new URL(`../../${relative}`, imp
 describe('Stage 3.1 reviewed branch convergence contract', () => {
   it('keeps the historical repair functionality reviewed from main', () => {
     const server = read('server.ts');
+    const contracts = read('src/api/contracts.ts');
     const historicalStore = read('src/services/historicalPriceStore.ts');
     const portfolioServer = read('src/services/supabasePortfolioServer.ts');
     const historicalAnalytics = read('src/features/app-shell/useHistoricalPortfolioAnalytics.ts');
 
-    expect(server).toContain('/api/supabase/price-history/ensure');
+    expect(contracts).toContain("supabasePriceHistoryEnsure: '/api/supabase/price-history/ensure'");
+    expect(server).toContain('API_ROUTES.supabasePriceHistoryEnsure');
     expect(historicalStore).toContain('ensureHistoricalPriceCoverage');
     expect(historicalAnalytics).toContain('ensureHistoricalPriceCoverage');
     expect(portfolioServer).toContain('const startDate = ledgerDate ?? hintedDate;');

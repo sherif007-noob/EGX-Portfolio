@@ -765,62 +765,11 @@ body {
  * These are opt-in contracts for component passes so existing desktop modal
  * composition is not silently rewritten by the shared baseline.
  */
-.premium-modal-viewport {
-  min-height: 0;
-  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
-  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  -webkit-overflow-scrolling: touch;
-  scroll-padding-block: 1rem 5rem;
-}
-
-.premium-modal-scroll-body {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scroll-padding-block: 1rem 5rem;
-}
-
-.premium-modal-frame {
-  min-height: 0;
-  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
-  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
-}
-
-.premium-modal-backdrop-panel-scroll {
-  overflow-y: hidden !important;
-}
-
-.premium-modal :is(input, textarea, select, [contenteditable='true']) {
-  scroll-margin-block: 1rem 5rem;
-}
-
-.premium-fixed-overlay {
-  box-sizing: border-box;
-  max-width: min(
-    var(--premium-fixed-overlay-max),
-    calc(100vw - (var(--premium-mobile-gutter) * 2))
-  );
-  overflow-wrap: anywhere;
-}
-
-.premium-mobile-min-w-0 {
-  min-width: 0;
-}
-
-.premium-mobile-full {
-  min-width: 0;
-}
+/* Stage 4.5.5: modal viewport/fixed overlay geometry moved to ./styles/overlays.css. */
 
 /* Stage 4.5.3.2.2.1: modal highlight material moved to ./styles/materials.css. */
 
-.premium-modal > * {
-  position: relative;
-  z-index: 1;
-}
+/* Stage 4.5.5: modal child stacking moved to ./styles/overlays.css. */
 
 .premium-radial {
   position: relative;
@@ -932,17 +881,7 @@ body {
 }
 
 
-/* Phase 6 Pass 0 — shared touch and viewport safety baseline. */
-.premium-modal-backdrop {
-  overscroll-behavior: contain;
-}
-
-@media (min-width: 768px) {
-  .premium-fixed-overlay {
-    max-width: none;
-  }
-}
-
+/* Stage 4.5.5: overlay viewport safety baseline moved to ./styles/overlays.css. */
 
 @media (max-width: 767px), (pointer: coarse) {
   .premium-action,
@@ -1113,110 +1052,9 @@ body {
   }
 }
 
-@media (max-width: 767px) {
-  .premium-modal-backdrop {
-    padding:
-      max(var(--premium-modal-gutter), env(safe-area-inset-top))
-      max(var(--premium-modal-gutter), env(safe-area-inset-right))
-      max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
-      max(var(--premium-modal-gutter), env(safe-area-inset-left));
-  }
+/* Stage 4.5.5: mobile overlay safe-area geometry moved to ./styles/overlays.css. */
 
-  .premium-modal-backdrop-panel-scroll {
-    align-items: flex-start !important;
-    overflow-y: hidden !important;
-  }
-
-  .premium-modal-backdrop-panel-scroll > .premium-modal-viewport {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    touch-action: pan-y;
-  }
-
-  .premium-modal-viewport,
-  .premium-modal-frame {
-    width: 100%;
-    max-height: calc(
-      var(--premium-modal-visual-height, 100dvh)
-      - max(var(--premium-modal-gutter), env(safe-area-inset-top))
-      - max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
-    );
-  }
-
-  .premium-fixed-overlay {
-    max-width: calc(
-      100vw
-      - max(var(--premium-mobile-gutter), env(safe-area-inset-left))
-      - max(var(--premium-mobile-gutter), env(safe-area-inset-right))
-    );
-  }
-
-  .premium-fixed-mobile-span {
-    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
-    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
-    width: auto;
-    max-width: none;
-  }
-
-  .premium-fixed-bottom-safe {
-    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
-  }
-
-  .premium-fixed-bottom-above-status {
-    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
-  }
-
-  .premium-fixed-top-after-header {
-    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
-  }
-}
-
-
-/* Keep open glass dropdowns above following cards and tables. */
-.premium-glass:has([aria-expanded="true"]),
-.premium-panel:has([aria-expanded="true"]),
-.premium-surface:has([aria-expanded="true"]) {
-  z-index: 60;
-}
-
-
-/* Canonical app dropdown surface — Data & Tools visual reference.
- * Tuned ~12% more transparent than the first Phase 9.4 Data & Tools menu,
- * then standardized across every custom dropdown/menu in the application.
- */
-/* Stage 4.5.3.2.2.1: dropdown material moved to ./styles/materials.css. */
-
-/* Stage 4.5.3.2.2.1: dropdown highlight material moved to ./styles/materials.css. */
-
-.premium-dropdown > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Portaled dropdown geometry is authoritative. Legacy min-width/max-width rules
- * must never expand a body-level menu beyond the clamped inline viewport box.
- */
-.premium-dropdown[data-premium-dropdown-portal='true'],
-.premium-select-dropdown[data-premium-dropdown-portal='true'] {
-  min-width: 0 !important;
-  max-width: none !important;
-  box-sizing: border-box;
-  margin: 0 !important;
-}
-
-/* Stage 4.5.3.2.2.1: dropdown mobile material moved to ./styles/materials.css. */
-@media (max-width: 767px) {
-  .premium-dropdown {
-    max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));
-    max-height: min(70dvh, 24rem);
-    overscroll-behavior: contain;
-  }
-
-  .premium-mobile-full {
-    width: 100%;
-  }
-}
-
+/* Stage 4.5.5: dropdown stacking and portal geometry moved to ./styles/overlays.css. */
 
 /* Phase 5 canonical semantic halo system — presentation moved to ./styles/semantics.css in Stage 4.5.4. */
 /* Interaction-only semantic transitions remain here until Stage 4.5.5. */
@@ -2653,13 +2491,7 @@ body {
   cursor: pointer;
 }
 
-/* Analytics dropdowns must float above report/month cards rather than below them. */
-.premium-report-glass:has([aria-expanded="true"]),
-.premium-report-glass-soft:has([aria-expanded="true"]),
-.premium-card:has([aria-expanded="true"]) {
-  z-index: 140;
-  overflow: visible;
-}
+/* Stage 4.5.5: analytics dropdown stacking moved to ./styles/overlays.css. */
 
 /* Hero-level report metrics use the same hierarchy as the dashboard hero cards. */
 .premium-hero-metric,

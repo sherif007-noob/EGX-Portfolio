@@ -12,6 +12,7 @@ export function useAppOverlayState() {
   const [isPriceAlertsModalOpen, setIsPriceAlertsModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
   const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [bonusSharesPosition, setBonusSharesPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
 
   const openAddTrade = useCallback((ticker: EGXTicker | null = null) => {
@@ -45,6 +46,8 @@ export function useAppOverlayState() {
     setSellingPosition,
     editingPosition,
     setEditingPosition,
+    bonusSharesPosition,
+    setBonusSharesPosition,
     selectedTickerForTrade,
     setSelectedTickerForTrade,
     openAddTrade,

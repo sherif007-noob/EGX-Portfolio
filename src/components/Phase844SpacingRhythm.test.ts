@@ -7,7 +7,7 @@ const readRelative = (relative: string) =>
 
 describe('Phase 8.4.4 canonical spacing rhythm', () => {
   it('defines a material-neutral spacing ladder and hierarchy padding helpers', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/hierarchy.css');
     const start = css.indexOf('Pass 8.4.4 — canonical spacing rhythm');
     const end = css.indexOf('/* Action importance only');
     expect(start).toBeGreaterThanOrEqual(0);
@@ -55,7 +55,7 @@ describe('Phase 8.4.4 canonical spacing rhythm', () => {
   });
 
   it('keeps accepted material, aura and semantic-edge recipes untouched', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
     expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');

@@ -900,7 +900,7 @@ Header-specific responsive rules remain together in `egx-features`. Because impo
 Measured on the candidate after the drain:
 
 - legacy entry: **3 lines / 53 bytes / 0 declarations**;
-- `!important`: **158 total**, exactly the 4.5.1 baseline — no new importance debt;
+- `!important`: **156 actual declaration occurrences** at final closure versus 158 at the 4.5.1 baseline. The two-declaration reduction is intentional: accepted 4.5.4 combined duplicate semantic-hover border/box-shadow declaration blocks into one selector family without changing values or rendered behavior. No new importance debt is introduced;
 - `@keyframes`: **23 total**, exactly the 4.5.1 baseline;
 - `@media`: **66 total** versus 62 at baseline because four mixed-owner media blocks were split across canonical owners; declaration behavior is unchanged.
 

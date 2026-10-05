@@ -10,6 +10,7 @@ on:
       - 'src/**'
       - 'scripts/renderedRegression.mjs'
       - 'visual-regression/baseline/**'
+      - 'visual-regression/accepted-changes.json'
       - 'worker.ts'
       - 'wrangler.jsonc'
       - 'vite.config.ts'

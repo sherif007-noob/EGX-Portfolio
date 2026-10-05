@@ -1,0 +1,6 @@
+{
+  "reports-desktop": {
+    "sha256": "5c68463c497f1f38130907b39d916303c8113ca0cbf9c1203c2242c160c45fc5",
+    "reason": "Stage 5 R1 intentionally adds the inspected Reports workspace mode rail; every other tracked state remains on the existing golden baseline."
+  }
+}

@@ -153,7 +153,6 @@ describe('Phase 10.3 dropdowns, menus, popovers and overlays', () => {
   });
 
   it('keeps the canonical glass material and portaled geometry authoritative', () => {
-    const legacy = readRelative('../index.css');
     const materials = readRelative('../styles/materials.css');
     const overlays = readRelative('../styles/overlays.css');
 

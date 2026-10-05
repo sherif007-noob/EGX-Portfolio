@@ -11,13 +11,14 @@ describe('Phase 9.6 mobile command architecture', () => {
 
     expect(header).toContain('aria-label="Quick utilities"');
     expect(header).toContain('aria-label="Data and settings"');
-    expect(header).toContain('aria-label="Create trade"');
+    expect(header).toContain('aria-label="Create portfolio activity"');
 
     expect(header).toContain('id="header-price-alerts-btn"');
     expect(header).toContain('id="header-live-sync-btn"');
     expect(header).toContain('id="header-data-tools-btn"');
     expect(header).toContain('id="header-settings-btn"');
     expect(header).toContain('id="header-scan-btn"');
+    expect(header).toContain('id="header-bonus-shares-btn"');
     expect(header).toContain('id="header-add-trade-btn"');
   });
 

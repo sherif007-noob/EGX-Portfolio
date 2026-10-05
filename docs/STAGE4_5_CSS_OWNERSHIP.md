@@ -155,7 +155,7 @@ The legacy stylesheet intentionally retains only the two responsive `:root` over
 - `@media (max-width: 767px)`;
 - `@media (max-width: 390px)`.
 
-Those two blocks contain **23** responsive hierarchy override declarations and remain unlayered until the responsive ownership pass so breakpoint behavior is unchanged.
+Those two blocks contain **20** responsive hierarchy override declarations and remain unlayered until the responsive ownership pass so breakpoint behavior is unchanged.
 
 ### Explicitly out of scope
 

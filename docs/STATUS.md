@@ -101,7 +101,7 @@ Stage 4 accepted:
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.3.2.2.2.5 cascade-safe hierarchy shell is accepted / CI + rendered green at `main@03e49ed2`; current execution point is 4.5.3 materials + cascade-safety closure.**
+- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.4 semantics + hierarchy is accepted at `main@f3266418`: PR source Quality Checks passed, Phase 10 Visual Closure #37368157990 passed, and Rendered Visual Regression #37368273304 passed. Current execution point is 4.5.5 interaction surfaces.**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -111,12 +111,11 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. Validate **4.5.4 — semantics + hierarchy**. The candidate folds the remaining 4.5.3 material/cascade closure into one cross-owner contract: tone → semantic → neutral fallback precedence is preserved structurally rather than with patches.
-2. After rendered acceptance, start **4.5.5 — interaction surfaces**.
-3. **4.5.5 — interaction surfaces**.
-4. **4.5.6 — responsive + feature/legacy closure**, then close Stage 4.
-5. Stage 5 Reports workspace redesign.
-6. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready.
+1. Validate and merge **4.5.5 — interaction surfaces**: shared controls, overlay geometry and CSS-owned motion.
+2. **4.5.6 — responsive + feature/legacy closure**, including final legacy drain and duplicate/`!important` audit.
+3. Close Stage 4 only after full Quality Checks, Phase 10 Visual Closure and rendered regression are green.
+4. Stage 5 Reports workspace redesign.
+5. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready.
 
 ---
 

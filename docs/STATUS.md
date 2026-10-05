@@ -111,8 +111,8 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. Finish **4.5.3 — materials + cascade-safety closure** by migrating the remaining non-important card/hierarchy interaction material as one ordered cascade family.
-2. **4.5.4 — semantics + hierarchy**, including the competing important-background contract.
+1. Validate **4.5.4 — semantics + hierarchy**. The candidate folds the remaining 4.5.3 material/cascade closure into one cross-owner contract: tone → semantic → neutral fallback precedence is preserved structurally rather than with patches.
+2. After rendered acceptance, start **4.5.5 — interaction surfaces**.
 3. **4.5.5 — interaction surfaces**.
 4. **4.5.6 — responsive + feature/legacy closure**, then close Stage 4.
 5. Stage 5 Reports workspace redesign.

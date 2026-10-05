@@ -21,8 +21,9 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(legacy).not.toContain('.premium-table-shell thead {');
     expect(legacy).not.toContain('.premium-table-shell tbody tr:hover {');
 
-    // Motion ownership is not pulled forward with the material.
-    expect(legacy).toContain('.premium-table-shell tbody tr {\n  transition:');
+    // Material stays material-owned while transition choreography advances to motion.
+    const motion = read('src/styles/motion.css');
+    expect(motion).toContain('.premium-table-shell tbody tr {\n  transition:');
   });
 
   it('moves Reports glass/table material and its mobile material overrides', () => {
@@ -64,9 +65,10 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     const semantics = read('src/styles/semantics.css');
     const bridge = read('src/styles/cascade-bridge.css');
 
+    const controls = read('src/styles/controls.css');
     expect(legacy).toContain('Phase 8 material restoration — Monthly Report quality reference');
-    expect(legacy).toContain('.premium-action {');
-    expect(legacy).toContain('.premium-field {');
+    expect(controls).toContain('.premium-action {');
+    expect(controls).toContain('.premium-field {');
 
     expect(materials).toContain('.premium-report-summary-band {');
     expect(materials).toContain('.premium-overview-market-strip.premium-material-tone-cyan {');
@@ -81,14 +83,18 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('keeps only the later interaction/responsive/feature owners empty', () => {
-    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
-    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
-
+  it('keeps interaction owners populated while responsive/feature closure remains deferred', () => {
     for (const path of [
+      'src/styles/semantics.css',
+      'src/styles/hierarchy.css',
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',
+    ]) {
+      expect(stripComments(read(path))).not.toBe('');
+    }
+
+    for (const path of [
       'src/styles/responsive.css',
       'src/styles/features/index.css',
     ]) {

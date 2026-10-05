@@ -67,7 +67,7 @@ describe('Phase 10.8 modal and workflow consistency', () => {
   });
 
   it('keeps framed modal bodies independently scrollable', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/overlays.css');
     const sheets = readRelative('./GoogleSheetsModal.tsx');
     const alerts = readRelative('./PriceAlertsModal.tsx');
     const screenshot = readRelative('./TradeScreenshotModal.tsx');

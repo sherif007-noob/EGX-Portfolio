@@ -101,7 +101,7 @@ Stage 4 accepted:
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — 4.5.3.2.2.2.4 FAILED RENDERED; recovery 4.5.3.2.2.2.4.R merged at `main@e5f12297` with post-merge rendered validation pending; 4.5.3.2.2.2.5 cascade-safe hierarchy shell is the next source candidate**
+- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.3.2.2.2.5 cascade-safe hierarchy shell is accepted / CI + rendered green at `main@03e49ed2`; current execution point is 4.5.3 materials + cascade-safety closure.**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -111,11 +111,12 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. Confirm **4.5.3.2.2.2.4.R** restored the accepted `54530841` rendered profile on `main@e5f12297`
-2. Validate **4.5.3.2.2.2.5 — cascade-safe hierarchy shell** without moving the important background or interaction-sensitive border/shadow
-3. Continue Stage 4.5 in small visual-preserving sub-passes
-4. Stage 5 Reports workspace redesign
-5. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
+1. Finish **4.5.3 — materials + cascade-safety closure** by migrating the remaining non-important card/hierarchy interaction material as one ordered cascade family.
+2. **4.5.4 — semantics + hierarchy**, including the competing important-background contract.
+3. **4.5.5 — interaction surfaces**.
+4. **4.5.6 — responsive + feature/legacy closure**, then close Stage 4.
+5. Stage 5 Reports workspace redesign.
+6. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready.
 
 ---
 

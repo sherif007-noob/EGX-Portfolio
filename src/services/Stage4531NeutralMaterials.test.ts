@@ -51,17 +51,15 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(legacy).toContain('Stage 4.5.3.1: refraction primary primitive moved to ./styles/materials.css.');
   });
 
-  it('keeps Phase 8 restoration in legacy until the final material gate', () => {
+  it('keeps the cascade-sensitive Phase 8 card restoration in legacy', () => {
     const legacy = read('src/index.css');
 
-    for (const marker of [
-      'Phase 8 material restoration — Monthly Report quality reference',
-      '.premium-card.premium-hierarchy-h1',
-      '.premium-report-summary-band {',
-      '.premium-overview-market-strip.premium-material-tone-cyan {',
-    ]) {
-      expect(legacy).toContain(marker);
-    }
+    expect(legacy).toContain('Phase 8 material restoration — Monthly Report quality reference');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1,');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1::before');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1:hover');
+    expect(legacy).toContain('@media (max-width: 767px) {');
   });
 
   it('does not move semantic, hierarchy, control, overlay, motion, or responsive ownership early', () => {

@@ -37,6 +37,13 @@ export function getActivePositionLedgerTransactionIds(
       continue;
     }
 
+    if (transaction.type === 'BONUS_SHARES') {
+      if (runningShares <= EPSILON) continue;
+      runningShares += transaction.shares;
+      activeCycleIds.push(transaction.id);
+      continue;
+    }
+
     if (transaction.type === 'SELL') {
       if (runningShares <= EPSILON) continue;
       activeCycleIds.push(transaction.id);

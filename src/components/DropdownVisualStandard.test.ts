@@ -17,17 +17,19 @@ const collectTsx = (dir: string): string[] =>
 
 describe('canonical dropdown visual standard', () => {
   it('uses the Data & Tools reference recipe at the requested higher transparency', () => {
-    const css = readRelative('../index.css');
-    const start = css.indexOf('Canonical app dropdown surface — Data & Tools visual reference');
-    const end = css.indexOf('Phase 5 canonical semantic halo system', start);
+    const css = readRelative('../styles/materials.css');
+    const start = css.indexOf('/* dropdown material */');
+    const end = css.indexOf('/* dropdown mobile material */', start);
     const block = css.slice(start, end);
 
     expect(start).toBeGreaterThanOrEqual(0);
     expect(end).toBeGreaterThan(start);
     expect(block).toContain('rgba(8, 15, 31, 0.60)');
-    expect(block).toContain('rgba(8, 15, 31, 0.56)');
     expect(block).toContain('backdrop-filter: blur(34px) saturate(175%) brightness(1.06)');
-    expect(block).toContain('backdrop-filter: blur(26px) saturate(165%) brightness(1.05)');
+
+    const mobile = css.slice(end);
+    expect(mobile).toContain('rgba(8, 15, 31, 0.56)');
+    expect(mobile).toContain('backdrop-filter: blur(26px) saturate(165%) brightness(1.05)');
   });
 
   it('keeps every current custom dropdown owner on premium-dropdown', () => {

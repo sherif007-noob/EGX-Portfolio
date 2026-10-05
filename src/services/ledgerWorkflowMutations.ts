@@ -9,6 +9,7 @@ import type {
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact } from './portfolioAccounting';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
+import { currentCairoDateKey, expectedBonusShares } from './corporateActions';
 import {
   deriveCapitalDepositsAfterLedgerChange,
   prepareCashLedgerChange,
@@ -265,5 +266,84 @@ export function prepareLedgerSnapshotRestoreMutation(
     tickers: current.tickers,
     positionSeed: restore.positions ?? current.positions,
     value: restore.transactions.length,
+  };
+}
+
+
+export interface BonusSharesCorporateActionInput {
+  transactionId: string;
+  ticker: string;
+  bonusShares: number;
+  officialRatio: number;
+  effectiveDate: string;
+  reference?: string;
+  notes?: string;
+}
+
+export function prepareBonusSharesMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: BonusSharesCorporateActionInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const ticker = String(input.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  if (!ticker) throw new Error('Bonus-share action requires a ticker.');
+
+  const effectiveDate = String(input.effectiveDate || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || !Number.isFinite(Date.parse(effectiveDate))) {
+    throw new Error('Bonus-share action requires a valid effective date.');
+  }
+  if (effectiveDate > currentCairoDateKey()) {
+    throw new Error('Bonus shares cannot be applied before their effective/credit date.');
+  }
+
+  const report = reconcilePortfolioFromLedger(
+    current.transactions,
+    current.tickers,
+    current.capitalDeposits,
+    current.positions,
+  );
+  const position = report.reconciledPositions.find(
+    (item) => item.ticker.trim().toUpperCase() === ticker,
+  );
+  if (!position) throw new Error(`No open ${ticker} position exists for this corporate action.`);
+
+  const bonusShares = Number(input.bonusShares);
+  if (!Number.isFinite(bonusShares) || bonusShares <= 0) {
+    throw new Error('Actual bonus shares received must be greater than zero.');
+  }
+
+  const officialRatio = Number(input.officialRatio);
+  if (!Number.isFinite(officialRatio) || officialRatio < 0) {
+    throw new Error('Official bonus-share ratio must be a finite non-negative number.');
+  }
+
+  const theoretical = expectedBonusShares(position.shares, officialRatio);
+  const action: TradeTransaction = {
+    id: input.transactionId,
+    type: 'CORPORATE_ACTION',
+    ticker,
+    companyName: position.companyName,
+    sector: position.sector,
+    shares: bonusShares,
+    price: 0,
+    date: effectiveDate,
+    fees: 0,
+    totalAmount: 0,
+    netCashImpact: 0,
+    corporateActionType: 'BONUS_SHARES',
+    corporateActionRatio: officialRatio,
+    corporateActionSourceShares: position.shares,
+    corporateActionReference: input.reference?.trim() || undefined,
+    positionId: position.id,
+    notes: [
+      input.notes?.trim(),
+      `Bonus shares: ${bonusShares}; official ratio: ${officialRatio} per share; theoretical entitlement: ${theoretical.toFixed(8)}.`,
+    ].filter(Boolean).join(' '),
+  };
+
+  return {
+    transactions: [...current.transactions, action],
+    capitalDeposits: current.capitalDeposits,
+    positionSeed: current.positions,
+    value: action,
   };
 }

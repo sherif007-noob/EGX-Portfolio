@@ -18,6 +18,7 @@ import {
   Search,
   Filter,
   Layers,
+  Gift,
   Plus,
 } from 'lucide-react';
 
@@ -54,6 +55,7 @@ interface PositionsTableProps {
   onCorrectLedger: (position: Position) => void;
   onAddNewTrade: () => void;
   onBuyMore: (position: Position) => void;
+  onBonusShares: (position: Position) => void;
   onOpenPriceAlerts?: () => void;
   variant?: 'full' | 'overview';
   overviewLimit?: number;
@@ -66,6 +68,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
   onCorrectLedger,
   onAddNewTrade,
   onBuyMore,
+  onBonusShares,
   onOpenPriceAlerts,
   variant = 'full',
   overviewLimit = 4,
@@ -368,6 +371,15 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         Buy More
                       </button>
 
+                      <button
+                        onClick={() => onBonusShares(pos)}
+                        title="Record bonus/free shares corporate action"
+                        className="premium-action premium-action-success px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1"
+                      >
+                        <Gift className="w-3 h-3" />
+                        Bonus
+                      </button>
+
                       {/* Sell Button */}
                       <button
                         onClick={() => onSellPosition(pos)}
@@ -551,6 +563,15 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     <Layers className="w-3.5 h-3.5 shrink-0 text-blue-400" />
                     <span className="sm:hidden">DCA</span>
                     <span className="hidden sm:inline">Buy More (DCA)</span>
+                  </button>
+
+                  <button
+                    onClick={() => onBonusShares(pos)}
+                    className="premium-action premium-action-success min-w-0 w-full justify-center px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
+                    title="Record bonus/free shares corporate action"
+                  >
+                    <Gift className="w-3.5 h-3.5" />
+                    Bonus Shares
                   </button>
                   <button
                     onClick={() => onSellPosition(pos)}

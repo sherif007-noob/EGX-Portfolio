@@ -37,12 +37,12 @@ describe('Stage 4.5.2 canonical token extraction', () => {
 
   it('leaves only responsive hierarchy root overrides in the legacy stylesheet', () => {
     const legacy = read('src/index.css');
-    const rootBlocks = [...legacy.matchAll(/:root\s*\{([\s\S]*?)\n\}/g)];
+    const rootBlocks = [...legacy.matchAll(/:root\s*\{([^{}]*)\}/g)];
 
     expect(rootBlocks).toHaveLength(2);
 
     const remainingDeclarations = rootBlocks.flatMap((match) => declarationNames(match[0]));
-    expect(remainingDeclarations).toHaveLength(23);
+    expect(remainingDeclarations).toHaveLength(20);
     expect(remainingDeclarations.every((name) => name.startsWith('--hierarchy-'))).toBe(true);
 
     expect(legacy).toContain('@media (max-width: 767px)');

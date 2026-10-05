@@ -90,7 +90,9 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
       continue;
     }
 
-    if (tx.type === 'BUY') {
+    if (tx.type === 'BONUS_SHARES') {
+      startShares.set(ticker, Math.max(0, (startShares.get(ticker) || 0) - tx.shares));
+    } else if (tx.type === 'BUY') {
       startCash += Number(tx.totalAmount || tx.shares * tx.price + (tx.fees || 0));
       startShares.set(ticker, (startShares.get(ticker) || 0) - tx.shares);
     } else if (tx.type === 'SELL') {

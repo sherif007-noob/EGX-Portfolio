@@ -490,7 +490,7 @@ The frozen visual profile returned to the accepted baseline: Positions desktop *
 Recovery is closed. The retry continues through a smaller non-card material slice.
 
 
-## 4.5.3.2.2.2.1 — Safe non-conflicting Phase 8 material ownership — VALIDATION IN PROGRESS
+## 4.5.3.2.2.2.1 — Safe non-conflicting Phase 8 material ownership — ACCEPTED / CI + RENDERED GREEN
 
 This retry intentionally excludes the hierarchy-card material bundle that failed rendered validation in PR #66.
 
@@ -524,4 +524,27 @@ Move only Phase 8 material families that do not depend on the late card/semantic
 - TypeScript, full tests and production build are green;
 - rendered visual regression stays below the frozen 1% threshold for every state.
 
-Next after acceptance: define the smallest safe hierarchy-card retry chunk from rendered evidence; do not reattempt the wholesale PR #66 move.
+### 4.5.3.2.2.2.1 acceptance record
+
+Accepted through PR #68 at `main@dcb0df5f`.
+
+PR Quality Checks #37336618605 passed:
+
+- TypeScript;
+- **119 / 119 test files, 654 / 654 tests**;
+- production build.
+
+Main-push validation passed:
+
+- Quality Checks #37336829763;
+- Phase 10 Visual Closure #37336829761;
+- Cloudflare Worker dry-run;
+- Rendered Visual Regression #37336829803;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs preserved the recovered baseline profile: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.042%**, and every remaining state **0.000%**.
+
+The safe retry proves the non-card Phase 8 material families can live in `egx-materials` without disturbing the frozen cascade.
+
+Next: **4.5.3.2.2.2.2 — Overview hero neutral refraction role**. This is intentionally a one-rule gate before any hierarchy-card body moves.

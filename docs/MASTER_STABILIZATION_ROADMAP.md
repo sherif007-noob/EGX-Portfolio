@@ -1341,7 +1341,8 @@ Rendered screenshot baselines protect the refactor.
 Granular acceptance sequence:
 
 - **4.5.1 — inventory + ownership/layer entry contract — ACCEPTED / CI + RENDERED GREEN** via PR #61 at `main@a8cb0956`; Quality Checks #37274673986 passed TypeScript, **114 / 114 test files, 628 / 628 tests**, and production build. Rendered Visual Regression #37275238651 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
-- **4.5.2 — token extraction — NEXT**
+- **4.5.2 — token extraction — ACCEPTED / CI + RENDERED GREEN** via PR #62 at `main@9e18daa8`; Quality Checks #37282283539 passed TypeScript, **115 / 115 test files, 633 / 633 tests**, and production build. Phase 10 Visual Closure #37282467066 and Rendered Visual Regression #37282467090 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
+- **4.5.3 — neutral material extraction — NEXT**
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

@@ -48,17 +48,17 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(legacy).not.toContain('/* Reports & Performance glass hierarchy */\n.premium-report-glass {');
   });
 
-  it('splits only report-soft material from the later shared soft-surface override', () => {
+  it('keeps report-soft and the shared soft composite material under the material owner', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
     expect(materials).toContain('/* reports soft-glass stronger override */');
     expect(materials).toContain('.premium-report-glass-soft {\n  background:');
-    expect(legacy).toContain('.premium-subpanel,\n.premium-inset-glass,\n.premium-form-section,\n.premium-modal-section {');
+    expect(materials).toContain('.premium-subpanel,\n.premium-inset-glass,\n.premium-form-section,\n.premium-modal-section {');
     expect(legacy).not.toContain('.premium-report-glass-soft,\n.premium-subpanel,');
   });
 
-  it('keeps Phase 8 restoration and overlay/control material out of this chunk', () => {
+  it('keeps Phase 8 restoration and controls out of the material owner', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
 
@@ -66,16 +66,14 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
       'Phase 8 material restoration — Monthly Report quality reference',
       '.premium-card.premium-hierarchy-h1',
       '.premium-report-summary-band {',
-      '.premium-dropdown {',
-      '.premium-modal {',
       '.premium-action {',
       '.premium-field {',
     ]) {
       expect(legacy).toContain(marker);
     }
 
-    expect(materials).not.toContain('.premium-dropdown {');
-    expect(materials).not.toContain('.premium-modal {');
+    expect(materials).toContain('.premium-dropdown {');
+    expect(materials).toContain('.premium-modal {');
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('.premium-field {');
     expect(materials).not.toContain('.premium-glow-win');

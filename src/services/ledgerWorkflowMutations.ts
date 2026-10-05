@@ -295,8 +295,14 @@ export function prepareBonusSharesMutation(
     throw new Error('Bonus shares cannot be applied before their effective/credit date.');
   }
 
+  // Entitlement is anchored to the ledger immediately before the action's
+  // effective/ex-date, not to today's final position. This keeps historical
+  // actions deterministic even when later BUY/SELL executions exist.
+  const preActionTransactions = current.transactions.filter(
+    (transaction) => String(transaction.date || '').slice(0, 10) < effectiveDate,
+  );
   const report = reconcilePortfolioFromLedger(
-    current.transactions,
+    preActionTransactions,
     current.tickers,
     current.capitalDeposits,
     current.positions,
@@ -304,7 +310,9 @@ export function prepareBonusSharesMutation(
   const position = report.reconciledPositions.find(
     (item) => item.ticker.trim().toUpperCase() === ticker,
   );
-  if (!position) throw new Error(`No open ${ticker} position exists for this corporate action.`);
+  if (!position) {
+    throw new Error(`No eligible open ${ticker} position exists before ${effectiveDate}.`);
+  }
 
   const bonusShares = Number(input.bonusShares);
   if (!Number.isFinite(bonusShares) || bonusShares <= 0) {

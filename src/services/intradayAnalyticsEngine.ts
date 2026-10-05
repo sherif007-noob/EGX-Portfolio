@@ -55,6 +55,8 @@ function transactionCashImpact(tx: TradeTransaction): number {
     return tx.type === 'BUY' ? amount : -amount;
   }
 
+  if (tx.type === 'BONUS_SHARES') return 0;
+
   const shares = Number(tx.shares);
   const price = Number(tx.price);
   const fees = Number.isFinite(tx.fees) ? Number(tx.fees) : 0;
@@ -94,9 +96,15 @@ function applyTransaction(
 
   const shares = Number(tx.shares);
   const price = Number(tx.price);
-  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return;
+  if (!Number.isFinite(shares) || shares <= 0) return;
 
   state.cash += cashImpact;
+  if (tx.type === 'BONUS_SHARES') {
+    state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
+    return;
+  }
+  if (!Number.isFinite(price) || price <= 0) return;
+
   if (tx.type === 'BUY') {
     state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
   } else {

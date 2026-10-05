@@ -3,7 +3,19 @@ import type { Request, Response } from 'express';
 import {
   classifyAuthErrorStatus,
   createApiErrorResponse,
+  createSheetsAppendResponse,
+  createSheetsBatchUpdateResponse,
+  createSheetsDriveFilesResponse,
+  createSheetsMetadataResponse,
+  createSheetsServiceAccountStatusResponse,
+  createSheetsValuesResponse,
+  createSheetsWriteValuesResponse,
   isAuthHttpStatus,
+  parseSheetsAppendRequest,
+  parseSheetsBatchUpdateRequest,
+  parseSheetsMetadataQuery,
+  parseSheetsValuesQuery,
+  parseSheetsValuesWriteRequest,
   type ApiAuthSource,
 } from '../api/contracts';
 
@@ -143,22 +155,25 @@ function sendGoogleHandlerError(
 
 export function handleGetServiceAccountStatus(_req: Request, res: Response) {
   const email = getServiceAccountEmail();
-  res.json({
-    configured: Boolean(email),
-    serviceAccountEmail: email || null,
-    instruction: email
+  return res.json(createSheetsServiceAccountStatusResponse(
+    Boolean(email),
+    email || null,
+    email
       ? `Share your Google Sheet with '${email}' and give it 'Editor' access.`
       : 'Configure GOOGLE_SERVICE_ACCOUNT_KEY in settings for 24/7 sync without hourly token expiry.',
-  });
+  ));
 }
 
 export async function handleGetSpreadsheetMetadata(req: Request, res: Response) {
   try {
-    const spreadsheetId = String(req.query.spreadsheetId || '').trim();
-    if (!spreadsheetId) {
-      return sendApiError(res, 400, 'Missing required query parameter "spreadsheetId"');
+    let query;
+    try {
+      query = parseSheetsMetadataQuery({ spreadsheetId: req.query.spreadsheetId });
+    } catch (error) {
+      return sendApiError(res, 400, error);
     }
 
+    const { spreadsheetId } = query;
     const { token, source } = await getServerSheetsAccessToken(req);
     const googleRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
       headers: {
@@ -178,17 +193,7 @@ export async function handleGetSpreadsheetMetadata(req: Request, res: Response) 
     }
 
     const data = await googleRes.json();
-    const sheets = (data.sheets || []).map((s: any) => s.properties?.title || '').filter(Boolean);
-    const sheetsInfo = (data.sheets || []).map((s: any) => ({
-      title: s.properties?.title || '',
-      sheetId: s.properties?.sheetId ?? 0,
-    })).filter((s: any) => Boolean(s.title));
-    res.json({
-      title: data.properties?.title || '',
-      sheets,
-      sheetsInfo,
-      authSource: source,
-    });
+    return res.json(createSheetsMetadataResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] Get metadata error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to fetch spreadsheet metadata');
@@ -197,12 +202,17 @@ export async function handleGetSpreadsheetMetadata(req: Request, res: Response) 
 
 export async function handleGetSheetValues(req: Request, res: Response) {
   try {
-    const spreadsheetId = String(req.query.spreadsheetId || '').trim();
-    const range = String(req.query.range || '').trim();
-    if (!spreadsheetId || !range) {
-      return sendApiError(res, 400, 'Missing "spreadsheetId" or "range"');
+    let query;
+    try {
+      query = parseSheetsValuesQuery({
+        spreadsheetId: req.query.spreadsheetId,
+        range: req.query.range,
+      });
+    } catch (error) {
+      return sendApiError(res, 400, error);
     }
 
+    const { spreadsheetId, range } = query;
     const { token, source } = await getServerSheetsAccessToken(req);
     const encodedRange = encodeURIComponent(range);
     const googleRes = await fetch(
@@ -226,11 +236,7 @@ export async function handleGetSheetValues(req: Request, res: Response) {
     }
 
     const data = await googleRes.json();
-    res.json({
-      values: data.values || [],
-      range: data.range,
-      authSource: source,
-    });
+    return res.json(createSheetsValuesResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] Get values error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to get sheet values');
@@ -239,11 +245,14 @@ export async function handleGetSheetValues(req: Request, res: Response) {
 
 export async function handlePutSheetValues(req: Request, res: Response) {
   try {
-    const { spreadsheetId, range, values, valueInputOption = 'USER_ENTERED' } = req.body;
-    if (!spreadsheetId || !range || !Array.isArray(values)) {
-      return sendApiError(res, 400, 'Missing spreadsheetId, range, or values array');
+    let input;
+    try {
+      input = parseSheetsValuesWriteRequest(req.body);
+    } catch (error) {
+      return sendApiError(res, 400, error);
     }
 
+    const { spreadsheetId, range, values, valueInputOption } = input;
     const { token, source } = await getServerSheetsAccessToken(req);
     const encodedRange = encodeURIComponent(range);
     const googleRes = await fetch(
@@ -270,7 +279,7 @@ export async function handlePutSheetValues(req: Request, res: Response) {
     }
 
     const data = await googleRes.json();
-    res.json({ success: true, updatedCells: data.updatedCells, authSource: source });
+    return res.json(createSheetsWriteValuesResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] Put values error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to update sheet values');
@@ -279,11 +288,14 @@ export async function handlePutSheetValues(req: Request, res: Response) {
 
 export async function handleAppendSheetValues(req: Request, res: Response) {
   try {
-    const { spreadsheetId, range, values, valueInputOption = 'USER_ENTERED', insertDataOption = 'INSERT_ROWS' } = req.body;
-    if (!spreadsheetId || !range || !Array.isArray(values)) {
-      return sendApiError(res, 400, 'Missing spreadsheetId, range, or values');
+    let input;
+    try {
+      input = parseSheetsAppendRequest(req.body);
+    } catch (error) {
+      return sendApiError(res, 400, error);
     }
 
+    const { spreadsheetId, range, values, valueInputOption, insertDataOption } = input;
     const { token, source } = await getServerSheetsAccessToken(req);
     const encodedRange = encodeURIComponent(range);
     const googleRes = await fetch(
@@ -310,7 +322,7 @@ export async function handleAppendSheetValues(req: Request, res: Response) {
     }
 
     const data = await googleRes.json();
-    res.json({ success: true, updates: data.updates, authSource: source });
+    return res.json(createSheetsAppendResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] Append values error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to append sheet values');
@@ -319,11 +331,14 @@ export async function handleAppendSheetValues(req: Request, res: Response) {
 
 export async function handleBatchUpdate(req: Request, res: Response) {
   try {
-    const { spreadsheetId, requests } = req.body;
-    if (!spreadsheetId || !Array.isArray(requests)) {
-      return sendApiError(res, 400, 'Missing spreadsheetId or requests array');
+    let input;
+    try {
+      input = parseSheetsBatchUpdateRequest(req.body);
+    } catch (error) {
+      return sendApiError(res, 400, error);
     }
 
+    const { spreadsheetId, requests } = input;
     const { token, source } = await getServerSheetsAccessToken(req);
     const googleRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       method: 'POST',
@@ -346,7 +361,7 @@ export async function handleBatchUpdate(req: Request, res: Response) {
     }
 
     const data = await googleRes.json();
-    res.json({ success: true, replies: data.replies, authSource: source });
+    return res.json(createSheetsBatchUpdateResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] Batch update error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to execute batch update');
@@ -377,7 +392,7 @@ export async function handleListDriveSpreadsheets(req: Request, res: Response) {
     }
 
     const data = await googleRes.json();
-    res.json({ files: data.files || [], authSource: source });
+    return res.json(createSheetsDriveFilesResponse(data, source));
   } catch (err: any) {
     console.error('[Google Sheets Server] List drive spreadsheets error:', err);
     return sendGoogleHandlerError(res, err, 'Failed to list drive spreadsheets');

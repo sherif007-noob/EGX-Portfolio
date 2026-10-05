@@ -1,6 +1,7 @@
 import { ClosedTrade, Position, TradeTransaction } from '../types';
 import { ACCOUNTING_EPSILON, calculatePortfolioValue, calculatePositionUnrealizedPnl } from './portfolioAccounting';
 import { cashFlowPerformancePnl, cashFlowReturnNeutralPortfolioFlow, cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from './cashFlowSemantics';
+import { isBonusSharesTransaction } from './corporateActions';
 
 export interface EquityBridge {
   netCapitalContributed: number;
@@ -154,6 +155,8 @@ export function sortPerformanceTransactions(transactions: TradeTransaction[]): T
     const tradeA = Number(a.tradeId);
     const tradeB = Number(b.tradeId);
     if (Number.isFinite(tradeA) && Number.isFinite(tradeB) && tradeA !== tradeB) return tradeA - tradeB;
+    if (a.type === 'CORPORATE_ACTION' && b.type !== 'CORPORATE_ACTION') return -1;
+    if (b.type === 'CORPORATE_ACTION' && a.type !== 'CORPORATE_ACTION') return 1;
     if (a.type === 'BUY' && b.type === 'SELL') return -1;
     if (a.type === 'SELL' && b.type === 'BUY') return 1;
     return a.id.localeCompare(b.id);
@@ -197,6 +200,11 @@ export function buildHistoricalEquityCurve(
         }
         continue;
       }
+      if (isBonusSharesTransaction(tx)) {
+        holdings[ticker] = (holdings[ticker] || 0) + tx.shares;
+        continue;
+      }
+
       const gross = Number.isFinite(tx.grossTradeValue) ? Number(tx.grossTradeValue) : tx.shares * tx.price;
       const fees = Number.isFinite(tx.fees) ? tx.fees : 0;
       if (tx.type === 'BUY') {

@@ -44,6 +44,28 @@ describe('Stage 4.5.6 final responsive + feature/legacy closure',()=>{
     expect(m).not.toContain('@keyframes premium-cta-aurora-flow');
   });
 
+  it('keeps final CSS debt counts explicit after accepted deduplication',()=>{
+    const files=[
+      'src/styles/tokens.css',
+      'src/styles/materials.css',
+      'src/styles/semantics.css',
+      'src/styles/hierarchy.css',
+      'src/styles/controls.css',
+      'src/styles/overlays.css',
+      'src/styles/motion.css',
+      'src/styles/responsive.css',
+      'src/styles/cascade-bridge.css',
+      'src/styles/features/app-shell.css',
+      'src/styles/features/charts.css',
+      'src/styles/features/reports.css',
+      'src/styles/features/header.css',
+    ];
+    const css=files.map(read).join('\n').replace(/\/\*[\s\S]*?\*\//g,'');
+    expect((css.match(/!important/g) ?? []).length).toBe(156);
+    expect((css.match(/@keyframes\b/g) ?? []).length).toBe(23);
+    expect((css.match(/@media\b/g) ?? []).length).toBe(66);
+  });
+
   it('keeps the named layer order unchanged at Stage 4 exit',()=>{
     const e=read('src/styles/index.css');
     const order=['egx-tokens','egx-materials','egx-semantics','egx-hierarchy','egx-controls','egx-overlays','egx-motion','egx-responsive','egx-features'];

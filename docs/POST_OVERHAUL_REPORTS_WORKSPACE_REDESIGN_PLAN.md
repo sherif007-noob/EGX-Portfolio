@@ -502,7 +502,7 @@ Existing report components should first be moved into the new architecture with 
 
 # 15. Implementation sequence
 
-## Stage R1 — Report workspace architecture — VALIDATION CANDIDATE
+## Stage R1 — Report workspace architecture — ACCEPTED / CI + RENDERED GREEN
 
 Implemented on branch `stage5-r1-reports-workspace`:
 
@@ -525,9 +525,22 @@ Acceptance:
 - no report calculation, chart-data, allocation, trading-statistic or monthly-audit logic changes;
 - TypeScript, full tests, production build and rendered regression remain green.
 
+### R1 acceptance record
+
+R1 product architecture merged through PR #88 as `main@3aa6459a`. The intentional Reports mode rail changed only the tracked `reports-desktop` visual state. The rendered artifact was inspected; all 12 geometry checks remained at **0px overflow**, every non-Reports visual stayed within the frozen threshold, and the Reports delta was exactly the new rail plus the corresponding vertical shift of the unchanged long report body.
+
+PR #89 then recorded that inspected Reports image by exact SHA-256 rather than weakening the global 1% threshold. Final accepted head: `main@4e9203bc`.
+
+Final gates:
+- Quality Checks #37378407121 — passed;
+- Phase 10 Visual Closure #37378407119 — passed;
+- Rendered Visual Regression #37378407114 — passed;
+- `reports-desktop` reported `accepted-change` at 13.625% only because its PNG bytes exactly matched the reviewed hash;
+- future pixel drift still fails normally.
+
 ---
 
-## Stage R2 — Split the current long page into workspaces
+## Stage R2 — Split the current long page into workspaces — VALIDATION CANDIDATE
 
 Move existing components into:
 

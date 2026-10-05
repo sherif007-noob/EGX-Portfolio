@@ -1392,7 +1392,7 @@ Established prerequisites:
 
 The redesign is **information architecture**, not a calculation rewrite.
 
-## R1 — Workspace architecture — VALIDATION CANDIDATE
+## R1 — Workspace architecture — ACCEPTED / CI + RENDERED GREEN
 
 Introduce internal modes:
 
@@ -1410,7 +1410,7 @@ Gate: switching/restoration works with zero calculation change.
 
 ---
 
-## R2 — Split current long Reports page into workspaces
+## R2 — Split current long Reports page into workspaces — VALIDATION CANDIDATE
 
 Move trusted existing components into their intended mode.
 
@@ -1868,6 +1868,6 @@ For financial/data changes also require:
 
 The implementation sequence is now:
 
-> **Stage 4 is CLOSED at `main@470b3ce8`. Current execution point: Stage 5 / Reports R1 — Workspace architecture — validation candidate.**
+> **Stage 4 is CLOSED at `main@470b3ce8`. Reports R1 is ACCEPTED at `main@4e9203bc`. Current execution point: Stage 5 / Reports R2 — workspace split — validation candidate.**
 
-R1 now implements internal Reports modes, dedicated navigation, `reports:lastMode` persistence and mode-keyed workspace transitions while preserving the existing long report body and every trusted calculation. R2 begins only after R1 passes source/build/rendered gates.
+R2 partitions the trusted existing Reports surfaces by mode without changing calculations. Overview remains deliberately transitional until R3; no R3 diagnostic redesign is mixed into R2.

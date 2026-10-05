@@ -47,7 +47,7 @@ describe('Stage 5 R1 Reports workspace architecture', () => {
     expect(reports).toContain('data-reports-mode={reportMode}');
   });
 
-  it('keeps the trusted long-form report content intact until R2', () => {
+  it('keeps the R1 navigation, persistence and swap shell authoritative after later workspace passes', () => {
     const reports = readRelative('./PerformanceReports.tsx');
 
     expect(reports).toContain('<TradingPerformanceReport');
@@ -57,9 +57,7 @@ describe('Stage 5 R1 Reports workspace architecture', () => {
     expect(reports).toContain('Portfolio Equity Bridge');
     expect(reports).toContain('Closed Trade Summary');
     expect(reports).toContain('<MonthlyPerformanceReport');
-    expect(reports).not.toContain("reportMode === 'analytics'");
-    expect(reports).not.toContain("reportMode === 'trading'");
-    expect(reports).not.toContain("reportMode === 'allocation'");
-    expect(reports).not.toContain("reportMode === 'monthly'");
+    expect(reports).toContain('motionKey={reportMode}');
+    expect(reports).toContain('data-reports-mode={reportMode}');
   });
 });

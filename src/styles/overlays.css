@@ -164,3 +164,8 @@
   z-index: 140;
   overflow: visible;
 }
+
+/* Stage 4.5.6 — select-menu viewport cap belongs to overlay geometry. */
+.premium-select-dropdown {
+  max-width: var(--premium-select-menu-max, calc(100vw - (var(--premium-mobile-gutter) * 2)));
+}

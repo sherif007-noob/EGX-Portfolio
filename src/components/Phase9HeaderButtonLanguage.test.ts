@@ -50,7 +50,7 @@ describe('Phase 9 header button language', () => {
   });
 
   it('uses premium glass/refraction/bloom for utilities instead of flattening them', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.3/9.4 header-button language');
     const end = css.indexOf('.premium-header-create-cluster', start);
     expect(start).toBeGreaterThanOrEqual(0);
@@ -64,7 +64,7 @@ describe('Phase 9 header button language', () => {
   });
 
   it('makes active navigation louder than idle navigation while preserving hierarchy', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.2 — navigation refinement');
     const end = css.indexOf('Phase 9.1 — command-zone header shell');
     const block = css.slice(start, end);
@@ -78,7 +78,7 @@ describe('Phase 9 header button language', () => {
   });
 
   it('does not modify Phase 8 card material contracts', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

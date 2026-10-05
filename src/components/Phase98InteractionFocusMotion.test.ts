@@ -7,7 +7,7 @@ const readRelative = (relative: string) =>
 
 describe('Phase 9.8 interaction / focus / motion closure', () => {
   it('keeps explicit hover and keyboard-focus treatment for navigation and commands', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     expect(css).toContain('.premium-nav-item.premium-nav-idle:hover');
     expect(css).toContain('.premium-nav-item:focus-visible');
@@ -29,7 +29,7 @@ describe('Phase 9.8 interaction / focus / motion closure', () => {
 
   it('keeps status motion purposeful and respects reduced motion', () => {
     const header = readRelative('./Header.tsx');
-    const legacy = readRelative('../index.css');
+    const legacy = readRelative('../styles/features/header.css');
     const controls = readRelative('../styles/controls.css');
     const motion = readRelative('../styles/motion.css');
     const css = [legacy, controls, motion].join('\n');
@@ -56,7 +56,7 @@ describe('Phase 9.8 interaction / focus / motion closure', () => {
   });
 
   it('does not reopen Phase 8 material or content hierarchy', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

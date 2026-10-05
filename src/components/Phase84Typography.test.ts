@@ -50,7 +50,7 @@ describe('Phase 8.4 typography foundation', () => {
   });
 
   it('keeps the accepted material and semantic-edge blocks intact and separate', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/materials.css'), readRelative('../styles/semantics.css')].join('\n');
     expect(css).toContain('Phase 8 material restoration — Monthly Report quality reference');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');

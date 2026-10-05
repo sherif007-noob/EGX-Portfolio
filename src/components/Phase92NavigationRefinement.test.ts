@@ -49,7 +49,7 @@ describe('Phase 9.2 navigation refinement', () => {
   });
 
   it('keeps active accent localized and gives keyboard focus an explicit visible state', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.2 — navigation refinement');
     const end = css.indexOf('Phase 9.1 — command-zone header shell');
 
@@ -66,7 +66,7 @@ describe('Phase 9.2 navigation refinement', () => {
   });
 
   it('does not change Phase 8 material contracts while refining header navigation', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

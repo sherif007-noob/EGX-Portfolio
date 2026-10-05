@@ -1090,3 +1090,41 @@
   }
 
 }
+
+/* Stage 4.5.6 — final shared effect/mobility choreography drained from legacy entry. */
+@media (max-width: 767px) {
+  .premium-card:hover,
+  .premium-nav:hover,
+  .premium-control:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+.premium-radial::after {
+  transition: opacity var(--premium-medium) var(--premium-ease);
+}
+
+.premium-radial:hover::after {
+  opacity: var(--premium-effect-radial-hover-opacity);
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .premium-shimmer-border::before {
+    animation: premium-cta-aurora-flow var(--premium-effect-aurora-cycle) linear infinite;
+  }
+}
+
+@keyframes premium-cta-aurora-flow {
+  from { background-position: 0% 50%; }
+  to { background-position: 220% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-shimmer-border::before {
+    animation: none !important;
+  }
+
+  .premium-radial::after {
+    transition: none !important;
+  }
+}

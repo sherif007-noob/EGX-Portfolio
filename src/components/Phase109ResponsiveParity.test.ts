@@ -7,7 +7,7 @@ const readRelative = (relative: string) =>
 
 describe('Phase 10.9 responsive cross-app parity', () => {
   it('contains Motion-owned tab/result surfaces without clipping semantic effects', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(css).toContain('.premium-motion-swap-shell,');
     expect(css).toContain('.premium-motion-swap,');
@@ -22,7 +22,7 @@ describe('Phase 10.9 responsive cross-app parity', () => {
   });
 
   it('keeps dense tables and chart surfaces bounded by their owning viewport', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
     const positions = readRelative('./PositionsTable.tsx');
     const cash = readRelative('./CashBalanceView.tsx');
     const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
@@ -41,7 +41,7 @@ describe('Phase 10.9 responsive cross-app parity', () => {
 
   it('gives the 320px Overview summary a single-column financial layout', () => {
     const summary = readRelative('./PortfolioSummary.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(summary).toContain('premium-overview-primary-grid');
     expect(summary).toContain('premium-overview-support-grid');
@@ -54,7 +54,7 @@ describe('Phase 10.9 responsive cross-app parity', () => {
 
   it('prevents the Reports summary band from becoming a cramped two-column strip at 320px', () => {
     const reports = readRelative('./PerformanceReports.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(reports).toContain('premium-report-summary-band');
     expect(css).toContain('.premium-report-summary-band');
@@ -62,7 +62,7 @@ describe('Phase 10.9 responsive cross-app parity', () => {
   });
 
   it('extends safe-area protection to short landscape overlays and modals', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(css).toContain('@media (orientation: landscape) and (max-height: 520px)');
     expect(css).toContain('max(0.75rem, env(safe-area-inset-right))');

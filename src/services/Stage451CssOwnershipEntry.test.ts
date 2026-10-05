@@ -4,28 +4,19 @@ import { describe, expect, it } from 'vitest';
 
 const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
-
-const stripComments = (value: string) =>
-  value.replace(/\/\*[\s\S]*?\*\//g, '').trim();
+const stripComments = (value: string) => value.replace(/\/\*[\s\S]*?\*\//g, '').trim();
 
 describe('Stage 4.5.1 CSS ownership entry contract', () => {
-  it('keeps one stable app stylesheet entry while attaching the ownership index after Tailwind', () => {
+  it('keeps one stable app stylesheet entry and a fully drained legacy entry', () => {
     const main = read('src/main.tsx');
-    const legacy = read('src/index.css');
+    const entry = read('src/index.css').trim();
 
     expect(main).toContain("import './index.css'");
     expect(main).not.toContain("import './styles/");
-
-    const tailwind = legacy.indexOf('@import "tailwindcss";');
-    const ownership = legacy.indexOf('@import "./styles/index.css";');
-    const firstLegacyRule = legacy.indexOf('.recharts-default-tooltip');
-
-    expect(tailwind).toBe(0);
-    expect(ownership).toBeGreaterThan(tailwind);
-    expect(firstLegacyRule).toBeGreaterThan(ownership);
+    expect(entry).toBe('@import "tailwindcss";\n@import "./styles/index.css";');
   });
 
-  it('defines one canonical named-layer order for future extraction passes', () => {
+  it('keeps the canonical named-layer order through final closure', () => {
     const entry = read('src/styles/index.css');
     const imports = [
       '@import "./tokens.css" layer(egx-tokens);',
@@ -38,16 +29,15 @@ describe('Stage 4.5.1 CSS ownership entry contract', () => {
       '@import "./responsive.css" layer(egx-responsive);',
       '@import "./features/index.css" layer(egx-features);',
     ];
-
     let previous = -1;
-    for (const importRule of imports) {
-      const current = entry.indexOf(importRule);
+    for (const rule of imports) {
+      const current = entry.indexOf(rule);
       expect(current).toBeGreaterThan(previous);
       previous = current;
     }
   });
 
-  it('advances only accepted ownership modules while later compressed passes stay empty', () => {
+  it('has every canonical owner populated at final closure', () => {
     for (const path of [
       'src/styles/tokens.css',
       'src/styles/materials.css',
@@ -57,45 +47,27 @@ describe('Stage 4.5.1 CSS ownership entry contract', () => {
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',
-    ]) {
-      expect(stripComments(read(path))).not.toBe('');
-    }
-
-    for (const path of [
       'src/styles/responsive.css',
       'src/styles/features/index.css',
     ]) {
-      expect(stripComments(read(path))).toBe('');
+      expect(stripComments(read(path))).not.toBe('');
     }
   });
 
-  it('does not move accepted Phase 7-10 visual families during the ownership bootstrap', () => {
-    const legacy = read('src/index.css');
-
-    for (const marker of [
-      'Phase 7 chart visual system',
-      'Premium visual system — presentation only',
-      'Phase 5 canonical semantic halo system',
-      'Stage 4.5.5: canonical v3 motion and desktop performance moved to ./styles/motion.css.',
-      'Phase 9.6 — mobile command architecture',
-      'Phase 8 hierarchy — MATERIAL-NEUTRAL restoration',
-      'Phase 8 material restoration — Monthly Report quality reference',
-      'Phase 10.9 — cross-app responsive containment',
-    ]) {
-      expect(legacy).toContain(marker);
-    }
+  it('routes former Phase 7-10 families to explicit final owners', () => {
+    expect(read('src/styles/features/charts.css')).toContain('Phase 7 chart visual system');
+    expect(read('src/styles/features/header.css')).toContain('Phase 9.6 — mobile command architecture');
+    expect(read('src/styles/responsive.css')).toContain('Phase 10.9 — cross-app responsive containment');
+    expect(read('src/styles/materials.css')).toContain('.premium-card.premium-hierarchy-h1');
+    expect(read('src/styles/semantics.css')).toContain('Additive semantic edge — aura/glass remain untouched');
   });
 
-  it('documents the measured legacy baseline and visual-preserving migration sequence', () => {
+  it('keeps the measured baseline and compressed closure documented', () => {
     const doc = read('docs/STAGE4_5_CSS_OWNERSHIP.md');
-
     expect(doc).toContain('**5,886 lines**');
     expect(doc).toContain('**158** `!important`');
     expect(doc).toContain('**62** `@media`');
     expect(doc).toContain('**23** `@keyframes`');
-    expect(doc).toContain('4.5.2 — token extraction');
     expect(doc).toContain('4.5.6 — responsive + feature/legacy closure');
-    expect(doc).toContain('former planned `4.5.7–4.5.11` scopes are folded');
-    expect(doc).toContain('rendered visual regression');
   });
 });

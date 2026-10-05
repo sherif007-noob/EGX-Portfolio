@@ -35,12 +35,12 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
     expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('keeps generic hover motion legacy-owned while material light and semantic hero are owned', () => {
-    const legacy = read('src/index.css');
+  it('keeps generic hover motion motion-owned while material light and semantic hero are owned', () => {
+    const motion = read('src/styles/motion.css');
     const materials = read('src/styles/materials.css');
     const semantics = read('src/styles/semantics.css');
 
-    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
+    expect(motion).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
     expect(materials).toContain('.premium-card:hover::before {');
     expect(semantics).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
     expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');

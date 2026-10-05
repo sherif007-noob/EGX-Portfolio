@@ -1,6 +1,6 @@
 {
   "reports-desktop": {
-    "sha256": "5c68463c497f1f38130907b39d916303c8113ca0cbf9c1203c2242c160c45fc5",
-    "reason": "Stage 5 R1 intentionally adds the inspected Reports workspace mode rail; every other tracked state remains on the existing golden baseline."
+    "sha256": "7af54b7232887bfda0cc8bc253d6ebfd40782780c523933eebcc0f09828f992b",
+    "reason": "Stage 5 R2 intentionally splits the former long Reports page into dedicated Overview, Analytics, Trading, Allocation and Monthly workspaces. The inspected Reports desktop screenshot shows the accepted transitional Overview summary band; every other tracked rendered state remains on the existing golden baseline."
   }
 }

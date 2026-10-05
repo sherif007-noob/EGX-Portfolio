@@ -24,7 +24,8 @@ describe('Phase 8.4.2 Overview + Reports typography migration', () => {
     const trading = readRelative('./reports/TradingPerformanceReport.tsx');
     const reportTypography = [reports, overview].join('\n');
 
-    expect(reportTypography.match(/premium-type-metric-secondary/g)?.length).toBeGreaterThanOrEqual(1);
+    expect(overview).toContain('premium-type-metric premium-type-metric-hero');
+    expect(overview).toContain('premium-type-metric-label');
     expect(reportTypography).toContain('premium-type-unit');
     expect(reports).toContain('premium-type-metric-dense');
 

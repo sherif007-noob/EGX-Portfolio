@@ -1,0 +1,9 @@
+/*
+ * Ownership entry for feature-specific visual rules that cannot be expressed
+ * by the shared layers without coupling unrelated screens.
+ *
+ * Future files may include charts.css, reports.css, header.css and dense-data
+ * families, but each is extracted only in its own visual-regression pass.
+ *
+ * Stage 4.5.1 placeholder: no feature rules moved yet.
+ */

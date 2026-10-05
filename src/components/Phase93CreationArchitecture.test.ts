@@ -64,7 +64,7 @@ describe('Phase 9.3 primary creation architecture', () => {
 
   it('preserves existing creation callbacks and Phase 8 material contracts', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).toContain('onClick={onOpenScreenshotModal}');
     expect(header).toContain('onClick={onOpenAddTrade}');

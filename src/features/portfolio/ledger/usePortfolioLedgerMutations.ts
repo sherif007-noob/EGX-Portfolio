@@ -7,6 +7,7 @@ import type {
 } from '../../../types';
 import {
   createLedgerMutationExecutor,
+  prepareBonusSharesMutation,
   prepareBuyTradeMutation,
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
@@ -17,6 +18,7 @@ import {
   prepareSellTradeMutation,
   prepareTransactionDeleteMutation,
   prepareTransactionEditMutation,
+  type BonusSharesCorporateActionInput,
   type CanonicalLedgerSnapshot,
   type LedgerMutationPreparation,
   type PortfolioRestoreInput,
@@ -136,6 +138,16 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     }),
   ), [executePreparedMutation]);
 
+  const addBonusShares = useCallback((
+    input: Omit<BonusSharesCorporateActionInput, 'transactionId'>,
+  ) => executePreparedMutation<TradeTransaction>(
+    'CORPORATE_ACTION_BONUS_SHARES',
+    (current) => prepareBonusSharesMutation(current, {
+      transactionId: `tx-${crypto.randomUUID()}`,
+      ...input,
+    }),
+  ), [executePreparedMutation]);
+
   const editTransaction = useCallback((updated: TradeTransaction) => executePreparedMutation(
     'EDIT_TRANSACTION',
     (current) => prepareTransactionEditMutation(current, updated),
@@ -251,6 +263,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   return {
     addTrade,
     sellPosition,
+    addBonusShares,
     editTransaction,
     deleteTransaction,
     addCashTransaction,

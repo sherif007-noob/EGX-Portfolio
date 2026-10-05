@@ -47,7 +47,7 @@ describe('Phase 9.5 status communication', () => {
   });
 
   it('uses one shared compact status vocabulary', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.5 — compact status communication');
     const end = css.indexOf('Phase 9.4 — utility/data-management consolidation');
     const block = css.slice(start, end);
@@ -63,7 +63,7 @@ describe('Phase 9.5 status communication', () => {
   });
 
   it('keeps Phase 8 material contracts untouched', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

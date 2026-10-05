@@ -28,7 +28,7 @@ async function resolvePortfolioId(sb: ReturnType<typeof client>) {
 function mapTransaction(row: any): TradeTransaction {
   return {
     id: String(row.id),
-    type: row.transaction_type === 'SELL' ? 'SELL' : 'BUY',
+    type: row.transaction_type === 'BONUS_SHARES' ? 'BONUS_SHARES' : row.transaction_type === 'SELL' ? 'SELL' : 'BUY',
     ticker: String(row.ticker ?? ''),
     companyName: row.company_name ?? '',
     sector: row.sector ?? 'Other',

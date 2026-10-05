@@ -550,7 +550,7 @@ The safe retry proves the non-card Phase 8 material families can live in `egx-ma
 Next: **4.5.3.2.2.2.2 — Overview hero neutral refraction role**. This is intentionally a one-rule gate before any hierarchy-card body moves.
 
 
-## 4.5.3.2.2.2.2 — Overview hero neutral refraction role — VALIDATION IN PROGRESS
+## 4.5.3.2.2.2.2 — Overview hero neutral refraction role — ACCEPTED / CI + RENDERED GREEN
 
 This is a one-rule cascade gate after the successful non-card retry.
 
@@ -584,4 +584,62 @@ The same hero refraction tier is already the canonical neutral role for `.premiu
 - TypeScript, full tests and production build are green;
 - all 16 rendered states stay below the frozen 1% threshold.
 
-Next after acceptance: split the remaining hierarchy-card body/highlight/hover/mobile bundle again; do not migrate it wholesale.
+### 4.5.3.2.2.2.2 acceptance record
+
+Accepted on `main@ed5642a5`.
+
+Main-push validation passed:
+
+- Quality Checks #37337833081;
+- TypeScript;
+- **120 / 120 test files, 657 / 657 tests**;
+- production build;
+- Phase 10 Visual Closure #37337833145;
+- Cloudflare Worker dry-run;
+- Rendered Visual Regression #37337833095;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs remained on the frozen accepted profile: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.042%**, and every remaining state **0.000%**.
+
+The one-rule gate is accepted. The Overview hero refraction role can remain in `egx-materials` without disturbing the still-unlayered semantic hero overrides.
+
+Next: **4.5.3.2.2.2.3 — neutral hero-card material body**.
+
+
+## 4.5.3.2.2.2.3 — Neutral hero-card material body — VALIDATION IN PROGRESS
+
+This pass removes one more neutral unlayered material competitor before the hierarchy-card body itself is layered.
+
+### Scope
+
+Move only the neutral `.premium-hero-card` body:
+
+- hero background recipe;
+- hero neutral border color.
+
+No hover, hierarchy, semantic, motion, geometry or responsive declaration moves with it.
+
+### Why this comes before the hierarchy-card body
+
+The neutral hero body is currently unlayered and therefore outranks any future hierarchy-card rule moved into the named material layer. Moving it first preserves the intended material ordering inside `egx-materials` and reduces the number of unlayered competitors before the hierarchy-card body gate.
+
+### Explicitly retained unlayered
+
+- hierarchy-card base material;
+- hierarchy-card highlight;
+- explicit material-tone hierarchy-card body;
+- neutral hierarchy-card hover;
+- generic card hover and highlight-hover interaction;
+- Phase 8 mobile hierarchy-card/panel material overrides;
+- all semantic aura/state/hover rules.
+
+### Acceptance
+
+- declaration values remain byte-for-byte equivalent;
+- `.premium-hero-card` body lives in `materials.css`;
+- all cascade-sensitive hierarchy and semantic rules remain unlayered;
+- TypeScript, full tests and production build are green;
+- all 16 rendered states remain below the frozen 1% threshold.
+
+Next after acceptance: evaluate the hierarchy-card base body as its own rendered gate; do not combine it with highlight, tone, hover or mobile overrides.

@@ -1353,9 +1353,10 @@ Granular acceptance sequence:
         - Root cause: late unlayered Phase 8 restoration rules lost cascade priority when moved wholesale into the named `egx-materials` layer while competing legacy rules remained unlayered.
         - **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACCEPTED / CI + RENDERED GREEN** at `main@8ec414fe`; Quality Checks #37335363101 passed **118 / 118 test files, 649 / 649 tests** and build. Phase 10 Visual Closure #37335363137 and Rendered Visual Regression #37335363252 restored **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
         - **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — ACCEPTED / CI + RENDERED GREEN** via PR #68 at `main@dcb0df5f`; Quality Checks #37336618605 passed **119 / 119 test files, 654 / 654 tests** and build. Phase 10 Visual Closure #37336829761 and Rendered Visual Regression #37336829803 passed **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
-        - **4.5.3.2.2.2.2 — Overview hero neutral refraction role — NEXT**
+        - **4.5.3.2.2.2.2 — Overview hero neutral refraction role — ACCEPTED / CI + RENDERED GREEN** at `main@ed5642a5`; Quality Checks #37337833081 passed **120 / 120 test files, 657 / 657 tests** and build. Phase 10 Visual Closure #37337833145 and Rendered Visual Regression #37337833095 passed Worker dry-run, **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
+        - **4.5.3.2.2.2.3 — neutral hero-card material body — NEXT**; move only the neutral `.premium-hero-card` background/border recipe before attempting the hierarchy-card body.
         - Do not add compensating visual values or `!important` patches; each remaining material slice must prove rendered parity before acceptance.
-        - Keep highlight, Overview hero refraction, explicit tone-card material, hover material, mobile material overrides, and all semantic aura/state rules unlayered while 4.5.3.2.2.2.2 is tested.
+        - Keep hierarchy-card body/highlight, explicit tone-card material, hover material, mobile material overrides, generic hover interaction, and all semantic aura/state rules unlayered while 4.5.3.2.2.2.3 is tested.
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

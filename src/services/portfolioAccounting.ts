@@ -1,4 +1,5 @@
 import { ClosedTrade, Position, TradeTransaction } from '../types';
+import { isBonusSharesTransaction } from './corporateActions';
 
 export const ACCOUNTING_EPSILON = 0.000001;
 
@@ -169,6 +170,7 @@ export function validateAccountingInvariants(
   cashBalance: number,
 ) {
   const boughtShares = transactions.filter(t => t.type === 'BUY').reduce((s, t) => s + t.shares, 0);
+  const bonusShares = transactions.filter(isBonusSharesTransaction).reduce((s, t) => s + t.shares, 0);
   const soldShares = transactions.filter(t => t.type === 'SELL').reduce((s, t) => s + t.shares, 0);
   const openShares = positions.reduce((s, p) => s + p.shares, 0);
   const realized = closedTrades.reduce((s, t) => s + t.realizedPnlEgp, 0);
@@ -177,7 +179,7 @@ export function validateAccountingInvariants(
   const fees = calculateFeeBreakdown(transactions);
 
   return {
-    sharesBalanced: Math.abs(boughtShares - soldShares - openShares) < 0.01,
+    sharesBalanced: Math.abs(boughtShares + bonusShares - soldShares - openShares) < 0.01,
     tradingPnlFinite: Number.isFinite(realized + unrealized),
     portfolioValueFinite: Number.isFinite(portfolioValue),
     feesFinite: Number.isFinite(fees.totalFees),

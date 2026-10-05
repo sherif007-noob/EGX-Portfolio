@@ -18,6 +18,7 @@ import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { DataHealthCenterModal } from './components/DataHealthCenterModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { PriceAlertsModal } from './components/PriceAlertsModal';
+import { CorporateActionsModal } from './components/CorporateActionsModal';
 import { PerformanceTimeframeChart } from './components/charts/PerformanceTimeframeChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { usePortfolioState } from './features/portfolio';
@@ -51,6 +52,7 @@ export default function App() {
     updateCashBalance,
     tickers,
     capitalDeposits,
+    addBonusShares: executeAddBonusShares,
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
     editPosition: executeEditPosition,
@@ -93,6 +95,8 @@ export default function App() {
     setIsScreenshotModalOpen,
     isPriceAlertsModalOpen,
     setIsPriceAlertsModalOpen,
+    isCorporateActionsModalOpen,
+    setIsCorporateActionsModalOpen,
     sellingPosition,
     setSellingPosition,
     editingPosition,
@@ -229,6 +233,37 @@ export default function App() {
     setUndoState,
   });
 
+  const handleAddBonusShares = async (input: {
+    ticker: string;
+    creditedShares: number;
+    effectiveDate: string;
+    notes?: string;
+  }): Promise<boolean> => {
+    const result = await executeAddBonusShares(input);
+    if ('error' in result) {
+      if (result.persisted) {
+        showToast(
+          `Bonus shares for ${input.ticker} were saved, but this screen could not refresh. Reload before making another accounting change.`,
+          'error',
+          7000,
+        );
+        return true;
+      }
+      showToast(`Bonus shares were not saved: ${result.error.message}`, 'error', 7000);
+      return false;
+    }
+
+    const position = result.snapshot.positions.find(
+      (item) => item.ticker.toUpperCase() === input.ticker.toUpperCase(),
+    );
+    showToast(
+      `Applied +${input.creditedShares.toLocaleString()} bonus shares to ${input.ticker.toUpperCase()}. New holding: ${position?.shares.toLocaleString() ?? 'updated'} shares.`,
+      'success',
+      6500,
+    );
+    return true;
+  };
+
   const handleQuickAddCash = () => setIsQuickCashModalOpen(true);
 
   return (
@@ -240,6 +275,7 @@ export default function App() {
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
         onOpenAddTrade={() => openAddTrade()}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onOpenCorporateActions={() => setIsCorporateActionsModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
         unreadAlertCount={unreadAlertCount}
@@ -479,6 +515,13 @@ export default function App() {
       </main>
 
       {/* Modals & Dialogs */}
+      <CorporateActionsModal
+        isOpen={isCorporateActionsModalOpen}
+        onClose={() => setIsCorporateActionsModalOpen(false)}
+        positions={positions}
+        onAddBonusShares={handleAddBonusShares}
+      />
+
       <PriceAlertsModal
         isOpen={isPriceAlertsModalOpen}
         onClose={() => setIsPriceAlertsModalOpen(false)}

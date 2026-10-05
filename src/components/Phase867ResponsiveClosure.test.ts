@@ -8,7 +8,7 @@ const readRelative = (relative: string) =>
 describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
   it('keeps the content shell bounded on desktop and tighter on narrow phones', () => {
     const app = readRelative('../App.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(app).toContain('premium-safe-inline-main premium-flow-major');
     expect(app).toContain('max-w-7xl');
@@ -67,7 +67,7 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
   });
 
   it('preserves the accepted Phase 8 material language while responsive rules stay material-neutral', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/responsive.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

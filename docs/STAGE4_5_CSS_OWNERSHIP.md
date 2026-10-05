@@ -70,7 +70,7 @@ Each import has its own named cascade layer. Existing accepted rules remain **un
 
 No pass may combine unrelated ownership families merely to reduce line count.
 
-## 4.5.1 — Inventory + ownership/layer entry contract — VALIDATION IN PROGRESS
+## 4.5.1 — Inventory + ownership/layer entry contract — ACCEPTED / CI + RENDERED GREEN
 
 ### Scope
 
@@ -100,4 +100,29 @@ No pass may combine unrelated ownership families merely to reduce line count.
 - TypeScript, full tests and production build are green;
 - rendered visual regression is unchanged before any real extraction begins.
 
-Next after acceptance: **4.5.2 — token extraction**.
+### 4.5.1 acceptance record
+
+Accepted through PR #61 at `main@a8cb0956`.
+
+Quality Checks #37274673986 passed:
+
+- TypeScript;
+- **114 / 114 test files, 628 / 628 tests**;
+- production build.
+
+Main-push closure also passed:
+
+- `build:cloudflare`;
+- Wrangler Worker dry-run;
+- Phase 10 closure gate;
+- Rendered Visual Regression #37275238651;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs remained effectively unchanged: 14 states were exactly 0.000%; the two non-zero deterministic states remained tiny and accepted (Positions desktop 0.021%, Closed Cycles desktop 0.012%), well below the 1% visual threshold.
+
+No existing selector or declaration moved in 4.5.1. The ownership modules are still visually empty, so this pass establishes architecture only.
+
+The first Cloudflare GitHub App deployment check on `a8cb0956` failed even though the same head passed the repository's Cloudflare production build and Wrangler dry-run. Recent neighboring main commits show the same intermittent external build behavior. This documentation closure push intentionally triggers a fresh Cloudflare deployment attempt without changing runtime code.
+
+Next: **4.5.2 — token extraction**.

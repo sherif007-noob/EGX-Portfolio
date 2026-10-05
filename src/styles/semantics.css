@@ -1,7 +1,378 @@
 /*
  * Ownership: financial-state presentation — buy/sell, win/loss, breakeven,
  * semantic aura/glow/edge behavior and semantic state surfaces.
- * No structural layout or responsive geometry.
+ * Generic transition/motion choreography remains in the interaction owner.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.4: canonical semantic ownership.
  */
+
+/* Phase 5 canonical semantic halo system.
+ * The semantic family supplies color; the surface hierarchy supplies intensity.
+ * Dense desktop rows stay edge-coded rather than receiving a card halo.
+ */
+.premium-glow-win,
+.premium-state-win {
+  --premium-semantic-rgb: var(--premium-semantic-win-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-win-deep-rgb);
+}
+
+.premium-glow-loss,
+.premium-state-loss {
+  --premium-semantic-rgb: var(--premium-semantic-loss-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-loss-deep-rgb);
+}
+
+.premium-glow-breakeven,
+.premium-state-breakeven {
+  --premium-semantic-rgb: var(--premium-semantic-breakeven-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-breakeven-deep-rgb);
+}
+
+.premium-glow-buy,
+.premium-state-buy {
+  --premium-semantic-rgb: var(--premium-semantic-buy-rgb);
+  --premium-semantic-deep-rgb: var(--premium-semantic-buy-deep-rgb);
+}
+
+/*
+ * Canonical semantic surface roles.
+ * These own halo geometry only. Material, financial color and information
+ * hierarchy remain independent. The accepted 8.3b alpha strength is retained;
+ * repeated records only tighten the far-field radius so lists stay scannable.
+ */
+.premium-semantic-hero {
+  --premium-semantic-role-border-alpha: 0.72;
+  --premium-semantic-role-near-radius: 58px;
+  --premium-semantic-role-near-alpha: 0.40;
+  --premium-semantic-role-far-radius: 132px;
+  --premium-semantic-role-far-alpha: 0.24;
+  --premium-semantic-role-hover-border-alpha: 0.70;
+  --premium-semantic-role-hover-near-radius: 56px;
+  --premium-semantic-role-hover-near-alpha: 0.42;
+  --premium-semantic-role-hover-far-radius: 132px;
+  --premium-semantic-role-hover-far-alpha: 0.24;
+}
+
+.premium-semantic-card {
+  --premium-semantic-role-border-alpha: 0.62;
+  --premium-semantic-role-near-radius: 48px;
+  --premium-semantic-role-near-alpha: 0.34;
+  --premium-semantic-role-far-radius: 112px;
+  --premium-semantic-role-far-alpha: 0.18;
+  --premium-semantic-role-hover-border-alpha: 0.70;
+  --premium-semantic-role-hover-near-radius: 56px;
+  --premium-semantic-role-hover-near-alpha: 0.42;
+  --premium-semantic-role-hover-far-radius: 132px;
+  --premium-semantic-role-hover-far-alpha: 0.24;
+}
+
+.premium-semantic-record {
+  --premium-semantic-role-border-alpha: 0.62;
+  --premium-semantic-role-near-radius: 48px;
+  --premium-semantic-role-near-alpha: 0.34;
+  --premium-semantic-role-far-radius: 96px;
+  --premium-semantic-role-far-alpha: 0.18;
+  --premium-semantic-role-hover-border-alpha: 0.70;
+  --premium-semantic-role-hover-near-radius: 56px;
+  --premium-semantic-role-hover-near-alpha: 0.42;
+  --premium-semantic-role-hover-far-radius: 112px;
+  --premium-semantic-role-hover-far-alpha: 0.24;
+}
+
+/* Primary semantic cards. */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-border-alpha, var(--premium-semantic-border-alpha, 0.44)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 38px rgba(0, 0, 0, 0.28),
+    0 0 var(--premium-semantic-role-near-radius, 30px) rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-near-alpha, var(--premium-semantic-near-alpha, 0.18))),
+    0 0 var(--premium-semantic-role-far-radius, var(--premium-semantic-far-radius, 68px)) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-role-far-alpha, var(--premium-semantic-far-alpha, 0.075))),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* Hero semantic cards are intentionally the strongest financial-state halo. */
+.premium-hero-card {
+  --premium-semantic-border-alpha: 0.52;
+  --premium-semantic-near-alpha: 0.22;
+  --premium-semantic-far-alpha: 0.095;
+  --premium-semantic-far-radius: 72px;
+  --premium-semantic-hover-border-alpha: 0.70;
+  --premium-semantic-hover-near-alpha: 0.30;
+  --premium-semantic-hover-far-alpha: 0.135;
+  --premium-semantic-hover-far-radius: 86px;
+}
+
+/* Desktop table semantics remain edge-only and use the same semantic palette. */
+.premium-row-win {
+  --premium-row-semantic-rgb: var(--premium-semantic-win-rgb);
+}
+.premium-row-loss {
+  --premium-row-semantic-rgb: var(--premium-semantic-loss-rgb);
+}
+.premium-row-breakeven {
+  --premium-row-semantic-rgb: var(--premium-semantic-breakeven-rgb);
+}
+
+.premium-row-win,
+.premium-row-loss,
+.premium-row-breakeven {
+  box-shadow: inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.60);
+}
+
+/* Compact semantic states use the same palette at lower intensity. */
+.premium-state-win,
+.premium-state-loss,
+.premium-state-breakeven,
+.premium-state-buy {
+  position: relative;
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-state-border-alpha, 0.34)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 10px 26px rgba(0,0,0,0.22),
+    0 0 24px rgb(var(--premium-semantic-rgb) / var(--premium-state-near-alpha, 0.11)),
+    0 0 var(--premium-state-far-radius, 54px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-state-far-alpha, 0.05)),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+}
+
+/* Report/dashboard hero semantics align to the hero-card hierarchy. */
+.premium-hero-metric,
+.premium-report-hero {
+  --premium-state-border-alpha: 0.50;
+  --premium-state-near-alpha: 0.19;
+  --premium-state-far-alpha: 0.085;
+  --premium-state-far-radius: 66px;
+}
+
+/*
+ * Semantic hierarchy cards use the SAME aura family as the accepted Monthly
+ * Report cards. H-level does not turn semantic glow down.
+ */
+.premium-card.premium-hierarchy-h1.premium-glow-win,
+.premium-card.premium-hierarchy-h1.premium-glow-loss,
+.premium-card.premium-hierarchy-h1.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h1.premium-glow-buy,
+.premium-card.premium-hierarchy-h2.premium-glow-win,
+.premium-card.premium-hierarchy-h2.premium-glow-loss,
+.premium-card.premium-hierarchy-h2.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h2.premium-glow-buy,
+.premium-card.premium-hierarchy-h3.premium-glow-win,
+.premium-card.premium-hierarchy-h3.premium-glow-loss,
+.premium-card.premium-hierarchy-h3.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h3.premium-glow-buy,
+.premium-card.premium-hierarchy-h4.premium-glow-win,
+.premium-card.premium-hierarchy-h4.premium-glow-loss,
+.premium-card.premium-hierarchy-h4.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h4.premium-glow-buy,
+.premium-card.premium-hierarchy-h5.premium-glow-win,
+.premium-card.premium-hierarchy-h5.premium-glow-loss,
+.premium-card.premium-hierarchy-h5.premium-glow-breakeven,
+.premium-card.premium-hierarchy-h5.premium-glow-buy,
+.premium-card.premium-hierarchy-h1.premium-state-win,
+.premium-card.premium-hierarchy-h1.premium-state-loss,
+.premium-card.premium-hierarchy-h1.premium-state-breakeven,
+.premium-card.premium-hierarchy-h1.premium-state-buy,
+.premium-card.premium-hierarchy-h2.premium-state-win,
+.premium-card.premium-hierarchy-h2.premium-state-loss,
+.premium-card.premium-hierarchy-h2.premium-state-breakeven,
+.premium-card.premium-hierarchy-h2.premium-state-buy,
+.premium-card.premium-hierarchy-h3.premium-state-win,
+.premium-card.premium-hierarchy-h3.premium-state-loss,
+.premium-card.premium-hierarchy-h3.premium-state-breakeven,
+.premium-card.premium-hierarchy-h3.premium-state-buy,
+.premium-card.premium-hierarchy-h4.premium-state-win,
+.premium-card.premium-hierarchy-h4.premium-state-loss,
+.premium-card.premium-hierarchy-h4.premium-state-breakeven,
+.premium-card.premium-hierarchy-h4.premium-state-buy,
+.premium-card.premium-hierarchy-h5.premium-state-win,
+.premium-card.premium-hierarchy-h5.premium-state-loss,
+.premium-card.premium-hierarchy-h5.premium-state-breakeven,
+.premium-card.premium-hierarchy-h5.premium-state-buy {
+  --phase8-material-rgb: var(--premium-semantic-rgb);
+  --phase8-material-deep-rgb: var(--premium-semantic-deep-rgb);
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-border-alpha, 0.62)) !important;
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-semantic-rgb) / 0.28), transparent 40%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-semantic-deep-rgb) / 0.16), transparent 48%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(12, 20, 39, 0.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.30),
+    0 0 var(--premium-semantic-role-near-radius, 48px) rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-near-alpha, 0.34)),
+    0 0 var(--premium-semantic-role-far-radius, 112px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-role-far-alpha, 0.18)),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(158%) brightness(1.035) !important;
+  backdrop-filter: blur(24px) saturate(158%) brightness(1.035) !important;
+}
+
+/* Semantic state surfaces that use .premium-state-* instead of .premium-glow-* */
+.premium-card.premium-hierarchy-h1.premium-state-win::before,
+.premium-card.premium-hierarchy-h1.premium-state-loss::before,
+.premium-card.premium-hierarchy-h1.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h1.premium-state-buy::before,
+.premium-card.premium-hierarchy-h2.premium-state-win::before,
+.premium-card.premium-hierarchy-h2.premium-state-loss::before,
+.premium-card.premium-hierarchy-h2.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h2.premium-state-buy::before,
+.premium-card.premium-hierarchy-h3.premium-state-win::before,
+.premium-card.premium-hierarchy-h3.premium-state-loss::before,
+.premium-card.premium-hierarchy-h3.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h3.premium-state-buy::before,
+.premium-card.premium-hierarchy-h4.premium-state-win::before,
+.premium-card.premium-hierarchy-h4.premium-state-loss::before,
+.premium-card.premium-hierarchy-h4.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h4.premium-state-buy::before,
+.premium-card.premium-hierarchy-h5.premium-state-win::before,
+.premium-card.premium-hierarchy-h5.premium-state-loss::before,
+.premium-card.premium-hierarchy-h5.premium-state-breakeven::before,
+.premium-card.premium-hierarchy-h5.premium-state-buy::before {
+  background:
+    radial-gradient(circle at 20% -12%, rgb(var(--premium-semantic-rgb) / 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 36%);
+  opacity: 0.84;
+}
+
+/* Hero keeps the accepted pre-Phase-8 hero identity, only in the new layout. */
+/* Stage 4.5.3.2.2.2.2: Overview hero neutral refraction role moved to ./styles/materials.css. */
+
+.premium-overview-hero.premium-hero-card.premium-glow-win,
+.premium-overview-hero.premium-hero-card.premium-glow-loss,
+.premium-overview-hero.premium-hero-card.premium-glow-breakeven {
+  border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-border-alpha, 0.72)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.105),
+    0 22px 52px rgba(0, 0, 0, 0.32),
+    0 0 var(--premium-semantic-role-near-radius, 58px) rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-near-alpha, 0.40)),
+    0 0 var(--premium-semantic-role-far-radius, 132px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-role-far-alpha, 0.24)),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+}
+
+/* Phase 8 semantic hover parity — never dim a semantic card on hover. */
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-hierarchy-h1.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h1.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h2.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h3.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h4.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-win:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-loss:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-breakeven:hover,
+  .premium-card.premium-hierarchy-h5.premium-state-buy:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-win:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-loss:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-breakeven:hover,
+  .premium-card.premium-hierarchy-h4.premium-glow-buy:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-hover-border-alpha, 0.70)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.11),
+      0 24px 56px rgba(0, 0, 0, 0.34),
+      0 0 var(--premium-semantic-role-hover-near-radius, 56px) rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-hover-near-alpha, 0.42)),
+      0 0 var(--premium-semantic-role-hover-far-radius, 132px) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-role-hover-far-alpha, 0.24)),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Additive semantic edge — aura/glass remain untouched                        */
+/* -------------------------------------------------------------------------- */
+/*
+ * This is a detail layer only. It must NEVER replace, reduce, or override the
+ * host card's existing semantic border, full-card aura, far bloom, glass body,
+ * refraction, or box-shadow. The edge uses its own ::after layer so the current
+ * material system remains exactly intact.
+ */
+.premium-semantic-edge {
+  --premium-edge-rgb: var(--premium-semantic-rgb, 34 211 238);
+  position: relative;
+  isolation: isolate;
+}
+
+.premium-report-hero-card.premium-report-semantic-edge {
+  --premium-edge-rgb: var(--premium-report-hero-rgb, 34 211 238);
+}
+
+.premium-semantic-edge::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 3px solid rgb(var(--premium-edge-rgb) / 0.96);
+  border-radius: inherit;
+
+  /*
+   * Use the real rounded card border as the edge path, then reveal only the
+   * left side plus the top/bottom border as they leave the two left corners.
+   * The horizontal mask fade recreates the accepted curved "wrap then blend"
+   * behavior without touching the host card's own border or aura.
+   */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 8%,
+    rgba(0, 0, 0, 0.92) 15%,
+    rgba(0, 0, 0, 0.66) 24%,
+    rgba(0, 0, 0, 0.30) 33%,
+    transparent 43%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 8%,
+    rgba(0, 0, 0, 0.92) 15%,
+    rgba(0, 0, 0, 0.66) 24%,
+    rgba(0, 0, 0, 0.30) 33%,
+    transparent 43%
+  );
+
+  filter:
+    drop-shadow(0 0 4px rgb(var(--premium-edge-rgb) / 0.86))
+    drop-shadow(0 0 9px rgb(var(--premium-edge-rgb) / 0.40))
+    drop-shadow(0 0 15px rgb(var(--premium-edge-rgb) / 0.16));
+  opacity: 0.98;
+}
+
+/* Preserve the same curve-wrap/fade language on touch layouts. */
+@media (max-width: 767px) {
+  .premium-semantic-edge::after {
+    border-width: 3px;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 9%,
+      rgba(0, 0, 0, 0.92) 17%,
+      rgba(0, 0, 0, 0.64) 26%,
+      rgba(0, 0, 0, 0.28) 35%,
+      transparent 46%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 9%,
+      rgba(0, 0, 0, 0.92) 17%,
+      rgba(0, 0, 0, 0.64) 26%,
+      rgba(0, 0, 0, 0.28) 35%,
+      transparent 46%
+    );
+    filter:
+      drop-shadow(0 0 4px rgb(var(--premium-edge-rgb) / 0.88))
+      drop-shadow(0 0 9px rgb(var(--premium-edge-rgb) / 0.42))
+      drop-shadow(0 0 15px rgb(var(--premium-edge-rgb) / 0.17));
+  }
+}

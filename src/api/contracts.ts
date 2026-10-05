@@ -106,6 +106,18 @@ export interface EgxScannerResponse {
   data: EgxScannerRowContract[];
 }
 
+export interface TradingViewSymbolSearchItem {
+  symbol?: string;
+  ticker?: string;
+  description?: string;
+  type?: string;
+  exchange?: string;
+  logoid?: string;
+  logo_urls?: string[];
+}
+
+export type TradingViewSymbolSearchResponse = TradingViewSymbolSearchItem[];
+
 export interface SheetsMetadataQuery {
   spreadsheetId: string;
 }
@@ -555,6 +567,42 @@ export function requireSymbolSearchText(value: unknown): string {
   const query = String(value ?? '').trim();
   if (!query) throw new Error("Query parameter 'text' is required");
   return query;
+}
+
+export function parseTradingViewSymbolSearchResponse(
+  payload: unknown,
+): TradingViewSymbolSearchResponse {
+  const container = apiObject(payload);
+  const rawItems = Array.isArray(payload)
+    ? payload
+    : Array.isArray(container.symbols)
+      ? container.symbols
+      : Array.isArray(container.data)
+        ? container.data
+        : null;
+
+  if (!rawItems) {
+    throw new Error('TradingView symbol search response is missing a symbol array.');
+  }
+
+  return rawItems
+    .map((rawItem) => apiObject(rawItem))
+    .map((item) => {
+      const logoUrls = Array.isArray(item.logo_urls)
+        ? item.logo_urls.map(apiString).filter(Boolean)
+        : [];
+
+      return {
+        ...(apiString(item.symbol) ? { symbol: apiString(item.symbol) } : {}),
+        ...(apiString(item.ticker) ? { ticker: apiString(item.ticker) } : {}),
+        ...(apiString(item.description) ? { description: apiString(item.description) } : {}),
+        ...(apiString(item.type) ? { type: apiString(item.type) } : {}),
+        ...(apiString(item.exchange) ? { exchange: apiString(item.exchange) } : {}),
+        ...(apiString(item.logoid) ? { logoid: apiString(item.logoid) } : {}),
+        ...(logoUrls.length ? { logo_urls: logoUrls } : {}),
+      };
+    })
+    .filter((item) => Boolean(item.symbol || item.ticker));
 }
 
 export const API_RUNTIME_CAPABILITIES = {

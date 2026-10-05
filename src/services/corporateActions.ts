@@ -38,3 +38,14 @@ export function expectedBonusShares(sourceShares: number, ratio: number): number
   if (!Number.isFinite(ratio) || ratio < 0) return 0;
   return sourceShares * ratio;
 }
+
+export function currentCairoDateKey(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${read('year')}-${read('month')}-${read('day')}`;
+}

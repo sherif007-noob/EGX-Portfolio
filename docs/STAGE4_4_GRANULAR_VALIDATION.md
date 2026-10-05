@@ -249,7 +249,7 @@ Portfolio-price and sector-momentum consumers now use the canonical scanner rout
 Next: **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure**.
 
 
-## 4.4.6 — Symbol-search response contract + Stage 4.4 exit regression closure — VALIDATION IN PROGRESS
+## 4.4.6 — Symbol-search response contract + Stage 4.4 exit regression closure — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -279,4 +279,22 @@ Next: **4.4.6 — symbol-search response contract + Stage 4.4 exit regression cl
 - all Stage 4.4.1–4.4.6 contract guards pass together;
 - TypeScript, full tests, and production build are green.
 
-Passing this gate closes **Stage 4.4**. Next: **Stage 4.5 — CSS ownership consolidation**, executed in granular sub-passes.
+### 4.4.6 acceptance record
+
+Accepted through PR #60 at `main@ff9b6abd`.
+
+Quality Checks #37249185251 passed:
+
+- TypeScript;
+- **113 / 113 test files, 623 / 623 tests**;
+- production build.
+
+The final shared-contract gap was the TradingView symbol-search success path. Worker and Express now normalize both known provider envelope forms through the same response contract, return retryable HTTP 502 responses for invalid JSON/malformed successful payloads, and expose the same stable app-facing array.
+
+The browser logo resolver now uses the canonical route and shared parser. The exit audit also removed the remaining ordinary app-owned hard-coded historical-repair API route and added a source guard preventing new `/api/*` literals outside `src/api/contracts.ts` in normal TypeScript/TSX application code.
+
+The API reference was aligned with the accepted health, scanner, symbol-search and error contracts.
+
+**Stage 4.4 is CLOSED / CI GREEN.**
+
+Next: **Stage 4.5 — CSS ownership consolidation**, executed in granular sub-passes.

@@ -54,6 +54,7 @@ describe('Stage 4.4 shared Worker/Express API contracts', () => {
       expect(runtime).toContain('parseHistoricalPriceQuery');
       expect(runtime).toContain('parseEgxScannerRequest');
       expect(runtime).toContain('parseEgxScannerResponse');
+      expect(runtime).toContain('parseTradingViewSymbolSearchResponse');
       expect(runtime).toContain('requireSymbolSearchText');
       expect(runtime).toContain('createClassifiedAuthErrorResponse');
       expect(runtime).toContain('createApiErrorResponse');

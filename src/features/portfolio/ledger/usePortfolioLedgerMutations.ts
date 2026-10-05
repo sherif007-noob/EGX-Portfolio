@@ -7,6 +7,7 @@ import type {
 } from '../../../types';
 import {
   createLedgerMutationExecutor,
+  prepareBonusSharesMutation,
   prepareBuyTradeMutation,
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
@@ -48,6 +49,16 @@ export interface BuyTradeInput {
   stopLoss?: number;
   notes?: string;
   cycleTag?: string;
+}
+
+export interface BonusSharesInput {
+  position: Position;
+  awardedShares: number;
+  effectiveDate: string;
+  executedAt?: string;
+  ratio?: number;
+  reference?: string;
+  notes?: string;
 }
 
 export interface SellTradeInput {
@@ -119,6 +130,20 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     (current) => prepareBuyTradeMutation(current, {
       transactionId: `tx-${crypto.randomUUID()}`,
       ...tradeInput,
+    }),
+  ), [executePreparedMutation]);
+
+  const addBonusShares = useCallback((input: BonusSharesInput) => executePreparedMutation<TradeTransaction>(
+    'BONUS_SHARES',
+    (current) => prepareBonusSharesMutation(current, {
+      transactionId: `ca-${crypto.randomUUID()}`,
+      positionId: input.position.id,
+      awardedShares: input.awardedShares,
+      effectiveDate: input.effectiveDate,
+      executedAt: input.executedAt,
+      ratio: input.ratio,
+      reference: input.reference,
+      notes: input.notes,
     }),
   ), [executePreparedMutation]);
 
@@ -250,6 +275,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
 
   return {
     addTrade,
+    addBonusShares,
     sellPosition,
     editTransaction,
     deleteTransaction,

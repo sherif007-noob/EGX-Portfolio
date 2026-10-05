@@ -92,20 +92,20 @@ describe('Stage 4.5.5 interaction-surface ownership', () => {
     );
   });
 
-  it('leaves responsive and feature-specific residue for the final 4.5.6 pass', () => {
+  it('hands responsive and feature-specific residue to the final 4.5.6 owners', () => {
     const legacy = read('src/index.css');
+    const responsive = read('src/styles/responsive.css');
+    const header = read('src/styles/features/header.css');
+    const charts = read('src/styles/features/charts.css');
 
-    expect(legacy).toContain('@media (max-width: 767px), (pointer: coarse) {');
-    expect(legacy).toContain('.premium-header-action-rail .premium-action');
-    expect(legacy).toContain('.premium-fixed-mobile-span {');
-    expect(legacy).toContain('.premium-fixed-bottom-safe {');
-    expect(legacy).toContain('.premium-fixed-bottom-above-status {');
-    expect(legacy).toContain('Phase 9.6 — mobile command architecture');
-
-    const overlays = read('src/styles/overlays.css');
-    expect(overlays).not.toContain('.premium-fixed-mobile-span {');
-    expect(overlays).not.toContain('.premium-fixed-bottom-safe {');
-    expect(legacy).toContain('Phase 10.9 — cross-app responsive containment');
-    expect(legacy).toContain('.premium-chart-skeleton');
+    expect(legacy.trim()).toBe('@import "tailwindcss";\n@import "./styles/index.css";');
+    expect(responsive).toContain('@media (max-width: 767px), (pointer: coarse) {');
+    expect(responsive).toContain('.premium-fixed-mobile-span {');
+    expect(responsive).toContain('.premium-fixed-bottom-safe {');
+    expect(responsive).toContain('.premium-fixed-bottom-above-status {');
+    expect(responsive).toContain('Phase 10.9 — cross-app responsive containment');
+    expect(header).toContain('Phase 9.6 — mobile command architecture');
+    expect(header).toContain('.premium-header-action-rail .premium-action');
+    expect(charts).toContain('.premium-chart-skeleton');
   });
 });

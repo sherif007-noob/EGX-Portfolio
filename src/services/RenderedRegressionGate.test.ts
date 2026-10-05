@@ -11,6 +11,9 @@ describe('rendered visual regression gate', () => {
 
     expect(script).toContain("if (item.status === 'failed')");
     expect(script).toContain("report.errors.push(\`${item.name}: ${detail}\`)");
+    expect(script.indexOf("report.errors.push(\`${item.name}: ${detail}\`)")).toBeLessThan(
+      script.indexOf('await fs.writeFile(reportPath'),
+    );
     expect(script).toContain('process.exitCode = 1');
   });
 
@@ -20,5 +23,6 @@ describe('rendered visual regression gate', () => {
 
     expect(rendered).toContain("VISUAL_MAX_DIFF_RATIO: '0.01'");
     expect(closure).toContain("VISUAL_MAX_DIFF_RATIO: '0.01'");
+    expect(closure).toContain("VISUAL_REQUIRE_BASELINE: 'true'");
   });
 });

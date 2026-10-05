@@ -208,7 +208,7 @@ The first PR CI run failed only because the new guard miscounted responsive root
 Next: **4.5.3 — neutral material extraction**.
 
 
-## 4.5.3.1 — Shared neutral material/refraction primitives — VALIDATION IN PROGRESS
+## 4.5.3.1 — Shared neutral material/refraction primitives — ACCEPTED / CI + RENDERED GREEN
 
 Stage 4.5.3 is split because the legacy material system spans both reusable primitives and later composite/Phase-8 restoration rules. They are validated separately so a cascade regression can be isolated.
 
@@ -251,4 +251,28 @@ Move only reusable neutral material ownership into `src/styles/materials.css`:
 - TypeScript, full tests, and production build are green;
 - main-push rendered regression remains inside the frozen Phase 10 baseline.
 
-Next after acceptance: **4.5.3.2 — composite + Phase 8 material restoration closure**.
+### 4.5.3.1 acceptance record
+
+Accepted through PR #63 at `main@1948c41a`.
+
+PR Quality Checks #37285896557 passed:
+
+- TypeScript;
+- **116 / 116 test files, 638 / 638 tests**;
+- production build.
+
+Main-push closure also passed:
+
+- Quality Checks #37286043290;
+- Phase 10 Visual Closure #37286043106;
+- production Vite/PWA build;
+- Cloudflare Worker compile + Wrangler dry-run;
+- Rendered Visual Regression #37286043136;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs stayed exactly on the frozen profile: 14 states at **0.000%**, Positions desktop at **0.021%**, and Closed Cycles desktop at **0.012%**.
+
+This sub-pass moved only the shared neutral surface/refraction primitives. Composite Reports/table/dropdown/modal material, the mixed card material block, and Phase 8 hierarchy-linked restoration remain in the legacy stylesheet for the next isolated gate.
+
+Next: **4.5.3.2 — composite + Phase 8 material restoration closure**.

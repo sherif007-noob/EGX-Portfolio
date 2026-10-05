@@ -94,12 +94,12 @@ describe('Phase 10.1 primitive and token ownership', () => {
 
   it('treats responsive hierarchy token overrides as intentional rather than duplicate ownership', () => {
     const hierarchy = readRelative('../styles/hierarchy.css');
-    const legacy = readRelative('../index.css');
+    const responsive = readRelative('../styles/responsive.css');
 
     expect(hierarchy).toContain('/* Pass 8.4.4 — canonical spacing rhythm.');
-    expect(legacy).toContain('@media (max-width: 767px)');
-    expect(legacy).toContain('/* Pass 8.6 — narrow-phone hierarchy guard.');
-    expect(legacy).toContain('@media (max-width: 390px)');
+    expect(responsive).toContain('@media (max-width: 767px)');
+    expect(responsive).toContain('/* Pass 8.6 — narrow-phone hierarchy guard.');
+    expect(responsive).toContain('@media (max-width: 390px)');
   });
 
   it('preserves Phase 8 material and Phase 9 header boundaries', () => {

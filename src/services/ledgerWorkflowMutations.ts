@@ -43,6 +43,21 @@ function canonicalizeEditedTrade(transaction: TradeTransaction): TradeTransactio
     return normalized;
   }
 
+  if (normalized.type === 'BONUS_SHARES') {
+    return {
+      ...normalized,
+      price: 0,
+      fees: 0,
+      totalAmount: 0,
+      grossTradeValue: 0,
+      netCashImpact: 0,
+      realizedPnlEgp: undefined,
+      realizedPnlPercent: undefined,
+      outcome: undefined,
+      holdingDays: undefined,
+    };
+  }
+
   const grossTradeValue = normalized.shares * normalized.price;
   if (normalized.type === 'BUY') {
     const impact = calculateBuyImpact(normalized.shares, normalized.price, normalized.fees || 0);

@@ -1,0 +1,198 @@
+/*
+ * Stage 4.5.6 — Reports/Overview feature ownership.
+ * Report-specific table contracts, hero cards and monthly audit structure.
+ */
+
+/* Hero-level report metrics use the same hierarchy as the dashboard hero cards. */
+.premium-hero-metric,
+.premium-report-hero {
+  position: relative;
+  border: 1px solid rgba(148,163,184,0.20);
+  background:
+    radial-gradient(circle at 16% -20%, rgba(34,211,238,0.07), transparent 38%),
+    linear-gradient(160deg, rgba(255,255,255,0.045), transparent 42%),
+    rgba(15,23,42,0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.075),
+    0 18px 42px rgba(0,0,0,0.26),
+    0 0 30px rgba(34,211,238,0.045),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+
+.premium-report-hero {
+  overflow: hidden;
+}
+
+/* Phase 6 Pass 4 real-device table contracts.
+ * Dense financial reports must scroll horizontally before their semantic columns
+ * collapse into vertical word stacks.
+ */
+.report-benchmark-table th:nth-child(1),
+.report-benchmark-table td:nth-child(1) {
+  min-width: 19rem;
+}
+
+.report-benchmark-table th:nth-child(2),
+.report-benchmark-table td:nth-child(2) {
+  min-width: 10.5rem;
+}
+
+.report-benchmark-table th:nth-child(3),
+.report-benchmark-table td:nth-child(3) {
+  min-width: 16rem;
+}
+
+.report-benchmark-table th:nth-child(4),
+.report-benchmark-table td:nth-child(4) {
+  min-width: 18rem;
+}
+
+.report-benchmark-table td:nth-child(4) > span {
+  white-space: nowrap;
+}
+
+.report-monthly-table th:nth-child(1),
+.report-monthly-table td:nth-child(1) {
+  min-width: 13rem;
+}
+
+.report-monthly-table th:nth-child(2),
+.report-monthly-table td:nth-child(2) {
+  min-width: 15rem;
+}
+
+.report-monthly-table th:nth-child(3),
+.report-monthly-table td:nth-child(3) {
+  min-width: 6rem;
+}
+
+.report-monthly-table th:nth-child(4),
+.report-monthly-table td:nth-child(4) {
+  min-width: 12rem;
+}
+
+.report-monthly-table th:nth-child(5),
+.report-monthly-table td:nth-child(5) {
+  min-width: 10rem;
+}
+
+.report-monthly-table th:nth-child(6),
+.report-monthly-table td:nth-child(6) {
+  min-width: 13rem;
+}
+
+.report-monthly-table th:nth-child(7),
+.report-monthly-table td:nth-child(7) {
+  min-width: 8rem;
+}
+
+.report-monthly-table td:nth-child(2) > span {
+  white-space: nowrap;
+}
+
+
+/* Phase 6 benchmark scorecards — hero-tier glass and semantic halo.
+ * These are the responsive equivalent of the institutional benchmark table,
+ * so they deliberately use the same visual hierarchy as accepted hero metrics,
+ * not the low-intensity report-glass-soft surface.
+ */
+.premium-report-hero-card {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+  --premium-report-hero-rgb: 56 189 248;
+  --premium-report-hero-deep-rgb: 37 99 235;
+  border-color: rgb(var(--premium-report-hero-rgb) / 0.52) !important;
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--premium-report-hero-rgb) / 0.19), transparent 38%),
+    radial-gradient(circle at 102% 0%, rgb(var(--premium-report-hero-deep-rgb) / 0.10), transparent 44%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(12, 20, 39, 0.66) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 18px 44px rgba(0, 0, 0, 0.30),
+    0 0 34px rgb(var(--premium-report-hero-rgb) / 0.22),
+    0 0 76px rgb(var(--premium-report-hero-deep-rgb) / 0.10),
+    var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(158%) !important;
+  backdrop-filter: blur(24px) saturate(158%) !important;
+}
+
+.premium-report-tone-positive {
+  --premium-report-hero-rgb: 16 185 129;
+  --premium-report-hero-deep-rgb: 5 150 105;
+}
+
+.premium-report-tone-negative {
+  --premium-report-hero-rgb: 244 63 94;
+  --premium-report-hero-deep-rgb: 225 29 72;
+}
+
+.premium-report-tone-warning,
+.premium-report-tone-amber {
+  --premium-report-hero-rgb: 245 158 11;
+  --premium-report-hero-deep-rgb: 217 119 6;
+}
+
+.premium-report-tone-blue {
+  --premium-report-hero-rgb: 59 130 246;
+  --premium-report-hero-deep-rgb: 37 99 235;
+}
+
+.premium-report-tone-purple {
+  --premium-report-hero-rgb: 168 85 247;
+  --premium-report-hero-deep-rgb: 126 34 206;
+}
+
+.premium-report-tone-cyan {
+  --premium-report-hero-rgb: 34 211 238;
+  --premium-report-hero-deep-rgb: 8 145 178;
+}
+
+.premium-report-tone-neutral {
+  --premium-report-hero-rgb: 148 163 184;
+  --premium-report-hero-deep-rgb: 71 85 105;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-report-hero-card:hover {
+    border-color: rgb(var(--premium-report-hero-rgb) / 0.70) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.11),
+      0 24px 56px rgba(0, 0, 0, 0.34),
+      0 0 42px rgb(var(--premium-report-hero-rgb) / 0.30),
+      0 0 90px rgb(var(--premium-report-hero-deep-rgb) / 0.14),
+      var(--premium-refraction-shadow, 0 0 0 transparent) !important;
+  }
+}
+
+
+/* Monthly Audit hierarchy: the month container is structural, not semantic.
+ * Profit/loss state belongs to the month badge/summary and individual audit cards,
+ * so the outer shell keeps neutral frosted depth with no colored halo.
+ */
+.premium-month-audit-shell {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.012) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.026), transparent 42%, rgba(139,92,246,0.026)),
+    rgba(10, 18, 36, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 42px rgba(0, 0, 0, 0.26);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Structural shell: never present itself as an interactive card. */
+.premium-month-audit-shell:hover,
+.premium-month-audit-shell:active {
+  transform: none !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 42px rgba(0, 0, 0, 0.26) !important;
+}

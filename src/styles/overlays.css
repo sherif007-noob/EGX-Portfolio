@@ -110,24 +110,6 @@
     );
   }
 
-  .premium-fixed-mobile-span {
-    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
-    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
-    width: auto;
-    max-width: none;
-  }
-
-  .premium-fixed-bottom-safe {
-    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
-  }
-
-  .premium-fixed-bottom-above-status {
-    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
-  }
-
-  .premium-fixed-top-after-header {
-    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
-  }
 }
 
 /* Keep open glass dropdowns above following cards and tables. */

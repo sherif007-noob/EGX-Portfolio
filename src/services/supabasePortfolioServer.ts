@@ -140,7 +140,10 @@ function mapTransaction(row: any, portfolioId: string) {
     trade_cycle: row.tradeCycle ?? row.trade_cycle ?? null, cycle_tag: row.cycleTag ?? row.cycle_tag ?? null, running_shares: row.runningShares ?? row.running_shares ?? null,
     gross_trade_value: row.grossTradeValue ?? row.gross_trade_value ?? null, net_cash_impact: row.netCashImpact ?? row.net_cash_impact ?? null, realized_pnl_egp: row.realizedPnlEgp ?? row.realized_pnl_egp ?? null,
     realized_pnl_percent: row.realizedPnlPercent ?? row.realized_pnl_percent ?? null, outcome: row.outcome ?? null, holding_days: row.holdingDays ?? row.holding_days ?? null,
-    position_id: row.positionId ?? row.position_id ?? null, created_at: toDate(row.createdAt ?? row.created_at) ?? new Date().toISOString(), updated_at: new Date().toISOString(),
+    position_id: row.positionId ?? row.position_id ?? null,
+    corporate_action_ratio: row.corporateActionRatio ?? row.corporate_action_ratio ?? null,
+    corporate_action_reference: row.corporateActionReference ?? row.corporate_action_reference ?? null,
+    created_at: toDate(row.createdAt ?? row.created_at) ?? new Date().toISOString(), updated_at: new Date().toISOString(),
   };
 }
 

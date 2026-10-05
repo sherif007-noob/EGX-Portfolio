@@ -343,7 +343,7 @@ The first CI run failed only because the historical 4.5.3.1 guard still required
 Next: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**.
 
 
-## 4.5.3.2.2.1 — Base composite card + neutral overlay material bodies — VALIDATION IN PROGRESS
+## 4.5.3.2.2.1 — Base composite card + neutral overlay material bodies — ACCEPTED / CI + RENDERED GREEN
 
 ### Scope
 
@@ -381,4 +381,28 @@ Next: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure
 - TypeScript, full tests and production build are green;
 - rendered regression remains inside the frozen Phase 10 baseline.
 
-Next after acceptance: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**.
+### 4.5.3.2.2.1 acceptance record
+
+Accepted through PR #65 at `main@5f5a1d1e`.
+
+PR Quality Checks #37332186760 passed:
+
+- TypeScript;
+- **118 / 118 test files, 649 / 649 tests**;
+- production build.
+
+Main-push closure also passed:
+
+- Quality Checks #37332396137;
+- Phase 10 Visual Closure #37332396168;
+- production Vite/PWA build;
+- Cloudflare Worker compile + Wrangler dry-run;
+- Rendered Visual Regression #37332396116;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+The rendered matrix remained within the frozen Phase 10 threshold. Highest observed diffs were Add Trade phone **0.282%**, Transaction Edit desktop **0.041%**, Positions desktop **0.026%**, Journal desktop **0.022%**, and Closed Cycles desktop **0.012%**; all other captured states were **0.000%**.
+
+The first CI attempt failed only because two historical dropdown visual guards still read the canonical glass recipe from `src/index.css`. Those guards were advanced to the new `materials.css` owner; no runtime CSS value changed.
+
+Next: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**.

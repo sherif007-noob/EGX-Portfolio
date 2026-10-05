@@ -282,6 +282,13 @@ for (const item of report.comparisons) {
   console.log(
     `[visual] ${item.name}: ${item.status}${typeof item.diffRatio === 'number' ? ` diff=${(item.diffRatio * 100).toFixed(3)}%` : ''}`,
   );
+
+  if (item.status === 'failed') {
+    const detail = item.reason
+      ? item.reason
+      : `diff=${((item.diffRatio ?? 0) * 100).toFixed(3)}% exceeds ${(maxDiffRatio * 100).toFixed(3)}%`;
+    report.errors.push(`${item.name}: ${detail}`);
+  }
 }
 if (report.errors.length) {
   for (const error of report.errors) console.error(`[visual-error] ${error}`);

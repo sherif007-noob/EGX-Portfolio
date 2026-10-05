@@ -20,3 +20,5 @@
 @import "./motion.css" layer(egx-motion);
 @import "./responsive.css" layer(egx-responsive);
 @import "./features/index.css" layer(egx-features);
+/* Unlayered important fallback; see cascade-bridge.css for the precedence contract. */
+@import "./cascade-bridge.css";

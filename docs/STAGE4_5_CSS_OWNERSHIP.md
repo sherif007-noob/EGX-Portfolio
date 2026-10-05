@@ -718,10 +718,50 @@ No compensating CSS values and no new `!important` patches are permitted.
 
 ### Recovery sequence
 
-- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — IN PROGRESS**
+- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — MERGED / POST-MERGE RENDERED VALIDATION PENDING** via PR #72 at `main@e5f12297`
 - restore hierarchy-card body to `src/index.css`;
 - restore the three historical guards to their accepted ownership boundary;
 - remove the rejected 4.5.3.2.2.2.4 guard;
 - prove the frozen rendered profile is back before choosing a different next slice.
 
 After recovery, do **not** retry the hierarchy-card body unchanged. The next Stage 4.5 move must first address the competing unlayered ownership boundary that makes the body unsafe to layer.
+
+
+## 4.5.3.2.2.2.5 — Generic card hover material interaction — VALIDATION CANDIDATE
+
+This pass addresses one remaining generic unlayered material competitor without touching the rejected hierarchy-card body.
+
+### Scope
+
+Move only:
+
+- generic `.premium-card:hover` border-color;
+- generic hover box-shadow/refraction;
+- generic `.premium-card:hover::before` opacity.
+
+Keep hover translation in the legacy/motion owner.
+
+### Explicitly retained unlayered
+
+- hierarchy-card resting body;
+- hierarchy-card highlight body;
+- explicit material-tone hierarchy-card body;
+- neutral hierarchy-card hover;
+- mobile hierarchy-card/panel overrides;
+- every semantic hierarchy-card rule.
+
+### Safety rationale
+
+The failed 4.5.3.2.2.2.4 move proved the hierarchy-card body cannot yet enter the named layer. This pass does not retry it. It only removes the generic card hover material from the unlayered cascade while preserving hierarchy-card dominance because the hierarchy body remains unlayered.
+
+### Acceptance
+
+- no declaration-value change;
+- only generic hover material moves;
+- hover translation remains unlayered;
+- rejected hierarchy-card body remains unlayered;
+- TypeScript, full tests and production build are green;
+- do not merge until the recovery main head is confirmed rendered-green;
+- after merge, all frozen rendered states must remain below the 1% threshold.
+
+Next after acceptance: re-audit the non-hover unlayered competitors responsible for the hierarchy-body failure before any hierarchy-body retry.

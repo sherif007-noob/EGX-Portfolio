@@ -114,8 +114,8 @@ Next:
 1. Confirm **4.5.3.2.2.2.4.R** restored the accepted `54530841` rendered profile on `main@e5f12297`
 2. Validate **4.5.3.2.2.2.5 — cascade-safe hierarchy shell** without moving the important background or interaction-sensitive border/shadow
 3. Continue Stage 4.5 in small visual-preserving sub-passes
-3. Stage 5 Reports workspace redesign
-4. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
+4. Stage 5 Reports workspace redesign
+5. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
 
 ---
 

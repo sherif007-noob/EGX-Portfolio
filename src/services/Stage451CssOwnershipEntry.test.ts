@@ -47,9 +47,10 @@ describe('Stage 4.5.1 CSS ownership entry contract', () => {
     }
   });
 
-  it('keeps every new ownership module declaration-free at the 4.5.1 gate', () => {
+  it('keeps later ownership modules declaration-free until their granular passes', () => {
+    expect(stripComments(read('src/styles/tokens.css'))).not.toBe('');
+
     for (const path of [
-      'src/styles/tokens.css',
       'src/styles/materials.css',
       'src/styles/semantics.css',
       'src/styles/hierarchy.css',

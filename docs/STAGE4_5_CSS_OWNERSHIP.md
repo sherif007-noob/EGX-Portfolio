@@ -830,7 +830,7 @@ The important-background problem is now resolved structurally: explicit tone and
 
 Next is **4.5.5 — interaction surfaces**.
 
-## 4.5.5 — Interaction surfaces — VALIDATION CANDIDATE
+## 4.5.5 — Interaction surfaces — ACCEPTED / SOURCE + RENDERED GREEN
 
 This compressed pass consolidates the reusable interaction vocabulary without pulling responsive or feature-specific ownership forward.
 
@@ -872,6 +872,17 @@ The mobile fixed-overlay important family is deliberately **not** moved into `eg
 - TypeScript, full tests and production build pass;
 - Phase 10 Visual Closure passes;
 - Rendered Visual Regression remains within the accepted threshold.
+
+### 4.5.5 acceptance record
+
+Accepted through PR #83 at `main@6eb83877`.
+
+Evidence:
+- exact-head PR Quality Checks #37372111721 — passed TypeScript, full Vitest and production build;
+- main Quality Checks #37374105870 — passed;
+- Phase 10 Visual Closure #37374105847 — passed TypeScript, **127 / 127 test files and 684 / 684 tests**, production Vite/PWA build, Cloudflare Worker dry-run and all 16 rendered states;
+- rendered diffs: 14 states at **0.000%**, Closed Cycles desktop **0.032%**, Transaction Edit desktop **0.145%**, all below the frozen 1% threshold;
+- separate Rendered Visual Regression #37374105922 remains queued during the GitHub-hosted-runner assignment incident. Phase 10 executed the same pinned Playwright 1.55 deterministic build and `scripts/renderedRegression.mjs` with the same baseline requirement, 1% max diff and channel tolerance, so there is no missing rendered evidence and no failed rendered state.
 
 After acceptance, the only remaining Stage 4.5 pass is **4.5.6 — responsive + feature/legacy closure**.
 

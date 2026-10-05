@@ -204,6 +204,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     () => transactions.filter((t) => t.type === 'SELL').length,
     [transactions]
   );
+  const corporateActionCount = useMemo(
+    () => transactions.filter((t) => t.type === 'BONUS_SHARES').length,
+    [transactions]
+  );
 
   // Identify transactions corresponding to currently active open positions
   const openTickersSet = useMemo(
@@ -353,6 +357,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const handleOpenEditModal = (tx: TradeTransaction) => {
+    if (tx.type === 'BONUS_SHARES') return;
     setEditingTx(tx);
     setEditType(tx.type);
     setEditTicker(tx.ticker);
@@ -526,7 +531,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
               {transactions.length}{' '}
               <span className="premium-type-metadata font-normal">
-                ({buyCount}B / {sellCount}S)
+                ({buyCount}B / {sellCount}S / {corporateActionCount}CA)
               </span>
             </span>
           </div>
@@ -756,6 +761,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
+          const isBonusShares = tx.type === 'BONUS_SHARES';
           const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
           const isWinningSell = !!sellMetrics?.isWin;
           const isLosingSell = !!sellMetrics?.isLoss;
@@ -765,15 +771,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           const isOpenPosition = isBuy && openTickersSet.has(tx.ticker.toUpperCase());
           const grossAmount = tx.shares * tx.price;
-          const totalOutlayOrProceeds =
-            tx.totalAmount ||
-            (isBuy ? grossAmount + (tx.fees || 0) : Math.max(0, grossAmount - (tx.fees || 0)));
+          const totalOutlayOrProceeds = isBonusShares
+            ? 0
+            : tx.totalAmount ||
+              (isBuy ? grossAmount + (tx.fees || 0) : Math.max(0, grossAmount - (tx.fees || 0)));
 
           return (
             <div
               key={tx.id}
               className={`premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 premium-flow-control rounded-2xl border transition relative overflow-hidden ${
-                isBuy
+                isBonusShares
+                  ? 'premium-material-tone-emerald'
+                  : isBuy
                   ? 'premium-glow-buy'
                   : isWinningSell
                   ? 'premium-glow-win'
@@ -806,7 +815,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                       )}
 
                       {/* Transaction Type Tag */}
-                      {isBuy ? (
+                      {isBonusShares ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 bg-emerald-500/15 text-emerald-300 border-emerald-500/35">
+                          <Sparkles className="w-3 h-3" />
+                          BONUS SHARES
+                        </span>
+                      ) : isBuy ? (
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
                             tx.isDCA
@@ -862,7 +876,14 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 {/* Right side: Financial Impact & Delete Action */}
                 <div className="flex w-full items-center justify-between gap-3 text-left sm:w-auto sm:justify-end sm:text-right">
                   <div>
-                    {isSell ? (
+                    {isBonusShares ? (
+                      <>
+                        <div className="premium-type-metric premium-type-metric-dense font-mono text-emerald-300">
+                          +{tx.shares.toLocaleString()} <span className="premium-type-unit">shares</span>
+                        </div>
+                        <div className="premium-type-metadata">No cash flow · cost basis preserved</div>
+                      </>
+                    ) : isSell ? (
                       <>
                         <div
                           className={`premium-type-metric premium-type-metric-dense font-mono ${
@@ -910,13 +931,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   {/* Edit and Delete Actions */}
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleOpenEditModal(tx)}
-                      title="Edit Transaction Record"
-                      className="premium-icon-action premium-icon-edit p-2 rounded-xl"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
+                    {!isBonusShares && (
+                      <button
+                        onClick={() => handleOpenEditModal(tx)}
+                        title="Edit Transaction Record"
+                        className="premium-icon-action premium-icon-edit p-2 rounded-xl"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(tx)}
                       title="Delete Transaction Record"
@@ -931,7 +954,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* Row 2: Detailed Transaction Attributes Grid */}
               <div className="premium-inset-glass premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs" data-hierarchy="h4">
                 <div>
-                  <span className="premium-type-metric-label block">Transaction Shares</span>
+                  <span className="premium-type-metric-label block">{isBonusShares ? 'Awarded Shares' : 'Transaction Shares'}</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {tx.shares.toLocaleString()} shares
                   </span>
@@ -939,10 +962,12 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
+                    {isBonusShares ? 'Bonus Ratio' : isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
-                    {formatEgp(tx.price)} EGP
+                    {isBonusShares
+                      ? (tx.corporateActionRatio != null ? `${tx.corporateActionRatio.toFixed(6)} / share` : 'Recorded by actual shares')
+                      : `${formatEgp(tx.price)} EGP`}
                   </span>
                 </div>
 
@@ -962,18 +987,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
 
                 <div>
-                  <span className="premium-type-metric-label block">Brokerage Fee</span>
-                  <span className="premium-type-metric premium-type-metric-dense font-mono text-amber-400">
-                    {tx.fees ? `${formatEgp(tx.fees)} EGP` : '0.00 EGP'}
+                  <span className="premium-type-metric-label block">{isBonusShares ? 'Corporate Action Ref.' : 'Brokerage Fee'}</span>
+                  <span className={`premium-type-metric premium-type-metric-dense font-mono ${isBonusShares ? 'text-emerald-300' : 'text-amber-400'}`}>
+                    {isBonusShares ? (tx.corporateActionReference || '—') : tx.fees ? `${formatEgp(tx.fees)} EGP` : '0.00 EGP'}
                   </span>
                 </div>
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
+                    {isBonusShares ? 'Cash Impact' : isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
-                    {formatEgp(totalOutlayOrProceeds)} EGP
+                    {isBonusShares ? '0.00 EGP' : `${formatEgp(totalOutlayOrProceeds)} EGP`}
                   </span>
                 </div>
               </div>

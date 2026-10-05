@@ -1,0 +1,22 @@
+/*
+ * Stage 4.5.4 — unlayered important fallback bridge.
+ *
+ * The hierarchy-card neutral background remains !important for compatibility,
+ * but it must rank below layered material-tone and financial-semantic important
+ * backgrounds. Important declarations reverse named-layer priority, while an
+ * unlayered important declaration ranks below every layered important owner.
+ *
+ * This file therefore contains only the neutral fallback that cannot safely
+ * belong to a named owner layer without changing the accepted cascade.
+ */
+.premium-card.premium-hierarchy-h1,
+.premium-card.premium-hierarchy-h2,
+.premium-card.premium-hierarchy-h3,
+.premium-card.premium-hierarchy-h4,
+.premium-card.premium-hierarchy-h5 {
+  background:
+    radial-gradient(circle at 16% -18%, rgb(var(--phase8-material-rgb) / 0.145), transparent 40%),
+    radial-gradient(circle at 102% 0%, rgb(var(--phase8-material-deep-rgb) / 0.085), transparent 46%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.012) 42%, transparent 70%),
+    rgba(10, 18, 36, 0.54) !important;
+}

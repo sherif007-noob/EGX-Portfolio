@@ -22,6 +22,17 @@ export interface PrepareBuyTradeInput {
   cycleTag?: string;
 }
 
+export interface PrepareBonusSharesInput {
+  transactionId: string;
+  positionId: string;
+  awardedShares: number;
+  effectiveDate: string;
+  executedAt?: string;
+  ratio?: number;
+  reference?: string;
+  notes?: string;
+}
+
 export interface PrepareSellTradeInput {
   transactionId: string;
   positionId: string;
@@ -103,6 +114,69 @@ export function prepareBuyTradeMutation(
   return {
     transactions: [transaction, ...current.transactions],
     positionSeed: updateBuyMetadataSeed(current.positions, ticker, input),
+    value: transaction,
+  };
+}
+
+export function prepareBonusSharesMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: PrepareBonusSharesInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const position = current.positions.find((candidate) => candidate.id === input.positionId);
+  if (!position) {
+    throw new Error('The position changed before the bonus-share action could be saved. Reload and try again.');
+  }
+
+  const awardedShares = Number(input.awardedShares);
+  if (!Number.isFinite(awardedShares) || awardedShares <= 0) {
+    throw new Error('Bonus shares must be greater than zero.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}/.test(input.effectiveDate) || !Number.isFinite(Date.parse(input.effectiveDate))) {
+    throw new Error('Bonus-share effective date is invalid.');
+  }
+
+  const beforeShares = Number(position.shares);
+  if (!Number.isFinite(beforeShares) || beforeShares <= 0) {
+    throw new Error('Bonus shares require an open position with positive shares.');
+  }
+
+  const factor = (beforeShares + awardedShares) / beforeShares;
+  const ratio = Number.isFinite(input.ratio) && Number(input.ratio) > 0
+    ? Number(input.ratio)
+    : awardedShares / beforeShares;
+
+  const transaction: TradeTransaction = {
+    id: input.transactionId,
+    type: 'BONUS_SHARES',
+    corporateActionType: 'BONUS_SHARES',
+    corporateActionRatio: ratio,
+    corporateActionReference: input.reference?.trim() || undefined,
+    ticker: position.ticker.trim().toUpperCase(),
+    companyName: position.companyName,
+    sector: position.sector,
+    shares: awardedShares,
+    price: 0,
+    date: input.effectiveDate,
+    executedAt: input.executedAt,
+    fees: 0,
+    totalAmount: 0,
+    grossTradeValue: 0,
+    netCashImpact: 0,
+    notes: input.notes || '',
+  };
+
+  const positionSeed = current.positions.map((candidate) => {
+    if (candidate.id !== position.id) return candidate;
+    return {
+      ...candidate,
+      targetPrice: candidate.targetPrice != null ? candidate.targetPrice / factor : undefined,
+      stopLoss: candidate.stopLoss != null ? candidate.stopLoss / factor : undefined,
+    };
+  });
+
+  return {
+    transactions: [transaction, ...current.transactions],
+    positionSeed,
     value: transaction,
   };
 }

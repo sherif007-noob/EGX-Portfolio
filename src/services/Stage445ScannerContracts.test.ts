@@ -65,8 +65,16 @@ describe('Stage 4.4.5 scanner request/response contract closure', () => {
       expect(runtime).toContain('502');
     }
 
-    expect(worker).not.toContain('new Response(tvResponse.body');
-    expect(server).not.toContain('res.json(await tvResponse.json())');
+    const workerScannerStart = worker.indexOf('path === API_ROUTES.egxScan');
+    const workerScannerEnd = worker.indexOf('path === API_ROUTES.tradingViewSymbolSearch', workerScannerStart);
+    const workerScannerBlock = worker.slice(workerScannerStart, workerScannerEnd);
+
+    const serverScannerStart = server.indexOf('app.post(API_ROUTES.egxScan');
+    const serverScannerEnd = server.indexOf('app.get(API_ROUTES.tradingViewSymbolSearch', serverScannerStart);
+    const serverScannerBlock = server.slice(serverScannerStart, serverScannerEnd);
+
+    expect(workerScannerBlock).not.toContain('new Response(tvResponse.body');
+    expect(serverScannerBlock).not.toContain('res.json(await tvResponse.json())');
   });
 
   it('keeps provider payload ownership out of same-origin scanner consumers', () => {

@@ -38,7 +38,8 @@ describe('Stage 4.5.4 semantics + hierarchy ownership', () => {
     expect(semantics).toContain('rgba(12, 20, 39, 0.58) !important;');
     expect(semantics).not.toContain('.premium-material-tone-cyan');
 
-    expect(hierarchy).not.toContain('background:');
+    expect(hierarchy).not.toContain('rgba(10, 18, 36, 0.54)');
+    expect(hierarchy).not.toContain('radial-gradient(');
     expect(hierarchy).not.toContain('.premium-glow-win');
     expect(hierarchy).not.toContain('.premium-material-tone-cyan');
   });

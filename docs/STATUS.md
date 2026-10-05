@@ -116,9 +116,10 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. **Stage 5 / Reports R1 — Workspace architecture**: introduce Reports internal modes (Overview, Analytics, Trading, Allocation, Monthly) with last-mode persistence and zero calculation change.
-2. Continue Stage 5 through the frozen Reports redesign plan only after each workspace gate preserves calculation parity.
-3. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+1. **Stage 5 / Reports R1 — Workspace architecture — VALIDATION CANDIDATE**: five internal modes, dedicated horizontal Reports navigation, `reports:lastMode` persistence, safe Overview fallback, and mode-keyed MotionSwap are implemented with the existing long Reports body preserved unchanged.
+2. Accept R1 only after TypeScript, full tests, production build and rendered visual regression are green.
+3. After R1 acceptance, begin **R2 — split the current long Reports page into Analytics / Trading / Allocation / Monthly workspaces without redesigning calculations or content.**
+4. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 
@@ -1184,6 +1185,18 @@ Current domain authorities:
 ---
 
 ## Current pass
+
+**Stage 5 / Reports R1 — Workspace architecture — VALIDATION CANDIDATE.**
+
+Implementation boundary:
+- report-mode state only;
+- `ReportsNavigation` only;
+- last-mode persistence only;
+- established report-mode swap transition only;
+- current long-form report contents intentionally remain together until R2;
+- no accounting, analytics, allocation, trading-statistic, monthly-audit, market-data, Supabase or export behavior changed.
+
+
 
 **Stage 4.5.6 — responsive + feature/legacy closure — FINAL VALIDATION CANDIDATE / PR #85.**
 

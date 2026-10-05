@@ -1392,7 +1392,7 @@ Established prerequisites:
 
 The redesign is **information architecture**, not a calculation rewrite.
 
-## R1 — Workspace architecture
+## R1 — Workspace architecture — VALIDATION CANDIDATE
 
 Introduce internal modes:
 
@@ -1868,6 +1868,6 @@ For financial/data changes also require:
 
 The implementation sequence is now:
 
-> **Stage 4 is CLOSED at `main@470b3ce8`. Current execution point: Stage 5 / Reports R1 — Workspace architecture.**
+> **Stage 4 is CLOSED at `main@470b3ce8`. Current execution point: Stage 5 / Reports R1 — Workspace architecture — validation candidate.**
 
-Stage 5 changes information architecture only at R1: internal Reports modes + persistence, with zero calculation change.
+R1 now implements internal Reports modes, dedicated navigation, `reports:lastMode` persistence and mode-keyed workspace transitions while preserving the existing long report body and every trusted calculation. R2 begins only after R1 passes source/build/rendered gates.

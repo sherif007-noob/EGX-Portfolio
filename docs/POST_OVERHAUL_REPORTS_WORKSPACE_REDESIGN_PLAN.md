@@ -2,7 +2,7 @@
 
 ## Status
 
-**SCHEDULED / DEFERRED — integrated as Stage 5 (R1–R8) of `MASTER_STABILIZATION_ROADMAP.md`. Implementation begins only after Phase 10 visual closure, financial mutation integrity, production/automation convergence, and the required architecture ownership work are complete.**
+**ACTIVE — Stage 5 / R1 workspace architecture is implemented as a validation candidate. Entry gates are closed; R1 adds internal Reports modes + last-mode persistence with zero report-calculation changes.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -502,18 +502,28 @@ Existing report components should first be moved into the new architecture with 
 
 # 15. Implementation sequence
 
-## Stage R1 — Report workspace architecture
+## Stage R1 — Report workspace architecture — VALIDATION CANDIDATE
 
-- introduce report-mode state;
-- build ReportsNavigation;
-- introduce last-mode persistence;
-- add report-mode transitions;
-- preserve current long-page contents temporarily while architecture is proven.
+Implemented on branch `stage5-r1-reports-workspace`:
+
+- canonical report-mode contract: Overview / Analytics / Trading / Allocation / Monthly;
+- dedicated `ReportsNavigation` under the Reports heading;
+- synchronous restore from `reports:lastMode` with invalid/stale fallback to Overview;
+- explicit mode changes persist back to `reports:lastMode`;
+- active mode is kept visible inside the horizontal rail;
+- the established `MotionSwap` state transition family is reused;
+- the full existing long-form Reports body remains intact beneath the mode shell.
+
+R1 deliberately does **not** move report sections between modes. That begins in R2.
 
 Acceptance:
 - modes switch reliably;
 - remembered mode restores correctly;
-- no report calculation changes.
+- stale persisted values fall back safely;
+- active mobile mode remains visible in the one-row rail;
+- current Trading/Analytics/Allocation/Monthly content remains present;
+- no report calculation, chart-data, allocation, trading-statistic or monthly-audit logic changes;
+- TypeScript, full tests, production build and rendered regression remain green.
 
 ---
 

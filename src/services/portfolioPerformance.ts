@@ -154,6 +154,8 @@ export function sortPerformanceTransactions(transactions: TradeTransaction[]): T
     const tradeA = Number(a.tradeId);
     const tradeB = Number(b.tradeId);
     if (Number.isFinite(tradeA) && Number.isFinite(tradeB) && tradeA !== tradeB) return tradeA - tradeB;
+    if (a.type === 'BONUS_SHARES' && b.type !== 'BONUS_SHARES') return -1;
+    if (b.type === 'BONUS_SHARES' && a.type !== 'BONUS_SHARES') return 1;
     if (a.type === 'BUY' && b.type === 'SELL') return -1;
     if (a.type === 'SELL' && b.type === 'BUY') return 1;
     return a.id.localeCompare(b.id);
@@ -194,6 +196,13 @@ export function buildHistoricalEquityCurve(
           const amount = Math.abs(Number(tx.cashFlowAmount ?? tx.totalAmount));
           if (!Number.isFinite(amount)) continue;
           cash += tx.type === 'BUY' ? amount : -amount;
+        }
+        continue;
+      }
+      if (tx.type === 'BONUS_SHARES') {
+        const awarded = Number(tx.shares);
+        if (Number.isFinite(awarded) && awarded > 0) {
+          holdings[ticker] = (holdings[ticker] || 0) + awarded;
         }
         continue;
       }

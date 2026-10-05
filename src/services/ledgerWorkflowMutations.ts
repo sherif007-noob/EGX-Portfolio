@@ -19,6 +19,14 @@ import type {
   LedgerMutationPreparation,
 } from './ledgerMutationService';
 
+export interface BonusSharesMutationInput {
+  transactionId: string;
+  ticker: string;
+  creditedShares: number;
+  effectiveDate: string;
+  notes?: string;
+}
+
 export interface PortfolioRestoreInput {
   positions?: Position[];
   closedTrades?: ClosedTrade[];
@@ -108,6 +116,46 @@ export function prepareTransactionDeleteMutation(
     capitalDeposits,
     positionSeed: current.positions,
     value: deleted,
+  };
+}
+
+export function prepareBonusSharesMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: BonusSharesMutationInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const ticker = String(input.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  if (!ticker) throw new Error('Bonus shares require a ticker.');
+  if (!Number.isFinite(input.creditedShares) || input.creditedShares <= 0) {
+    throw new Error('Credited bonus shares must be greater than zero.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}/.test(input.effectiveDate || '') || !Number.isFinite(Date.parse(input.effectiveDate))) {
+    throw new Error('Bonus shares require a valid effective date.');
+  }
+
+  const position = current.positions.find((item) => item.ticker.trim().toUpperCase() === ticker);
+  if (!position) throw new Error(`No open ${ticker} position exists for this bonus-share event.`);
+
+  const transaction: TradeTransaction = {
+    id: input.transactionId,
+    type: 'BONUS_SHARES',
+    ticker,
+    companyName: position.companyName,
+    sector: position.sector,
+    shares: input.creditedShares,
+    price: 0,
+    date: input.effectiveDate.slice(0, 10),
+    fees: 0,
+    totalAmount: 0,
+    netCashImpact: 0,
+    notes: input.notes?.trim() || 'Bonus shares corporate action',
+    positionId: position.id,
+  };
+
+  return {
+    transactions: [...current.transactions, transaction],
+    capitalDeposits: current.capitalDeposits,
+    positionSeed: current.positions,
+    value: transaction,
   };
 }
 

@@ -1,0 +1,7 @@
+/*
+ * Ownership: cross-app breakpoint, safe-area, containment, touch-target and
+ * table/viewport safety rules that are not feature-specific.
+ * Must not redefine material, semantic or hierarchy styling.
+ *
+ * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ */

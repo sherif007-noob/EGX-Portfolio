@@ -1,0 +1,19 @@
+/*
+ * Stage 4.5 canonical stylesheet ownership order.
+ *
+ * The imported ownership modules are intentionally empty at the 4.5.1 gate.
+ * Existing accepted rules remain unlayered in ../index.css until their owning
+ * granular migration pass moves them. That keeps 4.5.1 visually inert.
+ *
+ * Import order is cascade order for normal declarations inside these named
+ * layers. Do not reorder without a dedicated visual-regression pass.
+ */
+@import "./tokens.css" layer(egx-tokens);
+@import "./materials.css" layer(egx-materials);
+@import "./semantics.css" layer(egx-semantics);
+@import "./hierarchy.css" layer(egx-hierarchy);
+@import "./controls.css" layer(egx-controls);
+@import "./overlays.css" layer(egx-overlays);
+@import "./motion.css" layer(egx-motion);
+@import "./responsive.css" layer(egx-responsive);
+@import "./features/index.css" layer(egx-features);

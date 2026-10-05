@@ -1,0 +1,7 @@
+/*
+ * Ownership: CSS-owned transitions, keyframes, reduced-motion fallbacks and
+ * micro-interaction timing. Motion-for-React lifecycle choreography remains
+ * React-owned and must not be duplicated here.
+ *
+ * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ */

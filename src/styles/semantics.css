@@ -105,6 +105,30 @@
   --premium-semantic-hover-far-radius: 86px;
 }
 
+/* Stage 4.5.5 — generic semantic hover interaction presentation. */
+@media (hover: hover) and (pointer: fine) {
+  .premium-card.premium-glow-buy:hover,
+  .premium-card.premium-glow-win:hover,
+  .premium-card.premium-glow-loss:hover,
+  .premium-card.premium-glow-breakeven:hover {
+    border-color: rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-hover-border-alpha, var(--premium-semantic-hover-border-alpha, 0.62)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 22px 52px rgba(0, 0, 0, 0.32),
+      0 0 var(--premium-semantic-role-hover-near-radius, 38px) rgb(var(--premium-semantic-rgb) / var(--premium-semantic-role-hover-near-alpha, var(--premium-semantic-hover-near-alpha, 0.25))),
+      0 0 var(--premium-semantic-role-hover-far-radius, var(--premium-semantic-hover-far-radius, 84px)) rgb(var(--premium-semantic-deep-rgb) / var(--premium-semantic-role-hover-far-alpha, var(--premium-semantic-hover-far-alpha, 0.11))),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-table-shell tbody tr.premium-row-win:hover,
+  .premium-table-shell tbody tr.premium-row-loss:hover,
+  .premium-table-shell tbody tr.premium-row-breakeven:hover {
+    box-shadow:
+      inset 3px 0 0 rgb(var(--premium-row-semantic-rgb) / 0.80),
+      inset 14px 0 28px rgb(var(--premium-row-semantic-rgb) / 0.05);
+  }
+}
+
 /* Desktop table semantics remain edge-only and use the same semantic palette. */
 .premium-row-win {
   --premium-row-semantic-rgb: var(--premium-semantic-win-rgb);

@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import { MotionConfig } from 'motion/react';
 import { SupabaseAuthGate } from './components/SupabaseAuthGate.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import './styles/index.css';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(

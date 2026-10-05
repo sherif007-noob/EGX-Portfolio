@@ -488,3 +488,40 @@ Main-push validation passed:
 The frozen visual profile returned to the accepted baseline: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.041%**, and all remaining states **0.000%**.
 
 Recovery is closed. The retry continues through a smaller non-card material slice.
+
+
+## 4.5.3.2.2.2.1 — Safe non-conflicting Phase 8 material ownership — VALIDATION IN PROGRESS
+
+This retry intentionally excludes the hierarchy-card material bundle that failed rendered validation in PR #66.
+
+### Scope
+
+Move only Phase 8 material families that do not depend on the late card/semantic cascade:
+
+- explicit `premium-material-tone-*` custom-property owners;
+- neutral structural panel/report restoration;
+- market-strip material-tone restoration;
+- inset/detail material;
+- dense-data material;
+- Reports summary-band material;
+- transparent structural-shell material reset.
+
+### Explicitly retained unlayered
+
+- hierarchy-card base material;
+- hierarchy-card highlight;
+- Overview hero neutral refraction role;
+- explicitly-toned hierarchy-card material body;
+- neutral hierarchy-card fine-pointer hover material;
+- Phase 8 mobile card/panel material override block;
+- every financial semantic aura/state/hover rule.
+
+### Acceptance
+
+- only the safe non-card material families move to `materials.css`;
+- the six cascade-sensitive card families remain in `src/index.css`;
+- semantic rules remain unlayered and untouched;
+- TypeScript, full tests and production build are green;
+- rendered visual regression stays below the frozen 1% threshold for every state.
+
+Next after acceptance: define the smallest safe hierarchy-card retry chunk from rendered evidence; do not reattempt the wholesale PR #66 move.

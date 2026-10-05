@@ -11,7 +11,7 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `f3266418` — Stage 4.5.4 semantics + hierarchy
+**Current validated runtime head:** `6eb83877` — Stage 4.5.5 interaction surfaces
 **Current full verification:** PR exact-head Quality Checks passed on `13e210a`; Phase 10 Visual Closure #37368157990 and Rendered Visual Regression #37368273304 passed on `main@f3266418`. The concurrent main Quality run was infrastructure-cancelled rather than test-failed.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
@@ -103,7 +103,7 @@ Stage 4 accepted:
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.4 semantics + hierarchy is accepted at `main@f3266418`. 4.5.5 interaction surfaces is implemented on exact head `fa5819c7`; its first clean-head Quality run was cancelled by the GitHub-hosted-runner incident before executing steps and has been rerun. 4.5.6 responsive + feature/legacy closure is implemented as a dependent candidate on `stage4-5-final-closure`, pending 4.5.5 acceptance first.**
+- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.5 interaction surfaces is accepted at `main@6eb83877`: PR #83 exact-head Quality Checks #37372111721 passed, main Quality Checks #37374105870 passed, and Phase 10 Visual Closure #37374105847 passed the full source/build/Worker gate plus all 16 rendered states. The separate Rendered Visual Regression #37374105922 is still queued during GitHub's hosted-runner incident; its rendered step is technically duplicated by the already-green Phase 10 workflow with the same Playwright version, deterministic build, script, threshold and tolerance. 4.5.6 is the only remaining Stage 4 pass.**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -1184,7 +1184,7 @@ Current domain authorities:
 
 ## Current pass
 
-**Stage 4.5.6 — responsive + feature/legacy closure — DEPENDENT VALIDATION CANDIDATE.**
+**Stage 4.5.6 — responsive + feature/legacy closure — FINAL VALIDATION CANDIDATE / PR #85.**
 
 Implementation state:
 - `src/index.css` is reduced to the stable Tailwind + ownership-entry imports only;
@@ -1195,7 +1195,7 @@ Implementation state:
 - keyframe count remains **23**, exactly the baseline;
 - media blocks are **66** versus the original 62 because four mixed media queries were split across rightful owners without adding behavior.
 
-4.5.6 cannot merge before 4.5.5 is accepted.
+4.5.5 is accepted. PR #85 is now the sole Stage 4 exit candidate.
 
 **Deferred technical debt: Stage 3.5 live-session soak — FAILED / REMEDIATION REQUIRED.**
 

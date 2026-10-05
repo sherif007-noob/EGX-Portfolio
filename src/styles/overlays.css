@@ -3,5 +3,182 @@
  * z-index contracts, viewport clamping and overlay safe-area behavior.
  * Trigger styling belongs to controls.css.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.5: canonical overlay geometry ownership.
  */
+
+.premium-modal-viewport {
+  min-height: 0;
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 1rem 5rem;
+}
+
+.premium-modal-scroll-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 1rem 5rem;
+}
+
+.premium-modal-frame {
+  min-height: 0;
+  max-height: calc(100vh - (var(--premium-modal-gutter) * 2));
+  max-height: calc(var(--premium-modal-visual-height, 100dvh) - (var(--premium-modal-gutter) * 2));
+}
+
+.premium-modal-backdrop-panel-scroll {
+  overflow-y: hidden !important;
+}
+
+.premium-modal :is(input, textarea, select, [contenteditable='true']) {
+  scroll-margin-block: 1rem 5rem;
+}
+
+.premium-fixed-overlay {
+  box-sizing: border-box;
+  max-width: min(
+    var(--premium-fixed-overlay-max),
+    calc(100vw - (var(--premium-mobile-gutter) * 2))
+  );
+  overflow-wrap: anywhere;
+}
+
+.premium-mobile-min-w-0 {
+  min-width: 0;
+}
+
+.premium-mobile-full {
+  min-width: 0;
+}
+
+.premium-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Phase 6 Pass 0 — shared touch and viewport safety baseline. */
+.premium-modal-backdrop {
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 768px) {
+  .premium-fixed-overlay {
+    max-width: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-modal-backdrop {
+    padding:
+      max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      max(var(--premium-modal-gutter), env(safe-area-inset-right))
+      max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+      max(var(--premium-modal-gutter), env(safe-area-inset-left));
+  }
+
+  .premium-modal-backdrop-panel-scroll {
+    align-items: flex-start !important;
+    overflow-y: hidden !important;
+  }
+
+  .premium-modal-backdrop-panel-scroll > .premium-modal-viewport {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  .premium-modal-viewport,
+  .premium-modal-frame {
+    width: 100%;
+    max-height: calc(
+      var(--premium-modal-visual-height, 100dvh)
+      - max(var(--premium-modal-gutter), env(safe-area-inset-top))
+      - max(var(--premium-modal-gutter), env(safe-area-inset-bottom))
+    );
+  }
+
+  .premium-fixed-overlay {
+    max-width: calc(
+      100vw
+      - max(var(--premium-mobile-gutter), env(safe-area-inset-left))
+      - max(var(--premium-mobile-gutter), env(safe-area-inset-right))
+    );
+  }
+
+  .premium-fixed-mobile-span {
+    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
+    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
+    width: auto;
+    max-width: none;
+  }
+
+  .premium-fixed-bottom-safe {
+    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
+  }
+
+  .premium-fixed-bottom-above-status {
+    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
+  }
+
+  .premium-fixed-top-after-header {
+    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
+  }
+}
+
+/* Keep open glass dropdowns above following cards and tables. */
+.premium-glass:has([aria-expanded="true"]),
+.premium-panel:has([aria-expanded="true"]),
+.premium-surface:has([aria-expanded="true"]) {
+  z-index: 60;
+}
+
+
+/* Canonical app dropdown surface — Data & Tools visual reference.
+ * Tuned ~12% more transparent than the first Phase 9.4 Data & Tools menu,
+ * then standardized across every custom dropdown/menu in the application.
+ */
+/* Stage 4.5.3.2.2.1: dropdown material moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.2.1: dropdown highlight material moved to ./styles/materials.css. */
+
+.premium-dropdown > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Portaled dropdown geometry is authoritative. Legacy min-width/max-width rules
+ * must never expand a body-level menu beyond the clamped inline viewport box.
+ */
+.premium-dropdown[data-premium-dropdown-portal='true'],
+.premium-select-dropdown[data-premium-dropdown-portal='true'] {
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+}
+
+/* Stage 4.5.3.2.2.1: dropdown mobile material moved to ./styles/materials.css. */
+@media (max-width: 767px) {
+  .premium-dropdown {
+    max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));
+    max-height: min(70dvh, 24rem);
+    overscroll-behavior: contain;
+  }
+
+  .premium-mobile-full {
+    width: 100%;
+  }
+}
+
+/* Analytics dropdowns must float above report/month cards rather than below them. */
+.premium-report-glass:has([aria-expanded="true"]),
+.premium-report-glass-soft:has([aria-expanded="true"]),
+.premium-card:has([aria-expanded="true"]) {
+  z-index: 140;
+  overflow: visible;
+}

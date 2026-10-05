@@ -1,3 +1,8 @@
+import {
+  API_ROUTES,
+  parseTradingViewSymbolSearchResponse,
+} from '../api/contracts';
+
 /**
  * TradingView Stock Logo Resolution & Cache Service
  * Provides official TradingView symbol logos for EGX (Egyptian Exchange) equities.
@@ -126,29 +131,28 @@ export async function fetchTradingViewLogoForTicker(ticker: string): Promise<str
   const clean = ticker.trim().toUpperCase().replace('.CA', '').replace('EGX:', '');
 
   try {
-    const res = await fetch(`/api/tradingview/symbol-search?text=${encodeURIComponent(clean)}`);
+    const endpoint =
+      `${API_ROUTES.tradingViewSymbolSearch}?text=${encodeURIComponent(clean)}`;
+    const res = await fetch(endpoint);
     if (!res.ok) return null;
 
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) {
-      // Find matching item for EGX
-      const match = data.find((item: any) => 
-        item.symbol?.toUpperCase() === clean || 
+    const data = parseTradingViewSymbolSearchResponse(await res.json());
+    if (data.length > 0) {
+      const match = data.find((item) =>
+        item.symbol?.toUpperCase() === clean ||
         item.ticker?.toUpperCase() === clean
       ) || data[0];
 
-      if (match) {
-        let logoUrl = '';
-        if (match.logoid) {
-          logoUrl = `https://s3-symbol-logo.tradingview.com/${match.logoid}.svg`;
-        } else if (Array.isArray(match.logo_urls) && match.logo_urls.length > 0) {
-          logoUrl = match.logo_urls[0];
-        }
+      let logoUrl = '';
+      if (match.logoid) {
+        logoUrl = `https://s3-symbol-logo.tradingview.com/${match.logoid}.svg`;
+      } else if (match.logo_urls?.length) {
+        logoUrl = match.logo_urls[0];
+      }
 
-        if (logoUrl) {
-          saveLogoToCache(clean, logoUrl);
-          return logoUrl;
-        }
+      if (logoUrl) {
+        saveLogoToCache(clean, logoUrl);
+        return logoUrl;
       }
     }
   } catch (err) {

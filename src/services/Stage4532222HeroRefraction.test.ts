@@ -26,6 +26,7 @@ describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () =>
     const materials = read('src/styles/materials.css');
 
     for (const marker of [
+      '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
       '.premium-card.premium-hierarchy-h1::before,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
@@ -34,8 +35,6 @@ describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () =>
       expect(legacy).toContain(marker);
     }
 
-    expect(materials).toContain('.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,');
-    expect(legacy).toContain('Stage 4.5.3.2.2.2.4: hierarchy-card base material body moved to ./styles/materials.css.');
     expect(materials).not.toContain('/* Phase 8 hierarchy card material */');
     expect(materials).not.toContain('/* explicit material-tone hierarchy cards */');
     expect(materials).not.toContain('/* Phase 8 neutral card hover material */');

@@ -83,14 +83,14 @@ describe('Stage 4.5.2 canonical token extraction', () => {
       'src/styles/semantics.css',
       'src/styles/hierarchy.css',
       'src/styles/cascade-bridge.css',
+      'src/styles/controls.css',
+      'src/styles/overlays.css',
+      'src/styles/motion.css',
     ]) {
       expect(stripComments(read(path))).not.toBe('');
     }
 
     for (const path of [
-      'src/styles/controls.css',
-      'src/styles/overlays.css',
-      'src/styles/motion.css',
       'src/styles/responsive.css',
       'src/styles/features/index.css',
     ]) {
@@ -109,7 +109,7 @@ describe('Stage 4.5.2 canonical token extraction', () => {
     for (const marker of [
       'Phase 7 chart visual system',
       'Phase 5 canonical semantic halo system',
-      'Phase 4 v3 — canonical motion tokens and CSS micro-interactions',
+      'Stage 4.5.5: canonical v3 motion and desktop performance moved to ./styles/motion.css.',
       'Phase 9.6 — mobile command architecture',
       'Phase 8 hierarchy — MATERIAL-NEUTRAL restoration',
       'Phase 8 material restoration — Monthly Report quality reference',

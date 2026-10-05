@@ -522,31 +522,11 @@ body {
   background: radial-gradient(circle, rgba(139, 92, 246, 0.16), rgba(59, 130, 246, 0.065) 48%, transparent 72%);
 }
 
-.premium-surface,
-.premium-card,
-.premium-glass {
-  position: relative;
-  border: 1px solid var(--premium-border);
-  box-shadow:
-    inset 0 1px 0 var(--premium-highlight),
-    var(--premium-shadow-soft),
-    0 0 30px rgba(34, 211, 238, 0.075),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
+/* Stage 4.5.3.1: shared surface frame moved to ./styles/materials.css. */
 
-.premium-surface {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 38%),
-    var(--premium-surface);
-}
+/* Stage 4.5.3.1: surface material moved to ./styles/materials.css. */
 
-.premium-glass {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008)),
-    var(--premium-glass);
-  -webkit-backdrop-filter: blur(24px) saturate(155%);
-  backdrop-filter: blur(24px) saturate(155%);
-}
+/* Stage 4.5.3.1: glass material moved to ./styles/materials.css. */
 
 .premium-card {
   overflow: hidden;
@@ -784,31 +764,9 @@ body {
 
 
 /* Premium pass 2: working surfaces, tables, forms, modals */
-.premium-panel {
-  position: relative;
-  -webkit-backdrop-filter: blur(14px) saturate(135%);
-  backdrop-filter: blur(14px) saturate(135%);
-  border: 1px solid var(--premium-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 30%),
-    rgba(15, 23, 42, 0.62);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 18px 42px rgba(0, 0, 0, 0.28),
-    0 0 34px rgba(34, 211, 238, 0.09),
-    0 0 64px rgba(139, 92, 246, 0.035),
-    var(--premium-refraction-shadow, 0 0 0 transparent);
-}
+/* Stage 4.5.3.1: panel material moved to ./styles/materials.css. */
 
-.premium-subpanel {
-  -webkit-backdrop-filter: blur(9px) saturate(125%);
-  backdrop-filter: blur(9px) saturate(125%);
-  border: 1px solid rgba(148, 163, 184, 0.11);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 48%),
-    rgba(2, 6, 23, 0.38);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022);
-}
+/* Stage 4.5.3.1: subpanel base material moved to ./styles/materials.css. */
 
 .premium-table-shell {
   border: 1px solid var(--premium-border);
@@ -965,48 +923,22 @@ body {
  * It contributes only inset edge light through a custom-property shadow slot;
  * no pseudo-element, blur, animation, or extra React wrapper is required.
  */
-.premium-refraction {
-  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
-}
+/* Stage 4.5.3.1: refraction primary primitive moved to ./styles/materials.css. */
 
-.premium-refraction-hero {
-  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
-}
+/* Stage 4.5.3.1: refraction hero primitive moved to ./styles/materials.css. */
 
-.premium-refraction-overlay {
-  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
-}
+/* Stage 4.5.3.1: refraction overlay primitive moved to ./styles/materials.css. */
 
 /* Phase 5 effect-tier rollout. Shared surface roles own the refraction level;
  * data-dense tables/rows/fields/chart plots intentionally remain Tier 0.
  */
-.premium-surface,
-.premium-glass,
-.premium-card,
-.premium-panel,
-.premium-report-glass {
-  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
-}
+/* Stage 4.5.3.1: primary refraction role map moved to ./styles/materials.css. */
 
-.premium-subpanel,
-.premium-inset-glass,
-.premium-report-glass-soft,
-.premium-form-section,
-.premium-modal-section {
-  --premium-refraction-shadow: var(--premium-refraction-tier-secondary);
-}
+/* Stage 4.5.3.1: secondary refraction role map moved to ./styles/materials.css. */
 
-.premium-hero-card,
-.premium-hero-metric,
-.premium-report-hero {
-  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
-}
+/* Stage 4.5.3.1: hero refraction role map moved to ./styles/materials.css. */
 
-.premium-modal,
-.premium-dropdown,
-.premium-floating {
-  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
-}
+/* Stage 4.5.3.1: overlay refraction role map moved to ./styles/materials.css. */
 
 /* Phase 5 CTA aurora border flow.
  * User clarified that the approved original effect is not a light sweep: it is
@@ -2263,18 +2195,7 @@ body {
 }
 
 /* Stronger secondary/inset cards for dense finance information. */
-.premium-inset-glass {
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.024), transparent 46%),
-    linear-gradient(135deg, rgba(34,211,238,0.018), transparent 42%, rgba(139,92,246,0.015)),
-    rgba(2, 6, 23, 0.38);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 10px 24px rgba(0,0,0,0.14);
-  -webkit-backdrop-filter: blur(15px) saturate(132%);
-  backdrop-filter: blur(15px) saturate(132%);
-}
+/* Stage 4.5.3.1: inset glass material moved to ./styles/materials.css. */
 
 .premium-subpanel {
   border-color: rgba(148, 163, 184, 0.14);

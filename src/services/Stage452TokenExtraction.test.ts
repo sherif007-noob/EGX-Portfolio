@@ -77,9 +77,10 @@ describe('Stage 4.5.2 canonical token extraction', () => {
     ]);
   });
 
-  it('keeps every later ownership layer visually empty until its own pass', () => {
+  it('keeps ownership layers after materials visually empty until their own pass', () => {
+    expect(stripComments(read('src/styles/materials.css'))).not.toBe('');
+
     for (const path of [
-      'src/styles/materials.css',
       'src/styles/semantics.css',
       'src/styles/hierarchy.css',
       'src/styles/controls.css',

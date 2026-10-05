@@ -200,7 +200,7 @@ Notably, the Worker no longer forwards raw Google success payloads for value wri
 Next: **4.4.5 — scanner request/response contract closure**.
 
 
-## 4.4.5 — Scanner request/response contract closure — VALIDATION IN PROGRESS
+## 4.4.5 — Scanner request/response contract closure — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -229,4 +229,21 @@ Next: **4.4.5 — scanner request/response contract closure**.
 - older clients that omit `purpose` remain compatible;
 - TypeScript, full tests, and production build are green.
 
-Passing this gate closes the scanner-specific portion of Stage 4.4. The next Stage 4.4 sub-pass will be determined from the remaining shared-contract surface after regression review.
+### 4.4.5 acceptance record
+
+Accepted through PR #59 at `main@e6280537`.
+
+Quality Checks #37248175841 passed:
+
+- TypeScript;
+- **112 / 112 test files, 617 / 617 tests**;
+- production build.
+
+The pass closed two scanner-boundary defects:
+
+- the same-origin app API no longer requires clients to post TradingView's provider-specific request payload; the provider payload remains owned by the integration/runtime boundary, while older cached clients that omit `purpose` remain compatible;
+- Worker and Express now parse and normalize the same scanner success response, and malformed provider success payloads become retryable HTTP 502 failures instead of runtime-dependent behavior.
+
+Portfolio-price and sector-momentum consumers now use the canonical scanner route and shared response parser. The direct TradingView fallback remains explicit and is the only browser-side path that sends `EGX_SCANNER_PAYLOAD`.
+
+Next: **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure**.

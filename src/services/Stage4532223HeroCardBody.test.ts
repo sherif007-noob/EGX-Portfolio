@@ -28,6 +28,7 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
 
   it('keeps the cascade-sensitive hierarchy-card bundle unlayered', () => {
     const legacy = read('src/index.css');
+    const materials = read('src/styles/materials.css');
 
     for (const marker of [
       '.premium-card.premium-hierarchy-h1::before,',

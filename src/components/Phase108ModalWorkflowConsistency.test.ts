@@ -47,7 +47,7 @@ describe('Phase 10.8 modal and workflow consistency', () => {
       expect(readRelative(file)).toContain('premium-modal-backdrop-panel-scroll');
     }
 
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/overlays.css');
     expect(css).toContain('overflow-y: hidden !important;');
     expect(css).toContain('scroll-padding-block: 1rem 5rem;');
     expect(css).toContain('-webkit-overflow-scrolling: touch;');

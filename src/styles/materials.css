@@ -133,3 +133,139 @@
 .premium-floating {
   --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
 }
+
+/* Stage 4.5.3.2.1 — Reports + dense-data composite material ownership. */
+
+/* table shell material */
+.premium-table-shell {
+  border: 1px solid var(--premium-border);
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+/* table header material */
+.premium-table-shell thead {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), transparent),
+    rgba(2, 6, 23, 0.58);
+}
+
+/* table row hover material */
+.premium-table-shell tbody tr:hover {
+  background: rgba(30, 41, 59, 0.48);
+  box-shadow: inset 3px 0 0 rgba(56, 189, 248, 0.28);
+}
+
+/* reports glass base */
+.premium-report-glass {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012) 34%, transparent 58%),
+    linear-gradient(135deg, rgba(34,211,238,0.025), transparent 38%, rgba(139,92,246,0.025)),
+    rgba(15, 23, 42, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 16px 42px rgba(0,0,0,0.26),
+    0 0 28px rgba(34,211,238,0.035);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+
+/* reports glass soft base */
+.premium-report-glass-soft {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 48%),
+    rgba(2, 6, 23, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 10px 26px rgba(0,0,0,0.18);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  backdrop-filter: blur(14px) saturate(132%);
+}
+
+/* reports table base */
+.premium-report-table {
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.018), transparent 20%),
+    rgba(2, 6, 23, 0.60);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 14px 34px rgba(0,0,0,0.22);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* reports table header */
+.premium-report-table thead {
+  background: rgba(15, 23, 42, 0.54);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* reports table row base */
+.premium-report-table tbody tr {
+  background: transparent;
+}
+
+/* reports table row hover */
+.premium-report-table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.34);
+}
+
+/* reports mobile material overrides */
+@media (max-width: 767px) {
+  .premium-report-glass {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.038), rgba(255,255,255,0.010) 36%, transparent 60%),
+      rgba(15, 23, 42, 0.58);
+    -webkit-backdrop-filter: blur(17px) saturate(138%);
+    backdrop-filter: blur(17px) saturate(138%);
+  }
+
+  .premium-report-glass-soft {
+    -webkit-backdrop-filter: blur(11px) saturate(124%);
+    backdrop-filter: blur(11px) saturate(124%);
+  }
+
+  .premium-report-table {
+    background: rgba(2, 6, 23, 0.68);
+    -webkit-backdrop-filter: blur(8px) saturate(115%);
+    backdrop-filter: blur(8px) saturate(115%);
+  }
+}
+
+/* reports stronger glass override */
+.premium-report-glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.060), rgba(255,255,255,0.014) 34%, transparent 64%),
+    linear-gradient(135deg, rgba(34,211,238,0.040), transparent 42%, rgba(139,92,246,0.035)),
+    rgba(10, 18, 36, 0.50);
+  border-color: rgba(186, 230, 253, 0.20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.085),
+    0 20px 48px rgba(0,0,0,0.28),
+    0 0 34px rgba(34,211,238,0.055),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  backdrop-filter: blur(26px) saturate(155%);
+}
+
+/* reports soft-glass stronger override */
+.premium-report-glass-soft {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008) 42%, transparent 72%),
+    rgba(3, 9, 22, 0.36);
+  border-color: rgba(148,163,184,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 10px 26px rgba(0,0,0,0.15),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(17px) saturate(140%);
+  backdrop-filter: blur(17px) saturate(140%);
+}

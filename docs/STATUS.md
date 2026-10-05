@@ -101,18 +101,21 @@ Stage 4 accepted:
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — 4.5.3.2.2.2.4 FAILED RENDERED; recovery 4.5.3.2.2.2.4.R active**
+- **Stage 4.5 CSS ownership consolidation — 4.5.3.2.2.2.4 FAILED RENDERED; recovery 4.5.3.2.2.2.4.R merged at `main@e5f12297` with post-merge rendered validation pending; 4.5.3.2.2.2.5 cascade-safe hierarchy shell is the next source candidate**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
 PR #71 at `main@928fb8f6` is likewise **not an accepted runtime**. Moving only the hierarchy-card resting base body reproduced the same failing states: Positions phone **1.035%**, Journal desktop **1.947%**, and Semantic Summary desktop **3.137%**. Recovery pass **4.5.3.2.2.2.4.R** restores the accepted `main@54530841` runtime behavior before any further ownership migration.
 
+Root cause is now narrowed further: the rejected hierarchy body moved a neutral `background: ... !important` declaration into the named `egx-materials` layer. Important cascade-layer precedence reverses the normal layer ordering, so that neutral background began outranking still-unlayered semantic/tone important backgrounds. The next candidate therefore leaves the important background, border and box-shadow unlayered and extracts only cascade-safe custom properties + desktop backdrop filtering.
+
 Next:
 
-1. **4.5.3.2.2.2.4.R — restore the accepted `54530841` visual baseline after the rejected hierarchy-body move**
-2. Continue Stage 4.5 in small visual-preserving sub-passes
-3. Stage 5 Reports workspace redesign
-4. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
+1. Confirm **4.5.3.2.2.2.4.R** restored the accepted `54530841` rendered profile on `main@e5f12297`
+2. Validate **4.5.3.2.2.2.5 — cascade-safe hierarchy shell** without moving the important background or interaction-sensitive border/shadow
+3. Continue Stage 4.5 in small visual-preserving sub-passes
+4. Stage 5 Reports workspace redesign
+5. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
 
 ---
 

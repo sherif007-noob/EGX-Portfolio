@@ -6,7 +6,10 @@
  * granular migration pass moves them. That keeps 4.5.1 visually inert.
  *
  * Import order is cascade order for normal declarations inside these named
- * layers. Do not reorder without a dedicated visual-regression pass.
+ * layers. IMPORTANT: named-layer priority reverses for !important declarations;
+ * do not move a late unlayered important override into an earlier named layer
+ * unless its competing important owners are migrated as one proven contract.
+ * Do not reorder without a dedicated visual-regression pass.
  */
 @import "./tokens.css" layer(egx-tokens);
 @import "./materials.css" layer(egx-materials);

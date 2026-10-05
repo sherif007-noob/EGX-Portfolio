@@ -90,6 +90,22 @@ export interface PriceTickRequest {
   force: boolean;
 }
 
+export type EgxScannerPurpose = 'portfolio-prices' | 'sector-momentum';
+
+export interface EgxScannerRequest {
+  purpose: EgxScannerPurpose;
+}
+
+export interface EgxScannerRowContract {
+  s?: string;
+  d: unknown[];
+}
+
+export interface EgxScannerResponse {
+  totalCount?: number;
+  data: EgxScannerRowContract[];
+}
+
 export interface SheetsMetadataQuery {
   spreadsheetId: string;
 }
@@ -415,6 +431,46 @@ export function createSheetsDriveFilesResponse(
     .filter((file) => Boolean(file.id && file.name));
 
   return { files, authSource };
+}
+
+export function parseEgxScannerRequest(body: unknown): EgxScannerRequest {
+  const input = apiObject(body);
+  const purpose = apiString(input.purpose);
+
+  // Older app bundles sent the raw TradingView scanner payload to this route.
+  // The proxy has always owned the provider request, so preserve those callers
+  // by treating a missing purpose as the portfolio-price use case.
+  if (!purpose) return { purpose: 'portfolio-prices' };
+  if (purpose === 'portfolio-prices' || purpose === 'sector-momentum') {
+    return { purpose };
+  }
+  throw new Error(`Unsupported EGX scanner purpose: ${purpose}`);
+}
+
+export function parseEgxScannerResponse(payload: unknown): EgxScannerResponse {
+  const input = apiObject(payload);
+  if (!Array.isArray(input.data)) {
+    throw new Error('TradingView scanner response is missing a data array.');
+  }
+
+  const rows: EgxScannerRowContract[] = [];
+  for (const rawRow of input.data) {
+    const row = apiObject(rawRow);
+    if (!Array.isArray(row.d)) {
+      throw new Error('TradingView scanner response contains a row without positional data.');
+    }
+    const symbol = apiString(row.s);
+    rows.push({
+      ...(symbol ? { s: symbol } : {}),
+      d: row.d,
+    });
+  }
+
+  const totalCount = Number(input.totalCount);
+  return {
+    ...(Number.isFinite(totalCount) ? { totalCount } : {}),
+    data: rows,
+  };
 }
 
 export function parsePortfolioSaveRequest(body: unknown): PortfolioSaveRequest {

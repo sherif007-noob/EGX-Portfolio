@@ -21,8 +21,8 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(legacy).toContain('Stage 4.5.3.2.2.1: base card material moved to ./styles/materials.css.');
     expect(legacy).toContain('.premium-card {\n  transition:');
     expect(legacy).toContain('.premium-card::before {\n  transition: opacity');
-    expect(legacy).toContain('.premium-card:hover {');
-    expect(legacy).toContain('.premium-card:hover::before {');
+    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);\n}');
+    expect(materials).toContain('.premium-card:hover::before {\n  opacity: 0.62;\n}');
   });
 
   it('moves floating, modal, and dropdown material bodies without their geometry contracts', () => {

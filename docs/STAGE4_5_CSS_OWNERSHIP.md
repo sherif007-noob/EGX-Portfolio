@@ -128,7 +128,7 @@ The first Cloudflare GitHub App deployment check on `a8cb0956` failed even thoug
 Next: **4.5.2 — token extraction**.
 
 
-## 4.5.2 — Token extraction — VALIDATION IN PROGRESS
+## 4.5.2 — Token extraction — ACCEPTED / CI + RENDERED GREEN
 
 ### Scope
 
@@ -178,4 +178,29 @@ Those two blocks contain **20** responsive hierarchy override declarations and r
 - TypeScript, full tests and production build are green;
 - rendered visual regression remains within the frozen Phase 10 threshold.
 
-Next after acceptance: **4.5.3 — neutral material extraction**.
+### 4.5.2 acceptance record
+
+Accepted through PR #62 at `main@9e18daa8`.
+
+PR Quality Checks #37282283539 passed:
+
+- TypeScript;
+- **115 / 115 test files, 633 / 633 tests**;
+- production build.
+
+Main-push closure also passed:
+
+- Phase 10 Visual Closure #37282467066;
+- production Vite/PWA build;
+- Cloudflare Worker compile + Wrangler dry-run;
+- Rendered Visual Regression #37282467090;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs remained at the frozen baseline profile: 14 states were exactly 0.000%; Positions desktop remained 0.021% and Closed Cycles desktop remained 0.012%, both far below the 1% threshold.
+
+Extraction integrity was also checked directly: the six moved `:root` blocks are byte-identical to their pre-extraction source, all **88** base token declarations are preserved, and exactly two responsive root-override blocks remain in the legacy stylesheet.
+
+The first PR CI run failed only because the new guard miscounted responsive root declarations. The assertion was corrected to measure the actual root bodies; no runtime CSS change was required.
+
+Next: **4.5.3 — neutral material extraction**.

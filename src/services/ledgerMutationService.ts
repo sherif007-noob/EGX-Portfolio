@@ -130,7 +130,7 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
   const label = `Transaction ${transaction.id || index + 1}`;
   if (!transaction.id?.trim()) throw new Error(`${label} requires an id.`);
   if (!transaction.ticker?.trim()) throw new Error(`${label} requires a ticker.`);
-  if (transaction.type !== 'BUY' && transaction.type !== 'SELL') {
+  if (transaction.type !== 'BUY' && transaction.type !== 'SELL' && transaction.type !== 'BONUS_SHARES') {
     throw new Error(`${label} has an unsupported transaction type.`);
   }
   if (!/^\d{4}-\d{2}-\d{2}/.test(transaction.date || '') || !Number.isFinite(Date.parse(transaction.date))) {
@@ -141,6 +141,21 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
   assertFiniteNonNegative(transaction.price, `${label} price`);
   assertFiniteNonNegative(transaction.fees ?? 0, `${label} fees`);
   assertFiniteNonNegative(transaction.totalAmount, `${label} total amount`);
+  if (transaction.type === 'BONUS_SHARES') {
+    if (Math.abs(transaction.price) > EPSILON || Math.abs(transaction.fees ?? 0) > EPSILON || Math.abs(transaction.totalAmount) > EPSILON) {
+      throw new Error(`${label} bonus shares must not create price, fees, or cash value.`);
+    }
+    if (transaction.cashFlowType || Math.abs(transaction.cashFlowAmount ?? 0) > EPSILON || Math.abs(transaction.netCashImpact ?? 0) > EPSILON) {
+      throw new Error(`${label} bonus shares must not create a cash flow.`);
+    }
+    if (transaction.corporateActionType && transaction.corporateActionType !== 'BONUS_SHARES') {
+      throw new Error(`${label} has mismatched corporate action semantics.`);
+    }
+    if (transaction.corporateActionRatio != null) {
+      assertFinite(transaction.corporateActionRatio, `${label} corporate action ratio`);
+      if (transaction.corporateActionRatio <= EPSILON) throw new Error(`${label} corporate action ratio must be greater than zero.`);
+    }
+  }
   if (transaction.cashFlowAmount != null) assertFinite(transaction.cashFlowAmount, `${label} cash flow amount`);
   if (transaction.grossTradeValue != null) assertFiniteNonNegative(transaction.grossTradeValue, `${label} gross trade value`);
   if (transaction.netCashImpact != null) assertFinite(transaction.netCashImpact, `${label} net cash impact`);

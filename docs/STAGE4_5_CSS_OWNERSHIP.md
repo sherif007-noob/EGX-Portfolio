@@ -886,7 +886,7 @@ Evidence:
 
 After acceptance, the only remaining Stage 4.5 pass is **4.5.6 — responsive + feature/legacy closure**.
 
-## 4.5.6 — Responsive + feature/legacy closure — VALIDATION CANDIDATE
+## 4.5.6 — Responsive + feature/legacy closure — ACCEPTED / CI + RENDERED GREEN
 
 This is the Stage 4.5 exit pass. It drains the legacy application stylesheet without creating a catch-all legacy replacement.
 
@@ -926,3 +926,32 @@ No `legacy.css` or equivalent catch-all owner was introduced.
 - `src/index.css` remains import-only;
 - final duplicate/`!important` audit remains clean;
 - after merge, **Stage 4 is CLOSED** and Stage 5 begins at Reports R1.
+
+### 4.5.6 acceptance record / Stage 4 exit
+
+Accepted through PR #86 at `main@470b3ce8`.
+
+Final main evidence:
+- **Quality Checks #37375408314 — SUCCESS**: TypeScript, **128 / 128 test files, 680 / 680 tests**, production build;
+- **Phase 10 Visual Closure #37375408211 — SUCCESS**: TypeScript, **128 / 128 test files, 680 / 680 tests**, production Vite/PWA build, Cloudflare Worker dry-run, pinned Chromium rendered matrix;
+- **Rendered Visual Regression #37375408191 — SUCCESS**: all 16 frozen browser states remained below the 1% threshold.
+
+Final rendered diffs:
+- Overview 320 / 390 / landscape / laptop / desktop / 2XL: **0.000%** each;
+- Positions desktop / phone: **0.000%** each;
+- Closed Cycles desktop: **0.032%**;
+- Reports desktop: **0.000%**;
+- Journal desktop: **0.019%**;
+- Cash desktop: **0.000%**;
+- Add Trade phone: **0.000%**;
+- Transaction Edit desktop: **0.145%**;
+- Data & Tools dropdown desktop: **0.000%**;
+- Semantic Summary desktop: **0.000%**.
+
+Stage 4 exit contract:
+- `src/index.css` is import-only;
+- no catch-all legacy stylesheet replaced it;
+- named owner order is frozen;
+- final CSS audit is **156 actual `!important` declarations**, **23 `@keyframes`**, **66 `@media` blocks**;
+- **Stage 4 is CLOSED.**
+- Next execution point: **Stage 5 / Reports R1 — Workspace architecture**.

@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `6eb83877` — Stage 4.5.5 interaction surfaces
-**Current full verification:** PR exact-head Quality Checks passed on `13e210a`; Phase 10 Visual Closure #37368157990 and Rendered Visual Regression #37368273304 passed on `main@f3266418`. The concurrent main Quality run was infrastructure-cancelled rather than test-failed.
+**Current validated runtime head:** `470b3ce8` — Stage 4 CLOSED / Stage 4.5.6 responsive + feature/legacy closure
+**Current full verification:** on `main@470b3ce8`, Quality Checks #37375408314 passed TypeScript, **128 / 128 test files, 680 / 680 tests**, and production build; Phase 10 Visual Closure #37375408211 passed the same full suite, production Vite/PWA build, Cloudflare Worker dry-run and all 16 rendered states; Rendered Visual Regression #37375408191 independently passed all 16 states.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -101,9 +101,12 @@ Stage 4 accepted:
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
-Stage 4 active:
+Stage 4 closure:
 
-- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.5 interaction surfaces is accepted at `main@6eb83877`: PR #83 exact-head Quality Checks #37372111721 passed, main Quality Checks #37374105870 passed, and Phase 10 Visual Closure #37374105847 passed the full source/build/Worker gate plus all 16 rendered states. The separate Rendered Visual Regression #37374105922 is still queued during GitHub's hosted-runner incident; its rendered step is technically duplicated by the already-green Phase 10 workflow with the same Playwright version, deterministic build, script, threshold and tolerance. 4.5.6 is the only remaining Stage 4 pass.**
+- **Stage 4.5.5 — interaction surfaces — accepted / source + rendered green** at `main@6eb83877`.
+- **Stage 4.5.6 — responsive + feature/legacy closure — accepted / CI + rendered green** via PR #86 at `main@470b3ce8`.
+- **Stage 4 is CLOSED.** `src/index.css` is now the stable import-only entry; shared CSS has explicit token/material/semantic/hierarchy/control/overlay/motion/responsive owners and feature-specific residue is split into app-shell, charts, reports and header owners.
+- Final CSS audit: **156 actual `!important` declarations**, **23 `@keyframes`**, **66 `@media` blocks**. The reduction from the original 158 important declarations came from accepted 4.5.4 semantic-hover deduplication, not a dropped visual rule.
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -113,11 +116,9 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. Accept and merge **4.5.5 — interaction surfaces** after the exact-head Quality rerun passes.
-2. Rebase/re-evaluate the already-implemented **4.5.6 — responsive + feature/legacy closure** against accepted main.
-3. Merge 4.5.6 only after Quality Checks, Phase 10 Visual Closure and Rendered Visual Regression are green; that closes Stage 4.
-4. Start Stage 5 Reports workspace redesign at R1.
-5. Retry the deferred Stage 3.5 live-session soak only after the ingestion reliability fix is ready.
+1. **Stage 5 / Reports R1 — Workspace architecture**: introduce Reports internal modes (Overview, Analytics, Trading, Allocation, Monthly) with last-mode persistence and zero calculation change.
+2. Continue Stage 5 through the frozen Reports redesign plan only after each workspace gate preserves calculation parity.
+3. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 

@@ -1358,9 +1358,20 @@ Granular acceptance sequence:
         - **4.5.3.2.2.2.4 — hierarchy-card base material body — FAILED RENDERED / REJECTED** at `main@928fb8f6`; source CI passed **122 / 122 test files, 663 / 663 tests**, but Rendered Visual Regression #37340612935 reproduced Positions phone **1.035%**, Journal desktop **1.947%**, and Semantic Summary desktop **3.137%**.
         - **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — MERGED / POST-MERGE RENDERED VALIDATION PENDING** via PR #72 at `main@e5f12297`; no compensating CSS or `!important` patches.
         - Root cause is now explicit: moving the hierarchy `background: ... !important` into the earlier `egx-materials` layer reversed important-layer precedence and allowed the neutral background to outrank still-unlayered semantic/tone important backgrounds.
-        - **4.5.3.2.2.2.5 — cascade-safe hierarchy shell — SOURCE CANDIDATE**; move only hierarchy custom properties + desktop backdrop filtering. Keep important background, border and box-shadow unlayered as the importance/interaction bridge.
+        - **4.5.3.2.2.2.5 — cascade-safe hierarchy shell — ACCEPTED / CI + RENDERED GREEN** via PR #75 at `main@03e49ed2`; Quality Checks #37346978337, Phase 10 Visual Closure #37346978299 and Rendered Visual Regression #37346978175 all passed. The safe shell moved hierarchy custom properties + desktop backdrop filtering while keeping the important background, border and box-shadow unlayered as the importance/interaction bridge.
         - Do not add compensating visual values or new `!important` patches; each remaining material slice must prove rendered parity before acceptance.
         - Do not move the hierarchy important background into `egx-materials` again unless the semantic/important layer strategy is explicitly redesigned.
+
+### Compressed remaining Stage 4.5 sequence — adopted 2026-10-05
+
+The detailed 4.5.3.x records above are retained as historical regression evidence, but future roadmap accounting is compressed:
+
+1. **4.5.3 — materials + cascade-safety closure — ACTIVE**
+2. **4.5.4 — semantics + hierarchy**
+3. **4.5.5 — interaction surfaces**
+4. **4.5.6 — responsive + feature/legacy closure → Stage 4 exit**
+
+The previously planned standalone 4.5.7–4.5.11 sections are folded into 4.5.5 and 4.5.6. Cascade-sensitive work may still land in small commits, but it will not create extra roadmap sections.
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

@@ -4967,27 +4967,7 @@ body {
   }
 }
 
-@media (max-width: 767px) {
-  /* Keep aura visible on touch devices; only motion/hover is omitted. */
-  .premium-card.premium-hierarchy-h1,
-  .premium-card.premium-hierarchy-h2,
-  .premium-card.premium-hierarchy-h3,
-  .premium-card.premium-hierarchy-h4,
-  .premium-card.premium-hierarchy-h5 {
-    -webkit-backdrop-filter: blur(22px) saturate(150%) brightness(1.025);
-    backdrop-filter: blur(22px) saturate(150%) brightness(1.025);
-  }
-
-  .premium-panel.premium-hierarchy-h2,
-  .premium-panel.premium-hierarchy-h3,
-  .premium-panel.premium-hierarchy-h4,
-  .premium-report-section.premium-hierarchy-h2,
-  .premium-report-section.premium-hierarchy-h3,
-  .premium-overview-market-strip {
-    -webkit-backdrop-filter: blur(20px) saturate(145%);
-    backdrop-filter: blur(20px) saturate(145%);
-  }
-}
+/* Stage 4.5.3 compressed closure: mobile neutral material overrides moved to ./styles/materials.css. */
 
 
 

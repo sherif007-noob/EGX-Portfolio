@@ -30,7 +30,6 @@ describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () =>
       '.premium-card.premium-hierarchy-h1::before,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
-      '@media (max-width: 767px) {\n  /* Keep aura visible on touch devices; only motion/hover is omitted. */',
     ]) {
       expect(legacy).toContain(marker);
     }
@@ -38,6 +37,7 @@ describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () =>
     expect(materials).not.toContain('/* Phase 8 hierarchy card material */');
     expect(materials).not.toContain('/* explicit material-tone hierarchy cards */');
     expect(materials).not.toContain('/* Phase 8 neutral card hover material */');
+    expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');
   });
 
   it('does not alter semantic hero ownership', () => {

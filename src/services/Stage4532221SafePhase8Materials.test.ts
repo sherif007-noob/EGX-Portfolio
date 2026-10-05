@@ -50,7 +50,6 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
       '.premium-card.premium-hierarchy-h1::before,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
-      '@media (max-width: 767px) {\n  /* Keep aura visible on touch devices; only motion/hover is omitted. */',
     ]) {
       expect(legacy).toContain(marker);
     }
@@ -60,6 +59,8 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
     expect(materials).not.toContain('/* Phase 8 hierarchy card material */');
     expect(materials).not.toContain('/* explicit material-tone hierarchy cards */');
     expect(materials).not.toContain('/* Phase 8 neutral card hover material */');
+    expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');
+    expect(materials).toContain('blur(22px) saturate(150%) brightness(1.025)');
   });
 
   it('keeps financial semantic Phase 8 rules in legacy', () => {

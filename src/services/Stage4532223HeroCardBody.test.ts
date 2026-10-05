@@ -30,7 +30,6 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
     const legacy = read('src/index.css');
 
     for (const marker of [
-      '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
       '.premium-card.premium-hierarchy-h1::before,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
@@ -38,6 +37,8 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
     ]) {
       expect(legacy).toContain(marker);
     }
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,');
+    expect(legacy).toContain('Stage 4.5.3.2.2.2.4: hierarchy-card base material body moved to ./styles/materials.css.');
   });
 
   it('leaves generic hover and semantic hero ownership unlayered', () => {

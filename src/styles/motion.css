@@ -1,7 +1,21 @@
 /*
  * Ownership: CSS-owned transitions, keyframes, reduced-motion fallbacks and
  * micro-interaction timing. Motion-for-React lifecycle choreography remains
- * React-owned and must not be duplicated here.
+ * React-owned and is only neutralized here where the accepted CSS contract
+ * requires it.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.5: canonical CSS motion ownership.
  */
+
+/* Semantic transition choreography; financial presentation remains in semantics.css. */
+/* Interaction-only semantic transitions remain here until Stage 4.5.5. */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven {
+  transition:
+    transform var(--premium-medium) var(--premium-ease),
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    background var(--premium-medium) var(--premium-ease);
+}

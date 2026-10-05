@@ -39,6 +39,7 @@ export function usePortfolioState() {
     updateCashBalance: ledger.updateCashBalance,
 
     addTrade: ledger.addTrade,
+    addBonusShares: ledger.addBonusShares,
     sellPosition: ledger.sellPosition,
     editPosition: repository.editPosition,
     editTransaction: ledger.editTransaction,

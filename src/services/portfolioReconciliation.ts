@@ -65,8 +65,10 @@ export function sortTransactions(transactions: TradeTransaction[]): TradeTransac
     const tradeA = Number(a.tradeId);
     const tradeB = Number(b.tradeId);
     if (Number.isFinite(tradeA) && Number.isFinite(tradeB) && tradeA !== tradeB) return tradeA - tradeB;
-    if (a.type === 'BUY' && b.type === 'SELL') return -1;
-    if (a.type === 'SELL' && b.type === 'BUY') return 1;
+    const typePriority = (type: TradeTransaction['type']) => type === 'BONUS_SHARES' ? 0 : type === 'BUY' ? 1 : 2;
+    const priorityA = typePriority(a.type);
+    const priorityB = typePriority(b.type);
+    if (priorityA !== priorityB) return priorityA - priorityB;
     return a.id.localeCompare(b.id);
   });
 }
@@ -197,6 +199,29 @@ export function reconcilePortfolioFromLedger(
     const tickerQuote = tickers.find((t) => t.ticker.trim().toUpperCase() === tickerKey);
     const sector = tx.sector || tickerQuote?.sector || 'Other';
     const companyName = tx.companyName || tickerQuote?.nameEn || tx.ticker;
+
+    if (tx.type === 'BONUS_SHARES') {
+      const bonusShares = Number(tx.shares);
+      const lots = openLotsByTicker[tickerKey] || [];
+      const totalOpenShares = lots.reduce((sum, lot) => sum + lot.shares, 0);
+
+      if (!Number.isFinite(bonusShares) || bonusShares <= EPSILON) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has invalid credited shares.`);
+        continue;
+      }
+      if (totalOpenShares <= EPSILON) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has no eligible open shares.`);
+        continue;
+      }
+
+      const scale = (totalOpenShares + bonusShares) / totalOpenShares;
+      for (const lot of lots) {
+        const grossCost = lot.shares * lot.price;
+        lot.shares *= scale;
+        lot.price = lot.shares > EPSILON ? grossCost / lot.shares : 0;
+      }
+      continue;
+    }
 
     if (tx.type === 'BUY') {
       try {

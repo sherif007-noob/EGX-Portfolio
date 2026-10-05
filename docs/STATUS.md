@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `e6280537` — Stage 4.4.5 scanner request/response contract closure
-**Current full verification:** PR #59 Quality Checks #37248175841 — TypeScript + **112 / 112 test files, 617 / 617 tests** + production build
+**Current validated runtime head:** `ff9b6abd` — Stage 4.4.6 symbol-search + shared API exit closure
+**Current full verification:** PR #60 Quality Checks #37249185251 — TypeScript + **113 / 113 test files, 623 / 623 tests** + production build
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -85,17 +85,18 @@ Stage 4 accepted:
 - **Stage 4.4.3 — runtime capability/deprecation contract validation — accepted / CI green**
 - **Stage 4.4.4 — Google Sheets payload/response contract consolidation — accepted / CI green**
 - **Stage 4.4.5 — scanner request/response contract closure — accepted / CI green**
+- **Stage 4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — accepted / CI green**
 
-`Stage 4.3` is now fully accepted and closed through granular gates. The earlier broad Stage 4.4 implementation remains present on `main`, but it will be revalidated in similarly small sub-passes before Stage 4.5 or Stage 5.
+`Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.4 granular acceptance — next sub-pass: 4.4.6**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.1**
 
 Next:
 
-1. **Stage 4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure**
-2. Stage 4.5 granular CSS ownership work
+1. **Stage 4.5.1 — CSS ownership inventory + layer-entry contract**
+2. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**
 

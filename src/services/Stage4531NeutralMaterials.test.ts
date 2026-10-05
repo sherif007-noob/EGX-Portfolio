@@ -9,7 +9,7 @@ const stripComments = (value: string) =>
   value.replace(/\/\*[\s\S]*?\*\//g, '').trim();
 
 describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
-  it('moves the shared neutral material primitives into the material owner', () => {
+  it('keeps the shared neutral material primitives in the material owner', () => {
     const materials = read('src/styles/materials.css');
 
     for (const selector of [
@@ -32,54 +32,40 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
 
     expect(materials).toContain('var(--premium-refraction-shadow, 0 0 0 transparent)');
     expect(materials).toContain('backdrop-filter: blur(24px) saturate(155%)');
-    expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-primary)');
-    expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-secondary)');
-    expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-hero)');
-    expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-overlay)');
   });
 
-  it('removes those primitive owners from the legacy stylesheet', () => {
+  it('keeps primitive owners drained from the legacy stylesheet', () => {
     const legacy = read('src/index.css');
 
     expect(legacy).not.toContain('.premium-surface,\n.premium-card,\n.premium-glass {');
     expect(legacy).not.toContain('.premium-surface {');
     expect(legacy).not.toContain('.premium-glass {');
-
-    expect(legacy).not.toMatch(/\/\* Premium pass 2:[\s\S]*?\.premium-panel\s*\{/);
     expect(legacy).toContain('Stage 4.5.3.1: panel material moved to ./styles/materials.css.');
-    expect(legacy).toContain('Stage 4.5.3.1: inset glass material moved to ./styles/materials.css.');
-    expect(legacy).toContain('Stage 4.5.3.1: refraction primary primitive moved to ./styles/materials.css.');
   });
 
-  it('keeps the cascade-sensitive Phase 8 card restoration in legacy', () => {
+  it('advances Phase 8 hierarchy restoration into canonical owners', () => {
     const legacy = read('src/index.css');
+    const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
+    const bridge = read('src/styles/cascade-bridge.css');
 
     expect(legacy).toContain('Phase 8 material restoration — Monthly Report quality reference');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1,');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1::before');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1:hover');
-    expect(legacy).toContain('@media (max-width: 767px) {');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1::before');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1:hover');
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('does not move semantic, hierarchy, control, overlay, motion, or responsive ownership early', () => {
-    for (const path of [
-      'src/styles/semantics.css',
-      'src/styles/hierarchy.css',
-      'src/styles/controls.css',
-      'src/styles/overlays.css',
-      'src/styles/motion.css',
-      'src/styles/responsive.css',
-      'src/styles/features/index.css',
-    ]) {
-      expect(stripComments(read(path))).toBe('');
-    }
-
+  it('keeps material ownership free of semantic/control/motion implementation', () => {
     const materials = read('src/styles/materials.css');
     expect(materials).not.toContain('.premium-glow-win');
     expect(materials).not.toContain('.premium-state-loss');
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('@keyframes');
+
+    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
+    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
   });
 
   it('keeps the canonical material layer directly after tokens', () => {

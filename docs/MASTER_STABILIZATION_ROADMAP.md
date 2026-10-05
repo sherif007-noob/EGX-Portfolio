@@ -1348,7 +1348,12 @@ Granular acceptance sequence:
     - **4.5.3.2.1 — Reports + dense-data composite materials — ACCEPTED / CI + RENDERED GREEN** via PR #64 at `main@0e9330ed`; Quality Checks #37289566366 passed TypeScript, **117 / 117 test files, 643 / 643 tests**, and production build. Phase 10 Visual Closure #37289687438 and Rendered Visual Regression #37289687328 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
     - **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure — ACTIVE**
       - **4.5.3.2.2.1 — base composite card + neutral overlay material bodies — ACCEPTED / CI + RENDERED GREEN** via PR #65 at `main@5f5a1d1e`; Quality Checks #37332186760 passed TypeScript, **118 / 118 test files, 649 / 649 tests**, and production build. Phase 10 Visual Closure #37332396168 and Rendered Visual Regression #37332396116 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
-      - **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — NEXT**
+      - **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — FAILED RENDERED / RECOVERY ACTIVE**
+        - PR #66 at `main@2bd55d68` passed TypeScript, **119 / 119 test files, 656 / 656 tests**, and build, but failed the authoritative rendered threshold: Positions phone **1.035%**, Journal desktop **1.947%**, Semantic Summary desktop **3.137%**.
+        - Root cause: late unlayered Phase 8 restoration rules lost cascade priority when moved wholesale into the named `egx-materials` layer while competing legacy rules remained unlayered.
+        - **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACTIVE**
+        - **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — NEXT after revert**
+        - Do not add compensating visual values or `!important` patches; each remaining material slice must prove rendered parity before acceptance.
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

@@ -778,7 +778,7 @@ The safe shell is placed before the already-accepted Overview hero refraction ro
 
 Next after acceptance: evaluate border/shadow ownership separately only after generic hover material ordering has its own rendered-safe gate. The important hierarchy background remains blocked until the semantic/important layer strategy is explicitly redesigned.
 
-## 4.5.4 — Semantics + hierarchy — VALIDATION CANDIDATE
+## 4.5.4 — Semantics + hierarchy — ACCEPTED / CI + RENDERED GREEN
 
 This compressed pass closes the cross-owner cascade problem discovered during the rejected hierarchy-body extraction.
 
@@ -814,5 +814,62 @@ This arrangement is deliberate. For `!important` declarations, named-layer prior
 - Phase 10 Visual Closure passes;
 - all rendered states remain within the accepted regression threshold.
 
-If accepted, next is **4.5.5 — interaction surfaces**.
+### 4.5.4 acceptance record
+
+Accepted through PR #81 at `main@f3266418`.
+
+Validation evidence:
+
+- PR exact-head Quality Checks passed on `13e210a`;
+- post-merge Phase 10 Visual Closure #37368157990 passed;
+- post-merge Rendered Visual Regression #37368273304 passed;
+- the concurrent post-merge Quality Checks run #37368157987 was cancelled rather than test-failed, so it is not contradictory failure evidence;
+- no compensating visual values or new `!important` patches were introduced.
+
+The important-background problem is now resolved structurally: explicit tone and financial semantic important owners are layered, while the neutral important fallback is isolated in the intentionally unlayered bridge.
+
+Next is **4.5.5 — interaction surfaces**.
+
+## 4.5.5 — Interaction surfaces — VALIDATION CANDIDATE
+
+This compressed pass consolidates the reusable interaction vocabulary without pulling responsive or feature-specific ownership forward.
+
+### Scope
+
+- move reusable actions, fields, filters, choices, checkboxes, selector shells, compact selectors, dense-search controls and shared navigation interaction into `controls.css`;
+- move modal/dropdown/fixed-overlay geometry, viewport clamping, portal rules, overlay safe-area behavior and stacking into `overlays.css`;
+- move CSS-owned transitions, keyframes, reduced-motion fallbacks, legacy lifecycle compatibility and Motion-for-React neutralization into `motion.css`;
+- keep generic financial hover presentation in `semantics.css` while moving only its transition choreography to `motion.css`;
+- preserve all accepted declaration values and source-order precedence inside each new owner.
+
+### Cascade safety
+
+The field family is migrated as one competing-important contract: base `.premium-field`, nested modal/panel field overrides, strong-field overrides and textarea overrides move together so named-layer `!important` precedence cannot invert their accepted ordering.
+
+Older Phase 4 control visuals are also moved into `controls.css` before the later Phase 3.3/3.2 refinement blocks. This prevents an older unlayered selector from silently outranking the new control owner.
+
+Mixed dense-row rules are split by ownership: static row background remains outside motion while only transition choreography moves to `motion.css`. The later Phase 4 v3 transition owner therefore keeps the same final precedence.
+
+### Explicitly deferred to 4.5.6
+
+- breakpoint-only touch sizing and safe-area/containment rules;
+- Phase 9 Header-specific command/navigation CSS;
+- chart/allocation/cash feature-specific motion and presentation;
+- advanced-effect feature residue;
+- final feature CSS drain;
+- final duplicate/`!important` audit and legacy stylesheet closure.
+
+### Acceptance
+
+- `controls.css` is the canonical reusable control owner;
+- `overlays.css` is the canonical reusable overlay geometry owner;
+- `motion.css` is the canonical generic CSS-motion owner;
+- generic financial hover presentation remains semantic-owned;
+- legacy CSS no longer contains the migrated reusable interaction families;
+- responsive and feature-specific residue remains intentionally available for 4.5.6;
+- TypeScript, full tests and production build pass;
+- Phase 10 Visual Closure passes;
+- Rendered Visual Regression remains within the accepted threshold.
+
+After acceptance, the only remaining Stage 4.5 pass is **4.5.6 — responsive + feature/legacy closure**.
 

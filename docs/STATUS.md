@@ -91,6 +91,7 @@ Stage 4 accepted:
 - **Stage 4.5.3.1 — shared neutral material/refraction primitives — accepted / CI + rendered green**
 - **Stage 4.5.3.2.1 — Reports + dense-data composite materials — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.1 — base composite card + neutral overlay material bodies — accepted / CI + rendered green**
+- **Stage 4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.R — failed wholesale extraction reverted / baseline restored — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.1 — safe non-card Phase 8 material ownership — accepted / CI + rendered green**
 
@@ -100,7 +101,7 @@ Stage 4 active:
 
 - **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2.2.2.2**
 
-PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The current validated runtime therefore remains `5f5a1d1e` from Stage 4.5.3.2.2.1.
+PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
 Next:
 

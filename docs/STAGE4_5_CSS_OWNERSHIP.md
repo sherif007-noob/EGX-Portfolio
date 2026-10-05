@@ -777,3 +777,42 @@ The safe shell is placed before the already-accepted Overview hero refraction ro
 - after merge, all 16 rendered states must remain below the frozen 1% threshold.
 
 Next after acceptance: evaluate border/shadow ownership separately only after generic hover material ordering has its own rendered-safe gate. The important hierarchy background remains blocked until the semantic/important layer strategy is explicitly redesigned.
+
+## 4.5.4 — Semantics + hierarchy — VALIDATION CANDIDATE
+
+This compressed pass closes the cross-owner cascade problem discovered during the rejected hierarchy-body extraction.
+
+### Structural solution
+
+The accepted visual precedence is preserved without adding compensating values:
+
+- explicit material-tone hierarchy bodies live in `egx-materials`;
+- financial semantic hierarchy bodies live in `egx-semantics`;
+- information hierarchy remains material-neutral in `egx-hierarchy`;
+- the neutral hierarchy `background: ... !important` fallback lives in one explicitly unlayered `cascade-bridge.css`.
+
+This arrangement is deliberate. For `!important` declarations, named-layer priority reverses, while unlayered important declarations rank below layered important declarations. The neutral fallback therefore remains authoritative only when no explicit tone or financial semantic state is present.
+
+### Scope
+
+- move canonical financial palette, semantic-role geometry, state/aura surfaces and additive semantic edge to `semantics.css`;
+- move non-responsive H0-H5 typography, spacing, structural composition and action-importance ownership to `hierarchy.css`;
+- move the remaining neutral hierarchy frame/highlight, explicit tone card body and hierarchy material hover into `materials.css`;
+- move generic card hover light/highlight into `materials.css` while leaving transform choreography for 4.5.5;
+- isolate the neutral important background fallback in `cascade-bridge.css`;
+- retain responsive hierarchy overrides in legacy until 4.5.6;
+- retain generic transition/motion bridges until 4.5.5.
+
+### Acceptance
+
+- no visual declaration values change;
+- `hierarchy.css` contains no material background recipe or financial semantic selector;
+- `materials.css` contains no financial semantic hierarchy owner;
+- `semantics.css` contains no explicit material-tone owner;
+- the neutral important fallback is the only rule in the unlayered bridge;
+- TypeScript, full tests and production build pass;
+- Phase 10 Visual Closure passes;
+- all rendered states remain within the accepted regression threshold.
+
+If accepted, next is **4.5.5 — interaction surfaces**.
+

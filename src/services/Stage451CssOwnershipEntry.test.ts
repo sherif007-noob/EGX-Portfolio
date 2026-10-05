@@ -47,13 +47,18 @@ describe('Stage 4.5.1 CSS ownership entry contract', () => {
     }
   });
 
-  it('keeps later ownership modules declaration-free until their granular passes', () => {
-    expect(stripComments(read('src/styles/tokens.css'))).not.toBe('');
-    expect(stripComments(read('src/styles/materials.css'))).not.toBe('');
-
+  it('advances only accepted ownership modules while later compressed passes stay empty', () => {
     for (const path of [
+      'src/styles/tokens.css',
+      'src/styles/materials.css',
       'src/styles/semantics.css',
       'src/styles/hierarchy.css',
+      'src/styles/cascade-bridge.css',
+    ]) {
+      expect(stripComments(read(path))).not.toBe('');
+    }
+
+    for (const path of [
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',

@@ -837,7 +837,7 @@ This compressed pass consolidates the reusable interaction vocabulary without pu
 ### Scope
 
 - move reusable actions, fields, filters, choices, checkboxes, selector shells, compact selectors, dense-search controls and shared navigation interaction into `controls.css`;
-- move modal/dropdown/fixed-overlay geometry, viewport clamping, portal rules, overlay safe-area behavior and stacking into `overlays.css`;
+- move modal/dropdown/fixed-overlay geometry, viewport clamping, portal rules, non-conflicting overlay safe-area behavior and stacking into `overlays.css`;
 - move CSS-owned transitions, keyframes, reduced-motion fallbacks, legacy lifecycle compatibility and Motion-for-React neutralization into `motion.css`;
 - keep generic financial hover presentation in `semantics.css` while moving only its transition choreography to `motion.css`;
 - preserve all accepted declaration values and source-order precedence inside each new owner.
@@ -850,9 +850,11 @@ Older Phase 4 control visuals are also moved into `controls.css` before the late
 
 Mixed dense-row rules are split by ownership: static row background remains outside motion while only transition choreography moves to `motion.css`. The later Phase 4 v3 transition owner therefore keeps the same final precedence.
 
+The mobile fixed-overlay important family is deliberately **not** moved into `egx-overlays`. Phase 10.9 still owns later unlayered short-landscape `!important` overrides for the same positioning properties; layering only the earlier mobile rules would reverse important precedence. Those competing responsive rules remain together for 4.5.6.
+
 ### Explicitly deferred to 4.5.6
 
-- breakpoint-only touch sizing and safe-area/containment rules;
+- breakpoint-only touch sizing and safe-area/containment rules, including the competing mobile fixed-overlay `!important` helpers that must remain unlayered until Phase 10.9 responsive overrides migrate with them;
 - Phase 9 Header-specific command/navigation CSS;
 - chart/allocation/cash feature-specific motion and presentation;
 - advanced-effect feature residue;

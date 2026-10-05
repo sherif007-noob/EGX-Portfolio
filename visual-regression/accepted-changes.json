@@ -1,6 +1,6 @@
 {
   "reports-desktop": {
-    "sha256": "7af54b7232887bfda0cc8bc253d6ebfd40782780c523933eebcc0f09828f992b",
-    "reason": "Stage 5 R2 intentionally splits the former long Reports page into dedicated Overview, Analytics, Trading, Allocation and Monthly workspaces. The inspected Reports desktop screenshot shows the accepted transitional Overview summary band; every other tracked rendered state remains on the existing golden baseline."
+    "sha256": "a48aab3ab17c5a06e856ee1f2d02ec5f96e6ab7d376b7c6903e4466dbc786b5f",
+    "reason": "Stage 5 R3 intentionally replaces the transitional Reports Overview summary band with the inspected diagnostic Overview: one dominant Portfolio State surface plus Trading Quality, Risk & Costs, Concentration, and Current Month previews. Every other tracked rendered state remains on the existing golden baseline."
   }
 }

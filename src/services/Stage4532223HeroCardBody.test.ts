@@ -6,7 +6,7 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
-  it('moves the neutral hero-card body into materials.css without changing values', () => {
+  it('keeps the neutral hero-card body in materials.css without changing values', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
@@ -21,32 +21,28 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
 
     expect(materials).toContain(rule);
     expect(legacy).not.toContain(rule);
-    expect(legacy).toContain(
-      'Stage 4.5.3.2.2.2.3: neutral hero-card material body moved to ./styles/materials.css.',
-    );
   });
 
-  it('keeps the cascade-sensitive hierarchy-card bundle unlayered', () => {
-    const legacy = read('src/index.css');
+  it('advances the former hierarchy bundle into canonical material/semantic owners', () => {
+    const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
+    const bridge = read('src/styles/cascade-bridge.css');
 
-    for (const marker of [
-      '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
-      '.premium-card.premium-hierarchy-h1::before,',
-      '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
-      '.premium-card.premium-hierarchy-h1:hover,',
-    ]) {
-      expect(legacy).toContain(marker);
-    }
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1::before,');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1:hover,');
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win,');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('leaves generic hover and semantic hero ownership unlayered while mobile neutral material is owned', () => {
+  it('keeps generic hover motion legacy-owned while material light and semantic hero are owned', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
 
-    expect(legacy).toContain('.premium-card:hover {');
-    expect(legacy).toContain('.premium-card:hover::before {');
-    expect(legacy).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
-    expect(materials).not.toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
+    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
+    expect(materials).toContain('.premium-card:hover::before {');
+    expect(semantics).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
     expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');
   });
 });

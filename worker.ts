@@ -25,6 +25,7 @@ import {
   parseSheetsMetadataQuery,
   parseSheetsValuesQuery,
   parseSheetsValuesWriteRequest,
+  parseTradingViewSymbolSearchResponse,
   requireUnavailableRuntimeCapabilityResponse,
   requireSymbolSearchText,
 } from './src/api/contracts';
@@ -267,6 +268,7 @@ async function handleApi(request: Request): Promise<Response> {
     } catch (error) {
       return errorJson(error, 400);
     }
+
     try {
       const searchUrl =
         `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
@@ -274,12 +276,36 @@ async function handleApi(request: Request): Promise<Response> {
         headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
       });
       if (!tvResponse.ok) {
-        return json(createApiErrorResponse(`TradingView Symbol Search status ${tvResponse.status}`), tvResponse.status);
+        return json(
+          createApiErrorResponse(
+            `TradingView Symbol Search status ${tvResponse.status}`,
+            { retryable: tvResponse.status >= 500 },
+          ),
+          tvResponse.status,
+        );
       }
-      return new Response(tvResponse.body, {
-        status: tvResponse.status,
-        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-      });
+
+      let providerData: unknown;
+      try {
+        providerData = await tvResponse.json();
+      } catch (error) {
+        return json(
+          createApiErrorResponse("TradingView symbol search returned invalid JSON.", {
+            retryable: true,
+            details: error instanceof Error ? error.message : String(error),
+          }),
+          502,
+        );
+      }
+
+      try {
+        return json(parseTradingViewSymbolSearchResponse(providerData));
+      } catch (error) {
+        return json(
+          createApiErrorResponse(error, { retryable: true, details: providerData }),
+          502,
+        );
+      }
     } catch (error) {
       console.error("Error proxying TradingView Symbol Search:", error);
       return errorJson(error);

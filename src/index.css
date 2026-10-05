@@ -834,6 +834,29 @@ body {
 }
 
 /* Stage 4.5.5: mobile overlay safe-area geometry moved to ./styles/overlays.css. */
+/* Competing !important fixed-overlay helpers stay unlayered until 4.5.6 so
+ * Phase 10.9 short-landscape safe-area overrides keep their accepted priority. */
+@media (max-width: 767px) {
+  .premium-fixed-mobile-span {
+    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
+    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
+    width: auto;
+    max-width: none;
+  }
+
+  .premium-fixed-bottom-safe {
+    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
+  }
+
+  .premium-fixed-bottom-above-status {
+    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
+  }
+
+  .premium-fixed-top-after-header {
+    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
+  }
+}
+
 
 /* Stage 4.5.5: dropdown stacking and portal geometry moved to ./styles/overlays.css. */
 

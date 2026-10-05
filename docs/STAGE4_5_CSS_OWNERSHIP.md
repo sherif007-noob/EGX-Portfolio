@@ -607,7 +607,7 @@ The one-rule gate is accepted. The Overview hero refraction role can remain in `
 Next: **4.5.3.2.2.2.3 — neutral hero-card material body**.
 
 
-## 4.5.3.2.2.2.3 — Neutral hero-card material body — VALIDATION IN PROGRESS
+## 4.5.3.2.2.2.3 — Neutral hero-card material body — ACCEPTED / CI + RENDERED GREEN
 
 This pass removes one more neutral unlayered material competitor before the hierarchy-card body itself is layered.
 
@@ -642,4 +642,66 @@ The neutral hero body is currently unlayered and therefore outranks any future h
 - TypeScript, full tests and production build are green;
 - all 16 rendered states remain below the frozen 1% threshold.
 
-Next after acceptance: evaluate the hierarchy-card base body as its own rendered gate; do not combine it with highlight, tone, hover or mobile overrides.
+### 4.5.3.2.2.2.3 acceptance record
+
+Accepted through PR #70 at `main@54530841`.
+
+Validation passed:
+
+- PR Quality Checks #37339018295;
+- main Quality Checks #37339172950;
+- **121 / 121 test files, 660 / 660 tests**;
+- production build;
+- Phase 10 Visual Closure #37339173120;
+- Cloudflare Worker dry-run;
+- Rendered Visual Regression #37339172988;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs remained on the frozen accepted profile: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.042%**, and every remaining state **0.000%**.
+
+The neutral hero-card body can live in `egx-materials` without changing the accepted hierarchy/semantic cascade.
+
+Next: **4.5.3.2.2.2.4 — hierarchy-card base material body**.
+
+
+## 4.5.3.2.2.2.4 — Hierarchy-card base material body — VALIDATION IN PROGRESS
+
+Candidate: PR #71. Acceptance remains blocked on source CI plus the post-merge rendered gate.
+
+This gate moves only the resting neutral hierarchy-card body after the generic card and hero-card neutral materials have already moved into `egx-materials`.
+
+### Scope
+
+Move only the shared H1–H5 hierarchy-card resting body:
+
+- `--phase8-material-rgb`;
+- `--phase8-material-deep-rgb`;
+- primary refraction tier;
+- resting border;
+- resting background;
+- resting box-shadow;
+- resting desktop backdrop-filter.
+
+### Explicitly retained unlayered
+
+- hierarchy-card `::before` highlight body;
+- explicit `premium-material-tone-*` hierarchy-card body;
+- neutral fine-pointer hierarchy-card hover;
+- generic `.premium-card:hover` and `.premium-card:hover::before` interaction;
+- Phase 8 mobile hierarchy-card/panel backdrop overrides;
+- every semantic aura/state/hover selector.
+
+### Cascade rationale
+
+The generic card material and neutral hero-card body now live in the same named material owner. The hierarchy-card body is appended after those neutral recipes and has higher selector specificity. Semantic and explicit-tone hierarchy rules remain unlayered and therefore continue to outrank this neutral resting body exactly as before.
+
+### Acceptance
+
+- declaration values remain byte-for-byte equivalent;
+- only the hierarchy-card resting base body moves;
+- highlight, tone, hover, mobile and semantic rules remain unlayered;
+- TypeScript, full tests and production build are green;
+- all 16 rendered states remain below the frozen 1% threshold.
+
+Next after acceptance: evaluate the hierarchy-card highlight as a separate cascade problem; do not move it until generic highlight-hover ownership is resolved.

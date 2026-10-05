@@ -13,6 +13,7 @@ import {
   parseIntradayEnsureRequest,
   parsePortfolioSaveRequest,
   parsePriceTickRequest,
+  parseTradingViewSymbolSearchResponse,
   requireSymbolSearchText,
 } from './src/api/contracts';
 import express from "express";

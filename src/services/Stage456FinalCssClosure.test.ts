@@ -11,9 +11,10 @@ describe('Stage 4.5.6 final responsive + feature/legacy closure',()=>{
   });
 
   it('populates the responsive owner without material or semantic presentation',()=>{
-    const r=stripComments(read('src/styles/responsive.css'));
+    const raw=read('src/styles/responsive.css');
+    const r=stripComments(raw);
     expect(r).toContain('@media (max-width: 767px), (pointer: coarse)');
-    expect(r).toContain('Phase 10.9 — cross-app responsive containment');
+    expect(raw).toContain('Phase 10.9 — cross-app responsive containment');
     expect(r).toContain('.premium-fixed-bottom-safe');
     expect(r).not.toContain('premium-glow-win');
     expect(r).not.toContain('premium-material-tone-');

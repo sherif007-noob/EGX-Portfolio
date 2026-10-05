@@ -10,6 +10,7 @@ export function useAppOverlayState() {
   const [isDataHealthModalOpen, setIsDataHealthModalOpen] = useState(false);
   const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
   const [isPriceAlertsModalOpen, setIsPriceAlertsModalOpen] = useState(false);
+  const [isCorporateActionsModalOpen, setIsCorporateActionsModalOpen] = useState(false);
   const [sellingPosition, setSellingPosition] = useState<Position | null>(null);
   const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [selectedTickerForTrade, setSelectedTickerForTrade] = useState<EGXTicker | null>(null);
@@ -41,6 +42,8 @@ export function useAppOverlayState() {
     setIsScreenshotModalOpen,
     isPriceAlertsModalOpen,
     setIsPriceAlertsModalOpen,
+    isCorporateActionsModalOpen,
+    setIsCorporateActionsModalOpen,
     sellingPosition,
     setSellingPosition,
     editingPosition,

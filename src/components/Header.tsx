@@ -127,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     setCanScrollNavLeft(container.scrollLeft > tolerance);
     setCanScrollNavRight(container.scrollLeft < maxScrollLeft - tolerance);
-  }, [onOpenCorporateActions]);
+  }, []);
 
   useEffect(() => {
     const container = navScrollRef.current;
@@ -188,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
     );
 
     setDataToolsMenuGeometry({ left, top, width });
-  }, []);
+  }, [onOpenCorporateActions]);
 
   useEffect(() => {
     if (!isDataToolsOpen) return;

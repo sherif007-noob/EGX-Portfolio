@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import crypto from 'node:crypto';
 import { chromium } from 'playwright';
 import sharp from 'sharp';
 
@@ -10,10 +11,23 @@ const baselineDir = path.join(ROOT, 'visual-regression', 'baseline');
 const currentDir = path.join(ROOT, 'visual-regression', 'current');
 const diffDir = path.join(ROOT, 'visual-regression', 'diff');
 const reportPath = path.join(ROOT, 'visual-regression', 'report.json');
+const acceptedChangesPath = path.join(ROOT, 'visual-regression', 'accepted-changes.json');
 const requireBaseline = process.env.VISUAL_REQUIRE_BASELINE === 'true';
 const maxDiffRatio = Number(process.env.VISUAL_MAX_DIFF_RATIO || 0.01);
 const channelTolerance = Number(process.env.VISUAL_CHANNEL_TOLERANCE || 16);
 const fixedNowIso = '2026-09-30T09:00:00.000Z';
+
+let acceptedChanges = {};
+try {
+  acceptedChanges = JSON.parse(await fs.readFile(acceptedChangesPath, 'utf8'));
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error;
+}
+
+async function sha256File(file) {
+  const contents = await fs.readFile(file);
+  return crypto.createHash('sha256').update(contents).digest('hex');
+}
 
 await fs.rm(currentDir, { recursive: true, force: true });
 await fs.rm(diffDir, { recursive: true, force: true });
@@ -262,7 +276,23 @@ for (const shot of report.screenshots) {
   const baselineFile = path.join(baselineDir, `${shot.name}.png`);
   try {
     await fs.access(baselineFile);
-    report.comparisons.push(await comparePng(shot.name, currentFile, baselineFile));
+    const comparison = await comparePng(shot.name, currentFile, baselineFile);
+    const accepted = acceptedChanges[shot.name];
+
+    if (comparison.status === 'failed' && accepted?.sha256) {
+      const currentSha256 = await sha256File(currentFile);
+      if (currentSha256 === accepted.sha256) {
+        report.comparisons.push({
+          ...comparison,
+          status: 'accepted-change',
+          acceptedSha256: currentSha256,
+          acceptanceReason: accepted.reason ?? null,
+        });
+        continue;
+      }
+    }
+
+    report.comparisons.push(comparison);
   } catch {
     report.comparisons.push({ name: shot.name, status: 'missing-baseline', diffRatio: null });
     if (requireBaseline) report.errors.push(`${shot.name}: baseline is missing`);

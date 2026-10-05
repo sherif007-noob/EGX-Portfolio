@@ -58,20 +58,18 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(legacy).not.toContain('.premium-report-glass-soft,\n.premium-subpanel,');
   });
 
-  it('keeps Phase 8 restoration and controls out of the material owner', () => {
+  it('keeps card-sensitive Phase 8 restoration and controls out of the material owner', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
 
-    for (const marker of [
-      'Phase 8 material restoration — Monthly Report quality reference',
-      '.premium-card.premium-hierarchy-h1',
-      '.premium-report-summary-band {',
-      '.premium-action {',
-      '.premium-field {',
-    ]) {
-      expect(legacy).toContain(marker);
-    }
+    expect(legacy).toContain('Phase 8 material restoration — Monthly Report quality reference');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1,');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
+    expect(legacy).toContain('.premium-action {');
+    expect(legacy).toContain('.premium-field {');
 
+    expect(materials).toContain('.premium-report-summary-band {');
+    expect(materials).toContain('.premium-overview-market-strip.premium-material-tone-cyan {');
     expect(materials).toContain('.premium-dropdown {');
     expect(materials).toContain('.premium-modal {');
     expect(materials).not.toContain('.premium-action {');

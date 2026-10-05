@@ -19,6 +19,7 @@ import {
   BellRing,
   Settings2,
   ChevronDown,
+  Gift,
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
@@ -64,6 +65,7 @@ interface HeaderProps {
   onOpenGoogleSheets: () => void;
   onOpenAddTrade: () => void;
   onOpenBackupModal?: () => void;
+  onOpenCorporateActions?: () => void;
   onOpenScreenshotModal?: () => void;
   onOpenPriceAlerts?: () => void;
   unreadAlertCount?: number;
@@ -81,6 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGoogleSheets,
   onOpenAddTrade,
   onOpenBackupModal,
+  onOpenCorporateActions,
   onOpenScreenshotModal,
   onOpenPriceAlerts,
   unreadAlertCount = 0,
@@ -124,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     setCanScrollNavLeft(container.scrollLeft > tolerance);
     setCanScrollNavRight(container.scrollLeft < maxScrollLeft - tolerance);
-  }, []);
+  }, [onOpenCorporateActions]);
 
   useEffect(() => {
     const container = navScrollRef.current;
@@ -177,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
     const preferredLeft = rect.right - width;
     const maxLeft = Math.max(safeLeft, safeRight - width);
     const left = Math.min(maxLeft, Math.max(safeLeft, preferredLeft));
-    const estimatedMenuHeight = 148;
+    const estimatedMenuHeight = onOpenCorporateActions ? 222 : 148;
     const preferredTop = rect.bottom + 8;
     const top = Math.min(
       preferredTop,
@@ -502,6 +505,29 @@ export const Header: React.FC<HeaderProps> = ({
                             <span className="block text-xs font-semibold text-slate-100">Backup &amp; Reconcile</span>
                             <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
                               Backup, restore, or reconcile against the ledger
+                            </span>
+                          </span>
+                        </button>
+                      )}
+
+                      {onOpenCorporateActions && (
+                        <button
+                          id="header-corporate-actions-btn"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setIsDataToolsOpen(false);
+                            onOpenCorporateActions();
+                          }}
+                          className="premium-menu-item premium-header-tools-item premium-header-tools-item-purple flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left"
+                        >
+                          <span className="premium-header-tools-icon-wrap">
+                            <Gift className="h-4 w-4 text-purple-300" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-xs font-semibold text-slate-100">Corporate Actions</span>
+                            <span className="mt-0.5 block text-[10px] leading-4 text-slate-500">
+                              Bonus shares now; splits, rights and attributed dividends next
                             </span>
                           </span>
                         </button>

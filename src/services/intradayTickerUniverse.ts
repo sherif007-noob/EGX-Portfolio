@@ -25,7 +25,7 @@ export function resolveIntradaySessionTickers(
     if (txDate < date) {
       const shares = Number(tx.shares);
       if (!Number.isFinite(shares) || shares <= 0) continue;
-      const signedShares = tx.type === 'BUY' ? shares : -shares;
+      const signedShares = tx.type === 'SELL' ? -shares : shares;
       openingShares.set(ticker, (openingShares.get(ticker) || 0) + signedShares);
       continue;
     }

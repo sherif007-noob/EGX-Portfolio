@@ -280,7 +280,7 @@ This sub-pass moved only the shared neutral surface/refraction primitives. Compo
 Next: **4.5.3.2 — composite + Phase 8 material restoration closure**.
 
 
-## 4.5.3.2.1 — Reports + dense-data composite materials — VALIDATION IN PROGRESS
+## 4.5.3.2.1 — Reports + dense-data composite materials — ACCEPTED / CI + RENDERED GREEN
 
 The remaining 4.5.3.2 scope is split again to keep the cascade review local. This sub-pass owns only Reports/table material; Phase 8 hierarchy/card/overlay restoration remains separate.
 
@@ -314,4 +314,28 @@ The remaining 4.5.3.2 scope is split again to keep the cascade review local. Thi
 - TypeScript, full tests and production build are green;
 - rendered regression remains inside the frozen Phase 10 baseline.
 
-Next after acceptance: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**.
+### 4.5.3.2.1 acceptance record
+
+Accepted through PR #64 at `main@0e9330ed`.
+
+PR Quality Checks #37289566366 passed:
+
+- TypeScript;
+- **117 / 117 test files, 643 / 643 tests**;
+- production build.
+
+Main-push closure also passed:
+
+- Quality Checks #37289687498;
+- Phase 10 Visual Closure #37289687438;
+- production Vite/PWA build;
+- Cloudflare Worker compile + Wrangler dry-run;
+- Rendered Visual Regression #37289687328;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+Rendered diffs stayed on the frozen profile: 14 states at **0.000%**, Positions desktop at **0.021%**, and Closed Cycles desktop at **0.012%**.
+
+The first CI run failed only because the historical 4.5.3.1 guard still required Reports glass to remain in the legacy stylesheet. That guard was advanced to protect only the material families still deferred to 4.5.3.2.2; no runtime CSS had to be reverted.
+
+Next: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**.

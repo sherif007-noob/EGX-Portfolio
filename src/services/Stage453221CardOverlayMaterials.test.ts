@@ -41,7 +41,7 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     }
 
     expect(overlays).toContain('.premium-modal-viewport {');
-    expect(legacy).toContain(".premium-dropdown[data-premium-dropdown-portal='true']");
+    expect(overlays).toContain(".premium-dropdown[data-premium-dropdown-portal='true']");
     expect(overlays).toContain('max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));');
   });
 

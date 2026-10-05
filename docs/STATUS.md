@@ -1191,7 +1191,7 @@ Implementation state:
 - final feature owners are `features/app-shell.css`, `features/charts.css`, `features/reports.css`, and `features/header.css`;
 - cross-app touch/safe-area/containment/hierarchy overrides are in `responsive.css`;
 - final shared material/control/overlay/motion residue is drained to the existing canonical owners;
-- audit count remains **158 `!important` declarations**, exactly the Stage 4.5.1 baseline;
+- final audit has **156 actual `!important` declarations** versus 158 at the Stage 4.5.1 baseline; the reduction is the accepted 4.5.4 deduplication of one identical semantic-hover declaration pair, not a dropped visual rule;
 - keyframe count remains **23**, exactly the baseline;
 - media blocks are **66** versus the original 62 because four mixed media queries were split across rightful owners without adding behavior.
 

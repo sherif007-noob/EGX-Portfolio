@@ -31,13 +31,12 @@ describe('Stage 5 R2 Reports workspace split', () => {
     }
   });
 
-  it('keeps Overview transitional and free of full-workspace duplication before R3', () => {
+  it('keeps Overview isolated from every full workspace after the R3 diagnostic handoff', () => {
     const reports = readRelative('./PerformanceReports.tsx');
     const overview = workspaceBlock(reports, 'overview', 'analytics');
 
-    expect(overview).toContain('premium-report-summary-band');
-    expect(overview).toContain('Realized Gains');
-    expect(overview).toContain('Net Realized P&amp;L');
+    expect(overview).toContain('<ReportsOverview');
+    expect(overview).not.toContain('premium-report-summary-band');
     expect(overview).not.toContain('<TradingPerformanceReport');
     expect(overview).not.toContain('<PerformanceTimeframeChart');
     expect(overview).not.toContain('Portfolio Allocation');

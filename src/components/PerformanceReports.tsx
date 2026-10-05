@@ -4,18 +4,21 @@ import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransac
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
 import { ReportsNavigation } from './reports/ReportsNavigation';
+import { ReportsOverview } from './reports/ReportsOverview';
 import {
   type ReportsMode,
   persistReportsMode,
   readPersistedReportsMode,
 } from '../services/reportsWorkspace';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
-import { calculatePortfolioValue } from '../services/portfolioAccounting';
+import { calculatePortfolioValue, calculatePositionUnrealizedPnl } from '../services/portfolioAccounting';
+import { calculateMonthlyAuditSummary } from '../services/monthlyAuditSummary';
+import { dmyToIso, getLastDayOfMonth, getMonthKey, getMonthLabel } from '../utils/dateUtils';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { PerformanceTimeframeChart } from './charts/PerformanceTimeframeChart';
 import { RealizedTrajectoryChart } from './RealizedTrajectoryChart';
 import { MotionSwap } from './PremiumMotion';
-import { BarChart3, TrendingDown, Receipt, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
+import { BarChart3, TrendingDown, Layers, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import {
   ANALYTICS_CHART_THEME,
@@ -91,13 +94,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
     };
   }, []);
 
-  const grossProfit = stats.totalRealizedGainEgp || 0;
-  const grossLoss = stats.totalRealizedLossEgp || 0;
-  const netRealizedPnl = grossProfit - grossLoss;
   const closedFees = stats.totalBrokerageFeesPaid || 0;
   const openFees = positions.reduce((sum, p) => sum + (p.totalFees || 0), 0);
-  const netRealizedGlow =
-    netRealizedPnl > 0 ? 'premium-state-win' : netRealizedPnl < 0 ? 'premium-state-loss' : 'premium-state-breakeven';
+  const totalFees = metrics?.totalFeesPaid ?? (closedFees + openFees);
 
   const performanceBridge = useMemo(() => calculateEquityBridge(
     Number.isFinite(capitalDeposits) && capitalDeposits >= 0 ? capitalDeposits : 0,
@@ -124,6 +123,77 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
       kind: 'sector' as const,
     })).sort((a, b) => b.value - a.value);
   }, [positions]);
+
+  const holdingConcentration = useMemo(() => {
+    const rows = positions
+      .map((position) => ({
+        name: position.ticker,
+        value: position.shares * position.currentPrice,
+      }))
+      .sort((a, b) => b.value - a.value);
+    const total = rows.reduce((sum, row) => sum + row.value, 0);
+    const largest = rows[0]
+      ? {
+          name: rows[0].name,
+          percentage: total > 0 ? (rows[0].value / total) * 100 : 0,
+        }
+      : null;
+    const topThreeConcentration = total > 0
+      ? (rows.slice(0, 3).reduce((sum, row) => sum + row.value, 0) / total) * 100
+      : 0;
+
+    return { largest, topThreeConcentration };
+  }, [positions]);
+
+  const currentMonthDiagnostic = useMemo(() => {
+    const currentMonthKey = getMonthKey(new Date().toISOString());
+    if (!currentMonthKey) {
+      return {
+        label: 'Current Month',
+        totalPnlEgp: 0,
+        realizedPnlEgp: 0,
+        holdingPnlEgp: 0,
+        closedTrades: 0,
+        winRate: null as number | null,
+      };
+    }
+
+    const lastDayOfMonth = getLastDayOfMonth(currentMonthKey);
+    const liquidatedTrades = closedTrades.filter(
+      (trade) => getMonthKey(trade.sellDate) === currentMonthKey,
+    );
+    const monthEndHoldings = positions.filter((position) => {
+      const buyIso = dmyToIso(position.buyDate);
+      return Boolean(buyIso) && buyIso <= lastDayOfMonth;
+    });
+
+    const liquidatedRecords = liquidatedTrades.map((trade) => ({
+      kind: 'LIQUIDATED' as const,
+      pnlEgp: trade.realizedPnlEgp,
+      fees:
+        typeof trade.totalFees === 'number' && trade.totalFees > 0
+          ? trade.totalFees
+          : (trade.buyFees || 0) + (trade.sellFees || 0),
+    }));
+    const holdingRecords = monthEndHoldings.map((position) => ({
+      kind: 'HOLDING' as const,
+      pnlEgp: calculatePositionUnrealizedPnl(position),
+      fees: position.totalFees || 0,
+    }));
+    const summary = calculateMonthlyAuditSummary([
+      ...liquidatedRecords,
+      ...holdingRecords,
+    ]);
+
+    return {
+      label: getMonthLabel(currentMonthKey, 'long'),
+      totalPnlEgp: summary.totalPnlEgp,
+      realizedPnlEgp: liquidatedRecords.reduce((sum, row) => sum + row.pnlEgp, 0),
+      holdingPnlEgp: holdingRecords.reduce((sum, row) => sum + row.pnlEgp, 0),
+      closedTrades: summary.closedCount,
+      winRate: summary.winRate,
+    };
+  }, [closedTrades, positions]);
 
   const stockData = useMemo(() => {
     const rows: Array<{
@@ -196,6 +266,10 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
 
   const reportedNav = metrics?.totalValue ?? calculatePortfolioValue(cashBalance, positions);
   const bridgeBalanced = isEquityBridgeBalanced(performanceBridge);
+  const cashSharePercent = reportedNav > 0 ? (cashBalance / reportedNav) * 100 : 0;
+  const largestSector = sectorData[0]
+    ? { name: sectorData[0].name, percentage: sectorData[0].percentage }
+    : null;
 
   return (
     <div className="premium-reports-hierarchy premium-flow-major">
@@ -231,38 +305,26 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         >
           {reportMode === 'overview' && (
             <div className="premium-flow-major" data-reports-workspace="overview">
-              <div className="premium-hierarchy-h3 premium-report-summary-band grid grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4" data-hierarchy="h3">
-              <div className="premium-report-summary-cell">
-              <div className="premium-type-metric-label text-emerald-400">Realized Gains</div>
-              <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className="premium-type-metric premium-type-metric-secondary font-mono text-emerald-400">+{formatEgp(grossProfit)}</span>
-              <span className="premium-type-unit">EGP</span>
-              </div>
-              </div>
-              <div className="premium-report-summary-cell">
-              <div className="premium-type-metric-label text-rose-400">Realized Losses</div>
-              <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className="premium-type-metric premium-type-metric-secondary font-mono text-rose-400">-{formatEgp(grossLoss)}</span>
-              <span className="premium-type-unit">EGP</span>
-              </div>
-              </div>
-              <div className={`premium-report-summary-cell ${netRealizedGlow}`}>
-              <div className="premium-type-metric-label">Net Realized P&amp;L</div>
-              <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className={`premium-type-metric premium-type-metric-secondary font-mono ${netRealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {netRealizedPnl >= 0 ? '+' : ''}{formatEgp(netRealizedPnl)}
-              </span>
-              <span className="premium-type-unit">EGP</span>
-              </div>
-              </div>
-              <div className="premium-report-summary-cell">
-              <div className="premium-type-metric-label flex items-center gap-1 text-amber-400"><Receipt className="h-3.5 w-3.5" /> Fees</div>
-              <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className="premium-type-metric premium-type-metric-secondary font-mono text-amber-400">{formatEgp(closedFees + openFees)}</span>
-              <span className="premium-type-unit">EGP</span>
-              </div>
-              </div>
-              </div>
+              <ReportsOverview
+                portfolioValue={reportedNav}
+                dayChangeEgp={metrics?.dayChangeEgp ?? null}
+                dayChangePercent={metrics?.dayChangePercent ?? null}
+                realizedPnlEgp={metrics?.realizedPnlEgp ?? performanceBridge.realizedPnl}
+                unrealizedPnlEgp={metrics?.unrealizedPnlEgp ?? performanceBridge.unrealizedPnl}
+                cashBalance={cashBalance}
+                winRate={stats.winRate}
+                profitFactor={stats.profitFactor}
+                expectancyEgp={stats.expectancyEgp ?? null}
+                totalTrades={stats.totalTrades}
+                maxDrawdownPercent={stats.maxDrawdownPercent ?? null}
+                maxDrawdownEgp={stats.maxDrawdownEgp ?? null}
+                totalFees={totalFees}
+                largestHolding={holdingConcentration.largest}
+                largestSector={largestSector}
+                topThreeConcentration={holdingConcentration.topThreeConcentration}
+                cashSharePercent={cashSharePercent}
+                currentMonth={currentMonthDiagnostic}
+              />
             </div>
           )}
 

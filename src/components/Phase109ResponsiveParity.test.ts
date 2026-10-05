@@ -52,13 +52,11 @@ describe('Phase 10.9 responsive cross-app parity', () => {
     expect(css).toContain('.premium-overview-today');
   });
 
-  it('prevents the Reports summary band from becoming a cramped two-column strip at 320px', () => {
-    const reports = readRelative('./PerformanceReports.tsx');
-    const css = readRelative('../styles/responsive.css');
+  it('keeps the diagnostic Reports Overview single-column on narrow phones', () => {
+    const overview = readRelative('./reports/ReportsOverview.tsx');
 
-    expect(reports).toContain('premium-report-summary-band');
-    expect(css).toContain('.premium-report-summary-band');
-    expect(css).toContain('grid-template-columns: minmax(0, 1fr) !important;');
+    expect(overview).toContain('grid grid-cols-1 gap-4 md:grid-cols-2');
+    expect(overview).toContain('grid grid-cols-1 gap-2.5 sm:grid-cols-3');
   });
 
   it('extends safe-area protection to short landscape overlays and modals', () => {

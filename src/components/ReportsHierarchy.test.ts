@@ -42,12 +42,14 @@ describe('Phase 8.2 Reports composition hierarchy', () => {
     );
   });
 
-  it('demotes report detail/KPI surfaces to H3/H4 instead of peer hero cards', () => {
+  it('keeps diagnostic and detail surfaces below the main analytics hero', () => {
     const reports = readRelative('./PerformanceReports.tsx');
+    const overview = readRelative('./reports/ReportsOverview.tsx');
     const trading = readRelative('./reports/TradingPerformanceReport.tsx');
     const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
 
-    expect(reports).toContain('premium-report-summary-band');
+    expect(overview.match(/data-hierarchy="h2"/g)).toHaveLength(1);
+    expect(overview.match(/data-hierarchy="h3"/g)).toHaveLength(4);
     expect(reports).toContain('premium-report-section premium-hierarchy-h3');
     expect(trading).toContain('premium-card premium-semantic-card premium-hierarchy-h4 premium-report-kpi');
     expect(monthly).toContain('premium-month-audit-shell premium-hierarchy-h3');

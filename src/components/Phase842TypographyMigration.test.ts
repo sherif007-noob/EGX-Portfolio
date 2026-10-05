@@ -19,11 +19,14 @@ describe('Phase 8.4.2 Overview + Reports typography migration', () => {
 
   it('normalizes Reports summary, allocation, Monthly and Trading Performance typography', () => {
     const reports = readRelative('./PerformanceReports.tsx');
+    const overview = readRelative('./reports/ReportsOverview.tsx');
     const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
     const trading = readRelative('./reports/TradingPerformanceReport.tsx');
+    const reportTypography = [reports, overview].join('\n');
 
-    expect(reports.match(/premium-type-metric-secondary/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(reports).toContain('premium-type-unit');
+    expect(overview).toContain('premium-type-metric premium-type-metric-hero');
+    expect(overview).toContain('premium-type-metric-label');
+    expect(reportTypography).toContain('premium-type-unit');
     expect(reports).toContain('premium-type-metric-dense');
 
     expect(monthly).toContain('premium-type-section-title');

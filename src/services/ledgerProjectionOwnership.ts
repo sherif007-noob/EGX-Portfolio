@@ -30,6 +30,13 @@ export function getActivePositionLedgerTransactionIds(
     if (normalizeTicker(transaction.ticker) !== targetTicker) continue;
     if (transaction.cashFlowType || normalizeTicker(transaction.ticker) === 'CASH') continue;
 
+    if (transaction.type === 'BONUS_SHARES') {
+      if (runningShares <= EPSILON) continue;
+      runningShares += transaction.shares;
+      activeCycleIds.push(transaction.id);
+      continue;
+    }
+
     if (transaction.type === 'BUY') {
       if (runningShares <= EPSILON) activeCycleIds = [];
       runningShares += transaction.shares;

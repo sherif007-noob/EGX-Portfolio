@@ -20,6 +20,7 @@ export {
 } from '../../services/tradeLedgerMutations';
 
 export {
+  prepareBonusSharesMutation,
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
   prepareCashEventMutation,
@@ -28,6 +29,7 @@ export {
   preparePortfolioRestoreMutation,
   prepareTransactionDeleteMutation,
   prepareTransactionEditMutation,
+  type BonusSharesCorporateActionInput,
   type PortfolioRestoreInput,
 } from '../../services/ledgerWorkflowMutations';
 

@@ -59,6 +59,8 @@ Each import has its own named cascade layer. Existing accepted rules remain **un
 - **4.5.1 — inventory + ownership/layer entry contract**
 - **4.5.2 — token extraction**
 - **4.5.3 — neutral material extraction**
+  - **4.5.3.1 — shared neutral material/refraction primitives**
+  - **4.5.3.2 — composite + Phase 8 material restoration closure**
 - **4.5.4 — semantic state/aura extraction**
 - **4.5.5 — hierarchy extraction**
 - **4.5.6 — shared controls extraction**
@@ -204,3 +206,49 @@ Extraction integrity was also checked directly: the six moved `:root` blocks are
 The first PR CI run failed only because the new guard miscounted responsive root declarations. The assertion was corrected to measure the actual root bodies; no runtime CSS change was required.
 
 Next: **4.5.3 — neutral material extraction**.
+
+
+## 4.5.3.1 — Shared neutral material/refraction primitives — VALIDATION IN PROGRESS
+
+Stage 4.5.3 is split because the legacy material system spans both reusable primitives and later composite/Phase-8 restoration rules. They are validated separately so a cascade regression can be isolated.
+
+### Scope
+
+Move only reusable neutral material ownership into `src/styles/materials.css`:
+
+- shared `.premium-surface/.premium-card/.premium-glass` frame;
+- `.premium-surface` material;
+- `.premium-glass` material;
+- base `.premium-panel`;
+- base `.premium-subpanel`;
+- `.premium-inset-glass`;
+- static refraction primitives;
+- primary/secondary/hero/overlay refraction-tier role mappings.
+
+### Explicitly deferred to 4.5.3.2
+
+- mixed `.premium-card` material + transition block;
+- Reports glass/table composite surfaces;
+- dropdown/floating/modal material bodies;
+- dense table material;
+- Phase 8 hierarchy-linked material restoration;
+- neutral material-tone families and their hover/restoration rules.
+
+### Explicitly out of Stage 4.5.3
+
+- semantic state/aura rules (4.5.4);
+- hierarchy ownership (4.5.5);
+- controls (4.5.6);
+- overlay geometry (4.5.7);
+- motion (4.5.8);
+- responsive rules (4.5.9).
+
+### Acceptance
+
+- extracted primitive declaration values are unchanged;
+- `materials.css` contains no semantic-state selector, keyframe, media query, control body, or overlay body;
+- later composite material families remain unmodified in `src/index.css`;
+- TypeScript, full tests, and production build are green;
+- main-push rendered regression remains inside the frozen Phase 10 baseline.
+
+Next after acceptance: **4.5.3.2 — composite + Phase 8 material restoration closure**.

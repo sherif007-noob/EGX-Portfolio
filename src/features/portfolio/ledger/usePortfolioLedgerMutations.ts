@@ -7,6 +7,7 @@ import type {
 } from '../../../types';
 import {
   createLedgerMutationExecutor,
+  prepareBonusSharesMutation,
   prepareBuyTradeMutation,
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
@@ -112,6 +113,19 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const reconcileLedger = useCallback(() => executePreparedMutation(
     'RECONCILE_LEDGER',
     (current) => prepareLedgerReconciliationMutation(current),
+  ), [executePreparedMutation]);
+
+  const addBonusShares = useCallback((input: {
+    ticker: string;
+    creditedShares: number;
+    effectiveDate: string;
+    notes?: string;
+  }) => executePreparedMutation<TradeTransaction>(
+    'BONUS_SHARES',
+    (current) => prepareBonusSharesMutation(current, {
+      transactionId: `tx-${crypto.randomUUID()}`,
+      ...input,
+    }),
   ), [executePreparedMutation]);
 
   const addTrade = useCallback((tradeInput: BuyTradeInput) => executePreparedMutation<TradeTransaction>(
@@ -249,6 +263,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   }, [executePreparedMutation]);
 
   return {
+    addBonusShares,
     addTrade,
     sellPosition,
     editTransaction,

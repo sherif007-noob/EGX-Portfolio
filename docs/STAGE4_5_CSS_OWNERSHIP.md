@@ -720,7 +720,7 @@ No compensating CSS values and no new `!important` patches are permitted.
 
 ### Recovery sequence
 
-- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — MERGED / POST-MERGE RENDERED VALIDATION PENDING** via PR #72 at `main@e5f12297`
+- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — ACCEPTED / CI + RENDERED GREEN** via PR #72 at `main@e5f12297`; Phase 10 Visual Closure #37344440053 and Rendered Visual Regression #37344440077 passed
 - restore hierarchy-card body to `src/index.css`;
 - restore the three historical guards to their accepted ownership boundary;
 - remove the rejected 4.5.3.2.2.2.4 guard;
@@ -728,7 +728,7 @@ No compensating CSS values and no new `!important` patches are permitted.
 
 After recovery, do **not** retry the hierarchy-card body unchanged. The next Stage 4.5 move must first address the competing unlayered ownership boundary that makes the body unsafe to layer.
 
-## 4.5.3.2.2.2.5 — Cascade-safe hierarchy shell — VALIDATION CANDIDATE
+## 4.5.3.2.2.2.5 — Cascade-safe hierarchy shell — ACCEPTED / CI + RENDERED GREEN
 
 This pass is a root-cause-driven retry, not a smaller copy of the rejected 4.5.3.2.2.2.4 move.
 
@@ -774,4 +774,28 @@ The safe shell is placed before the already-accepted Overview hero refraction ro
 - recovery main must be rendered-green before this candidate merges;
 - after merge, all 16 rendered states must remain below the frozen 1% threshold.
 
-Next after acceptance: evaluate border/shadow ownership separately only after generic hover material ordering has its own rendered-safe gate. The important hierarchy background remains blocked until the semantic/important layer strategy is explicitly redesigned.
+### 4.5.3.2.2.2.5 acceptance record
+
+Accepted through PR #75 at `main@03e49ed2`.
+
+Validation passed:
+
+- recovery Phase 10 Visual Closure #37344440053;
+- recovery Rendered Visual Regression #37344440077;
+- PR Quality Checks #37346334154;
+- **122 / 122 test files, 665 / 665 tests**;
+- production build;
+- pre-merge rendered gate #37346519204;
+- main Quality Checks #37346978337;
+- main Phase 10 Visual Closure #37346978299;
+- main Rendered Visual Regression #37346978175;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+The main rendered profile remained frozen: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.042%**, and every remaining state including Semantic Summary **0.000%**.
+
+This proves the hierarchy custom properties and desktop backdrop filtering can live in `egx-materials` while the important background and interaction-sensitive border/shadow bridge remain unlayered.
+
+Next: **4.5.3.2.2.2.6 — generic card hover material ownership**. Move only generic hover border/shadow + highlight opacity into `materials.css`; keep hover translation in legacy/motion ownership. The hierarchy bridge remains unlayered.
+
+The important hierarchy background remains blocked until the semantic/important layer strategy is explicitly redesigned.

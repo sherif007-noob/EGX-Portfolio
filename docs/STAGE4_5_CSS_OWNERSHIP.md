@@ -54,27 +54,29 @@ Each import has its own named cascade layer. Existing accepted rules remain **un
 - New late-file repair blocks in `src/index.css` are prohibited during Stage 4.5; fix the owning module instead once that family has migrated.
 - `!important` removal is not a numerical goal by itself. A declaration is removed only when the owning cascade has been proven equivalent by tests/rendered regression.
 
-## Granular sequence
+## Compressed execution sequence — adopted 2026-10-05
 
-- **4.5.1 — inventory + ownership/layer entry contract**
-- **4.5.2 — token extraction**
-- **4.5.3 — neutral material extraction**
-  - **4.5.3.1 — shared neutral material/refraction primitives**
-  - **4.5.3.2 — composite + Phase 8 material restoration closure**
-    - **4.5.3.2.1 — Reports + dense-data composite materials**
-    - **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**
-      - **4.5.3.2.2.1 — base composite card + neutral overlay material bodies**
-      - **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**
-- **4.5.4 — semantic state/aura extraction**
-- **4.5.5 — hierarchy extraction**
-- **4.5.6 — shared controls extraction**
-- **4.5.7 — overlays/portal geometry extraction**
-- **4.5.8 — CSS-owned motion extraction**
-- **4.5.9 — responsive/safe-area/table-safety extraction**
-- **4.5.10 — feature CSS drain**, split into smaller 4.5.10.x passes if needed
-- **4.5.11 — legacy drain, duplicate/`!important` audit and rendered-regression closure**
+Stage 4.5 keeps the same ownership end-state but no longer turns every extraction family into a top-level roadmap section. Small cascade-sensitive commits remain valid implementation gates; they do not create new roadmap stages.
 
-No pass may combine unrelated ownership families merely to reduce line count.
+- **4.5.1 — inventory + ownership/layer entry contract — ACCEPTED**
+- **4.5.2 — token extraction — ACCEPTED**
+- **4.5.3 — materials + cascade-safety closure — ACTIVE**
+  - finish the remaining neutral card/hierarchy interaction material as one ordered family;
+  - keep the hierarchy `background: ... !important` bridge unlayered until competing semantic/tone important owners move with it;
+  - historical `4.5.3.x` micro-passes below remain acceptance evidence, not additional roadmap stages.
+- **4.5.4 — semantics + hierarchy**
+  - move financial semantic aura/state ownership and hierarchy ownership together;
+  - resolve the important-background layer contract as one proven cascade.
+- **4.5.5 — interaction surfaces**
+  - consolidate controls, dropdown/modal overlay surfaces, hover/focus/tactile material, and CSS-owned motion without redesigning behavior.
+- **4.5.6 — responsive + feature/legacy closure**
+  - migrate responsive/safe-area/table-safety ownership;
+  - drain feature-specific leftovers;
+  - complete duplicate/`!important` audit, legacy stylesheet drain, and final rendered-regression closure.
+
+The former planned `4.5.7–4.5.11` scopes are folded into 4.5.5–4.5.6. No separate roadmap sections are created for them.
+
+Implementation rule: combine declarations only when they are part of one cascade contract. If a family needs several commits to remain rendered-safe, those commits stay internal to the numbered pass rather than expanding the roadmap.
 
 ## 4.5.1 — Inventory + ownership/layer entry contract — ACCEPTED / CI + RENDERED GREEN
 

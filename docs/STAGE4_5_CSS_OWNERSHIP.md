@@ -667,6 +667,8 @@ Next: **4.5.3.2.2.2.4 — hierarchy-card base material body**.
 
 ## 4.5.3.2.2.2.4 — Hierarchy-card base material body — VALIDATION IN PROGRESS
 
+Candidate: PR #71. Acceptance remains blocked on source CI plus the post-merge rendered gate.
+
 This gate moves only the resting neutral hierarchy-card body after the generic card and hero-card neutral materials have already moved into `egx-materials`.
 
 ### Scope

@@ -241,7 +241,7 @@ export type CashFlowType = CanonicalCashFlowType | 'CASH_ADJUSTMENT';
 
 export interface TradeTransaction {
   id: string;
-  type: 'BUY' | 'SELL';
+  type: 'BUY' | 'SELL' | 'BONUS_SHARES';
   ticker: string;
   companyName: string;
   sector: Sector;

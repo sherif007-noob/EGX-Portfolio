@@ -51,16 +51,15 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(legacy).toContain('Stage 4.5.3.1: refraction primary primitive moved to ./styles/materials.css.');
   });
 
-  it('keeps mixed or later composite material families in legacy for 4.5.3.2', () => {
+  it('keeps the remaining composite material families in legacy for later 4.5.3 gates', () => {
     const legacy = read('src/index.css');
 
     for (const marker of [
       '.premium-card {',
       '.premium-card::before {',
-      '.premium-report-glass {',
-      '.premium-report-glass-soft {',
-      '.premium-table-shell {',
       '.premium-dropdown {',
+      '.premium-modal {',
+      '.premium-subpanel,\n.premium-inset-glass,\n.premium-form-section,\n.premium-modal-section {',
       'Phase 8 material restoration — Monthly Report quality reference',
       '.premium-card.premium-hierarchy-h1',
       '.premium-report-summary-band {',
@@ -88,7 +87,6 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('.premium-dropdown {');
     expect(materials).not.toContain('@keyframes');
-    expect(materials).not.toContain('@media');
   });
 
   it('keeps the canonical material layer directly after tokens', () => {

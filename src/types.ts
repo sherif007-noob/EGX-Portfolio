@@ -239,9 +239,11 @@ export type CanonicalCashFlowType =
  */
 export type CashFlowType = CanonicalCashFlowType | 'CASH_ADJUSTMENT';
 
+export type CorporateActionType = 'BONUS_SHARES';
+
 export interface TradeTransaction {
   id: string;
-  type: 'BUY' | 'SELL';
+  type: 'BUY' | 'SELL' | CorporateActionType;
   ticker: string;
   companyName: string;
   sector: Sector;
@@ -269,4 +271,7 @@ export interface TradeTransaction {
   outcome?: 'WIN' | 'LOSS' | 'BREAKEVEN';
   holdingDays?: number;
   positionId?: string;
+  corporateActionType?: CorporateActionType;
+  corporateActionRatio?: number;
+  corporateActionReference?: string;
 }

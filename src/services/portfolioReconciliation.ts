@@ -4,6 +4,7 @@ import { INITIAL_CAPITAL_DEPOSITS } from '../data/initialPortfolio';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact, calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
 import { normalizeCashFlowType } from './cashFlowSemantics';
+import { isBonusSharesTransaction } from './corporateActions';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];
@@ -197,6 +198,58 @@ export function reconcilePortfolioFromLedger(
     const tickerQuote = tickers.find((t) => t.ticker.trim().toUpperCase() === tickerKey);
     const sector = tx.sector || tickerQuote?.sector || 'Other';
     const companyName = tx.companyName || tickerQuote?.nameEn || tx.ticker;
+
+    if (tx.type === 'CORPORATE_ACTION') {
+      if (!isBonusSharesTransaction(tx)) {
+        discrepancies.push(`Corporate action ${tx.id} for ${tx.ticker} has unsupported type ${tx.corporateActionType || 'EMPTY'}.`);
+        continue;
+      }
+
+      const lots = openLotsByTicker[tickerKey] || [];
+      const currentShares = lots.reduce((sum, lot) => sum + lot.shares, 0);
+      const sourceShares = Number(tx.corporateActionSourceShares);
+      const bonusShares = Number(tx.shares);
+      const ratio = Number(tx.corporateActionRatio);
+
+      if (currentShares <= EPSILON) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has no open position.`);
+        continue;
+      }
+      if (!Number.isFinite(sourceShares) || sourceShares <= EPSILON) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has invalid source shares.`);
+        continue;
+      }
+      if (Math.abs(currentShares - sourceShares) > 0.01) {
+        discrepancies.push(
+          `BONUS_SHARES ${tx.id} for ${tx.ticker} expected ${sourceShares.toFixed(4)} source shares but ledger has ${currentShares.toFixed(4)}.`,
+        );
+        continue;
+      }
+      if (!Number.isFinite(bonusShares) || bonusShares <= EPSILON) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has invalid received shares.`);
+        continue;
+      }
+      if (!Number.isFinite(ratio) || ratio < 0) {
+        discrepancies.push(`BONUS_SHARES ${tx.id} for ${tx.ticker} has invalid official ratio.`);
+        continue;
+      }
+
+      // Bonus shares add units without adding economic cost or cash movement.
+      // A zero-cost lot preserves total gross cost and buy fees, so weighted
+      // average cost automatically drops over the enlarged share count.
+      lots.push({
+        id: tx.id,
+        shares: bonusShares,
+        price: 0,
+        date: tx.date,
+        fees: 0,
+        companyName,
+        sector,
+        notes: tx.notes,
+      });
+      openLotsByTicker[tickerKey] = lots;
+      continue;
+    }
 
     if (tx.type === 'BUY') {
       try {

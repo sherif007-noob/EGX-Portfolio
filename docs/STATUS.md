@@ -97,14 +97,13 @@ Stage 4 accepted:
 Stage 4 active:
 
 - **Stage 4.5.3.2.2.2 — FAILED RENDERED / recovery active**
-- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration**
+- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — accepted / CI + rendered green**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The current validated runtime therefore remains `5f5a1d1e` from Stage 4.5.3.2.2.1.
 
 Next:
 
-1. **4.5.3.2.2.2.R — restore the accepted 4.5.3.2.2.1 visual baseline**
-2. **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership**
+1. **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership**
 3. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**

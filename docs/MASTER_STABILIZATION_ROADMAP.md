@@ -1351,7 +1351,7 @@ Granular acceptance sequence:
       - **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — FAILED RENDERED / RECOVERY ACTIVE**
         - PR #66 at `main@2bd55d68` passed TypeScript, **119 / 119 test files, 656 / 656 tests**, and build, but failed the authoritative rendered threshold: Positions phone **1.035%**, Journal desktop **1.947%**, Semantic Summary desktop **3.137%**.
         - Root cause: late unlayered Phase 8 restoration rules lost cascade priority when moved wholesale into the named `egx-materials` layer while competing legacy rules remained unlayered.
-        - **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACTIVE**
+        - **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACCEPTED / CI + RENDERED GREEN** at `main@8ec414fe`; Quality Checks #37335363101 passed **118 / 118 test files, 649 / 649 tests** and build. Phase 10 Visual Closure #37335363137 and Rendered Visual Regression #37335363252 restored **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
         - **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — NEXT after revert**
         - Do not add compensating visual values or `!important` patches; each remaining material slice must prove rendered parity before acceptance.
 

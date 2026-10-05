@@ -692,9 +692,9 @@ Move only the shared H1–H5 hierarchy-card resting body:
 - Phase 8 mobile hierarchy-card/panel backdrop overrides;
 - every semantic aura/state/hover selector.
 
-### Cascade rationale
+### Pre-merge cascade hypothesis — DISPROVEN BY RENDERED GATE
 
-The generic card material and neutral hero-card body now live in the same named material owner. The hierarchy-card body is appended after those neutral recipes and has higher selector specificity. Semantic and explicit-tone hierarchy rules remain unlayered and therefore continue to outrank this neutral resting body exactly as before.
+The candidate assumed that leaving semantic and explicit-tone hierarchy rules unlayered would guarantee that they continued to outrank the layered neutral hierarchy body. That is true for the normal declarations in the rule, but **not** for its `background: ... !important` declaration: important cascade-layer priority reverses. The rendered failure below is the evidence that invalidated this hypothesis.
 
 ### Failed rendered attempt record
 

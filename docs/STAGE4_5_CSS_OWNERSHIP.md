@@ -712,16 +712,66 @@ It merged as `main@928fb8f6`, but Rendered Visual Regression #37340612935 reprod
 
 Additional states that had previously remained effectively unchanged also shifted materially, including Overview phone 390 at **0.969%** and Closed Cycles desktop at **0.816%**.
 
-This confirms that moving the hierarchy-card resting body into the named `egx-materials` layer is still unsafe while the competing unlayered hierarchy/semantic cascade remains in place. This is a cascade-order problem, not a declaration-value problem.
+Rendered-artifact comparison isolated the precise mechanism: the neutral hierarchy body contains `background: ... !important`. For important declarations, named cascade-layer precedence is reversed relative to normal declarations. Moving that background into the earlier `egx-materials` layer made the neutral hierarchy background outrank still-unlayered semantic/tone `background: ... !important` owners. That is why Brokerage Fees and semantic transaction/position cards changed even though their semantic selectors were untouched.
+
+The failure is therefore an **important-layer precedence** problem, not a declaration-value problem. Normal hierarchy declarations can be tested independently, but the important background cannot move into `egx-materials` under the current layer order.
 
 No compensating CSS values and no new `!important` patches are permitted.
 
 ### Recovery sequence
 
-- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — IN PROGRESS**
+- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — MERGED / POST-MERGE RENDERED VALIDATION PENDING** via PR #72 at `main@e5f12297`
 - restore hierarchy-card body to `src/index.css`;
 - restore the three historical guards to their accepted ownership boundary;
 - remove the rejected 4.5.3.2.2.2.4 guard;
 - prove the frozen rendered profile is back before choosing a different next slice.
 
 After recovery, do **not** retry the hierarchy-card body unchanged. The next Stage 4.5 move must first address the competing unlayered ownership boundary that makes the body unsafe to layer.
+
+## 4.5.3.2.2.2.5 — Cascade-safe hierarchy shell — VALIDATION CANDIDATE
+
+This pass is a root-cause-driven retry, not a smaller copy of the rejected 4.5.3.2.2.2.4 move.
+
+### Scope
+
+Move only the hierarchy declarations that are safe inside the named material layer:
+
+- `--phase8-material-rgb`;
+- `--phase8-material-deep-rgb`;
+- `--premium-refraction-shadow`;
+- desktop `-webkit-backdrop-filter`;
+- desktop `backdrop-filter`.
+
+Keep the following hierarchy-card declarations unlayered as an explicit importance/interaction bridge:
+
+- resting `border-color`;
+- the complete resting `background: ... !important` recipe;
+- resting `box-shadow`.
+
+### Why the bridge is required
+
+The background must remain unlayered because putting an important declaration in `egx-materials` changes its priority relative to the still-unlayered semantic/tone important backgrounds. The border and box-shadow stay unlayered in this pass because the generic `.premium-card:hover` rule has equal class/pseudo-class specificity; moving hierarchy border/shadow early would also change accepted hover ordering.
+
+The safe shell is placed before the already-accepted Overview hero refraction role inside `materials.css`, so the Overview-specific hero refraction continues to win exactly as before.
+
+### Explicitly retained unlayered
+
+- hierarchy-card importance/interaction bridge;
+- hierarchy-card `::before` highlight;
+- explicit material-tone hierarchy-card body;
+- neutral hierarchy-card hover;
+- generic card hover interaction;
+- Phase 8 mobile hierarchy-card/panel overrides;
+- every semantic aura/state/highlight/hover owner.
+
+### Acceptance
+
+- no declaration values change;
+- the safe shell contains no `background`, `border-color`, `box-shadow` or `!important`;
+- the important background bridge remains unlayered;
+- Overview hero refraction remains ordered after the shell;
+- TypeScript, full tests and production build are green;
+- recovery main must be rendered-green before this candidate merges;
+- after merge, all 16 rendered states must remain below the frozen 1% threshold.
+
+Next after acceptance: evaluate border/shadow ownership separately only after generic hover material ordering has its own rendered-safe gate. The important hierarchy background remains blocked until the semantic/important layer strategy is explicitly redesigned.

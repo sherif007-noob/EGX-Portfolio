@@ -150,3 +150,37 @@ Existing public behavior is intentionally preserved:
 Express remains the runtime that implements all four capabilities; the capability boolean means runtime implementation support, not whether an optional feature is currently configured or enabled.
 
 Next: **4.4.4 — Google Sheets payload/response contract consolidation**.
+
+
+## 4.4.4 — Google Sheets payload/response contract consolidation — VALIDATION IN PROGRESS
+
+**Scope**
+
+- Google Sheets metadata query schema;
+- range-value read query schema;
+- range-value write payload schema;
+- append payload schema;
+- batch-update payload schema;
+- metadata/value/write/append/batch/Drive response schemas;
+- browser use of canonical Sheets routes and shared response types;
+- Worker/Express success-response parity.
+
+**Explicitly out of scope**
+
+- scanner request/response schemas;
+- Google Sheets business synchronization logic;
+- authentication/error semantics already accepted in 4.4.2;
+- runtime capability behavior already accepted in 4.4.3;
+- Stage 4.5 CSS ownership.
+
+**Acceptance**
+
+- Worker and Express parse the same Sheets request shapes through `src/api/contracts.ts`;
+- Worker and Express construct the same successful Sheets response shapes through shared builders;
+- Worker no longer exposes raw Google success payloads where Express exposes normalized application responses;
+- browser Sheets code uses canonical `API_ROUTES` instead of hard-coded `/api/sheets/*` strings;
+- browser metadata/value/Drive reads consume shared response types;
+- existing route names and Google synchronization behavior remain unchanged;
+- TypeScript, full tests, and production build are green.
+
+Next after acceptance: **4.4.5 — scanner request/response contract closure**.

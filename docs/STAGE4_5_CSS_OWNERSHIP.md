@@ -408,7 +408,7 @@ The first CI attempt failed only because two historical dropdown visual guards s
 Next: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**.
 
 
-## 4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — VALIDATION IN PROGRESS
+## 4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — FAILED RENDERED / REVERTING
 
 ### Scope
 
@@ -443,6 +443,28 @@ Next: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**
 - TypeScript, full tests and production build are green;
 - rendered regression remains inside the frozen Phase 10 baseline.
 
-Passing this gate closes **Stage 4.5.3 neutral material extraction**.
+### Failed rendered attempt record
 
-Next: **4.5.4 — semantic state/aura extraction**.
+PR #66 merged as `main@2bd55d68` after its source gate passed TypeScript, **119 / 119 test files, 656 / 656 tests**, and production build.
+
+The main-push rendered matrix then exposed a real cascade regression despite the workflow job itself reporting success:
+
+- Positions phone: **1.035%** diff;
+- Journal desktop: **1.947%** diff;
+- Semantic Summary desktop: **3.137%** diff.
+
+Those states exceed the frozen **1%** Phase 10 threshold, so PR #66 is **not accepted**.
+
+Root cause: the moved Phase 8 restoration rules were late **unlayered** rules in `src/index.css`. Moving them wholesale into the named `egx-materials` layer lowered their cascade priority beneath still-unlayered legacy rules. This is a cascade-ownership problem, not a declaration-value problem.
+
+No compensating visual values or new `!important` patches will be introduced.
+
+### Recovery sequence
+
+- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACTIVE**
+- **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — NEXT after revert**
+- further Phase 8 material chunks will be defined only after each rendered gate proves cascade safety.
+
+The hierarchy-card restoration matrix, neutral hierarchy hover, and related mobile material overrides remain explicitly blocked from wholesale layering until their competing unlayered owners are isolated or migrated safely.
+
+Stage 4.5.3 remains **ACTIVE**. It is not closed by PR #66.

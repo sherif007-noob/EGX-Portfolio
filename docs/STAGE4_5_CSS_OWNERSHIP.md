@@ -705,3 +705,50 @@ The generic card material and neutral hero-card body now live in the same named 
 - all 16 rendered states remain below the frozen 1% threshold.
 
 Next after acceptance: evaluate the hierarchy-card highlight as a separate cascade problem; do not move it until generic highlight-hover ownership is resolved.
+
+## 4.5.3.2.2.2.5 — Generic card hover material interaction — VALIDATION CANDIDATE
+
+This pass resolves the generic hover cascade competitor before the hierarchy-card highlight is layered.
+
+### Scope
+
+Move only the generic card hover material interaction into `materials.css`:
+
+- hover border color;
+- hover box-shadow/refraction recipe;
+- hover `::before` highlight opacity.
+
+Keep hover translation in the legacy/motion owner:
+
+```css
+.premium-card:hover {
+  transform: translateY(-2px);
+}
+```
+
+### Ordering invariant
+
+`.premium-card:hover` and `.premium-card.premium-hierarchy-h*` have equal class/pseudo-class specificity for the shared border/box-shadow properties. The generic hover material must therefore remain **before** the hierarchy-card resting body inside `egx-materials`, preserving the accepted behavior where hierarchy resting material wins on hierarchy-card hover.
+
+The generic hover `::before` interaction is likewise moved before the still-unlayered hierarchy highlight. This removes the future unlayered competitor without changing current highlight precedence.
+
+### Explicitly retained unlayered
+
+- hierarchy-card `::before` highlight body;
+- explicit `premium-material-tone-*` hierarchy-card body;
+- neutral fine-pointer hierarchy-card hover;
+- Phase 8 mobile hierarchy-card/panel material overrides;
+- semantic aura/state/highlight rules;
+- card hover transform and all motion timing.
+
+### Acceptance
+
+- no declaration values change;
+- generic hover material lives in `materials.css` before the hierarchy-card body;
+- hover transform remains in legacy/motion ownership;
+- hierarchy highlight/tone/hover/mobile/semantic rules remain unlayered;
+- TypeScript, full tests and production build are green;
+- merge remains blocked until 4.5.3.2.2.2.4 post-merge rendered validation is accepted;
+- after merge, all 16 rendered states must remain below the frozen 1% threshold.
+
+Next after acceptance: **4.5.3.2.2.2.6 — hierarchy-card highlight body**, as its own rendered gate.

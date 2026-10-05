@@ -1,5 +1,6 @@
 import { loadHistoricalPricesFromSupabase } from './supabasePersistence';
 import { getSupabaseBrowserClient } from './supabaseBrowser';
+import { API_ROUTES } from '../api/contracts';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -86,7 +87,7 @@ export async function ensureHistoricalPriceCoverage(
   const token = data.session?.access_token;
   if (!token) throw new Error('Historical backfill requires an authenticated Supabase session.');
 
-  const response = await fetch('/api/supabase/price-history/ensure', {
+  const response = await fetch(API_ROUTES.supabasePriceHistoryEnsure, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ targets: uniqueTargets }),

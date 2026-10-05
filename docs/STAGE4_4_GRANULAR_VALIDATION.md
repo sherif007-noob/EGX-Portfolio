@@ -247,3 +247,36 @@ The pass closed two scanner-boundary defects:
 Portfolio-price and sector-momentum consumers now use the canonical scanner route and shared response parser. The direct TradingView fallback remains explicit and is the only browser-side path that sends `EGX_SCANNER_PAYLOAD`.
 
 Next: **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure**.
+
+
+## 4.4.6 — Symbol-search response contract + Stage 4.4 exit regression closure — VALIDATION IN PROGRESS
+
+**Scope**
+
+- TradingView symbol-search success-response normalization;
+- compatibility with known provider envelope variants;
+- Worker/Express malformed-provider handling parity;
+- browser logo-resolution use of the canonical route and response parser;
+- remaining ordinary app-owned hard-coded `/api/*` route literals;
+- full Stage 4.4 cross-contract regression closure;
+- API reference alignment.
+
+**Explicitly out of scope**
+
+- TradingView symbol-resolution/history algorithms;
+- ticker registry business rules;
+- scanner ranking/background operationalization;
+- Stage 3.5 ingestion remediation;
+- Stage 4.5 CSS ownership.
+
+**Acceptance**
+
+- Worker and Express return one normalized symbol-search array through the shared contract;
+- legacy top-level-array and object-envelope provider responses normalize identically;
+- invalid JSON or malformed successful provider responses become retryable HTTP 502 errors in both runtimes;
+- the browser logo service uses `API_ROUTES.tradingViewSymbolSearch` and the shared response parser;
+- ordinary app-owned TypeScript/TSX contains no hard-coded `/api/*` route literals outside `src/api/contracts.ts`;
+- all Stage 4.4.1–4.4.6 contract guards pass together;
+- TypeScript, full tests, and production build are green.
+
+Passing this gate closes **Stage 4.4**. Next: **Stage 4.5 — CSS ownership consolidation**, executed in granular sub-passes.

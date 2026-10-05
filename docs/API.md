@@ -13,35 +13,46 @@ Normal browser portfolio persistence now uses the authenticated Supabase browser
 Response:
 
 ```json
-{ "status": "ok" }
+{
+  "status": "ok",
+  "runtime": "cloudflare-workers",
+  "contractVersion": 1
+}
 ```
 
-Use this endpoint for simple process/HTTP health checks.
+`runtime` is either `cloudflare-workers` or `express-vite`. Both runtimes use the same contract version.
 
 ## EGX market data
 
 ### POST /api/egx/scan
 
-Proxies TradingView's Egypt scanner.
+Proxies TradingView's Egypt scanner through a stable application contract.
 
-The server requests a broad EGX snapshot including:
+Body:
 
-- symbol/name;
-- description;
-- logo ID;
-- close;
-- absolute and percentage change;
-- volume;
-- high/low;
-- 52-week range;
-- sector;
-- RSI.
+```json
+{ "purpose": "portfolio-prices" }
+```
 
-Possible responses:
+Supported purposes:
 
-- `200`: TradingView payload;
-- upstream status: TradingView returned an error;
-- `500`: proxy/network failure.
+- `portfolio-prices`;
+- `sector-momentum`.
+
+Older cached clients that post the legacy provider payload without `purpose` remain compatible and are treated as `portfolio-prices`.
+
+The runtime owns the provider-specific TradingView scanner payload. Successful responses are normalized to:
+
+```json
+{
+  "totalCount": 2,
+  "data": [
+    { "s": "EGX:COMI", "d": ["COMI", "..."] }
+  ]
+}
+```
+
+Malformed provider success payloads return retryable `502` errors rather than being forwarded unchecked.
 
 ### GET /api/tradingview/symbol-search
 
@@ -53,7 +64,29 @@ Query:
 
 Search is scoped to the EGX exchange.
 
-Returns `400` when the `text` query is missing.
+Successful responses are a normalized array containing only the application-used symbol fields:
+
+```json
+[
+  {
+    "symbol": "SWDY",
+    "ticker": "SWDY",
+    "description": "Elsewedy Electric",
+    "exchange": "EGX",
+    "logoid": "elsewedy-electric",
+    "logo_urls": ["https://..."]
+  }
+]
+```
+
+The compatibility parser accepts both TradingView's legacy top-level array and newer object envelopes containing `symbols` (or `data`), while the app-facing response remains the normalized array.
+
+Returns:
+
+- `400` when the `text` query is missing;
+- upstream status when TradingView returns a non-success status;
+- retryable `502` when TradingView returns invalid JSON or an invalid success envelope;
+- `500` for proxy/network failure.
 
 ## Google Sheets
 

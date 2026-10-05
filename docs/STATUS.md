@@ -101,7 +101,7 @@ Stage 4 accepted:
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — 4.5.3.2.2.2.4 FAILED RENDERED; recovery 4.5.3.2.2.2.4.R active**
+- **Stage 4.5 CSS ownership consolidation — 4.5.3.2.2.2.4 FAILED RENDERED; recovery 4.5.3.2.2.2.4.R merged at main@e5f12297 with post-merge rendered validation pending; 4.5.3.2.2.2.5 generic hover material candidate prepared**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -109,8 +109,9 @@ PR #71 at `main@928fb8f6` is likewise **not an accepted runtime**. Moving only t
 
 Next:
 
-1. **4.5.3.2.2.2.4.R — restore the accepted `54530841` visual baseline after the rejected hierarchy-body move**
-2. Continue Stage 4.5 in small visual-preserving sub-passes
+1. Confirm **4.5.3.2.2.2.4.R** restored the frozen rendered baseline on main
+2. Validate **4.5.3.2.2.2.5 — generic card hover material interaction**; merge only after recovery rendered acceptance
+3. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready
 

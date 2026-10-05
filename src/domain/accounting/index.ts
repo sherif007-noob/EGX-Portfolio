@@ -15,6 +15,7 @@ export {
 } from '../../services/ledgerMutationService';
 
 export {
+  prepareBonusSharesMutation,
   prepareBuyTradeMutation,
   prepareSellTradeMutation,
 } from '../../services/tradeLedgerMutations';

@@ -1,0 +1,139 @@
+/*
+ * Stage 4.5.6 — application-shell feature ownership.
+ * Global canvas, scrollbar chrome, numeric browser-chrome suppression and
+ * ambient/status shell presentation live here rather than in the legacy entry.
+ */
+
+/* App-wide scrollbar theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #0f172a;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569, #334155);
+  border: 2px solid #0f172a;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b, #475569);
+}
+
+*::-webkit-scrollbar-corner {
+  background: #0f172a;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Numeric inputs use the app's custom stepper controls instead of browser chrome. */
+.app-number-input {
+  appearance: textfield;
+}
+
+.app-number-input::-webkit-outer-spin-button,
+.app-number-input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Premium visual system — presentation only                                  */
+/* -------------------------------------------------------------------------- */
+/* Base premium/effect/responsive tokens moved to ./styles/tokens.css in Stage 4.5.2. */
+
+html {
+  background: var(--premium-bg);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% -8%, rgba(34, 211, 238, 0.13), transparent 34rem),
+    radial-gradient(circle at 92% 14%, rgba(139, 92, 246, 0.11), transparent 36rem),
+    radial-gradient(circle at 50% 110%, rgba(59, 130, 246, 0.095), transparent 42rem),
+    var(--premium-bg);
+  color: #e2e8f0;
+}
+
+.premium-page {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+.premium-page::before,
+.premium-page::after {
+  content: '';
+  position: fixed;
+  z-index: -2;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(var(--premium-effect-ambient-blur));
+  opacity: var(--premium-effect-ambient-opacity);
+  transform: translateZ(0);
+}
+
+.premium-page::before {
+  top: 5rem;
+  left: -8rem;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.19), rgba(59, 130, 246, 0.075) 48%, transparent 72%);
+}
+
+.premium-page::after {
+  top: 22rem;
+  right: -10rem;
+  width: 28rem;
+  height: 28rem;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.16), rgba(59, 130, 246, 0.065) 48%, transparent 72%);
+}
+
+/* Phase 5 shared floating status surface.
+ * Status banners reuse one glass/refraction recipe; semantic variants supply color.
+ */
+.premium-status-surface {
+  --premium-status-rgb: 245 158 11;
+  --premium-refraction-shadow: var(--premium-refraction-tier-overlay);
+  position: relative;
+  border: 1px solid rgb(var(--premium-status-rgb) / 0.34);
+  background:
+    linear-gradient(180deg, rgb(var(--premium-status-rgb) / 0.10), transparent 44%),
+    rgba(8, 15, 31, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 52px rgba(0, 0, 0, 0.38),
+    0 0 28px rgb(var(--premium-status-rgb) / 0.10),
+    var(--premium-refraction-shadow, 0 0 0 transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+
+.premium-status-warning {
+  --premium-status-rgb: 245 158 11;
+}
+
+@media (max-width: 767px) {
+  .premium-page::before,
+  .premium-page::after {
+    filter: blur(56px);
+    opacity: 0.72;
+  }
+}

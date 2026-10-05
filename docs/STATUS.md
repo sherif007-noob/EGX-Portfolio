@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `a8cb0956` — Stage 4.5.1 CSS ownership/layer entry contract
-**Current full verification:** PR #61 Quality Checks #37274673986 — TypeScript + **114 / 114 test files, 628 / 628 tests** + production build; Rendered Visual Regression #37275238651 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
+**Current validated runtime head:** `9e18daa8` — Stage 4.5.2 canonical token extraction
+**Current full verification:** PR #62 Quality Checks #37282283539 — TypeScript + **115 / 115 test files, 633 / 633 tests** + production build; Phase 10 Visual Closure #37282467066 + Rendered Visual Regression #37282467090 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -87,16 +87,17 @@ Stage 4 accepted:
 - **Stage 4.4.5 — scanner request/response contract closure — accepted / CI green**
 - **Stage 4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — accepted / CI green**
 - **Stage 4.5.1 — CSS ownership inventory + layer-entry contract — accepted / CI + rendered green**
+- **Stage 4.5.2 — canonical token extraction — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.2**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3**
 
 Next:
 
-1. **Stage 4.5.2 — token extraction**
+1. **Stage 4.5.3 — neutral material extraction**
 2. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**

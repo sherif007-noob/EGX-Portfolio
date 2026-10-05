@@ -875,3 +875,43 @@ The mobile fixed-overlay important family is deliberately **not** moved into `eg
 
 After acceptance, the only remaining Stage 4.5 pass is **4.5.6 — responsive + feature/legacy closure**.
 
+## 4.5.6 — Responsive + feature/legacy closure — VALIDATION CANDIDATE
+
+This is the Stage 4.5 exit pass. It drains the legacy application stylesheet without creating a catch-all legacy replacement.
+
+### Final ownership map
+
+- `src/index.css` — stable entry only: Tailwind + `styles/index.css`;
+- `responsive.css` — cross-app touch sizing, safe areas, containment, responsive hierarchy overrides and viewport safety;
+- `features/app-shell.css` — global canvas/scrollbar/ambient shell presentation;
+- `features/charts.css` — Phase 7 chart/allocation/cash feature presentation;
+- `features/reports.css` — report-specific table contracts, report hero cards and monthly audit structure;
+- `features/header.css` — Phase 9 Header/navigation/command feature cascade;
+- existing materials/controls/overlays/motion owners receive the last shared residue instead of duplicating it in feature CSS.
+
+### Cascade preservation
+
+The competing mobile fixed-overlay `!important` helpers and the later Phase 10.9 short-landscape overrides now live together in `egx-responsive` in their original source order. This preserves later Phase 10.9 precedence without the important-layer reversal that caused the rejected 4.5.3 hierarchy extraction.
+
+Header-specific responsive rules remain together in `egx-features`. Because important layer priority reverses, cross-app responsive important rules in the earlier `egx-responsive` layer continue to outrank feature-important rules where the accepted Phase 10 cascade requires it.
+
+### Final debt audit
+
+Measured on the candidate after the drain:
+
+- legacy entry: **3 lines / 53 bytes / 0 declarations**;
+- `!important`: **158 total**, exactly the 4.5.1 baseline — no new importance debt;
+- `@keyframes`: **23 total**, exactly the 4.5.1 baseline;
+- `@media`: **66 total** versus 62 at baseline because four mixed-owner media blocks were split across canonical owners; declaration behavior is unchanged.
+
+No `legacy.css` or equivalent catch-all owner was introduced.
+
+### Acceptance
+
+- 4.5.5 must be accepted first;
+- TypeScript, full Vitest and production build pass on the final 4.5.6 exact head;
+- Phase 10 Visual Closure passes;
+- Rendered Visual Regression remains within the frozen threshold;
+- `src/index.css` remains import-only;
+- final duplicate/`!important` audit remains clean;
+- after merge, **Stage 4 is CLOSED** and Stage 5 begins at Reports R1.

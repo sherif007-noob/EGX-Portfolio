@@ -75,7 +75,7 @@ describe('Phase 9.0–9.1 header architecture', () => {
   });
 
   it('keeps the Phase 9 shell scoped to header classes and preserves Phase 8 material contracts', () => {
-    const legacy = readRelative('../index.css');
+    const legacy = readRelative('../styles/features/header.css');
     const semantics = readRelative('../styles/semantics.css');
     const css = [legacy, semantics].join('\n');
 

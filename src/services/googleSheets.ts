@@ -2,6 +2,14 @@ import { Position, ClosedTrade, Sector, TradeTransaction, EGXTicker } from '../t
 import { EGX_STOCK_DICTIONARY, INITIAL_EGX_TICKERS } from '../data/egxTickers';
 import { reconcilePortfolioFromLedger, sortTransactions } from './portfolioReconciliation';
 import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
+import {
+  API_ROUTES,
+  type SheetsDriveFile,
+  type SheetsDriveFilesResponse,
+  type SheetsMetadataResponse,
+  type SheetsServiceAccountStatusResponse,
+  type SheetsValuesResponse,
+} from '../api/contracts';
 
 export const TRANSACTION_LOGGER_HEADERS = [
   'Trade ID',
@@ -204,24 +212,15 @@ export interface SheetParseResult {
   tickerQuotes?: Record<string, number>;
 }
 
-export interface GoogleDriveSpreadsheet {
-  id: string;
-  name: string;
-  modifiedTime?: string;
-}
-
-export interface ServiceAccountStatus {
-  configured: boolean;
-  serviceAccountEmail: string | null;
-  instruction: string;
-}
+export type GoogleDriveSpreadsheet = SheetsDriveFile;
+export type ServiceAccountStatus = SheetsServiceAccountStatusResponse;
 
 /**
  * Checks whether Google Service Account is configured on the server for 24/7 continuous sync.
  */
 export async function fetchServiceAccountStatus(): Promise<ServiceAccountStatus> {
   try {
-    const res = await fetch('/api/sheets/service-account-status');
+    const res = await fetch(API_ROUTES.sheetsServiceAccountStatus);
     if (!res.ok) {
       return { configured: false, serviceAccountEmail: null, instruction: '' };
     }
@@ -237,12 +236,12 @@ export async function fetchServiceAccountStatus(): Promise<ServiceAccountStatus>
  */
 export async function fetchUserSpreadsheets(accessToken?: string | null): Promise<GoogleDriveSpreadsheet[]> {
   try {
-    const res = await fetchWithSheetsProxy('/api/sheets/drive-files', {}, accessToken);
+    const res = await fetchWithSheetsProxy(API_ROUTES.sheetsDriveFiles, {}, accessToken);
     if (!res.ok) {
       const errorText = await res.text().catch(() => '');
       throw new Error(`Failed to list Google Drive files (HTTP ${res.status}): ${errorText}`);
     }
-    const data = await res.json();
+    const data = await res.json() as SheetsDriveFilesResponse;
     return data.files || [];
   } catch (err) {
     console.warn('Could not list drive spreadsheets:', err);
@@ -338,7 +337,7 @@ export async function fetchSpreadsheetMetadata(
 ): Promise<{ title: string; sheets: string[]; sheetsInfo?: { title: string; sheetId: number }[] }> {
   const cleanId = extractSpreadsheetId(spreadsheetId);
   const res = await fetchWithSheetsProxy(
-    `/api/sheets/metadata?spreadsheetId=${encodeURIComponent(cleanId)}`,
+    `${API_ROUTES.sheetsMetadata}?spreadsheetId=${encodeURIComponent(cleanId)}`,
     {},
     accessToken
   );
@@ -348,7 +347,7 @@ export async function fetchSpreadsheetMetadata(
     throw new Error(errorData.error || `Failed to fetch sheet metadata (HTTP ${res.status})`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as SheetsMetadataResponse;
   const title = data.title || 'EGX Portfolio Spreadsheet';
   const sheets = Array.isArray(data.sheets) ? data.sheets : ['Sheet1'];
   const sheetsInfo = Array.isArray(data.sheetsInfo) ? data.sheetsInfo : [];
@@ -365,7 +364,7 @@ export async function fetchSheetValues(
 ): Promise<string[][]> {
   const cleanId = extractSpreadsheetId(spreadsheetId);
   const res = await fetchWithSheetsProxy(
-    `/api/sheets/values?spreadsheetId=${encodeURIComponent(cleanId)}&range=${encodeURIComponent(range)}`,
+    `${API_ROUTES.sheetsValues}?spreadsheetId=${encodeURIComponent(cleanId)}&range=${encodeURIComponent(range)}`,
     {},
     accessToken
   );
@@ -375,8 +374,8 @@ export async function fetchSheetValues(
     throw new Error(errorData.error || `Failed to fetch sheet values (HTTP ${res.status})`);
   }
 
-  const data = await res.json();
-  return data.values || [];
+  const data = await res.json() as SheetsValuesResponse;
+  return (data.values || []) as string[][];
 }
 
 
@@ -1131,7 +1130,7 @@ export async function ensureSheetTabExists(
 
     // Add new sheet tab via server proxy batchUpdate
     await fetchWithSheetsProxy(
-      '/api/sheets/batchUpdate',
+      API_ROUTES.sheetsBatchUpdate,
       {
         method: 'POST',
         headers: {
@@ -1208,7 +1207,7 @@ export async function appendTransactionToSheet(
     if (hasHeader && effectiveHeaders.length !== headers.length) {
       const headerRange = `${targetTab}!A${headerRowIdx + 1}:${colToLetter(effectiveHeaders.length - 1)}${headerRowIdx + 1}`;
       const headerRes = await fetchWithSheetsProxy(
-        '/api/sheets/values',
+        API_ROUTES.sheetsValues,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -1351,7 +1350,7 @@ export async function appendTransactionToSheet(
       // UPDATE existing row via server proxy
       const updateRange = `${targetTab}!A${existingSheetRowNumber}:${colToLetter(rowData.length - 1)}${existingSheetRowNumber}`;
       const updateRes = await fetchWithSheetsProxy(
-        '/api/sheets/values',
+        API_ROUTES.sheetsValues,
         {
           method: 'PUT',
           headers: {
@@ -1430,7 +1429,7 @@ export async function appendTransactionToSheet(
           const targetSheetId = targetSheetInfo?.sheetId ?? 0;
 
           await fetchWithSheetsProxy(
-            '/api/sheets/batchUpdate',
+            API_ROUTES.sheetsBatchUpdate,
             {
               method: 'POST',
               headers: {
@@ -1461,7 +1460,7 @@ export async function appendTransactionToSheet(
 
         const appendRange = `${targetTab}!A${nextAppendRowNumber}:${colToLetter(rowData.length - 1)}${nextAppendRowNumber}`;
         const appendRes = await fetchWithSheetsProxy(
-          '/api/sheets/values',
+          API_ROUTES.sheetsValues,
           {
             method: 'PUT',
             headers: {
@@ -1485,7 +1484,7 @@ export async function appendTransactionToSheet(
         const valuesToAppend = [stdHeaders, rowData];
         const appendRange = `${targetTab}!A1:${colToLetter(stdHeaders.length - 1)}2`;
         const appendRes = await fetchWithSheetsProxy(
-          '/api/sheets/values',
+          API_ROUTES.sheetsValues,
           {
             method: 'PUT',
             headers: {
@@ -1621,7 +1620,7 @@ export async function updateStockDirectoryInSheet(
     const updateRange = `${targetTab}!A1:${lastColLetter}${updatedRows.length}`;
 
     const updateRes = await fetchWithSheetsProxy(
-      '/api/sheets/values',
+      API_ROUTES.sheetsValues,
       {
         method: 'PUT',
         headers: {
@@ -1765,7 +1764,7 @@ export async function syncTransactionsLedgerToSheet(
       if (txRows.length > previousTradeRowsCount) {
         const insertCount = txRows.length - previousTradeRowsCount;
         await fetchWithSheetsProxy(
-          '/api/sheets/batchUpdate',
+          API_ROUTES.sheetsBatchUpdate,
           {
             method: 'POST',
             headers: {
@@ -1793,7 +1792,7 @@ export async function syncTransactionsLedgerToSheet(
       } else if (txRows.length < previousTradeRowsCount) {
         const deleteCount = previousTradeRowsCount - txRows.length;
         await fetchWithSheetsProxy(
-          '/api/sheets/batchUpdate',
+          API_ROUTES.sheetsBatchUpdate,
           {
             method: 'POST',
             headers: {
@@ -1831,7 +1830,7 @@ export async function syncTransactionsLedgerToSheet(
 
     const endRow = startRow + tableRows.length - 1;
     const putRes = await fetchWithSheetsProxy(
-      '/api/sheets/values',
+      API_ROUTES.sheetsValues,
       {
         method: 'PUT',
         headers: {
@@ -2043,7 +2042,7 @@ export async function syncActivePositionsToSheet(
     const updateRange = `${targetTab}!A1:${lastColLetter}${updatedRows.length}`;
 
     const updateRes = await fetchWithSheetsProxy(
-      '/api/sheets/values',
+      API_ROUTES.sheetsValues,
       {
         method: 'PUT',
         headers: {

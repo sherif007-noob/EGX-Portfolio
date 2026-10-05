@@ -46,6 +46,7 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
     const materials = read('src/styles/materials.css');
 
     for (const marker of [
+      '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
       '.premium-card.premium-hierarchy-h1::before,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
@@ -54,8 +55,6 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
       expect(legacy).toContain(marker);
     }
 
-    expect(materials).toContain('.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,');
-    expect(legacy).toContain('Stage 4.5.3.2.2.2.4: hierarchy-card base material body moved to ./styles/materials.css.');
     expect(materials).toContain('.premium-overview-hero.premium-hero-card {');
     expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-hero);');
     expect(materials).not.toContain('/* Phase 8 hierarchy card material */');

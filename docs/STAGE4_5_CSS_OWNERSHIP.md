@@ -665,9 +665,9 @@ The neutral hero-card body can live in `egx-materials` without changing the acce
 Next: **4.5.3.2.2.2.4 — hierarchy-card base material body**.
 
 
-## 4.5.3.2.2.2.4 — Hierarchy-card base material body — VALIDATION IN PROGRESS
+## 4.5.3.2.2.2.4 — Hierarchy-card base material body — FAILED RENDERED / REVERTING
 
-Candidate: PR #71. Acceptance remains blocked on source CI plus the post-merge rendered gate.
+Candidate PR #71 passed source CI after advancing three stale ownership guards, but the post-merge rendered gate reproduced the original cascade regression. This pass is rejected.
 
 This gate moves only the resting neutral hierarchy-card body after the generic card and hero-card neutral materials have already moved into `egx-materials`.
 
@@ -696,12 +696,32 @@ Move only the shared H1–H5 hierarchy-card resting body:
 
 The generic card material and neutral hero-card body now live in the same named material owner. The hierarchy-card body is appended after those neutral recipes and has higher selector specificity. Semantic and explicit-tone hierarchy rules remain unlayered and therefore continue to outrank this neutral resting body exactly as before.
 
-### Acceptance
+### Failed rendered attempt record
 
-- declaration values remain byte-for-byte equivalent;
-- only the hierarchy-card resting base body moves;
-- highlight, tone, hover, mobile and semantic rules remain unlayered;
-- TypeScript, full tests and production build are green;
-- all 16 rendered states remain below the frozen 1% threshold.
+PR #71 passed source CI after the historical guards were advanced:
 
-Next after acceptance: evaluate the hierarchy-card highlight as a separate cascade problem; do not move it until generic highlight-hover ownership is resolved.
+- Quality Checks #37340415304;
+- **122 / 122 test files, 663 / 663 tests**;
+- production build.
+
+It merged as `main@928fb8f6`, but Rendered Visual Regression #37340612935 reproduced the same cascade-regression signature as the earlier wholesale Phase 8 attempt:
+
+- Positions phone: **1.035%**;
+- Journal desktop: **1.947%**;
+- Semantic Summary desktop: **3.137%**.
+
+Additional states that had previously remained effectively unchanged also shifted materially, including Overview phone 390 at **0.969%** and Closed Cycles desktop at **0.816%**.
+
+This confirms that moving the hierarchy-card resting body into the named `egx-materials` layer is still unsafe while the competing unlayered hierarchy/semantic cascade remains in place. This is a cascade-order problem, not a declaration-value problem.
+
+No compensating CSS values and no new `!important` patches are permitted.
+
+### Recovery sequence
+
+- **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — IN PROGRESS**
+- restore hierarchy-card body to `src/index.css`;
+- restore the three historical guards to their accepted ownership boundary;
+- remove the rejected 4.5.3.2.2.2.4 guard;
+- prove the frozen rendered profile is back before choosing a different next slice.
+
+After recovery, do **not** retry the hierarchy-card body unchanged. The next Stage 4.5 move must first address the competing unlayered ownership boundary that makes the body unsafe to layer.

@@ -461,10 +461,30 @@ No compensating visual values or new `!important` patches will be introduced.
 
 ### Recovery sequence
 
-- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACTIVE**
+- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — ACCEPTED / CI + RENDERED GREEN**
 - **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — NEXT after revert**
 - further Phase 8 material chunks will be defined only after each rendered gate proves cascade safety.
 
 The hierarchy-card restoration matrix, neutral hierarchy hover, and related mobile material overrides remain explicitly blocked from wholesale layering until their competing unlayered owners are isolated or migrated safely.
 
 Stage 4.5.3 remains **ACTIVE**. It is not closed by PR #66.
+
+
+### 4.5.3.2.2.2.R recovery acceptance record
+
+Recovery head `main@8ec414fe` restored the accepted Stage 4.5.3.2.2.1 runtime state.
+
+Main-push validation passed:
+
+- Quality Checks #37335363101;
+- **118 / 118 test files, 649 / 649 tests**;
+- production build;
+- Phase 10 Visual Closure #37335363137;
+- Cloudflare Worker dry-run;
+- Rendered Visual Regression #37335363252;
+- **12 / 12 responsive geometries at 0px overflow**;
+- **16 / 16 rendered states passed**.
+
+The frozen visual profile returned to the accepted baseline: Positions desktop **0.026%**, Closed Cycles desktop **0.012%**, Journal desktop **0.022%**, Add Trade phone **0.282%**, Transaction Edit desktop **0.041%**, and all remaining states **0.000%**.
+
+Recovery is closed. The retry continues through a smaller non-card material slice.

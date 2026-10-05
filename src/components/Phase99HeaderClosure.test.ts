@@ -134,7 +134,7 @@ describe('Phase 9.9 header regression and closure', () => {
 
   it('freezes the Phase 8 material boundary and forbids financial semantics on header chrome', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).not.toContain('premium-state-win');
     expect(header).not.toContain('premium-state-loss');

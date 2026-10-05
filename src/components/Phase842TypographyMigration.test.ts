@@ -38,7 +38,7 @@ describe('Phase 8.4.2 Overview + Reports typography migration', () => {
   });
 
   it('does not alter the protected material or semantic-edge implementation', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

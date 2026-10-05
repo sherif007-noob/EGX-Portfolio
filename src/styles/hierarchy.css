@@ -1,7 +1,260 @@
 /*
  * Ownership: information hierarchy only — typography scale, spacing rhythm,
  * H0-H5 structural composition and action-importance weight.
- * Must remain material-neutral and semantic-neutral.
+ * Material and financial-semantic presentation remain independently owned.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.4: canonical non-responsive hierarchy ownership.
  */
+
+.premium-hierarchy-surface,
+.premium-hierarchy-h0,
+.premium-hierarchy-h1,
+.premium-hierarchy-h2,
+.premium-hierarchy-h3,
+.premium-hierarchy-h4,
+.premium-hierarchy-h5 {
+  position: relative;
+  min-width: 0;
+}
+
+/* Typography hierarchy only. */
+.premium-type-page-title {
+  color: #f8fafc;
+  font-size: var(--hierarchy-page-title-size);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.premium-type-section-title {
+  color: #f1f5f9;
+  font-size: var(--hierarchy-section-title-size);
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+}
+
+.premium-type-metric {
+  color: #f8fafc;
+  font-size: var(--hierarchy-metric-size);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Metric is still one typography role; these classes only express scale. */
+.premium-type-metric-hero {
+  font-size: var(--hierarchy-metric-hero-size);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.premium-type-metric-primary {
+  font-size: var(--hierarchy-metric-primary-size);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.premium-type-metric-secondary {
+  font-size: var(--hierarchy-metric-secondary-size);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.premium-type-metric-dense {
+  font-size: var(--hierarchy-metric-dense-size);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Units are subordinate helpers, not a seventh hierarchy role. */
+.premium-type-unit {
+  color: #64748b;
+  font-size: var(--hierarchy-unit-size);
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.premium-type-metric-label {
+  color: #94a3b8;
+  font-size: var(--hierarchy-label-size);
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.premium-type-metadata {
+  color: #64748b;
+  font-size: var(--hierarchy-metadata-size);
+  line-height: 1.35;
+  font-weight: 550;
+}
+
+.premium-type-helper {
+  color: #94a3b8;
+  font-size: var(--hierarchy-helper-size);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Canonical spacing hierarchy. */
+.premium-hierarchy-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-hierarchy-section-gap {
+  margin-top: var(--hierarchy-space-section);
+}
+
+.premium-hierarchy-card-pad {
+  padding: var(--hierarchy-space-card);
+}
+
+.premium-hierarchy-inline-gap {
+  gap: var(--hierarchy-space-inline);
+}
+
+.premium-hierarchy-control-gap {
+  gap: var(--hierarchy-space-control);
+}
+
+
+/* Pass 8.4.4 — canonical spacing rhythm. Layout only; no material ownership. */
+/* Base hierarchy padding tokens moved to ./styles/tokens.css in Stage 4.5.2. */
+
+.premium-flow-major,
+.premium-flow-related,
+.premium-flow-control {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.premium-flow-major {
+  gap: var(--hierarchy-space-section);
+}
+
+.premium-flow-related {
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-flow-control {
+  gap: var(--hierarchy-space-control);
+}
+
+.premium-gap-control {
+  gap: var(--hierarchy-space-control);
+}
+
+.premium-gap-related {
+  gap: var(--hierarchy-space-related);
+}
+
+.premium-pad-h1 { padding: var(--hierarchy-pad-h1); }
+.premium-pad-h2 { padding: var(--hierarchy-pad-h2); }
+.premium-pad-h3 { padding: var(--hierarchy-pad-h3); }
+.premium-pad-h4 { padding: var(--hierarchy-pad-h4); }
+.premium-pad-h5 { padding: var(--hierarchy-pad-h5); }
+
+/* Action importance only; semantic color/material still comes from existing controls. */
+.premium-action-priority-primary {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.premium-action-priority-secondary {
+  opacity: 0.94;
+}
+
+.premium-action-priority-utility {
+  opacity: 0.82;
+}
+
+.premium-action-priority-utility:hover,
+.premium-action-priority-utility:focus-visible {
+  opacity: 1;
+}
+
+.premium-action-priority-destructive {
+  opacity: 0.86;
+}
+
+.premium-action-priority-destructive:hover,
+.premium-action-priority-destructive:focus-visible {
+  opacity: 1;
+}
+
+/* Overview hierarchy sizing only. Material/glow remains pre-Phase-8. */
+.premium-overview-hero {
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 10.25rem;
+}
+
+.premium-overview-hero-value {
+  font-size: clamp(1.8rem, 1.35rem + 1.5vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-overview-primary-value {
+  font-size: clamp(1.3rem, 1.05rem + 0.7vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.premium-overview-secondary-value {
+  font-size: clamp(1.15rem, 1rem + 0.45vw, 1.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accepted Phase-8 composition: these are structural wrappers, not glass cards.
+ * The actual child cards retain the complete pre-Phase-8 glass/semantic system.
+ */
+.premium-report-structural {
+  position: relative;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+}
+
+.premium-report-structural > :first-child {
+  padding-bottom: 1rem;
+}
+
+.premium-report-summary-cell {
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+}
+
+.premium-reports-hierarchy {
+  --reports-section-gap: 1.75rem;
+}
+
+/* Dense-workflow classes are structural markers only.
+ * Do NOT replace full-card semantic halos with edge coding here.
+ */
+.premium-dense-workflow,
+.premium-dense-context,
+.premium-dense-summary,
+.premium-dense-summary-card,
+.premium-dense-toolbar,
+.premium-dense-data,
+.premium-dense-row {
+  min-width: 0;
+}

@@ -7,7 +7,7 @@ const readRelative = (relative: string) =>
 
 describe('Phase 8 material restoration', () => {
   it('keeps hierarchy cards on the Monthly Report glass/aura family', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/materials.css'), readRelative('../styles/semantics.css')].join('\n');
     expect(css).toContain('Phase 8 material restoration — Monthly Report quality reference');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
     expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');
@@ -23,7 +23,7 @@ describe('Phase 8 material restoration', () => {
   });
 
   it('does not replace dense semantic cards with edge-only coding', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/materials.css'), readRelative('../styles/semantics.css')].join('\n');
     const restoration = css.slice(
       css.indexOf('Phase 8 material restoration — Monthly Report quality reference'),
     );

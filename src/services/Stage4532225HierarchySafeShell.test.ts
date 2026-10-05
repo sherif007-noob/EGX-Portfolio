@@ -12,7 +12,7 @@ const hierarchySelector = `.premium-card.premium-hierarchy-h1,
 .premium-card.premium-hierarchy-h5`;
 
 describe('Stage 4.5.3.2.2.2.5 cascade-safe hierarchy shell ownership', () => {
-  it('moves only hierarchy custom properties and desktop backdrop material into materials.css', () => {
+  it('keeps hierarchy custom properties and desktop backdrop material in materials.css', () => {
     const materials = read('src/styles/materials.css');
 
     const expected = `${hierarchySelector} {
@@ -24,46 +24,31 @@ describe('Stage 4.5.3.2.2.2.5 cascade-safe hierarchy shell ownership', () => {
 }`;
 
     expect(materials).toContain(expected);
-
-    const start = materials.indexOf(expected);
-    const body = materials.slice(start, start + expected.length);
-    expect(body).not.toContain('background:');
-    expect(body).not.toContain('border-color:');
-    expect(body).not.toContain('box-shadow:');
-    expect(body).not.toContain('!important');
   });
 
-  it('keeps the important background and interaction-sensitive border/shadow bridge unlayered', () => {
-    const legacy = read('src/index.css');
-
-    const bridgeStart = legacy.indexOf('Stage 4.5.3.2.2.2.5 importance/interaction bridge.');
-    expect(bridgeStart).toBeGreaterThanOrEqual(0);
-
-    const selectorStart = legacy.indexOf(hierarchySelector, bridgeStart);
-    const nextHighlight = legacy.indexOf('.premium-card.premium-hierarchy-h1::before,', selectorStart);
-    const bridge = legacy.slice(selectorStart, nextHighlight);
-
-    expect(bridge).toContain('border-color: rgb(var(--phase8-material-rgb) / 0.30);');
-    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
-    expect(bridge).toContain('box-shadow:');
-    expect(bridge).not.toContain('--phase8-material-rgb:');
-    expect(bridge).not.toContain('--phase8-material-deep-rgb:');
-    expect(bridge).not.toContain('-webkit-backdrop-filter:');
-    expect(bridge).not.toContain('backdrop-filter:');
-  });
-
-  it('preserves semantic/tone important precedence by keeping those owners unlayered', () => {
-    const legacy = read('src/index.css');
+  it('advances the old unlayered bridge into material frame plus neutral important fallback', () => {
     const materials = read('src/styles/materials.css');
+    const bridge = read('src/styles/cascade-bridge.css');
+    const legacy = read('src/index.css');
 
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-state-win');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
-    expect(legacy).toContain('background:');
-    expect(legacy).toContain('rgba(12, 20, 39, 0.58) !important;');
+    expect(materials).toContain('border-color: rgb(var(--phase8-material-rgb) / 0.30);');
+    expect(materials).toContain('0 0 92px rgb(var(--phase8-material-deep-rgb) / 0.08)');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
 
-    expect(materials).not.toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
-    expect(materials).not.toContain('.premium-card.premium-hierarchy-h1.premium-state-win');
+    expect(legacy).not.toContain('Stage 4.5.3.2.2.2.5 importance/interaction bridge.');
+    expect(legacy).not.toContain('rgba(10, 18, 36, 0.54) !important;');
+  });
+
+  it('preserves explicit tone and financial semantic important precedence in their owners', () => {
+    const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
+
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
+    expect(materials).toContain('rgba(12, 20, 39, 0.56) !important;');
+
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win,');
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-state-win,');
+    expect(semantics).toContain('rgba(12, 20, 39, 0.58) !important;');
   });
 
   it('keeps Overview hero refraction after the safe shell inside egx-materials', () => {
@@ -75,14 +60,13 @@ describe('Stage 4.5.3.2.2.2.5 cascade-safe hierarchy shell ownership', () => {
     expect(overview).toBeGreaterThan(shell);
   });
 
-  it('documents the named-layer important-precedence hazard in docs and the layer entry contract', () => {
+  it('documents the named-layer important-precedence hazard and explicit bridge solution', () => {
     const docs = read('docs/STAGE4_5_CSS_OWNERSHIP.md');
     const entry = read('src/styles/index.css');
 
     expect(docs).toContain('important-layer precedence');
-    expect(docs).toContain('background');
-    expect(docs).toContain('4.5.3.2.2.2.5');
+    expect(docs).toContain('cascade-bridge.css');
     expect(entry).toContain('named-layer priority reverses for !important declarations');
-    expect(entry).toContain('competing important owners are migrated as one proven contract');
+    expect(entry).toContain('@import "./cascade-bridge.css";');
   });
 });

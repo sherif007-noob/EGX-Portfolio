@@ -58,13 +58,13 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(legacy).not.toContain('.premium-report-glass-soft,\n.premium-subpanel,');
   });
 
-  it('keeps card-sensitive Phase 8 restoration and controls out of the material owner', () => {
+  it('keeps Reports material owned while Stage 4.5.4 advances card/semantic ownership', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
+    const bridge = read('src/styles/cascade-bridge.css');
 
     expect(legacy).toContain('Phase 8 material restoration — Monthly Report quality reference');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1,');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
     expect(legacy).toContain('.premium-action {');
     expect(legacy).toContain('.premium-field {');
 
@@ -72,16 +72,20 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(materials).toContain('.premium-overview-market-strip.premium-material-tone-cyan {');
     expect(materials).toContain('.premium-dropdown {');
     expect(materials).toContain('.premium-modal {');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan');
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('.premium-field {');
     expect(materials).not.toContain('.premium-glow-win');
-    expect(materials).not.toContain('.premium-state-loss');
+
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('keeps later ownership modules empty until their dedicated passes', () => {
+  it('keeps only the later interaction/responsive/feature owners empty', () => {
+    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
+    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
+
     for (const path of [
-      'src/styles/semantics.css',
-      'src/styles/hierarchy.css',
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',

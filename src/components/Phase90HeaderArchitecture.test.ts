@@ -75,14 +75,16 @@ describe('Phase 9.0–9.1 header architecture', () => {
   });
 
   it('keeps the Phase 9 shell scoped to header classes and preserves Phase 8 material contracts', () => {
-    const css = readRelative('../index.css');
+    const legacy = readRelative('../index.css');
+    const semantics = readRelative('../styles/semantics.css');
+    const css = [legacy, semantics].join('\n');
 
-    const start = css.indexOf('Phase 9.1 — command-zone header shell');
-    const end = css.indexOf('/* A short landscape viewport needs a compact header layout');
+    const start = legacy.indexOf('Phase 9.1 — command-zone header shell');
+    const end = legacy.indexOf('/* A short landscape viewport needs a compact header layout');
     expect(start).toBeGreaterThanOrEqual(0);
     expect(end).toBeGreaterThan(start);
 
-    const phase9 = css.slice(start, end);
+    const phase9 = legacy.slice(start, end);
     expect(phase9).toContain('.premium-header-command-zone');
     expect(phase9).toContain('.premium-header-utility-cluster');
     expect(phase9).toContain('.premium-header-create-cluster');

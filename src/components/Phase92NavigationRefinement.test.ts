@@ -66,7 +66,7 @@ describe('Phase 9.2 navigation refinement', () => {
   });
 
   it('does not change Phase 8 material contracts while refining header navigation', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

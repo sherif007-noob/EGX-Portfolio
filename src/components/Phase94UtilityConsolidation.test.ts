@@ -68,7 +68,7 @@ describe('Phase 9.4 utility/data-management consolidation', () => {
   });
 
   it('does not touch Phase 8 content material contracts', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

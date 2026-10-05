@@ -53,7 +53,7 @@ describe('Phase 9.8 interaction / focus / motion closure', () => {
   });
 
   it('does not reopen Phase 8 material or content hierarchy', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

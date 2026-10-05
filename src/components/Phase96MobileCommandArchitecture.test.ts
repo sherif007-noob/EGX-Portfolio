@@ -71,7 +71,7 @@ describe('Phase 9.6 mobile command architecture', () => {
   });
 
   it('does not reopen Phase 8 card material or semantic contracts', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

@@ -22,7 +22,7 @@ describe('Additive semantic edge', () => {
   });
 
   it('implements the edge as an additive pseudo-element without replacing host glow', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/semantics.css');
     const start = css.indexOf('Additive semantic edge — aura/glass remain untouched');
     expect(start).toBeGreaterThanOrEqual(0);
 

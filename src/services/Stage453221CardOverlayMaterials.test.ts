@@ -9,23 +9,22 @@ const stripComments = (value: string) =>
   value.replace(/\/\*[\s\S]*?\*\//g, '').trim();
 
 describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
-  it('moves card material while leaving card motion in the legacy owner', () => {
+  it('keeps card material in materials while card motion remains legacy-owned', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
     expect(materials).toContain('.premium-card {\n  overflow: hidden;');
     expect(materials).toContain('backdrop-filter: blur(14px) saturate(135%)');
     expect(materials).toContain('.premium-card::before {\n  content:');
-    expect(materials).toContain('opacity: 0.38;');
+    expect(materials).toContain('.premium-card:hover::before {');
 
     expect(legacy).toContain('Stage 4.5.3.2.2.1: base card material moved to ./styles/materials.css.');
     expect(legacy).toContain('.premium-card {\n  transition:');
     expect(legacy).toContain('.premium-card::before {\n  transition: opacity');
-    expect(legacy).toContain('.premium-card:hover {');
-    expect(legacy).toContain('.premium-card:hover::before {');
+    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
   });
 
-  it('moves floating, modal, and dropdown material bodies without their geometry contracts', () => {
+  it('keeps floating, modal, and dropdown material bodies without their geometry contracts', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
@@ -43,8 +42,6 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(legacy).toContain('.premium-modal-viewport {');
     expect(legacy).toContain(".premium-dropdown[data-premium-dropdown-portal='true']");
     expect(legacy).toContain('max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));');
-    expect(legacy).not.toContain('.premium-dropdown {\n  isolation: isolate;');
-    expect(legacy).not.toContain('.premium-modal {\n  position: relative;');
   });
 
   it('keeps responsive dropdown material with materials but leaves responsive geometry in legacy', () => {
@@ -53,25 +50,21 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
 
     expect(materials).toContain('@media (max-width: 767px) {\n  .premium-dropdown {\n    background:');
     expect(materials).toContain('blur(26px) saturate(165%) brightness(1.05)');
-
-    expect(legacy).toContain('Stage 4.5.3.2.2.1: dropdown mobile material moved to ./styles/materials.css.');
-    expect(legacy).toContain('@media (max-width: 767px) {\n  .premium-dropdown {\n    max-width:');
     expect(legacy).toContain('overscroll-behavior: contain;');
   });
 
-  it('moves the remaining shared soft composite material into materials.css', () => {
+  it('keeps the remaining shared soft composite material in materials.css', () => {
     const materials = read('src/styles/materials.css');
-    const legacy = read('src/index.css');
 
     expect(materials).toContain('.premium-subpanel,\n.premium-inset-glass,\n.premium-form-section,\n.premium-modal-section {');
     expect(materials).toContain('backdrop-filter: blur(17px) saturate(140%)');
-    expect(legacy).toContain('Stage 4.5.3.2.2.1: shared soft composite material moved to ./styles/materials.css.');
   });
 
-  it('leaves semantic, hierarchy, control, motion and responsive owners untouched', () => {
+  it('advances semantic and hierarchy owners while later owners remain deferred', () => {
+    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
+    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
+
     for (const path of [
-      'src/styles/semantics.css',
-      'src/styles/hierarchy.css',
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',
@@ -89,9 +82,9 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(materials).not.toContain('@keyframes');
   });
 
-  it('keeps only cascade-sensitive Phase 8 card restoration in legacy after the safe retry', () => {
-    const legacy = read('src/index.css');
+  it('owns the formerly cascade-sensitive hierarchy material while semantic state stays separate', () => {
     const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
 
     for (const marker of [
       '.premium-card.premium-hierarchy-h1,',
@@ -99,17 +92,9 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan',
       '.premium-card.premium-hierarchy-h1:hover',
     ]) {
-      expect(legacy).toContain(marker);
-    }
-
-    for (const marker of [
-      '.premium-panel.premium-hierarchy-h2',
-      '.premium-overview-market-strip.premium-material-tone-cyan {',
-      '.premium-subpanel.premium-hierarchy-h4',
-      '.premium-table-shell.premium-hierarchy-h5',
-      '.premium-report-summary-band {',
-    ]) {
       expect(materials).toContain(marker);
     }
+
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
   });
 });

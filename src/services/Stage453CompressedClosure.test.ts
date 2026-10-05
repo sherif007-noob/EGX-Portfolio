@@ -6,35 +6,29 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 describe('Stage 4.5.3 compressed materials closure', () => {
-  it('moves the safe mobile hierarchy material overrides into materials.css', () => {
+  it('keeps the safe mobile hierarchy material overrides in materials.css', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
     expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');
     expect(materials).toContain('blur(22px) saturate(150%) brightness(1.025)');
     expect(materials).toContain('blur(20px) saturate(145%)');
-    expect(materials).toContain('.premium-panel.premium-hierarchy-h2,');
-    expect(materials).toContain('.premium-overview-market-strip {');
-
     expect(legacy).toContain(
       'Stage 4.5.3 compressed closure: mobile neutral material overrides moved to ./styles/materials.css.',
     );
-    expect(legacy).not.toContain(
-      '.premium-card.premium-hierarchy-h5 {\n    -webkit-backdrop-filter: blur(22px) saturate(150%) brightness(1.025);',
-    );
   });
 
-  it('keeps the cross-owner important background and interaction bridge for 4.5.4', () => {
+  it('hands the former cross-owner bridge to the 4.5.4 cascade contract', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
+    const semantics = read('src/styles/semantics.css');
+    const bridge = read('src/styles/cascade-bridge.css');
 
-    expect(legacy).toContain('Stage 4.5.3.2.2.2.5 importance/interaction bridge.');
-    expect(legacy).toContain('rgba(10, 18, 36, 0.54) !important;');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
-    expect(legacy).toContain('.premium-card.premium-hierarchy-h1:hover,');
-
-    expect(materials).not.toContain('rgba(10, 18, 36, 0.54) !important;');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1:hover,');
+    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win,');
+    expect(legacy).not.toContain('Stage 4.5.3.2.2.2.5 importance/interaction bridge.');
   });
 
   it('uses the compressed 4.5 roadmap instead of reopening 4.5.7 through 4.5.11', () => {

@@ -63,7 +63,7 @@ describe('Phase 9.5 status communication', () => {
   });
 
   it('keeps Phase 8 material contracts untouched', () => {
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

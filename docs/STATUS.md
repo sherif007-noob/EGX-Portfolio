@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `ed5642a5` — Stage 4.5.3.2.2.2.2 Overview hero neutral refraction role
-**Current full verification:** Quality Checks #37337833081 — TypeScript + **120 / 120 test files, 657 / 657 tests** + production build; Phase 10 Visual Closure #37337833145 + Rendered Visual Regression #37337833095 — Worker dry-run green, **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
+**Current validated runtime head:** `54530841` — Stage 4.5.3.2.2.2.3 neutral hero-card material body
+**Current full verification:** PR Quality Checks #37339018295 + main Quality Checks #37339172950 — TypeScript + **121 / 121 test files, 660 / 660 tests** + production build; Phase 10 Visual Closure #37339173120 + Rendered Visual Regression #37339172988 — Worker dry-run green, **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -95,18 +95,19 @@ Stage 4 accepted:
 - **Stage 4.5.3.2.2.2.R — failed wholesale extraction reverted / baseline restored — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.1 — safe non-card Phase 8 material ownership — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.2 — Overview hero neutral refraction role — accepted / CI + rendered green**
+- **Stage 4.5.3.2.2.2.3 — neutral hero-card material body — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2.2.2.3**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2.2.2.4**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
 Next:
 
-1. **4.5.3.2.2.2.3 — neutral hero-card material body**
+1. **4.5.3.2.2.2.4 — hierarchy-card base material body**
 2. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready

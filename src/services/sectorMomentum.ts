@@ -1,3 +1,8 @@
+import {
+  API_ROUTES,
+  parseEgxScannerResponse,
+  type EgxScannerRequest,
+} from '../api/contracts';
 export interface SectorScannerRow {
   ticker: string;
   name: string;
@@ -138,12 +143,13 @@ function groupForRow(row: SectorScannerRow): {
  * portfolio quote contract; the sector-momentum fields are appended after them.
  */
 export function parseSectorScannerResponse(
-  payload: any,
+  payload: unknown,
   capturedAt = Date.now(),
 ): SectorMomentumSnapshot {
+  const scanner = parseEgxScannerResponse(payload);
   const rows: SectorScannerRow[] = [];
 
-  for (const item of Array.isArray(payload?.data) ? payload.data : []) {
+  for (const item of scanner.data) {
     if (!Array.isArray(item?.d)) continue;
     const d = item.d;
     const ticker = normalizeTicker(item.s || d[0]);
@@ -175,13 +181,14 @@ export function parseSectorScannerResponse(
 }
 
 export async function fetchSectorMomentumSnapshot(
-  endpoint = '/api/egx/scan',
+  endpoint = API_ROUTES.egxScan,
 ): Promise<SectorMomentumSnapshot> {
+  const request: EgxScannerRequest = { purpose: 'sector-momentum' };
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     cache: 'no-store',
-    body: JSON.stringify({ purpose: 'sector-momentum' }),
+    body: JSON.stringify(request),
     signal: AbortSignal.timeout(15_000),
   });
 

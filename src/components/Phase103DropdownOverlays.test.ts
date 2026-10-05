@@ -153,14 +153,15 @@ describe('Phase 10.3 dropdowns, menus, popovers and overlays', () => {
   });
 
   it('keeps the canonical glass material and portaled geometry authoritative', () => {
-    const css = readRelative('../index.css');
+    const legacy = readRelative('../index.css');
+    const materials = readRelative('../styles/materials.css');
 
-    expect(css).toContain('Canonical app dropdown surface — Data & Tools visual reference');
-    expect(css).toContain('.premium-dropdown {');
-    expect(css).toContain("premium-dropdown[data-premium-dropdown-portal='true']");
-    expect(css).toContain('min-width: 0 !important');
-    expect(css).toContain('max-width: none !important');
-    expect(css).toContain('backdrop-filter: blur(34px) saturate(175%) brightness(1.06)');
+    expect(legacy).toContain('Canonical app dropdown surface — Data & Tools visual reference');
+    expect(materials).toContain('.premium-dropdown {');
+    expect(legacy).toContain("premium-dropdown[data-premium-dropdown-portal='true']");
+    expect(legacy).toContain('min-width: 0 !important');
+    expect(legacy).toContain('max-width: none !important');
+    expect(materials).toContain('backdrop-filter: blur(34px) saturate(175%) brightness(1.06)');
   });
 
   it('does not reopen Phase 8 material, Phase 9 header, chart or data behavior', () => {

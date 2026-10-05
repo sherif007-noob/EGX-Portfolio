@@ -51,18 +51,14 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(legacy).toContain('Stage 4.5.3.1: refraction primary primitive moved to ./styles/materials.css.');
   });
 
-  it('keeps the remaining composite material families in legacy for later 4.5.3 gates', () => {
+  it('keeps Phase 8 restoration in legacy until the final material gate', () => {
     const legacy = read('src/index.css');
 
     for (const marker of [
-      '.premium-card {',
-      '.premium-card::before {',
-      '.premium-dropdown {',
-      '.premium-modal {',
-      '.premium-subpanel,\n.premium-inset-glass,\n.premium-form-section,\n.premium-modal-section {',
       'Phase 8 material restoration — Monthly Report quality reference',
       '.premium-card.premium-hierarchy-h1',
       '.premium-report-summary-band {',
+      '.premium-overview-market-strip.premium-material-tone-cyan {',
     ]) {
       expect(legacy).toContain(marker);
     }
@@ -85,7 +81,6 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(materials).not.toContain('.premium-glow-win');
     expect(materials).not.toContain('.premium-state-loss');
     expect(materials).not.toContain('.premium-action {');
-    expect(materials).not.toContain('.premium-dropdown {');
     expect(materials).not.toContain('@keyframes');
   });
 

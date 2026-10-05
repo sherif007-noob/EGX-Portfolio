@@ -194,7 +194,7 @@ export const BonusSharesModal: React.FC<BonusSharesModalProps> = ({
               <AnalyticsSelect
                 value={ticker}
                 onChange={handleTickerChange}
-                accent="cyan"
+                accent="blue"
                 ariaLabel="Select position for bonus shares"
                 className="w-full"
                 options={sortedPositions.map((position) => ({
@@ -228,7 +228,7 @@ export const BonusSharesModal: React.FC<BonusSharesModalProps> = ({
                 required
                 value={officialRatio}
                 onValueChange={handleRatioChange}
-                accent="cyan"
+                accent="blue"
                 className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
                 placeholder="e.g. 2.222885"
               />
@@ -244,7 +244,7 @@ export const BonusSharesModal: React.FC<BonusSharesModalProps> = ({
                 required
                 value={bonusShares}
                 onValueChange={handleBonusSharesChange}
-                accent="cyan"
+                accent="blue"
                 className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
                 placeholder="Actual credited quantity"
               />

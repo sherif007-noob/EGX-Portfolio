@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `54530841` — Stage 4.5.3.2.2.2.3 neutral hero-card material body
-**Current full verification:** PR Quality Checks #37339018295 + main Quality Checks #37339172950 — TypeScript + **121 / 121 test files, 660 / 660 tests** + production build; Phase 10 Visual Closure #37339173120 + Rendered Visual Regression #37339172988 — Worker dry-run green, **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
+**Current validated runtime head:** `f3266418` — Stage 4.5.4 semantics + hierarchy
+**Current full verification:** PR exact-head Quality Checks passed on `13e210a`; Phase 10 Visual Closure #37368157990 and Rendered Visual Regression #37368273304 passed on `main@f3266418`. The concurrent main Quality run was infrastructure-cancelled rather than test-failed.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -96,12 +96,14 @@ Stage 4 accepted:
 - **Stage 4.5.3.2.2.2.1 — safe non-card Phase 8 material ownership — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.2 — Overview hero neutral refraction role — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.2.3 — neutral hero-card material body — accepted / CI + rendered green**
+- **Stage 4.5.3.2.2.2.5 — cascade-safe hierarchy shell — accepted / CI + rendered green**
+- **Stage 4.5.4 — semantics + hierarchy — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.4 semantics + hierarchy is accepted at `main@f3266418`: PR source Quality Checks passed, Phase 10 Visual Closure #37368157990 passed, and Rendered Visual Regression #37368273304 passed. Current execution point is 4.5.5 interaction surfaces.**
+- **Stage 4.5 CSS ownership consolidation — compressed roadmap active. 4.5.4 semantics + hierarchy is accepted at `main@f3266418`. 4.5.5 interaction surfaces is implemented on exact head `fa5819c7`; its first clean-head Quality run was cancelled by the GitHub-hosted-runner incident before executing steps and has been rerun. 4.5.6 responsive + feature/legacy closure is implemented as a dependent candidate on `stage4-5-final-closure`, pending 4.5.5 acceptance first.**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The wholesale extraction was reverted, then the safe non-card subset was reintroduced through PR #68 and passed full rendered validation.
 
@@ -111,11 +113,11 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. Validate and merge **4.5.5 — interaction surfaces**: shared controls, overlay geometry and CSS-owned motion.
-2. **4.5.6 — responsive + feature/legacy closure**, including final legacy drain and duplicate/`!important` audit.
-3. Close Stage 4 only after full Quality Checks, Phase 10 Visual Closure and rendered regression are green.
-4. Stage 5 Reports workspace redesign.
-5. Retry the deferred Stage 3.5 live-session soak after the ingestion reliability fix is ready.
+1. Accept and merge **4.5.5 — interaction surfaces** after the exact-head Quality rerun passes.
+2. Rebase/re-evaluate the already-implemented **4.5.6 — responsive + feature/legacy closure** against accepted main.
+3. Merge 4.5.6 only after Quality Checks, Phase 10 Visual Closure and Rendered Visual Regression are green; that closes Stage 4.
+4. Start Stage 5 Reports workspace redesign at R1.
+5. Retry the deferred Stage 3.5 live-session soak only after the ingestion reliability fix is ready.
 
 ---
 
@@ -1182,6 +1184,19 @@ Current domain authorities:
 
 ## Current pass
 
-**Stage 3.5 — Live-session soak — FAILED / REMEDIATION REQUIRED.**
+**Stage 4.5.6 — responsive + feature/legacy closure — DEPENDENT VALIDATION CANDIDATE.**
+
+Implementation state:
+- `src/index.css` is reduced to the stable Tailwind + ownership-entry imports only;
+- final feature owners are `features/app-shell.css`, `features/charts.css`, `features/reports.css`, and `features/header.css`;
+- cross-app touch/safe-area/containment/hierarchy overrides are in `responsive.css`;
+- final shared material/control/overlay/motion residue is drained to the existing canonical owners;
+- audit count remains **158 `!important` declarations**, exactly the Stage 4.5.1 baseline;
+- keyframe count remains **23**, exactly the baseline;
+- media blocks are **66** versus the original 62 because four mixed media queries were split across rightful owners without adding behavior.
+
+4.5.6 cannot merge before 4.5.5 is accepted.
+
+**Deferred technical debt: Stage 3.5 live-session soak — FAILED / REMEDIATION REQUIRED.**
 
 The October 4 production soak failed because no target-session 1m/5m bars were persisted and daily history had not advanced past October 1. The production scanner proxy remained healthy. The only scheduled 1m writer run recorded for October 4 started at 15:53 Cairo and explicitly skipped outside the 15:15 ingestion window, so it wrote no bars. Repeat Stage 3.5 only after scheduled ingestion reliability is repaired.

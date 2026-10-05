@@ -66,6 +66,10 @@ export function sortTransactions(transactions: TradeTransaction[]): TradeTransac
     const tradeA = Number(a.tradeId);
     const tradeB = Number(b.tradeId);
     if (Number.isFinite(tradeA) && Number.isFinite(tradeB) && tradeA !== tradeB) return tradeA - tradeB;
+    // Corporate actions are effective before same-day exchange executions so
+    // ex-date holdings are adjusted before any new BUY/SELL entered that day.
+    if (a.type === 'CORPORATE_ACTION' && b.type !== 'CORPORATE_ACTION') return -1;
+    if (b.type === 'CORPORATE_ACTION' && a.type !== 'CORPORATE_ACTION') return 1;
     if (a.type === 'BUY' && b.type === 'SELL') return -1;
     if (a.type === 'SELL' && b.type === 'BUY') return 1;
     return a.id.localeCompare(b.id);

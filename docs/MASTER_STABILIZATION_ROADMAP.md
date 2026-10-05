@@ -1355,6 +1355,7 @@ Granular acceptance sequence:
         - **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership — ACCEPTED / CI + RENDERED GREEN** via PR #68 at `main@dcb0df5f`; Quality Checks #37336618605 passed **119 / 119 test files, 654 / 654 tests** and build. Phase 10 Visual Closure #37336829761 and Rendered Visual Regression #37336829803 passed **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
         - **4.5.3.2.2.2.2 — Overview hero neutral refraction role — NEXT**
         - Do not add compensating visual values or `!important` patches; each remaining material slice must prove rendered parity before acceptance.
+        - Keep highlight, Overview hero refraction, explicit tone-card material, hover material, mobile material overrides, and all semantic aura/state rules unlayered while 4.5.3.2.2.2.2 is tested.
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

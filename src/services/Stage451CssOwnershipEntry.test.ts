@@ -89,7 +89,8 @@ describe('Stage 4.5.1 CSS ownership entry contract', () => {
     expect(doc).toContain('**62** `@media`');
     expect(doc).toContain('**23** `@keyframes`');
     expect(doc).toContain('4.5.2 — token extraction');
-    expect(doc).toContain('4.5.11 — legacy drain');
+    expect(doc).toContain('4.5.6 — responsive + feature/legacy closure');
+    expect(doc).toContain('former planned `4.5.7–4.5.11` scopes are folded');
     expect(doc).toContain('rendered visual regression');
   });
 });

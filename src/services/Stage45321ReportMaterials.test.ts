@@ -44,9 +44,8 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(materials).toContain('@media (max-width: 767px) {\n  .premium-report-glass {');
     expect(materials).toContain('backdrop-filter: blur(26px) saturate(155%)');
 
-    expect(legacy).toContain('Stage 4.5.3.2.1: reports glass base moved to ./styles/materials.css.');
-    expect(legacy).toContain('Stage 4.5.3.2.1: reports mobile material overrides moved to ./styles/materials.css.');
     expect(legacy).not.toContain('/* Reports & Performance glass hierarchy */\n.premium-report-glass {');
+    expect(legacy).not.toContain('.premium-report-glass {\n  border: 1px solid var(--premium-border);');
   });
 
   it('keeps report-soft and the shared soft composite material under the material owner', () => {

@@ -75,10 +75,14 @@ describe('Stage 4.5.3.2.2.2.5 cascade-safe hierarchy shell ownership', () => {
     expect(overview).toBeGreaterThan(shell);
   });
 
-  it('documents the named-layer important-precedence hazard in the ownership gate', () => {
+  it('documents the named-layer important-precedence hazard in docs and the layer entry contract', () => {
     const docs = read('docs/STAGE4_5_CSS_OWNERSHIP.md');
+    const entry = read('src/styles/index.css');
+
     expect(docs).toContain('important-layer precedence');
     expect(docs).toContain('background');
     expect(docs).toContain('4.5.3.2.2.2.5');
+    expect(entry).toContain('named-layer priority reverses for !important declarations');
+    expect(entry).toContain('competing important owners are migrated as one proven contract');
   });
 });

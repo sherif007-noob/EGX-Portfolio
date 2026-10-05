@@ -548,3 +548,40 @@ Rendered diffs preserved the recovered baseline profile: Positions desktop **0.0
 The safe retry proves the non-card Phase 8 material families can live in `egx-materials` without disturbing the frozen cascade.
 
 Next: **4.5.3.2.2.2.2 — Overview hero neutral refraction role**. This is intentionally a one-rule gate before any hierarchy-card body moves.
+
+
+## 4.5.3.2.2.2.2 — Overview hero neutral refraction role — VALIDATION IN PROGRESS
+
+This is a one-rule cascade gate after the successful non-card retry.
+
+### Scope
+
+Move only:
+
+```css
+.premium-overview-hero.premium-hero-card {
+  --premium-refraction-shadow: var(--premium-refraction-tier-hero);
+}
+```
+
+into `materials.css`.
+
+The same hero refraction tier is already the canonical neutral role for `.premium-hero-card`; this gate proves the Overview-specific reinforcement can move without disturbing the semantic hero overrides that remain unlayered.
+
+### Explicitly retained unlayered
+
+- hierarchy-card base material;
+- hierarchy-card highlight;
+- explicit material-tone hierarchy-card body;
+- neutral hierarchy-card hover;
+- Phase 8 mobile hierarchy-card/panel material overrides;
+- all semantic aura/state/hover rules.
+
+### Acceptance
+
+- no declaration value changes;
+- no other Phase 8 card rule moves;
+- TypeScript, full tests and production build are green;
+- all 16 rendered states stay below the frozen 1% threshold.
+
+Next after acceptance: split the remaining hierarchy-card body/highlight/hover/mobile bundle again; do not migrate it wholesale.

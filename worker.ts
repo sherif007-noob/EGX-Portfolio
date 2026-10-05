@@ -7,11 +7,22 @@ import {
   createApiErrorResponse,
   createClassifiedAuthErrorResponse,
   createHealthResponse,
+  createSheetsAppendResponse,
+  createSheetsBatchUpdateResponse,
+  createSheetsDriveFilesResponse,
+  createSheetsMetadataResponse,
+  createSheetsValuesResponse,
+  createSheetsWriteValuesResponse,
   isAuthHttpStatus,
   isApiRouteMethodAllowed,
   parseHistoricalPriceQuery,
   parsePortfolioSaveRequest,
   parsePriceTickRequest,
+  parseSheetsAppendRequest,
+  parseSheetsBatchUpdateRequest,
+  parseSheetsMetadataQuery,
+  parseSheetsValuesQuery,
+  parseSheetsValuesWriteRequest,
   requireUnavailableRuntimeCapabilityResponse,
   requireSymbolSearchText,
 } from './src/api/contracts';
@@ -41,6 +52,14 @@ const errorJson = (
   status = 500,
   options: Parameters<typeof createApiErrorResponse>[1] = {},
 ) => json(createApiErrorResponse(error, options), status);
+
+function parseOrBadRequest<T>(parse: () => T): { value: T } | { response: Response } {
+  try {
+    return { value: parse() };
+  } catch (error) {
+    return { response: errorJson(error, 400) };
+  }
+}
 
 async function withSupabaseUser(
   request: Request,
@@ -79,6 +98,7 @@ async function googleJson(
   token: string,
   init: RequestInit = {},
   apiName = "Google Sheets",
+  transformSuccess: (body: unknown) => unknown = (body) => body,
 ): Promise<Response> {
   const response = await fetch(url, {
     ...init,
@@ -99,7 +119,7 @@ async function googleJson(
       }),
     }, response.status);
   }
-  return json(body);
+  return json(transformSuccess(body));
 }
 
 async function handleApi(request: Request): Promise<Response> {
@@ -255,12 +275,16 @@ async function handleApi(request: Request): Promise<Response> {
       const token = googleBearer(request);
 
       if (path === API_ROUTES.sheetsMetadata && request.method === "GET") {
-        const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
-        if (!spreadsheetId) return errorJson('Missing required query parameter "spreadsheetId"', 400);
+        const parsed = parseOrBadRequest(() => parseSheetsMetadataQuery({
+          spreadsheetId: url.searchParams.get("spreadsheetId"),
+        }));
+        if ("response" in parsed) return parsed.response;
+        const { spreadsheetId } = parsed.value;
+
         const upstream = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data: any = await upstream.json();
+        const data: unknown = await upstream.json();
         if (!upstream.ok) {
           return json(createApiErrorResponse(
             `Google Sheets API error (${upstream.status})`,
@@ -271,64 +295,66 @@ async function handleApi(request: Request): Promise<Response> {
             },
           ), upstream.status);
         }
-        return json({
-          title: data.properties?.title || "",
-          sheets: (data.sheets || []).map((s: any) => s.properties?.title || "").filter(Boolean),
-          sheetsInfo: (data.sheets || []).map((s: any) => ({
-            title: s.properties?.title || "",
-            sheetId: s.properties?.sheetId ?? 0,
-          })).filter((s: any) => Boolean(s.title)),
-          authSource: "oauth_bearer",
-        });
+        return json(createSheetsMetadataResponse(data, "oauth_bearer"));
       }
 
       if (path === API_ROUTES.sheetsValues && request.method === "GET") {
-        const spreadsheetId = (url.searchParams.get("spreadsheetId") || "").trim();
-        const range = (url.searchParams.get("range") || "").trim();
-        if (!spreadsheetId || !range) return errorJson('Missing "spreadsheetId" or "range"', 400);
+        const parsed = parseOrBadRequest(() => parseSheetsValuesQuery({
+          spreadsheetId: url.searchParams.get("spreadsheetId"),
+          range: url.searchParams.get("range"),
+        }));
+        if ("response" in parsed) return parsed.response;
+        const { spreadsheetId, range } = parsed.value;
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`,
           token,
+          {},
+          "Google Sheets",
+          (body) => createSheetsValuesResponse(body, "oauth_bearer"),
         );
       }
 
       if (path === API_ROUTES.sheetsValues && request.method === "PUT") {
-        const body: any = await request.json();
-        if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
-          return errorJson("Missing spreadsheetId, range, or values array", 400);
-        }
+        const rawBody = await request.json();
+        const parsed = parseOrBadRequest(() => parseSheetsValuesWriteRequest(rawBody));
+        if ("response" in parsed) return parsed.response;
+        const body = parsed.value;
         return googleJson(
-          `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}?valueInputOption=${encodeURIComponent(body.valueInputOption || "USER_ENTERED")}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}?valueInputOption=${encodeURIComponent(body.valueInputOption)}`,
           token,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ values: body.values }),
           },
+          "Google Sheets",
+          (data) => createSheetsWriteValuesResponse(data, "oauth_bearer"),
         );
       }
 
       if (path === API_ROUTES.sheetsAppend && request.method === "POST") {
-        const body: any = await request.json();
-        if (!body?.spreadsheetId || !body?.range || !Array.isArray(body?.values)) {
-          return errorJson("Missing spreadsheetId, range, or values", 400);
-        }
+        const rawBody = await request.json();
+        const parsed = parseOrBadRequest(() => parseSheetsAppendRequest(rawBody));
+        if ("response" in parsed) return parsed.response;
+        const body = parsed.value;
         return googleJson(
-          `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}:append?valueInputOption=${encodeURIComponent(body.valueInputOption || "USER_ENTERED")}&insertDataOption=${encodeURIComponent(body.insertDataOption || "INSERT_ROWS")}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}/values/${encodeURIComponent(body.range)}:append?valueInputOption=${encodeURIComponent(body.valueInputOption)}&insertDataOption=${encodeURIComponent(body.insertDataOption)}`,
           token,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ values: body.values }),
           },
+          "Google Sheets",
+          (data) => createSheetsAppendResponse(data, "oauth_bearer"),
         );
       }
 
       if (path === API_ROUTES.sheetsBatchUpdate && request.method === "POST") {
-        const body: any = await request.json();
-        if (!body?.spreadsheetId || !Array.isArray(body?.requests)) {
-          return errorJson("Missing spreadsheetId or requests array", 400);
-        }
+        const rawBody = await request.json();
+        const parsed = parseOrBadRequest(() => parseSheetsBatchUpdateRequest(rawBody));
+        if ("response" in parsed) return parsed.response;
+        const body = parsed.value;
         return googleJson(
           `https://sheets.googleapis.com/v4/spreadsheets/${body.spreadsheetId}:batchUpdate`,
           token,
@@ -337,6 +363,8 @@ async function handleApi(request: Request): Promise<Response> {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ requests: body.requests }),
           },
+          "Google Sheets",
+          (data) => createSheetsBatchUpdateResponse(data, "oauth_bearer"),
         );
       }
 
@@ -347,6 +375,7 @@ async function handleApi(request: Request): Promise<Response> {
           token,
           {},
           "Google Drive",
+          (data) => createSheetsDriveFilesResponse(data, "oauth_bearer"),
         );
       }
     } catch (error) {

@@ -1,5 +1,10 @@
 import { selectPositionQuote } from './positionQuote';
 import { EGX_SCANNER_PAYLOAD } from './scannerRequest';
+import {
+  API_ROUTES,
+  parseEgxScannerResponse,
+  type EgxScannerRequest,
+} from '../api/contracts';
 import { EGXTicker, Position, LivePriceQuote } from '../types';
 import { EGX_STOCK_DICTIONARY, LEGACY_TICKER_ALIASES, canonicalizeEGXSymbol, createEGXTickerRecord } from '../data/egxTickers';
 
@@ -29,29 +34,38 @@ export interface TradingViewScanResult {
 export async function fetchTradingViewEGXPrices(
   directory: EGXTicker[] = [],
 ): Promise<TradingViewScanResult> {
-  const payload = EGX_SCANNER_PAYLOAD;
+  const proxyRequest: EgxScannerRequest = { purpose: 'portfolio-prices' };
 
-  let json: any = null;
+  let json: ReturnType<typeof parseEgxScannerResponse> | null = null;
   let lastError: unknown;
-  // Retry the same-origin proxy before the optional direct endpoint. Every
-  // attempt is bounded so a stalled network cannot leave sync locked forever.
-  for (const endpoint of ['/api/egx/scan', '/api/egx/scan', 'https://scanner.tradingview.com/egypt/scan']) {
+  // Retry the same-origin application API before the optional direct-provider
+  // fallback. Provider-specific scanner payload details stay out of our app API.
+  const attempts = [
+    { endpoint: API_ROUTES.egxScan, body: proxyRequest },
+    { endpoint: API_ROUTES.egxScan, body: proxyRequest },
+    { endpoint: 'https://scanner.tradingview.com/egypt/scan', body: EGX_SCANNER_PAYLOAD },
+  ];
+  for (const attempt of attempts) {
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload), cache: 'no-store',
+      const response = await fetch(attempt.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attempt.body),
+        cache: 'no-store',
         signal: AbortSignal.timeout(15_000),
       });
       if (!response.ok) throw new Error(`Price scanner HTTP ${response.status}`);
-      const candidate = await response.json();
-      if (!Array.isArray(candidate?.data) || !candidate.data.length) throw new Error('Price scanner returned no data.');
+      const candidate = parseEgxScannerResponse(await response.json());
+      if (!candidate.data.length) throw new Error('Price scanner returned no data.');
       json = candidate;
       break;
-    } catch (error) { lastError = error; }
+    } catch (error) {
+      lastError = error;
+    }
   }
   if (!json) throw lastError instanceof Error ? lastError : new Error('Price scanner unavailable.');
 
-  const data = json.data || [];
+  const data = json.data;
   const quotes: Record<string, LivePriceQuote> = {};
   const discoveredTickers: EGXTicker[] = [];
 

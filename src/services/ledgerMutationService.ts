@@ -130,7 +130,11 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
   const label = `Transaction ${transaction.id || index + 1}`;
   if (!transaction.id?.trim()) throw new Error(`${label} requires an id.`);
   if (!transaction.ticker?.trim()) throw new Error(`${label} requires a ticker.`);
-  if (transaction.type !== 'BUY' && transaction.type !== 'SELL') {
+  if (
+    transaction.type !== 'BUY'
+    && transaction.type !== 'SELL'
+    && transaction.type !== 'CORPORATE_ACTION'
+  ) {
     throw new Error(`${label} has an unsupported transaction type.`);
   }
   if (!/^\d{4}-\d{2}-\d{2}/.test(transaction.date || '') || !Number.isFinite(Date.parse(transaction.date))) {
@@ -141,6 +145,30 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
   assertFiniteNonNegative(transaction.price, `${label} price`);
   assertFiniteNonNegative(transaction.fees ?? 0, `${label} fees`);
   assertFiniteNonNegative(transaction.totalAmount, `${label} total amount`);
+
+  if (transaction.type === 'CORPORATE_ACTION') {
+    if (transaction.corporateActionType !== 'BONUS_SHARES') {
+      throw new Error(`${label} has unsupported corporate action type.`);
+    }
+    if (transaction.price !== 0 || (transaction.fees ?? 0) !== 0 || transaction.totalAmount !== 0) {
+      throw new Error(`${label} bonus shares must have zero price, fees, and cash amount.`);
+    }
+    if (transaction.cashFlowType || transaction.cashFlowAmount != null) {
+      throw new Error(`${label} bonus shares cannot carry cash-flow semantics.`);
+    }
+    const sourceShares = Number(transaction.corporateActionSourceShares);
+    if (!Number.isFinite(sourceShares) || sourceShares <= EPSILON) {
+      throw new Error(`${label} requires positive pre-action source shares.`);
+    }
+    const ratio = Number(transaction.corporateActionRatio);
+    if (!Number.isFinite(ratio) || ratio < 0) {
+      throw new Error(`${label} requires a finite non-negative official ratio.`);
+    }
+    if (transaction.netCashImpact != null && Math.abs(Number(transaction.netCashImpact)) > EPSILON) {
+      throw new Error(`${label} bonus shares must have zero net cash impact.`);
+    }
+  }
+
   if (transaction.cashFlowAmount != null) assertFinite(transaction.cashFlowAmount, `${label} cash flow amount`);
   if (transaction.grossTradeValue != null) assertFiniteNonNegative(transaction.grossTradeValue, `${label} gross trade value`);
   if (transaction.netCashImpact != null) assertFinite(transaction.netCashImpact, `${label} net cash impact`);

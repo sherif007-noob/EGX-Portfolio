@@ -9,9 +9,11 @@ const stripComments = (value: string) =>
   value.replace(/\/\*[\s\S]*?\*\//g, '').trim();
 
 describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
-  it('keeps card material in materials while card motion remains legacy-owned', () => {
+  it('keeps card material in materials while card motion advances to motion.css', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
+    const overlays = read('src/styles/overlays.css');
+    const motion = read('src/styles/motion.css');
 
     expect(materials).toContain('.premium-card {\n  overflow: hidden;');
     expect(materials).toContain('backdrop-filter: blur(14px) saturate(135%)');
@@ -19,9 +21,9 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(materials).toContain('.premium-card:hover::before {');
 
     expect(legacy).toContain('Stage 4.5.3.2.2.1: base card material moved to ./styles/materials.css.');
-    expect(legacy).toContain('.premium-card {\n  transition:');
-    expect(legacy).toContain('.premium-card::before {\n  transition: opacity');
-    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
+    expect(motion).toContain('.premium-card {\n  transition:');
+    expect(motion).toContain('.premium-card::before {\n  transition: opacity');
+    expect(motion).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
   });
 
   it('keeps floating, modal, and dropdown material bodies without their geometry contracts', () => {
@@ -46,11 +48,11 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
 
   it('keeps responsive dropdown material with materials but leaves responsive geometry in legacy', () => {
     const materials = read('src/styles/materials.css');
-    const legacy = read('src/index.css');
+    const overlays = read('src/styles/overlays.css');
 
     expect(materials).toContain('@media (max-width: 767px) {\n  .premium-dropdown {\n    background:');
     expect(materials).toContain('blur(26px) saturate(165%) brightness(1.05)');
-    expect(legacy).toContain('overscroll-behavior: contain;');
+    expect(overlays).toContain('overscroll-behavior: contain;');
   });
 
   it('keeps the remaining shared soft composite material in materials.css', () => {
@@ -60,14 +62,18 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(materials).toContain('backdrop-filter: blur(17px) saturate(140%)');
   });
 
-  it('advances semantic and hierarchy owners while later owners remain deferred', () => {
-    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
-    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
-
+  it('advances semantic, hierarchy and interaction owners while final closure remains deferred', () => {
     for (const path of [
+      'src/styles/semantics.css',
+      'src/styles/hierarchy.css',
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',
+    ]) {
+      expect(stripComments(read(path))).not.toBe('');
+    }
+
+    for (const path of [
       'src/styles/responsive.css',
       'src/styles/features/index.css',
     ]) {

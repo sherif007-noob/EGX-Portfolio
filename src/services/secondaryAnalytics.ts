@@ -77,13 +77,22 @@ function applyTrade(
   const shares = Number(tx.shares);
   const price = Number(tx.price);
   const fees = Number.isFinite(tx.fees) ? Math.max(0, Number(tx.fees)) : 0;
-  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return 0;
+  if (!Number.isFinite(shares) || shares <= 0) return 0;
 
   const state = states.get(ticker) ?? {
     shares: 0,
     grossCost: 0,
     buyFees: 0,
   };
+
+  if (tx.type === 'BONUS_SHARES') {
+    if (state.shares <= EPSILON) return 0;
+    state.shares += shares;
+    states.set(ticker, state);
+    return 0;
+  }
+
+  if (!Number.isFinite(price) || price <= 0) return 0;
 
   if (tx.type === 'BUY') {
     state.shares += shares;

@@ -58,8 +58,8 @@ describe('Stage 4.5.3.2.2.2.4 hierarchy-card base material ownership', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
 
-    expect(legacy).toContain('.premium-card:hover {');
-    expect(legacy).toContain('.premium-card:hover::before {');
+    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);\n}');
+    expect(materials).toContain('.premium-card:hover::before {\n  opacity: 0.62;\n}');
     expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
     expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-state-win');
     expect(materials).not.toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');

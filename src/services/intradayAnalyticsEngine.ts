@@ -6,6 +6,7 @@ import { resolveAnalyticsWindow } from './analyticsTimeframes';
 import { egxCairoSessionClock } from './egxTradingSession';
 import { INTRADAY_POLICY } from './intradayPolicy';
 import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
+import { isBonusSharesTransaction } from './corporateActions';
 import {
   buildExternalCashFlows,
   sortPerformanceTransactions,
@@ -43,6 +44,8 @@ function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
 
 function transactionCashImpact(tx: TradeTransaction): number {
   const ticker = normalizeIntradayTicker(tx.ticker);
+
+  if (isBonusSharesTransaction(tx)) return 0;
 
   if (ticker === 'CASH') {
     const kind = cashFlowKind(tx);
@@ -93,8 +96,15 @@ function applyTransaction(
   }
 
   const shares = Number(tx.shares);
+  if (!Number.isFinite(shares) || shares <= 0) return;
+
+  if (isBonusSharesTransaction(tx)) {
+    state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
+    return;
+  }
+
   const price = Number(tx.price);
-  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return;
+  if (!Number.isFinite(price) || price <= 0) return;
 
   state.cash += cashImpact;
   if (tx.type === 'BUY') {
@@ -234,6 +244,7 @@ export function buildIntradayAnalyticsResult(
 
   const sessionTransactions: TradeTransaction[] = [];
   const missingTimestampIds: string[] = [];
+  const sessionReferencePriceFactors = new Map<string, number>();
 
   for (const tx of ordered) {
     const txDay = dayKey(tx.date);
@@ -242,6 +253,26 @@ export function buildIntradayAnalyticsResult(
       continue;
     }
     if (txDay > sessionDate) continue;
+
+    if (isBonusSharesTransaction(tx)) {
+      const ticker = normalizeIntradayTicker(tx.ticker);
+      const sourceShares = Number(tx.corporateActionSourceShares);
+      const bonusShares = Number(tx.shares);
+      const postActionShares = sourceShares + bonusShares;
+      if (
+        ticker
+        && Number.isFinite(sourceShares)
+        && sourceShares > EPSILON
+        && Number.isFinite(bonusShares)
+        && bonusShares > EPSILON
+        && postActionShares > EPSILON
+      ) {
+        const priorFactor = sessionReferencePriceFactors.get(ticker) ?? 1;
+        sessionReferencePriceFactors.set(ticker, priorFactor * (sourceShares / postActionShares));
+      }
+      applyTransaction(tx, state);
+      continue;
+    }
 
     const executed = parseMs(tx.executedAt);
     if (!Number.isFinite(executed)) {
@@ -271,7 +302,9 @@ export function buildIntradayAnalyticsResult(
   for (const [ticker, shares] of state.shares.entries()) {
     if (shares <= EPSILON) continue;
     const close = previousClose(historicalPrices, ticker, sessionDate);
-    if (close !== undefined) previousCloses.set(ticker, close);
+    if (close !== undefined) {
+      previousCloses.set(ticker, close * (sessionReferencePriceFactors.get(ticker) ?? 1));
+    }
   }
 
   const allExternalFlows = buildExternalCashFlows(

@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `1948c41a` — Stage 4.5.3.1 shared neutral material/refraction primitives
-**Current full verification:** PR #63 Quality Checks #37285896557 — TypeScript + **116 / 116 test files, 638 / 638 tests** + production build; Phase 10 Visual Closure #37286043106 + Rendered Visual Regression #37286043136 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
+**Current validated runtime head:** `0e9330ed` — Stage 4.5.3.2.1 Reports + dense-data composite materials
+**Current full verification:** PR #64 Quality Checks #37289566366 — TypeScript + **117 / 117 test files, 643 / 643 tests** + production build; Phase 10 Visual Closure #37289687438 + Rendered Visual Regression #37289687328 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -89,16 +89,17 @@ Stage 4 accepted:
 - **Stage 4.5.1 — CSS ownership inventory + layer-entry contract — accepted / CI + rendered green**
 - **Stage 4.5.2 — canonical token extraction — accepted / CI + rendered green**
 - **Stage 4.5.3.1 — shared neutral material/refraction primitives — accepted / CI + rendered green**
+- **Stage 4.5.3.2.1 — Reports + dense-data composite materials — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2.2**
 
 Next:
 
-1. **Stage 4.5.3.2 — composite + Phase 8 material restoration closure**
+1. **Stage 4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**
 2. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**

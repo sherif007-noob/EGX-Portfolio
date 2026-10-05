@@ -6,7 +6,7 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () => {
-  it('moves only the Overview hero neutral refraction role into materials.css', () => {
+  it('keeps the Overview hero neutral refraction role in materials.css', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
 
@@ -16,35 +16,24 @@ describe('Stage 4.5.3.2.2.2.2 Overview hero neutral refraction ownership', () =>
 
     expect(materials).toContain(rule);
     expect(legacy).not.toContain(rule);
-    expect(legacy).toContain(
-      'Stage 4.5.3.2.2.2.2: Overview hero neutral refraction role moved to ./styles/materials.css.',
-    );
   });
 
-  it('keeps the remaining hierarchy-card material bundle unlayered', () => {
-    const legacy = read('src/index.css');
+  it('advances the remaining hierarchy-card material bundle into 4.5.4 owners', () => {
     const materials = read('src/styles/materials.css');
+    const bridge = read('src/styles/cascade-bridge.css');
 
-    for (const marker of [
-      '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
-      '.premium-card.premium-hierarchy-h1::before,',
-      '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
-      '.premium-card.premium-hierarchy-h1:hover,',
-    ]) {
-      expect(legacy).toContain(marker);
-    }
-
-    expect(materials).not.toContain('/* Phase 8 hierarchy card material */');
-    expect(materials).not.toContain('/* explicit material-tone hierarchy cards */');
-    expect(materials).not.toContain('/* Phase 8 neutral card hover material */');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1::before,');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
+    expect(materials).toContain('.premium-card.premium-hierarchy-h1:hover,');
+    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
     expect(materials).toContain('Stage 4.5.3 compressed closure — safe mobile neutral material overrides.');
   });
 
-  it('does not alter semantic hero ownership', () => {
-    const legacy = read('src/index.css');
+  it('moves semantic hero ownership to semantics without contaminating materials', () => {
+    const semantics = read('src/styles/semantics.css');
     const materials = read('src/styles/materials.css');
 
-    expect(legacy).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
+    expect(semantics).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
     expect(materials).not.toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
     expect(materials).not.toContain('.premium-glow-loss');
   });

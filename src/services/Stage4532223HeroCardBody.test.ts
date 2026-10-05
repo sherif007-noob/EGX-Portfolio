@@ -46,8 +46,8 @@ describe('Stage 4.5.3.2.2.2.3 neutral hero-card material ownership', () => {
     const legacy = read('src/index.css');
     const materials = read('src/styles/materials.css');
 
-    expect(legacy).toContain('.premium-card:hover {');
-    expect(legacy).toContain('.premium-card:hover::before {');
+    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);\n}');
+    expect(materials).toContain('.premium-card:hover::before {\n  opacity: 0.62;\n}');
     expect(legacy).toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
     expect(materials).not.toContain('.premium-overview-hero.premium-hero-card.premium-glow-win');
   });

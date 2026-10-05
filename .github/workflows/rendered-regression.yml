@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - ci/stage4-5-3-2-2-2-5-rendered-gate
     paths:
       - 'src/**'
       - 'scripts/renderedRegression.mjs'

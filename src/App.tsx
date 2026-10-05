@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { PortfolioSummary } from './components/PortfolioSummary';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
+import { BonusSharesModal } from './components/BonusSharesModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
 import { PerformanceReports } from './features/reports';
 import { TradingJournal } from './components/TradingJournal';
@@ -52,6 +53,7 @@ export default function App() {
     tickers,
     capitalDeposits,
     addTrade: executeAddTrade,
+    addBonusShares,
     sellPosition: executeSellPosition,
     editPosition: executeEditPosition,
     editTransaction: executeEditTransaction,
@@ -97,6 +99,8 @@ export default function App() {
     setSellingPosition,
     editingPosition,
     setEditingPosition,
+    bonusSharesPosition,
+    setBonusSharesPosition,
     selectedTickerForTrade,
     openAddTrade,
     closeAddTrade,
@@ -362,6 +366,7 @@ export default function App() {
                 positions={positions}
                 onSellPosition={(pos) => setSellingPosition(pos)}
                 onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
+                onBonusShares={(pos) => setBonusSharesPosition(pos)}
                 onEditPosition={(pos) => setEditingPosition(pos)}
                 onCorrectLedger={openPositionLedgerCorrection}
                 onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
@@ -401,6 +406,7 @@ export default function App() {
               positions={positions}
               onSellPosition={(pos) => setSellingPosition(pos)}
               onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
+              onBonusShares={(pos) => setBonusSharesPosition(pos)}
               onEditPosition={(pos) => setEditingPosition(pos)}
               onCorrectLedger={openPositionLedgerCorrection}
               onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
@@ -565,6 +571,25 @@ export default function App() {
         isOpen={!!editingPosition}
         onClose={() => setEditingPosition(null)}
         onSave={handleSavePositionEdit}
+      />
+
+      <BonusSharesModal
+        position={bonusSharesPosition}
+        isOpen={!!bonusSharesPosition}
+        onClose={() => setBonusSharesPosition(null)}
+        onApply={async (input) => {
+          const result = await addBonusShares(input);
+          if ('error' in result) {
+            showToast(`Bonus shares were not saved: ${result.error.message}`, 'error', 7000);
+            return false;
+          }
+          showToast(
+            `Recorded ${input.awardedShares.toLocaleString()} bonus shares for ${input.position.ticker}. Cost basis preserved.`,
+            'success',
+          );
+          void handleSyncPrices();
+          return true;
+        }}
       />
 
       <SellPositionModal

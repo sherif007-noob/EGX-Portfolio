@@ -61,7 +61,7 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
     expect(materials).not.toContain('.premium-state-loss');
   });
 
-  it('keeps later control/overlay/motion/responsive/feature owners deferred', () => {
+  it('advances interaction owners while responsive/feature closure remains deferred', () => {
     const materials = read('src/styles/materials.css');
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('.premium-field {');
@@ -71,13 +71,17 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',
+      'src/styles/semantics.css',
+      'src/styles/hierarchy.css',
+    ]) {
+      expect(stripComments(read(path))).not.toBe('');
+    }
+
+    for (const path of [
       'src/styles/responsive.css',
       'src/styles/features/index.css',
     ]) {
       expect(stripComments(read(path))).toBe('');
     }
-
-    expect(stripComments(read('src/styles/semantics.css'))).not.toBe('');
-    expect(stripComments(read('src/styles/hierarchy.css'))).not.toBe('');
   });
 });

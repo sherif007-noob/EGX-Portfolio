@@ -6,6 +6,7 @@ import { sortPerformanceTransactions } from './portfolioPerformance';
 import type { UnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
 import { calculateSellAccounting } from './portfolioAccounting';
 import { cashFlowPerformancePnl } from './cashFlowSemantics';
+import { isBonusSharesTransaction } from './corporateActions';
 
 const EPSILON = 1e-8;
 
@@ -75,15 +76,24 @@ function applyTrade(
   }
 
   const shares = Number(tx.shares);
-  const price = Number(tx.price);
-  const fees = Number.isFinite(tx.fees) ? Math.max(0, Number(tx.fees)) : 0;
-  if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return 0;
+  if (!Number.isFinite(shares) || shares <= 0) return 0;
 
   const state = states.get(ticker) ?? {
     shares: 0,
     grossCost: 0,
     buyFees: 0,
   };
+
+  if (isBonusSharesTransaction(tx)) {
+    if (state.shares <= EPSILON) return 0;
+    state.shares += shares;
+    states.set(ticker, state);
+    return 0;
+  }
+
+  const price = Number(tx.price);
+  const fees = Number.isFinite(tx.fees) ? Math.max(0, Number(tx.fees)) : 0;
+  if (!Number.isFinite(price) || price <= 0) return 0;
 
   if (tx.type === 'BUY') {
     state.shares += shares;
@@ -135,6 +145,7 @@ function pointIncludesTransaction(
   const txDay = dayKey(tx.date);
   if (txDay < sessionDate) return true;
   if (txDay > sessionDate) return false;
+  if (isBonusSharesTransaction(tx)) return true;
 
   const executed = tx.executedAt ? new Date(tx.executedAt).getTime() : Number.NaN;
   const point = new Date(pointDate).getTime();

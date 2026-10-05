@@ -90,7 +90,9 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
       continue;
     }
 
-    if (tx.type === 'BUY') {
+    if (tx.type === 'BONUS_SHARES') {
+      startShares.set(ticker, (startShares.get(ticker) || 0) - tx.shares);
+    } else if (tx.type === 'BUY') {
       startCash += Number(tx.totalAmount || tx.shares * tx.price + (tx.fees || 0));
       startShares.set(ticker, (startShares.get(ticker) || 0) - tx.shares);
     } else if (tx.type === 'SELL') {
@@ -161,7 +163,7 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     || (rawType === 'CASH' && direction === 'IN' ? 'DEPOSIT' : undefined)
     || (rawType === 'CASH' && direction === 'OUT' ? 'WITHDRAWAL' : undefined);
   const isCash = rawType === 'CASH' || !!inferredCashFlowType;
-  const isTrade = rawType === 'BUY' || rawType === 'SELL';
+  const isTrade = rawType === 'BUY' || rawType === 'SELL' || rawType === 'BONUS_SHARES';
   if (!isTrade && !isCash) throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
   const price = typeof tx.price === 'number' ? tx.price : parseFloat(tx.price) || 0;
@@ -183,8 +185,16 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     : rawType;
   const normalizedTicker = isCash ? 'CASH' : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   const normalizedShares = isCash && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
-  const normalizedPrice = isCash ? 1 : price;
-  const totalAmount = isCash ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount)) : typeof tx.totalAmount === 'number' ? tx.totalAmount : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
+  const normalizedPrice = isCash ? 1 : rawType === 'BONUS_SHARES' ? 0 : price;
+  const totalAmount = rawType === 'BONUS_SHARES'
+    ? 0
+    : isCash
+      ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount))
+      : typeof tx.totalAmount === 'number'
+        ? tx.totalAmount
+        : rawType === 'BUY'
+          ? grossAmount + fees
+          : grossAmount - fees;
   const cashFlowAmount = inferredCashFlowType === 'RECONCILIATION_ADJUSTMENT'
     ? Number.isFinite(rawCashAmount)
       ? rawCashAmount
@@ -196,7 +206,7 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     : isCash
       ? totalAmount
       : undefined;
-  return { id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, type: normalizedType as 'BUY' | 'SELL', ticker: normalizedTicker, companyName: isCash ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''), sector: isCash ? 'Liquid Buying Power' : (tx.sector || 'Other'), shares: normalizedShares, price: normalizedPrice, date: tx.date || tx.transactionDate || tx.transaction_date || new Date().toISOString().split('T')[0], executedAt:
+  return { id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, type: normalizedType as 'BUY' | 'SELL' | 'BONUS_SHARES', ticker: normalizedTicker, companyName: isCash ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''), sector: isCash ? 'Liquid Buying Power' : (tx.sector || 'Other'), shares: normalizedShares, price: normalizedPrice, date: tx.date || tx.transactionDate || tx.transaction_date || new Date().toISOString().split('T')[0], executedAt:
     typeof tx.executedAt === 'string' && tx.executedAt.trim()
       ? tx.executedAt
       : typeof tx.executed_at === 'string' && tx.executed_at.trim()

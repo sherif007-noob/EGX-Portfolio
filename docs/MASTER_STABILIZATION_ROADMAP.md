@@ -1258,7 +1258,7 @@ The broad Stage 4.4 implementation already exists on `main`, but its acceptance 
 
 ---
 
-## Pass 4.4 — Shared Worker/Express API contracts — IMPLEMENTATION LANDED / GRANULAR ACCEPTANCE ACTIVE
+## Pass 4.4 — Shared Worker/Express API contracts — COMPLETE / CI GREEN
 
 Production uses Cloudflare Worker + static assets. Express remains valuable for local development and compatibility.
 
@@ -1303,7 +1303,9 @@ Do not advance Stage 4.4 as fully accepted merely because later broad implementa
 - **4.4.3 — runtime capability/deprecation contract validation — ACCEPTED / CI GREEN** via PR #57 at `main@406c171d`; Quality Checks #37245209262 passed TypeScript, **110 / 110 test files, 606 / 606 tests**, and production build.
 - **4.4.4 — Google Sheets payload/response contract consolidation — ACCEPTED / CI GREEN** via PR #58 at `main@40fa5b81`; Quality Checks #37247685414 passed TypeScript, **111 / 111 test files, 611 / 611 tests**, and production build.
 - **4.4.5 — scanner request/response contract closure — ACCEPTED / CI GREEN** via PR #59 at `main@e6280537`; Quality Checks #37248175841 passed TypeScript, **112 / 112 test files, 617 / 617 tests**, and production build.
-- **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — NEXT**
+- **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — ACCEPTED / CI GREEN** via PR #60 at `main@ff9b6abd`; Quality Checks #37249185251 passed TypeScript, **113 / 113 test files, 623 / 623 tests**, and production build.
+
+Stage 4.4 is fully closed through the granular acceptance sequence. Worker and Express share route/method authority, request normalization, auth/error semantics, runtime capability contracts, Google Sheets schemas, scanner contracts and symbol-search response normalization.
 
 ---
 

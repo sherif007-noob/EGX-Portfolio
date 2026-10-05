@@ -1369,7 +1369,7 @@ The detailed 4.5.3.x records above are retained as historical regression evidenc
 1. **4.5.3 — materials + cascade-safety closure — CLOSED through the 4.5.4 cross-owner cascade solution**
 2. **4.5.4 — semantics + hierarchy — ACCEPTED / CI + RENDERED GREEN** via PR #81 at `main@f3266418`
 3. **4.5.5 — interaction surfaces — ACCEPTED / SOURCE + RENDERED GREEN** via PR #83 at `main@6eb83877`; PR Quality #37372111721, main Quality #37374105870 and Phase 10 Visual Closure #37374105847 passed. The redundant standalone rendered workflow remains runner-delayed, while Phase 10 already passed the same rendered matrix/config.
-4. **4.5.6 — responsive + feature/legacy closure — FINAL VALIDATION CANDIDATE / PR #85 → Stage 4 exit**; legacy entry is import-only, final ownership/audit guards are in place, and the pre-documentation exact head passed Quality Checks #37374686697.
+4. **4.5.6 — responsive + feature/legacy closure — ACCEPTED / CI + RENDERED GREEN** via PR #86 at `main@470b3ce8`; Quality Checks #37375408314, Phase 10 Visual Closure #37375408211 and Rendered Visual Regression #37375408191 all passed. **Stage 4 is CLOSED.**
 
 The previously planned standalone 4.5.7–4.5.11 sections are folded into 4.5.5 and 4.5.6. Cascade-sensitive work may still land in small commits, but it will not create extra roadmap sections.
 
@@ -1381,12 +1381,14 @@ The 4.5.1 gate moved no existing declarations. It established the named ownershi
 
 **Detailed design authority:** `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md`.
 
-This stage begins only after:
+This stage is now ACTIVE after Stage 4 closure at `main@470b3ce8`.
+
+Established prerequisites:
 
 - Phase 10 is closed;
 - Stage 2 financial integrity is closed;
-- Stage 3 production convergence is closed;
-- Stage 4 has established enough component ownership to move Reports safely.
+- Stage 4 architecture/CSS ownership is closed;
+- Stage 3.5 live-session soak remains deferred technical debt and does not block the Reports information-architecture sequence.
 
 The redesign is **information architecture**, not a calculation rewrite.
 
@@ -1866,6 +1868,6 @@ For financial/data changes also require:
 
 The implementation sequence is now:
 
-> **Validate/merge 4.5.6 → run final main rendered closure → close Stage 4 → start Stage 5 / Reports R1.**
+> **Stage 4 is CLOSED at `main@470b3ce8`. Current execution point: Stage 5 / Reports R1 — Workspace architecture.**
 
-4.5.5 is accepted. 4.5.6 / PR #85 is the sole remaining Stage 4 exit candidate. No financial/accounting rewrite belongs in this CSS closure.
+Stage 5 changes information architecture only at R1: internal Reports modes + persistence, with zero calculation change.

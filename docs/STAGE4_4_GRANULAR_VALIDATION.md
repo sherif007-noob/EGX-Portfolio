@@ -152,7 +152,7 @@ Express remains the runtime that implements all four capabilities; the capabilit
 Next: **4.4.4 — Google Sheets payload/response contract consolidation**.
 
 
-## 4.4.4 — Google Sheets payload/response contract consolidation — VALIDATION IN PROGRESS
+## 4.4.4 — Google Sheets payload/response contract consolidation — ACCEPTED / CI GREEN
 
 **Scope**
 
@@ -183,4 +183,18 @@ Next: **4.4.4 — Google Sheets payload/response contract consolidation**.
 - existing route names and Google synchronization behavior remain unchanged;
 - TypeScript, full tests, and production build are green.
 
-Next after acceptance: **4.4.5 — scanner request/response contract closure**.
+### 4.4.4 acceptance record
+
+Accepted through PR #58 at `main@40fa5b81`.
+
+Quality Checks #37247685414 passed:
+
+- TypeScript;
+- **111 / 111 test files, 611 / 611 tests**;
+- production build.
+
+The pass consolidated Google Sheets request and success-response schemas across the browser client, Express, and Cloudflare Worker.
+
+Notably, the Worker no longer forwards raw Google success payloads for value writes, appends, batch updates, value reads, or Drive file discovery while Express returns normalized application responses. Both runtimes now use the same request parsers and response builders from `src/api/contracts.ts`, and the browser client uses canonical `API_ROUTES` plus shared response types rather than hard-coded Sheets API paths.
+
+Next: **4.4.5 — scanner request/response contract closure**.

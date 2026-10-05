@@ -89,12 +89,12 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(materials).not.toContain('@keyframes');
   });
 
-  it('keeps all Phase 8 hierarchy-linked material restoration in legacy for 4.5.3.2.2.2', () => {
+  it('keeps the final neutral Phase 8 restoration in materials and semantic Phase 8 in legacy', () => {
     const legacy = read('src/index.css');
+    const materials = read('src/styles/materials.css');
 
     for (const marker of [
-      'Phase 8 material restoration — Monthly Report quality reference',
-      '.premium-card.premium-hierarchy-h1',
+      '.premium-card.premium-hierarchy-h1,',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan',
       '.premium-panel.premium-hierarchy-h2',
       '.premium-overview-market-strip.premium-material-tone-cyan',
@@ -102,7 +102,10 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
       '.premium-table-shell.premium-hierarchy-h5',
       '.premium-report-summary-band {',
     ]) {
-      expect(legacy).toContain(marker);
+      expect(materials).toContain(marker);
     }
+
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
+    expect(legacy).toContain('.premium-card.premium-hierarchy-h1.premium-state-win');
   });
 });

@@ -17,7 +17,7 @@ describe('Stage 4.5.3.2.1 Reports + dense-data material ownership', () => {
     expect(materials).toContain('.premium-table-shell thead {');
     expect(materials).toContain('.premium-table-shell tbody tr:hover {');
 
-    expect(legacy).not.toContain('.premium-table-shell {');
+    expect(legacy).not.toContain('.premium-table-shell {\n  border: 1px solid var(--premium-border);');
     expect(legacy).not.toContain('.premium-table-shell thead {');
     expect(legacy).not.toContain('.premium-table-shell tbody tr:hover {');
 

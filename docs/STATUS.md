@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `406c171d` — Stage 4.4.3 runtime capability/deprecation contract validation
-**Current full verification:** PR #57 Quality Checks #37245209262 — TypeScript + **110 / 110 test files, 606 / 606 tests** + production build
+**Current validated runtime head:** `40fa5b81` — Stage 4.4.4 Google Sheets payload/response contract consolidation
+**Current full verification:** PR #58 Quality Checks #37247685414 — TypeScript + **111 / 111 test files, 611 / 611 tests** + production build
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -83,16 +83,17 @@ Stage 4 accepted:
 - **Stage 4.4.1 — shared route/request contract authority — accepted / CI green**
 - **Stage 4.4.2 — auth/error response contract parity — accepted / CI green**
 - **Stage 4.4.3 — runtime capability/deprecation contract validation — accepted / CI green**
+- **Stage 4.4.4 — Google Sheets payload/response contract consolidation — accepted / CI green**
 
 `Stage 4.3` is now fully accepted and closed through granular gates. The earlier broad Stage 4.4 implementation remains present on `main`, but it will be revalidated in similarly small sub-passes before Stage 4.5 or Stage 5.
 
 Stage 4 active:
 
-- **Stage 4.4 granular acceptance — next sub-pass: 4.4.4**
+- **Stage 4.4 granular acceptance — next sub-pass: 4.4.5**
 
 Next:
 
-1. **Stage 4.4.4 — Google Sheets payload/response contract consolidation**
+1. **Stage 4.4.5 — scanner request/response contract closure**
 2. Continue Stage 4.4 in similarly small sub-passes
 3. Stage 4.5 granular CSS ownership work
 4. Stage 5 Reports workspace redesign

@@ -8,7 +8,7 @@ const readRelative = (relative: string) =>
 describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
   it('keeps the content shell bounded on desktop and tighter on narrow phones', () => {
     const app = readRelative('../App.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/responsive.css');
 
     expect(app).toContain('premium-safe-inline-main premium-flow-major');
     expect(app).toContain('max-w-7xl');
@@ -66,23 +66,21 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
     expect(overview).toContain('premium-type-metric-hero');
   });
 
-  it('preserves the accepted Phase 8 material language while responsive rules stay material-neutral', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+  it('preserves the accepted Phase 8 semantic language while responsive rules stay material-neutral', () => {
+    const responsive = readRelative('../styles/responsive.css');
+    const semantics = readRelative('../styles/semantics.css');
 
-    expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
-    expect(css).toContain('--premium-semantic-role-near-radius: 48px;');
-    expect(css).toContain('--premium-semantic-role-near-alpha: 0.34;');
-    expect(css).toContain('--premium-semantic-role-far-radius: 112px;');
-    expect(css).toContain('--premium-semantic-role-far-alpha: 0.18;');
-    expect(css).toContain('Additive semantic edge — aura/glass remain untouched');
-    expect(css).toContain('border-radius: inherit');
+    expect(semantics).toContain('Pass 8.3b: intensified resting aura/glow');
+    expect(semantics).toContain('--premium-semantic-role-near-radius: 48px;');
+    expect(semantics).toContain('--premium-semantic-role-near-alpha: 0.34;');
+    expect(semantics).toContain('--premium-semantic-role-far-radius: 112px;');
+    expect(semantics).toContain('--premium-semantic-role-far-alpha: 0.18;');
+    expect(semantics).toContain('Additive semantic edge — aura/glass remain untouched');
+    expect(semantics).toContain('border-radius: inherit');
 
-    const start = css.indexOf('Pass 8.6 — narrow-phone hierarchy guard');
-    const end = css.indexOf('Phase 8 material restoration — Monthly Report quality reference');
+    const start = responsive.indexOf('Pass 8.6 — narrow-phone hierarchy guard');
     expect(start).toBeGreaterThanOrEqual(0);
-    expect(end).toBeGreaterThan(start);
-
-    const responsiveBlock = css.slice(start, end);
+    const responsiveBlock = responsive.slice(start);
     expect(responsiveBlock).not.toMatch(/box-shadow|background:|border-color|backdrop-filter|filter:/);
   });
 

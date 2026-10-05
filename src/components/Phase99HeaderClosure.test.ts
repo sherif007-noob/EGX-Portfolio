@@ -86,7 +86,7 @@ describe('Phase 9.9 header regression and closure', () => {
 
   it('freezes viewport architecture from phone through 2XL', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     expect(header.match(/xl:max-w-\[100rem\]/g)?.length).toBe(2);
 
@@ -107,7 +107,7 @@ describe('Phase 9.9 header regression and closure', () => {
 
   it('freezes status, focus and reduced-motion semantics', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     expect(header).toContain('data-status={unreadAlertCount > 0');
     expect(header).toContain("data-status={isSyncingPrices ? 'running' : 'idle'}");
@@ -134,7 +134,7 @@ describe('Phase 9.9 header regression and closure', () => {
 
   it('freezes the Phase 8 material boundary and forbids financial semantics on header chrome', () => {
     const header = readRelative('./Header.tsx');
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).not.toContain('premium-state-win');
     expect(header).not.toContain('premium-state-loss');

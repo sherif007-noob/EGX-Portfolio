@@ -44,7 +44,7 @@ describe('Phase 9.3 primary creation architecture', () => {
   });
 
   it('uses the same premium material family while keeping primary stronger than secondary', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     expect(css).toContain('.premium-header-create-cluster');
     expect(css).toContain('backdrop-filter: blur(16px) saturate(138%)');
@@ -64,7 +64,7 @@ describe('Phase 9.3 primary creation architecture', () => {
 
   it('preserves existing creation callbacks and Phase 8 material contracts', () => {
     const header = readRelative('./Header.tsx');
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).toContain('onClick={onOpenScreenshotModal}');
     expect(header).toContain('onClick={onOpenAddTrade}');

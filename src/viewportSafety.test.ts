@@ -12,7 +12,7 @@ describe('mobile viewport safety contracts', () => {
   });
 
   it('keeps header and main content inside safe-area insets', () => {
-    const css = readRelative('./index.css');
+    const css = readRelative('./styles/features/header.css');
     expect(css).toContain('.premium-safe-inline-header');
     expect(css).toContain('.premium-safe-inline-main');
     expect(css).toContain('env(safe-area-inset-left)');

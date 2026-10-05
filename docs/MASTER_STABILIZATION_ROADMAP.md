@@ -1368,8 +1368,8 @@ The detailed 4.5.3.x records above are retained as historical regression evidenc
 
 1. **4.5.3 — materials + cascade-safety closure — CLOSED through the 4.5.4 cross-owner cascade solution**
 2. **4.5.4 — semantics + hierarchy — ACCEPTED / CI + RENDERED GREEN** via PR #81 at `main@f3266418`
-3. **4.5.5 — interaction surfaces — ACTIVE / VALIDATION CANDIDATE**
-4. **4.5.6 — responsive + feature/legacy closure → Stage 4 exit**
+3. **4.5.5 — interaction surfaces — ACCEPTED / SOURCE + RENDERED GREEN** via PR #83 at `main@6eb83877`; PR Quality #37372111721, main Quality #37374105870 and Phase 10 Visual Closure #37374105847 passed. The redundant standalone rendered workflow remains runner-delayed, while Phase 10 already passed the same rendered matrix/config.
+4. **4.5.6 — responsive + feature/legacy closure — FINAL VALIDATION CANDIDATE / PR #85 → Stage 4 exit**; legacy entry is import-only, final ownership/audit guards are in place, and the pre-documentation exact head passed Quality Checks #37374686697.
 
 The previously planned standalone 4.5.7–4.5.11 sections are folded into 4.5.5 and 4.5.6. Cascade-sensitive work may still land in small commits, but it will not create extra roadmap sections.
 
@@ -1864,10 +1864,8 @@ For financial/data changes also require:
 
 # 17. Immediate next action
 
-The next implementation pass is:
+The implementation sequence is now:
 
-> **Phase 10.8 — Modal & workflow consistency**
+> **Validate/merge 4.5.6 → run final main rendered closure → close Stage 4 → start Stage 5 / Reports R1.**
 
-No Stage 2 financial behavior change should be mixed into 10.8.
-
-After 10.10 closes, move directly to **Stage 2.1 — Canonical mutation executor** before starting Reports R1 or adding another major feature.
+4.5.5 is accepted. 4.5.6 / PR #85 is the sole remaining Stage 4 exit candidate. No financial/accounting rewrite belongs in this CSS closure.

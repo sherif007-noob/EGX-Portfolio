@@ -830,7 +830,7 @@ The important-background problem is now resolved structurally: explicit tone and
 
 Next is **4.5.5 — interaction surfaces**.
 
-## 4.5.5 — Interaction surfaces — VALIDATION CANDIDATE
+## 4.5.5 — Interaction surfaces — ACCEPTED / SOURCE + RENDERED GREEN
 
 This compressed pass consolidates the reusable interaction vocabulary without pulling responsive or feature-specific ownership forward.
 
@@ -873,5 +873,56 @@ The mobile fixed-overlay important family is deliberately **not** moved into `eg
 - Phase 10 Visual Closure passes;
 - Rendered Visual Regression remains within the accepted threshold.
 
+### 4.5.5 acceptance record
+
+Accepted through PR #83 at `main@6eb83877`.
+
+Evidence:
+- exact-head PR Quality Checks #37372111721 — passed TypeScript, full Vitest and production build;
+- main Quality Checks #37374105870 — passed;
+- Phase 10 Visual Closure #37374105847 — passed TypeScript, **127 / 127 test files and 684 / 684 tests**, production Vite/PWA build, Cloudflare Worker dry-run and all 16 rendered states;
+- rendered diffs: 14 states at **0.000%**, Closed Cycles desktop **0.032%**, Transaction Edit desktop **0.145%**, all below the frozen 1% threshold;
+- separate Rendered Visual Regression #37374105922 remains queued during the GitHub-hosted-runner assignment incident. Phase 10 executed the same pinned Playwright 1.55 deterministic build and `scripts/renderedRegression.mjs` with the same baseline requirement, 1% max diff and channel tolerance, so there is no missing rendered evidence and no failed rendered state.
+
 After acceptance, the only remaining Stage 4.5 pass is **4.5.6 — responsive + feature/legacy closure**.
 
+## 4.5.6 — Responsive + feature/legacy closure — VALIDATION CANDIDATE
+
+This is the Stage 4.5 exit pass. It drains the legacy application stylesheet without creating a catch-all legacy replacement.
+
+### Final ownership map
+
+- `src/index.css` — stable entry only: Tailwind + `styles/index.css`;
+- `responsive.css` — cross-app touch sizing, safe areas, containment, responsive hierarchy overrides and viewport safety;
+- `features/app-shell.css` — global canvas/scrollbar/ambient shell presentation;
+- `features/charts.css` — Phase 7 chart/allocation/cash feature presentation;
+- `features/reports.css` — report-specific table contracts, report hero cards and monthly audit structure;
+- `features/header.css` — Phase 9 Header/navigation/command feature cascade;
+- existing materials/controls/overlays/motion owners receive the last shared residue instead of duplicating it in feature CSS.
+
+### Cascade preservation
+
+The competing mobile fixed-overlay `!important` helpers and the later Phase 10.9 short-landscape overrides now live together in `egx-responsive` in their original source order. This preserves later Phase 10.9 precedence without the important-layer reversal that caused the rejected 4.5.3 hierarchy extraction.
+
+Header-specific responsive rules remain together in `egx-features`. Because important layer priority reverses, cross-app responsive important rules in the earlier `egx-responsive` layer continue to outrank feature-important rules where the accepted Phase 10 cascade requires it.
+
+### Final debt audit
+
+Measured on the candidate after the drain:
+
+- legacy entry: **3 lines / 53 bytes / 0 declarations**;
+- `!important`: **156 actual declaration occurrences** at final closure versus 158 at the 4.5.1 baseline. The two-declaration reduction is intentional: accepted 4.5.4 combined duplicate semantic-hover border/box-shadow declaration blocks into one selector family without changing values or rendered behavior. No new importance debt is introduced;
+- `@keyframes`: **23 total**, exactly the 4.5.1 baseline;
+- `@media`: **66 total** versus 62 at baseline because four mixed-owner media blocks were split across canonical owners; declaration behavior is unchanged.
+
+No `legacy.css` or equivalent catch-all owner was introduced.
+
+### Acceptance
+
+- 4.5.5 must be accepted first;
+- TypeScript, full Vitest and production build pass on the final 4.5.6 exact head;
+- Phase 10 Visual Closure passes;
+- Rendered Visual Regression remains within the frozen threshold;
+- `src/index.css` remains import-only;
+- final duplicate/`!important` audit remains clean;
+- after merge, **Stage 4 is CLOSED** and Stage 5 begins at Reports R1.

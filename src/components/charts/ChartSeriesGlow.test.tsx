@@ -52,7 +52,7 @@ describe('chart series painting', () => {
     expect([...host.querySelectorAll('path')].map(node => node.getAttribute('fill'))).toEqual(ids.map(id => `url(#${id})`));
   });
   it('does not raster-filter the whole animated series or its filled area', () => {
-    const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
+    const css = readFileSync(resolve(process.cwd(), 'src/styles/features/charts.css'), 'utf8');
     for (const selector of ['premium-secondary-chart-series', 'premium-trajectory-semantic-curve']) {
       const rule = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]+)\\}`))?.[1];
       expect(rule).toContain('filter: none');

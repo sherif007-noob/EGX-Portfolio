@@ -49,7 +49,7 @@ describe('Phase 8.4.5 typography and spacing consistency sweep', () => {
   });
 
   it('preserves the accepted glass, aura, glow and semantic-edge material language', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/materials.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('--premium-semantic-role-near-radius: 48px;');

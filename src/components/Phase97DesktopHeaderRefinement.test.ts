@@ -7,7 +7,7 @@ const readRelative = (relative: string) =>
 
 describe('Phase 9.7 desktop / 2XL header refinement', () => {
   it('uses a bounded desktop grid instead of stretching the header across the viewport', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.7 — desktop / 2XL header refinement');
     const block = css.slice(start);
 
@@ -32,7 +32,7 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
   });
 
   it('keeps laptop-width desktop compact while preserving the primary creation label', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('@media (min-width: 1024px) and (max-width: 1279px) and (min-height: 521px)');
     const end = css.indexOf('/* Standard desktop has room', start);
     const block = css.slice(start, end);
@@ -48,7 +48,7 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
 
   it('uses wider screens for existing context rather than new functionality', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('@media (min-width: 1536px) and (min-height: 521px)');
     const block = css.slice(start);
 
@@ -61,7 +61,7 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
   });
 
   it('keeps mobile and short-landscape architecture isolated from desktop rules', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     const mobileStart = css.indexOf('Phase 9.6 — mobile command architecture');
     const desktopStart = css.indexOf('Phase 9.7 — desktop / 2XL header refinement');
@@ -76,7 +76,7 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
 
   it('preserves navigation interaction and Phase 8 material contracts', () => {
     const header = readRelative('./Header.tsx');
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).toContain('aria-current={active ? \'page\' : undefined}');
     expect(header).toContain("['ArrowLeft', 'ArrowRight', 'Home', 'End']");

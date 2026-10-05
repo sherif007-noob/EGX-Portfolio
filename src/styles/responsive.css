@@ -3,5 +3,229 @@
  * table/viewport safety rules that are not feature-specific.
  * Must not redefine material, semantic or hierarchy styling.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.6: canonical responsive/safe-area ownership.
  */
+
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-action,
+  .premium-nav,
+  .premium-filter-pill,
+  .premium-segment,
+  .premium-choice,
+  .premium-accordion-trigger,
+  .premium-select-trigger {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  .premium-action {
+    min-width: var(--premium-touch-target);
+  }
+
+  .premium-icon-action {
+    min-width: var(--premium-touch-target);
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+
+  input.premium-field,
+  select.premium-field,
+  textarea.premium-field {
+    min-height: var(--premium-touch-target);
+  }
+
+  .premium-menu-item {
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .premium-select-dropdown {
+    min-width: min(100%, var(--premium-select-menu-max, calc(100vw - (var(--premium-mobile-gutter) * 2))));
+  }
+
+  .premium-number-stepper-desktop-controls {
+    display: none;
+  }
+
+  .premium-number-stepper-touch-controls {
+    display: flex;
+  }
+
+  .premium-number-stepper-input {
+    padding-left: 3.25rem !important;
+    padding-right: 3.25rem !important;
+    text-align: center;
+  }
+
+  .premium-number-stepper-touch-controls > button {
+    min-width: var(--premium-touch-target);
+    min-height: var(--premium-touch-target);
+    touch-action: manipulation;
+  }
+}
+
+/* Stage 4.5.5: mobile overlay safe-area geometry moved to ./styles/overlays.css. */
+/* Competing !important fixed-overlay helpers stay unlayered until 4.5.6 so
+ * Phase 10.9 short-landscape safe-area overrides keep their accepted priority. */
+@media (max-width: 767px) {
+  .premium-fixed-mobile-span {
+    left: max(var(--premium-mobile-gutter), env(safe-area-inset-left)) !important;
+    right: max(var(--premium-mobile-gutter), env(safe-area-inset-right)) !important;
+    width: auto;
+    max-width: none;
+  }
+
+  .premium-fixed-bottom-safe {
+    bottom: max(var(--premium-mobile-gutter), env(safe-area-inset-bottom)) !important;
+  }
+
+  .premium-fixed-bottom-above-status {
+    bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
+  }
+
+  .premium-fixed-top-after-header {
+    top: max(11rem, calc(env(safe-area-inset-top) + 10.5rem)) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --hierarchy-space-card: 0.875rem;
+    --hierarchy-space-related: 1rem;
+    --hierarchy-space-section: 1.5rem;
+    --hierarchy-metric-size: clamp(1.35rem, 6.3vw, 1.75rem);
+    --hierarchy-pad-h1: 1rem;
+    --hierarchy-pad-h2: 0.875rem;
+    --hierarchy-pad-h3: 0.75rem;
+    --hierarchy-pad-h4: 0.75rem;
+    --hierarchy-pad-h5: 0.875rem;
+  }
+
+  .premium-flow-control,
+  .premium-gap-control {
+    gap: 0.5rem;
+  }
+
+  .premium-overview-hero {
+    min-height: 9.25rem;
+  }
+
+  .premium-report-summary-cell {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .premium-reports-hierarchy {
+    --reports-section-gap: 1.5rem;
+  }
+}
+
+
+/* Pass 8.6 — narrow-phone hierarchy guard. Material/aura/glow are intentionally untouched. */
+@media (max-width: 390px) {
+  :root {
+    --hierarchy-page-title-size: 1.2rem;
+    --hierarchy-section-title-size: 0.95rem;
+    --hierarchy-metric-hero-size: clamp(1.55rem, 8vw, 1.9rem);
+    --hierarchy-metric-primary-size: clamp(1.08rem, 5.4vw, 1.28rem);
+    --hierarchy-metric-secondary-size: clamp(1rem, 4.8vw, 1.15rem);
+    --hierarchy-metric-dense-size: 0.95rem;
+    --hierarchy-pad-h1: 0.875rem;
+    --hierarchy-pad-h2: 0.75rem;
+    --hierarchy-pad-h3: 0.75rem;
+    --hierarchy-pad-h4: 0.75rem;
+    --hierarchy-pad-h5: 0.75rem;
+  }
+
+  .premium-overview-hero {
+    min-height: 8.75rem;
+  }
+
+  .premium-type-metric,
+  .premium-type-metric-hero,
+  .premium-type-metric-primary,
+  .premium-type-metric-secondary,
+  .premium-type-metric-dense {
+    min-width: 0;
+  }
+}
+
+/* Phase 10.9 — cross-app responsive containment.
+ * These rules are layout-only. They must not own glass, aura, semantic color,
+ * hierarchy weight, or chart behavior.
+ */
+.premium-motion-swap-shell,
+.premium-motion-swap,
+.premium-tab-stage {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.premium-table-shell,
+.premium-report-table,
+.premium-chart-stage,
+.premium-chart-plot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 320px is the only supported width where the Overview financial summary is
+ * too narrow for two side-by-side money cards. Keep 359px+ composition intact.
+ */
+@media (max-width: 359px) {
+  .premium-overview-primary-grid,
+  .premium-overview-support-grid,
+  .premium-report-summary-band {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .premium-overview-primary-grid > *,
+  .premium-overview-support-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  .premium-overview-today {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .premium-overview-today > :last-child {
+    align-self: flex-start;
+  }
+}
+
+/* Width-only mobile media queries do not catch modern phones in landscape.
+ * Extend safe-area protection to overlays without changing the Phase 9 header.
+ */
+@supports (padding-left: max(0px)) {
+  @media (orientation: landscape) and (max-height: 520px) {
+    .premium-modal-backdrop {
+      padding:
+        max(0.5rem, env(safe-area-inset-top))
+        max(0.75rem, env(safe-area-inset-right))
+        max(0.5rem, env(safe-area-inset-bottom))
+        max(0.75rem, env(safe-area-inset-left));
+    }
+
+    .premium-fixed-overlay {
+      right: max(1rem, env(safe-area-inset-right)) !important;
+      max-width: min(
+        var(--premium-fixed-overlay-max),
+        calc(
+          100vw
+          - max(0.75rem, env(safe-area-inset-left))
+          - max(0.75rem, env(safe-area-inset-right))
+        )
+      );
+    }
+
+    .premium-fixed-bottom-safe {
+      bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    }
+
+    .premium-fixed-bottom-above-status {
+      bottom: max(4.75rem, calc(env(safe-area-inset-bottom) + 4.25rem)) !important;
+    }
+  }
+}

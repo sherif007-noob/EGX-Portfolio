@@ -32,7 +32,7 @@ describe('Phase 9.6 mobile command architecture', () => {
   });
 
   it('lets only quick utilities scroll while data/settings and creation remain fixed-access', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.6 — mobile command architecture');
     const end = css.indexOf('iPhone landscape edge-to-edge viewport', start);
     const block = css.slice(start, end);
@@ -48,7 +48,7 @@ describe('Phase 9.6 mobile command architecture', () => {
   });
 
   it('preserves 44px touch targets including short landscape', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
     const start = css.indexOf('Phase 9.6 — mobile command architecture');
     const end = css.indexOf('iPhone landscape edge-to-edge viewport', start);
     const block = css.slice(start, end);
@@ -60,7 +60,7 @@ describe('Phase 9.6 mobile command architecture', () => {
 
   it('keeps direct navigation and safe-area infrastructure intact', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/features/header.css');
 
     expect(header).toContain('premium-nav-scroller');
     expect(header).toContain('aria-current={active ? \'page\' : undefined}');
@@ -71,7 +71,7 @@ describe('Phase 9.6 mobile command architecture', () => {
   });
 
   it('does not reopen Phase 8 card material or semantic contracts', () => {
-    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
+    const css = [readRelative('../styles/features/header.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(css).toContain('Pass 8.3b: intensified resting aura/glow');
     expect(css).toContain('Additive semantic edge — aura/glass remain untouched');

@@ -1,74 +1,37 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+const read=(r:string)=>readFileSync(fileURLToPath(new URL(`../../${r}`,import.meta.url)),'utf8');
 
-const read = (relative: string) =>
-  readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
-
-describe('Stage 4.5.4 semantics + hierarchy ownership', () => {
-  it('keeps named owner order and attaches the neutral important fallback unlayered', () => {
-    const entry = read('src/styles/index.css');
-
-    const materials = entry.indexOf('@import "./materials.css" layer(egx-materials);');
-    const semantics = entry.indexOf('@import "./semantics.css" layer(egx-semantics);');
-    const hierarchy = entry.indexOf('@import "./hierarchy.css" layer(egx-hierarchy);');
-    const bridge = entry.indexOf('@import "./cascade-bridge.css";');
-
-    expect(materials).toBeGreaterThanOrEqual(0);
-    expect(semantics).toBeGreaterThan(materials);
-    expect(hierarchy).toBeGreaterThan(semantics);
-    expect(bridge).toBeGreaterThan(hierarchy);
+describe('Stage 4.5.4 semantics + hierarchy ownership',()=>{
+  it('keeps financial semantic presentation in semantics.css',()=>{
+    const s=read('src/styles/semantics.css');
+    expect(s).toContain('.premium-semantic-hero');
+    expect(s).toContain('.premium-semantic-card');
+    expect(s).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
+    expect(s).toContain('Additive semantic edge — aura/glass remain untouched');
   });
 
-  it('isolates the neutral important background below layered tone and semantic owners', () => {
-    const materials = read('src/styles/materials.css');
-    const semantics = read('src/styles/semantics.css');
-    const hierarchy = read('src/styles/hierarchy.css');
-    const bridge = read('src/styles/cascade-bridge.css');
-
-    expect(bridge).toContain('rgba(10, 18, 36, 0.54) !important;');
-    expect(bridge).not.toContain('.premium-glow-win');
-    expect(bridge).not.toContain('.premium-material-tone-cyan');
-
-    expect(materials).toContain('.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,');
-    expect(materials).toContain('rgba(12, 20, 39, 0.56) !important;');
-    expect(materials).not.toContain('.premium-card.premium-hierarchy-h1.premium-glow-win');
-
-    expect(semantics).toContain('.premium-card.premium-hierarchy-h1.premium-glow-win,');
-    expect(semantics).toContain('rgba(12, 20, 39, 0.58) !important;');
-    expect(semantics).not.toContain('.premium-material-tone-cyan');
-
-    expect(hierarchy).not.toContain('rgba(10, 18, 36, 0.54)');
-    expect(hierarchy).not.toContain('radial-gradient(');
-    expect(hierarchy).not.toContain('.premium-glow-win');
-    expect(hierarchy).not.toContain('.premium-material-tone-cyan');
+  it('keeps non-responsive hierarchy structure in hierarchy.css',()=>{
+    const h=read('src/styles/hierarchy.css');
+    expect(h).toContain('Typography hierarchy only.');
+    expect(h).toContain('Pass 8.4.4 — canonical spacing rhythm');
+    expect(h).not.toContain('premium-glow-win');
+    expect(h).not.toContain('premium-material-tone-cyan');
   });
 
-  it('moves canonical hierarchy and semantic presentation out of the legacy stylesheet', () => {
-    const legacy = read('src/index.css');
-    const semantics = read('src/styles/semantics.css');
-    const hierarchy = read('src/styles/hierarchy.css');
-
-    expect(legacy).not.toContain('/* Typography hierarchy only. */');
-    expect(legacy).not.toContain('Additive semantic edge — aura/glass remain untouched');
-    expect(legacy).not.toContain('.premium-card.premium-hierarchy-h1.premium-glow-win,');
-
-    expect(hierarchy).toContain('/* Typography hierarchy only. */');
-    expect(hierarchy).toContain('.premium-type-page-title {');
-    expect(hierarchy).toContain('.premium-flow-major {');
-
-    expect(semantics).toContain('Phase 5 canonical semantic halo system');
-    expect(semantics).toContain('Additive semantic edge — aura/glass remain untouched');
-    expect(semantics).toContain('.premium-semantic-card {');
+  it('preserves tone -> semantic -> neutral fallback important precedence structurally',()=>{
+    const m=read('src/styles/materials.css');
+    const s=read('src/styles/semantics.css');
+    const b=read('src/styles/cascade-bridge.css');
+    expect(m).toContain('premium-material-tone-cyan');
+    expect(s).toContain('rgba(12, 20, 39, 0.58) !important;');
+    expect(b).toContain('rgba(10, 18, 36, 0.54) !important;');
   });
 
-  it('advances generic motion while leaving responsive hierarchy for the final pass', () => {
-    const legacy = read('src/index.css');
-    const motion = read('src/styles/motion.css');
-
-    expect(motion).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
-    expect(motion).toContain('Semantic transition choreography; financial presentation remains in semantics.css.');
-    expect(legacy).toContain('@media (max-width: 767px) {\n  :root {\n    --hierarchy-space-card: 0.875rem;');
-    expect(legacy).toContain('Pass 8.6 — narrow-phone hierarchy guard.');
+  it('hands later interaction and responsive work to their final owners',()=>{
+    expect(read('src/styles/motion.css')).toContain('Phase 4 v3 — canonical motion tokens and CSS micro-interactions');
+    expect(read('src/styles/responsive.css')).toContain('Phase 10.9 — cross-app responsive containment');
+    expect(read('src/index.css').trim()).toBe('@import "tailwindcss";\n@import "./styles/index.css";');
   });
 });

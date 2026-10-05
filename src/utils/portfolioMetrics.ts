@@ -162,7 +162,10 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     || (rawType === 'CASH' && direction === 'OUT' ? 'WITHDRAWAL' : undefined);
   const isCash = rawType === 'CASH' || !!inferredCashFlowType;
   const isTrade = rawType === 'BUY' || rawType === 'SELL';
-  if (!isTrade && !isCash) throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
+  const isCorporateAction = rawType === 'BONUS_SHARES';
+  if (!isTrade && !isCash && !isCorporateAction) {
+    throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
+  }
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
   const price = typeof tx.price === 'number' ? tx.price : parseFloat(tx.price) || 0;
   const shares = typeof tx.shares === 'number' ? tx.shares : parseFloat(tx.shares) || 0;
@@ -183,8 +186,16 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     : rawType;
   const normalizedTicker = isCash ? 'CASH' : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   const normalizedShares = isCash && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
-  const normalizedPrice = isCash ? 1 : price;
-  const totalAmount = isCash ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount)) : typeof tx.totalAmount === 'number' ? tx.totalAmount : rawType === 'BUY' ? grossAmount + fees : grossAmount - fees;
+  const normalizedPrice = isCash ? 1 : isCorporateAction ? 0 : price;
+  const totalAmount = isCash
+    ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount))
+    : isCorporateAction
+      ? 0
+      : typeof tx.totalAmount === 'number'
+        ? tx.totalAmount
+        : rawType === 'BUY'
+          ? grossAmount + fees
+          : grossAmount - fees;
   const cashFlowAmount = inferredCashFlowType === 'RECONCILIATION_ADJUSTMENT'
     ? Number.isFinite(rawCashAmount)
       ? rawCashAmount
@@ -196,10 +207,12 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     : isCash
       ? totalAmount
       : undefined;
-  return { id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, type: normalizedType as 'BUY' | 'SELL', ticker: normalizedTicker, companyName: isCash ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''), sector: isCash ? 'Liquid Buying Power' : (tx.sector || 'Other'), shares: normalizedShares, price: normalizedPrice, date: tx.date || tx.transactionDate || tx.transaction_date || new Date().toISOString().split('T')[0], executedAt:
+  const corporateActionRatioRaw = Number(tx.corporateActionRatio ?? tx.corporate_action_ratio);
+  const corporateActionReference = tx.corporateActionReference ?? tx.corporate_action_reference;
+  return { id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, type: normalizedType as TradeTransaction['type'], ticker: normalizedTicker, companyName: isCash ? 'Cash Balance' : (tx.companyName || tx.company_name || tx.ticker || ''), sector: isCash ? 'Liquid Buying Power' : (tx.sector || 'Other'), shares: normalizedShares, price: normalizedPrice, date: tx.date || tx.transactionDate || tx.transaction_date || new Date().toISOString().split('T')[0], executedAt:
     typeof tx.executedAt === 'string' && tx.executedAt.trim()
       ? tx.executedAt
       : typeof tx.executed_at === 'string' && tx.executed_at.trim()
         ? tx.executed_at
-        : undefined, fees, totalAmount, cashFlowType: inferredCashFlowType, cashFlowAmount, isDCA: tx.isDCA ?? tx.isDca ?? tx.is_dca, notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id };
+        : undefined, fees, totalAmount, cashFlowType: inferredCashFlowType, cashFlowAmount, isDCA: tx.isDCA ?? tx.isDca ?? tx.is_dca, notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id, corporateActionType: isCorporateAction ? 'BONUS_SHARES' : undefined, corporateActionRatio: Number.isFinite(corporateActionRatioRaw) && corporateActionRatioRaw > 0 ? corporateActionRatioRaw : undefined, corporateActionReference: typeof corporateActionReference === 'string' && corporateActionReference.trim() ? corporateActionReference.trim() : undefined };
 }

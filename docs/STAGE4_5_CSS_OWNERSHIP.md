@@ -126,3 +126,56 @@ No existing selector or declaration moved in 4.5.1. The ownership modules are st
 The first Cloudflare GitHub App deployment check on `a8cb0956` failed even though the same head passed the repository's Cloudflare production build and Wrangler dry-run. Recent neighboring main commits show the same intermittent external build behavior. This documentation closure push intentionally triggers a fresh Cloudflare deployment attempt without changing runtime code.
 
 Next: **4.5.2 — token extraction**.
+
+
+## 4.5.2 — Token extraction — VALIDATION IN PROGRESS
+
+### Scope
+
+- move the six non-responsive base `:root` token blocks from `src/index.css` into `src/styles/tokens.css`;
+- preserve declaration values and original block order;
+- keep responsive hierarchy token overrides in the legacy stylesheet until 4.5.9;
+- update existing token-ownership regression guards to follow the canonical token owner;
+- keep every later Stage 4.5 ownership module declaration-free.
+
+### Extracted baseline
+
+The token owner now contains:
+
+- **6** base `:root` blocks;
+- **88** base custom-property declarations;
+- premium material/effect primitives;
+- semantic palette/effect primitives;
+- touch/viewport primitives;
+- canonical motion easing/duration/family tokens;
+- base hierarchy spacing/type/padding tokens.
+
+The legacy stylesheet intentionally retains only the two responsive `:root` override blocks:
+
+- `@media (max-width: 767px)`;
+- `@media (max-width: 390px)`.
+
+Those two blocks contain **20** responsive hierarchy override declarations and remain unlayered until the responsive ownership pass so breakpoint behavior is unchanged.
+
+### Explicitly out of scope
+
+- moving material selectors;
+- moving semantic state/aura selectors;
+- moving hierarchy selectors;
+- moving controls, overlays, keyframes or responsive rules;
+- changing any token value;
+- removing `!important`;
+- redesigning any Phase 10-approved surface;
+- Stage 5 Reports work.
+
+### Acceptance
+
+- `src/styles/tokens.css` is the only base-token owner;
+- it contains only `:root` custom-property declarations;
+- all 88 extracted base declarations preserve their accepted values;
+- legacy `src/index.css` retains only responsive hierarchy root overrides;
+- all later ownership modules remain visually empty;
+- TypeScript, full tests and production build are green;
+- rendered visual regression remains within the frozen Phase 10 threshold.
+
+Next after acceptance: **4.5.3 — neutral material extraction**.

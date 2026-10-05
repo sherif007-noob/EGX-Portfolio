@@ -70,7 +70,8 @@ describe('Phase 10.1 primitive and token ownership', () => {
   });
 
   it('gives canonical motion durations a single global token owner', () => {
-    const css = readRelative('../index.css');
+    const legacy = readRelative('../index.css');
+    const tokens = readRelative('../styles/tokens.css');
 
     for (const token of [
       '--motion-instant:',
@@ -80,13 +81,14 @@ describe('Phase 10.1 primitive and token ownership', () => {
       '--motion-panel:',
       '--motion-modal:',
     ]) {
-      expect(css.split(token).length - 1).toBe(1);
+      expect(tokens.split(token).length - 1).toBe(1);
+      expect(legacy).not.toContain(token);
     }
 
-    expect(css).toContain('/* Phase 4.1 — perceptible motion correction');
-    expect(css).toContain('--motion-instant: 120ms');
-    expect(css).toContain('--motion-modal: 360ms');
-    expect(css).toContain('Canonical motion durations are owned by the');
+    expect(legacy).toContain('/* Phase 4.1 — perceptible motion correction');
+    expect(tokens).toContain('--motion-instant: 120ms');
+    expect(tokens).toContain('--motion-modal: 360ms');
+    expect(tokens).toContain('Canonical motion durations are owned by the');
   });
 
   it('treats responsive hierarchy token overrides as intentional rather than duplicate ownership', () => {

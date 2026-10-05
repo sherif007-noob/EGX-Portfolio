@@ -473,88 +473,7 @@
 /* -------------------------------------------------------------------------- */
 /* Premium visual system — presentation only                                  */
 /* -------------------------------------------------------------------------- */
-:root {
-  --premium-bg: #020617;
-  --premium-surface: rgba(15, 23, 42, 0.62);
-  --premium-surface-strong: rgba(15, 23, 42, 0.78);
-  --premium-glass: rgba(8, 15, 31, 0.52);
-  --premium-border: rgba(148, 163, 184, 0.2);
-  --premium-border-strong: rgba(165, 180, 252, 0.32);
-  --premium-highlight: rgba(255, 255, 255, 0.085);
-  --premium-shadow:
-    0 22px 55px rgba(0, 0, 0, 0.32),
-    0 4px 14px rgba(0, 0, 0, 0.2);
-  --premium-shadow-soft:
-    0 14px 34px rgba(0, 0, 0, 0.24),
-    0 2px 8px rgba(0, 0, 0, 0.16);
-  --premium-cyan-glow: rgba(34, 211, 238, 0.24);
-  --premium-blue-glow: rgba(59, 130, 246, 0.2);
-  --premium-purple-glow: rgba(139, 92, 246, 0.18);
-  --premium-emerald-glow: rgba(16, 185, 129, 0.16);
-
-  /* Phase 5 effect primitives — preserve the accepted pre-Phase-5 appearance.
-   * New advanced effects must consume/extend these primitives instead of
-   * introducing component-local glow/shimmer/ambient recipes.
-   */
-  --premium-effect-ambient-blur: 76px;
-  --premium-effect-ambient-opacity: 0.74;
-
-  --premium-semantic-win-rgb: 16 185 129;
-  --premium-semantic-win-deep-rgb: 5 150 105;
-  --premium-semantic-loss-rgb: 244 63 94;
-  --premium-semantic-loss-deep-rgb: 225 29 72;
-  --premium-semantic-breakeven-rgb: 245 158 11;
-  --premium-semantic-breakeven-deep-rgb: 217 119 6;
-  --premium-semantic-buy-rgb: 59 130 246;
-  --premium-semantic-buy-deep-rgb: 37 99 235;
-  --premium-effect-radial-color: rgba(56, 189, 248, 0.09);
-  --premium-effect-radial-hover-opacity: 0.62;
-  --premium-effect-aurora-blue: rgba(59, 130, 246, 0.28);
-  --premium-effect-aurora-cyan: rgba(34, 211, 238, 0.58);
-  --premium-effect-aurora-purple: rgba(139, 92, 246, 0.34);
-  --premium-effect-aurora-opacity: 0.68;
-  --premium-effect-aurora-cycle: 5.5s;
-  --premium-effect-refraction-cyan: rgba(34, 211, 238, 0.16);
-  --premium-effect-refraction-purple: rgba(139, 92, 246, 0.11);
-  --premium-effect-refraction-cyan-soft: rgba(34, 211, 238, 0.045);
-  --premium-effect-refraction-purple-soft: rgba(139, 92, 246, 0.035);
-  --premium-effect-refraction-cyan-strong: rgba(186, 230, 253, 0.20);
-  --premium-effect-refraction-purple-strong: rgba(196, 181, 253, 0.15);
-
-  --premium-refraction-tier-secondary:
-    inset 1px 0 0 rgba(34, 211, 238, 0.10),
-    inset -1px 0 0 rgba(139, 92, 246, 0.07),
-    inset 6px 0 14px rgba(34, 211, 238, 0.025),
-    inset -6px 0 14px rgba(139, 92, 246, 0.02);
-  --premium-refraction-tier-primary:
-    inset 1px 0 0 var(--premium-effect-refraction-cyan),
-    inset -1px 0 0 var(--premium-effect-refraction-purple),
-    inset 8px 0 18px var(--premium-effect-refraction-cyan-soft),
-    inset -8px 0 18px var(--premium-effect-refraction-purple-soft);
-  --premium-refraction-tier-hero:
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 1px 0 0 rgba(34, 211, 238, 0.18),
-    inset -1px 0 0 rgba(59, 130, 246, 0.12),
-    inset 10px 0 22px rgba(34, 211, 238, 0.055),
-    inset -10px 0 22px rgba(59, 130, 246, 0.04);
-  --premium-refraction-tier-overlay:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 1px 0 0 var(--premium-effect-refraction-cyan-strong),
-    inset -1px 0 0 var(--premium-effect-refraction-purple-strong),
-    inset 10px 0 22px rgba(34, 211, 238, 0.06),
-    inset -10px 0 22px rgba(139, 92, 246, 0.05);
-
-  --premium-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --premium-fast: 150ms;
-  --premium-medium: 220ms;
-  --premium-slow: 320ms;
-
-  /* Phase 6 responsive primitives. */
-  --premium-touch-target: 2.75rem; /* 44px */
-  --premium-mobile-gutter: 0.75rem;
-  --premium-modal-gutter: 0.75rem;
-  --premium-fixed-overlay-max: 28rem;
-}
+/* Base premium/effect/responsive tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 html {
   background: var(--premium-bg);
@@ -1626,13 +1545,7 @@ body {
 /* Phase 4 — premium motion & micro-interaction system                         */
                          */
 /* -------------------------------------------------------------------------- */
-:root {
-  /* Easing ownership lives here. Canonical motion durations are owned by the
-   * Phase 4.1 perceptible-motion token block below; do not shadow them here. */
-  --motion-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
-  --motion-standard: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-snappy: cubic-bezier(0.2, 0.9, 0.25, 1);
-}
+/* Base motion easing tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 /* Floating surfaces should feel like they detach from the trigger. */
 .premium-dropdown {
@@ -2035,14 +1948,7 @@ body {
 /* Phase 4.1 — perceptible motion correction                                  */
 /* The first motion pass was too subtle in real use.                           */
 /* -------------------------------------------------------------------------- */
-:root {
-  --motion-instant: 120ms;
-  --motion-fast: 180ms;
-  --motion-control: 220ms;
-  --motion-popover: 280ms;
-  --motion-panel: 340ms;
-  --motion-modal: 360ms;
-}
+/* Canonical motion duration tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 /* Every main tab now has one obvious, coherent entrance. */
 .premium-tab-stage {
@@ -3387,18 +3293,7 @@ body {
  * timer-swap, modal snapshot, and duplicated lifecycle keyframes from earlier
  * Phase 4 experiments are intentionally retired here.
  */
-:root {
-  --motion-family-control: 260ms;
-  --motion-family-selector: 340ms;
-  --motion-family-overlay: 360ms;
-  --motion-family-modal: 420ms;
-  --motion-family-content: 360ms;
-  --motion-family-navigation: 440ms;
-  --motion-family-chart: 520ms;
-  --motion-family-tooltip: 200ms;
-  --motion-family-standard: cubic-bezier(0.22, 0.8, 0.24, 1);
-  --motion-family-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Motion-family tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 /* Family 2 — controls remain CSS-driven and immediately responsive. */
 .premium-nav,
@@ -4756,28 +4651,7 @@ body {
  * Existing premium-card / premium-glass / premium-state-* / premium-glow-*
  * primitives remain the sole source of glass, aura, glow and semantic styling.
  */
-:root {
-  --hierarchy-space-inline: 0.375rem;
-  --hierarchy-space-control: 0.625rem;
-  --hierarchy-space-card: 1rem;
-  --hierarchy-space-related: 1.25rem;
-  --hierarchy-space-section: 1.75rem;
-
-  --hierarchy-page-title-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
-  --hierarchy-section-title-size: clamp(1rem, 0.92rem + 0.35vw, 1.25rem);
-
-  /* Pass 8.4.1 canonical financial metric scale. */
-  --hierarchy-metric-hero-size: clamp(1.8rem, 1.35rem + 1.5vw, 2.7rem);
-  --hierarchy-metric-primary-size: clamp(1.3rem, 1.05rem + 0.7vw, 1.8rem);
-  --hierarchy-metric-secondary-size: clamp(1.15rem, 1rem + 0.45vw, 1.5rem);
-  --hierarchy-metric-dense-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
-  --hierarchy-metric-size: var(--hierarchy-metric-primary-size);
-
-  --hierarchy-label-size: 0.75rem;
-  --hierarchy-metadata-size: 0.6875rem;
-  --hierarchy-helper-size: 0.75rem;
-  --hierarchy-unit-size: 0.6875rem;
-}
+/* Base hierarchy scale/spacing tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 .premium-hierarchy-surface,
 .premium-hierarchy-h0,
@@ -4901,13 +4775,7 @@ body {
 
 
 /* Pass 8.4.4 — canonical spacing rhythm. Layout only; no material ownership. */
-:root {
-  --hierarchy-pad-h1: 1.25rem;
-  --hierarchy-pad-h2: 1rem;
-  --hierarchy-pad-h3: 0.875rem;
-  --hierarchy-pad-h4: 0.875rem;
-  --hierarchy-pad-h5: 0.875rem;
-}
+/* Base hierarchy padding tokens moved to ./styles/tokens.css in Stage 4.5.2. */
 
 .premium-flow-major,
 .premium-flow-related,

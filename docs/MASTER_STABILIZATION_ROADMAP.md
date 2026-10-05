@@ -1302,7 +1302,8 @@ Do not advance Stage 4.4 as fully accepted merely because later broad implementa
 
 - **4.4.3 — runtime capability/deprecation contract validation — ACCEPTED / CI GREEN** via PR #57 at `main@406c171d`; Quality Checks #37245209262 passed TypeScript, **110 / 110 test files, 606 / 606 tests**, and production build.
 - **4.4.4 — Google Sheets payload/response contract consolidation — ACCEPTED / CI GREEN** via PR #58 at `main@40fa5b81`; Quality Checks #37247685414 passed TypeScript, **111 / 111 test files, 611 / 611 tests**, and production build.
-- **4.4.5 — scanner request/response contract closure — NEXT**
+- **4.4.5 — scanner request/response contract closure — ACCEPTED / CI GREEN** via PR #59 at `main@e6280537`; Quality Checks #37248175841 passed TypeScript, **112 / 112 test files, 617 / 617 tests**, and production build.
+- **4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — NEXT**
 
 ---
 

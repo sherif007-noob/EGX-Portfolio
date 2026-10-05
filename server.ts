@@ -6,6 +6,8 @@ import {
   createClassifiedAuthErrorResponse,
   createHealthResponse,
   isApiRouteMethodAllowed,
+  parseEgxScannerRequest,
+  parseEgxScannerResponse,
   parseHistoricalEnsureRequest,
   parseHistoricalPriceQuery,
   parseIntradayEnsureRequest,
@@ -124,19 +126,58 @@ async function startServer() {
     } finally { migrationRunning = false; }
   });
 
-  app.post(API_ROUTES.egxScan, async (_req, res) => {
+  app.post(API_ROUTES.egxScan, async (req, res) => {
     try {
+      try {
+        parseEgxScannerRequest(req.body);
+      } catch (error) {
+        return res.status(400).json(createApiErrorResponse(error));
+      }
+
       const tvUrl = "https://scanner.tradingview.com/egypt/scan";
-      const payload = EGX_SCANNER_PAYLOAD;
       res.setHeader("Cache-Control", "no-store");
-      const tvResponse = await fetch(tvUrl, { method: "POST", headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }, signal: AbortSignal.timeout(12_000), body: JSON.stringify(payload) });
-      if (!tvResponse.ok) return res.status(tvResponse.status).json(
-        createApiErrorResponse(`TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}`),
-      );
-      res.json(await tvResponse.json());
+      const tvResponse = await fetch(tvUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        },
+        signal: AbortSignal.timeout(12_000),
+        body: JSON.stringify(EGX_SCANNER_PAYLOAD),
+      });
+      if (!tvResponse.ok) {
+        return res.status(tvResponse.status).json(
+          createApiErrorResponse(
+            `TradingView returned status ${tvResponse.status}: ${tvResponse.statusText}`,
+            { retryable: tvResponse.status >= 500 },
+          ),
+        );
+      }
+
+      let providerData: unknown;
+      try {
+        providerData = await tvResponse.json();
+      } catch (error) {
+        return res.status(502).json(
+          createApiErrorResponse('TradingView scanner returned invalid JSON.', {
+            retryable: true,
+            details: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
+
+      try {
+        return res.json(parseEgxScannerResponse(providerData));
+      } catch (error) {
+        return res.status(502).json(
+          createApiErrorResponse(error, { retryable: true, details: providerData }),
+        );
+      }
     } catch (err: any) {
       console.error("Error proxying to TradingView Scanner:", err);
-      res.status(500).json(createApiErrorResponse(err?.message || "Failed to fetch prices from TradingView"));
+      return res.status(500).json(
+        createApiErrorResponse(err?.message || "Failed to fetch prices from TradingView"),
+      );
     }
   });
   app.get(API_ROUTES.tradingViewSymbolSearch, async (req, res) => {

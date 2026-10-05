@@ -406,3 +406,43 @@ The rendered matrix remained within the frozen Phase 10 threshold. Highest obser
 The first CI attempt failed only because two historical dropdown visual guards still read the canonical glass recipe from `src/index.css`. Those guards were advanced to the new `materials.css` owner; no runtime CSS value changed.
 
 Next: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**.
+
+
+## 4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure — VALIDATION IN PROGRESS
+
+### Scope
+
+- move explicit `premium-material-tone-*` material variables;
+- move neutral hierarchy-card material and neutral highlight;
+- move explicitly-toned hierarchy-card material;
+- move neutral structural panel/report restoration;
+- move market-strip material-tone restoration;
+- move inset/detail material;
+- move dense-data material;
+- move Reports summary-band material;
+- move transparent structural-shell material reset;
+- move neutral hierarchy-card fine-pointer material hover;
+- move Phase 8 mobile material-only blur/saturation overrides;
+- keep every financial semantic aura/state/hover selector in legacy for 4.5.4.
+
+### Explicitly out of scope
+
+- semantic win/loss/buy/breakeven aura and state surfaces;
+- semantic edge;
+- hierarchy spacing/typography;
+- controls;
+- overlay geometry;
+- motion;
+- general responsive ownership.
+
+### Acceptance
+
+- every neutral Phase 8 material/restoration selector is owned by `materials.css`;
+- financial semantic Phase 8 selectors remain in legacy;
+- no control, keyframe, or general responsive rule is pulled into materials;
+- TypeScript, full tests and production build are green;
+- rendered regression remains inside the frozen Phase 10 baseline.
+
+Passing this gate closes **Stage 4.5.3 neutral material extraction**.
+
+Next: **4.5.4 — semantic state/aura extraction**.

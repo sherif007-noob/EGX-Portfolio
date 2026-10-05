@@ -157,7 +157,7 @@ describe('Phase 10.3 dropdowns, menus, popovers and overlays', () => {
     const materials = readRelative('../styles/materials.css');
     const overlays = readRelative('../styles/overlays.css');
 
-    expect(legacy).toContain('Canonical app dropdown surface — Data & Tools visual reference');
+    expect(overlays).toContain('Canonical app dropdown surface — Data & Tools visual reference');
     expect(materials).toContain('.premium-dropdown {');
     expect(overlays).toContain("premium-dropdown[data-premium-dropdown-portal='true']");
     expect(overlays).toContain('min-width: 0 !important');

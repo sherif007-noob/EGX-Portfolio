@@ -1366,9 +1366,9 @@ Granular acceptance sequence:
 
 The detailed 4.5.3.x records above are retained as historical regression evidence, but future roadmap accounting is compressed:
 
-1. **4.5.3 — materials + cascade-safety closure — ACTIVE**
-2. **4.5.4 — semantics + hierarchy**
-3. **4.5.5 — interaction surfaces**
+1. **4.5.3 — materials + cascade-safety closure — CLOSED through the 4.5.4 cross-owner cascade solution**
+2. **4.5.4 — semantics + hierarchy — ACCEPTED / CI + RENDERED GREEN** via PR #81 at `main@f3266418`
+3. **4.5.5 — interaction surfaces — ACTIVE / VALIDATION CANDIDATE**
 4. **4.5.6 — responsive + feature/legacy closure → Stage 4 exit**
 
 The previously planned standalone 4.5.7–4.5.11 sections are folded into 4.5.5 and 4.5.6. Cascade-sensitive work may still land in small commits, but it will not create extra roadmap sections.

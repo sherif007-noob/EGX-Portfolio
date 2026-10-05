@@ -29,7 +29,10 @@ describe('Phase 9.8 interaction / focus / motion closure', () => {
 
   it('keeps status motion purposeful and respects reduced motion', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const legacy = readRelative('../index.css');
+    const controls = readRelative('../styles/controls.css');
+    const motion = readRelative('../styles/motion.css');
+    const css = [legacy, controls, motion].join('\n');
 
     expect(header).toContain("isSyncingPrices ? 'animate-spin' : ''");
     expect(header).toContain('premium-motion-chevron');

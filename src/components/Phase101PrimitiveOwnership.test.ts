@@ -72,6 +72,7 @@ describe('Phase 10.1 primitive and token ownership', () => {
   it('gives canonical motion durations a single global token owner', () => {
     const legacy = readRelative('../index.css');
     const tokens = readRelative('../styles/tokens.css');
+    const motion = readRelative('../styles/motion.css');
 
     for (const token of [
       '--motion-instant:',
@@ -85,7 +86,7 @@ describe('Phase 10.1 primitive and token ownership', () => {
       expect(legacy).not.toContain(token);
     }
 
-    expect(legacy).toContain('/* Phase 4.1 — perceptible motion correction');
+    expect(motion).toContain('/* Phase 4.1 — perceptible motion correction');
     expect(tokens).toContain('--motion-instant: 120ms');
     expect(tokens).toContain('--motion-modal: 360ms');
     expect(tokens).toContain('Canonical motion durations are owned by the');

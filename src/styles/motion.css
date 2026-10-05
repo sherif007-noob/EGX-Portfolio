@@ -1,7 +1,1092 @@
 /*
  * Ownership: CSS-owned transitions, keyframes, reduced-motion fallbacks and
  * micro-interaction timing. Motion-for-React lifecycle choreography remains
- * React-owned and must not be duplicated here.
+ * React-owned and is only neutralized here where the accepted CSS contract
+ * requires it.
  *
- * Stage 4.5.1 placeholder: accepted rules remain in src/index.css.
+ * Stage 4.5.5: canonical CSS motion ownership.
  */
+
+/* base card transition */
+.premium-card {
+  transition:
+    transform var(--premium-medium) var(--premium-ease),
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    background var(--premium-medium) var(--premium-ease);
+}
+
+/* card highlight transition */
+.premium-card::before {
+  transition: opacity var(--premium-medium) var(--premium-ease);
+}
+
+/* base card hover transform */
+.premium-card:hover {
+  transform: translateY(-2px);
+}
+
+/* section and ambient entrance motion */
+.premium-section-enter {
+  animation: premium-section-in var(--premium-slow) var(--premium-ease) both;
+}
+
+@keyframes premium-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .premium-page::before {
+    animation: premium-aurora-a 22s ease-in-out infinite alternate;
+  }
+
+  .premium-page::after {
+    animation: premium-aurora-b 28s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes premium-aurora-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(1.6rem, 0.65rem, 0) scale(1.04); }
+}
+
+@keyframes premium-aurora-b {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-1.4rem, -0.6rem, 0) scale(1.035); }
+}
+
+/* base reduced-motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .premium-card,
+  .premium-control,
+  .premium-nav,
+  .premium-section-enter {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .premium-page::before,
+  .premium-page::after {
+    animation: none !important;
+  }
+}
+
+/* base table-row transition */
+.premium-table-shell tbody tr {
+  transition:
+    background-color var(--premium-fast) var(--premium-ease),
+    box-shadow var(--premium-fast) var(--premium-ease);
+}
+
+/* semantic transition choreography */
+/* Semantic transition choreography; financial presentation remains in semantics.css. */
+/* Interaction-only semantic transitions remain here until Stage 4.5.5. */
+.premium-card.premium-glow-buy,
+.premium-card.premium-glow-win,
+.premium-card.premium-glow-loss,
+.premium-card.premium-glow-breakeven {
+  transition:
+    transform var(--premium-medium) var(--premium-ease),
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    background var(--premium-medium) var(--premium-ease);
+}
+
+/* Phase 4 and 4.1 motion families */
+/* -------------------------------------------------------------------------- */
+/* Phase 4 — premium motion & micro-interaction system                         */
+                         */
+/* -------------------------------------------------------------------------- */
+/* Base motion easing tokens moved to ./styles/tokens.css in Stage 4.5.2. */
+
+/* Floating surfaces should feel like they detach from the trigger. */
+.premium-dropdown {
+  transform-origin: top center;
+  animation: premium-popover-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.975);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Modal entrance: backdrop arrives first visually, panel follows with spring-like settle. */
+.premium-modal-backdrop {
+  animation: premium-backdrop-in var(--motion-panel) ease-out both;
+}
+
+.premium-modal {
+  transform-origin: 50% 42%;
+  animation: premium-modal-in var(--motion-modal) var(--motion-emphasized) both;
+}
+
+@keyframes premium-backdrop-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+    filter: blur(2px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.002);
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Stage 4.5.5: Phase 4 tactile control baseline moved to ./styles/controls.css. */
+
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: translateY(0) scale(0.965);
+  transition-duration: var(--motion-instant);
+}
+
+.premium-control > svg,
+.premium-nav > svg,
+.premium-segment > svg,
+.premium-accordion-trigger > svg {
+  transition:
+    transform var(--motion-control) var(--motion-emphasized),
+    color var(--motion-control) ease-out,
+    filter var(--motion-control) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-control:hover:not(:disabled) > svg,
+  .premium-nav:hover > svg {
+    transform: translateY(-1px) scale(1.045);
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+/* Stage 4.5.5: Phase 4 navigation selected-state visual moved to ./styles/controls.css. */
+
+/* Stage 4.5.5: Phase 4 segmented-control visual moved to ./styles/controls.css. */
+
+/* Expandable sections reveal as one coherent surface. */
+.premium-reveal {
+  transform-origin: top center;
+  animation: premium-reveal-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scaleY(0.975);
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Tooltip content appears crisply but does not lag behind the cursor. */
+.premium-tooltip-content {
+  transform-origin: 50% 100%;
+  animation: premium-tooltip-in var(--motion-fast) var(--motion-snappy) both;
+}
+
+@keyframes premium-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Refine page/tab entry so it feels like content continuity, not a full-page fade. */
+.premium-section-enter {
+  animation: premium-section-in var(--motion-panel) var(--motion-emphasized) both;
+}
+
+/* Small feedback for cards on touch; desktop hover remains the stronger affordance. */
+.premium-card {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.premium-card:active {
+  transform: scale(0.995);
+  transition-duration: var(--motion-instant);
+}
+
+/* Stage 4.5.5: Phase 4 shared focus visual moved to ./styles/controls.css. */
+
+@media (max-width: 767px) {
+  .premium-dropdown {
+    animation-duration: 175ms;
+  }
+
+  .premium-modal {
+    animation-duration: 235ms;
+  }
+
+  .premium-card:active {
+    transform: scale(0.992);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-dropdown,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-reveal,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+
+  .premium-control,
+  .premium-nav,
+  .premium-segment,
+  .premium-accordion-trigger,
+  .premium-card,
+  .premium-nav::after,
+  .premium-segment::before {
+    transition: none !important;
+  }
+}
+
+
+/* Stage 4.5.5: Phase 4 select-trigger expanded visual moved to ./styles/controls.css. */
+
+.premium-menu-item {
+  transition:
+    transform var(--motion-fast) var(--motion-emphasized),
+    background-color var(--motion-fast) ease-out,
+    color var(--motion-fast) ease-out,
+    box-shadow var(--motion-fast) ease-out;
+}
+
+.premium-menu-item:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-menu-item:hover {
+    transform: translateX(3px);
+  }
+}
+
+
+/* Compact semantic state presentation moved to ./styles/semantics.css in Stage 4.5.4. */
+.premium-state-win,
+.premium-state-loss,
+.premium-state-breakeven,
+.premium-state-buy {
+  transition:
+    border-color var(--premium-medium) var(--premium-ease),
+    box-shadow var(--premium-medium) var(--premium-ease),
+    transform var(--premium-medium) var(--premium-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-state-win:hover,
+  .premium-state-loss:hover,
+  .premium-state-breakeven:hover,
+  .premium-state-buy:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Reports & Performance glass hierarchy */
+/* Stage 4.5.3.2.1: reports glass base moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports glass soft base moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports table base moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports table header moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports table row base moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports table row hover moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.1: reports mobile material overrides moved to ./styles/materials.css. */
+
+
+/* -------------------------------------------------------------------------- */
+/* Phase 4.1 — perceptible motion correction                                  */
+/* The first motion pass was too subtle in real use.                           */
+/* -------------------------------------------------------------------------- */
+/* Canonical motion duration tokens moved to ./styles/tokens.css in Stage 4.5.2. */
+
+/* Every main tab now has one obvious, coherent entrance. */
+.premium-tab-stage {
+  transform-origin: 50% 0%;
+  animation: premium-tab-stage-in var(--motion-panel) var(--motion-emphasized) both;
+}
+
+.premium-tab-stage .premium-section-enter {
+  animation: none;
+}
+
+@keyframes premium-tab-stage-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(22px, 10px, 0) scale(0.982);
+    filter: blur(5px);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 0, 0) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Dropdowns visibly detach from their trigger with a short spring settle. */
+.premium-dropdown {
+  animation: premium-popover-strong-in var(--motion-popover) var(--motion-emphasized) both;
+}
+
+@keyframes premium-popover-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.93);
+    filter: blur(5px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.012);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Menu contents enter in sequence so opening a dropdown visibly reads as motion. */
+.premium-dropdown .premium-menu-item {
+  animation: premium-menu-item-in 240ms var(--motion-emphasized) both;
+}
+
+.premium-dropdown .premium-menu-item:nth-child(1) { animation-delay: 20ms; }
+.premium-dropdown .premium-menu-item:nth-child(2) { animation-delay: 38ms; }
+.premium-dropdown .premium-menu-item:nth-child(3) { animation-delay: 56ms; }
+.premium-dropdown .premium-menu-item:nth-child(4) { animation-delay: 74ms; }
+.premium-dropdown .premium-menu-item:nth-child(5) { animation-delay: 92ms; }
+.premium-dropdown .premium-menu-item:nth-child(6) { animation-delay: 110ms; }
+.premium-dropdown .premium-menu-item:nth-child(n+7) { animation-delay: 126ms; }
+
+@keyframes premium-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-9px) translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* Modals now have enough travel/scale to be visually obvious. */
+.premium-modal-backdrop {
+  animation: premium-backdrop-strong-in 280ms ease-out both;
+}
+
+.premium-modal {
+  animation: premium-modal-strong-in var(--motion-modal) var(--motion-emphasized) both;
+}
+
+@keyframes premium-backdrop-strong-in {
+  from {
+    opacity: 0;
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes premium-modal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+    filter: blur(6px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Stronger tactile controls. */
+.premium-control:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: scale(0.94);
+  transition-duration: var(--motion-instant);
+}
+
+.premium-card:active {
+  transform: scale(0.982);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card:hover {
+    transform: translateY(-4px) scale(1.006);
+  }
+}
+
+/* Active nav/tab selection itself animates, not just its color. */
+.premium-nav-active {
+  animation: premium-nav-select 260ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-nav-select {
+  0% {
+    transform: translateY(2px) scale(0.94);
+  }
+  65% {
+    transform: translateY(-2px) scale(1.025);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Segmented controls visibly pop when selection changes. */
+.premium-segment[aria-pressed='true'] {
+  animation: premium-segment-select 280ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-segment-select {
+  0% {
+    transform: translateY(2px) scale(0.88);
+    filter: brightness(0.88);
+  }
+  62% {
+    transform: translateY(-2px) scale(1.045);
+    filter: brightness(1.12);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Accordion/reveal movement is now intentionally readable. */
+.premium-reveal {
+  animation: premium-reveal-strong-in 300ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-reveal-strong-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scaleY(0.91);
+    filter: blur(4px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scaleY(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Tooltips stay fast, but the arrival is now visible. */
+.premium-tooltip-content {
+  animation: premium-tooltip-strong-in 190ms var(--motion-snappy) both;
+}
+
+@keyframes premium-tooltip-strong-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-tab-stage {
+    animation-duration: 300ms;
+  }
+
+  .premium-dropdown {
+    animation-duration: 240ms;
+  }
+
+  .premium-modal {
+    animation-duration: 320ms;
+  }
+
+  .premium-control:active:not(:disabled),
+  .premium-nav:active:not(:disabled),
+  .premium-segment:active:not(:disabled),
+  .premium-accordion-trigger:active:not(:disabled) {
+    transform: scale(0.93);
+  }
+
+  .premium-card:active {
+    transform: scale(0.975);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-tab-stage,
+  .premium-dropdown,
+  .premium-dropdown .premium-menu-item,
+  .premium-modal-backdrop,
+  .premium-modal,
+  .premium-nav-active,
+  .premium-segment[aria-pressed='true'],
+  .premium-reveal,
+  .premium-tooltip-content {
+    animation: none !important;
+  }
+}
+
+
+/* Analytics plot visibly transitions when timeframe or mode changes. */
+.premium-chart-stage {
+  transform-origin: 50% 55%;
+  animation: premium-chart-stage-in 320ms var(--motion-emphasized) both;
+}
+
+@keyframes premium-chart-stage-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+    filter: blur(4px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.008);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-chart-stage {
+    animation: none !important;
+  }
+}
+
+/* visible surface motion */
+/* Do not retain a transformed ancestor after tab entrance; fixed modals must stay viewport-fixed. */
+.premium-tab-stage {
+  transform: none;
+  filter: none;
+}
+
+@keyframes premium-tab-stage-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(22px, 10px, 0) scale(0.982);
+    filter: blur(5px);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 0, 0) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+
+/* Pass 3/3.2 continuation: full component sweep + visible motion */
+
+/*
+ * These overrides deliberately make the redesign legible on dense screens.
+ * Earlier passes supplied glass classes to most components, but many secondary
+ * surfaces still looked flat because they had no surface motion, little edge
+ * separation, and hover changes below the perceptual threshold.
+ */
+.premium-panel,
+.premium-subpanel,
+.premium-report-glass,
+.premium-report-glass-soft,
+.premium-inset-glass,
+.premium-form-section,
+.premium-modal-section,
+.premium-table-shell,
+.premium-report-table {
+  transition:
+    transform 210ms var(--premium-ease),
+    border-color 210ms var(--premium-ease),
+    background 210ms var(--premium-ease),
+    box-shadow 210ms var(--premium-ease),
+    filter 210ms var(--premium-ease);
+}
+
+/* Stronger frosted hierarchy for report/performance secondary surfaces. */
+/* Stage 4.5.3.2.1: reports stronger glass override moved to ./styles/materials.css. */
+
+/* Stage 4.5.3.2.2.1: shared soft composite material moved to ./styles/materials.css. */
+
+/* Make interaction motion unmistakable without turning the app into a toy. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-card:hover,
+  .premium-panel:hover,
+  .premium-report-glass:hover {
+    transform: translateY(-3px);
+  }
+
+  .premium-subpanel:hover,
+  .premium-report-glass-soft:hover,
+  .premium-inset-glass:hover,
+  .premium-form-section:hover,
+  .premium-modal-section:hover {
+    transform: translateY(-2px);
+    border-color: rgba(186,230,253,0.24);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.065),
+      0 15px 32px rgba(0,0,0,0.20),
+      0 0 24px rgba(34,211,238,0.045),
+      var(--premium-refraction-shadow, 0 0 0 transparent);
+  }
+
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  .premium-action:hover:not(:disabled) > svg,
+  .premium-filter-pill:hover:not(:disabled) > svg,
+  .premium-choice:hover:not(:disabled) > svg,
+  .premium-icon-action:hover:not(:disabled) > svg {
+    transform: scale(1.09);
+    filter: drop-shadow(0 0 7px currentColor);
+  }
+
+  .premium-table-shell tbody tr:hover,
+  .premium-report-table tbody tr:hover {
+    transform: translateX(2px);
+  }
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  transition:
+    transform 170ms var(--premium-ease),
+    border-color 170ms var(--premium-ease),
+    background 170ms var(--premium-ease),
+    color 170ms var(--premium-ease),
+    box-shadow 170ms var(--premium-ease);
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg {
+  transition:
+    transform 180ms var(--premium-ease),
+    filter 180ms ease-out,
+    color 180ms ease-out;
+}
+
+/* Selected segmented controls should visibly settle into place. */
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"] {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 8px 22px rgba(0,0,0,0.22),
+    0 0 22px rgba(56,189,248,0.07);
+}
+
+/* Add a small reveal to dense collections so navigation feels alive. */
+@media (prefers-reduced-motion: no-preference) {
+  .premium-section-enter > .premium-panel,
+  .premium-section-enter > .premium-glass,
+  .premium-section-enter > .premium-report-glass,
+  .premium-section-enter > .premium-card {
+    animation: premium-surface-arrive 360ms var(--premium-ease) both;
+  }
+
+  .premium-section-enter > :nth-child(2) { animation-delay: 35ms; }
+  .premium-section-enter > :nth-child(3) { animation-delay: 70ms; }
+  .premium-section-enter > :nth-child(4) { animation-delay: 105ms; }
+
+  @keyframes premium-surface-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.992);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .premium-modal {
+    animation: premium-modal-arrive 230ms var(--premium-ease) both;
+  }
+
+  @keyframes premium-modal-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+/* dense row transition compatibility */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    transform 160ms var(--premium-ease),
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+/* surface reduced-motion fallback */
+/* Preserve accessibility and battery-friendly behavior. */
+@media (prefers-reduced-motion: reduce) {
+  .premium-panel,
+  .premium-subpanel,
+  .premium-report-glass,
+  .premium-report-glass-soft,
+  .premium-inset-glass,
+  .premium-form-section,
+  .premium-modal-section,
+  .premium-table-shell,
+  .premium-report-table,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-modal {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* canonical v3 motion and desktop performance */
+/* Phase 4 v3 — canonical motion tokens and CSS micro-interactions */
+/*
+ * Lifecycle ownership moved to Motion for React. CSS owns only tactile/control
+ * feedback plus chart/tooltip compatibility. All browser View Transition,
+ * timer-swap, modal snapshot, and duplicated lifecycle keyframes from earlier
+ * Phase 4 experiments are intentionally retired here.
+ */
+/* Motion-family tokens moved to ./styles/tokens.css in Stage 4.5.2. */
+
+/* Family 2 — controls remain CSS-driven and immediately responsive. */
+.premium-nav,
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment,
+.premium-control,
+.premium-accordion-trigger,
+.premium-select-trigger,
+.premium-field {
+  transition-duration: var(--motion-family-control);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-action,
+.premium-filter-pill,
+.premium-choice,
+.premium-icon-action,
+.premium-segment {
+  transition-property: transform, border-color, background-color, color, box-shadow, opacity;
+}
+
+.premium-action > svg,
+.premium-filter-pill > svg,
+.premium-choice > svg,
+.premium-icon-action > svg,
+.premium-control > svg,
+.premium-nav > svg,
+.premium-segment > svg,
+.premium-accordion-trigger > svg {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    filter var(--motion-family-control) ease-out,
+    color var(--motion-family-control) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .premium-action:hover:not(:disabled),
+  .premium-filter-pill:hover:not(:disabled),
+  .premium-choice:hover:not(:disabled),
+  .premium-icon-action:hover:not(:disabled),
+  .premium-segment:hover:not(:disabled),
+  .premium-control:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.006);
+  }
+}
+
+.premium-action:active:not(:disabled),
+.premium-filter-pill:active:not(:disabled),
+.premium-choice:active:not(:disabled),
+.premium-icon-action:active:not(:disabled),
+.premium-control:active:not(:disabled),
+.premium-nav:active:not(:disabled),
+.premium-segment:active:not(:disabled),
+.premium-accordion-trigger:active:not(:disabled) {
+  transform: translateY(0) scale(0.976);
+  transition-duration: 140ms;
+}
+
+/* Selected states settle through property interpolation, not replaying keyframes. */
+.premium-filter-pill[aria-pressed="true"],
+.premium-segment[aria-pressed="true"],
+.premium-nav-active {
+  transition-duration: var(--motion-family-selector);
+}
+
+.premium-filter-pill::before {
+  transition-duration: var(--motion-family-selector);
+  transition-timing-function: var(--motion-family-standard);
+}
+
+.premium-motion-chevron {
+  transition: transform var(--motion-family-control) var(--motion-family-standard);
+}
+
+.premium-motion-opacity {
+  transition: opacity var(--motion-family-control) ease-out;
+}
+
+.premium-motion-toggle {
+  transition:
+    transform var(--motion-family-control) var(--motion-family-standard),
+    background-color var(--motion-family-control) ease-out,
+    border-color var(--motion-family-control) ease-out;
+}
+
+/* Dense financial rows only animate hover decoration; result replacement belongs
+ * to MotionSwap rather than every table row moving independently.
+ */
+.premium-table-shell tbody tr,
+.premium-report-table tbody tr {
+  transition:
+    background-color 220ms ease-out,
+    box-shadow 220ms ease-out,
+    border-color 220ms ease-out;
+}
+
+/* Family 5 — Recharts remains the sole owner of chart interpolation. */
+.premium-chart-stage {
+  animation: none !important;
+}
+
+/* Retired browser snapshot names are explicitly neutralized. */
+.premium-tab-stage,
+.premium-journal-results,
+.premium-trading-performance-results,
+.premium-monthly-results,
+.premium-cash-action-content,
+.premium-cash-history-results,
+.premium-closed-results,
+.premium-positions-results,
+.premium-directory-results,
+.premium-modal-backdrop {
+  view-transition-name: none !important;
+}
+
+/* Main page lifecycle is Motion-owned; never replay historical CSS tab entrances. */
+.premium-tab-stage {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-nav,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action,
+  .premium-segment,
+  .premium-control,
+  .premium-accordion-trigger,
+  .premium-select-trigger,
+  .premium-field,
+  .premium-motion-chevron,
+  .premium-motion-opacity,
+  .premium-motion-toggle,
+  .premium-table-shell tbody tr,
+  .premium-report-table tbody tr {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+
+/* Phase 4 v3 — Motion for React lifecycle ownership */
+/*
+ * Motion for React now owns lifecycle animation for elements carrying
+ * data-motion-owned="react". Legacy CSS keyframes remain only as compatibility
+ * for components not migrated yet and must not compete with Motion inline state.
+ */
+[data-motion-owned="react"].premium-motion-swap,
+[data-motion-owned="react"].premium-modal-backdrop,
+[data-motion-owned="react"].premium-modal,
+[data-motion-owned="react"].premium-dropdown,
+[data-motion-owned="react"].premium-expand-presence {
+  animation: none !important;
+}
+
+/* No legacy child entrance may replay during a Motion-owned result transition. */
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-panel,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-report-glass,
+[data-motion-owned="react"].premium-motion-swap .premium-section-enter > .premium-card,
+[data-motion-owned="react"].premium-motion-swap .premium-content-swap,
+[data-motion-owned="react"].premium-motion-swap .premium-reveal {
+  animation: none !important;
+}
+
+/* Motion itself promotes active transforms as needed. Do not keep giant content
+ * layers permanently promoted on idle pages.
+ */
+[data-motion-owned="react"].premium-motion-swap {
+  will-change: auto;
+  transform-origin: center top;
+}
+
+/* React Motion owns the menu lifecycle. Menu rows remain stable as one surface. */
+[data-motion-owned="react"].premium-dropdown .premium-menu-item {
+  animation: none !important;
+}
+
+
+/* Phase 4 desktop performance pass — preserve choreography, reduce render cost */
+.premium-motion-swap-shell {
+  /* Isolate layout/style invalidation without clipping glass shadows. */
+  contain: layout style;
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Desktop result surfaces can contain wide tables and dense reports.
+   * Their visible presence animation remains unchanged, but Motion layout
+   * projection is disabled in React to avoid measuring/projecting the full
+   * subtree every frame.
+   */
+  .premium-motion-swap-shell[data-motion-desktop="optimized"] {
+    transform: none;
+  }
+
+  /*
+   * Do not pre-promote dozens of controls/rows. Chrome can promote the active
+   * Motion wrapper when needed; persistent child layers increase GPU memory
+   * and compositor traffic during old/new page overlap.
+   */
+  .premium-control,
+  .premium-nav,
+  .premium-segment,
+  .premium-accordion-trigger,
+  .premium-action,
+  .premium-filter-pill,
+  .premium-choice,
+  .premium-icon-action {
+    will-change: auto;
+  }
+
+}
+
+
+/* Desktop heavy-surface paint deferral */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /*
+   * Reports/position tabs can be several viewport-heights tall. Let Chrome
+   * skip raster/layout work for sections that are still off-screen while the
+   * incoming tab animation is running. "auto" keeps the remembered real size
+   * after first layout, avoiding scroll jumps on subsequent visits.
+   */
+  .premium-tab-stage .premium-table-shell,
+  .premium-tab-stage .premium-report-table {
+    content-visibility: auto;
+  }
+
+  .premium-tab-stage .premium-table-shell {
+    contain-intrinsic-size: auto 520px;
+    contain: layout style;
+  }
+
+  .premium-tab-stage .premium-report-table {
+    contain-intrinsic-size: auto 460px;
+    contain: layout style;
+  }
+
+}

@@ -8,7 +8,7 @@ const readRelative = (relative: string) =>
 describe('Phase 10.2 buttons, selectors and interactive controls', () => {
   it('gives compact dropdowns and dense toolbar search fields one desktop height contract', () => {
     const select = readRelative('./AnalyticsSelect.tsx');
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/controls.css');
 
     expect(select).toContain(
       "compact ? 'premium-compact-selector px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'",

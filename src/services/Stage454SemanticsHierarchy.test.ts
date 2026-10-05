@@ -62,11 +62,12 @@ describe('Stage 4.5.4 semantics + hierarchy ownership', () => {
     expect(semantics).toContain('.premium-semantic-card {');
   });
 
-  it('leaves generic motion and responsive hierarchy work for later compressed passes', () => {
+  it('advances generic motion while leaving responsive hierarchy for the final pass', () => {
     const legacy = read('src/index.css');
+    const motion = read('src/styles/motion.css');
 
-    expect(legacy).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
-    expect(legacy).toContain('Interaction-only semantic transitions remain here until Stage 4.5.5.');
+    expect(motion).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
+    expect(motion).toContain('Semantic transition choreography; financial presentation remains in semantics.css.');
     expect(legacy).toContain('@media (max-width: 767px) {\n  :root {\n    --hierarchy-space-card: 0.875rem;');
     expect(legacy).toContain('Pass 8.6 — narrow-phone hierarchy guard.');
   });

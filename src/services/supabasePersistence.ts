@@ -89,7 +89,7 @@ function mapClosedTrade(row: any): ClosedTrade {
 function mapTransaction(row: any): TradeTransaction {
   return {
     id: String(row.id),
-    type: row.transaction_type === 'SELL' ? 'SELL' : 'BUY',
+    type: row.transaction_type === 'BONUS_SHARES' ? 'BONUS_SHARES' : row.transaction_type === 'SELL' ? 'SELL' : 'BUY',
     ticker: String(row.ticker ?? '').toUpperCase(),
     companyName: row.company_name ?? '',
     sector: row.sector ?? 'Other',
@@ -173,7 +173,7 @@ function toDbTransaction(row: TradeTransaction, portfolioId: string) {
   return {
     id: String(row.id),
     portfolio_id: portfolioId,
-    transaction_type: row.type === 'SELL' ? 'SELL' : 'BUY',
+    transaction_type: row.type,
     ticker: String(row.ticker ?? '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''),
     company_name: row.companyName ?? '',
     sector: row.sector ?? 'Other',

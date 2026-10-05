@@ -198,3 +198,35 @@ The pass consolidated Google Sheets request and success-response schemas across 
 Notably, the Worker no longer forwards raw Google success payloads for value writes, appends, batch updates, value reads, or Drive file discovery while Express returns normalized application responses. Both runtimes now use the same request parsers and response builders from `src/api/contracts.ts`, and the browser client uses canonical `API_ROUTES` plus shared response types rather than hard-coded Sheets API paths.
 
 Next: **4.4.5 — scanner request/response contract closure**.
+
+
+## 4.4.5 — Scanner request/response contract closure — VALIDATION IN PROGRESS
+
+**Scope**
+
+- app-facing `POST /api/egx/scan` request schema;
+- TradingView scanner success-response normalization;
+- malformed provider-response handling;
+- ownership of the provider-specific scanner request payload;
+- portfolio-price and sector-momentum scanner consumers;
+- backward compatibility for older cached clients that still post the raw provider payload.
+
+**Explicitly out of scope**
+
+- scanner algorithm/ranking changes;
+- background scanner operationalization;
+- TradingView data-source replacement;
+- intraday persistence/Stage 3.5 remediation;
+- Stage 4.5 CSS ownership.
+
+**Acceptance**
+
+- the app API accepts a small purpose-based scanner request rather than depending on TradingView's provider payload;
+- the provider-specific `EGX_SCANNER_PAYLOAD` remains integration-owned and is used by Worker/Express plus the explicit direct-provider fallback only;
+- Worker and Express parse the same request contract and return the same normalized scanner success shape;
+- malformed/invalid provider success payloads are surfaced as retryable HTTP 502 failures instead of runtime-dependent behavior;
+- portfolio-price and sector-momentum consumers use `API_ROUTES.egxScan` and the shared scanner response parser;
+- older clients that omit `purpose` remain compatible;
+- TypeScript, full tests, and production build are green.
+
+Passing this gate closes the scanner-specific portion of Stage 4.4. The next Stage 4.4 sub-pass will be determined from the remaining shared-contract surface after regression review.

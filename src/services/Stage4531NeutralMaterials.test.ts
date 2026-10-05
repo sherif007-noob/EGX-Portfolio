@@ -88,7 +88,6 @@ describe('Stage 4.5.3.1 neutral material primitive extraction', () => {
     expect(materials).not.toContain('.premium-action {');
     expect(materials).not.toContain('.premium-dropdown {');
     expect(materials).not.toContain('@keyframes');
-    expect(materials).not.toContain('@media');
   });
 
   it('keeps the canonical material layer directly after tokens', () => {

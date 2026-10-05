@@ -21,6 +21,7 @@ type ShowToast = (message: string, type?: ToastKind, duration?: number) => void;
 interface PortfolioActions {
   addTrade: (trade: any) => Promise<any>;
   sellPosition: (sell: any) => Promise<any>;
+  addBonusShares: (action: any) => Promise<any>;
   editPosition: (position: Position) => Promise<boolean>;
   editTransaction: (transaction: TradeTransaction) => Promise<any>;
   deleteTransaction: (id: string) => Promise<any>;
@@ -63,6 +64,15 @@ export interface AddPositionInput {
   brokerageFee: number;
   targetPrice?: number;
   stopLoss?: number;
+  notes?: string;
+}
+
+export interface BonusSharesInput {
+  ticker: string;
+  bonusShares: number;
+  officialRatio: number;
+  effectiveDate: string;
+  reference?: string;
   notes?: string;
 }
 
@@ -265,6 +275,44 @@ export function usePortfolioWorkflows({
     return true;
   }, [appendPersistedTransactionToSheet, portfolio, positions, showToast]);
 
+  const handleAddBonusShares = useCallback(async (input: BonusSharesInput): Promise<boolean> => {
+    const result = await portfolio.addBonusShares(input);
+    if ('error' in result) {
+      if (result.persisted) {
+        showToast(
+          `Bonus shares for ${input.ticker.toUpperCase()} were saved to Supabase, but this screen could not refresh. Reload before entering another action.`,
+          'error',
+          7000,
+        );
+        return true;
+      }
+      showToast(
+        `Bonus shares were not saved: ${result.error.message} Nothing was changed.`,
+        'error',
+        7000,
+      );
+      return false;
+    }
+
+    const transaction = result.value as TradeTransaction | undefined;
+    if (!transaction) {
+      showToast(
+        'Bonus shares were persisted but the saved corporate-action result was unavailable. Reload before entering another action.',
+        'error',
+        7000,
+      );
+      return true;
+    }
+
+    appendPersistedTransactionToSheet(transaction);
+    showToast(
+      `Recorded +${transaction.shares.toLocaleString('en-EG', { maximumFractionDigits: 8 })} bonus shares for ${transaction.ticker}. Cash and total cost basis unchanged.`,
+      'success',
+      5500,
+    );
+    return true;
+  }, [appendPersistedTransactionToSheet, portfolio, showToast]);
+
   const handleSavePositionEdit = useCallback(async (updated: {
     id: string;
     targetPrice?: number;
@@ -330,6 +378,15 @@ export function usePortfolioWorkflows({
   ]);
 
   const handleEditTransaction = useCallback(async (updatedTx: TradeTransaction): Promise<boolean> => {
+    if (updatedTx.type === 'CORPORATE_ACTION') {
+      showToast(
+        'Corporate actions use protected accounting metadata. Delete and re-enter the action instead of editing it as a trade.',
+        'error',
+        6000,
+      );
+      return false;
+    }
+
     const validation = validateTradeInput({
       ticker: updatedTx.ticker,
       shares: updatedTx.shares,
@@ -516,6 +573,7 @@ export function usePortfolioWorkflows({
   return {
     handleAddPosition,
     handleConfirmSell,
+    handleAddBonusShares,
     handleSavePositionEdit,
     handleDeleteTransaction,
     handleEditTransaction,

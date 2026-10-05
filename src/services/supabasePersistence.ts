@@ -89,7 +89,11 @@ function mapClosedTrade(row: any): ClosedTrade {
 function mapTransaction(row: any): TradeTransaction {
   return {
     id: String(row.id),
-    type: row.transaction_type === 'SELL' ? 'SELL' : 'BUY',
+    type: row.transaction_type === 'CORPORATE_ACTION'
+      ? 'CORPORATE_ACTION'
+      : row.transaction_type === 'SELL'
+        ? 'SELL'
+        : 'BUY',
     ticker: String(row.ticker ?? '').toUpperCase(),
     companyName: row.company_name ?? '',
     sector: row.sector ?? 'Other',
@@ -101,6 +105,10 @@ function mapTransaction(row: any): TradeTransaction {
     totalAmount: Number(row.total_amount ?? 0),
     cashFlowType: row.cash_flow_type ?? undefined,
     cashFlowAmount: row.cash_flow_amount == null ? undefined : Number(row.cash_flow_amount),
+    corporateActionType: row.corporate_action_type ?? undefined,
+    corporateActionRatio: row.corporate_action_ratio == null ? undefined : Number(row.corporate_action_ratio),
+    corporateActionSourceShares: row.corporate_action_source_shares == null ? undefined : Number(row.corporate_action_source_shares),
+    corporateActionReference: row.corporate_action_reference ?? undefined,
     isDCA: Boolean(row.is_dca),
     notes: row.notes ?? '',
     targetPrice: row.target_price == null ? undefined : Number(row.target_price),
@@ -173,7 +181,7 @@ function toDbTransaction(row: TradeTransaction, portfolioId: string) {
   return {
     id: String(row.id),
     portfolio_id: portfolioId,
-    transaction_type: row.type === 'SELL' ? 'SELL' : 'BUY',
+    transaction_type: row.type,
     ticker: String(row.ticker ?? '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, ''),
     company_name: row.companyName ?? '',
     sector: row.sector ?? 'Other',
@@ -185,6 +193,10 @@ function toDbTransaction(row: TradeTransaction, portfolioId: string) {
     total_amount: Number(row.totalAmount ?? 0),
     cash_flow_type: row.cashFlowType ?? null,
     cash_flow_amount: row.cashFlowAmount ?? null,
+    corporate_action_type: row.corporateActionType ?? null,
+    corporate_action_ratio: row.corporateActionRatio ?? null,
+    corporate_action_source_shares: row.corporateActionSourceShares ?? null,
+    corporate_action_reference: row.corporateActionReference ?? null,
     is_dca: Boolean(row.isDCA),
     notes: row.notes ?? '',
     target_price: row.targetPrice ?? null,

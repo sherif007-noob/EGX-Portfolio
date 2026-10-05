@@ -239,9 +239,18 @@ export type CanonicalCashFlowType =
  */
 export type CashFlowType = CanonicalCashFlowType | 'CASH_ADJUSTMENT';
 
+export type CorporateActionType =
+  | 'BONUS_SHARES'
+  | 'STOCK_DIVIDEND'
+  | 'SPLIT'
+  | 'REVERSE_SPLIT'
+  | 'RIGHTS_SUBSCRIPTION'
+  | 'TENDER'
+  | 'MERGER_RESTRUCTURE';
+
 export interface TradeTransaction {
   id: string;
-  type: 'BUY' | 'SELL';
+  type: 'BUY' | 'SELL' | 'CORPORATE_ACTION';
   ticker: string;
   companyName: string;
   sector: Sector;
@@ -253,6 +262,13 @@ export interface TradeTransaction {
   totalAmount: number;
   cashFlowType?: CashFlowType;
   cashFlowAmount?: number;
+  corporateActionType?: CorporateActionType;
+  /** Official action ratio expressed as additional shares per one pre-action share. */
+  corporateActionRatio?: number;
+  /** Shares held immediately before the action; used as a stale-ledger guard. */
+  corporateActionSourceShares?: number;
+  /** EGX/company disclosure reference, broker note, or other traceable source. */
+  corporateActionReference?: string;
   isDCA?: boolean;
   notes?: string;
   targetPrice?: number;

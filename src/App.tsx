@@ -12,6 +12,7 @@ import { CashBalanceView } from './components/CashBalanceView';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { PythonSchemaSyncModal } from './components/PythonSchemaSyncModal';
 import { AddTradeModal } from './components/AddTradeModal';
+import { BonusSharesModal } from './components/BonusSharesModal';
 import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
@@ -53,6 +54,7 @@ export default function App() {
     capitalDeposits,
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
+    addBonusShares: executeAddBonusShares,
     editPosition: executeEditPosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
@@ -83,6 +85,8 @@ export default function App() {
     isSchemaModalOpen,
     setIsSchemaModalOpen,
     isAddTradeModalOpen,
+    isBonusSharesModalOpen,
+    setIsBonusSharesModalOpen,
     isQuickCashModalOpen,
     setIsQuickCashModalOpen,
     isBackupModalOpen,
@@ -184,6 +188,7 @@ export default function App() {
   const portfolioWorkflowActions = useMemo(() => ({
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
+    addBonusShares: executeAddBonusShares,
     editPosition: executeEditPosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
@@ -193,6 +198,7 @@ export default function App() {
   }), [
     executeAddTrade,
     executeSellPosition,
+    executeAddBonusShares,
     executeEditPosition,
     executeEditTransaction,
     executeDeleteTransaction,
@@ -204,6 +210,7 @@ export default function App() {
   const {
     handleAddPosition,
     handleConfirmSell,
+    handleAddBonusShares,
     handleSavePositionEdit,
     handleDeleteTransaction,
     handleEditTransaction,
@@ -239,6 +246,7 @@ export default function App() {
         setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
         onOpenAddTrade={() => openAddTrade()}
+        onOpenBonusShares={() => setIsBonusSharesModalOpen(true)}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
@@ -550,6 +558,13 @@ export default function App() {
         existingPositions={positions}
         transactions={transactions}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
+      />
+
+      <BonusSharesModal
+        isOpen={isBonusSharesModalOpen}
+        onClose={() => setIsBonusSharesModalOpen(false)}
+        positions={positions}
+        onSubmit={handleAddBonusShares}
       />
 
       <TradeScreenshotModal

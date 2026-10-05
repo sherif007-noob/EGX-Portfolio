@@ -1,5 +1,6 @@
 import type { TradeTransaction } from '../types';
 import { normalizeIntradayTicker } from './intradayPriceStore';
+import { transactionShareDelta } from './corporateActions';
 
 const EPSILON = 1e-8;
 
@@ -25,7 +26,7 @@ export function resolveIntradaySessionTickers(
     if (txDate < date) {
       const shares = Number(tx.shares);
       if (!Number.isFinite(shares) || shares <= 0) continue;
-      const signedShares = tx.type === 'BUY' ? shares : -shares;
+      const signedShares = transactionShareDelta(tx);
       openingShares.set(ticker, (openingShares.get(ticker) || 0) + signedShares);
       continue;
     }

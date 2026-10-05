@@ -19,6 +19,7 @@ import {
   BellRing,
   Settings2,
   ChevronDown,
+  Gift,
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
@@ -63,6 +64,7 @@ interface HeaderProps {
   setActiveTab: (tab: NavigationTab) => void;
   onOpenGoogleSheets: () => void;
   onOpenAddTrade: () => void;
+  onOpenBonusShares?: () => void;
   onOpenBackupModal?: () => void;
   onOpenScreenshotModal?: () => void;
   onOpenPriceAlerts?: () => void;
@@ -80,6 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onOpenGoogleSheets,
   onOpenAddTrade,
+  onOpenBonusShares,
   onOpenBackupModal,
   onOpenScreenshotModal,
   onOpenPriceAlerts,
@@ -527,7 +530,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div
               className="premium-header-create-cluster flex shrink-0 items-center gap-1 p-1 sm:gap-1.5"
               role="group"
-              aria-label="Create trade"
+              aria-label="Create portfolio activity"
             >
             {/* Scan Screenshot Button */}
             {onOpenScreenshotModal && (
@@ -541,6 +544,20 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-200" />
                 <span className="premium-header-action-label hidden lg:inline">Scan Receipt</span>
+              </button>
+            )}
+
+            {onOpenBonusShares && (
+              <button
+                id="header-bonus-shares-btn"
+                onClick={onOpenBonusShares}
+                aria-label="Record bonus or free shares"
+                data-action-priority="creation-secondary"
+                className="premium-action premium-header-create-secondary flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                title="Record a zero-cash bonus/free-share corporate action"
+              >
+                <Gift className="h-3.5 w-3.5 text-cyan-300" />
+                <span className="premium-header-action-label hidden xl:inline">Bonus Shares</span>
               </button>
             )}
 

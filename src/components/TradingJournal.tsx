@@ -33,6 +33,7 @@ import {
   Sparkles,
   Zap,
   RefreshCw,
+  Gift,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -204,6 +205,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     () => transactions.filter((t) => t.type === 'SELL').length,
     [transactions]
   );
+  const corporateActionCount = useMemo(
+    () => transactions.filter((t) => t.type === 'CORPORATE_ACTION').length,
+    [transactions]
+  );
 
   // Identify transactions corresponding to currently active open positions
   const openTickersSet = useMemo(
@@ -265,6 +270,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           tx.ticker.toLowerCase().includes(q) ||
           tx.companyName.toLowerCase().includes(q) ||
           (tx.notes && tx.notes.toLowerCase().includes(q)) ||
+          (tx.corporateActionReference && tx.corporateActionReference.toLowerCase().includes(q)) ||
           tx.sector.toLowerCase().includes(q);
 
         if (!matchesSearch) return false;
@@ -320,13 +326,20 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           return sortOrder === 'desc' ? idB - idA : idA - idB;
         }
 
-        // 2. Lot execution integrity: A BUY must always precede a SELL
+        // 2. Corporate actions are session-start events; same-day exchange
+        // executions come after them in chronological order.
+        if (a.type === 'CORPORATE_ACTION' && b.type !== 'CORPORATE_ACTION') {
+          return sortOrder === 'desc' ? 1 : -1;
+        }
+        if (b.type === 'CORPORATE_ACTION' && a.type !== 'CORPORATE_ACTION') {
+          return sortOrder === 'desc' ? -1 : 1;
+        }
+
+        // 3. Lot execution integrity: A BUY must always precede a SELL
         if (sortOrder === 'desc') {
-          // In reverse time, the SELL executed later in the day is at the top
           if (a.type === 'SELL' && b.type === 'BUY') return -1;
           if (a.type === 'BUY' && b.type === 'SELL') return 1;
         } else {
-          // In chronological order, the BUY entry must be listed first before the SELL exit
           if (a.type === 'BUY' && b.type === 'SELL') return -1;
           if (a.type === 'SELL' && b.type === 'BUY') return 1;
         }
@@ -353,6 +366,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const handleOpenEditModal = (tx: TradeTransaction) => {
+    if (tx.type === 'CORPORATE_ACTION') return;
     setEditingTx(tx);
     setEditType(tx.type);
     setEditTicker(tx.ticker);
@@ -516,7 +530,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </div>
           </div>
           <p className="premium-type-helper mt-1 max-w-2xl">
-            Chronological log of all individual executions (entries, DCA purchases, and exit sales). Each buy order is tracked as a separate transaction at its exact purchase price.
+            Chronological ledger of executions and corporate actions. Bonus/free shares are recorded separately from BUY/SELL activity and carry zero cash impact.
           </p>
         </div>
 
@@ -526,7 +540,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
               {transactions.length}{' '}
               <span className="premium-type-metadata font-normal">
-                ({buyCount}B / {sellCount}S)
+                ({buyCount}B / {sellCount}S{corporateActionCount > 0 ? ` / ${corporateActionCount}CA` : ''})
               </span>
             </span>
           </div>
@@ -756,6 +770,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
+          const isCorporateAction = tx.type === 'CORPORATE_ACTION';
+          const isBonusShares = isCorporateAction && tx.corporateActionType === 'BONUS_SHARES';
           const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
           const isWinningSell = !!sellMetrics?.isWin;
           const isLosingSell = !!sellMetrics?.isLoss;
@@ -765,15 +781,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
           const isOpenPosition = isBuy && openTickersSet.has(tx.ticker.toUpperCase());
           const grossAmount = tx.shares * tx.price;
-          const totalOutlayOrProceeds =
-            tx.totalAmount ||
-            (isBuy ? grossAmount + (tx.fees || 0) : Math.max(0, grossAmount - (tx.fees || 0)));
+          const totalOutlayOrProceeds = isCorporateAction
+            ? 0
+            : tx.totalAmount ||
+              (isBuy ? grossAmount + (tx.fees || 0) : Math.max(0, grossAmount - (tx.fees || 0)));
 
           return (
             <div
               key={tx.id}
               className={`premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 premium-flow-control rounded-2xl border transition relative overflow-hidden ${
-                isBuy
+                isCorporateAction
+                  ? 'premium-glow-breakeven'
+                  : isBuy
                   ? 'premium-glow-buy'
                   : isWinningSell
                   ? 'premium-glow-win'
@@ -816,6 +835,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                         >
                           <PlusCircle className="w-3 h-3" />
                           {tx.isDCA ? 'BUY (DCA LOT)' : 'BUY (INITIAL LOT)'}
+                        </span>
+                      ) : isCorporateAction ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 bg-cyan-500/15 text-cyan-200 border-cyan-500/35">
+                          <Gift className="w-3 h-3 text-cyan-300" />
+                          {isBonusShares ? 'BONUS SHARES' : 'CORPORATE ACTION'}
                         </span>
                       ) : (
                         <span
@@ -898,6 +922,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           </span>
                         </div>
                       </>
+                    ) : isCorporateAction ? (
+                      <>
+                        <div className="premium-type-metric premium-type-metric-dense font-mono text-cyan-300">
+                          +{tx.shares.toLocaleString('en-EG', { maximumFractionDigits: 8 })} shares
+                        </div>
+                        <div className="premium-type-metadata">0.00 EGP cash impact</div>
+                      </>
                     ) : (
                       <>
                         <div className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
@@ -910,13 +941,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   {/* Edit and Delete Actions */}
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleOpenEditModal(tx)}
-                      title="Edit Transaction Record"
-                      className="premium-icon-action premium-icon-edit p-2 rounded-xl"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
+                    {!isCorporateAction && (
+                      <button
+                        onClick={() => handleOpenEditModal(tx)}
+                        title="Edit Transaction Record"
+                        className="premium-icon-action premium-icon-edit p-2 rounded-xl"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(tx)}
                       title="Delete Transaction Record"
@@ -931,7 +964,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* Row 2: Detailed Transaction Attributes Grid */}
               <div className="premium-inset-glass premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs" data-hierarchy="h4">
                 <div>
-                  <span className="premium-type-metric-label block">Transaction Shares</span>
+                  <span className="premium-type-metric-label block">{isCorporateAction ? 'Shares Added' : 'Transaction Shares'}</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {tx.shares.toLocaleString()} shares
                   </span>
@@ -939,15 +972,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
+                    {isCorporateAction ? 'Official Ratio' : isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
-                    {formatEgp(tx.price)} EGP
+                    {isCorporateAction
+                      ? `${Number(tx.corporateActionRatio ?? 0).toLocaleString('en-EG', { maximumFractionDigits: 8 })} : 1`
+                      : `${formatEgp(tx.price)} EGP`}
                   </span>
                 </div>
 
                 <div>
-                  <span className="premium-type-metric-label block">Execution Date</span>
+                  <span className="premium-type-metric-label block">{isCorporateAction ? 'Effective / Ex-Date' : 'Execution Date'}</span>
                   <span
                     className="premium-type-metric-dense font-mono text-slate-200 flex items-center gap-1 cursor-help"
                     title={`Interpreted Date: ${formatDateVerbose(tx.date, true)}`}
@@ -970,7 +1005,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
+                    {isCorporateAction ? 'Cash Impact' : isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(totalOutlayOrProceeds)} EGP
@@ -999,6 +1034,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                     <span className="premium-chip flex items-center gap-1 text-rose-400 px-2.5 py-1 rounded-lg border-rose-500/30 font-medium">
                       <ShieldAlert className="w-3.5 h-3.5" />
                       Stop: <strong className="font-mono">{formatEgp(tx.stopLoss)}</strong>
+                    </span>
+                  )}
+
+                  {isCorporateAction && tx.corporateActionSourceShares !== undefined && (
+                    <span className="premium-chip flex items-center gap-1 text-cyan-300 px-2.5 py-1 rounded-lg border-cyan-500/30 font-medium">
+                      Source shares: <strong className="font-mono">{tx.corporateActionSourceShares.toLocaleString('en-EG', { maximumFractionDigits: 8 })}</strong>
+                    </span>
+                  )}
+
+                  {isCorporateAction && tx.corporateActionReference && (
+                    <span className="premium-chip flex items-center gap-1 text-slate-300 px-2.5 py-1 rounded-lg font-medium">
+                      Ref: <strong className="font-mono">{tx.corporateActionReference}</strong>
                     </span>
                   )}
                 </div>

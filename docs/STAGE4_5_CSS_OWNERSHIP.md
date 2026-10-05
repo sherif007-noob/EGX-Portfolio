@@ -63,6 +63,8 @@ Each import has its own named cascade layer. Existing accepted rules remain **un
   - **4.5.3.2 — composite + Phase 8 material restoration closure**
     - **4.5.3.2.1 — Reports + dense-data composite materials**
     - **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**
+      - **4.5.3.2.2.1 — base composite card + neutral overlay material bodies**
+      - **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**
 - **4.5.4 — semantic state/aura extraction**
 - **4.5.5 — hierarchy extraction**
 - **4.5.6 — shared controls extraction**
@@ -339,3 +341,44 @@ Rendered diffs stayed on the frozen profile: 14 states at **0.000%**, Positions 
 The first CI run failed only because the historical 4.5.3.1 guard still required Reports glass to remain in the legacy stylesheet. That guard was advanced to protect only the material families still deferred to 4.5.3.2.2; no runtime CSS had to be reverted.
 
 Next: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**.
+
+
+## 4.5.3.2.2.1 — Base composite card + neutral overlay material bodies — VALIDATION IN PROGRESS
+
+### Scope
+
+- move base `.premium-card` material while keeping its transition/hover motion in legacy;
+- move the neutral card highlight body while keeping opacity transition in legacy;
+- move `.premium-floating` material;
+- move modal backdrop/body/highlight material while keeping modal viewport/scroll geometry in legacy;
+- move dropdown body/highlight material;
+- move dropdown mobile material while keeping mobile geometry/clamping in legacy;
+- move the remaining shared subpanel/inset/form/modal-section composite material.
+
+### Explicitly deferred to 4.5.3.2.2.2
+
+- Phase 8 hierarchy-linked neutral card material;
+- material-tone card families;
+- structural panel/report restoration;
+- market-strip material;
+- Phase 8 inset/dense/report-summary restoration;
+- neutral card Phase 8 hover/resting restoration.
+
+### Explicitly out of this pass
+
+- semantic state/aura ownership;
+- control styling;
+- overlay geometry/z-index ownership;
+- motion ownership;
+- responsive geometry ownership.
+
+### Acceptance
+
+- neutral card/overlay material bodies live in `materials.css`;
+- card/dropdown/modal motion and geometry remain in their later owners;
+- semantic/control rules are not pulled forward;
+- all Phase 8 hierarchy-linked material remains in legacy for the final material gate;
+- TypeScript, full tests and production build are green;
+- rendered regression remains inside the frozen Phase 10 baseline.
+
+Next after acceptance: **4.5.3.2.2.2 — Phase 8 neutral hierarchy/material restoration closure**.

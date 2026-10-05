@@ -25,7 +25,7 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
     expect(motion).toContain('.premium-card:hover {\n  transform: translateY(-2px);');
   });
 
-  it('keeps floating, modal, and dropdown material bodies without their geometry contracts', () => {
+  it('keeps floating, modal, and dropdown material bodies separate from overlay geometry', () => {
     const materials = read('src/styles/materials.css');
     const overlays = read('src/styles/overlays.css');
 
@@ -40,9 +40,9 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
       expect(materials).toContain(selector);
     }
 
-    expect(legacy).toContain('.premium-modal-viewport {');
+    expect(overlays).toContain('.premium-modal-viewport {');
     expect(legacy).toContain(".premium-dropdown[data-premium-dropdown-portal='true']");
-    expect(legacy).toContain('max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));');
+    expect(overlays).toContain('max-width: calc(100vw - (var(--premium-mobile-gutter) * 2));');
   });
 
   it('keeps responsive dropdown material with materials but leaves responsive geometry in legacy', () => {

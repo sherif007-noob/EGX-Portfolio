@@ -36,7 +36,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Gift
 } from 'lucide-react';
 
 export interface JournalLedgerFocus {
@@ -353,6 +354,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const handleOpenEditModal = (tx: TradeTransaction) => {
+    if (tx.type === 'BONUS_SHARES') return;
     setEditingTx(tx);
     setEditType(tx.type);
     setEditTicker(tx.ticker);
@@ -516,7 +518,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             </div>
           </div>
           <p className="premium-type-helper mt-1 max-w-2xl">
-            Chronological log of all individual executions (entries, DCA purchases, and exit sales). Each buy order is tracked as a separate transaction at its exact purchase price.
+            Chronological source ledger for executions and corporate actions. BUY/SELL executions retain exact trade terms; bonus-share events change holdings without creating cash flow.
           </p>
         </div>
 
@@ -756,6 +758,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         {paginatedTransactions.map((tx) => {
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
+          const isBonus = tx.type === 'BONUS_SHARES';
           const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
           const isWinningSell = !!sellMetrics?.isWin;
           const isLosingSell = !!sellMetrics?.isLoss;
@@ -773,7 +776,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <div
               key={tx.id}
               className={`premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 premium-flow-control rounded-2xl border transition relative overflow-hidden ${
-                isBuy
+                isBonus
+                  ? 'premium-material-tone-purple'
+                  : isBuy
                   ? 'premium-glow-buy'
                   : isWinningSell
                   ? 'premium-glow-win'
@@ -816,6 +821,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                         >
                           <PlusCircle className="w-3 h-3" />
                           {tx.isDCA ? 'BUY (DCA LOT)' : 'BUY (INITIAL LOT)'}
+                        </span>
+                      ) : isBonus ? (
+                        <span className="flex items-center gap-1 rounded-full border border-purple-500/40 bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-200">
+                          <Gift className="h-3 w-3 text-purple-300" />
+                          BONUS SHARES
                         </span>
                       ) : (
                         <span
@@ -898,6 +908,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           </span>
                         </div>
                       </>
+                    ) : isBonus ? (
+                      <>
+                        <div className="premium-type-metric premium-type-metric-dense font-mono text-purple-300">
+                          +{tx.shares.toLocaleString(undefined, { maximumFractionDigits: 8 })} shares
+                        </div>
+                        <div className="premium-type-metadata">No cash impact</div>
+                      </>
                     ) : (
                       <>
                         <div className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
@@ -910,13 +927,15 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   {/* Edit and Delete Actions */}
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleOpenEditModal(tx)}
-                      title="Edit Transaction Record"
-                      className="premium-icon-action premium-icon-edit p-2 rounded-xl"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
+                    {!isBonus && (
+                      <button
+                        onClick={() => handleOpenEditModal(tx)}
+                        title="Edit Transaction Record"
+                        className="premium-icon-action premium-icon-edit p-2 rounded-xl"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(tx)}
                       title="Delete Transaction Record"
@@ -939,7 +958,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
+                    {isBonus ? 'Action Price' : isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(tx.price)} EGP
@@ -947,7 +966,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
 
                 <div>
-                  <span className="premium-type-metric-label block">Execution Date</span>
+                  <span className="premium-type-metric-label block">{isBonus ? 'Effective Date' : 'Execution Date'}</span>
                   <span
                     className="premium-type-metric-dense font-mono text-slate-200 flex items-center gap-1 cursor-help"
                     title={`Interpreted Date: ${formatDateVerbose(tx.date, true)}`}
@@ -970,7 +989,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
+                    {isBonus ? 'Net Cash Impact' : isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(totalOutlayOrProceeds)} EGP

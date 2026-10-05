@@ -1344,7 +1344,9 @@ Granular acceptance sequence:
 - **4.5.2 — token extraction — ACCEPTED / CI + RENDERED GREEN** via PR #62 at `main@9e18daa8`; Quality Checks #37282283539 passed TypeScript, **115 / 115 test files, 633 / 633 tests**, and production build. Phase 10 Visual Closure #37282467066 and Rendered Visual Regression #37282467090 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
 - **4.5.3 — neutral material extraction — ACTIVE**
   - **4.5.3.1 — shared neutral material/refraction primitives — ACCEPTED / CI + RENDERED GREEN** via PR #63 at `main@1948c41a`; Quality Checks #37285896557 passed TypeScript, **116 / 116 test files, 638 / 638 tests**, and production build. Phase 10 Visual Closure #37286043106 and Rendered Visual Regression #37286043136 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
-  - **4.5.3.2 — composite + Phase 8 material restoration closure — NEXT**
+  - **4.5.3.2 — composite + Phase 8 material restoration closure — ACTIVE**
+    - **4.5.3.2.1 — Reports + dense-data composite materials — ACCEPTED / CI + RENDERED GREEN** via PR #64 at `main@0e9330ed`; Quality Checks #37289566366 passed TypeScript, **117 / 117 test files, 643 / 643 tests**, and production build. Phase 10 Visual Closure #37289687438 and Rendered Visual Regression #37289687328 passed **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states.
+    - **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure — NEXT**
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

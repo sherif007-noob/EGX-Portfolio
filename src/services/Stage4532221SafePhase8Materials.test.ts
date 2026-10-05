@@ -48,7 +48,6 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
     for (const marker of [
       '.premium-card.premium-hierarchy-h1,\n.premium-card.premium-hierarchy-h2,',
       '.premium-card.premium-hierarchy-h1::before,',
-      '.premium-overview-hero.premium-hero-card {',
       '.premium-card.premium-hierarchy-h1.premium-material-tone-cyan,',
       '.premium-card.premium-hierarchy-h1:hover,',
       '@media (max-width: 767px) {\n  /* Keep aura visible on touch devices; only motion/hover is omitted. */',
@@ -56,6 +55,8 @@ describe('Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership', () => {
       expect(legacy).toContain(marker);
     }
 
+    expect(materials).toContain('.premium-overview-hero.premium-hero-card {');
+    expect(materials).toContain('--premium-refraction-shadow: var(--premium-refraction-tier-hero);');
     expect(materials).not.toContain('/* Phase 8 hierarchy card material */');
     expect(materials).not.toContain('/* explicit material-tone hierarchy cards */');
     expect(materials).not.toContain('/* Phase 8 neutral card hover material */');

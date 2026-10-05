@@ -76,7 +76,7 @@ describe('Phase 9.7 desktop / 2XL header refinement', () => {
 
   it('preserves navigation interaction and Phase 8 material contracts', () => {
     const header = readRelative('./Header.tsx');
-    const css = readRelative('../index.css');
+    const css = [readRelative('../index.css'), readRelative('../styles/semantics.css')].join('\n');
 
     expect(header).toContain('aria-current={active ? \'page\' : undefined}');
     expect(header).toContain("['ArrowLeft', 'ArrowRight', 'Home', 'End']");

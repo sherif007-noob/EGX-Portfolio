@@ -15,7 +15,7 @@ const cssBlock = (source: string, selector: string) => {
 
 describe('Phase 10.6 semantic-state consistency', () => {
   it('defines exactly the three canonical semantic surface roles', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/semantics.css');
 
     expect((css.match(/\.premium-semantic-hero\s*\{/g) || []).length).toBe(1);
     expect((css.match(/\.premium-semantic-card\s*\{/g) || []).length).toBe(1);
@@ -23,7 +23,7 @@ describe('Phase 10.6 semantic-state consistency', () => {
   });
 
   it('keeps semantic roles geometry-only and independent from material/state color', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/semantics.css');
 
     for (const selector of [
       '.premium-semantic-hero',
@@ -37,7 +37,7 @@ describe('Phase 10.6 semantic-state consistency', () => {
   });
 
   it('preserves accepted 8.3b hero/card aura strength while bounding repeated records', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/semantics.css');
     const hero = cssBlock(css, '.premium-semantic-hero');
     const card = cssBlock(css, '.premium-semantic-card');
     const record = cssBlock(css, '.premium-semantic-record');
@@ -190,7 +190,7 @@ describe('Phase 10.6 semantic-state consistency', () => {
   });
 
   it('keeps semantic edge additive instead of replacing the host aura', () => {
-    const css = readRelative('../index.css');
+    const css = readRelative('../styles/semantics.css');
     const start = css.indexOf('Additive semantic edge — aura/glass remain untouched');
     expect(start).toBeGreaterThanOrEqual(0);
 

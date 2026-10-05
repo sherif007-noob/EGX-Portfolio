@@ -97,7 +97,14 @@ describe('Stage 4.5.5 interaction-surface ownership', () => {
 
     expect(legacy).toContain('@media (max-width: 767px), (pointer: coarse) {');
     expect(legacy).toContain('.premium-header-action-rail .premium-action');
+    expect(legacy).toContain('.premium-fixed-mobile-span {');
+    expect(legacy).toContain('.premium-fixed-bottom-safe {');
+    expect(legacy).toContain('.premium-fixed-bottom-above-status {');
     expect(legacy).toContain('Phase 9.6 — mobile command architecture');
+
+    const overlays = read('src/styles/overlays.css');
+    expect(overlays).not.toContain('.premium-fixed-mobile-span {');
+    expect(overlays).not.toContain('.premium-fixed-bottom-safe {');
     expect(legacy).toContain('Phase 10.9 — cross-app responsive containment');
     expect(legacy).toContain('.premium-chart-skeleton');
   });

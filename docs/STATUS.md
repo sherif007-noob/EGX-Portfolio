@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `ff9b6abd` — Stage 4.4.6 symbol-search + shared API exit closure
-**Current full verification:** PR #60 Quality Checks #37249185251 — TypeScript + **113 / 113 test files, 623 / 623 tests** + production build
+**Current validated runtime head:** `a8cb0956` — Stage 4.5.1 CSS ownership/layer entry contract
+**Current full verification:** PR #61 Quality Checks #37274673986 — TypeScript + **114 / 114 test files, 628 / 628 tests** + production build; Rendered Visual Regression #37275238651 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -86,16 +86,17 @@ Stage 4 accepted:
 - **Stage 4.4.4 — Google Sheets payload/response contract consolidation — accepted / CI green**
 - **Stage 4.4.5 — scanner request/response contract closure — accepted / CI green**
 - **Stage 4.4.6 — symbol-search response contract + Stage 4.4 exit regression closure — accepted / CI green**
+- **Stage 4.5.1 — CSS ownership inventory + layer-entry contract — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.1**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.2**
 
 Next:
 
-1. **Stage 4.5.1 — CSS ownership inventory + layer-entry contract**
+1. **Stage 4.5.2 — token extraction**
 2. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**

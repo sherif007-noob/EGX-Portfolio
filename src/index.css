@@ -4730,14 +4730,20 @@ body {
  * Actual hierarchy cards retain one shared premium material recipe.
  * Hierarchy rank is NOT allowed to attenuate glass or semantic aura.
  */
+/*
+ * Stage 4.5.3.2.2.2.5 importance/interaction bridge.
+ *
+ * Keep background !important, border and box-shadow unlayered. Moving the
+ * important background into egx-materials reverses important-layer priority
+ * and incorrectly outranks the later semantic/tone important backgrounds.
+ * Border/shadow also stay here so the accepted later generic hover ordering
+ * remains unchanged.
+ */
 .premium-card.premium-hierarchy-h1,
 .premium-card.premium-hierarchy-h2,
 .premium-card.premium-hierarchy-h3,
 .premium-card.premium-hierarchy-h4,
 .premium-card.premium-hierarchy-h5 {
-  --phase8-material-rgb: var(--premium-material-rgb, 56 189 248);
-  --phase8-material-deep-rgb: var(--premium-material-deep-rgb, 37 99 235);
-  --premium-refraction-shadow: var(--premium-refraction-tier-primary);
   border-color: rgb(var(--phase8-material-rgb) / 0.30);
   background:
     radial-gradient(circle at 16% -18%, rgb(var(--phase8-material-rgb) / 0.145), transparent 40%),
@@ -4750,8 +4756,6 @@ body {
     0 0 40px rgb(var(--phase8-material-rgb) / 0.16),
     0 0 92px rgb(var(--phase8-material-deep-rgb) / 0.08),
     var(--premium-refraction-shadow, 0 0 0 transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(155%) brightness(1.025);
-  backdrop-filter: blur(24px) saturate(155%) brightness(1.025);
 }
 
 .premium-card.premium-hierarchy-h1::before,

@@ -188,15 +188,48 @@ async function startServer() {
       } catch (error) {
         return res.status(400).json(createApiErrorResponse(error));
       }
-      const searchUrl = `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
-      const tvResponse = await fetch(searchUrl, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", Accept: "application/json" } });
-      if (!tvResponse.ok) return res.status(tvResponse.status).json(
-        createApiErrorResponse(`TradingView Symbol Search status ${tvResponse.status}`),
-      );
-      res.json(await tvResponse.json());
+
+      const searchUrl =
+        `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(query)}&hl=1&exchange=EGX&lang=en`;
+      const tvResponse = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          Accept: "application/json",
+        },
+      });
+      if (!tvResponse.ok) {
+        return res.status(tvResponse.status).json(
+          createApiErrorResponse(
+            `TradingView Symbol Search status ${tvResponse.status}`,
+            { retryable: tvResponse.status >= 500 },
+          ),
+        );
+      }
+
+      let providerData: unknown;
+      try {
+        providerData = await tvResponse.json();
+      } catch (error) {
+        return res.status(502).json(
+          createApiErrorResponse("TradingView symbol search returned invalid JSON.", {
+            retryable: true,
+            details: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
+
+      try {
+        return res.json(parseTradingViewSymbolSearchResponse(providerData));
+      } catch (error) {
+        return res.status(502).json(
+          createApiErrorResponse(error, { retryable: true, details: providerData }),
+        );
+      }
     } catch (err: any) {
       console.error("Error proxying to TradingView Symbol Search:", err);
-      res.status(500).json(createApiErrorResponse(err?.message || "Failed to search TradingView symbols"));
+      return res.status(500).json(
+        createApiErrorResponse(err?.message || "Failed to search TradingView symbols"),
+      );
     }
   });
 

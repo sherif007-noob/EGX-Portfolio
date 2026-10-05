@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-05  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `5f5a1d1e` — Stage 4.5.3.2.2.1 base card + neutral overlay material bodies
-**Current full verification:** PR #65 Quality Checks #37332186760 — TypeScript + **118 / 118 test files, 649 / 649 tests** + production build; Phase 10 Visual Closure #37332396168 + Rendered Visual Regression #37332396116 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
+**Current validated runtime head:** `dcb0df5f` — Stage 4.5.3.2.2.2.1 safe non-card Phase 8 material ownership
+**Current full verification:** PR #68 Quality Checks #37336618605 — TypeScript + **119 / 119 test files, 654 / 654 tests** + production build; Phase 10 Visual Closure #37336829761 + Rendered Visual Regression #37336829803 — **12 / 12** responsive geometries at 0px overflow and **16 / 16** rendered states passed
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -91,19 +91,20 @@ Stage 4 accepted:
 - **Stage 4.5.3.1 — shared neutral material/refraction primitives — accepted / CI + rendered green**
 - **Stage 4.5.3.2.1 — Reports + dense-data composite materials — accepted / CI + rendered green**
 - **Stage 4.5.3.2.2.1 — base composite card + neutral overlay material bodies — accepted / CI + rendered green**
+- **Stage 4.5.3.2.2.2.R — failed wholesale extraction reverted / baseline restored — accepted / CI + rendered green**
+- **Stage 4.5.3.2.2.2.1 — safe non-card Phase 8 material ownership — accepted / CI + rendered green**
 
 `Stage 4.3` and `Stage 4.4` are now fully accepted and closed through granular gates.
 
 Stage 4 active:
 
-- **Stage 4.5.3.2.2.2 — FAILED RENDERED / recovery active**
-- **4.5.3.2.2.2.R — visual revert / accepted-baseline restoration — accepted / CI + rendered green**
+- **Stage 4.5 CSS ownership consolidation — next sub-pass: 4.5.3.2.2.2.2**
 
 PR #66 at `main@2bd55d68` passed source CI but is **not an accepted runtime**. Rendered regression exceeded the frozen 1% threshold on Positions phone (**1.035%**), Journal desktop (**1.947%**), and Semantic Summary desktop (**3.137%**). The current validated runtime therefore remains `5f5a1d1e` from Stage 4.5.3.2.2.1.
 
 Next:
 
-1. **4.5.3.2.2.2.1 — safe non-conflicting Phase 8 material ownership**
+1. **4.5.3.2.2.2.2 — Overview hero neutral refraction role**
 3. Continue Stage 4.5 in small visual-preserving sub-passes
 3. Stage 5 Reports workspace redesign
 4. **2026-10-05: retry the deferred Stage 3.5 live-session soak**

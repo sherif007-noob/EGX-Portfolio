@@ -12,7 +12,6 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
   it('keeps card material in materials while card motion advances to motion.css', () => {
     const materials = read('src/styles/materials.css');
     const legacy = read('src/index.css');
-    const overlays = read('src/styles/overlays.css');
     const motion = read('src/styles/motion.css');
 
     expect(materials).toContain('.premium-card {\n  overflow: hidden;');
@@ -28,7 +27,7 @@ describe('Stage 4.5.3.2.2.1 card + neutral overlay material ownership', () => {
 
   it('keeps floating, modal, and dropdown material bodies without their geometry contracts', () => {
     const materials = read('src/styles/materials.css');
-    const legacy = read('src/index.css');
+    const overlays = read('src/styles/overlays.css');
 
     for (const selector of [
       '.premium-floating {',

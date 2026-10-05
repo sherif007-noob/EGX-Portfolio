@@ -61,6 +61,8 @@ Each import has its own named cascade layer. Existing accepted rules remain **un
 - **4.5.3 — neutral material extraction**
   - **4.5.3.1 — shared neutral material/refraction primitives**
   - **4.5.3.2 — composite + Phase 8 material restoration closure**
+    - **4.5.3.2.1 — Reports + dense-data composite materials**
+    - **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**
 - **4.5.4 — semantic state/aura extraction**
 - **4.5.5 — hierarchy extraction**
 - **4.5.6 — shared controls extraction**
@@ -276,3 +278,40 @@ Rendered diffs stayed exactly on the frozen profile: 14 states at **0.000%**, Po
 This sub-pass moved only the shared neutral surface/refraction primitives. Composite Reports/table/dropdown/modal material, the mixed card material block, and Phase 8 hierarchy-linked restoration remain in the legacy stylesheet for the next isolated gate.
 
 Next: **4.5.3.2 — composite + Phase 8 material restoration closure**.
+
+
+## 4.5.3.2.1 — Reports + dense-data composite materials — VALIDATION IN PROGRESS
+
+The remaining 4.5.3.2 scope is split again to keep the cascade review local. This sub-pass owns only Reports/table material; Phase 8 hierarchy/card/overlay restoration remains separate.
+
+### Scope
+
+- move `.premium-table-shell` base material, table-header material and row-hover material;
+- move Reports glass, soft-glass and table material recipes;
+- move the Reports mobile-only material overrides with their owning material family;
+- move the later stronger Reports glass override;
+- split `.premium-report-glass-soft` out of the later shared soft-surface override while leaving subpanel/inset/form/modal-section material in legacy.
+
+### Explicitly deferred to 4.5.3.2.2
+
+- base/mixed `.premium-card` material and highlight;
+- dropdown/floating/modal material bodies;
+- Phase 8 hierarchy-linked neutral material restoration;
+- material-tone card/market-strip families;
+- inset/dense/report-summary Phase 8 restoration;
+- neutral card material hover/resting restoration.
+
+### Explicitly out of this material stage
+
+- financial semantic aura/state ownership;
+- hierarchy, controls, overlay geometry, motion and responsive ownership.
+
+### Acceptance
+
+- Reports and table-shell material lives in `materials.css`;
+- table/report motion declarations remain in the legacy stylesheet for 4.5.8;
+- no semantic/control/overlay body is pulled into the material owner early;
+- TypeScript, full tests and production build are green;
+- rendered regression remains inside the frozen Phase 10 baseline.
+
+Next after acceptance: **4.5.3.2.2 — Phase 8 neutral hierarchy/card/overlay restoration closure**.

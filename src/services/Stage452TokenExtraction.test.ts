@@ -77,12 +77,17 @@ describe('Stage 4.5.2 canonical token extraction', () => {
     ]);
   });
 
-  it('keeps ownership layers after materials visually empty until their own pass', () => {
-    expect(stripComments(read('src/styles/materials.css'))).not.toBe('');
-
+  it('keeps accepted owners populated while later compressed passes remain empty', () => {
     for (const path of [
+      'src/styles/materials.css',
       'src/styles/semantics.css',
       'src/styles/hierarchy.css',
+      'src/styles/cascade-bridge.css',
+    ]) {
+      expect(stripComments(read(path))).not.toBe('');
+    }
+
+    for (const path of [
       'src/styles/controls.css',
       'src/styles/overlays.css',
       'src/styles/motion.css',

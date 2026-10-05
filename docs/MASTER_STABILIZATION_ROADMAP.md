@@ -1356,9 +1356,11 @@ Granular acceptance sequence:
         - **4.5.3.2.2.2.2 — Overview hero neutral refraction role — ACCEPTED / CI + RENDERED GREEN** at `main@ed5642a5`; Quality Checks #37337833081 passed **120 / 120 test files, 657 / 657 tests** and build. Phase 10 Visual Closure #37337833145 and Rendered Visual Regression #37337833095 passed Worker dry-run, **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
         - **4.5.3.2.2.2.3 — neutral hero-card material body — ACCEPTED / CI + RENDERED GREEN** via PR #70 at `main@54530841`; PR Quality Checks #37339018295 and main Quality Checks #37339172950 passed **121 / 121 test files, 660 / 660 tests** and build. Phase 10 Visual Closure #37339173120 and Rendered Visual Regression #37339172988 passed Worker dry-run, **12 / 12** geometries at 0px overflow and **16 / 16** rendered states.
         - **4.5.3.2.2.2.4 — hierarchy-card base material body — FAILED RENDERED / REJECTED** at `main@928fb8f6`; source CI passed **122 / 122 test files, 663 / 663 tests**, but Rendered Visual Regression #37340612935 reproduced Positions phone **1.035%**, Journal desktop **1.947%**, and Semantic Summary desktop **3.137%**.
-        - **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — ACTIVE**; no compensating CSS or `!important` patches.
-        - Do not add compensating visual values or `!important` patches; each remaining material slice must prove rendered parity before acceptance.
-        - The hierarchy-card base body must also remain unlayered after recovery. Do not retry it until the competing unlayered cascade boundary has been isolated in a different, rendered-safe sequence.
+        - **4.5.3.2.2.2.4.R — restore accepted 4.5.3.2.2.2.3 runtime baseline — MERGED / POST-MERGE RENDERED VALIDATION PENDING** via PR #72 at `main@e5f12297`; no compensating CSS or `!important` patches.
+        - Root cause is now explicit: moving the hierarchy `background: ... !important` into the earlier `egx-materials` layer reversed important-layer precedence and allowed the neutral background to outrank still-unlayered semantic/tone important backgrounds.
+        - **4.5.3.2.2.2.5 — cascade-safe hierarchy shell — SOURCE CANDIDATE**; move only hierarchy custom properties + desktop backdrop filtering. Keep important background, border and box-shadow unlayered as the importance/interaction bridge.
+        - Do not add compensating visual values or new `!important` patches; each remaining material slice must prove rendered parity before acceptance.
+        - Do not move the hierarchy important background into `egx-materials` again unless the semantic/important layer strategy is explicitly redesigned.
 
 The 4.5.1 gate moved no existing declarations. It established the named ownership layers and permanent import order while leaving all accepted Phase 3–10 CSS in the legacy body.
 

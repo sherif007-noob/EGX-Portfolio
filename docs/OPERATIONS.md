@@ -331,11 +331,26 @@ Physical phone/desktop display parity remains a manual observation because authe
 
 ### Current Stage 3.5 status
 
-The 2026-10-04 acceptance soak **failed** because the target session did not receive the required persisted 1m/derived-5m coverage and daily history had not advanced sufficiently. The read-only scanner path remained healthy, but that does not satisfy the ingestion contract.
+The 2026-10-04 acceptance soak failed and the scheduled 2026-10-05 retry also failed to produce acceptance evidence.
 
-Stage 3.5 is therefore deferred technical debt, not accepted production evidence.
+October 5 retry workflow evidence:
 
-Repeat the soak only after scheduled raw-1m ingestion reliability is repaired. Do not retire legacy 15m fallback solely because source-level migration tests are green.
+- #37331276519 — failed;
+- #37338555588 — failed;
+- #37354056348 — failed;
+- #37364644401 — failed;
+- #37370688812 — final scheduled trigger cancelled.
+
+The completed observations ran late enough to evaluate as strict-final checks. The latest completed run still reported:
+
+- missing reconstructible derived 5m buckets across the target session;
+- stale raw 1m tails for held ARCC, ETEL, MPRC and ORHD;
+- no held symbols missing from the Scanner snapshot;
+- reference NAV and stored NAV both at 66,116.23 EGP.
+
+That combination is important: matching NAV/Scanner health does **not** prove the stored intraday ingestion contract is healthy.
+
+Stage 3.5 is therefore deferred technical debt, not accepted production evidence. The current workflow contains a one-shot October 5 schedule that is now exhausted. Repeat the soak only after scheduled raw-1m ingestion reliability is repaired, using an explicitly rescheduled or manually dispatched observation window. Do not retire legacy 15m fallback solely because source-level migration tests are green.
 
 ## Data Health Center
 

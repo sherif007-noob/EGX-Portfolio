@@ -324,6 +324,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 topThreeConcentration={holdingConcentration.topThreeConcentration}
                 cashSharePercent={cashSharePercent}
                 currentMonth={currentMonthDiagnostic}
+                onOpenReport={setReportMode}
               />
             </div>
           )}

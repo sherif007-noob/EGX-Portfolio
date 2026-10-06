@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
+  ArrowRight,
   CalendarDays,
   Crosshair,
   Layers3,
+  Minus,
+  Plus,
   ShieldAlert,
   WalletCards,
 } from 'lucide-react';
+import type { ReportsMode } from '../../services/reportsWorkspace';
 
 interface AllocationDiagnostic {
   name: string;
@@ -21,6 +25,15 @@ interface CurrentMonthDiagnostic {
   closedTrades: number;
   winRate: number | null;
 }
+
+type ReportsPreviewId =
+  | 'portfolio-state'
+  | 'trading-quality'
+  | 'risk-costs'
+  | 'concentration'
+  | 'current-month';
+
+type FullReportMode = Exclude<ReportsMode, 'overview'>;
 
 interface ReportsOverviewProps {
   portfolioValue: number;
@@ -41,6 +54,7 @@ interface ReportsOverviewProps {
   topThreeConcentration: number;
   cashSharePercent: number;
   currentMonth: CurrentMonthDiagnostic;
+  onOpenReport: (mode: FullReportMode) => void;
 }
 
 const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
@@ -64,6 +78,47 @@ const pnlText = (value: number) =>
 
 const signedEgp = (value: number) => `${value > 0 ? '+' : ''}${formatEgp(value)}`;
 
+interface PreviewActionsProps {
+  previewId: ReportsPreviewId;
+  expanded: boolean;
+  destination: FullReportMode;
+  onToggle: (previewId: ReportsPreviewId) => void;
+  onOpenReport: (mode: FullReportMode) => void;
+}
+
+const PreviewActions: React.FC<PreviewActionsProps> = ({
+  previewId,
+  expanded,
+  destination,
+  onToggle,
+  onOpenReport,
+}) => (
+  <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+    <button
+      type="button"
+      className="premium-action premium-action-secondary flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
+      aria-expanded={expanded}
+      aria-controls={`reports-preview-${previewId}`}
+      onClick={() => onToggle(previewId)}
+    >
+      {expanded ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+      {expanded ? 'Show less' : 'Inspect'}
+    </button>
+
+    {expanded && (
+      <button
+        type="button"
+        className="premium-action premium-action-primary flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
+        aria-label={`Open full ${destination} report`}
+        onClick={() => onOpenReport(destination)}
+      >
+        Open full report
+        <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+    )}
+  </div>
+);
+
 const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
   portfolioValue,
   dayChangeEgp,
@@ -83,9 +138,21 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
   topThreeConcentration,
   cashSharePercent,
   currentMonth,
+  onOpenReport,
 }) => {
+  const [expandedPreview, setExpandedPreview] = useState<ReportsPreviewId | null>(null);
   const totalPnl = realizedPnlEgp + unrealizedPnlEgp;
   const expectancyState = expectancyEgp ?? 0;
+
+  const togglePreview = (previewId: ReportsPreviewId) => {
+    setExpandedPreview((current) => (current === previewId ? null : previewId));
+  };
+
+  const portfolioExpanded = expandedPreview === 'portfolio-state';
+  const tradingExpanded = expandedPreview === 'trading-quality';
+  const riskExpanded = expandedPreview === 'risk-costs';
+  const concentrationExpanded = expandedPreview === 'concentration';
+  const monthExpanded = expandedPreview === 'current-month';
 
   return (
     <div className="premium-flow-major" data-reports-diagnostic-overview="true">
@@ -104,7 +171,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
               Current portfolio snapshot
             </h3>
             <p className="premium-type-helper mt-1">
-              NAV, current P&amp;L composition and cash context without opening the full Analytics workspace.
+              NAV and today&apos;s movement first; expand only when the P&amp;L composition deserves inspection.
             </p>
           </div>
 
@@ -124,27 +191,46 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-          <div className="premium-subpanel rounded-xl p-3">
-            <div className="premium-type-metadata">Realized P&amp;L</div>
-            <div className={`mt-1 font-mono font-bold ${pnlText(realizedPnlEgp)}`}>
-              {signedEgp(realizedPnlEgp)} EGP
+        {portfolioExpanded && (
+          <div
+            id="reports-preview-portfolio-state"
+            data-reports-preview-expanded="portfolio-state"
+            className="premium-inset-glass mt-4 rounded-xl p-3.5"
+          >
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <div className="premium-subpanel rounded-xl p-3">
+                <div className="premium-type-metadata">Realized P&amp;L</div>
+                <div className={`mt-1 font-mono font-bold ${pnlText(realizedPnlEgp)}`}>
+                  {signedEgp(realizedPnlEgp)} EGP
+                </div>
+              </div>
+              <div className="premium-subpanel rounded-xl p-3">
+                <div className="premium-type-metadata">Unrealized P&amp;L</div>
+                <div className={`mt-1 font-mono font-bold ${pnlText(unrealizedPnlEgp)}`}>
+                  {signedEgp(unrealizedPnlEgp)} EGP
+                </div>
+              </div>
+              <div className="premium-subpanel rounded-xl p-3">
+                <div className="premium-type-metadata flex items-center gap-1.5">
+                  <WalletCards className="h-3.5 w-3.5" />
+                  Cash Available
+                </div>
+                <div className="mt-1 font-mono font-bold text-blue-300">{formatEgp(cashBalance)} EGP</div>
+              </div>
+            </div>
+            <div className={`premium-type-helper mt-3 ${pnlText(totalPnl)}`}>
+              Combined realized + unrealized P&amp;L: {signedEgp(totalPnl)} EGP.
             </div>
           </div>
-          <div className="premium-subpanel rounded-xl p-3">
-            <div className="premium-type-metadata">Unrealized P&amp;L</div>
-            <div className={`mt-1 font-mono font-bold ${pnlText(unrealizedPnlEgp)}`}>
-              {signedEgp(unrealizedPnlEgp)} EGP
-            </div>
-          </div>
-          <div className="premium-subpanel rounded-xl p-3">
-            <div className="premium-type-metadata flex items-center gap-1.5">
-              <WalletCards className="h-3.5 w-3.5" />
-              Cash Available
-            </div>
-            <div className="mt-1 font-mono font-bold text-blue-300">{formatEgp(cashBalance)} EGP</div>
-          </div>
-        </div>
+        )}
+
+        <PreviewActions
+          previewId="portfolio-state"
+          expanded={portfolioExpanded}
+          destination="analytics"
+          onToggle={togglePreview}
+          onOpenReport={onOpenReport}
+        />
       </section>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -166,22 +252,42 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             <span className="premium-chip rounded-lg px-2 py-1 text-[11px] text-slate-300">{totalTrades} closed</span>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div>
-              <div className="premium-type-metadata">Win Rate</div>
-              <div className="mt-1 font-mono text-lg font-bold text-emerald-300">{winRate.toFixed(1)}%</div>
-            </div>
-            <div>
-              <div className="premium-type-metadata">Profit Factor</div>
-              <div className="mt-1 font-mono text-lg font-bold text-amber-300">{formatRatio(profitFactor)}x</div>
-            </div>
-            <div>
-              <div className="premium-type-metadata">Expectancy</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${pnlText(expectancyState)}`}>
-                {expectancyEgp == null ? '—' : `${signedEgp(expectancyEgp)} EGP`}
+          <div className="mt-4">
+            <div className="premium-type-metadata">Win Rate</div>
+            <div className="mt-1 font-mono text-2xl font-bold text-emerald-300">{winRate.toFixed(1)}%</div>
+          </div>
+
+          {tradingExpanded && (
+            <div
+              id="reports-preview-trading-quality"
+              data-reports-preview-expanded="trading-quality"
+              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="premium-type-metadata">Profit Factor</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-amber-300">{formatRatio(profitFactor)}x</div>
+                </div>
+                <div>
+                  <div className="premium-type-metadata">Expectancy</div>
+                  <div className={`mt-1 font-mono text-lg font-bold ${pnlText(expectancyState)}`}>
+                    {expectancyEgp == null ? '—' : `${signedEgp(expectancyEgp)} EGP`}
+                  </div>
+                </div>
+              </div>
+              <div className="premium-type-helper mt-3">
+                Closed-trade quality uses the existing Trading statistics authority.
               </div>
             </div>
-          </div>
+          )}
+
+          <PreviewActions
+            previewId="trading-quality"
+            expanded={tradingExpanded}
+            destination="trading"
+            onToggle={togglePreview}
+            onOpenReport={onOpenReport}
+          />
         </section>
 
         <section
@@ -197,26 +303,45 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             Drawdown and execution friction
           </h3>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div>
-              <div className="premium-type-metadata">Max Drawdown</div>
-              <div className="mt-1 font-mono text-lg font-bold text-rose-300">
-                {maxDrawdownPercent == null ? '—' : formatPercent(Math.abs(maxDrawdownPercent))}
-              </div>
-              {maxDrawdownEgp != null && (
-                <div className="premium-type-helper mt-0.5">{formatEgp(Math.abs(maxDrawdownEgp))} EGP peak-to-trough</div>
-              )}
+          <div className="mt-4">
+            <div className="premium-type-metadata">Max Drawdown</div>
+            <div className="mt-1 font-mono text-2xl font-bold text-rose-300">
+              {maxDrawdownPercent == null ? '—' : formatPercent(Math.abs(maxDrawdownPercent))}
             </div>
-            <div>
-              <div className="premium-type-metadata">Brokerage Fees</div>
-              <div className="mt-1 font-mono text-lg font-bold text-amber-300">{formatEgp(totalFees)} EGP</div>
-              <div className="premium-type-helper mt-0.5">Open + closed fees</div>
-            </div>
+            {maxDrawdownEgp != null && (
+              <div className="premium-type-helper mt-0.5">{formatEgp(Math.abs(maxDrawdownEgp))} EGP peak-to-trough</div>
+            )}
           </div>
 
-          <div className="premium-type-helper mt-3">
-            Realized {signedEgp(realizedPnlEgp)} EGP · Unrealized {signedEgp(unrealizedPnlEgp)} EGP
-          </div>
+          {riskExpanded && (
+            <div
+              id="reports-preview-risk-costs"
+              data-reports-preview-expanded="risk-costs"
+              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <div className="premium-type-metadata">Brokerage Fees</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-amber-300">{formatEgp(totalFees)} EGP</div>
+                  <div className="premium-type-helper mt-0.5">Open + closed fees</div>
+                </div>
+                <div>
+                  <div className="premium-type-metadata">P&amp;L composition</div>
+                  <div className="premium-type-helper mt-1">
+                    Realized {signedEgp(realizedPnlEgp)} EGP · Unrealized {signedEgp(unrealizedPnlEgp)} EGP
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <PreviewActions
+            previewId="risk-costs"
+            expanded={riskExpanded}
+            destination="analytics"
+            onToggle={togglePreview}
+            onOpenReport={onOpenReport}
+          />
         </section>
 
         <section
@@ -232,35 +357,48 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             Where is capital concentrated?
           </h3>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div>
-              <div className="premium-type-metadata">Largest Holding</div>
-              <div className="mt-1 font-mono text-lg font-bold text-cyan-300">
-                {largestHolding ? largestHolding.name : '—'}
-              </div>
-              <div className="premium-type-helper mt-0.5">
-                {largestHolding ? formatPercent(largestHolding.percentage) : 'No holdings'}
-              </div>
+          <div className="mt-4">
+            <div className="premium-type-metadata">Largest Holding</div>
+            <div className="mt-1 font-mono text-2xl font-bold text-cyan-300">
+              {largestHolding ? largestHolding.name : '—'}
             </div>
-            <div>
-              <div className="premium-type-metadata">Largest Sector</div>
-              <div className="mt-1 truncate font-mono text-lg font-bold text-blue-300">
-                {largestSector ? largestSector.name : '—'}
-              </div>
-              <div className="premium-type-helper mt-0.5">
-                {largestSector ? formatPercent(largestSector.percentage) : 'No sectors'}
-              </div>
+            <div className="premium-type-helper mt-0.5">
+              {largestHolding ? formatPercent(largestHolding.percentage) : 'No holdings'}
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="premium-chip rounded-lg px-2 py-1 text-xs text-slate-300">
-              Top 3: {formatPercent(topThreeConcentration)}
-            </span>
-            <span className="premium-chip rounded-lg px-2 py-1 text-xs text-slate-300">
-              Cash: {formatPercent(cashSharePercent)}
-            </span>
-          </div>
+          {concentrationExpanded && (
+            <div
+              id="reports-preview-concentration"
+              data-reports-preview-expanded="concentration"
+              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="premium-type-metadata">Largest Sector</div>
+                  <div className="mt-1 truncate font-mono text-lg font-bold text-blue-300">
+                    {largestSector ? largestSector.name : '—'}
+                  </div>
+                  <div className="premium-type-helper mt-0.5">
+                    {largestSector ? formatPercent(largestSector.percentage) : 'No sectors'}
+                  </div>
+                </div>
+                <div>
+                  <div className="premium-type-metadata">Portfolio mix</div>
+                  <div className="premium-type-helper mt-1">Top 3: {formatPercent(topThreeConcentration)}</div>
+                  <div className="premium-type-helper mt-0.5">Cash: {formatPercent(cashSharePercent)}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <PreviewActions
+            previewId="concentration"
+            expanded={concentrationExpanded}
+            destination="allocation"
+            onToggle={togglePreview}
+            onOpenReport={onOpenReport}
+          />
         </section>
 
         <section
@@ -288,26 +426,42 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
           <div className="premium-type-helper mt-1">Visible monthly audit P&amp;L: liquidated + holdings.</div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <div>
-              <div className="premium-type-metadata">Liquidated</div>
-              <div className={`mt-1 font-mono text-sm font-bold ${pnlText(currentMonth.realizedPnlEgp)}`}>
-                {signedEgp(currentMonth.realizedPnlEgp)}
+          {monthExpanded && (
+            <div
+              id="reports-preview-current-month"
+              data-reports-preview-expanded="current-month"
+              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="premium-type-metadata">Liquidated</div>
+                  <div className={`mt-1 font-mono text-sm font-bold ${pnlText(currentMonth.realizedPnlEgp)}`}>
+                    {signedEgp(currentMonth.realizedPnlEgp)}
+                  </div>
+                </div>
+                <div>
+                  <div className="premium-type-metadata">Holdings</div>
+                  <div className={`mt-1 font-mono text-sm font-bold ${pnlText(currentMonth.holdingPnlEgp)}`}>
+                    {signedEgp(currentMonth.holdingPnlEgp)}
+                  </div>
+                </div>
+                <div>
+                  <div className="premium-type-metadata">Win Rate</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-emerald-300">
+                    {currentMonth.winRate == null ? '—' : formatPercent(currentMonth.winRate)}
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <div className="premium-type-metadata">Holdings</div>
-              <div className={`mt-1 font-mono text-sm font-bold ${pnlText(currentMonth.holdingPnlEgp)}`}>
-                {signedEgp(currentMonth.holdingPnlEgp)}
-              </div>
-            </div>
-            <div>
-              <div className="premium-type-metadata">Win Rate</div>
-              <div className="mt-1 font-mono text-sm font-bold text-emerald-300">
-                {currentMonth.winRate == null ? '—' : formatPercent(currentMonth.winRate)}
-              </div>
-            </div>
-          </div>
+          )}
+
+          <PreviewActions
+            previewId="current-month"
+            expanded={monthExpanded}
+            destination="monthly"
+            onToggle={togglePreview}
+            onOpenReport={onOpenReport}
+          />
         </section>
       </div>
     </div>

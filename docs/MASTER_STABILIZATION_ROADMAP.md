@@ -1410,7 +1410,7 @@ Gate: switching/restoration works with zero calculation change.
 
 ---
 
-## R2 — Split current long Reports page into workspaces — VALIDATION CANDIDATE
+## R2 — Split current long Reports page into workspaces — ACCEPTED / CI + RENDERED GREEN
 
 Move trusted existing components into their intended mode.
 
@@ -1422,7 +1422,7 @@ Gate: full functional parity with the existing long page.
 
 ---
 
-## R3 — Diagnostic Reports Overview
+## R3 — Diagnostic Reports Overview — ACCEPTED / CI + RENDERED GREEN
 
 Build a concise diagnostic layer around:
 
@@ -1465,7 +1465,7 @@ It must not become a miniature full Reports page.
 
 ---
 
-## R4 — Progressive disclosure
+## R4 — Progressive disclosure — ACTIVE / VALIDATION CANDIDATE
 
 Depth model:
 

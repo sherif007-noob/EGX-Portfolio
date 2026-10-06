@@ -1,41 +1,45 @@
 # Documentation Archive Policy
 
-The archive exists to separate **current truth** from **implementation history** without deleting useful reasoning.
+The archive separates **current truth** from **implementation history** without deleting useful reasoning.
 
-## Why historical files have not all been moved yet
+## Current rule
 
-Several Phase 8–10 regression tests read plan/contract files using exact repository paths.
-
-Moving those documents merely for tidiness would break regression coverage or require unrelated code changes while Phase 10 is still active.
+Phase 10, Stage 4 and Stage 5 are closed, but several historical visual/architecture tests still read plan files using exact repository paths.
 
 Therefore:
 
 > classification happens first; physical movement happens only when path ownership is safely removed or migrated.
 
-Use `../README.md` to see whether a root-level document is canonical, active, audit evidence, or historical.
+A document may remain physically under `docs/` while being classified as historical in [../README.md](../README.md).
 
-## Future archive groups
+Do not infer current status from a historical file's old `ACTIVE`, `NEXT` or branch wording. Use:
+
+1. [../STATUS.md](../STATUS.md);
+2. [../MASTER_STABILIZATION_ROADMAP.md](../MASTER_STABILIZATION_ROADMAP.md);
+3. the relevant canonical domain document.
+
+## Intended archive groups
 
 ### `archive/visual/`
 
-Completed visual implementation journals, once no active tests depend on their current paths.
+Completed visual implementation journals once exact-path test dependencies are removed.
 
 ### `archive/audits/`
 
-Dated audits/incidents after their findings have been incorporated into canonical domain docs.
+Dated audits/incidents after their findings are incorporated into canonical domain docs.
 
 ### `archive/migrations/`
 
-Completed migration/rollout plans after the deployed architecture no longer depends on their checklist.
+Completed migration/rollout plans once no remaining rollout/deprecation gate depends on them.
 
 ## Archive requirements
 
 Before moving a document:
 
-1. identify references from code/tests/docs;
+1. identify references from code, tests and docs;
 2. update those references in the same reviewed change;
 3. confirm no active plan still owns it;
-4. keep a canonical replacement for any current behavioral rule;
+4. keep a canonical replacement for every current behavioral rule;
 5. run the relevant regression suite.
 
-Historical reasoning about accounting, persistence or market-data integrity should be preserved rather than deleted.
+Historical reasoning about accounting, persistence, market-data integrity, visual regressions and failed migration attempts should be preserved rather than deleted.

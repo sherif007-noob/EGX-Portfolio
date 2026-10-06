@@ -4,154 +4,126 @@
 
 Use these three documents first:
 
-1. **[STATUS.md](STATUS.md)** — what is true now and what pass comes next.
-2. **[MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md)** — ordered plan for stabilization and future features.
-3. **This file** — which document owns which subject.
+1. **[STATUS.md](STATUS.md)** — current application truth and next execution point.
+2. **[MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md)** — sequencing authority and accepted stage history.
+3. **This file** — exhaustive map of which document owns which subject.
 
-The repository accumulated many implementation journals while the application evolved rapidly. They are valuable evidence, but they are not all current authorities.
+The repository intentionally preserves implementation history. A historical plan can describe what was true during a phase without being a current authority.
 
----
-
-# Canonical current-state documents
+## Current canonical domain documents
 
 | Document | Authority |
 | --- | --- |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | runtime/component/data architecture |
-| [DATA_MODEL.md](DATA_MODEL.md) | persisted data model |
-| [AUTH_AND_SECURITY.md](AUTH_AND_SECURITY.md) | auth, RLS and security model |
-| [API.md](API.md) | application/API surface |
-| [OPERATIONS.md](OPERATIONS.md) | deploy, workflows, production operations |
-| [TESTING.md](TESTING.md) | test gates and regression strategy |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | recovery/debug procedures |
-| [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) | performance calculation semantics |
-| [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) | current 1m/5m/15m market-data policy |
-| [TICKER_REGISTRY.md](TICKER_REGISTRY.md) | security identity/resolver rules |
-| [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) | analytics chart visual contract |
-| [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) | material/semantic/hierarchy visual contract |
-| [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) | canonical financial mutation ordering, persistence and failure semantics |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | current runtime, feature ownership and data-flow architecture |
+| [DATA_MODEL.md](DATA_MODEL.md) | persisted data model, ledger/projection ownership and market-data tables |
+| [AUTH_AND_SECURITY.md](AUTH_AND_SECURITY.md) | Supabase auth, RLS and security boundaries |
+| [API.md](API.md) | Worker/Express application API contract |
+| [OPERATIONS.md](OPERATIONS.md) | production branch, deployment and automation operations |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | local development and contribution workflow |
+| [TESTING.md](TESTING.md) | current CI, regression and rendered-validation strategy |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | operational recovery/debug procedures |
+| [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) | portfolio performance and analytics semantics |
+| [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) | current raw-1m / derived-5m / legacy-15m policy |
+| [TICKER_REGISTRY.md](TICKER_REGISTRY.md) | security identity, aliases, ISIN resolution and registry rules |
+| [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) | current analytics chart interaction/visual contract |
+| [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) | protected glass/material/semantic/hierarchy/control visual language |
+| [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) | canonical persist-confirmed financial mutation semantics |
+| [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) | implemented corporate-action ledger contract; currently BONUS_SHARES |
 
 When a historical phase log conflicts with one of these about current behavior, the canonical document wins.
 
----
-
-# Execution plans
+## Current execution / rollout authorities
 
 | Document | State |
 | --- | --- |
+| [STATUS.md](STATUS.md) | **current truth — Stage 6.1 next** |
 | [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) | **master sequencing authority** |
-| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | **closed Stage 1 reference; visual system CLOSED / CI CLEAN** |
-| [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | scheduled as master-roadmap Stage 5; implementation deferred |
-| [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | migration/rollout reference; remaining promotion evidence still relevant |
+| [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | implemented migration record with remaining multi-session/live-soak retirement evidence |
+| [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | **closed Stage 5 design/acceptance authority** |
+| [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | **closed Stage 1 / Phase 10 acceptance reference** |
 
----
+## Architecture/stabilization implementation evidence
 
-# Audit and incident evidence
+These files document accepted implementation stages but do not replace the current architecture/roadmap:
 
-These documents capture what was observed/fixed at a point in time. They support history and regression reasoning; they are not automatically the current architecture.
+- [ARCHITECTURE_MODULE_OWNERSHIP.md](ARCHITECTURE_MODULE_OWNERSHIP.md) — Stage 4.1 ownership design;
+- [STAGE4_3_GRANULAR_VALIDATION.md](STAGE4_3_GRANULAR_VALIDATION.md) — Stage 4.3 decomposition evidence;
+- [STAGE4_4_GRANULAR_VALIDATION.md](STAGE4_4_GRANULAR_VALIDATION.md) — Stage 4.4 API/runtime contract evidence;
+- [STAGE4_5_CSS_OWNERSHIP.md](STAGE4_5_CSS_OWNERSHIP.md) — Stage 4.5 CSS ownership/cascade evidence;
+- [STAGE3_BRANCH_DIVERGENCE_REVIEW.md](STAGE3_BRANCH_DIVERGENCE_REVIEW.md) — Stage 3.1 branch review and production-authority migration.
 
-| Document | Purpose |
-| --- | --- |
-| [READINESS_AUDIT.md](READINESS_AUDIT.md) | earlier cross-app readiness snapshot |
-| [STAGE3_BRANCH_DIVERGENCE_REVIEW.md](STAGE3_BRANCH_DIVERGENCE_REVIEW.md) | Stage 3.1 commit-by-commit main/premium divergence review and integration decision |
-| [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) | September 28 intraday/valuation root-cause audit |
-| [CHART_RENDERING_FIX_2026_09_28.md](CHART_RENDERING_FIX_2026_09_28.md) | dated chart-rendering incident/fix record |
-| [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) | evolution history for analytics market data |
+## Dated audits / incident evidence
 
----
+These documents preserve observations from a specific date. Treat later canonical docs as authoritative where behavior evolved afterward.
 
-# Historical visual implementation journals
+- [READINESS_AUDIT.md](READINESS_AUDIT.md)
+- [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md)
+- [CHART_RENDERING_FIX_2026_09_28.md](CHART_RENDERING_FIX_2026_09_28.md)
+- [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md)
 
-These record how the accepted visual system was reached.
+## Historical visual implementation journals
 
-They are **historical implementation evidence**, even when some remain physically in `docs/`.
+These explain how the accepted visual system was reached. They are historical evidence, not current work queues:
 
-- `PREMIUM_UI_REDESIGN_PLAN.md`
-- `PREMIUM_UI_REDESIGN_IMPLEMENTATION.md`
-- `PHASE4_MOTION_REIMPLEMENTATION_PLAN.md`
-- `PHASE5_ADVANCED_EFFECTS_PLAN.md`
-- `PHASE6_RESPONSIVE_REFINEMENT_PLAN.md`
-- `PHASE6_5_NAVIGATION_REFINEMENT_PLAN.md`
-- `PHASE7_CHARTS_PLAN.md`
-- `PHASE8_VISUAL_HIERARCHY_PLAN.md`
-- `PHASE8_HIERARCHY_AUDIT_MAP.md`
-- `PHASE8_4_TYPOGRAPHY_AUDIT.md`
-- `PHASE9_HEADER_NAVIGATION_PLAN.md`
+- [PREMIUM_UI_REDESIGN_PLAN.md](PREMIUM_UI_REDESIGN_PLAN.md)
+- [PREMIUM_UI_REDESIGN_IMPLEMENTATION.md](PREMIUM_UI_REDESIGN_IMPLEMENTATION.md)
+- [PHASE4_MOTION_REIMPLEMENTATION_PLAN.md](PHASE4_MOTION_REIMPLEMENTATION_PLAN.md)
+- [PHASE5_ADVANCED_EFFECTS_PLAN.md](PHASE5_ADVANCED_EFFECTS_PLAN.md)
+- [PHASE6_RESPONSIVE_REFINEMENT_PLAN.md](PHASE6_RESPONSIVE_REFINEMENT_PLAN.md)
+- [PHASE6_5_NAVIGATION_REFINEMENT_PLAN.md](PHASE6_5_NAVIGATION_REFINEMENT_PLAN.md)
+- [PHASE7_CHARTS_PLAN.md](PHASE7_CHARTS_PLAN.md)
+- [PHASE8_VISUAL_HIERARCHY_PLAN.md](PHASE8_VISUAL_HIERARCHY_PLAN.md)
+- [PHASE8_HIERARCHY_AUDIT_MAP.md](PHASE8_HIERARCHY_AUDIT_MAP.md)
+- [PHASE8_4_TYPOGRAPHY_AUDIT.md](PHASE8_4_TYPOGRAPHY_AUDIT.md)
+- [PHASE9_HEADER_NAVIGATION_PLAN.md](PHASE9_HEADER_NAVIGATION_PLAN.md)
 
-Do not use an old phase recipe to override the canonical visual contract.
+Some tests still read historical files by exact path. That is why classification is authoritative even when physical files remain at the docs root.
 
-Some regression tests intentionally read historical plan files by exact path. Phase 10 is now closed, but physical archive moves remain deferred until those path bindings are deliberately removed and updated.
+## Archive policy
 
 See [archive/README.md](archive/README.md).
 
----
+Physical moves are allowed only when:
 
-# Development/reference documents
+- no test/code depends on the current path, or those references are migrated in the same change;
+- active/current docs link to the new path;
+- the document no longer owns a live contract.
 
-- [DEVELOPMENT.md](DEVELOPMENT.md)
-- [API.md](API.md)
-- [DATA_MODEL.md](DATA_MODEL.md)
+## Documentation update rules
 
-Root-level project governance remains in:
-
-- `../CONTRIBUTING.md`
-- `../SECURITY.md`
-- `../CHANGELOG.md`
-
----
-
-# Documentation update rules
-
-Every accepted implementation pass should:
+Every accepted implementation pass must:
 
 1. update `STATUS.md`;
-2. update the domain document whose invariant changed;
-3. update its active phase/subplan where relevant;
-4. avoid duplicating the same current-state rule into multiple historical logs;
-5. keep dated audits immutable except for an explicit correction note.
+2. update the canonical domain document whose invariant changed;
+3. update the active roadmap/subplan where relevant;
+4. record acceptance evidence only after the relevant gate is green;
+5. avoid copying current-state rules into historical logs;
+6. update this map whenever a document is added, removed or changes authority class.
 
-## What belongs where
+## Authority model
 
 ### STATUS
-Short current truth and next action.
+
+Short current truth, known debt and next action.
 
 ### MASTER_STABILIZATION_ROADMAP
-Ordering, dependencies, stage gates, deferred features.
 
-### Domain docs
-Long-lived behavioral rules.
+Ordering, dependencies, stage gates and accepted stage history.
 
-### Phase/subplan docs
-Implementation detail for the currently active scoped project.
+### Canonical domain docs
 
-### Audit docs
-Evidence from a particular investigation/date.
+Long-lived current behavior.
+
+### Closed plans / implementation evidence
+
+How a completed stage was designed and validated.
+
+### Dated audits
+
+What was observed at a point in time.
 
 ### Archive
-Completed implementation journals no longer needed by active code/tests.
 
----
+Historical documents whose current root path is no longer required.
 
-# Physical archive policy
-
-The intended future structure is:
-
-```text
-docs/
-  STATUS.md
-  MASTER_STABILIZATION_ROADMAP.md
-  README.md
-  <canonical domain docs>
-  <active plans>
-  archive/
-    visual/
-    audits/
-    migrations/
-```
-
-Do **not** move a document while:
-
-- tests read its exact path;
-- active docs link to it without being updated in the same change;
-- it still owns an active implementation contract.
-
-Physical archive migration is a closure task, not a cosmetic rename exercise.
+This map intentionally names every Markdown file under `docs/` either directly or by the archive-policy entry.

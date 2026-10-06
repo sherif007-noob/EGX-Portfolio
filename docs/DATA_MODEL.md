@@ -147,7 +147,7 @@ The transaction ID arrays allow a closed cycle to be traced back to its ledger e
 
 EGX security master and latest market snapshot.
 
-Contains company identity, sector, live-price fields, volume, range data, RSI, support/resistance, target/stop fields, timestamps, and optional logo metadata.
+Contains company/market-instrument identity, sector, live-price fields, volume, range data, RSI, support/resistance, target/stop fields, timestamps, and optional logo metadata. Stage 7.1 also registers EGX30, EGX70EWI and EGX100EWI as `Market Index` reference instruments so `price_history` can persist benchmark rows under its ticker foreign key.
 
 ### price_history
 
@@ -165,7 +165,7 @@ Primary analytical fields:
 - `source`
 - `retrieved_at`
 
-Historical portfolio valuations are reconstructed from transactions plus this table.
+Historical portfolio valuations are reconstructed from transactions plus this table. The same table also stores daily EGX30 / EGX70EWI / EGX100EWI closes used by Stage 7.1 benchmark comparison.
 
 ### intraday_price_history
 
@@ -198,7 +198,7 @@ Primary key:
 
 Retention is resolution-aware: raw 1m history is kept for 30 calendar days and derived 5m history for 90 calendar days; legacy 15m fallback remains separate during the migration/soak period. Intraday rows are kept separate from permanent daily history so resolutions cannot be confused.
 
-Authenticated application sessions have SELECT-only access. Trusted automation owns writes and retention cleanup.
+Authenticated application sessions have SELECT-only access. Trusted automation owns writes and retention cleanup. Stage 7.1 benchmark indices use the same 1m/5m/15m table and retention policy as portfolio intraday market data.
 
 ### daily_valuations
 

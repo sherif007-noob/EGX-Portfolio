@@ -8,23 +8,20 @@ Detailed sequencing belongs in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZ
 
 ## Snapshot
 
-**Date:** 2026-10-06  
+**Date:** 2026-10-07  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** compatibility/history only; not production authority  
-**Current validated runtime head:** `5152ca2b` — Stage 5 / Reports R8 closure  
+**Latest runtime feature head:** `9f6cdcea` — Stage 7.1 benchmark comparison + Today Cairo-session boundary fix  
 **Current documentation head:** may be newer than the validated runtime because docs-only commits do not redefine runtime acceptance
 
-Validated runtime evidence on `main@5152ca2b`:
+Current runtime evidence:
 
-- Quality Checks **#37502935404** — passed;
-- Phase 10 Visual Closure **#37502935456** — passed;
-- Rendered Visual Regression **#37502935538** — passed;
-- **139 / 139** Vitest files;
-- **734 / 734** tests;
+- Quality Checks **#37546024261** on `main@9f6cdcea` — passed;
+- **140 / 140** Vitest files;
+- **739 / 739** tests;
 - production Vite/PWA build — passed;
-- Cloudflare Worker dry-run — passed;
-- **12 / 12** responsive geometry checks at **0px overflow**;
-- inspected Reports selector-aura screenshot accepted by exact hash at **23.556%** while every other tracked state remains below the frozen **1%** threshold.
+- the first rendered run on this head preserved every accepted screenshot/geometry result but failed the Reports interaction closure because its global `Analytics timeframe` locator became ambiguous after the new benchmark-capable analytics surface;
+- the regression harness is being corrected to scope Analytics controls to the active Reports Analytics workspace before this runtime is marked full rendered-closure green.
 
 ## Runtime and persistence
 
@@ -64,7 +61,10 @@ Current production policy:
 - raw retention: 30 calendar days;
 - derived retention: 90 calendar days;
 - Cairo-local session rules;
-- current-session data must remain missing rather than silently falling back to an older session.
+- the requested EGX session must remain missing rather than silently switching to another date;
+- Cairo midnight does **not** start a new Today session: from 00:00 through 09:59 Cairo on an EGX weekday, Today still resolves to the previous trading weekday; at 10:00 Cairo it switches to the new session date;
+- Cairo day query bounds are converted to UTC with `Intl` timezone/DST handling rather than using an arbitrary UTC calendar day;
+- EGX30, EGX70 EWI and EGX100 EWI are included in daily and intraday market-data ingestion for benchmark comparison.
 
 Today UI resolutions:
 
@@ -97,7 +97,9 @@ Current analytical foundation includes:
 - synchronized primary/secondary chart timelines;
 - realized trajectory modes/timeframes;
 - monthly audit;
-- trading-performance indicators.
+- trading-performance indicators;
+- flow-neutral Portfolio vs Benchmarks mode against EGX30, EGX70 EWI and EGX100 EWI;
+- selected-period normalized benchmark overlays with portfolio-minus-index relative return.
 
 The accounting and analytics engines remain the calculation authorities. UI work must consume them rather than duplicate formulas.
 
@@ -126,6 +128,22 @@ Accepted architecture:
 - deterministic source and Chromium interaction regression.
 
 Detailed authority: [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md).
+
+## Portfolio intelligence
+
+**Stage 7.1 — Benchmark comparison is implemented on `main`.**
+
+Current benchmark contract:
+
+- Portfolio leg = selected-period TWR;
+- index legs = EGX30 / EGX70 EWI / EGX100 EWI;
+- all series normalized from the selected-period baseline;
+- daily history comes from the scheduled TradingView history pipeline;
+- Today uses the same selected trustworthy intraday resolution as portfolio analytics;
+- relative result = portfolio TWR minus benchmark return;
+- missing index observations remain missing rather than being fabricated.
+
+This was intentionally implemented before Stage 6 was complete. It does **not** close or waive Stage 6.
 
 ## Corporate actions
 
@@ -180,17 +198,13 @@ See:
 
 ## Current execution point
 
-**NEXT — Stage 6.1: Broker reconciliation workspace.**
+**Active working track — Stage 7.2: Personal risk dashboard**, because Stage 7.1 was explicitly implemented out of the original sequence.
 
-Goal:
+**Earliest unfinished master-sequence stage — Stage 6.1: Broker reconciliation workspace.**
 
-- compare broker snapshot/import with canonical app truth;
-- identify ticker/share/cash discrepancies;
-- trace them to source ledger events;
-- route corrections through explicit persist-confirmed ledger edits;
-- never patch derived positions or cash directly.
+Stage 7 work does not silently waive Stage 6. Stage 6.1 still needs to compare broker truth with canonical app truth, explain discrepancies through source ledger events, and route corrections through explicit persist-confirmed ledger edits.
 
-After 6.1, the master roadmap owns sequencing through audit trail, full corporate-action lifecycle, attributed dividends, portfolio intelligence, execution analytics, scanner operationalization and long-term cleanup.
+If continuing the currently active Stage 7 track, the next pass is 7.2.
 
 ## Documentation authority
 

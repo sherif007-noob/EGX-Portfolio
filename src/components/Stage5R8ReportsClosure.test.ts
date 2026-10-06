@@ -159,6 +159,8 @@ describe('Stage 5 R8 Reports full regression and closure', () => {
     expect(harness).toContain("check: 'direct-mode-opening'");
     expect(harness).toContain("check: 'navigation-restoration'");
     expect(harness).toContain("check: 'analytics-controls'");
+    expect(harness).toContain("analyticsWorkspace.getByRole('group', { name: 'Analytics timeframe' })");
+    expect(harness).toContain("analyticsWorkspace.getByRole('group', { name: 'Today chart resolution' })");
     expect(harness).toContain("check: 'trading-filters-and-exports'");
     expect(harness).toContain("check: 'allocation-sectors-holdings-cash'");
     expect(harness).toContain("check: 'monthly-filters-and-exports'");

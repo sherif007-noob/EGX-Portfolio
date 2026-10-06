@@ -296,6 +296,20 @@ The selected mode is remembered via `reports:lastMode`. Overview is diagnostic a
 
 See [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md).
 
+## Portfolio benchmark analytics
+
+Stage 7.1 adds a read-only benchmark comparison layer on top of the existing analytics engines.
+
+`src/services/portfolioBenchmarks.ts` owns:
+
+- EGX30 / EGX70 EWI / EGX100 EWI benchmark identities;
+- daily and intraday normalized-return alignment;
+- portfolio-minus-benchmark relative return.
+
+The portfolio leg is canonical TWR. Benchmark data is market reference only and never mutates the transaction ledger, positions, cash, or closed cycles.
+
+Daily and intraday ingestion explicitly include benchmark indices so Today and longer-period comparison use the same market-data trust rules as portfolio analytics.
+
 ## Market data
 
 ### Live/current quote path

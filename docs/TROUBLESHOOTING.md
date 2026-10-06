@@ -128,16 +128,23 @@ Do not replace the selected-period MWR with annualized XIRR.
 
 ## Today shows no intraday curve
 
-Today resolves to the latest **actual** EGX session available in the 15-minute store, including across exchange holidays.
+Today resolves its requested date from the **EGX session boundary**, not from Cairo midnight:
 
-If it is unavailable, check:
+- Friday/Saturday → previous EGX trading weekday;
+- Sunday–Thursday before 10:00 Cairo → previous EGX trading weekday;
+- Sunday–Thursday from 10:00 Cairo → current Cairo date.
 
-- `intraday_price_history` has rows for the latest completed/current session;
+The selected Cairo date is converted to a full UTC query window with timezone/DST-aware bounds. Once that date is selected, missing 1m/5m/15m data does not authorize silently switching to a different session date.
+
+If Today is unavailable, check:
+
+- `intraday_price_history` has rows for the requested session and selected/fallback resolution;
 - all same-session trades have `executedAt`;
 - required holdings have a prior trusted close;
-- the intraday workflow completed successfully.
+- the intraday workflow completed successfully;
+- benchmark mode additionally has EGX30 / EGX70EWI / EGX100EWI data for the requested comparison.
 
-The app does not fabricate a 1D curve from daily prices.
+The app does not fabricate a Today curve from daily prices. The pre-10:00 rule handles ordinary overnight continuity; it is not a full exchange-holiday calendar.
 
 ## Drawdown shows N/A
 

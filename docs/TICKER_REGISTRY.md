@@ -12,6 +12,18 @@ The authoritative identity layer is now service-managed in Supabase:
 
 This split prevents browser price persistence from corrupting security identity.
 
+## Benchmark market instruments
+
+Stage 7.1 introduces three non-equity benchmark instruments:
+
+- `EGX30` → TradingView `EGX:EGX30`;
+- `EGX70EWI` → displayed as EGX70;
+- `EGX100EWI` → displayed as EGX100.
+
+They are registered in the market-reference `tickers` table as `Market Index` instruments so daily `price_history` rows satisfy the existing ticker foreign key. They do not require an equity ISIN and must not be treated as investable portfolio positions.
+
+The application-level benchmark contract lives in `src/services/portfolioBenchmarks.ts`; market-data ingestion explicitly includes these indices even when they are absent from portfolio holdings.
+
 ## Identity precedence
 
 For current security identity, precedence is:

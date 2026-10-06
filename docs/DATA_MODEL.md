@@ -53,7 +53,7 @@ The authoritative accounting ledger.
 
 Important fields include:
 
-- BUY/SELL type;
+- transaction type: `BUY`, `SELL` or `CORPORATE_ACTION`;
 - ticker;
 - shares;
 - execution price;
@@ -92,6 +92,17 @@ book repair         = RECONCILIATION_ADJUSTMENT
 ```
 
 For Google Sheets ledger round-trip, `Cash Flow Type` and `Cash Flow Amount` are persisted as explicit Transaction Logger columns.
+
+Corporate-action ledger metadata is stored on the same authoritative transaction row:
+
+- `corporate_action_type`;
+- `corporate_action_ratio`;
+- `corporate_action_source_shares`;
+- `corporate_action_reference`.
+
+The type vocabulary includes bonus shares, stock dividend, split, reverse split, rights subscription, tender and merger/restructure. **Only `BONUS_SHARES` is currently supported end-to-end.** Unsupported action types are rejected by the mutation boundary rather than partially applied.
+
+For `BONUS_SHARES`, the ledger row has zero price/fees/total/cash impact, increases shares by the actual broker-credited quantity and preserves invested cost. See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
 
 ### positions
 
@@ -155,12 +166,18 @@ Historical portfolio valuations are reconstructed from transactions plus this ta
 
 ### intraday_price_history
 
-15-minute EGX OHLCV bars used for current/latest-session analytics.
+Observed EGX intraday OHLCV used for Today analytics.
+
+The production interval constraint accepts:
+
+- `1` — raw TradingView observations;
+- `5` — deterministic aggregation of persisted raw 1m observations;
+- `15` — legacy fallback/repair history retained during rollout.
 
 Primary fields:
 
 - `ticker`
-- `interval_minutes` (currently 15)
+- `interval_minutes`
 - `bar_timestamp` (`timestamptz`, stored in UTC)
 - `open`
 - `high`
@@ -176,9 +193,17 @@ Primary key:
 (ticker, interval_minutes, bar_timestamp)
 ```
 
-Intraday rows use a rolling 90-day retention policy by default. They are kept separate from permanent daily history so different resolutions cannot be confused.
+Current retention policy is resolution-specific:
 
-Authenticated application sessions have SELECT-only access. Trusted automation owns writes and retention cleanup.
+- raw 1m: 30 calendar days;
+- derived 5m: 90 calendar days;
+- legacy 15m: retained as rollback/fallback data until its dependency is deliberately retired.
+
+Derived 5m rows use `source = derived-1m`; missing minutes are not synthesized. The UI may derive a 1h display client-side from observed intraday rows, but 1h is not a persisted storage interval.
+
+Authenticated application sessions have SELECT-only access. Trusted Node automation owns intraday writes and retention cleanup.
+
+See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md).
 
 ### daily_valuations
 
@@ -242,7 +267,7 @@ The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
 
-As of Stage 2.4, BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation and portfolio restore/import follow this ordering, and derived Position / Closed Cycle records no longer expose independent accounting deletion.
+Stage 2 is closed. BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation, portfolio restore/import and the supported BONUS_SHARES corporate-action workflow follow this ordering, and derived Position / Closed Cycle records do not expose independent accounting deletion.
 
 ### Derived Position / Closed Cycle ownership
 

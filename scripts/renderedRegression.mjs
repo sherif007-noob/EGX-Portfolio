@@ -41,6 +41,7 @@ const report = {
   baseUrl: BASE_URL,
   geometry: [],
   reportsResponsive: [],
+  reportsClosure: [],
   screenshots: [],
   comparisons: [],
   errors: [],
@@ -276,6 +277,201 @@ for (const [name, width, height] of reportsResponsiveViewports) {
   } catch (error) {
     report.errors.push(
       `${name}: Reports responsive validation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+
+async function assertAriaState(locator, attribute, label) {
+  const value = await locator.getAttribute(attribute);
+  if (value !== 'true') {
+    throw new Error(`${label}: expected ${attribute}="true", received ${String(value)}`);
+  }
+}
+
+async function recordReportsClosure(reportEntry) {
+  report.reportsClosure.push(reportEntry);
+}
+
+{
+  const { context, page } = await openStablePage(1440, 1000);
+  try {
+    await page.locator('#tab-reports').click();
+    await page.locator('[data-reports-workspace="overview"]').waitFor({ state: 'visible' });
+
+    for (const label of [
+      'Current portfolio snapshot',
+      'Trading Quality',
+      'Risk & Costs',
+      'Concentration',
+      'Current Month',
+    ]) {
+      await page.getByText(label, { exact: true }).first().waitFor({ state: 'visible' });
+    }
+    await recordReportsClosure({ check: 'overview-diagnostics', status: 'passed' });
+
+    const tradingPreview = page.locator(
+      'section[aria-labelledby="reports-overview-trading-quality"]',
+    );
+    await tradingPreview.getByRole('button', { name: 'Inspect' }).click();
+    await tradingPreview
+      .getByRole('button', { name: 'Open full trading report' })
+      .click();
+    await page.locator('[data-reports-workspace="trading"]').waitFor({ state: 'visible' });
+
+    const directlyPersistedMode = await page.evaluate(
+      () => window.localStorage.getItem('reports:lastMode'),
+    );
+    if (directlyPersistedMode !== 'trading') {
+      throw new Error(
+        `Direct report opening did not persist trading mode: ${String(directlyPersistedMode)}`,
+      );
+    }
+    await recordReportsClosure({ check: 'direct-mode-opening', status: 'passed' });
+
+    await page.locator('#tab-overview').click();
+    await page.locator('#tab-reports').click();
+    await page.locator('[data-reports-workspace="trading"]').waitFor({ state: 'visible' });
+    await recordReportsClosure({ check: 'navigation-restoration', status: 'passed' });
+
+    await page.locator('#reports-mode-analytics').click();
+    const analyticsWorkspace = page.locator('[data-reports-workspace="analytics"]');
+    await analyticsWorkspace.waitFor({ state: 'visible' });
+
+    const analyticsTimeframe = page.getByRole('group', { name: 'Analytics timeframe' });
+    const oneWeek = analyticsTimeframe.getByRole('button', { name: '1W', exact: true });
+    await oneWeek.click();
+    await page.waitForTimeout(120);
+    await assertAriaState(oneWeek, 'aria-pressed', 'Analytics 1W');
+
+    const today = analyticsTimeframe.getByRole('button', { name: 'Today', exact: true });
+    await today.click();
+    await page.waitForTimeout(120);
+    await assertAriaState(today, 'aria-pressed', 'Analytics Today');
+
+    const todayResolution = page.getByRole('group', { name: 'Today chart resolution' });
+    await todayResolution.waitFor({ state: 'visible' });
+    const fiveMinute = todayResolution.getByRole('button', { name: '5m', exact: true });
+    await fiveMinute.click();
+    await page.waitForTimeout(80);
+    await assertAriaState(fiveMinute, 'aria-pressed', 'Today 5m resolution');
+
+    const modeTrigger = analyticsWorkspace.locator('button[aria-haspopup="menu"]').first();
+    await modeTrigger.click();
+    const twrOption = page.getByRole('menuitemradio', { name: /Performance \(TWR\)/ });
+    await twrOption.click();
+    await page.waitForTimeout(80);
+    if (!(await modeTrigger.textContent())?.includes('Performance (TWR)')) {
+      throw new Error('Analytics mode menu did not switch to Performance (TWR)');
+    }
+
+    const tradeByTrade = analyticsWorkspace.getByRole('button', {
+      name: 'Trade-by-Trade',
+      exact: true,
+    });
+    await tradeByTrade.click();
+    await assertAriaState(tradeByTrade, 'aria-pressed', 'Trade-by-Trade trajectory');
+
+    const trajectoryTimeframe = page.getByRole('group', {
+      name: 'Realized trajectory timeframe',
+    });
+    const trajectoryOneMonth = trajectoryTimeframe.getByRole('button', {
+      name: '1M',
+      exact: true,
+    });
+    await trajectoryOneMonth.click();
+    await assertAriaState(
+      trajectoryOneMonth,
+      'aria-pressed',
+      'Realized trajectory 1M',
+    );
+    await recordReportsClosure({ check: 'analytics-controls', status: 'passed' });
+
+    await page.locator('#reports-mode-trading').click();
+    const tradingWorkspace = page.locator('[data-reports-workspace="trading"]');
+    await tradingWorkspace.waitFor({ state: 'visible' });
+
+    const trading90d = tradingWorkspace.getByRole('button', { name: '90D', exact: true });
+    await trading90d.click();
+    await assertAriaState(trading90d, 'aria-pressed', 'Trading 90D filter');
+
+    const tradeTypeTrigger = tradingWorkspace.getByRole('button', {
+      name: 'Filter by trade type',
+    });
+    await tradeTypeTrigger.click();
+    await page.getByRole('option', { name: 'Swing Only', exact: true }).click();
+    if (!(await tradeTypeTrigger.textContent())?.includes('Swing Only')) {
+      throw new Error('Trading trade-type filter did not switch to Swing Only');
+    }
+    await tradingWorkspace
+      .getByRole('button', { name: 'Export CSV', exact: true })
+      .waitFor({ state: 'visible' });
+    await tradingWorkspace
+      .getByRole('button', { name: 'Print', exact: true })
+      .waitFor({ state: 'visible' });
+    await recordReportsClosure({ check: 'trading-filters-and-exports', status: 'passed' });
+
+    await page.locator('#reports-mode-allocation').click();
+    const allocationWorkspace = page.locator('[data-reports-workspace="allocation"]');
+    await allocationWorkspace.waitFor({ state: 'visible' });
+
+    const holdings = allocationWorkspace.getByRole('button', {
+      name: 'Holdings',
+      exact: true,
+    });
+    await holdings.click();
+    await assertAriaState(holdings, 'aria-pressed', 'Allocation Holdings');
+
+    const cashSwitch = allocationWorkspace.getByRole('switch', { name: /Include cash/i });
+    const cashBefore = await cashSwitch.getAttribute('aria-checked');
+    await cashSwitch.click();
+    const cashAfter = await cashSwitch.getAttribute('aria-checked');
+    if (cashBefore === cashAfter) {
+      throw new Error('Allocation Include cash switch did not toggle');
+    }
+    await recordReportsClosure({ check: 'allocation-sectors-holdings-cash', status: 'passed' });
+
+    await page.locator('#reports-mode-monthly').click();
+    const monthlyWorkspace = page.locator('[data-reports-workspace="monthly"]');
+    await monthlyWorkspace.waitFor({ state: 'visible' });
+
+    await monthlyWorkspace
+      .getByRole('button', { name: 'Export CSV', exact: true })
+      .waitFor({ state: 'visible' });
+    await monthlyWorkspace
+      .getByRole('button', { name: 'Print', exact: true })
+      .waitFor({ state: 'visible' });
+
+    const monthlyFilter = monthlyWorkspace.getByRole('button', {
+      name: 'Filter monthly report records',
+    });
+    await monthlyFilter.click();
+    await page
+      .getByRole('option', { name: 'Liquidated Trades Only', exact: true })
+      .click();
+    if (!(await monthlyFilter.textContent())?.includes('Liquidated Trades Only')) {
+      throw new Error('Monthly filter did not switch to Liquidated Trades Only');
+    }
+
+    await monthlyFilter.click();
+    await page
+      .getByRole('option', { name: 'Month-End Holdings Only', exact: true })
+      .click();
+    if (!(await monthlyFilter.textContent())?.includes('Month-End Holdings Only')) {
+      throw new Error('Monthly filter did not switch to Month-End Holdings Only');
+    }
+
+    const allMonths = monthlyWorkspace.getByRole('button', {
+      name: /All Recorded Months/,
+    });
+    await allMonths.click();
+    await assertAriaState(allMonths, 'aria-pressed', 'Monthly All Recorded Months');
+    await recordReportsClosure({ check: 'monthly-filters-and-exports', status: 'passed' });
+  } catch (error) {
+    report.errors.push(
+      `reports-closure-desktop: ${error instanceof Error ? error.message : String(error)}`,
     );
   } finally {
     await context.close();

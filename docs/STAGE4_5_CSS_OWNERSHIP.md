@@ -1,5 +1,9 @@
 # Stage 4.5 — CSS Ownership Consolidation
 
+## Status
+
+**CLOSED STAGE 4.5 IMPLEMENTATION / CASCADE-EVIDENCE RECORD.** Stage 4.5 closed at `main@470b3ce8`. Current visual ownership is the accepted split across tokens/materials/semantics/hierarchy/controls/overlays/motion/responsive plus feature CSS owners. Historical `ACTIVE`, `NEXT`, and micro-pass wording below records the sequence that produced that state and is not current roadmap status.
+
 Stage 4.5 is a **visual-preserving architecture refactor**. The accepted Phase 10 appearance is frozen. This stage may reorganize ownership and remove redundant cascade debt, but it must not redesign the application.
 
 ## Baseline inventory at 4.5.1

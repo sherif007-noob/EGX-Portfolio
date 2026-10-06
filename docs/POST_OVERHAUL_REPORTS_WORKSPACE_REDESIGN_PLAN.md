@@ -763,8 +763,23 @@ The redesign is successful when:
 
 ---
 
-## Master-roadmap integration\n\nRoadmap owner: **Stage 5 — Reports workspace redesign**.\n\nRequired entry gates:\n\n1. Phase 10 closed / CI-clean;\n2. persistence-confirmed financial mutation model closed;\n3. production/default-branch + scheduler convergence closed;\n4. architecture ownership sufficient to move trusted report components without reimplementing analytics.\n\nThe existing R1–R8 sequence in this document is preserved. Benchmarking, risk-dashboard expansion, execution analytics and other new calculations are later roadmap features and must not be smuggled into the workspace restructuring.\n\n---\n\n## Deferred implementation rule
+## Master-roadmap integration
 
-Do not begin this plan until the current premium visual overhaul is formally complete.
+Roadmap owner: **Stage 5 — Reports workspace redesign**.
 
-This document should remain separate from the active Phase 8–11 roadmap unless the user explicitly decides to schedule the Reports workspace redesign afterward.
+Entry gates that were required and are now satisfied:
+
+1. Phase 10 closed / CI-clean;
+2. persistence-confirmed financial mutation model closed;
+3. production/default-branch authority and automation convergence sufficient for Reports work;
+4. architecture ownership sufficient to move trusted report components without reimplementing analytics.
+
+The R1–R8 sequence in this document is complete. Benchmarking, risk-dashboard expansion, execution analytics and other new calculations remain later roadmap features and were not smuggled into the workspace restructuring.
+
+---
+
+## Closure rule
+
+This plan is no longer deferred or active. It is retained as the accepted Stage 5 design/validation authority.
+
+Current implementation truth is summarized in [STATUS.md](STATUS.md), and future sequencing is owned by [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).

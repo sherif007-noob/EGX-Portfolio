@@ -29,6 +29,7 @@ The repository accumulated many implementation journals while the application ev
 | [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) | analytics chart visual contract |
 | [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) | material/semantic/hierarchy visual contract |
 | [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) | canonical financial mutation ordering, persistence and failure semantics |
+| [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) | implemented corporate-action ledger semantics; currently BONUS_SHARES, with later lifecycle expansion owned by Stage 6.3 |
 
 When a historical phase log conflicts with one of these about current behavior, the canonical document wins.
 
@@ -40,10 +41,44 @@ When a historical phase log conflicts with one of these about current behavior, 
 | --- | --- |
 | [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) | **master sequencing authority** |
 | [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | **closed Stage 1 reference; visual system CLOSED / CI CLEAN** |
-| [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | scheduled as master-roadmap Stage 5; implementation deferred |
+| [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | **closed Stage 5 reference; R1–R8 accepted / CI + rendered green** |
 | [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | migration/rollout reference; remaining promotion evidence still relevant |
 
 ---
+
+# Whole-app documentation coverage
+
+Use this matrix to find the current authority for each live subsystem. A feature is considered documented only when it has an owner here or is explicitly classified as historical evidence.
+
+| App area | Current authority |
+| --- | --- |
+| Runtime topology, feature/data boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Supabase schema and persisted records | [DATA_MODEL.md](DATA_MODEL.md) |
+| Auth, RLS, secrets | [AUTH_AND_SECURITY.md](AUTH_AND_SECURITY.md) |
+| Worker/Express API contracts | [API.md](API.md) |
+| Deployment, workflows, production operations | [OPERATIONS.md](OPERATIONS.md) |
+| Test gates and rendered/browser regression | [TESTING.md](TESTING.md) |
+| Ledger mutation / persist-before-apply | [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) |
+| Corporate actions / bonus shares | [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) |
+| Daily + intraday market data | [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) |
+| Ticker / ISIN / alias identity | [TICKER_REGISTRY.md](TICKER_REGISTRY.md) |
+| NAV, TWR, MWR, drawdown, realized/unrealized analytics | [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) |
+| Chart interaction/visual behavior | [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) |
+| Reports Overview/Analytics/Trading/Allocation/Monthly workspace | [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) |
+| Glass/refraction/aura/hierarchy/control language | [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) |
+| Stage 4 module/CSS ownership closure | [ARCHITECTURE_MODULE_OWNERSHIP.md](ARCHITECTURE_MODULE_OWNERSHIP.md) and [STAGE4_5_CSS_OWNERSHIP.md](STAGE4_5_CSS_OWNERSHIP.md) |
+| Scanner/alerts current limitations and future operationalization | [ARCHITECTURE.md](ARCHITECTURE.md), [API.md](API.md), and Stage 9 in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) |
+| Google Sheets / OCR integration boundaries | [ARCHITECTURE.md](ARCHITECTURE.md), [API.md](API.md), [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) |
+| Troubleshooting / stale PWA / recovery | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+
+## Closed architecture implementation records
+
+These are still useful technical evidence, but they do not own the current execution point:
+
+- [ARCHITECTURE_MODULE_OWNERSHIP.md](ARCHITECTURE_MODULE_OWNERSHIP.md) — Stage 4 ownership map and migration record;
+- [STAGE4_3_GRANULAR_VALIDATION.md](STAGE4_3_GRANULAR_VALIDATION.md) — Stage 4.3 validation history;
+- [STAGE4_4_GRANULAR_VALIDATION.md](STAGE4_4_GRANULAR_VALIDATION.md) — Stage 4.4 validation history;
+- [STAGE4_5_CSS_OWNERSHIP.md](STAGE4_5_CSS_OWNERSHIP.md) — Stage 4.5 CSS ownership/cascade evidence.
 
 # Audit and incident evidence
 
@@ -63,7 +98,7 @@ These documents capture what was observed/fixed at a point in time. They support
 
 These record how the accepted visual system was reached.
 
-They are **historical implementation evidence**, even when some remain physically in `docs/`.
+They are **historical implementation evidence**, even when some remain physically in `docs/`. Contemporaneous words such as **ACTIVE**, **NEXT**, **deferred**, or an old branch name inside those journals describe the state at that historical checkpoint; they are not the current execution status. Current truth always comes from `STATUS.md`, the master roadmap, and the canonical domain docs above.
 
 - `PREMIUM_UI_REDESIGN_PLAN.md`
 - `PREMIUM_UI_REDESIGN_IMPLEMENTATION.md`

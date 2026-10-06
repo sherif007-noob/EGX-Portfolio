@@ -151,7 +151,7 @@ Create one obvious answer to each of these questions:
 - `docs/README.md` — documentation map;
 - `docs/archive/README.md` — archive policy;
 - current architecture/operations docs corrected to match the Cloudflare + Supabase + Node-workflow topology;
-- deferred Reports plan linked into this roadmap.
+- Reports plan linked into this roadmap and later closed through Stage 5 R8.
 
 ## Archive rule
 
@@ -307,7 +307,7 @@ Phase 10 is **CLOSED / CI CLEAN**. Its accepted visual contracts are frozen unle
 
 # 5. Stage 2 — Financial mutation & ledger integrity — COMPLETE / CLOSED / CI CLEAN
 
-This is the highest-priority non-visual work.
+Historical Stage 2 objective: establish one persist-confirmed financial mutation model. Stage 2 is now closed.
 
 ## Pass 2.1 — Canonical mutation executor — COMPLETE / CI GREEN
 
@@ -1852,17 +1852,17 @@ This is a personal portfolio system. Reliability has higher value than product-s
 | FIFO helper conflicts with proportional accounting | Stage 2.4–2.6 |
 | Deduct/add cash toggles violate ledger semantics | Stage 2.5 |
 | Cash adjustment meaning is ambiguous | Stage 2.7 |
-| Premium/default branch divergence | Stage 3.1–3.2 |
-| 1m scheduler/default-branch mismatch | Stage 3.2–3.5 |
-| Production-data audit still uses Bun after npm migration | Stage 3.3 |
-| No proactive data trust surface | Stage 3.6 |
-| App/usePortfolioState are oversized | Stage 4.2–4.3 |
-| Worker/Express drift risk | Stage 4.4 |
-| 5,000+ line CSS cascade | Stage 4.5 |
-| Reports is a long scrolling workspace | Stage 5 / R1–R8 |
+| Premium/default branch divergence | Stage 3.1–3.2 — CLOSED |
+| 1m scheduler/default-branch mismatch | Stage 3.2–3.4 closed; Stage 3.5 live reliability debt remains |
+| Production-data audit toolchain drift | Stage 3.3 — CLOSED |
+| No proactive data trust surface | Stage 3.6 — CLOSED / Data Health Center implemented |
+| App/usePortfolioState ownership pressure | Stage 4.2–4.3 — CLOSED |
+| Worker/Express drift risk | Stage 4.4 — CLOSED |
+| 5,000+ line CSS ownership/cascade | Stage 4.5 — CLOSED |
+| Reports long scrolling workspace | Stage 5 / R1–R8 — CLOSED |
 | Need broker truth reconciliation | Stage 6.1 |
 | Need correction traceability | Stage 6.2 |
-| Corporate actions missing | Stage 6.3 |
+| Corporate-action lifecycle beyond implemented BONUS_SHARES | Stage 6.3 |
 | Dividends lack source attribution | Stage 6.4 |
 | No benchmark context | Stage 7.1 |
 | Risk controls underused analytically | Stage 7.2 |

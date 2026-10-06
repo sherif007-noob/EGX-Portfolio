@@ -179,7 +179,7 @@ Shared timeframe boundaries live in `src/services/analyticsTimeframes.ts`.
 
 | Timeframe | Definition | Resolution |
 | --- | --- | --- |
-| Today | Current EGX session after open, otherwise latest completed session | 15-minute |
+| Today | Current requested EGX session under Cairo session rules | Coverage-aware observed intraday: Auto 1m → 5m → legacy 15m; manual 1m/5m/15m; client-derived 1h |
 | 1W | Elapsed 7-day lookback ending at the latest session | Daily |
 | 1M | Rolling one calendar month ending at the latest session | Daily |
 | 90D | Rolling 90 calendar days ending at the latest session | Daily |
@@ -188,7 +188,7 @@ Shared timeframe boundaries live in `src/services/analyticsTimeframes.ts`.
 
 For daily ranges, if a boundary lands on a weekend, holiday, or otherwise lacks a valuation, the engine uses the last complete valuation at or before the requested start as the analytical baseline. It never invents a synthetic price for the missing date.
 
-`Today` is marked as requiring intraday data. Pass 2 intentionally does not substitute a daily point for the missing 15-minute series; session reconstruction belongs to the intraday analytics pass.
+`Today` requires observed intraday data. The requested Cairo session is shared by every intraday resolution. Missing current-session data does not authorize switching to an older date or synthesizing a daily substitute.
 
 ## Selected-period MWR
 
@@ -230,7 +230,7 @@ TWR = product(1 + subperiod return) - 1
 
 A deposit therefore changes portfolio size but does not count as investment performance.
 
-The daily version is an end-of-day approximation. The intraday pass will use execution timestamps and 15-minute valuations to improve same-session precision.
+The daily version is an end-of-day approximation. Today uses execution timestamps and the selected observed intraday timeline for same-session precision.
 
 ## Net deposits
 
@@ -284,12 +284,13 @@ The daily timeframes use `buildUnifiedAnalyticsResult()` and therefore share the
 
 The engine:
 
-- selects the current EGX session after market open, otherwise the latest completed session; if a nominal weekday has no intraday bars, it falls back to the latest actual stored EGX session (holiday-safe);
+- resolves one requested EGX session using Cairo session rules;
+- requires every selected resolution to match that same session;
 - starts from pre-session cash and holdings rebuilt from the transaction ledger;
 - values opening holdings from the prior trusted daily close;
 - applies same-session trades at their exact `executedAt` timestamps;
-- applies 15-minute TradingView bars without look-ahead;
-- uses the current partial bar only up to the current time during an active session;
+- applies observed intraday market bars without look-ahead;
+- uses the current partial observation only up to the current time during an active session;
 - includes intraday round trips even when the security is no longer held at session end;
 - includes brokerage fees through the ledger cash impact;
 - computes intraday NAV, TWR, MWR, net deposits, and drawdown from the same timeline.
@@ -298,7 +299,7 @@ A same-session transaction without an execution timestamp makes the 1D reconstru
 
 The Today chart uses a straight `linear` line rather than a smoothed curve so the UI does not imply market observations that did not occur.
 
-The stored 15-minute bars reconstruct the session path. During the active session, if every currently held ticker has a valid live quote, the engine appends one final as-of valuation using the same live position prices that drive the portfolio hero/current NAV. This makes the chart endpoint converge on the current portfolio value without rewriting the earlier 15-minute path. If even one held ticker lacks a trustworthy live quote, no mixed live/stale endpoint is appended.
+The selected observed intraday series reconstructs the session path. Auto prefers sufficient raw 1m, then sufficient derived 5m, then legacy 15m. Manual 1m/5m/15m uses the requested persisted tier; 1h is derived client-side from the healthiest observed source. During the active session, if every currently held ticker has a valid same-session live quote, the engine may append one final as-of valuation using the same live position prices that drive current NAV. If even one held ticker lacks a trustworthy live quote, no mixed live/stale endpoint is appended.
 
 ### Seven-day window semantics
 
@@ -306,9 +307,9 @@ The stored 15-minute bars reconstruct the session path. During the active sessio
 
 ### Current-session versus completed-session behavior
 
-During an active session, the newest available partial 15-minute bar is valued only through the current time.
+During an active session, observations after the current Cairo time are excluded.
 
-The session boundary is shared with the live-market scheduler: the regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is treated as pre-market, not portfolio-session performance. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
+The regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is pre-market, not portfolio-session performance. Before open and on normal closed days, Cairo session logic resolves the appropriate prior session. Once a current session is requested, missing ingestion is treated as missing data rather than evidence that the app should silently display a different stored date.
 
 ### MWR presentation
 
@@ -318,9 +319,9 @@ For `All`, annualized XIRR is shown only as a secondary reference value.
 
 ### Data availability
 
-If no 15-minute rows exist for the selected session, Today remains explicitly unavailable instead of falling back to a daily price.
+If the requested session lacks a usable observed intraday series, Today remains explicitly unavailable instead of falling back to a daily price or a different date.
 
-The ingestion workflow is also triggered when its own workflow/script changes are merged to `main`, which allows an empty production intraday store to seed immediately after deployment while preserving the normal 15-minute scheduled ingestion.
+Scheduled raw-1m ingestion runs from `main`; derived 5m is rebuilt from persisted raw truth. Legacy 15m remains a fallback/repair tier only while rollout evidence is incomplete.
 
 
 ## Analytics chart modes
@@ -389,7 +390,7 @@ All four modes support:
 Today · 1W · 1M · 90D · YTD · All
 ```
 
-`Today` uses the 15-minute transaction-aware series. Longer periods use complete daily valuation points.
+`Today` uses the transaction-aware observed intraday series selected under the 1m/5m/15m policy. Longer periods use complete daily valuation points.
 
 ### Visual behavior
 
@@ -458,13 +459,11 @@ open market value
 - remaining buy fees
 ```
 
-For daily timeframes the chart uses historical daily closes. For Today it uses 15-minute prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
+For daily timeframes the chart uses historical daily closes. For Today it uses the selected observed intraday prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
 
 The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.
 
 
-
-<!-- deployment-trigger: premium-cloudflare-2026-09-23-2331 -->
 
 ### Rolling-period boundary valuation
 
@@ -475,4 +474,18 @@ Daily rolling periods distinguish the **first plotted date** from the **beginnin
 
 Today uses one Cairo session for Auto/1m/5m/15m/1h. Missing current-session candles do not authorize switching dates. Secondary unrealized P&L uses the primary engine's market value minus ledger remaining cost and buy fees, so candle timing and the complete live endpoint match the main chart. Drawdown continues to use the unified performance curve. Daily 1W/1M/90D/YTD/ALL reads are paginated in `(trading_date, ticker)` order. Intraday reads use `(bar_timestamp, ticker)` order. Visible history and realized-trajectory windows refresh independently of whether a quote price changed. Daily axis labels are Cairo-based across device timezones.
 
-The visual curves, materials, navigation, and accepted Phase 8/9 hierarchy are unchanged. See [the audit](MARKET_DATA_AUDIT_2026_09_28.md) for evidence and deployment limits.
+The visual curves and analytical semantics remain protected by the current chart/visual contracts. See [the audit](MARKET_DATA_AUDIT_2026_09_28.md) for the September incident evidence and [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) for current production policy.
+
+## Reports workspace integration
+
+Stage 5 reorganized Reports without rewriting these calculations.
+
+The same trusted analytics surfaces now live inside the dedicated **Analytics** workspace, while Overview consumes diagnostic summaries and promotes into the full workspace when deeper inspection is requested. Report mode persistence is presentation state only and does not alter analytics math.
+
+## Corporate-action analytics
+
+Supported bonus-share corporate actions are quantity/cost-basis adjustments, not external cash flows.
+
+Historical/Today analytics must not create artificial profit/loss solely because share count increased and the market price mechanically adjusted. The corporate-action ledger remains the source of the quantity event; missing market observations are still never synthesized.
+
+See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).

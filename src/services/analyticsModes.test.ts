@@ -72,11 +72,12 @@ const result: UnifiedAnalyticsResult = {
 };
 
 describe('analytics modes', () => {
-  it('defines the four agreed chart modes', () => {
+  it('defines the analytics chart modes including benchmark comparison', () => {
     expect(getAnalyticsModeDefinition('PORTFOLIO_RETURN').valueKind).toBe('egp');
     expect(getAnalyticsModeDefinition('PORTFOLIO_DEPOSITS').secondaryKey).toBe('netDeposits');
     expect(getAnalyticsModeDefinition('TWR').primaryKey).toBe('twrPercent');
     expect(getAnalyticsModeDefinition('MWR').primaryKey).toBe('mwrrPercent');
+    expect(getAnalyticsModeDefinition('BENCHMARKS').primaryKey).toBe('twrPercent');
   });
 
   it('summarizes portfolio value and selected-period return without counting deposits as profit', () => {
@@ -96,5 +97,6 @@ describe('analytics modes', () => {
   it('uses the engine TWR and MWR summaries directly', () => {
     expect(analyticsModeSummary(result, 'TWR').primaryValue).toBe(7);
     expect(analyticsModeSummary(result, 'MWR').primaryValue).toBe(6.8);
+    expect(analyticsModeSummary(result, 'BENCHMARKS').primaryValue).toBe(7);
   });
 });

@@ -176,7 +176,7 @@ Before calling the migration stable, verify directly against persisted data:
 6. a legitimately sparse/illiquid ticker is not rejected merely for missing minutes;
 7. same-session executions between old 15m boundaries enter the finer path at the correct time;
 8. opening equity, cash accounting, external flows, final authoritative NAV/P&L and TWR/MWR semantics remain stable across interval changes;
-9. after midnight/weekends/closed dates, the reader uses the latest real session and does not synthesize a new one;
+9. Cairo midnight does not create a new Today session: before 10:00 Cairo on an EGX weekday the reader uses the previous trading weekday, while weekends resolve to the previous trading weekday; once a requested session date is chosen, missing candles do not authorize switching to a different date;
 10. resolver logs preserve failed attempts, such as NAPR ticker failure followed by ISIN success.
 
 A reported `repaired1mGaps` sync metric is source-backed: it counts TradingView observations that were absent at or before the previously persisted latest raw timestamp. It must not interpret a no-trade minute as a gap.

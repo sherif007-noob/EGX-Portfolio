@@ -4,7 +4,8 @@ export type AnalyticsChartMode =
   | 'PORTFOLIO_RETURN'
   | 'PORTFOLIO_DEPOSITS'
   | 'TWR'
-  | 'MWR';
+  | 'MWR'
+  | 'BENCHMARKS';
 
 export interface AnalyticsModeDefinition {
   mode: AnalyticsChartMode;
@@ -50,6 +51,14 @@ export const ANALYTICS_MODES: AnalyticsModeDefinition[] = [
     valueKind: 'percent',
     primaryKey: 'twrPercent',
     primaryLabel: 'TWR',
+  },
+  {
+    mode: 'BENCHMARKS',
+    label: 'Portfolio vs Benchmarks',
+    description: 'Flow-neutral portfolio performance vs EGX30, EGX70 and EGX100, normalized from the selected-period baseline.',
+    valueKind: 'percent',
+    primaryKey: 'twrPercent',
+    primaryLabel: 'Portfolio',
   },
   {
     mode: 'MWR',
@@ -117,7 +126,7 @@ export function analyticsModeSummary(
     };
   }
 
-  if (mode === 'TWR') {
+  if (mode === 'TWR' || mode === 'BENCHMARKS') {
     return {
       primaryValue: result.summary.twrPercent,
       changeEgp: null,

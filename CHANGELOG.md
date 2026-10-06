@@ -6,17 +6,50 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 
 ## Unreleased
 
-### Analytics
-
-- Added shared Today/1W/1M/90D/YTD/All portfolio analytics.
-- Added Portfolio vs Return, Portfolio vs Net Deposits, TWR, and MWR chart modes.
-- Added 15-minute transaction-aware Today reconstruction.
-- Added performance drawdown, cumulative-fee, and realized-vs-unrealized P&L charts.
-- Standardized dark chart tooltips, crosshairs, axes, empty states, and mobile resize behavior.
-
 ### Documentation
 
-- Added full project documentation covering architecture, development, data model, API routes, authentication/security, analytics, testing, operations, troubleshooting, contribution workflow, and security policy.
+- Reconciled the current documentation authorities after Stage 5 closure and advanced the documented execution point to Stage 6.1 Broker Reconciliation.
+
+## 2026-10
+
+### Financial integrity
+
+- Closed Stage 2 around one persist-confirmed ledger mutation boundary for BUY/SELL, transaction correction/deletion, cash events, OCR/import, reconciliation and restore/import.
+- Froze weighted-average / proportional cost-basis semantics and separated contributed-capital, performance-cash and bookkeeping-reconciliation cash flows.
+- Removed independent Position/Closed Cycle accounting deletion and hidden trade cash modes.
+
+### Production and architecture
+
+- Made `main` the sole production/default branch authority and normalized GitHub Actions/Node/npm production workflows.
+- Added the exact-head production candidate gate and read-only Data Health Center.
+- Closed Stage 4 architecture consolidation: app-shell orchestration, portfolio state/hydration/ledger/repository ownership, shared Worker/Express API contracts, and explicit CSS ownership layers.
+- Kept Stage 3.5 live-session ingestion soak open as deferred technical debt after the October 4 failure.
+
+### Market data and analytics
+
+- Promoted raw TradingView 1m observations as recent intraday truth with deterministic persisted 1m → 5m derivation and legacy 15m fallback.
+- Added coverage-aware Today resolution plus manual `Auto | 1m | 5m | 15m | 1h`; 1h is derived client-side from observed data.
+- Preserved strict same-session behavior and no-fabrication rules for missing market observations.
+- Kept synchronized primary/secondary analytics, 1W transition behavior, realized trajectory, monthly audit and trading statistics under regression coverage.
+
+### Reports workspace
+
+- Closed Stage 5 Reports redesign with internal Overview / Analytics / Trading / Allocation / Monthly modes.
+- Added remembered last mode, diagnostic Overview with one-at-a-time progressive disclosure, direct full-report promotion, responsive workspace validation and shared reduced-motion behavior.
+- Restored the Reports structural selector to the accepted glass/refraction/aura visual language and froze the inspected rendered result by exact hash without relaxing the global 1% visual threshold.
+
+### Corporate actions
+
+- Added explicit `CORPORATE_ACTION` ledger support and the first end-to-end action: `BONUS_SHARES`.
+- Bonus shares increase broker-credited quantity with zero cash impact and unchanged invested cost, preserve effective-date entitlement/source-share guards, and remain neutral to historical/Today analytics across mechanical price adjustment.
+- Reserved broader corporate-action types for Stage 6.3 rather than partially implementing them.
+
+### Validation
+
+- Stage 5 R8 validated runtime `main@5152ca2b` passed Quality Checks, Phase 10 Visual Closure and Rendered Visual Regression.
+- Full suite: **139 / 139 test files, 734 / 734 tests**.
+- Production build and Cloudflare Worker dry-run passed.
+- **12 / 12** responsive geometries remained at **0px overflow**.
 
 ## 2026-09
 

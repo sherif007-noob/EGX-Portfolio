@@ -1482,7 +1482,7 @@ Each expanded preview gets a clear full-report action.
 
 ---
 
-## R5 — Persistence/restoration polish — NEXT
+## R5 — Persistence/restoration polish — ACTIVE / VALIDATION CANDIDATE
 
 Validate:
 

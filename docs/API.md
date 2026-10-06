@@ -2,9 +2,11 @@
 
 ## Overview
 
-The Express server in `server.ts` provides integration endpoints for market data, Google Sheets, health checks, and retained legacy migration/server-persistence paths.
+The application exposes one shared API contract across the production Cloudflare Worker (`worker.ts`) and the local/compatibility Express runtime (`server.ts`).
 
-Normal browser portfolio persistence now uses the authenticated Supabase browser client directly with RLS. The `/api/supabase/*` routes remain available as a server-side compatibility path but are not the primary browser data path.
+Shared route constants live in `src/api/contracts.ts`. The two runtimes must preserve the same request/auth/error contract where a route is supported.
+
+Normal browser portfolio persistence uses the authenticated Supabase browser client directly with RLS. The `/api/supabase/*` routes remain as server-side compatibility/repair paths and are not the primary browser accounting path.
 
 ## Health
 
@@ -191,6 +193,23 @@ Optional:
 ```text
 &startDate=2026-01-01&endDate=2026-12-31
 ```
+
+
+### POST /api/supabase/price-history/ensure
+
+Authenticated historical-coverage repair compatibility route.
+
+The current app may use this path when daily historical coverage is missing. Repair behavior remains ledger/ticker-aware and must not fabricate prices.
+
+### POST /api/supabase/intraday-history/ensure
+
+Retained compatibility route for older clients.
+
+- the current browser no longer relies on startup intraday repair;
+- production intraday ingestion is owned by trusted Node/GitHub Actions;
+- the Cloudflare path intentionally returns a successful deprecated no-op rather than opening TradingView history ingestion inside the Worker.
+
+Do not reintroduce browser-triggered or Worker-WebSocket intraday repair.
 
 ## Legacy Firestore migration endpoint
 

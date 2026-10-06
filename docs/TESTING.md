@@ -18,20 +18,18 @@ These are the same core checks run by `.github/workflows/quality.yml`.
 
 ## Current validated runtime evidence
 
-The current validated runtime baseline is `main@5152ca2b` (Stage 5 / Reports R8 closure).
+The latest runtime feature head is `main@9f6cdcea` (Stage 7.1 benchmark comparison + Today Cairo-session boundary fix).
 
-Same-head evidence:
+Current evidence:
 
-- Quality Checks **#37502935404** — passed;
-- Phase 10 Visual Closure **#37502935456** — passed;
-- Rendered Visual Regression **#37502935538** — passed;
-- full Vitest: **139 / 139 files, 734 / 734 tests**;
-- production Vite/PWA build: passed;
-- Cloudflare Worker dry-run: passed;
-- responsive geometry: **12 / 12 at 0px page overflow**;
-- the inspected Reports selector-aura screenshot is exact-hash accepted at **23.556%** while all other tracked states remain below the frozen 1% threshold.
+- Quality Checks **#37546024261** on `main@9f6cdcea` — passed;
+- full Vitest: **140 / 140 files, 739 / 739 tests**;
+- production build: passed;
+- the first Rendered Visual Regression on this head kept **12 / 12 geometries at 0px overflow** and every tracked screenshot on its accepted diff profile, including Reports at **23.556%**;
+- that run failed only because the Stage 5 R8 browser interaction harness used a global `Analytics timeframe` locator that became ambiguous after the benchmark-capable analytics surface was added;
+- the harness is now scoped to the active Reports Analytics workspace and must return green before Stage 7.1 is called fully rendered-closure accepted.
 
-Documentation-only commits may be newer than this validated runtime baseline.
+Documentation-only commits may be newer than the runtime feature head.
 
 ## Test areas
 
@@ -85,6 +83,18 @@ Covers historical valuations, external cash flows, MWRR, and drawdown.
 
 Covers equity bridges and fee-aware portfolio performance math.
 
+### Portfolio benchmarks
+
+`src/services/portfolioBenchmarks.test.ts`
+
+Covers:
+
+- EGX30 / EGX70 EWI / EGX100 EWI normalized-return construction;
+- selected-period beginning-of-period baseline alignment;
+- latest-at-or-before observation alignment without future look-ahead;
+- intraday benchmark normalization;
+- portfolio-minus-index relative return.
+
 ### Portfolio metrics
 
 `src/utils/portfolioMetrics.test.ts`
@@ -133,7 +143,8 @@ The 1-minute migration is validated by the focused smoke workflow and the follow
 - `intradayBackfillPlan.test.ts` — full-derived bootstrap, raw-tier backfill and incremental overlap planning;
 - `intradayAggregation.test.ts` — deterministic 1m -> 5m OHLCV, sparse-minute behavior and persisted-raw precedence;
 - `intradayTickerUniverse.test.ts` — held/session-traded tickers, same-day round trips, normalization and CASH exclusion;
-- `intradayResolution.test.ts` — 1m/5m/15m fallback, incomplete 1m rejection, sparse illiquid acceptance, Cairo date handling, post-midnight and closed-session fallback;
+- `intradayResolution.test.ts` — 1m/5m/15m fallback, incomplete 1m rejection, sparse illiquid acceptance, Cairo date handling and same-session selection;
+- `todayIntraday.test.ts` — Cairo calendar-day UTC bounds, midnight behavior, summer/winter DST offsets, same-session loading and resolution fallback;
 - `tradingViewSymbolResolver.test.ts` — ticker/canonical/ISIN resolution behavior;
 - `intradayAnalyticsEngine.test.ts` — transaction timing, post-close endpoint pinning, authoritative session-cash reconstruction, stale-opening-capital regression, and 1m/5m/15m accounting invariants.
 
@@ -541,6 +552,12 @@ Current establishment evidence:
 - required-baseline comparison #36918687347 passed **16/16 at 0.000% diff** and **12/12 geometry checks at 0px page overflow**.
 
 The bootstrap inspection also caught a Supabase configuration message in the analytics screenshot. That image was rejected and the visual fixture was corrected before baseline promotion. Never refresh baselines merely to make a regression pass; first decide whether the visual change is intentional.
+
+### Stage 7.1 interaction-harness compatibility
+
+Adding the benchmark analytics mode exposed that the R8 browser closure's global accessible-role lookup could match more than one Analytics timeframe group. The closure harness now scopes Analytics timeframe, Today resolution and realized-trajectory controls to `[data-reports-workspace="analytics"]`.
+
+This is a test-harness ownership fix, not a visual-baseline change.
 
 ### Stage 5 Reports interaction closure
 

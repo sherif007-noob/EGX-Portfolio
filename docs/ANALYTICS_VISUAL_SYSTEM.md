@@ -133,6 +133,8 @@ This removes the earlier mix of default Recharts white tooltips and independent 
 
 The Today portfolio chart uses a **linear, unsmoothed path** because intraday observations are discrete market/accounting observations at the selected resolution.
 
+Today session ownership is EGX-session based, not midnight based: before 10:00 Cairo on a normal trading weekday the chart still represents the previous trading session; from 10:00 it represents the current date. This session switch must not alter the accepted linear visual treatment or manufacture an empty midnight session.
+
 Longer daily timeframes may use restrained visual interpolation where appropriate, provided the plotted points remain the actual calculated observations.
 
 ## Mobile rules

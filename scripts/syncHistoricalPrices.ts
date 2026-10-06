@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { canonicalizeEGXSymbol } from '../src/data/egxTickers';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
+import { PORTFOLIO_BENCHMARKS } from '../src/services/portfolioBenchmarks';
 import {
   buildHistoricalRepairPlans,
   type HistoryCoverageRequirement,
@@ -125,6 +126,13 @@ async function loadCoverageRequirements(
   }
   for (const row of positions ?? []) {
     setEarliestRequirement(byTicker, row.ticker, row.buy_date);
+  }
+
+  const portfolioStartDate = [...byTicker.values()].sort()[0];
+  if (portfolioStartDate) {
+    for (const benchmark of PORTFOLIO_BENCHMARKS) {
+      setEarliestRequirement(byTicker, benchmark.ticker, portfolioStartDate);
+    }
   }
 
   const explicitTickers = process.env.EGX_HISTORY_TICKERS

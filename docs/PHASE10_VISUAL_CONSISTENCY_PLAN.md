@@ -6,7 +6,7 @@
 
 Phase 10 begins only after the accepted Phase 8 material/hierarchy system and the Phase 9 header architecture are treated as frozen dependencies.
 
-**Master-roadmap ownership:** this plan is the now-complete Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. The next implementation pass is **Stage 2.1 — Canonical financial mutation executor**. Phase 10 remains the closure/freeze authority for the accepted visual system.
+**Master-roadmap ownership:** this plan is the now-complete Stage 1 of `MASTER_STABILIZATION_ROADMAP.md`. At Phase 10 closure the next pass was Stage 2.1; Stages 2, 4 and 5 have since closed. Use `STATUS.md` for the current execution point. Phase 10 remains the closure/freeze authority for the accepted visual system.
 
 The purpose of Phase 10 is **consistency, not redesign**.
 

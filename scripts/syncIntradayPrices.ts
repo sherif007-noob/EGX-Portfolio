@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
+import { PORTFOLIO_BENCHMARKS } from '../src/services/portfolioBenchmarks';
 
 type HistoryBar = [number, number, number, number, number, number?];
 
@@ -65,7 +66,7 @@ async function resolveTickerUniverse(
     ?.split(',')
     .map(normalizeTicker)
     .filter(Boolean);
-  if (explicit?.length) return [...new Set(explicit)];
+  if (explicit?.length) return [...new Set([...explicit, ...PORTFOLIO_BENCHMARKS.map((item) => item.ticker)])];
 
   const [{ data: transactions, error: txError }, { data: positions, error: positionError }] = await Promise.all([
     sb
@@ -84,6 +85,7 @@ async function resolveTickerUniverse(
       [...(transactions ?? []), ...(positions ?? [])]
         .map((row: any) => normalizeTicker(String(row.ticker || '')))
         .filter((ticker) => ticker && ticker !== 'CASH'),
+      ...PORTFOLIO_BENCHMARKS.map((item) => item.ticker),
     ),
   ].sort();
 }

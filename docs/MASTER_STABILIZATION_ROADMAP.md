@@ -1645,13 +1645,11 @@ These features come after trust/accounting foundations.
 
 ## Pass 7.1 — Benchmark comparison
 
-Add benchmark series such as EGX30, and later EGX70/EGX100 where appropriate.
+**Status: implemented on main (2026-10-07).**
 
-For a selected timeframe show:
+Main Analytics now compares flow-neutral portfolio TWR against EGX30, EGX70 EWI and EGX100 EWI. Every series is normalized from the selected-period baseline and the UI exposes portfolio-minus-index relative return for explicit outperformance/underperformance measurement.
 
-- portfolio return;
-- benchmark return;
-- relative return.
+Daily benchmark history is persisted through the scheduled TradingView history pipeline. The 1m/5m intraday ingestion universes also include the three benchmark indices so Today can use the same trustworthy session/resolution policy as portfolio analytics.
 
 Do not reinterpret this as investment advice; it is contextual measurement.
 

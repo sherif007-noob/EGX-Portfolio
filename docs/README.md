@@ -42,7 +42,7 @@ When a historical phase log conflicts with one of these about current behavior, 
 | [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md) | **master sequencing authority** |
 | [PHASE10_VISUAL_CONSISTENCY_PLAN.md](PHASE10_VISUAL_CONSISTENCY_PLAN.md) | **closed Stage 1 reference; visual system CLOSED / CI CLEAN** |
 | [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) | **closed Stage 5 reference; R1–R8 accepted / CI + rendered green** |
-| [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | migration/rollout reference; remaining promotion evidence still relevant |
+| [INTRADAY_1M_MIGRATION_PLAN.md](INTRADAY_1M_MIGRATION_PLAN.md) | promoted migration/history reference; Stage 3.5 live-session soak/remediation remains relevant |
 
 ---
 

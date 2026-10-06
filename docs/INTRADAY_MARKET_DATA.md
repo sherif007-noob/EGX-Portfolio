@@ -4,7 +4,7 @@
 
 The intraday market-data layer provides real EGX observations for Today analytics without fabricating market points.
 
-The target and current Premium architecture is:
+The current production architecture on `main` is:
 
 ```text
 TradingView 1m
@@ -113,7 +113,7 @@ They are migration bootstrap/fallback data, not a reason to fabricate older 1-mi
 
 ### Legacy 15-minute fallback
 
-The old 15-minute dataset remains available during rollout. It is not deleted until the new pipeline has been observed reliably across multiple sessions.
+The old 15-minute dataset remains available as a rollback/fallback tier. It is not deleted until the raw-1m/derived-5m pipeline passes the outstanding multi-session/live-session reliability evidence, including the deferred Stage 3.5 soak.
 
 ## Ticker resolution
 
@@ -236,21 +236,19 @@ A complete live snapshot may be appended only to the same Cairo session date. Ev
 
 ## Workflow scheduling
 
-Primary workflow:
+Primary production workflow:
 
 ```text
 .github/workflows/intraday-1m-sync.yml
 ```
 
-On the Premium branch it is configured for:
+Current cron on the default/production `main` branch:
 
 ```text
 */5 7-13 * * 0-4
 ```
 
-GitHub cron is UTC. The Node script applies the authoritative Cairo-local session gate and post-close grace window, so the broad UTC window safely covers Cairo DST changes.
-
-Important: GitHub scheduled workflows execute from the repository default branch. The Premium schedule is staged code and does not become the production scheduler until that branch is intentionally promoted.
+GitHub cron is UTC. The Node script applies the authoritative Cairo-local session gate and accepts scheduled ingestion through **15:15 Cairo**, so the broad UTC window safely covers DST and delayed final observations.
 
 Legacy direct-TradingView 5-minute workflow:
 
@@ -258,9 +256,9 @@ Legacy direct-TradingView 5-minute workflow:
 .github/workflows/intraday-prices.yml
 ```
 
-is manual-only. It remains a repair/rollback tool and is no longer a competing scheduled producer.
+is manual-only. It remains a repair/rollback tool and is not a competing scheduled producer.
 
-Both reviewed workflows share the same concurrency group and queue rather than cancelling an active writer. The old workflow on main uses a different group until rollout; retire that scheduled producer during promotion.
+Writer workflows use the normalized concurrency contract so an active ingestion run is queued rather than silently replaced by another producer.
 
 ## Commands
 
@@ -347,10 +345,12 @@ The smoke workflow typechecks and runs the intraday regression suite before writ
 - Do not trigger history repair from the browser.
 - Preserve 15m fallback until rollout observation is complete.
 
-See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the canonical 15-phase rollout status.
+See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the implementation history and the remaining rollout/legacy-retirement evidence.
 
-## September 28 audit and repair
+## September 28 audit and current rollout debt
 
-See [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) for confirmed production evidence, implementation changes, verification, and the remaining scheduler promotion step.
+See [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) for the dated incident/root-cause evidence. Scheduler promotion described in that audit is historical: `main` is now production authority and raw-1m ingestion is scheduled there.
 
-Manual ingestion now resolves the latest EGX session rather than using the calendar day after midnight. Set `EGX_INTRADAY_SKIP_RETENTION=true` for a repair that must not prune old rows. Normal scheduled retention remains 30/90 days.
+Manual ingestion resolves the latest EGX session rather than using the calendar day after midnight. Set `EGX_INTRADAY_SKIP_RETENTION=true` for a repair that must not prune old rows. Normal scheduled retention remains 30/90 days.
+
+The remaining trust gap is Stage 3.5 live-session soak/remediation. Legacy 15m must not be retired until the scheduled writer proves reliable across the required live-session evidence.

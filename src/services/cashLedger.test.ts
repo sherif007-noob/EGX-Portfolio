@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyCashLedgerEvent, changeCashLedgerEntry, buildCashHistory, rebuildAfterLedgerChange } from './cashLedger';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import type { TradeTransaction } from '../types';
@@ -17,7 +17,24 @@ function expectReloadStable(state: ReturnType<typeof applyCashLedgerEvent>) {
   expect(report.reconciledClosedTrades).toEqual(state.closedTrades);
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('cash ledger events', () => {
+  it('defaults new cash events to the Cairo calendar date across UTC midnight', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-06T22:08:55.000Z')); // 01:08 Cairo on Oct 7
+
+    const next = applyCashLedgerEvent(
+      { ...legacy(), transactions: [], capitalDeposits: 0 },
+      'DEPOSIT',
+      20000,
+    );
+
+    expect(next.transaction.date).toBe('2026-10-07');
+  });
+
   it('carries legacy opening capital into the ledger once on the first deposit', () => {
     const first = applyCashLedgerEvent(legacy(), 'DEPOSIT', 200);
     expect(first.cashBalance).toBe(999);

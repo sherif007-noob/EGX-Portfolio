@@ -340,6 +340,8 @@ async function recordReportsClosure(reportEntry) {
     const analyticsWorkspace = page.locator('[data-reports-workspace="analytics"]');
     await analyticsWorkspace.waitFor({ state: 'visible' });
 
+    // Scope controls to the active Reports Analytics workspace. The same
+    // analytics component may exist elsewhere in the deterministic app shell.
     const analyticsTimeframe = analyticsWorkspace.getByRole('group', { name: 'Analytics timeframe' });
     const oneWeek = analyticsTimeframe.getByRole('button', { name: '1W', exact: true });
     await oneWeek.click();

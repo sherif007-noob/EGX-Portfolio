@@ -8,11 +8,11 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 
 ## Snapshot
 
-**Date:** 2026-10-05  
+**Date:** 2026-10-06  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `470b3ce8` — Stage 4 CLOSED / Stage 4.5.6 responsive + feature/legacy closure
-**Current full verification:** on `main@470b3ce8`, Quality Checks #37375408314 passed TypeScript, **128 / 128 test files, 680 / 680 tests**, and production build; Phase 10 Visual Closure #37375408211 passed the same full suite, production Vite/PWA build, Cloudflare Worker dry-run and all 16 rendered states; Rendered Visual Regression #37375408191 independently passed all 16 states.
+**Current validated runtime head:** `33ab8278` — Stage 5 / Reports R6 responsive workspace accepted
+**Current full verification:** on `main@33ab8278`, Quality Checks #37432757200 passed; Phase 10 Visual Closure #37432757207 passed; Rendered Visual Regression #37432757249 passed. The R6 Reports geometry matrix covers phone, short landscape, tablet, desktop and 2XL while retaining the existing golden screenshot set.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -121,8 +121,9 @@ Next:
 3. **Stage 5 / Reports R3 — Diagnostic Reports Overview — ACCEPTED / CI + RENDERED GREEN** at `main@a39d7fd9`; Quality #37388874197, Phase 10 #37388874006 and Rendered #37388874168 passed after the inspected Reports baseline was accepted.
 4. **Stage 5 / Reports R4 — Progressive disclosure — ACCEPTED / SOURCE GREEN + INSPECTED VISUAL ACCEPTANCE** at implementation head `main@5b1af622`: Quality #37430549239 and Intraday Smoke #37430549221 passed; Rendered #37430549099 changed only `reports-desktop` beyond threshold at **22.311%**. The inspected compact Overview is accepted by exact SHA-256 `105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e`; the global 1% threshold remains unchanged.
 5. **Stage 5 / Reports R5 — Persistence/restoration polish — MERGED / SOURCE + RENDERED GREEN** at `main@7524a09c`: lazy synchronous restoration remains first-render authoritative; navigation and R4 direct-open actions share one atomic `persist → setState` handler; Quality #37432207590, Intraday Smoke #37432207619 and Rendered #37432207600 passed. Phase 10 closure is still finishing.
-6. **Stage 5 / Reports R6 — Responsive workspace pass — ACTIVE / VALIDATION CANDIDATE**: the rendered harness now exercises Reports at phone, short landscape, tablet, desktop and 2XL; it validates the one-row mode rail, default and expanded Overview, every full workspace, page/stage containment, chart/table bounds and existing safe-area contracts without adding new golden screenshots.
-7. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+6. **Stage 5 / Reports R6 — Responsive workspace pass — ACCEPTED / CI + RENDERED GREEN** at `main@33ab8278`: Quality #37432757200, Phase 10 #37432757207 and Rendered #37432757249 passed. The rendered harness covers phone, short landscape, tablet, desktop and 2XL; it validates the one-row mode rail, default and expanded Overview, every full workspace, page/stage containment, chart/table bounds and existing safe-area contracts without adding new golden screenshots.
+7. **Stage 5 / Reports R7 — Motion/state polish — ACTIVE / IMPLEMENTATION CANDIDATE**: workspace mode changes keep the accepted `MotionSwap` state choreography; diagnostic expansion/collapse now uses a shared React-owned `DisclosurePresence` lifecycle with exit presence and a reduced-motion opacity-only path. First-render mode restoration and existing loading/empty-state owners remain unchanged.
+8. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 

@@ -34,7 +34,6 @@ import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEn
 import { deriveCanonicalCapitalDeposits } from '../../services/portfolioReconciliation';
 import {
   PORTFOLIO_BENCHMARKS,
-  benchmarkRelativeReturn,
   buildDailyBenchmarkComparison,
   buildIntradayBenchmarkComparison,
   type PortfolioBenchmarkTicker,
@@ -999,6 +998,23 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             {isPercentMode && (
               <>
                 <div className="text-[11px] text-slate-400">{selectedLabel}</div>
+                {isBenchmarksMode && benchmarkComparison.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] sm:justify-end">
+                    {PORTFOLIO_BENCHMARKS.map((benchmark) => {
+                      const latest = benchmarkComparison.at(-1);
+                      const benchmarkValue = latest?.[benchmark.ticker];
+                      const relative =
+                        latest && Number.isFinite(benchmarkValue)
+                          ? latest.portfolioReturnPercent - Number(benchmarkValue)
+                          : null;
+                      return (
+                        <span key={benchmark.ticker} className={signedToneClass(relative)}>
+                          {benchmark.label}: {relative == null ? '—' : `${formatAnalyticsPercent(relative, true)} relative`}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
                 {mode === 'MWR' && timeframe === 'ALL' && result?.summary.annualizedMwrrPercent != null && (
                   <div className="text-[10px] text-slate-500 mt-0.5">
                     Annualized XIRR: {formatAnalyticsPercent(result.summary.annualizedMwrrPercent, true)}
@@ -1060,17 +1076,28 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         </div>
       </div>
 
-      {definition.secondaryKey && chartData.length >= 2 && !loading && (
+      {(definition.secondaryKey || isBenchmarksMode) && chartData.length >= 2 && !loading && (
         <ChartLegend
           ariaLabel={`${definition.label} series`}
-          items={[
-            { label: definition.primaryLabel, color: primaryStroke, kind: 'solid' },
-            {
-              label: definition.secondaryLabel ?? 'Comparison',
-              color: ANALYTICS_CHART_THEME.purple,
-              kind: 'dashed',
-            },
-          ]}
+          items={
+            isBenchmarksMode
+              ? [
+                  { label: 'Portfolio', color: primaryStroke, kind: 'solid' },
+                  ...PORTFOLIO_BENCHMARKS.map((benchmark) => ({
+                    label: benchmark.label,
+                    color: benchmarkColors[benchmark.ticker],
+                    kind: 'dashed' as const,
+                  })),
+                ]
+              : [
+                  { label: definition.primaryLabel, color: primaryStroke, kind: 'solid' },
+                  {
+                    label: definition.secondaryLabel ?? 'Comparison',
+                    color: ANALYTICS_CHART_THEME.purple,
+                    kind: 'dashed',
+                  },
+                ]
+          }
           className="px-1"
         />
       )}
@@ -1142,6 +1169,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
               />
               {renderPrimaryArea()}
               {renderSecondaryLine()}
+              {renderBenchmarkLines()}
             </AreaChart>
           </ResponsiveContainer>
           )}

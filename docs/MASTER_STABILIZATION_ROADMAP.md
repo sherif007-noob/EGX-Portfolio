@@ -1493,29 +1493,39 @@ Validate:
 
 ---
 
-## R6 — Responsive workspace pass — ACTIVE / VALIDATION CANDIDATE
+## R6 — Responsive workspace pass — ACCEPTED / CI + RENDERED GREEN
 
-Validate phone, short landscape, tablet, desktop and 2XL.
+Validated phone, short landscape, tablet, desktop and 2XL through PR #97 at `main@33ab8278`.
 
 The Reports navigation stays one horizontal row on small screens.
 
 Full workspaces retain chart/table safety.
 
+Main-push acceptance:
+- Quality Checks #37432757200 passed;
+- Phase 10 Visual Closure #37432757207 passed;
+- Rendered Visual Regression #37432757249 passed.
+
 ---
 
-## R7 — Motion/state polish
+## R7 — Motion/state polish — ACTIVE / IMPLEMENTATION CANDIDATE
 
 Reuse existing motion language.
 
 No new Reports-only animation system.
 
-Cover:
+Candidate:
+- mode swaps remain owned by the existing `MotionSwap` state variant;
+- preview expansion/collapse uses a shared React-owned `DisclosurePresence` primitive so exit motion completes before unmount;
+- synchronous remembered-mode restoration remains unchanged;
+- existing loading/empty-state owners remain authoritative;
+- reduced-motion disclosure is opacity-only with no spatial choreography;
+- no Reports-specific CSS keyframes or breakpoint motion rules are added.
 
-- mode swap;
-- preview expansion;
-- loading;
-- empty state;
-- reduced motion.
+Gate:
+- TypeScript, full tests and production build green;
+- rendered Reports regression and responsive geometry green;
+- no analytical or persistence behavior change.
 
 ---
 

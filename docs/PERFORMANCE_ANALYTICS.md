@@ -405,6 +405,30 @@ Today · 1W · 1M · 90D · YTD · All
 - Tooltips, axes, crosshairs, empty states, EGP formatting, and percentage formatting use the shared Phase 3 analytics theme.
 
 
+### Portfolio vs Benchmarks
+
+The primary analytics card also supports a flow-neutral benchmark comparison mode:
+
+```text
+Portfolio (TWR)
+EGX30
+EGX70 EWI
+EGX100 EWI
+```
+
+All four series are expressed as percentage return and normalized from the selected-period beginning-of-period baseline. The portfolio leg uses TWR so deposits and withdrawals cannot create artificial outperformance or underperformance.
+
+Benchmark observations use the latest trustworthy index observation at or before each portfolio valuation timestamp; future index observations are never carried backward. Daily comparison uses persisted TradingView daily history. Today uses the same selected trustworthy intraday resolution as the portfolio chart, including the optional 1h display aggregation.
+
+The UI exposes relative return as:
+
+```text
+portfolio TWR - benchmark normalized return
+```
+
+A positive relative value means portfolio outperformance over the selected period; a negative value means underperformance. Missing benchmark data remains missing and does not invalidate the portfolio analytics series.
+
+
 ## Secondary analytics
 
 Phase 6 adds secondary analytical views that reuse the same selected timeframe and valuation result as the primary analytics card.

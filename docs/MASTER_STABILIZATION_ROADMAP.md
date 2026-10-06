@@ -21,8 +21,8 @@ When this roadmap conflicts with an older phase document about *when* work shoul
 
 Current detailed subplans retained as dependencies:
 
-- `PHASE10_VISUAL_CONSISTENCY_PLAN.md` — active visual closure contract;
-- `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` — detailed Reports workspace design, integrated here as Stage 5;
+- `PHASE10_VISUAL_CONSISTENCY_PLAN.md` — closed Stage 1 visual-freeze reference;
+- `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` — closed Stage 5 Reports workspace authority;
 - `INTRADAY_1M_MIGRATION_PLAN.md` — intraday migration history and rollout rules;
 - `PREMIUM_VISUAL_LANGUAGE_CONTRACT.md` — frozen visual/material contract;
 - `INTRADAY_MARKET_DATA.md`, `PERFORMANCE_ANALYTICS.md`, and `TICKER_REGISTRY.md` — canonical domain behavior.
@@ -1857,10 +1857,10 @@ This is a personal portfolio system. Reliability has higher value than product-s
 | App/usePortfolioState are oversized | Stage 4.2–4.3 |
 | Worker/Express drift risk | Stage 4.4 |
 | 5,000+ line CSS cascade | Stage 4.5 |
-| Reports is a long scrolling workspace | Stage 5 / R1–R8 |
+| Reports long-page information architecture | Stage 5 / R1–R8 — CLOSED |
 | Need broker truth reconciliation | Stage 6.1 |
 | Need correction traceability | Stage 6.2 |
-| Corporate actions missing | Stage 6.3 |
+| Corporate actions partially implemented (BONUS_SHARES); full lifecycle still incomplete | Stage 6.3 |
 | Dividends lack source attribution | Stage 6.4 |
 | No benchmark context | Stage 7.1 |
 | Risk controls underused analytically | Stage 7.2 |
@@ -1897,6 +1897,8 @@ For financial/data changes also require:
 
 The implementation sequence is now:
 
-> **Stage 4 is CLOSED at `main@470b3ce8`. Reports R1 is ACCEPTED at `main@4e9203bc`. Current execution point: Stage 5 / Reports R2 — workspace split — validation candidate.**
+> **Stages 1, 2, 4 and 5 are CLOSED. Stage 3.5 remains deferred technical debt. Current execution point: Stage 6.1 — Broker reconciliation workspace.**
 
-R2 partitions the trusted existing Reports surfaces by mode without changing calculations. Overview remains deliberately transitional until R3; no R3 diagnostic redesign is mixed into R2.
+Stage 6.1 should compare broker truth with canonical app truth, explain discrepancies through source ledger events, and route corrections through explicit persist-confirmed ledger edits rather than derived-state patching.
+
+The existing BONUS_SHARES corporate-action ledger remains current functionality. Stage 6.3 must audit and extend that implementation to the full corporate-action lifecycle rather than creating a parallel model.

@@ -15,6 +15,21 @@ export function getTodayISO(): string {
 }
 
 /**
+ * Returns the current Cairo calendar date in YYYY-MM-DD format.
+ * Use this for EGX/accounting dates that must not roll over on UTC midnight.
+ */
+export function getCairoTodayISO(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${read('year')}-${read('month')}-${read('day')}`;
+}
+
+/**
  * Returns today's date in DD/MM/YYYY format.
  */
 export function getTodayDDMMYYYY(): string {

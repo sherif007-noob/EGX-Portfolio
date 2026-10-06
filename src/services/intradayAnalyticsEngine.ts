@@ -254,8 +254,8 @@ export function buildIntradayAnalyticsResult(
     }
     if (txDay > sessionDate) continue;
 
+    const ticker = normalizeIntradayTicker(tx.ticker);
     if (isBonusSharesTransaction(tx)) {
-      const ticker = normalizeIntradayTicker(tx.ticker);
       const sourceShares = Number(tx.corporateActionSourceShares);
       const bonusShares = Number(tx.shares);
       const postActionShares = sourceShares + bonusShares;
@@ -276,6 +276,14 @@ export function buildIntradayAnalyticsResult(
 
     const executed = parseMs(tx.executedAt);
     if (!Number.isFinite(executed)) {
+      if (ticker === 'CASH') {
+        // Cash-ledger rows are date-based by design. Without an explicit
+        // execution timestamp, treat a same-session cash flow as a boundary
+        // event present at the opening baseline rather than invalidating every
+        // intraday market observation. Timed CASH rows still replay at time.
+        applyTransaction(tx, state);
+        continue;
+      }
       missingTimestampIds.push(tx.id);
       continue;
     }

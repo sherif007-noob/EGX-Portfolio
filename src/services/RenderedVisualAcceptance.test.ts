@@ -6,14 +6,14 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 describe('rendered visual exact-hash acceptance', () => {
-  it('accepts only the inspected Stage 5 R4 Reports screenshot bytes', () => {
+  it('accepts only the inspected Stage 5 R8 Reports selector-aura screenshot bytes', () => {
     const manifest = JSON.parse(read('visual-regression/accepted-changes.json'));
 
     expect(Object.keys(manifest)).toEqual(['reports-desktop']);
     expect(manifest['reports-desktop'].sha256).toBe(
-      '105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e',
+      '9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3',
     );
-    expect(manifest['reports-desktop'].reason).toContain('Stage 5 R4');
+    expect(manifest['reports-desktop'].reason).toContain('Stage 5 R8');
   });
 
   it('does not weaken the global visual threshold', () => {

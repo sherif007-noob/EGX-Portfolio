@@ -1,6 +1,6 @@
 {
   "reports-desktop": {
-    "sha256": "105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e",
-    "reason": "Stage 5 R4 intentionally makes the accepted diagnostic Reports Overview progressively disclosed: Portfolio State is compact by default, the five diagnostics expose Inspect affordances, and medium-detail metrics are hidden until one preview expands. Every other tracked rendered state remains on the existing golden baseline."
+    "sha256": "9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3",
+    "reason": "Stage 5 R8 explicitly restores the Reports workspace selector to the accepted premium visual language. The Reports tab rail now uses the shared emphasized selector-shell material, aria-selected tab semantics activate the shared radial aura, and the active cyan structural tab carries visible near/far navigation glow without using financial win/loss semantics. The rendered artifact from main@a948ccdc was manually inspected; all 12 responsive geometries remained at 0px overflow and every non-Reports tracked state stayed below the global 1% threshold."
   }
 }

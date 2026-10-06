@@ -15,6 +15,7 @@ import { egxCairoSessionClock } from '../src/services/egxTradingSession';
 import { INTRADAY_POLICY } from '../src/services/intradayPolicy';
 import type { IntradayPricePoint } from '../src/services/intradayPriceStore';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
+import { PORTFOLIO_BENCHMARKS } from '../src/services/portfolioBenchmarks';
 
 type HistoryBar = [number, number, number, number, number, number?];
 type SupabaseClient = ReturnType<typeof createSupabaseClient>;
@@ -110,7 +111,7 @@ async function resolveTickerUniverse(
     .map(canonicalize)
     .filter(Boolean);
   if (explicit?.length) {
-    const tickers = [...new Set(explicit)].sort();
+    const tickers = [...new Set([...explicit, ...PORTFOLIO_BENCHMARKS.map((item) => item.ticker)])].sort();
     return {
       tickers,
       positionTickers: [],
@@ -150,7 +151,11 @@ async function resolveTickerUniverse(
     ),
   ].sort();
   const tickers = [
-    ...new Set([...positionTickers, ...sessionTransactionTickers]),
+    ...new Set([
+      ...positionTickers,
+      ...sessionTransactionTickers,
+      ...PORTFOLIO_BENCHMARKS.map((item) => item.ticker),
+    ]),
   ].sort();
 
   return {

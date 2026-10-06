@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — R1 through R4 are accepted. R5 persistence/restoration polish is next. R4 keeps the Overview compact by default, permits exactly one expanded preview, and promotes depth through the existing full workspaces without duplicating calculations.**
+**ACTIVE — R1 through R6 are accepted. R7 motion/state polish is the active implementation pass. R6 validated the Reports workspace across phone, short landscape, tablet, desktop and 2XL without adding Reports-only breakpoint styling or new golden screenshots.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -626,7 +626,7 @@ Candidate implementation:
 
 ---
 
-## Stage R6 — Responsive workspace pass — VALIDATION CANDIDATE
+## Stage R6 — Responsive workspace pass — ACCEPTED / CI + RENDERED GREEN
 
 Validate:
 
@@ -655,15 +655,35 @@ Candidate evidence layer:
 - existing tooltip, chart, table and short-landscape contracts remain source-guarded;
 - this pass adds no new Reports-only breakpoint styling and no new screenshot baselines.
 
+Acceptance record:
+- accepted through PR #97 at `main@33ab8278`;
+- Quality Checks #37432757200 passed;
+- Phase 10 Visual Closure #37432757207 passed;
+- Rendered Visual Regression #37432757249 passed;
+- the dedicated Reports geometry matrix covered 390×844 phone, 844×390 short landscape, 768×1024 tablet, 1440×1000 desktop and 2560×1440 2XL;
+- no Reports-only breakpoint styling or new golden screenshots were required.
+
 ---
 
-## Stage R7 — Motion and state polish
+## Stage R7 — Motion and state polish — ACTIVE / IMPLEMENTATION CANDIDATE
 
-- report-mode transitions;
-- expanded-preview transitions;
-- remembered-mode restoration;
-- loading/empty states;
-- reduced-motion behavior.
+Candidate implementation:
+- report-mode transitions continue through the existing `MotionSwap` state variant keyed by `reportMode`;
+- diagnostic preview enter/exit lifecycle uses one shared `DisclosurePresence` primitive built on Motion for React `AnimatePresence`;
+- the single `expandedPreview` owner remains authoritative, so only one diagnostic can be open at a time;
+- remembered mode still restores synchronously from `reports:lastMode` on first render, avoiding post-mount restoration flicker;
+- existing Analytics loading/empty surfaces and Allocation empty-state ownership remain unchanged;
+- reduced-motion users receive a short opacity-only disclosure transition with no height/y choreography;
+- no Reports-only CSS keyframes, motion tokens or breakpoint rules are introduced.
+
+Acceptance:
+- mode switching and preview expansion/collapse use the established premium motion language;
+- collapsing content remains mounted through its exit lifecycle rather than disappearing instantly;
+- reduced-motion behavior avoids spatial movement;
+- persisted-mode restoration remains first-render authoritative;
+- loading/empty states do not manufacture data or replace existing analytical owners;
+- TypeScript, full tests and production build pass;
+- rendered Reports regression and responsive geometry remain green.
 
 ---
 

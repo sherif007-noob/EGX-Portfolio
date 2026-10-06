@@ -1645,11 +1645,24 @@ These features come after trust/accounting foundations.
 
 ## Pass 7.1 — Benchmark comparison
 
-**Status: IMPLEMENTED on main / closure revalidation in progress (2026-10-07).**
+**Status: IMPLEMENTED / CI + RENDERED GREEN on main (2026-10-07).**
 
 Main Analytics now compares flow-neutral portfolio TWR against EGX30, EGX70 EWI and EGX100 EWI. Every series is normalized from the selected-period baseline and the UI exposes portfolio-minus-index relative return for explicit outperformance/underperformance measurement.
 
 Daily benchmark history is persisted through the scheduled TradingView history pipeline. The 1m/5m intraday ingestion universes also include the three benchmark indices so Today can use the same trustworthy session/resolution policy as portfolio analytics.
+
+Closure evidence:
+
+- application feature head: `main@9f6cdcea`;
+- exact validation/harness head: `main@ea1204bb`;
+- Quality Checks **#37547142039** — passed;
+- Rendered Visual Regression **#37547142047** — passed;
+- Phase 10 Visual Closure **#37547142018** — passed;
+- **140 / 140** test files, **739 / 739** tests;
+- production build + Cloudflare Worker dry-run — passed;
+- **12 / 12** responsive geometries at **0px overflow**;
+- accepted screenshot profile unchanged; Reports remains the previously accepted **23.556%** exact-hash delta;
+- the R8 browser closure is green again after scoping duplicate Analytics controls to the active Reports workspace.
 
 Do not reinterpret this as investment advice; it is contextual measurement.
 

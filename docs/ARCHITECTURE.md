@@ -2,7 +2,7 @@
 
 ## Status
 
-**Canonical current architecture for the Premium branch.**
+**Canonical current architecture for the production/default `main` branch.**
 
 For current rollout gaps and the next implementation step, see [STATUS.md](STATUS.md). For future structural changes, see [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).
 
@@ -243,7 +243,18 @@ BUY pre-validation and canonical mutation preparation now enforce the same insuf
 
 Cash reconciliation remains a separate ledger workflow; it is not a trade option.
 
-A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
+Stage 4 completed that separation without rewriting accounting behavior.
+
+Current ownership is split across:
+
+- `src/features/app-shell/*` — top-level navigation, overlay state, user workflows, historical analytics coordination and optional live-price sheet mirroring;
+- `src/features/portfolio/state/*` — local portfolio state and compatibility cache;
+- `src/features/portfolio/hydration/*` — remote hydration/subscription ownership;
+- `src/features/portfolio/ledger/*` — canonical ledger mutation hooks;
+- `src/features/portfolio/persistence/*` — repository/persistence actions;
+- `src/features/reports/*` plus Reports components/services — Reports feature boundary;
+- `src/api/contracts.ts` and shared runtime helpers — Worker/Express request/response authority;
+- `src/styles/*` — explicit token/material/semantic/hierarchy/control/overlay/motion/responsive/feature CSS ownership.
 
 ## Accounting model
 
@@ -268,7 +279,7 @@ Key services:
 - `intradayAnalyticsEngine.ts`;
 - `secondaryAnalytics.ts`.
 
-The canonical persist-before-apply mutation boundary now exists. Remaining integrity work is workflow adoption: BUY/SELL first, then transaction/cash/import workflows, followed by removal of direct Position accounting deletion and the remaining Stage 2 accounting-semantic cleanup.
+The canonical persist-before-apply mutation boundary is fully adopted across ordinary financial workflows. Stage 2 is closed: BUY/SELL, transaction correction/deletion, cash events, OCR/import, reconciliation and restore/import all route through ledger-derived reconciliation and authoritative persistence before local success.
 
 ## Market data
 
@@ -311,6 +322,20 @@ Current policy:
 
 See [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md).
 
+## Corporate actions
+
+Corporate actions are explicit transaction-ledger events, not synthetic trades or manual projection edits.
+
+The current end-to-end supported action is:
+
+- `CORPORATE_ACTION / BONUS_SHARES`.
+
+Bonus shares increase share quantity with zero cash impact and no added invested cost. Entitlement is replayed from pre-action holdings, the recorded source-share count is used as a stale-ledger guard, and future sales continue through the same weighted-average/proportional cost model.
+
+Other corporate-action types are reserved in the type vocabulary but remain unsupported until their accounting rules are implemented and tested.
+
+See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
+
 ## Ticker identity
 
 Security identity is separated from quote snapshots.
@@ -350,6 +375,20 @@ Local/Node compatibility may additionally support service-account behavior.
 
 Firebase code remains only for legacy migration and the optional Google OAuth helper; it is not the portfolio authentication/database architecture.
 
+## Reports workspace
+
+Reports is a feature-owned analytical workspace with five internal modes:
+
+- Overview;
+- Analytics;
+- Trading;
+- Allocation;
+- Monthly.
+
+`src/services/reportsWorkspace.ts` owns mode identity, defaulting and `reports:lastMode` persistence. `PerformanceReports.tsx` owns the workspace shell, while dedicated Reports components own Overview, Trading and Monthly surfaces.
+
+Overview is diagnostic and can promote directly into a full workspace. Trusted analytics/accounting components are reused rather than reimplemented.
+
 ## Scanner/alerts
 
 Price alerts and the current sector-momentum detector are client features.
@@ -364,17 +403,19 @@ The application uses `vite-plugin-pwa`.
 
 A stale service worker can make a device appear to run older code after deployment. Use the documented troubleshooting path before assuming persisted portfolio data differs.
 
-## Target structural direction
+## Current structural state
 
-No rewrite is planned.
+Stage 4 architecture consolidation is closed.
 
-After visual, financial and production stabilization, architecture will move incrementally toward:
+The accepted structure now has:
 
-- domain accounting/performance/market modules;
-- explicit Supabase repository layer;
+- feature-owned app-shell orchestration;
+- split portfolio state/hydration/ledger/repository ownership;
 - canonical ledger mutation service;
-- feature-owned UI modules;
-- shared Worker/Express request contracts;
-- layered visual CSS ownership.
+- shared Worker/Express API contracts;
+- feature-owned Reports boundary;
+- layered CSS ownership with `src/index.css` as the stable import entry.
 
-See Stage 4 in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).
+Further work should evolve these owners incrementally rather than reopening a repository-wide rewrite.
+
+See Stage 4 acceptance history and Stage 6+ sequencing in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).

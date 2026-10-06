@@ -126,7 +126,7 @@ Stage 9  Scanner/background-alert operationalization
 Stage 10 Long-term cleanup and archive closure
 ```
 
-Do not skip a stage gate merely because a later feature is more interesting.
+Default rule: do not skip a stage gate merely because a later feature is more interesting. If the user explicitly opens a later isolated pass out of sequence, record that exception; completing the later pass does not close or waive the skipped stage.
 
 ---
 
@@ -1645,7 +1645,7 @@ These features come after trust/accounting foundations.
 
 ## Pass 7.1 — Benchmark comparison
 
-**Status: implemented on main (2026-10-07).**
+**Status: IMPLEMENTED on main / closure revalidation in progress (2026-10-07).**
 
 Main Analytics now compares flow-neutral portfolio TWR against EGX30, EGX70 EWI and EGX100 EWI. Every series is normalized from the selected-period baseline and the UI exposes portfolio-minus-index relative return for explicit outperformance/underperformance measurement.
 
@@ -1860,7 +1860,7 @@ This is a personal portfolio system. Reliability has higher value than product-s
 | Need correction traceability | Stage 6.2 |
 | Corporate actions partially implemented (BONUS_SHARES); full lifecycle still incomplete | Stage 6.3 |
 | Dividends lack source attribution | Stage 6.4 |
-| No benchmark context | Stage 7.1 |
+| No benchmark context | Stage 7.1 — IMPLEMENTED |
 | Risk controls underused analytically | Stage 7.2 |
 | Notes/targets not yet a full thesis system | Stage 7.3 |
 | Execution quality unknown | Stage 8.1 |
@@ -1893,10 +1893,12 @@ For financial/data changes also require:
 
 # 17. Immediate next action
 
-The implementation sequence is now:
+Two pointers are now recorded because Stage 7.1 was explicitly implemented before Stage 6 closed:
 
-> **Stages 1, 2, 4 and 5 are CLOSED. Stage 3.5 remains deferred technical debt. Current execution point: Stage 6.1 — Broker reconciliation workspace.**
+> **Active working track: Stage 7.2 — Personal risk dashboard.**
 
-Stage 6.1 should compare broker truth with canonical app truth, explain discrepancies through source ledger events, and route corrections through explicit persist-confirmed ledger edits rather than derived-state patching.
+> **Earliest unfinished master-sequence stage: Stage 6.1 — Broker reconciliation workspace.**
+
+Stage 7.1 benchmark comparison is implemented and does not waive Stage 6. If work continues on Stage 7, proceed to 7.2. If returning to dependency order, Stage 6.1 remains the next unresolved trust/reconciliation pass.
 
 The existing BONUS_SHARES corporate-action ledger remains current functionality. Stage 6.3 must audit and extend that implementation to the full corporate-action lifecycle rather than creating a parallel model.

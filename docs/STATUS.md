@@ -116,11 +116,12 @@ Root cause is now narrowed further: the rejected hierarchy body moved a neutral 
 
 Next:
 
-1. **Stage 5 / Reports R1 — Workspace architecture — ACCEPTED / CI + RENDERED GREEN** at `main@4e9203bc`: five internal modes, dedicated horizontal Reports navigation, `reports:lastMode` persistence, safe Overview fallback, and mode-keyed MotionSwap are accepted. Quality #37378407121, Phase 10 #37378407119 and Rendered #37378407114 passed.
-2. **Stage 5 / Reports R2 — Workspace split — VALIDATION CANDIDATE**: the former long page is now partitioned into Overview / Analytics / Trading / Allocation / Monthly without rewriting calculations.
-3. Accept R2 only after TypeScript, full tests, production build and rendered regression prove the split.
-4. After R2 acceptance, begin **R3 — Diagnostic Reports Overview**.
-5. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+1. **Stage 5 / Reports R1 — Workspace architecture — ACCEPTED / CI + RENDERED GREEN** at `main@4e9203bc`.
+2. **Stage 5 / Reports R2 — Workspace split — ACCEPTED / CI + RENDERED GREEN** at `main@c71c16a4`; Overview / Analytics / Trading / Allocation / Monthly are separated without calculation rewrites.
+3. **Stage 5 / Reports R3 — Diagnostic Reports Overview — ACCEPTED / CI + RENDERED GREEN** at `main@a39d7fd9`; Quality #37388874197, Phase 10 #37388874006 and Rendered #37388874168 passed after the inspected Reports baseline was accepted.
+4. **Stage 5 / Reports R4 — Progressive disclosure — ACTIVE / VALIDATION CANDIDATE**: one diagnostic preview may expand at a time, medium-detail metrics remain inline, and each expanded preview promotes into its existing full workspace through `reportMode`.
+5. After R4 acceptance, begin **R5 — Persistence/restoration polish**.
+6. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 

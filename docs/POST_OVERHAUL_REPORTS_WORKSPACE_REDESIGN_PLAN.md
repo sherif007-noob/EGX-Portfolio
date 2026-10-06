@@ -608,7 +608,7 @@ Acceptance record:
 
 ---
 
-## Stage R5 — Persistence and restoration polish — VALIDATION CANDIDATE
+## Stage R5 — Persistence and restoration polish — MERGED / SOURCE + RENDERED GREEN
 
 Validate:
 
@@ -626,7 +626,7 @@ Candidate implementation:
 
 ---
 
-## Stage R6 — Responsive workspace pass
+## Stage R6 — Responsive workspace pass — VALIDATION CANDIDATE
 
 Validate:
 
@@ -646,6 +646,14 @@ Check:
 - chart sizing;
 - safe areas;
 - dense report tables.
+
+Candidate evidence layer:
+- `renderedRegression.mjs` opens Reports at 390×844, 844×390, 768×1024, 1440×1000 and 2560×1440;
+- the mode rail must remain one row at every tier and may scroll horizontally rather than wrap;
+- the default Overview and an expanded diagnostic preview must remain inside the viewport;
+- Analytics, Trading, Allocation and Monthly are each opened and checked for page/stage horizontal overflow;
+- existing tooltip, chart, table and short-landscape contracts remain source-guarded;
+- this pass adds no new Reports-only breakpoint styling and no new screenshot baselines.
 
 ---
 

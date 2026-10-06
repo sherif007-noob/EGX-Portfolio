@@ -4,7 +4,7 @@
 
 **CANONICAL MASTER ROADMAP — created 2026-09-30.**
 
-This is the sequencing authority for work after the September 2026 audit of `feature/premium-ui-redesign`.
+This is the sequencing authority for work after the September 2026 audit that began on the former premium branch. Production/default authority is now `main`.
 
 The application is a **private personal EGX portfolio system**. The roadmap therefore optimizes for:
 
@@ -19,12 +19,14 @@ The application is a **private personal EGX portfolio system**. The roadmap ther
 
 When this roadmap conflicts with an older phase document about *when* work should happen, this roadmap controls sequencing. Domain documents still control their specialist rules.
 
-Current detailed subplans retained as dependencies:
+Current detailed authorities retained alongside this roadmap:
 
-- `PHASE10_VISUAL_CONSISTENCY_PLAN.md` — active visual closure contract;
-- `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` — detailed Reports workspace design, integrated here as Stage 5;
-- `INTRADAY_1M_MIGRATION_PLAN.md` — intraday migration history and rollout rules;
-- `PREMIUM_VISUAL_LANGUAGE_CONTRACT.md` — frozen visual/material contract;
+- `PHASE10_VISUAL_CONSISTENCY_PLAN.md` — closed visual closure evidence;
+- `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` — closed Stage 5 Reports design/acceptance authority;
+- `INTRADAY_1M_MIGRATION_PLAN.md` — intraday migration history plus remaining rollout/legacy-retirement evidence;
+- `PREMIUM_VISUAL_LANGUAGE_CONTRACT.md` — protected visual/material contract, including the accepted Stage 5 Reports selector extension;
+- `FINANCIAL_MUTATION_CONTRACT.md` — closed Stage 2 mutation contract;
+- `CORPORATE_ACTIONS_LEDGER.md` — current implemented corporate-action contract;
 - `INTRADAY_MARKET_DATA.md`, `PERFORMANCE_ANALYTICS.md`, and `TICKER_REGISTRY.md` — canonical domain behavior.
 
 See `STATUS.md` for the current execution point.
@@ -303,7 +305,7 @@ Phase 10 is **CLOSED / CI CLEAN**. Its accepted visual contracts are frozen unle
 
 ---
 
-# 5. Stage 2 — Financial mutation & ledger integrity — ACTIVE
+# 5. Stage 2 — Financial mutation & ledger integrity — COMPLETE / CLOSED / CI CLEAN
 
 This is the highest-priority non-visual work.
 
@@ -781,7 +783,7 @@ Validated runtime:
 
 ---
 
-# 6. Stage 3 — Production, CI & market-data convergence
+# 6. Stage 3 — Production, CI & market-data convergence — CORE CLOSED / 3.5 DEFERRED DEBT
 
 ## Pass 3.1 — Reconcile branch divergence — COMPLETE / CI GREEN
 
@@ -1050,7 +1052,7 @@ Still requires one physical-app observation:
 
 Do not close this pass from CI alone. Close only after the strict post-close run and device-parity observation are recorded.
 
-**Deferral record — 2026-10-04:** the failed scheduler-ingestion soak is intentionally carried as technical debt for one session while Stage 3.6 proceeds. Retry is scheduled for **2026-10-05**. Stage 3.5 remains open and cannot be silently closed by Stage 3.6.
+**Deferral record — 2026-10-04:** the failed scheduler-ingestion soak remains technical debt. The previously planned October 5 retry did not become accepted closure evidence. Repeat Stage 3.5 only after scheduled ingestion reliability is repaired; Stage 3.6 cannot silently close it.
 
 ---
 
@@ -1098,7 +1100,7 @@ One promoted production truth, one active ingestion model, exact-head CI clean, 
 
 ---
 
-# 7. Stage 4 — Architecture consolidation
+# 7. Stage 4 — Architecture consolidation — COMPLETE / CLOSED
 
 This is a **refactor, not a rewrite**.
 
@@ -1377,7 +1379,7 @@ The 4.5.1 gate moved no existing declarations. It established the named ownershi
 
 ---
 
-# 8. Stage 5 — Reports workspace redesign
+# 8. Stage 5 — Reports workspace redesign — COMPLETE / CLOSED
 
 **Detailed design authority:** `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md`.
 
@@ -1567,7 +1569,7 @@ Acceptance:
 
 ---
 
-# 9. Stage 6 — Trust, reconciliation & financial lifecycle features
+# 9. Stage 6 — Trust, reconciliation & financial lifecycle features — NEXT / ACTIVE ROADMAP
 
 ## Pass 6.1 — Broker reconciliation workspace
 
@@ -1897,6 +1899,12 @@ For financial/data changes also require:
 
 The implementation sequence is now:
 
-> **Stage 4 is CLOSED at `main@470b3ce8`. Reports R1 is ACCEPTED at `main@4e9203bc`. Current execution point: Stage 5 / Reports R2 — workspace split — validation candidate.**
+> **Stage 5 is CLOSED at validated runtime `main@5152ca2b`. Current execution point: Stage 6.1 — Broker reconciliation workspace.**
 
-R2 partitions the trusted existing Reports surfaces by mode without changing calculations. Overview remains deliberately transitional until R3; no R3 diagnostic redesign is mixed into R2.
+Stage 6.1 should compare a broker snapshot/import against authoritative app truth, surface per-security/cash differences, and trace those differences back to ledger events where possible.
+
+Corrections must route through explicit source-ledger edits and the existing persist-confirmed mutation contract. Do not patch derived Position, Closed Cycle or cash state directly.
+
+The existing `CORPORATE_ACTION / BONUS_SHARES` implementation is already live project capability. Stage 6.3 must audit and extend that ledger rather than create a second corporate-action system.
+
+Stage 3.5 live-session soak remains deferred technical debt and is not reopened implicitly by Stage 6.

@@ -312,9 +312,17 @@ The selected persisted intraday timeline reconstructs the session path. During t
 
 ### Current-session versus completed-session behavior
 
-During an active session, the newest available partial bar at the selected resolution is valued only through the current time.
+Today is keyed to the **EGX session boundary**, not to Cairo calendar midnight.
 
-The session boundary is shared with the live-market scheduler: the regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is treated as pre-market, not portfolio-session performance. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
+- Friday/Saturday resolve to the previous EGX trading weekday.
+- On Sunday–Thursday from **00:00 through 09:59 Cairo**, Today continues to show the previous trading weekday/session.
+- At **10:00 Cairo**, the requested Today session switches to the current Cairo date.
+- Once that requested session is chosen, missing intraday data does not authorize silently switching to an older session date.
+- The database query window is the complete Cairo calendar day converted to UTC using `Africa/Cairo` timezone rules, so midnight and DST do not clip or shift the requested session.
+- During an active session, the newest available partial bar at the selected resolution is valued only through the current time.
+
+This intentionally fixes the post-midnight empty-chart failure while preserving the no-fabricated-session rule. Exchange holidays after the 10:00 boundary still remain unavailable unless real bars exist for the requested date; the current resolver is weekday/session-time aware, not an exchange-holiday calendar.
+
 
 ### MWR presentation
 
@@ -389,13 +397,13 @@ For `All`, annualized XIRR remains a secondary reference only.
 
 Changing chart mode does not reset the selected timeframe. Changing timeframe does not change the selected mode.
 
-All four modes support:
+All five modes support:
 
 ```text
 Today · 1W · 1M · 90D · YTD · All
 ```
 
-`Today` uses the 15-minute transaction-aware series. Longer periods use complete daily valuation points.
+`Today` uses the selected trustworthy Auto/1m/5m/15m intraday series, with optional 1h display aggregation. Longer periods use complete daily valuation points.
 
 ### Visual behavior
 
@@ -488,7 +496,7 @@ open market value
 - remaining buy fees
 ```
 
-For daily timeframes the chart uses historical daily closes. For Today it uses 15-minute prices, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
+For daily timeframes the chart uses historical daily closes. For Today it uses the selected trustworthy intraday resolution, prior-session closes for the opening baseline, and exact execution timestamps for same-session trades.
 
 The secondary analytics service never mutates portfolio rows, positions, closed trades, or transactions.
 

@@ -41,7 +41,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 ### Current validation
 
 - Stage 5 R8 validated on `main@5152ca2b`: 139/139 test files, 734/734 tests, production build, Worker dry-run, rendered browser regression, and 12/12 responsive geometries at 0px overflow.
-- Stage 7.1 + Today-session feature head `main@9f6cdcea`: Quality Checks green with 140/140 test files and 739/739 tests; rendered screenshots/geometry remained accepted while a Reports browser-harness selector ambiguity was identified and corrected in the follow-up closure branch.
+- Stage 7.1 + Today-session feature head `main@9f6cdcea` is fully closure-green at exact validation head `main@ea1204bb`: Quality **#37547142039**, Rendered Visual Regression **#37547142047**, and Phase 10 Visual Closure **#37547142018** all passed with 140/140 test files, 739/739 tests, production build, Worker dry-run, 12/12 zero-overflow geometries, and unchanged accepted screenshot baselines.
 - Stage 3.5 live-session ingestion soak remains deferred technical debt pending scheduler reliability remediation.
 
 ## 2026-09

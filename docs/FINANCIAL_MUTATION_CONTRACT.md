@@ -2,15 +2,13 @@
 
 ## Status
 
-**Canonical Stage 2 financial mutation boundary.**
+**Canonical financial mutation boundary — Stage 2 CLOSED.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics; Stage 2.8 closed the stage with cross-workflow financial acceptance coverage. Current validated runtime head: `70ad1148`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics; Stage 2.8 closed the stage with cross-workflow financial acceptance coverage.
 
-This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
+This document defines the mutation ordering and failure semantics that all current and future financial workflows must preserve.
 
-Stage 2.1 creates the boundary; it does **not** claim that all existing workflows already use it.
-
-Current adoption sequence:
+Stage 2's historical adoption sequence was:
 
 1. **2.1 — boundary implemented — complete**
 2. **2.2 — BUY/SELL migration — complete**
@@ -21,7 +19,7 @@ Current adoption sequence:
 7. **2.7 — cash-adjustment semantics — complete**
 8. **2.8 — financial acceptance suite — complete**
 
-**Stage 2 — complete / CI green**
+**Stage 2 — complete / CI green.** Current runtime work after Stage 2 must preserve this contract unless the relevant invariant is deliberately reopened.
 
 ---
 
@@ -293,6 +291,14 @@ This applies to target and stop; notes prefer existing position metadata and the
 This is metadata ownership only.
 
 Position shares, cost basis, fees, cash and realized/closed accounting remain deterministic ledger projections.
+
+### Corporate-action adoption after Stage 2
+
+The later corporate-actions implementation reuses this same mutation boundary.
+
+The currently supported `CORPORATE_ACTION / BONUS_SHARES` flow is prepared as a ledger mutation, validated, reconciled, persisted through the authoritative snapshot, and only then applied locally. It does not create a second mutation path.
+
+See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
 
 For DCA, `prepareBuyTradeMutation()` updates the reconciliation position seed when the user explicitly supplies new target/stop/notes, so those new portfolio values survive the canonical persist/rebuild cycle.
 

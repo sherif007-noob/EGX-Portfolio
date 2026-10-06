@@ -192,7 +192,8 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
         </div>
 
-        <DisclosurePresence isOpen={portfolioExpanded} className="mt-4">\n          <div
+        <DisclosurePresence isOpen={portfolioExpanded} className="mt-4">
+          <div
             id="reports-preview-portfolio-state"
             data-reports-preview-expanded="portfolio-state"
             className="premium-inset-glass rounded-xl p-3.5"
@@ -221,7 +222,11 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             <div className={`premium-type-helper mt-3 ${pnlText(totalPnl)}`}>
               Combined realized + unrealized P&amp;L: {signedEgp(totalPnl)} EGP.
             </div>
-          </div>\n        </DisclosurePresence>\n\n        <PreviewActions\n          previewId="portfolio-state"
+          </div>
+        </DisclosurePresence>
+
+        <PreviewActions
+          previewId="portfolio-state"
           expanded={portfolioExpanded}
           destination="analytics"
           onToggle={togglePreview}
@@ -253,7 +258,8 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             <div className="mt-1 font-mono text-2xl font-bold text-emerald-300">{winRate.toFixed(1)}%</div>
           </div>
 
-          <DisclosurePresence isOpen={tradingExpanded} className="mt-4">\n            <div
+          <DisclosurePresence isOpen={tradingExpanded} className="mt-4">
+            <div
               id="reports-preview-trading-quality"
               data-reports-preview-expanded="trading-quality"
               className="premium-inset-glass rounded-xl p-3.5"
@@ -273,7 +279,11 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
               <div className="premium-type-helper mt-3">
                 Closed-trade quality uses the existing Trading statistics authority.
               </div>
-            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="trading-quality"
+            </div>
+          </DisclosurePresence>
+
+          <PreviewActions
+            previewId="trading-quality"
             expanded={tradingExpanded}
             destination="trading"
             onToggle={togglePreview}
@@ -304,7 +314,8 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             )}
           </div>
 
-          <DisclosurePresence isOpen={riskExpanded} className="mt-4">\n            <div
+          <DisclosurePresence isOpen={riskExpanded} className="mt-4">
+            <div
               id="reports-preview-risk-costs"
               data-reports-preview-expanded="risk-costs"
               className="premium-inset-glass rounded-xl p-3.5"
@@ -322,7 +333,11 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   </div>
                 </div>
               </div>
-            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="risk-costs"
+            </div>
+          </DisclosurePresence>
+
+          <PreviewActions
+            previewId="risk-costs"
             expanded={riskExpanded}
             destination="analytics"
             onToggle={togglePreview}
@@ -353,7 +368,8 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             </div>
           </div>
 
-          <DisclosurePresence isOpen={concentrationExpanded} className="mt-4">\n            <div
+          <DisclosurePresence isOpen={concentrationExpanded} className="mt-4">
+            <div
               id="reports-preview-concentration"
               data-reports-preview-expanded="concentration"
               className="premium-inset-glass rounded-xl p-3.5"
@@ -374,7 +390,11 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   <div className="premium-type-helper mt-0.5">Cash: {formatPercent(cashSharePercent)}</div>
                 </div>
               </div>
-            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="concentration"
+            </div>
+          </DisclosurePresence>
+
+          <PreviewActions
+            previewId="concentration"
             expanded={concentrationExpanded}
             destination="allocation"
             onToggle={togglePreview}
@@ -407,7 +427,8 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
           <div className="premium-type-helper mt-1">Visible monthly audit P&amp;L: liquidated + holdings.</div>
 
-          <DisclosurePresence isOpen={monthExpanded} className="mt-4">\n            <div
+          <DisclosurePresence isOpen={monthExpanded} className="mt-4">
+            <div
               id="reports-preview-current-month"
               data-reports-preview-expanded="current-month"
               className="premium-inset-glass rounded-xl p-3.5"
@@ -432,7 +453,11 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   </div>
                 </div>
               </div>
-            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="current-month"
+            </div>
+          </DisclosurePresence>
+
+          <PreviewActions
+            previewId="current-month"
             expanded={monthExpanded}
             destination="monthly"
             onToggle={togglePreview}

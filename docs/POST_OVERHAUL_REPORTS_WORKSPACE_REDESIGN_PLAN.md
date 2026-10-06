@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — R1 through R7 are accepted. R8 full regression and closure is next. R7 reused the established React-owned motion language for workspace swaps and diagnostic disclosure, preserved first-render restoration/loading/empty-state ownership, and passed the frozen rendered regression matrix.**
+**CLOSED — R1 through R8 are accepted. The Reports workspace redesign is complete: diagnostic Overview, dedicated Analytics/Trading/Allocation/Monthly workspaces, remembered mode, progressive disclosure, responsive behavior, premium motion, the restored selector aura, and the full functional/rendered regression matrix are all accepted.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -697,7 +697,7 @@ Acceptance record:
 
 ---
 
-## Stage R8 — Full regression and closure — NEXT
+## Stage R8 — Full regression and closure — ACCEPTED / CI + RENDERED GREEN
 
 Regression matrix:
 
@@ -714,6 +714,25 @@ Regression matrix:
 - direct-mode opening;
 - phone/desktop/landscape;
 - typecheck/tests/build.
+
+Closure implementation:
+- the user-requested Reports selector visual-language correction was merged through PR #100; the Reports mode rail now uses the shared emphasized selector shell and `aria-selected` tabs activate the shared cyan/violet aura instead of bypassing it;
+- the inspected selector-aura screenshot was accepted by exact SHA-256 `9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3` through PR #101; the global `VISUAL_MAX_DIFF_RATIO=0.01` threshold remains unchanged;
+- PR #102 added a Stage 5 R8 source closure suite plus a deterministic browser interaction matrix without changing report runtime calculations, persistence behavior or CSS;
+- the browser closure actually exercises direct report opening and remembered-mode restoration, Analytics 1W/Today/5m/TWR/trajectory controls, Trading timeframe/trade-type filters and exports, Allocation Holdings/Cash, and Monthly record filters and exports;
+- the existing Reports responsive matrix continues to cover portrait phone, short landscape, tablet, desktop and 2XL.
+
+Acceptance record:
+- selector visual correction accepted at `main@956d058d`;
+- R8 closure merged through PR #102 as validated runtime `main@5152ca2b`;
+- Quality Checks #37502935404 passed;
+- Rendered Visual Regression #37502935538 passed;
+- Phase 10 Visual Closure #37502935456 passed TypeScript, **139 / 139 test files, 734 / 734 tests**, production Vite/PWA build, Cloudflare Worker dry-run and rendered baseline verification;
+- all **12 / 12** global responsive geometries remained at **0px overflow**;
+- the inspected `reports-desktop` state is an exact-hash accepted change at **23.556%**; every other tracked rendered state remained below the frozen 1% threshold;
+- no accounting calculation, analytics formula, market-data behavior, Supabase behavior or Reports persistence contract changed.
+
+**Stage 5 / Reports workspace redesign is CLOSED.**
 
 ---
 

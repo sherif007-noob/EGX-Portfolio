@@ -11,6 +11,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import type { ReportsMode } from '../../services/reportsWorkspace';
+import { DisclosurePresence } from '../PremiumMotion';
 
 interface AllocationDiagnostic {
   name: string;
@@ -191,11 +192,10 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
         </div>
 
-        {portfolioExpanded && (
-          <div
+        <DisclosurePresence isOpen={portfolioExpanded} className="mt-4">\n          <div
             id="reports-preview-portfolio-state"
             data-reports-preview-expanded="portfolio-state"
-            className="premium-inset-glass mt-4 rounded-xl p-3.5"
+            className="premium-inset-glass rounded-xl p-3.5"
           >
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
               <div className="premium-subpanel rounded-xl p-3">
@@ -221,11 +221,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             <div className={`premium-type-helper mt-3 ${pnlText(totalPnl)}`}>
               Combined realized + unrealized P&amp;L: {signedEgp(totalPnl)} EGP.
             </div>
-          </div>
-        )}
-
-        <PreviewActions
-          previewId="portfolio-state"
+          </div>\n        </DisclosurePresence>\n\n        <PreviewActions\n          previewId="portfolio-state"
           expanded={portfolioExpanded}
           destination="analytics"
           onToggle={togglePreview}
@@ -257,11 +253,10 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             <div className="mt-1 font-mono text-2xl font-bold text-emerald-300">{winRate.toFixed(1)}%</div>
           </div>
 
-          {tradingExpanded && (
-            <div
+          <DisclosurePresence isOpen={tradingExpanded} className="mt-4">\n            <div
               id="reports-preview-trading-quality"
               data-reports-preview-expanded="trading-quality"
-              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+              className="premium-inset-glass rounded-xl p-3.5"
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -278,11 +273,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
               <div className="premium-type-helper mt-3">
                 Closed-trade quality uses the existing Trading statistics authority.
               </div>
-            </div>
-          )}
-
-          <PreviewActions
-            previewId="trading-quality"
+            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="trading-quality"
             expanded={tradingExpanded}
             destination="trading"
             onToggle={togglePreview}
@@ -313,11 +304,10 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             )}
           </div>
 
-          {riskExpanded && (
-            <div
+          <DisclosurePresence isOpen={riskExpanded} className="mt-4">\n            <div
               id="reports-preview-risk-costs"
               data-reports-preview-expanded="risk-costs"
-              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+              className="premium-inset-glass rounded-xl p-3.5"
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
@@ -332,11 +322,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          <PreviewActions
-            previewId="risk-costs"
+            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="risk-costs"
             expanded={riskExpanded}
             destination="analytics"
             onToggle={togglePreview}
@@ -367,11 +353,10 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
             </div>
           </div>
 
-          {concentrationExpanded && (
-            <div
+          <DisclosurePresence isOpen={concentrationExpanded} className="mt-4">\n            <div
               id="reports-preview-concentration"
               data-reports-preview-expanded="concentration"
-              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+              className="premium-inset-glass rounded-xl p-3.5"
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -389,11 +374,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   <div className="premium-type-helper mt-0.5">Cash: {formatPercent(cashSharePercent)}</div>
                 </div>
               </div>
-            </div>
-          )}
-
-          <PreviewActions
-            previewId="concentration"
+            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="concentration"
             expanded={concentrationExpanded}
             destination="allocation"
             onToggle={togglePreview}
@@ -426,11 +407,10 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
           </div>
           <div className="premium-type-helper mt-1">Visible monthly audit P&amp;L: liquidated + holdings.</div>
 
-          {monthExpanded && (
-            <div
+          <DisclosurePresence isOpen={monthExpanded} className="mt-4">\n            <div
               id="reports-preview-current-month"
               data-reports-preview-expanded="current-month"
-              className="premium-inset-glass mt-4 rounded-xl p-3.5"
+              className="premium-inset-glass rounded-xl p-3.5"
             >
               <div className="grid grid-cols-3 gap-2">
                 <div>
@@ -452,11 +432,7 @@ const ReportsOverviewComponent: React.FC<ReportsOverviewProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          <PreviewActions
-            previewId="current-month"
+            </div>\n          </DisclosurePresence>\n\n          <PreviewActions\n            previewId="current-month"
             expanded={monthExpanded}
             destination="monthly"
             onToggle={togglePreview}

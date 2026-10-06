@@ -1,5 +1,5 @@
 import { useChartResourceId } from './charts/ChartSeriesGlow';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
 import { MonthlyPerformanceReport } from './reports/MonthlyPerformanceReport';
@@ -72,9 +72,12 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
   const [reportMode, setReportMode] = useState<ReportsMode>(() => readPersistedReportsMode());
 
-  useEffect(() => {
-    persistReportsMode(reportMode);
-  }, [reportMode]);
+  const handleReportModeChange = useCallback((mode: ReportsMode) => {
+    // Persist before the visual workspace swap so direct Overview promotions
+    // override any remembered mode even if Reports unmounts immediately after.
+    persistReportsMode(mode);
+    setReportMode(mode);
+  }, []);
 
   useEffect(() => {
     const dismissAllocationTooltip = (event: PointerEvent) => {
@@ -289,7 +292,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
         </div>
       </div>
 
-      <ReportsNavigation activeMode={reportMode} onModeChange={setReportMode} />
+      <ReportsNavigation activeMode={reportMode} onModeChange={handleReportModeChange} />
 
       <MotionSwap
         motionKey={reportMode}
@@ -324,7 +327,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
                 topThreeConcentration={holdingConcentration.topThreeConcentration}
                 cashSharePercent={cashSharePercent}
                 currentMonth={currentMonthDiagnostic}
-                onOpenReport={setReportMode}
+                onOpenReport={handleReportModeChange}
               />
             </div>
           )}

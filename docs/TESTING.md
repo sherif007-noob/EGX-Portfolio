@@ -16,6 +16,23 @@ npm run build
 
 These are the same core checks run by `.github/workflows/quality.yml`.
 
+## Current validated runtime evidence
+
+The current validated runtime baseline is `main@5152ca2b` (Stage 5 / Reports R8 closure).
+
+Same-head evidence:
+
+- Quality Checks **#37502935404** — passed;
+- Phase 10 Visual Closure **#37502935456** — passed;
+- Rendered Visual Regression **#37502935538** — passed;
+- full Vitest: **139 / 139 files, 734 / 734 tests**;
+- production Vite/PWA build: passed;
+- Cloudflare Worker dry-run: passed;
+- responsive geometry: **12 / 12 at 0px page overflow**;
+- the inspected Reports selector-aura screenshot is exact-hash accepted at **23.556%** while all other tracked states remain below the frozen 1% threshold.
+
+Documentation-only commits may be newer than this validated runtime baseline.
+
 ## Test areas
 
 ### Portfolio accounting
@@ -35,6 +52,20 @@ Covers rebuilding positions, cash, and closed cycles from transactions.
 `src/services/cashLedger.test.ts`
 
 Covers capital cash events, performance cash events, reconciliation adjustments, and editing/deletion of cash history.
+
+### Corporate actions
+
+`src/services/corporateActionAccounting.test.ts`
+
+Covers the implemented BONUS_SHARES lifecycle, including:
+
+- zero-cash / zero-added-cost issuance;
+- weighted-average cost after a later partial sale;
+- effective-date entitlement based on pre-action holdings;
+- stale source-share rejection;
+- historical-equity neutrality across mechanical price adjustment.
+
+Corporate-action creation is also protected by the shared persist-before-apply ledger mutation tests.
 
 ### Persistence/storage
 
@@ -120,7 +151,7 @@ npx vitest run \
   src/services/intradayAnalyticsEngine.test.ts
 ```
 
-The Premium smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test.
+The Intraday 1m Migration Smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test.
 
 ### Intraday acceptance checks
 
@@ -427,7 +458,7 @@ Use a test/staging project when possible. Never expose the server secret in comm
 
 ## Rendered visual regression
 
-Phase 10 adds a real Chromium rendered-regression layer in addition to the existing Vitest source contracts.
+The application uses a real Chromium rendered-regression layer in addition to Vitest source contracts.
 
 Canonical workflow:
 
@@ -510,6 +541,20 @@ Current establishment evidence:
 - required-baseline comparison #36918687347 passed **16/16 at 0.000% diff** and **12/12 geometry checks at 0px page overflow**.
 
 The bootstrap inspection also caught a Supabase configuration message in the analytics screenshot. That image was rejected and the visual fixture was corrected before baseline promotion. Never refresh baselines merely to make a regression pass; first decide whether the visual change is intentional.
+
+### Stage 5 Reports interaction closure
+
+The rendered harness also contains a non-golden Reports interaction matrix (`report.reportsClosure`) that exercises behavior rather than only pixel output:
+
+- Overview diagnostic surfaces;
+- direct full-report opening;
+- remembered mode restoration;
+- Analytics 1W/Today/5m/mode/realized-trajectory controls;
+- Trading timeframe/trade-type filters and export actions;
+- Allocation Holdings + Include Cash;
+- Monthly record filters and export actions.
+
+R8 accepted this matrix on `main@5152ca2b` through Rendered Visual Regression **#37502935538**. This interaction closure complements the five Reports responsive geometry tiers and the exact-hash Reports screenshot acceptance.
 
 ## Phase 10 exact-head visual closure gate
 

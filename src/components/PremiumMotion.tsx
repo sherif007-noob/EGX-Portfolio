@@ -174,6 +174,86 @@ export const MotionSwap: React.FC<MotionSwapProps> = ({
   );
 };
 
+
+interface DisclosurePresenceProps {
+  isOpen: boolean;
+  children: React.ReactNode;
+  className?: string;
+}
+
+/**
+ * Canonical progressive-disclosure lifecycle.
+ *
+ * Keeps expansion/collapse React-owned so exit content remains mounted long
+ * enough to animate, while reduced-motion users get a short opacity-only
+ * transition with no spatial movement.
+ */
+export const DisclosurePresence: React.FC<DisclosurePresenceProps> = ({
+  isOpen,
+  children,
+  className = '',
+}) => {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen && (
+        <motion.div
+          key="premium-disclosure"
+          className={`premium-disclosure-presence ${className}`.trim()}
+          data-motion-owned="react"
+          initial={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, height: 0, y: -6 }
+          }
+          animate={
+            reduceMotion
+              ? {
+                  opacity: 1,
+                  transition: { duration: 0.12, ease: EASE_OUT },
+                }
+              : {
+                  opacity: 1,
+                  height: 'auto',
+                  y: 0,
+                  transition: {
+                    height: { duration: 0.34, ease: EASE_OUT },
+                    opacity: { duration: 0.24, delay: 0.035, ease: EASE_OUT },
+                    y: { duration: 0.3, ease: EASE_OUT },
+                  },
+                }
+          }
+          exit={
+            reduceMotion
+              ? {
+                  opacity: 0,
+                  transition: { duration: 0.08, ease: 'easeIn' },
+                }
+              : {
+                  opacity: 0,
+                  height: 0,
+                  y: -4,
+                  transition: {
+                    height: { duration: 0.26, ease: EASE_IN },
+                    opacity: { duration: 0.16, ease: EASE_IN },
+                    y: { duration: 0.2, ease: EASE_IN },
+                  },
+                }
+          }
+          style={{
+            overflow: 'clip',
+            transformOrigin: 'top center',
+            width: '100%',
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 interface PremiumModalMotionProps {
   isOpen: boolean;
   children: React.ReactNode;

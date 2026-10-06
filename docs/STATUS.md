@@ -19,7 +19,6 @@ Detailed stage history belongs in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABI
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** compatibility mirror only; not production authority  
 **Current validated runtime head:** `5152ca2b` — Stage 5 / Reports R8 closure  
-**Current documentation head before this audit:** `96468204`  
 **Application:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth + RLS  
 **Production web/API runtime:** Cloudflare Worker serving Vite assets and `/api/*`  

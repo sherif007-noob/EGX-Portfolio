@@ -4,7 +4,7 @@
 
 The analytics visual system defines how every portfolio chart should look and behave inside EGX Portfolio.
 
-Phase 7 implementation is governed by **docs/PHASE7_CHARTS_PLAN.md**, which audits the current seven chart visualizations and defines the staged migration/validation order.
+Phase 7 is historical and closed. **docs/PHASE7_CHARTS_PLAN.md** records how the chart system was migrated; this file is the current visual/interaction contract for analytics charts.
 
 External apps such as Telda are references for useful interactions and information hierarchy. They are **not** the visual design source. Charts must continue to look like native EGX Portfolio components.
 
@@ -65,7 +65,7 @@ The shell provides:
 - dark shadow;
 - app-consistent rounded corners.
 
-A CSS fallback in `src/index.css` also darkens Recharts' built-in tooltip if a future chart accidentally uses the default component. This is defensive only; new charts should still use the shared tooltip component.
+A defensive Recharts tooltip fallback lives under the chart feature CSS owner. It is not a substitute for using the shared tooltip primitives.
 
 ## Crosshair behavior
 
@@ -77,7 +77,7 @@ Cartesian charts should pass:
 
 The shared cursor uses a thin, dashed cyan line.
 
-The 1D chart in the later intraday phase will build on this with a highlighted active point and timestamp tooltip.
+Today is the live intraday chart. It uses timestamp-aware tooltips and the shared synchronized interaction boundary across the primary and secondary analytics charts.
 
 ## Axes and grid
 
@@ -111,23 +111,24 @@ Examples:
 +69.2k
 ```
 
-## Current migrated charts
+## Current chart surfaces
 
-Phase 3 migrates the existing Recharts surfaces:
+The shared system now covers:
 
-- historical MWRR;
-- realized P&L trajectory;
-- allocation pie chart;
-- detailed cumulative realized trajectory;
-- trade-by-trade realized bar chart.
+- primary portfolio analytics across Portfolio vs Return / Net Deposits / TWR / MWR;
+- Today plus 1W / 1M / 90D / YTD / All;
+- synchronized secondary drawdown, fee and realized/unrealized analytics;
+- realized trajectory in cumulative and trade-by-trade modes;
+- allocation charts;
+- Reports Analytics workspace reuse of the same chart components.
 
-This removes the inconsistent mix of default Recharts white tooltips and custom dark tooltips.
+This removes the earlier mix of default Recharts surfaces and one-off tooltip/control styling.
 
-## 1D chart rule
+## Today chart rule
 
-The future 1D portfolio chart must use a **linear, unsmoothed path** because the observations are discrete 15-minute portfolio valuations.
+Today must use a **linear, unsmoothed path** because observations are discrete market valuations. The selectable display resolution is `Auto | 1m | 5m | 15m | 1h`; changing display sampling must not invent observations.
 
-Longer daily timeframes may use restrained visual interpolation where appropriate, provided the plotted points remain the actual calculated observations.
+Longer daily timeframes may use restrained visual interpolation where appropriate, provided the plotted points remain the actual calculated observations. The special 1W transition interpolation must match points by date so entering/leaving 1W does not visually start from the wrong quarter of the chart.
 
 ## Mobile rules
 
@@ -141,20 +142,20 @@ Tooltips must:
 
 Chart controls should be touch-sized and remain usable without hover.
 
-## Future chart modes
+## Current analytics modes
 
-The same visual system will be reused for:
+The visual system is used by:
 
-- Portfolio vs Return
-- Portfolio vs Net Deposits
-- Performance (TWR)
-- Performance (MWR)
-- 1D intraday NAV
-- drawdown
-- realized vs unrealized P&L
-- cumulative fees
+- Portfolio vs Return;
+- Portfolio vs Net Deposits;
+- Performance (TWR);
+- Performance (MWR);
+- Today intraday NAV;
+- drawdown;
+- realized vs unrealized P&L;
+- cumulative fees.
 
-This visual layer must remain separate from financial calculations in the unified analytics engine.
+The visual layer remains separate from financial calculations in the unified/intraday analytics engines. Reports Stage 5 reorganized where these components appear; it did not create a second chart engine.
 
 
 ## Secondary chart layout

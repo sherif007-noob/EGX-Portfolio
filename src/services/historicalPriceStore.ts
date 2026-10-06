@@ -1,6 +1,7 @@
 import { loadHistoricalPricesFromSupabase } from './supabasePersistence';
 import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { API_ROUTES } from '../api/contracts';
+import { PORTFOLIO_BENCHMARKS } from './portfolioBenchmarks';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -47,7 +48,10 @@ export async function getHistoricalPrices(tickers: string[], startDate?: string,
 }
 
 export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string }>, endDate = new Date().toISOString().slice(0, 10)) {
-  const tickers = transactions.filter((tx) => normalizeTicker(tx.ticker) !== 'CASH').map((tx) => tx.ticker);
+  const tickers = [
+    ...transactions.filter((tx) => normalizeTicker(tx.ticker) !== 'CASH').map((tx) => tx.ticker),
+    ...PORTFOLIO_BENCHMARKS.map((benchmark) => benchmark.ticker),
+  ];
   const dates = transactions.map((tx) => String(tx.date).slice(0, 10)).filter(Boolean).sort();
   return getHistoricalPrices(tickers, dates[0], endDate);
 }

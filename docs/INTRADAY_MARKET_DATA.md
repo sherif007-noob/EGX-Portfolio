@@ -353,4 +353,4 @@ See [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) for the d
 
 Manual ingestion resolves the latest EGX session rather than using the calendar day after midnight. Set `EGX_INTRADAY_SKIP_RETENTION=true` for a repair that must not prune old rows. Normal scheduled retention remains 30/90 days.
 
-The remaining trust gap is Stage 3.5 live-session soak/remediation. Legacy 15m must not be retired until the scheduled writer proves reliable across the required live-session evidence.
+The remaining trust gap is Stage 3.5 live-session soak/remediation. The October 5 retry did run but did not pass: four completed observations failed and the fifth scheduled trigger was cancelled; completed strict-final checks still showed missing reconstructible 5m coverage and stale raw 1m tails on held securities. The one-shot October 5 soak schedule is exhausted. Legacy 15m must not be retired until the writer is repaired and a new live-session observation passes.

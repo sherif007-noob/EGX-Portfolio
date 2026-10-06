@@ -2,7 +2,7 @@
 
 ## Status
 
-**Canonical current architecture for the Premium branch.**
+**Canonical current architecture for the production/default `main` branch.**
 
 For current rollout gaps and the next implementation step, see [STATUS.md](STATUS.md). For future structural changes, see [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).
 
@@ -133,7 +133,7 @@ Responsibilities include:
 
 ## Financial mutation boundary
 
-Stage 2.1 adds:
+Stage 2 established:
 
 `src/services/ledgerMutationService.ts`
 
@@ -243,7 +243,7 @@ BUY pre-validation and canonical mutation preparation now enforce the same insuf
 
 Cash reconciliation remains a separate ledger workflow; it is not a trade option.
 
-A future architecture pass will separate repository, mutation and presentation responsibilities further without rewriting accounting behavior.
+Stage 4 completed the main repository/mutation/presentation ownership separation without rewriting accounting behavior. Later cleanup may refine module size, but the accepted boundaries remain authoritative.
 
 ## Accounting model
 
@@ -268,7 +268,33 @@ Key services:
 - `intradayAnalyticsEngine.ts`;
 - `secondaryAnalytics.ts`.
 
-The canonical persist-before-apply mutation boundary now exists. Remaining integrity work is workflow adoption: BUY/SELL first, then transaction/cash/import workflows, followed by removal of direct Position accounting deletion and the remaining Stage 2 accounting-semantic cleanup.
+The canonical persist-before-apply mutation boundary is fully adopted across BUY/SELL, transaction edits/deletes, cash, OCR, restore/import, reconciliation and BONUS_SHARES corporate actions. Stage 2 is closed; derived Position/Closed Cycle accounting mutations are not independent write paths.
+
+## Corporate actions
+
+Corporate actions are canonical transaction-ledger events and use the same persist-before-apply executor as other financial mutations.
+
+Current implemented action:
+
+- `CORPORATE_ACTION / BONUS_SHARES`.
+
+The action has zero cash impact and zero added cost, increases share quantity, and preserves total cost basis. Entitlement is derived from the ledger immediately before the effective date, and the saved source-share count acts as a stale-ledger guard.
+
+See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md). Stage 6.3 owns expansion to the remaining corporate-action lifecycle.
+
+## Reports workspace
+
+Reports is a feature-owned analytical workspace with five internal modes:
+
+- Overview;
+- Analytics;
+- Trading;
+- Allocation;
+- Monthly.
+
+The selected mode is remembered via `reports:lastMode`. Overview is diagnostic and uses progressive disclosure; full report modes reuse the canonical accounting/analytics engines rather than recalculating financial truth.
+
+See [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md).
 
 ## Market data
 
@@ -364,17 +390,19 @@ The application uses `vite-plugin-pwa`.
 
 A stale service worker can make a device appear to run older code after deployment. Use the documented troubleshooting path before assuming persisted portfolio data differs.
 
-## Target structural direction
+## Current structural state
 
-No rewrite is planned.
+Stage 4 architecture consolidation is closed.
 
-After visual, financial and production stabilization, architecture will move incrementally toward:
+Current accepted ownership includes:
 
-- domain accounting/performance/market modules;
-- explicit Supabase repository layer;
-- canonical ledger mutation service;
-- feature-owned UI modules;
+- domain accounting/performance/market facades;
+- Supabase data boundary;
+- integration boundaries for Google Sheets, OCR and TradingView;
+- portfolio/report feature ownership;
 - shared Worker/Express request contracts;
-- layered visual CSS ownership.
+- stable CSS ownership entry and layered shared/feature owners.
 
-See Stage 4 in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).
+No rewrite is planned. Future Stage 10 cleanup may reduce legacy names or large-module residue, but must preserve the accepted financial, data, API and visual contracts.
+
+See Stage 4 closure in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md).

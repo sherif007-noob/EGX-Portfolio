@@ -159,6 +159,17 @@ On push, diff hygiene covers the promoted candidate delta. On a manual run, supp
 
 Stage 3.4 validated this contract on `main@ce60f932` with Production Candidate Gate **#37180662256**. The production audit returned zero issues.
 
+## Benchmark market-data operations
+
+Stage 7.1 benchmark comparison depends on the existing market-data jobs rather than a separate provider path:
+
+- daily historical sync includes EGX30, EGX70EWI and EGX100EWI coverage requirements;
+- raw 1m / derived 5m ingestion includes the same indices in both discovered and explicitly targeted universes;
+- the indices persist through the same `price_history` / `intraday_price_history` storage contracts;
+- benchmark rows are read-only context and do not enter portfolio accounting.
+
+The migration `20261007023000_add_benchmark_indices_to_ticker_registry.sql` registers the index instruments in the market-reference `tickers` table required by the daily-history foreign key.
+
 ## Raw 1m / derived 5m workflow
 
 Primary workflow:

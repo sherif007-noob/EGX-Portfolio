@@ -134,14 +134,15 @@ Do not add ticker-specific ingestion hacks when ticker/canonical/ISIN resolution
 
 ## Today ticker universe
 
-Today analytics and automatic 1-minute ingestion operate on session-relevant securities:
+Today analytics and automatic 1-minute ingestion operate on:
 
 1. securities held entering the session;
 2. securities currently held;
 3. securities bought or sold during the session;
-4. same-day round trips.
+4. same-day round trips;
+5. the benchmark indices EGX30, EGX70 EWI and EGX100 EWI.
 
-CASH and unrelated closed historical positions are excluded.
+CASH and unrelated closed historical positions are excluded. Benchmark indices are market-data context, not portfolio holdings.
 
 Browser selection uses:
 
@@ -227,6 +228,22 @@ The Today chart reconstructs the current EGX session from a session boundary rat
 3. **Post-close timestamp pinning.** During the live EGX session, a complete live quote snapshot may be appended at its real as-of time. After the regular 14:30 Cairo close, the live endpoint is pinned immediately after the final observed market point instead of using the later phone/browser wall-clock time. This prevents a 23:xx refresh from making the Today axis appear to extend into the night.
 
 The Today engine does not vertically shift a finished equity curve to force a target total. Cash, shares, prices and transaction impacts must reconcile at their source.
+
+## Today session-date ownership
+
+Today follows the EGX session boundary rather than Cairo midnight.
+
+`getLatestEgxSessionDate()` resolves:
+
+- Friday/Saturday → previous EGX trading weekday;
+- Sunday–Thursday before 10:00 Cairo → previous EGX trading weekday;
+- Sunday–Thursday from 10:00 Cairo onward → current Cairo date.
+
+Therefore a chart opened at 00:01–09:59 Cairo continues to display the previous session instead of querying a new empty calendar day.
+
+`cairoSessionUtcBounds()` converts that selected Cairo date into its full UTC query interval using `Intl.DateTimeFormat(..., { timeZone: 'Africa/Cairo' })`. This is DST-aware and prevents a Cairo session from being clipped by UTC midnight.
+
+After the requested date is chosen, resolution selection is same-session only: missing 1m/5m/15m data may fall back across resolutions, but not across session dates.
 
 ## Live endpoint
 
@@ -344,6 +361,9 @@ The smoke workflow typechecks and runs the intraday regression suite before writ
 - Do not run TradingView WebSocket ingestion in Cloudflare Workers.
 - Do not trigger history repair from the browser.
 - Preserve 15m fallback until rollout observation is complete.
+- Keep the pre-10:00 Cairo Today session on the previous EGX trading weekday.
+- Build Cairo-day database bounds with timezone/DST-aware conversion, not raw UTC midnight.
+- Keep benchmark indices in the same daily/intraday ingestion paths used by benchmark analytics.
 
 See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the canonical 15-phase rollout status.
 

@@ -1,5 +1,6 @@
 import { EGXTicker, Position, TradeTransaction, CanonicalCashFlowType, CashTransaction } from '../types';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
+import { getCairoTodayISO } from '../utils/dateUtils';
 import { reconcilePortfolioFromLedger, sortTransactions } from './portfolioReconciliation';
 import { cashFlowSignedImpact, isCapitalCashFlowType } from './cashFlowSemantics';
 
@@ -29,7 +30,7 @@ export function prepareCashLedgerEvent(
   kind: CanonicalCashFlowType,
   amount: number,
   notes = '',
-  date = new Date().toISOString().slice(0, 10),
+  date = getCairoTodayISO(),
 ): PreparedCashLedgerChange {
   validateCashDate(date);
   const signedAdjustment = kind === 'RECONCILIATION_ADJUSTMENT';
@@ -76,7 +77,7 @@ export function applyCashLedgerEvent(
   kind: CanonicalCashFlowType,
   amount: number,
   notes = '',
-  date = new Date().toISOString().slice(0, 10),
+  date = getCairoTodayISO(),
 ) {
   const prepared = prepareCashLedgerEvent(state, kind, amount, notes, date);
   const report = reconcilePortfolioFromLedger(
@@ -115,7 +116,7 @@ function withOpeningCapital(state: CashLedgerState): TradeTransaction[] {
       id: 'legacy-opening-capital', type: 'BUY', ticker: 'CASH', companyName: 'Cash Balance',
       sector: 'Liquid Buying Power', shares: state.capitalDeposits, price: 1, fees: 0,
       totalAmount: state.capitalDeposits, cashFlowType: 'DEPOSIT', cashFlowAmount: state.capitalDeposits,
-      date: transactions.reduce((date, tx) => tx.date.slice(0, 10) < date ? tx.date.slice(0, 10) : date, new Date().toISOString().slice(0, 10)),
+      date: transactions.reduce((date, tx) => tx.date.slice(0, 10) < date ? tx.date.slice(0, 10) : date, getCairoTodayISO()),
       notes: 'Opening capital carried forward from legacy balance',
     });
   }

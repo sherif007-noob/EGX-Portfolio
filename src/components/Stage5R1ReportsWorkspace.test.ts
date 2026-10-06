@@ -31,7 +31,7 @@ describe('Stage 5 R1 Reports workspace architecture', () => {
     expect(reports).toContain(
       'useState<ReportsMode>(() => readPersistedReportsMode())',
     );
-    expect(reports).toContain('persistReportsMode(reportMode);');
+    expect(reports).toContain('persistReportsMode(mode);');
     expect(reports).toContain(
       '<ReportsNavigation activeMode={reportMode} onModeChange={setReportMode} />',
     );

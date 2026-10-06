@@ -1465,7 +1465,7 @@ It must not become a miniature full Reports page.
 
 ---
 
-## R4 — Progressive disclosure — ACTIVE / VALIDATION CANDIDATE
+## R4 — Progressive disclosure — ACCEPTED / SOURCE GREEN + INSPECTED VISUAL ACCEPTANCE
 
 Depth model:
 
@@ -1482,7 +1482,7 @@ Each expanded preview gets a clear full-report action.
 
 ---
 
-## R5 — Persistence/restoration polish
+## R5 — Persistence/restoration polish — NEXT
 
 Validate:
 

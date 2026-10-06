@@ -1381,7 +1381,7 @@ The 4.5.1 gate moved no existing declarations. It established the named ownershi
 
 **Detailed design authority:** `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md`.
 
-This stage is now ACTIVE after Stage 4 closure at `main@470b3ce8`.
+This stage is **CLOSED** after R8 acceptance at validated runtime `main@5152ca2b`.
 
 Established prerequisites:
 
@@ -1537,24 +1537,33 @@ Accepted through PR #98 at `main@25eddb89`:
 
 ---
 
-## R8 — Regression closure — NEXT
+## R8 — Regression closure — ACCEPTED / CI + RENDERED GREEN
 
-Validate:
+Validated:
 
-- Overview diagnostic values;
+- Overview diagnostic values and trusted calculation owners;
 - all Analytics modes/timeframes/Today resolutions;
-- synchronized tooltips;
-- 1W transition;
-- realized trajectory;
-- Trading filters/statistics;
+- synchronized tooltip ownership and 1W transition interpolation;
+- realized trajectory modes/timeframes;
+- Trading filters/statistics and exports;
 - Allocation Holdings/Sectors/Cash;
-- Monthly All/Liquidated/Holdings;
-- exports;
-- mode persistence;
-- direct opening;
-- phone/desktop/landscape.
+- Monthly All/Liquidated/Holdings and exports;
+- mode persistence and direct opening;
+- phone, short-landscape, tablet, desktop and 2XL containment;
+- TypeScript, full tests, production build, Cloudflare Worker dry-run and rendered browser regression.
 
-Only after R8 is the Reports workspace redesign closed.
+Acceptance:
+- selector-aura correction: PR #100, exact visual acceptance PR #101, accepted selector screenshot SHA-256 `9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3`;
+- closure implementation: PR #102 at validated runtime `main@5152ca2b`;
+- Quality Checks #37502935404 passed;
+- Rendered Visual Regression #37502935538 passed;
+- Phase 10 Visual Closure #37502935456 passed;
+- **139 / 139 test files, 734 / 734 tests** passed;
+- **12 / 12** responsive geometries remained at **0px overflow**;
+- `reports-desktop` remains an exact-hash accepted visual change at **23.556%** and the global 1% threshold remains unchanged;
+- no accounting, analytics-formula, market-data or persistence behavior changed.
+
+**Stage 5 is CLOSED. Next execution point: Stage 6.1 — Broker reconciliation workspace.**
 
 ---
 
@@ -1593,7 +1602,9 @@ This is for personal traceability, not enterprise compliance.
 
 ## Pass 6.3 — Corporate actions
 
-Introduce explicit lifecycle events before manual share/price corrections become necessary:
+An initial corporate-actions ledger was already introduced early to support the ORHD free-share requirement. This pass must first audit that existing implementation, then extend/freeze the complete lifecycle contract rather than creating a parallel system.
+
+The complete lifecycle should cover:
 
 - SPLIT;
 - REVERSE_SPLIT;

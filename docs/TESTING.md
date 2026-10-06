@@ -2,7 +2,7 @@
 
 ## Test stack
 
-The project uses Vitest for automated tests and TypeScript's compiler for type checking.
+The project uses Vitest for source/service/component regressions, TypeScript's compiler for type checking, and Playwright + Sharp for deterministic rendered browser regression.
 
 ## Required pre-merge checks
 
@@ -15,6 +15,17 @@ npm run build
 ```
 
 These are the same core checks run by `.github/workflows/quality.yml`.
+
+Latest accepted full runtime validation is `main@5152ca2b`:
+
+- **139 / 139** Vitest files;
+- **734 / 734** tests;
+- production Vite/PWA build passed;
+- Cloudflare Worker dry-run passed in Phase 10 Visual Closure;
+- Rendered Visual Regression passed;
+- **12 / 12** responsive geometries had **0px overflow**.
+
+The current Reports screenshot is an intentionally inspected exact-hash accepted change; the global visual diff threshold remains **1%**.
 
 ## Test areas
 
@@ -59,6 +70,38 @@ Covers equity bridges and fee-aware portfolio performance math.
 `src/utils/portfolioMetrics.test.ts`
 
 Covers summary metrics such as denominators used for day-change calculations.
+
+### Corporate actions
+
+`src/services/corporateActionAccounting.test.ts`
+
+Covers the currently supported `CORPORATE_ACTION / BONUS_SHARES` behavior:
+
+- zero cash impact;
+- zero added invested cost;
+- share issuance;
+- weighted-average cost after later sale;
+- stale entitlement/source-share rejection;
+- effective-date replay;
+- historical equity neutrality across mechanical price adjustment.
+
+Unsupported corporate-action types must remain rejected until they receive explicit accounting and regression coverage.
+
+### Reports workspace closure
+
+Stage 5 has dedicated source-contract tests:
+
+- `Stage5R1ReportsWorkspace.test.ts`;
+- `Stage5R2ReportsWorkspaceSplit.test.ts`;
+- `Stage5R3DiagnosticOverview.test.ts`;
+- `Stage5R4ProgressiveDisclosure.test.ts`;
+- `Stage5R5ReportsRestoration.test.ts`;
+- `Stage5R6ReportsResponsive.test.ts`;
+- `Stage5R7ReportsMotionState.test.ts`;
+- `Stage5R8ReportsClosure.test.ts`;
+- `Stage5ReportsSelectorAura.test.ts`.
+
+R8 also extends `scripts/renderedRegression.mjs` with a real browser interaction closure covering direct report opening/restoration, Analytics controls, Trading filters/exports, Allocation controls and Monthly filters/exports.
 
 ## Stage 2 financial acceptance suite
 
@@ -120,7 +163,7 @@ npx vitest run \
   src/services/intradayAnalyticsEngine.test.ts
 ```
 
-The Premium smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test.
+The intraday migration smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test. Production scheduler authority is `main`.
 
 ### Intraday acceptance checks
 
@@ -543,6 +586,24 @@ Phase 10 closure evidence:
 - screenshot baselines: **16 / 16 at 0.000% diff**.
 
 The full-suite gate is intentionally authoritative over focused phase smoke tests. During closure it exposed four obsolete source-string assertions even though focused smoke and rendered checks were green; those contracts were repaired before Phase 10 was closed.
+
+## Stage 5 Reports closure evidence
+
+Validated runtime: `main@5152ca2b`.
+
+Main-push gates:
+
+- Quality Checks **#37502935404** — passed;
+- Phase 10 Visual Closure **#37502935456** — passed;
+- Rendered Visual Regression **#37502935538** — passed;
+- **139 / 139** test files, **734 / 734** tests;
+- production build and Worker dry-run passed;
+- **12 / 12** responsive geometries at **0px overflow**;
+- Reports interaction closure passed;
+- inspected `reports-desktop` selector/workspace change accepted by exact screenshot hash at **23.556%**;
+- every other tracked rendered state remained below the frozen 1% threshold.
+
+The exact-hash exception is intentionally scoped to the inspected Reports screenshot. It does not relax the global threshold.
 
 ## CI
 

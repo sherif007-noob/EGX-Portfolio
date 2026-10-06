@@ -53,7 +53,7 @@ The authoritative accounting ledger.
 
 Important fields include:
 
-- BUY/SELL type;
+- BUY/SELL/CORPORATE_ACTION type;
 - ticker;
 - shares;
 - execution price;
@@ -67,9 +67,23 @@ Important fields include:
 - net cash impact;
 - realized P&L;
 - holding period;
-- position reference.
+- position reference;
+- corporate-action subtype, ratio, entitlement-base shares and reference metadata when applicable.
 
 Cash events also live in the ledger by using ticker `CASH`.
+
+Corporate actions also live in this same authoritative ledger. The currently implemented subtype is:
+
+- `CORPORATE_ACTION / BONUS_SHARES`.
+
+Persisted corporate-action metadata:
+
+- `corporate_action_type`;
+- `corporate_action_ratio`;
+- `corporate_action_source_shares`;
+- `corporate_action_reference`.
+
+BONUS_SHARES has zero cash impact and zero added cost. It increases quantity while preserving total cost basis. See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
 
 Canonical `cash_flow_type` values are:
 
@@ -155,12 +169,18 @@ Historical portfolio valuations are reconstructed from transactions plus this ta
 
 ### intraday_price_history
 
-15-minute EGX OHLCV bars used for current/latest-session analytics.
+Multi-resolution EGX OHLCV observations used for current/latest-session analytics.
+
+Persisted resolutions:
+
+- raw `1m` observations from TradingView;
+- deterministic derived `5m` bars from persisted 1m truth;
+- legacy `15m` fallback rows retained during migration/soak.
 
 Primary fields:
 
 - `ticker`
-- `interval_minutes` (currently 15)
+- `interval_minutes` (1, 5, or 15)
 - `bar_timestamp` (`timestamptz`, stored in UTC)
 - `open`
 - `high`
@@ -176,7 +196,7 @@ Primary key:
 (ticker, interval_minutes, bar_timestamp)
 ```
 
-Intraday rows use a rolling 90-day retention policy by default. They are kept separate from permanent daily history so different resolutions cannot be confused.
+Retention is resolution-aware: raw 1m history is kept for 30 calendar days and derived 5m history for 90 calendar days; legacy 15m fallback remains separate during the migration/soak period. Intraday rows are kept separate from permanent daily history so resolutions cannot be confused.
 
 Authenticated application sessions have SELECT-only access. Trusted automation owns writes and retention cleanup.
 
@@ -222,7 +242,7 @@ Because the accounting tables are replaced as a coherent snapshot, callers must 
 
 ## Mutation ordering
 
-Stage 2.1 introduces a canonical mutation boundary above snapshot persistence.
+Stage 2 established a canonical mutation boundary above snapshot persistence.
 
 The intended ordering is:
 
@@ -242,7 +262,7 @@ The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
 
-As of Stage 2.4, BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation and portfolio restore/import follow this ordering, and derived Position / Closed Cycle records no longer expose independent accounting deletion.
+BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation, portfolio restore/import, and BONUS_SHARES corporate actions follow this ordering. Derived Position / Closed Cycle records do not expose independent accounting deletion.
 
 ### Derived Position / Closed Cycle ownership
 

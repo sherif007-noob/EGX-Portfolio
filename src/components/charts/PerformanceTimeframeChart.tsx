@@ -402,6 +402,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const isPercentMode = definition.valueKind === 'percent';
   const isDepositsMode = mode === 'PORTFOLIO_DEPOSITS';
   const isPortfolioReturnMode = mode === 'PORTFOLIO_RETURN';
+  const isBenchmarksMode = mode === 'BENCHMARKS';
   const longRangeCurve = curveCardinal.tension(0.55);
 
   const yDomain: [number, number] | undefined = (() => {
@@ -734,6 +735,34 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
             </>
           )}
 
+          {mode === 'BENCHMARKS' && (
+            <>
+              <TooltipMetric
+                label="Portfolio"
+                value={twr == null ? '—' : formatAnalyticsPercent(twr, true)}
+                valueClassName={signedToneClass(twr)}
+              />
+              {PORTFOLIO_BENCHMARKS.map((benchmark) => {
+                const benchmarkValue = finiteNumber(point[benchmark.ticker]);
+                const relative =
+                  twr != null && benchmarkValue != null ? twr - benchmarkValue : null;
+                return (
+                  <React.Fragment key={benchmark.ticker}>
+                    <TooltipMetric
+                      label={benchmark.label}
+                      value={benchmarkValue == null ? '—' : formatAnalyticsPercent(benchmarkValue, true)}
+                    />
+                    <TooltipMetric
+                      label={`vs ${benchmark.label}`}
+                      value={relative == null ? '—' : formatAnalyticsPercent(relative, true)}
+                      valueClassName={signedToneClass(relative)}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </>
+          )}
+
           {timeframe === 'TODAY' && (
             <TooltipMetric
               label="Cash / invested"
@@ -831,6 +860,42 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         animationInterpolateFn={weeklyLineInterpolator}
       />
     ) : null;
+
+  const benchmarkColors: Record<PortfolioBenchmarkTicker, string> = {
+    EGX30: ANALYTICS_CHART_THEME.blue,
+    EGX70EWI: ANALYTICS_CHART_THEME.purple,
+    EGX100EWI: ANALYTICS_CHART_THEME.amber,
+  };
+
+  const renderBenchmarkLines = () =>
+    entranceReady && isBenchmarksMode
+      ? PORTFOLIO_BENCHMARKS.map((benchmark, index) => (
+          <Line
+            key={benchmark.ticker}
+            type={chartCurve}
+            dataKey={benchmark.ticker}
+            name={benchmark.label}
+            stroke={benchmarkColors[benchmark.ticker]}
+            strokeWidth={1.65}
+            strokeDasharray={index === 0 ? '6 4' : index === 1 ? '3 4' : '9 4'}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            connectNulls={false}
+            dot={false}
+            activeDot={{
+              r: 4,
+              fill: benchmarkColors[benchmark.ticker],
+              stroke: '#020617',
+              strokeWidth: 2,
+            }}
+            isAnimationActive={!reducedMotion}
+            animationDuration={520}
+            animationEasing="ease-out"
+            animationMatchBy={weeklyMorph ? matchWeeklyPointByDate : undefined}
+            animationInterpolateFn={weeklyLineInterpolator}
+          />
+        ))
+      : null;
 
   return (
     <>

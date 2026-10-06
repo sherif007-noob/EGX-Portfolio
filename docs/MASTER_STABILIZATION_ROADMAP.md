@@ -1508,7 +1508,7 @@ Main-push acceptance:
 
 ---
 
-## R7 — Motion/state polish — ACTIVE / IMPLEMENTATION CANDIDATE
+## R7 — Motion/state polish — ACCEPTED / CI + RENDERED GREEN
 
 Reuse existing motion language.
 
@@ -1527,9 +1527,17 @@ Gate:
 - rendered Reports regression and responsive geometry green;
 - no analytical or persistence behavior change.
 
+Accepted through PR #98 at `main@25eddb89`:
+- Quality Checks #37488860193 passed;
+- Phase 10 Visual Closure #37488860091 passed;
+- Rendered Visual Regression #37488860007 passed;
+- **137 / 137 test files, 723 / 723 tests** passed in the full Phase 10 gate;
+- **12 / 12** responsive geometries remained at **0px overflow**;
+- no report calculation, accounting, market-data or persistence behavior changed.
+
 ---
 
-## R8 — Regression closure
+## R8 — Regression closure — NEXT
 
 Validate:
 

@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-06  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `33ab8278` — Stage 5 / Reports R6 responsive workspace accepted
-**Current full verification:** on `main@33ab8278`, Quality Checks #37432757200 passed; Phase 10 Visual Closure #37432757207 passed; Rendered Visual Regression #37432757249 passed. The R6 Reports geometry matrix covers phone, short landscape, tablet, desktop and 2XL while retaining the existing golden screenshot set.
+**Current validated runtime head:** `25eddb89` — Stage 5 / Reports R7 motion/state polish accepted
+**Current full verification:** on `main@25eddb89`, Quality Checks #37488860193 passed; Phase 10 Visual Closure #37488860091 passed TypeScript, **137 / 137 test files, 723 / 723 tests**, production Vite/PWA build, Cloudflare Worker dry-run and rendered baseline verification; Rendered Visual Regression #37488860007 passed. All **12 / 12** responsive geometries remained at **0px overflow**.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -122,8 +122,9 @@ Next:
 4. **Stage 5 / Reports R4 — Progressive disclosure — ACCEPTED / SOURCE GREEN + INSPECTED VISUAL ACCEPTANCE** at implementation head `main@5b1af622`: Quality #37430549239 and Intraday Smoke #37430549221 passed; Rendered #37430549099 changed only `reports-desktop` beyond threshold at **22.311%**. The inspected compact Overview is accepted by exact SHA-256 `105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e`; the global 1% threshold remains unchanged.
 5. **Stage 5 / Reports R5 — Persistence/restoration polish — MERGED / SOURCE + RENDERED GREEN** at `main@7524a09c`: lazy synchronous restoration remains first-render authoritative; navigation and R4 direct-open actions share one atomic `persist → setState` handler; Quality #37432207590, Intraday Smoke #37432207619 and Rendered #37432207600 passed. Phase 10 closure is still finishing.
 6. **Stage 5 / Reports R6 — Responsive workspace pass — ACCEPTED / CI + RENDERED GREEN** at `main@33ab8278`: Quality #37432757200, Phase 10 #37432757207 and Rendered #37432757249 passed. The rendered harness covers phone, short landscape, tablet, desktop and 2XL; it validates the one-row mode rail, default and expanded Overview, every full workspace, page/stage containment, chart/table bounds and existing safe-area contracts without adding new golden screenshots.
-7. **Stage 5 / Reports R7 — Motion/state polish — ACTIVE / IMPLEMENTATION CANDIDATE**: workspace mode changes keep the accepted `MotionSwap` state choreography; diagnostic expansion/collapse now uses a shared React-owned `DisclosurePresence` lifecycle with exit presence and a reduced-motion opacity-only path. First-render mode restoration and existing loading/empty-state owners remain unchanged.
-8. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+7. **Stage 5 / Reports R7 — Motion/state polish — ACCEPTED / CI + RENDERED GREEN** at `main@25eddb89`: workspace mode changes keep the accepted `MotionSwap` state choreography; diagnostic expansion/collapse uses shared React-owned `DisclosurePresence` exit presence with an opacity-only reduced-motion path; first-render restoration and existing loading/empty-state owners remain unchanged. Quality #37488860193, Phase 10 #37488860091 and Rendered #37488860007 passed.
+8. **Stage 5 / Reports R8 — Full regression and closure — NEXT**: run the complete Reports functional/regression matrix across Overview diagnostics, Analytics modes/timeframes/Today resolutions/tooltips/1W transitions, realized trajectory, Trading filters/statistics, Allocation modes/Cash, Monthly modes/exports, persistence/direct opening and phone/desktop/landscape.
+9. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 

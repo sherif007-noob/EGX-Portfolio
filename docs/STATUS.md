@@ -40,7 +40,7 @@ Completed:
 
 Frozen visual contracts now remain protected while the roadmap moves into financial integrity work.
 
-Financial integrity is closed; production/CI/market-data convergence is now active.
+Financial integrity, architecture consolidation, and the Reports redesign are closed. Stage 3.5 live-session soak remains deferred technical debt; the current forward execution point is Stage 6.1.
 
 Completed:
 
@@ -198,7 +198,7 @@ The closure gate initially exposed four obsolete source-string contracts. They w
 
 **Visual system state: CLOSED / CI CLEAN.**
 
-Next execution point: **Stage 2.1 — Canonical financial mutation executor.**
+Historical note: the next action immediately after the October 1 Phase 10 closure was Stage 2.1. Stage 2 has since closed.
 
 ---
 
@@ -1107,26 +1107,33 @@ Strong/current foundation:
 - cumulative fees;
 - realized/unrealized composition;
 - transaction-aware Today reconstruction;
+- selectable Today resolution: Auto / 1m / 5m / 15m / 1h;
 - daily 1W / 1M / 90D / YTD / All;
-- realized trajectory;
+- synchronized primary/secondary analytics tooltips;
+- realized trajectory with dedicated timeframe controls;
 - monthly audit;
 - trading-performance indicators.
 
-Do not rewrite this engine during the Reports workspace redesign.
+The analytical engines remain canonical. Stage 5 reused them without calculation rewrites.
 
 ---
 
 ## Reports workspace
 
-`POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md` is now integrated into the master roadmap as **Stage 5 / R1–R8**.
+**Stage 5 / Reports R1–R8 is CLOSED** at validated runtime `main@5152ca2b`.
 
-Its visual entry gate is now satisfied because Phase 10 is closed.
+Current Reports architecture:
 
-It remains deferred until the remaining gates close:
+- internal modes: Overview / Analytics / Trading / Allocation / Monthly;
+- remembered mode through `reports:lastMode`;
+- diagnostic Overview with one expanded preview at a time;
+- direct full-report promotion;
+- shared React-owned motion/disclosure;
+- responsive one-row mode rail;
+- restored premium selector shell/aura;
+- deterministic source + browser interaction regression coverage.
 
-1. financial mutation integrity;
-2. production/automation convergence;
-3. enough architecture ownership exists to move report components safely.
+Detailed closure authority: `POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md`.
 
 ---
 
@@ -1150,21 +1157,21 @@ Server-side/background operationalization is deferred until the underlying data 
 
 ---
 
-## Architecture pressure points
+## Architecture state
 
-Current large owners include:
+**Stage 4 is CLOSED.**
 
-- `App.tsx`;
-- `usePortfolioState.ts`;
-- `index.css`;
-- Trading Journal;
-- Cash Balance;
-- Closed Cycles;
-- Performance Reports;
-- Header;
-- several integration modals.
+Accepted architecture ownership now includes:
 
-Plan: incremental extraction after financial/release stabilization. No rewrite.
+- App orchestration extraction;
+- portfolio local/remote/mutation/repository ownership;
+- shared Worker/Express request contracts;
+- feature facades for portfolio and Reports;
+- stable import-only `src/index.css`;
+- explicit shared CSS owners for tokens, materials, semantics, hierarchy, controls, overlays, motion and responsive behavior;
+- feature CSS owners for app shell, charts, Reports and Header.
+
+Future cleanup is Stage 10 work unless an earlier roadmap feature requires a focused ownership change. No rewrite is planned.
 
 ---
 

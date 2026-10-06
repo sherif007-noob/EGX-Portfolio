@@ -119,6 +119,7 @@ The shared system now covers:
 - Portfolio vs Net Deposits;
 - Performance (TWR);
 - Performance (MWR);
+- Portfolio vs Benchmarks (EGX30 / EGX70 / EGX100);
 - Today intraday NAV;
 - performance drawdown;
 - cumulative fees;
@@ -154,6 +155,7 @@ The same visual system is used for:
 - Portfolio vs Net Deposits
 - Performance (TWR)
 - Performance (MWR)
+- Portfolio vs Benchmarks (normalized percentage overlay)
 - Today intraday NAV
 - drawdown
 - realized vs unrealized P&L
@@ -175,3 +177,15 @@ Risk and cost analytics follow the same visual system as the primary analytics c
 - Cumulative fees use a step line because costs occur at discrete transaction events.
 - Secondary charts share a Recharts `syncId` so crosshair position stays aligned when comparing the same valuation timestamp.
 - Responsive containers use a small resize debounce to reduce layout churn on mobile orientation/viewport changes.
+
+
+## Benchmark comparison visual contract
+
+Benchmark comparison is a percentage-domain overlay, never a dual-axis EGP/percent chart.
+
+- Portfolio is the primary solid series and uses flow-neutral TWR.
+- EGX30, EGX70 and EGX100 are subordinate comparison lines with distinct shared-theme accents/dash patterns.
+- Every series is normalized from the selected-period baseline.
+- The headline/tooltip exposes relative portfolio-minus-index return so outperformance and underperformance are explicit rather than inferred only from line position.
+- Today remains linear/unsmoothed; daily ranges retain the accepted restrained interpolation and existing 1W transition behavior.
+- Missing benchmark observations are not fabricated or forward-looking.

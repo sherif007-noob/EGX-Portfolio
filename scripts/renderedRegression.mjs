@@ -340,7 +340,7 @@ async function recordReportsClosure(reportEntry) {
     const analyticsWorkspace = page.locator('[data-reports-workspace="analytics"]');
     await analyticsWorkspace.waitFor({ state: 'visible' });
 
-    const analyticsTimeframe = page.getByRole('group', { name: 'Analytics timeframe' });
+    const analyticsTimeframe = analyticsWorkspace.getByRole('group', { name: 'Analytics timeframe' });
     const oneWeek = analyticsTimeframe.getByRole('button', { name: '1W', exact: true });
     await oneWeek.click();
     await page.waitForTimeout(120);
@@ -351,7 +351,7 @@ async function recordReportsClosure(reportEntry) {
     await page.waitForTimeout(120);
     await assertAriaState(today, 'aria-pressed', 'Analytics Today');
 
-    const todayResolution = page.getByRole('group', { name: 'Today chart resolution' });
+    const todayResolution = analyticsWorkspace.getByRole('group', { name: 'Today chart resolution' });
     await todayResolution.waitFor({ state: 'visible' });
     const fiveMinute = todayResolution.getByRole('button', { name: '5m', exact: true });
     await fiveMinute.click();
@@ -374,7 +374,7 @@ async function recordReportsClosure(reportEntry) {
     await tradeByTrade.click();
     await assertAriaState(tradeByTrade, 'aria-pressed', 'Trade-by-Trade trajectory');
 
-    const trajectoryTimeframe = page.getByRole('group', {
+    const trajectoryTimeframe = analyticsWorkspace.getByRole('group', {
       name: 'Realized trajectory timeframe',
     });
     const trajectoryOneMonth = trajectoryTimeframe.getByRole('button', {

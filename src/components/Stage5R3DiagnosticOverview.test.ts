@@ -24,16 +24,15 @@ describe('Stage 5 R3 diagnostic Reports Overview', () => {
     expect(overview.match(/data-hierarchy="h3"/g)).toHaveLength(4);
   });
 
-  it('keeps Overview concise and free of full-workspace controls before R4', () => {
+  it('keeps Overview concise without embedding full-workspace components after R4', () => {
     const overview = readRelative('./reports/ReportsOverview.tsx');
 
-    expect(overview).not.toContain('<button');
     expect(overview).not.toContain('AnalyticsSelect');
     expect(overview).not.toContain('PerformanceTimeframeChart');
     expect(overview).not.toContain('TradingPerformanceReport');
     expect(overview).not.toContain('MonthlyPerformanceReport');
     expect(overview).not.toContain('<PieChart');
-    expect(overview).not.toContain('onModeChange');
+    expect(overview).toContain('onOpenReport');
   });
 
   it('uses trusted portfolio/stat authorities instead of recomputing report engines', () => {

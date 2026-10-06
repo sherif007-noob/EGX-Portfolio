@@ -23,7 +23,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 - Made `main` the sole production/default branch authority and normalized GitHub Actions/Node/npm production workflows.
 - Added the exact-head production candidate gate and read-only Data Health Center.
 - Closed Stage 4 architecture consolidation: app-shell orchestration, portfolio state/hydration/ledger/repository ownership, shared Worker/Express API contracts, and explicit CSS ownership layers.
-- Kept Stage 3.5 live-session ingestion soak open as deferred technical debt after the October 4 failure.
+- Kept Stage 3.5 live-session ingestion soak open as deferred technical debt after the October 4 failure and the unsuccessful October 5 retry (four failed observation jobs and one cancelled final trigger).
 
 ### Market data and analytics
 

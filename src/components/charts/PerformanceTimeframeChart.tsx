@@ -33,6 +33,13 @@ import { loadTodayIntraday } from '../../services/todayIntraday';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
 import { deriveCanonicalCapitalDeposits } from '../../services/portfolioReconciliation';
 import {
+  PORTFOLIO_BENCHMARKS,
+  benchmarkRelativeReturn,
+  buildDailyBenchmarkComparison,
+  buildIntradayBenchmarkComparison,
+  type PortfolioBenchmarkTicker,
+} from '../../services/portfolioBenchmarks';
+import {
   buildUnifiedAnalyticsResult,
   type UnifiedAnalyticsResult,
 } from '../../services/unifiedAnalyticsEngine';
@@ -258,7 +265,12 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
         const requestedWindow = resolveAnalyticsWindow('TODAY');
         const requestedSessionDate = requestedWindow.endDate;
         setIntradayResult(previous => previous?.window.endDate === requestedSessionDate ? previous : null);
-        const tickers = resolveIntradaySessionTickers(transactions, requestedSessionDate);
+        const tickers = [
+          ...new Set([
+            ...resolveIntradaySessionTickers(transactions, requestedSessionDate),
+            ...PORTFOLIO_BENCHMARKS.map((benchmark) => benchmark.ticker),
+          ]),
+        ];
 
         const selection = await loadTodayIntraday(tickers, requestedSessionDate, todayResolution);
 
@@ -355,6 +367,19 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
   const definition = getAnalyticsModeDefinition(mode);
   const summary = analyticsModeSummary(result, mode);
   const points = analyticsModePoints(result, mode);
+  const benchmarkComparison = useMemo(
+    () =>
+      mode !== 'BENCHMARKS'
+        ? []
+        : timeframe === 'TODAY'
+          ? buildIntradayBenchmarkComparison(points, loadedIntradayPrices)
+          : buildDailyBenchmarkComparison(points, historicalPrices),
+    [mode, timeframe, points, loadedIntradayPrices, historicalPrices],
+  );
+  const benchmarkByDate = useMemo(
+    () => new Map(benchmarkComparison.map((point) => [point.date, point])),
+    [benchmarkComparison],
+  );
   const selectedLabel =
     timeframe === 'TODAY' && result
       ? `${formatDailyLabel(result.window.endDate)} session`
@@ -364,6 +389,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
   const chartData = points.map((point) => ({
     ...point,
+    ...(benchmarkByDate.get(point.date) ?? {}),
     // Daily ranges use real elapsed calendar time on the X axis. This keeps
     // weekend/holiday gaps proportional instead of treating every trading
     // valuation as an equally spaced category.
@@ -387,6 +413,13 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
       if (definition.secondaryKey) {
         const secondary = Number(point[definition.secondaryKey]);
         if (Number.isFinite(secondary)) visible.push(secondary);
+      }
+
+      if (mode === 'BENCHMARKS') {
+        for (const benchmark of PORTFOLIO_BENCHMARKS) {
+          const benchmarkValue = Number(point[benchmark.ticker]);
+          if (Number.isFinite(benchmarkValue)) visible.push(benchmarkValue);
+        }
       }
 
       return visible;

@@ -119,8 +119,8 @@ Next:
 1. **Stage 5 / Reports R1 — Workspace architecture — ACCEPTED / CI + RENDERED GREEN** at `main@4e9203bc`.
 2. **Stage 5 / Reports R2 — Workspace split — ACCEPTED / CI + RENDERED GREEN** at `main@c71c16a4`; Overview / Analytics / Trading / Allocation / Monthly are separated without calculation rewrites.
 3. **Stage 5 / Reports R3 — Diagnostic Reports Overview — ACCEPTED / CI + RENDERED GREEN** at `main@a39d7fd9`; Quality #37388874197, Phase 10 #37388874006 and Rendered #37388874168 passed after the inspected Reports baseline was accepted.
-4. **Stage 5 / Reports R4 — Progressive disclosure — ACTIVE / VALIDATION CANDIDATE**: one diagnostic preview may expand at a time, medium-detail metrics remain inline, and each expanded preview promotes into its existing full workspace through `reportMode`.
-5. After R4 acceptance, begin **R5 — Persistence/restoration polish**.
+4. **Stage 5 / Reports R4 — Progressive disclosure — ACCEPTED / SOURCE GREEN + INSPECTED VISUAL ACCEPTANCE** at implementation head `main@5b1af622`: Quality #37430549239 and Intraday Smoke #37430549221 passed; Rendered #37430549099 changed only `reports-desktop` beyond threshold at **22.311%**. The inspected compact Overview is accepted by exact SHA-256 `105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e`; the global 1% threshold remains unchanged.
+5. Next: **R5 — Persistence/restoration polish**.
 6. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---

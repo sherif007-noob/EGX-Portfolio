@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — R1, R2 and R3 are accepted. R4 progressive disclosure is the current validation candidate: one Overview diagnostic preview may expand at a time and may promote into its existing full report workspace without duplicating report calculations.**
+**ACTIVE — R1 through R4 are accepted. R5 persistence/restoration polish is next. R4 keeps the Overview compact by default, permits exactly one expanded preview, and promotes depth through the existing full workspaces without duplicating calculations.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -576,7 +576,7 @@ Acceptance:
 
 ---
 
-## Stage R4 — Progressive preview expansion — VALIDATION CANDIDATE
+## Stage R4 — Progressive preview expansion — ACCEPTED / INSPECTED VISUAL CHANGE
 
 - allow one preview to expand at a time;
 - expanded preview adds meaningful medium-detail information;
@@ -597,6 +597,14 @@ Acceptance:
 - moving from diagnosis to depth is obvious;
 - TypeScript, full tests and production build pass;
 - rendered Reports inspection confirms the default compact state remains readable and hierarchy-safe.
+
+Acceptance record:
+- implementation merged at `main@5b1af622`;
+- Quality #37430549239 passed;
+- Intraday 1m Migration Smoke #37430549221 passed;
+- Rendered #37430549099 changed only `reports-desktop` materially, at **22.311%**;
+- inspected screenshot SHA-256: `105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e`;
+- exact-hash acceptance is scoped to `reports-desktop`; `VISUAL_MAX_DIFF_RATIO=0.01` remains unchanged.
 
 ---
 

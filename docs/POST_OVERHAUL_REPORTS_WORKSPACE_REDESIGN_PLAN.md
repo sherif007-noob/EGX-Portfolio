@@ -608,7 +608,7 @@ Acceptance record:
 
 ---
 
-## Stage R5 — Persistence and restoration polish
+## Stage R5 — Persistence and restoration polish — VALIDATION CANDIDATE
 
 Validate:
 
@@ -616,6 +616,13 @@ Validate:
 - direct report-opening actions override remembered mode;
 - invalid/stale persisted values safely fall back to Overview;
 - state restoration does not cause visible flicker.
+
+Candidate implementation:
+- initial `reportMode` remains a lazy synchronous read from `reports:lastMode`, so restoration occurs on first render instead of after mount;
+- `handleReportModeChange` persists the target mode before applying local state;
+- both the Reports navigation and R4 full-report actions use that same handler;
+- stale/unknown persisted values continue to normalize to Overview through `parseReportsMode`;
+- persistence remains intentionally limited to the workspace mode only.
 
 ---
 

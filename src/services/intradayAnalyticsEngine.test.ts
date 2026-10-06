@@ -53,6 +53,29 @@ describe('intraday analytics engine', () => {
     expect(result.dataQuality.hasUsableRange).toBe(true);
   });
 
+  it('keeps date-only same-session cash flows from poisoning an otherwise complete curve', () => {
+    const result = buildIntradayAnalyticsResult(
+      [
+        tx({ id: 'dep-old', type: 'BUY', ticker: 'CASH', shares: 1000, price: 1, totalAmount: 1000, cashFlowType: 'DEPOSIT', cashFlowAmount: 1000, date: '2026-10-05' }),
+        tx({ id: 'hold', type: 'BUY', ticker: 'TEST', shares: 5, price: 100, totalAmount: 500, date: '2026-10-05', executedAt: '2026-10-05T08:00:00Z' }),
+        tx({ id: 'dep-session', type: 'BUY', ticker: 'CASH', shares: 500, price: 1, totalAmount: 500, cashFlowType: 'DEPOSIT', cashFlowAmount: 500, date: '2026-10-06' }),
+      ],
+      { TEST: [{ date: '2026-10-05', close: 100 }] },
+      {
+        TEST: [
+          { timestamp: '2026-10-06T07:00:00Z', intervalMinutes: 1, open: 100, high: 100, low: 100, close: 100 },
+          { timestamp: '2026-10-06T07:01:00Z', intervalMinutes: 1, open: 100, high: 101, low: 100, close: 101 },
+        ],
+      },
+      { sessionDate: '2026-10-06', asOf: '2026-10-06T07:02:00Z' },
+    );
+
+    expect(result.points.length).toBeGreaterThan(0);
+    expect(result.dataQuality.hasUsableRange).toBe(true);
+    expect(result.dataQuality.incompleteDays).toBe(0);
+    expect(result.summary.startEquity).toBeCloseTo(1500, 8);
+  });
+
   it('refuses to present a complete intraday curve when a session trade has no execution timestamp', () => {
     const result = buildIntradayAnalyticsResult(
       [

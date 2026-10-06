@@ -1,6 +1,6 @@
 # EGX Portfolio
 
-A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct accounting, current and historical market data, transaction-aware analytics, cash tracking, closed trade cycles, and fast personal trade logging.
+A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct accounting, current/historical market data, transaction-aware analytics, cash tracking, closed trade cycles, corporate actions, and fast personal trade logging.
 
 ## Current architecture
 
@@ -8,30 +8,55 @@ A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct ac
 - **Production web/API runtime:** Cloudflare Worker (`worker.ts`) serving Vite assets and `/api/*` routes.
 - **Local/development runtime:** Express/Vite (`server.ts`).
 - **Database/auth:** Supabase Postgres + Supabase Auth + RLS.
-- **Market data:** TradingView scanner/history through controlled proxy/Node ingestion paths.
-- **Automation:** GitHub Actions for daily history, raw 1m intraday ingestion, derived 5m history, ticker registry reconciliation, and production data audits.
+- **Financial truth:** transaction ledger; positions, cash and closed cycles are reconciled projections.
+- **Market data:** TradingView scanner/history through controlled HTTP proxy and trusted Node ingestion.
+- **Automation:** GitHub Actions for daily history, raw 1m ingestion, derived 5m history, ticker-registry reconciliation, production data audit and regression gates.
 - **Optional integration:** Google Sheets.
 - **OCR:** Tesseract.js-assisted trade entry.
 
-The transaction ledger is the financial source of truth. Positions, cash and closed cycles are projections of ledger activity.
+The default/production branch is **`main`**. The old premium branch is only a compatibility mirror and is not a second production authority.
 
-## Market-data model
+## Current feature state
 
-Current Premium policy:
+### Portfolio/accounting
+
+Financial mutations are persist-confirmed: candidate ledger → reconciliation → authoritative Supabase snapshot → local apply.
+
+Current accounting includes:
+
+- BUY/SELL;
+- deposits/withdrawals and explicit cash-flow semantics;
+- transaction correction/deletion;
+- OCR/import/restore/reconciliation workflows;
+- weighted-average / proportional cost basis;
+- derived open positions and closed cycles;
+- `CORPORATE_ACTION / BONUS_SHARES` with zero cash impact and unchanged invested cost.
+
+### Reports
+
+Reports is a five-mode analytical workspace:
+
+```text
+Overview | Analytics | Trading | Allocation | Monthly
+```
+
+It remembers the last mode, supports diagnostic drill-in, responsive layouts and the accepted premium selector/glass/aura language.
+
+### Market data
 
 ```text
 TradingView raw 1m
         ↓
 Supabase intraday_price_history
         ↓
-deterministic 5m derivation
+deterministic persisted 1m → 5m derivation
         ↓
-Today selector: 1m → 5m → legacy 15m
+Today Auto selector: 1m → 5m → legacy 15m
 ```
 
-Daily historical closes remain in `price_history`.
+The UI also supports manual `Auto | 1m | 5m | 15m | 1h`; 1h is client-derived from observed intraday data.
 
-The UI also supports a client-derived 1h Today display from observed intraday data.
+Daily historical prices remain in `price_history`.
 
 ## Quick start
 
@@ -80,9 +105,10 @@ npm run diagnose:intraday:1m
 npm run sync:intraday
 npm run sync:ticker-registry
 npm run verify:production-data
+npm run verify:live-session-soak
 ```
 
-Legacy Firestore migration commands remain for one-time historical recovery/migration work only.
+Legacy Firestore migration commands remain for one-time historical recovery/migration only.
 
 ## Documentation
 
@@ -92,38 +118,39 @@ Start here:
 - [Master stabilization & evolution roadmap](docs/MASTER_STABILIZATION_ROADMAP.md)
 - [Documentation map](docs/README.md)
 
-Canonical domain references include:
+Canonical references include:
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data model](docs/DATA_MODEL.md)
 - [Authentication and security](docs/AUTH_AND_SECURITY.md)
+- [API](docs/API.md)
 - [Operations](docs/OPERATIONS.md)
 - [Testing](docs/TESTING.md)
 - [Performance analytics](docs/PERFORMANCE_ANALYTICS.md)
 - [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
 - [Ticker registry](docs/TICKER_REGISTRY.md)
+- [Financial mutation contract](docs/FINANCIAL_MUTATION_CONTRACT.md)
+- [Corporate actions ledger](docs/CORPORATE_ACTIONS_LEDGER.md)
 - [Premium visual language](docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md)
 
-## Accounting invariants
+## Accounting/data invariants
 
 1. The transaction ledger is authoritative.
 2. A financial mutation is successful only after authoritative persistence succeeds.
 3. Cash is derived from contributed capital and ledger cash impacts.
-4. Positions reconcile to the ledger.
-5. Closed cycles reconcile to the same ledger.
-6. Historical analytics do not fabricate missing market values.
-7. Startup hydration is read-only.
-8. Financial rows are not silently deduplicated or rewritten.
+4. Positions and closed cycles reconcile to the ledger.
+5. Missing historical/intraday market values are not fabricated.
+6. Startup hydration is read-only.
+7. Financial rows are not silently deduplicated or rewritten.
+8. Corporate actions are explicit ledger events, not fake trades or derived-state patches.
 
-The master roadmap records known places where the current implementation still needs to be brought fully into compliance with these invariants.
+## Current roadmap
 
-## Production note
+Stages 1, 2, 4 and 5 are closed. Stage 3.5 remains deferred technical debt.
 
-GitHub scheduled workflows execute from the repository default branch.
+The next planned implementation is **Stage 6.1 — Broker reconciliation workspace**.
 
-The premium branch contains newer raw-1m/derived-5m and ticker-registry workflows; those schedules are production-authoritative only after reviewed promotion to the default branch.
-
-See [Operations](docs/OPERATIONS.md) and [Current status](docs/STATUS.md).
+See [Current status](docs/STATUS.md) for the exact accepted runtime and [Operations](docs/OPERATIONS.md) for deployment/automation details.
 
 ## Disclaimer
 

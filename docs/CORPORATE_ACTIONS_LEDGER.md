@@ -1,5 +1,9 @@
 # Corporate Actions Ledger
 
+## Status
+
+**CANONICAL CURRENT SUBSET — BONUS_SHARES IMPLEMENTED.** The current app supports bonus/free-share actions end to end through the canonical ledger mutation path. Stage 6.3 owns auditing this implementation and extending it to the remaining corporate-action lifecycle; it must not create a parallel accounting system.
+
 ## Purpose
 
 Corporate actions must be represented as canonical ledger events. They must never be simulated as a BUY/SELL execution or by manually changing a derived position.

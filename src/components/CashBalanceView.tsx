@@ -27,7 +27,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { DateInput } from './DateInput';
-import { getTodayISO } from '../utils/dateUtils';
+import { getCairoTodayISO } from '../utils/dateUtils';
 import { buildCashHistory } from '../services/cashLedger';
 import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliation';
 
@@ -62,12 +62,12 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [depositAmount, setDepositAmount] = useState<string>('');
   const [depositMethod, setDepositMethod] = useState<string>('Bank Transfer (InstaPay/Wire)');
   const [depositNotes, setDepositNotes] = useState<string>('');
-  const [depositDate, setDepositDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [depositDate, setDepositDate] = useState<string>(() => getCairoTodayISO());
 
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawDestination, setWithdrawDestination] = useState<string>('Bank Account Transfer');
   const [withdrawNotes, setWithdrawNotes] = useState<string>('');
-  const [withdrawDate, setWithdrawDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [withdrawDate, setWithdrawDate] = useState<string>(() => getCairoTodayISO());
 
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAWAL'>('ALL');
@@ -250,7 +250,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance + amountNum).toFixed(2));
     const noteText = `${depositMethod}${depositNotes ? ` - ${depositNotes}` : ''}`;
-    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'DEPOSIT', noteText, depositDate || getTodayISO()))) return;
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'DEPOSIT', noteText, depositDate || getCairoTodayISO()))) return;
     setDepositAmount('');
     setDepositNotes('');
     setFeedbackMessage({
@@ -279,7 +279,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance - amountNum).toFixed(2));
     const noteText = `${withdrawDestination}${withdrawNotes ? ` - ${withdrawNotes}` : ''}`;
-    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'WITHDRAW', noteText, withdrawDate || getTodayISO()))) return;
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'WITHDRAW', noteText, withdrawDate || getCairoTodayISO()))) return;
     setWithdrawAmount('');
     setWithdrawNotes('');
     setFeedbackMessage({

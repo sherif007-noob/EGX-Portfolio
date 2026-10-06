@@ -23,10 +23,10 @@ describe('portfolio benchmark comparison', () => {
       },
     );
 
-    expect(rows[0].EGX30).toBeCloseTo(1);
-    expect(rows[1].EGX30).toBeCloseTo(3);
-    expect(rows[2].EGX30).toBeCloseTo(2);
-    expect(benchmarkRelativeReturn(rows[2], 'EGX30')).toBeCloseTo(2);
+    expect(rows[0].EGX30).toBeCloseTo(0);
+    expect(rows[1].EGX30).toBeCloseTo((103 / 101 - 1) * 100);
+    expect(rows[2].EGX30).toBeCloseTo((102 / 101 - 1) * 100);
+    expect(benchmarkRelativeReturn(rows[2], 'EGX30')).toBeCloseTo(4 - (102 / 101 - 1) * 100);
   });
 
   it('uses no look-ahead when aligning intraday benchmark observations', () => {

@@ -120,8 +120,9 @@ Next:
 2. **Stage 5 / Reports R2 — Workspace split — ACCEPTED / CI + RENDERED GREEN** at `main@c71c16a4`; Overview / Analytics / Trading / Allocation / Monthly are separated without calculation rewrites.
 3. **Stage 5 / Reports R3 — Diagnostic Reports Overview — ACCEPTED / CI + RENDERED GREEN** at `main@a39d7fd9`; Quality #37388874197, Phase 10 #37388874006 and Rendered #37388874168 passed after the inspected Reports baseline was accepted.
 4. **Stage 5 / Reports R4 — Progressive disclosure — ACCEPTED / SOURCE GREEN + INSPECTED VISUAL ACCEPTANCE** at implementation head `main@5b1af622`: Quality #37430549239 and Intraday Smoke #37430549221 passed; Rendered #37430549099 changed only `reports-desktop` beyond threshold at **22.311%**. The inspected compact Overview is accepted by exact SHA-256 `105c3dcbbdc10b8e3904b1480b3e261f745beeffc2d41570450de5f775a74e2e`; the global 1% threshold remains unchanged.
-5. **Stage 5 / Reports R5 — Persistence/restoration polish — ACTIVE / VALIDATION CANDIDATE**: initial mode still restores synchronously from `reports:lastMode`; navigation and R4 direct-open actions now share one `persist → setState` handler so explicit report opening overrides remembered mode immediately; stale values still fall back through the existing Reports workspace authority.
-6. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+5. **Stage 5 / Reports R5 — Persistence/restoration polish — MERGED / SOURCE + RENDERED GREEN** at `main@7524a09c`: lazy synchronous restoration remains first-render authoritative; navigation and R4 direct-open actions share one atomic `persist → setState` handler; Quality #37432207590, Intraday Smoke #37432207619 and Rendered #37432207600 passed. Phase 10 closure is still finishing.
+6. **Stage 5 / Reports R6 — Responsive workspace pass — ACTIVE / VALIDATION CANDIDATE**: the rendered harness now exercises Reports at phone, short landscape, tablet, desktop and 2XL; it validates the one-row mode rail, default and expanded Overview, every full workspace, page/stage containment, chart/table bounds and existing safe-area contracts without adding new golden screenshots.
+7. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
 
 ---
 

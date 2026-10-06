@@ -40,6 +40,7 @@ const report = {
   fixedBrowserTime: fixedNowIso,
   baseUrl: BASE_URL,
   geometry: [],
+  reportsResponsive: [],
   screenshots: [],
   comparisons: [],
   errors: [],
@@ -156,6 +157,126 @@ for (const [name, width, height] of geometryViewports) {
     if (overflow > 1) {
       report.errors.push(`${name}: page-level horizontal overflow is ${overflow}px`);
     }
+  } finally {
+    await context.close();
+  }
+}
+
+const reportsResponsiveViewports = [
+  ['reports-phone-390', 390, 844],
+  ['reports-landscape-844', 844, 390],
+  ['reports-tablet-768', 768, 1024],
+  ['reports-desktop-1440', 1440, 1000],
+  ['reports-2xl-2560', 2560, 1440],
+];
+
+const reportsModes = ['overview', 'analytics', 'trading', 'allocation', 'monthly'];
+
+async function reportsViewportMetrics(page) {
+  return page.evaluate(() => {
+    const rail = document.querySelector('[data-reports-navigation] [role="tablist"]');
+    const stage = document.querySelector('.premium-reports-mode-stage');
+    const tabs = rail ? [...rail.querySelectorAll('[role="tab"]')] : [];
+    const tabTops = tabs.map((tab) => Math.round(tab.getBoundingClientRect().top));
+    const uniqueRows = new Set(tabTops).size;
+
+    const documentClientWidth = document.documentElement.clientWidth;
+    const documentScrollWidth = document.documentElement.scrollWidth;
+    const bodyClientWidth = document.body.clientWidth;
+    const bodyScrollWidth = document.body.scrollWidth;
+    const pageOverflow = Math.max(
+      documentScrollWidth - documentClientWidth,
+      bodyScrollWidth - bodyClientWidth,
+    );
+
+    const stageRect = stage?.getBoundingClientRect() ?? null;
+    const stageOverflow =
+      stageRect == null
+        ? null
+        : Math.max(0, -stageRect.left, stageRect.right - window.innerWidth);
+
+    return {
+      pageOverflow,
+      railClientWidth: rail?.clientWidth ?? null,
+      railScrollWidth: rail?.scrollWidth ?? null,
+      railRows: uniqueRows,
+      stageLeft: stageRect?.left ?? null,
+      stageRight: stageRect?.right ?? null,
+      stageOverflow,
+    };
+  });
+}
+
+for (const [name, width, height] of reportsResponsiveViewports) {
+  const { context, page } = await openStablePage(width, height);
+  try {
+    await page.locator('#tab-reports').click();
+    await page.locator('[data-reports-navigation]').waitFor({ state: 'visible' });
+    await page.waitForTimeout(160);
+
+    const overviewMetrics = await reportsViewportMetrics(page);
+    report.reportsResponsive.push({
+      name,
+      width,
+      height,
+      mode: 'overview',
+      expanded: false,
+      ...overviewMetrics,
+    });
+
+    if (overviewMetrics.pageOverflow > 1 || (overviewMetrics.stageOverflow ?? 0) > 1) {
+      report.errors.push(
+        `${name}/overview: Reports workspace overflow page=${overviewMetrics.pageOverflow}px stage=${overviewMetrics.stageOverflow ?? 'missing'}px`,
+      );
+    }
+    if (overviewMetrics.railRows !== 1) {
+      report.errors.push(`${name}: Reports mode rail wrapped to ${overviewMetrics.railRows} rows`);
+    }
+
+    const inspectButton = page.getByRole('button', { name: 'Inspect' }).first();
+    await inspectButton.click();
+    await page.waitForTimeout(120);
+    const expandedMetrics = await reportsViewportMetrics(page);
+    report.reportsResponsive.push({
+      name,
+      width,
+      height,
+      mode: 'overview',
+      expanded: true,
+      ...expandedMetrics,
+    });
+    if (expandedMetrics.pageOverflow > 1 || (expandedMetrics.stageOverflow ?? 0) > 1) {
+      report.errors.push(
+        `${name}/overview-expanded: Reports workspace overflow page=${expandedMetrics.pageOverflow}px stage=${expandedMetrics.stageOverflow ?? 'missing'}px`,
+      );
+    }
+
+    for (const mode of reportsModes.slice(1)) {
+      await page.locator(`#reports-mode-${mode}`).click();
+      await page.locator(`[data-reports-workspace="${mode}"]`).waitFor({ state: 'visible' });
+      await page.waitForTimeout(160);
+      const metrics = await reportsViewportMetrics(page);
+      report.reportsResponsive.push({
+        name,
+        width,
+        height,
+        mode,
+        expanded: false,
+        ...metrics,
+      });
+      if (metrics.pageOverflow > 1 || (metrics.stageOverflow ?? 0) > 1) {
+        report.errors.push(
+          `${name}/${mode}: Reports workspace overflow page=${metrics.pageOverflow}px stage=${metrics.stageOverflow ?? 'missing'}px`,
+        );
+      }
+      if (metrics.railRows !== 1) {
+        report.errors.push(`${name}/${mode}: Reports mode rail wrapped to ${metrics.railRows} rows`);
+      }
+    }
+  } catch (error) {
+    report.errors.push(
+      `${name}: Reports responsive validation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   } finally {
     await context.close();
   }

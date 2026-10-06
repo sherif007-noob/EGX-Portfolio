@@ -1482,7 +1482,7 @@ Each expanded preview gets a clear full-report action.
 
 ---
 
-## R5 — Persistence/restoration polish — ACTIVE / VALIDATION CANDIDATE
+## R5 — Persistence/restoration polish — MERGED / SOURCE + RENDERED GREEN
 
 Validate:
 
@@ -1493,7 +1493,7 @@ Validate:
 
 ---
 
-## R6 — Responsive workspace pass
+## R6 — Responsive workspace pass — ACTIVE / VALIDATION CANDIDATE
 
 Validate phone, short landscape, tablet, desktop and 2XL.
 

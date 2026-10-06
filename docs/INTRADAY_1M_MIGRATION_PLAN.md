@@ -347,7 +347,7 @@ GitHub cron is UTC. The Node script applies the authoritative Cairo-local Sunday
 
 The old direct-TradingView 5m workflow is manual-only and is not a competing scheduled producer.
 
-The branch-promotion work described by the original migration plan is complete. `main` is the scheduler authority. The remaining issue is operational reliability evidence: the October 4 Stage 3.5 soak failed and must be repeated after ingestion remediation.
+The branch-promotion work described by the original migration plan is complete. `main` is the scheduler authority. Operational reliability remains open: the October 4 Stage 3.5 soak failed, and the October 5 one-session retry also failed to close the gate (four failed observation runs plus one cancelled final trigger). The current one-shot retry cron is exhausted; another acceptance attempt must be explicitly rescheduled or manually dispatched after ingestion remediation.
 
 ---
 

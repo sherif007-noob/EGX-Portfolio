@@ -11,8 +11,8 @@ Update it after every accepted implementation pass. Detailed historical reasonin
 **Date:** 2026-10-06  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** mirrored to `main` at Stage 3.2 closure; no longer production authority  
-**Current validated runtime head:** `25eddb89` — Stage 5 / Reports R7 motion/state polish accepted
-**Current full verification:** on `main@25eddb89`, Quality Checks #37488860193 passed; Phase 10 Visual Closure #37488860091 passed TypeScript, **137 / 137 test files, 723 / 723 tests**, production Vite/PWA build, Cloudflare Worker dry-run and rendered baseline verification; Rendered Visual Regression #37488860007 passed. All **12 / 12** responsive geometries remained at **0px overflow**.
+**Current validated runtime head:** `5152ca2b` — Stage 5 / Reports R8 full regression and closure accepted
+**Current full verification:** on `main@5152ca2b`, Quality Checks #37502935404 passed; Phase 10 Visual Closure #37502935456 passed TypeScript, **139 / 139 test files, 734 / 734 tests**, production Vite/PWA build, Cloudflare Worker dry-run and rendered baseline verification; Rendered Visual Regression #37502935538 passed. All **12 / 12** responsive geometries remained at **0px overflow**. The inspected Reports selector-aura state is exact-hash accepted at **23.556%** while every other tracked rendered state remains below the frozen 1% threshold.
 **Application type:** private/personal EGX portfolio tracker  
 **Primary database/auth:** Supabase Postgres + Supabase Auth  
 **Production web runtime:** Cloudflare Worker serving Vite assets and `/api/*` routes  
@@ -64,12 +64,12 @@ Stage 3 completed:
 
 Stage 3 active:
 
-- **Stage 3.5 — Live-session soak — FAILED / deferred technical debt; retry scheduled for the 2026-10-05 live session**
+- **Stage 3.5 — Live-session soak — FAILED / deferred technical debt; remediation/retry still required**
 - **Stage 3.6 — Data Health Center — IMPLEMENTED / PR CI GREEN / merged to `main`**
 
 Stage 3.6 is merged on `main@f5ae6ad6`. PR #45 Quality Checks passed TypeScript, **98 / 98 test files, 550 / 550 tests**, and the production build. It exposes a read-only production trust surface from the existing Settings affordance. It reports held-universe quote health, expected vs selected EGX session, latest raw 1m coverage, derived 5m tail alignment, daily-history coverage, ticker resolution, Supabase portfolio sync age, last raw-ingestion age, and the build commit. It does not mutate accounting or manufacture missing market data.
 
-Stage 3.5 remains deferred technical debt for the scheduled 2026-10-05 live-session retry.
+Stage 3.5 remains deferred technical debt. Repeat the live-session soak only after scheduled ingestion reliability is repaired.
 
 Stage 4 accepted:
 
@@ -123,8 +123,10 @@ Next:
 5. **Stage 5 / Reports R5 — Persistence/restoration polish — MERGED / SOURCE + RENDERED GREEN** at `main@7524a09c`: lazy synchronous restoration remains first-render authoritative; navigation and R4 direct-open actions share one atomic `persist → setState` handler; Quality #37432207590, Intraday Smoke #37432207619 and Rendered #37432207600 passed. Phase 10 closure is still finishing.
 6. **Stage 5 / Reports R6 — Responsive workspace pass — ACCEPTED / CI + RENDERED GREEN** at `main@33ab8278`: Quality #37432757200, Phase 10 #37432757207 and Rendered #37432757249 passed. The rendered harness covers phone, short landscape, tablet, desktop and 2XL; it validates the one-row mode rail, default and expanded Overview, every full workspace, page/stage containment, chart/table bounds and existing safe-area contracts without adding new golden screenshots.
 7. **Stage 5 / Reports R7 — Motion/state polish — ACCEPTED / CI + RENDERED GREEN** at `main@25eddb89`: workspace mode changes keep the accepted `MotionSwap` state choreography; diagnostic expansion/collapse uses shared React-owned `DisclosurePresence` exit presence with an opacity-only reduced-motion path; first-render restoration and existing loading/empty-state owners remain unchanged. Quality #37488860193, Phase 10 #37488860091 and Rendered #37488860007 passed.
-8. **Stage 5 / Reports R8 — Full regression and closure — NEXT**: run the complete Reports functional/regression matrix across Overview diagnostics, Analytics modes/timeframes/Today resolutions/tooltips/1W transitions, realized trajectory, Trading filters/statistics, Allocation modes/Cash, Monthly modes/exports, persistence/direct opening and phone/desktop/landscape.
-9. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by the Stage 5 information-architecture work.
+8. **Stage 5 / Reports R8 — Full regression and closure — ACCEPTED / CI + RENDERED GREEN** at `main@5152ca2b`: PR #102 added source and browser interaction closure for Overview diagnostics, Analytics modes/timeframes/Today resolutions/tooltips/1W transition ownership, realized trajectory, Trading filters/statistics/exports, Allocation modes/Cash, Monthly modes/exports, persistence/direct opening and responsive containment. Quality #37502935404, Phase 10 #37502935456 and Rendered #37502935538 passed; **139 / 139 test files, 734 / 734 tests** passed and all **12 / 12** responsive geometries remained at **0px overflow**.
+9. **Stage 5 is CLOSED.** The Reports selector aura correction is accepted by exact screenshot hash `9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3`; the global 1% visual threshold remains frozen.
+10. **Next: Stage 6.1 — Broker reconciliation workspace.**
+11. **Stage 3.5 live-session soak remains deferred technical debt** and is not reopened by Stage 6 unless its remediation is explicitly scheduled.
 
 ---
 
@@ -1191,32 +1193,12 @@ Current domain authorities:
 
 ## Current pass
 
-**Stage 5 / Reports R2 — Workspace split — VALIDATION CANDIDATE.**
+**NEXT — Stage 6.1: Broker reconciliation workspace.**
 
-R1 is accepted at `main@4e9203bc`. R2 now maps the trusted existing content as follows:
-- Overview → existing realized summary band, transitional until R3;
-- Analytics → main performance analytics + realized trajectory + equity bridge;
-- Trading → TradingPerformanceReport + closed-trade summary;
-- Allocation → existing allocation system and controls;
-- Monthly → MonthlyPerformanceReport.
+Stage 5 / Reports is fully closed at validated runtime `main@5152ca2b`. The R8 closure includes the accepted premium selector aura, source regression coverage, deterministic browser interaction coverage, exports/filter checks, direct-mode restoration, and responsive validation.
 
-Every trusted report surface remains present exactly once. No accounting, analytics formula, market-data, Supabase, export or persistence behavior was rewritten.
+Stage 6.1 should compare a broker snapshot/import against authoritative app truth and explain discrepancies through ledger events. Any correction must route through explicit ledger edits and the existing persist-confirmed mutation contract; do not patch derived positions/cash directly.
 
+**Existing Stage 6.3 corporate-action work must be audited and extended, not reimplemented.** The corporate-actions ledger introduced for the ORHD free-share requirement is already part of the app.
 
-
-**Stage 4.5.6 — responsive + feature/legacy closure — FINAL VALIDATION CANDIDATE / PR #85.**
-
-Implementation state:
-- `src/index.css` is reduced to the stable Tailwind + ownership-entry imports only;
-- final feature owners are `features/app-shell.css`, `features/charts.css`, `features/reports.css`, and `features/header.css`;
-- cross-app touch/safe-area/containment/hierarchy overrides are in `responsive.css`;
-- final shared material/control/overlay/motion residue is drained to the existing canonical owners;
-- final audit has **156 actual `!important` declarations** versus 158 at the Stage 4.5.1 baseline; the reduction is the accepted 4.5.4 deduplication of one identical semantic-hover declaration pair, not a dropped visual rule;
-- keyframe count remains **23**, exactly the baseline;
-- media blocks are **66** versus the original 62 because four mixed media queries were split across rightful owners without adding behavior.
-
-4.5.5 is accepted. PR #85 is now the sole Stage 4 exit candidate.
-
-**Deferred technical debt: Stage 3.5 live-session soak — FAILED / REMEDIATION REQUIRED.**
-
-The October 4 production soak failed because no target-session 1m/5m bars were persisted and daily history had not advanced past October 1. The production scanner proxy remained healthy. The only scheduled 1m writer run recorded for October 4 started at 15:53 Cairo and explicitly skipped outside the 15:15 ingestion window, so it wrote no bars. Repeat Stage 3.5 only after scheduled ingestion reliability is repaired.
+**Deferred technical debt: Stage 3.5 live-session soak — FAILED / REMEDIATION REQUIRED.** Repeat it only after scheduled 1m ingestion reliability is repaired.

@@ -60,9 +60,9 @@ Use this matrix to find the current authority for each live subsystem. A feature
 | Test gates and rendered/browser regression | [TESTING.md](TESTING.md) |
 | Ledger mutation / persist-before-apply | [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) |
 | Corporate actions / bonus shares | [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) |
-| Daily + intraday market data | [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) |
+| Daily + intraday market data, Today session-date policy, benchmark ingestion | [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) |
 | Ticker / ISIN / alias identity | [TICKER_REGISTRY.md](TICKER_REGISTRY.md) |
-| NAV, TWR, MWR, drawdown, realized/unrealized analytics | [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) |
+| NAV, TWR, MWR, drawdown, realized/unrealized analytics, EGX benchmark comparison | [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) |
 | Chart interaction/visual behavior | [ANALYTICS_VISUAL_SYSTEM.md](ANALYTICS_VISUAL_SYSTEM.md) |
 | Reports Overview/Analytics/Trading/Allocation/Monthly workspace | [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md) |
 | Glass/refraction/aura/hierarchy/control language | [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) |

@@ -9,10 +9,12 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 ### Analytics
 
 - Added shared Today/1W/1M/90D/YTD/All portfolio analytics.
-- Added Portfolio vs Return, Portfolio vs Net Deposits, TWR, and MWR chart modes.
+- Added Portfolio vs Return, Portfolio vs Net Deposits, TWR, MWR, and Portfolio vs Benchmarks chart modes.
 - Added transaction-aware Today reconstruction with persisted 1m/5m/15m selection, Auto fallback, and client-derived 1h display aggregation.
+- Changed Today session ownership so Cairo midnight does not create a new empty session: before 10:00 Cairo the chart keeps the previous EGX trading weekday, with DST-aware Cairo-day query bounds.
 - Added performance drawdown, cumulative-fee, and realized-vs-unrealized P&L charts.
 - Standardized dark chart tooltips, crosshairs, axes, empty states, and mobile resize behavior.
+- Added Stage 7.1 flow-neutral benchmark overlays for EGX30, EGX70 EWI and EGX100 EWI, with selected-period normalization, relative portfolio-minus-index return, daily history ingestion, and intraday benchmark ingestion.
 
 ### Documentation
 
@@ -39,6 +41,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 ### Current validation
 
 - Stage 5 R8 validated on `main@5152ca2b`: 139/139 test files, 734/734 tests, production build, Worker dry-run, rendered browser regression, and 12/12 responsive geometries at 0px overflow.
+- Stage 7.1 + Today-session feature head `main@9f6cdcea`: Quality Checks green with 140/140 test files and 739/739 tests; rendered screenshots/geometry remained accepted while a Reports browser-harness selector ambiguity was identified and corrected in the follow-up closure branch.
 - Stage 3.5 live-session ingestion soak remains deferred technical debt pending scheduler reliability remediation.
 
 ## 2026-09

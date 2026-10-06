@@ -1052,7 +1052,7 @@ Still requires one physical-app observation:
 
 Do not close this pass from CI alone. Close only after the strict post-close run and device-parity observation are recorded.
 
-**Deferral record — 2026-10-04:** the failed scheduler-ingestion soak remains technical debt. The previously planned October 5 retry did not become accepted closure evidence. Repeat Stage 3.5 only after scheduled ingestion reliability is repaired; Stage 3.6 cannot silently close it.
+**Deferral record — 2026-10-04 / retry 2026-10-05:** the scheduler-ingestion soak remains technical debt. The October 5 one-session retry executed five scheduled triggers: runs #37331276519, #37338555588, #37354056348 and #37364644401 failed; final trigger #37370688812 was cancelled. Completed strict-final observations still showed missing reconstructible derived 5m coverage and stale raw 1m tails on held symbols even though Scanner coverage and NAV reconciliation could agree. The one-shot retry schedule is exhausted. Repeat Stage 3.5 only after ingestion reliability is repaired and a new observation window is explicitly scheduled/dispatched; Stage 3.6 cannot silently close it.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — Stage 5 / R1 workspace architecture is implemented as a validation candidate. Entry gates are closed; R1 adds internal Reports modes + last-mode persistence with zero report-calculation changes.**
+**ACTIVE — R1, R2 and R3 are accepted. R4 progressive disclosure is the current validation candidate: one Overview diagnostic preview may expand at a time and may promote into its existing full report workspace without duplicating report calculations.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -576,16 +576,27 @@ Acceptance:
 
 ---
 
-## Stage R4 — Progressive preview expansion
+## Stage R4 — Progressive preview expansion — VALIDATION CANDIDATE
 
 - allow one preview to expand at a time;
 - expanded preview adds meaningful medium-detail information;
 - add **Open full report →** actions;
 - explicit report opening overrides last-mode persistence.
 
+Candidate implementation:
+- `ReportsOverview` owns one `expandedPreview` ID, so opening another diagnostic closes the previous one;
+- the default view is shorter than R3 because secondary diagnostic metrics move behind the inline expansion;
+- Portfolio State and Risk & Costs open Analytics;
+- Trading Quality opens Trading;
+- Concentration opens Allocation;
+- Current Month opens Monthly;
+- full-report actions route through the existing `reportMode` state so the trusted workspaces/calculation engines are reused.
+
 Acceptance:
 - Overview does not become a long accordion page;
-- moving from diagnosis to depth is obvious.
+- moving from diagnosis to depth is obvious;
+- TypeScript, full tests and production build pass;
+- rendered Reports inspection confirms the default compact state remains readable and hierarchy-safe.
 
 ---
 

@@ -81,12 +81,12 @@ async function resolveTickerUniverse(
   if (positionError) throw new Error(`Supabase position lookup failed: ${positionError.message}`);
 
   return [
-    ...new Set(
-      [...(transactions ?? []), ...(positions ?? [])]
+    ...new Set([
+      ...[...(transactions ?? []), ...(positions ?? [])]
         .map((row: any) => normalizeTicker(String(row.ticker || '')))
         .filter((ticker) => ticker && ticker !== 'CASH'),
       ...PORTFOLIO_BENCHMARKS.map((item) => item.ticker),
-    ),
+    ]),
   ].sort();
 }
 

@@ -13,7 +13,7 @@ describe('rendered visual exact-hash acceptance', () => {
     expect(manifest['reports-desktop'].sha256).toBe(
       '9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3',
     );
-    expect(manifest['reports-desktop'].reason).toContain('Stage 5 R4');
+    expect(manifest['reports-desktop'].reason).toContain('Stage 5 R8');
   });
 
   it('does not weaken the global visual threshold', () => {

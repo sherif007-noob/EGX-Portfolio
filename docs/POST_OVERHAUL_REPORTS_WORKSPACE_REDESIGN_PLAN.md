@@ -4,9 +4,7 @@
 
 **CLOSED — R1 through R8 are accepted. The Reports workspace redesign is complete: diagnostic Overview, dedicated Analytics/Trading/Allocation/Monthly workspaces, remembered mode, progressive disclosure, responsive behavior, premium motion, the restored selector aura, and the full functional/rendered regression matrix are all accepted.**
 
-This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
-
-The current visual-overhaul plan should continue unchanged. This document remains the detailed design authority for the later **Reports & Performance** information-architecture redesign. The master roadmap owns sequencing; this file owns the R1–R8 Reports behavior and acceptance details.
+This document is the **closed Stage 5 detailed authority** for the Reports & Performance workspace. Phase 10 and Stage 4 were completed before this redesign began; the master roadmap owns sequencing and this file owns the accepted R1–R8 Reports behavior and closure evidence.
 
 ---
 
@@ -763,8 +761,21 @@ The redesign is successful when:
 
 ---
 
-## Master-roadmap integration\n\nRoadmap owner: **Stage 5 — Reports workspace redesign**.\n\nRequired entry gates:\n\n1. Phase 10 closed / CI-clean;\n2. persistence-confirmed financial mutation model closed;\n3. production/default-branch + scheduler convergence closed;\n4. architecture ownership sufficient to move trusted report components without reimplementing analytics.\n\nThe existing R1–R8 sequence in this document is preserved. Benchmarking, risk-dashboard expansion, execution analytics and other new calculations are later roadmap features and must not be smuggled into the workspace restructuring.\n\n---\n\n## Deferred implementation rule
+## Master-roadmap integration
 
-Do not begin this plan until the current premium visual overhaul is formally complete.
+Roadmap owner: **Stage 5 — Reports workspace redesign — CLOSED**.
 
-This document should remain separate from the active Phase 8–11 roadmap unless the user explicitly decides to schedule the Reports workspace redesign afterward.
+All entry gates were satisfied before implementation:
+
+1. Phase 10 closed / CI-clean;
+2. persistence-confirmed financial mutation model closed;
+3. production/default-branch convergence sufficient for the workspace change;
+4. Stage 4 architecture ownership sufficient to move trusted report components without reimplementing analytics.
+
+The accepted R1–R8 sequence is preserved in this document as closure evidence. Benchmarking, risk-dashboard expansion, execution analytics and other new calculations remain later roadmap features.
+
+---
+
+## Post-closure rule
+
+Reports may consume later analytical features, but its accepted workspace architecture, persistence behavior, premium selector language and progressive-disclosure model must not be silently reopened. A later change that intentionally alters those contracts must name the reopened scope and pass the current source + rendered regression gates.

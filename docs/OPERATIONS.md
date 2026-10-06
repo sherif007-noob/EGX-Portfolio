@@ -29,7 +29,7 @@ The former `feature/premium-ui-redesign` branch is retained only as a compatibil
 
 Stage 3.2 production verification confirmed the live Supabase project's accounting RPC plus `price_history`, `intraday_price_history`, and `ticker_registry` production objects.
 
-The remaining automation/toolchain normalization is owned by Stage 3.3.
+Stage 3.3 automation/toolchain normalization is closed. Stage 3.5 live-session soak remains deferred technical debt until scheduled ingestion reliability is repaired and a new live-session verification succeeds.
 
 ---
 
@@ -178,6 +178,8 @@ GitHub cron is UTC.
 The Node script applies the authoritative `Africa/Cairo` gate and accepts scheduled ingestion through **15:15 Cairo** so delayed final observations and runner delays can be captured.
 
 Workflow behavior:
+
+> Operational caveat: Stage 3.5 is not closed. The October 4 live-session soak showed that the scheduled writer can miss a target session when execution occurs outside the ingestion window. The workflow below is the production authority, but scheduled-ingestion reliability still requires remediation + a fresh live-session soak.
 
 1. discover the session-relevant portfolio universe;
 2. resolve current ticker/history identity including ISIN fallback;

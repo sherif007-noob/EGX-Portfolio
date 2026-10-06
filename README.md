@@ -12,12 +12,14 @@ A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct ac
 - **Automation:** GitHub Actions for daily history, raw 1m intraday ingestion, derived 5m history, ticker registry reconciliation, and production data audits.
 - **Optional integration:** Google Sheets.
 - **OCR:** Tesseract.js-assisted trade entry.
+- **Reports workspace:** Overview / Analytics / Trading / Allocation / Monthly with remembered mode and progressive disclosure.
+- **Corporate actions:** canonical ledger-backed BONUS_SHARES flow; broader lifecycle expansion is planned in Stage 6.3.
 
 The transaction ledger is the financial source of truth. Positions, cash and closed cycles are projections of ledger activity.
 
 ## Market-data model
 
-Current Premium policy:
+Current production/default-`main` policy:
 
 ```text
 TradingView raw 1m
@@ -26,7 +28,8 @@ Supabase intraday_price_history
         ↓
 deterministic 5m derivation
         ↓
-Today selector: 1m → 5m → legacy 15m
+Today reader: trustworthy 1m → 5m → legacy 15m
+UI resolution: Auto / 1m / 5m / 15m / 1h
 ```
 
 Daily historical closes remain in `price_history`.
@@ -103,6 +106,9 @@ Canonical domain references include:
 - [Intraday market data](docs/INTRADAY_MARKET_DATA.md)
 - [Ticker registry](docs/TICKER_REGISTRY.md)
 - [Premium visual language](docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md)
+- [Financial mutation contract](docs/FINANCIAL_MUTATION_CONTRACT.md)
+- [Corporate actions ledger](docs/CORPORATE_ACTIONS_LEDGER.md)
+- [Closed Reports workspace authority](docs/POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md)
 
 ## Accounting invariants
 
@@ -115,13 +121,13 @@ Canonical domain references include:
 7. Startup hydration is read-only.
 8. Financial rows are not silently deduplicated or rewritten.
 
-The master roadmap records known places where the current implementation still needs to be brought fully into compliance with these invariants.
+The master roadmap records remaining operational debt and future feature work. Stage 2 financial-integrity adoption is closed; later stages must preserve these invariants.
 
 ## Production note
 
-GitHub scheduled workflows execute from the repository default branch.
+GitHub scheduled workflows execute from the repository default branch, and `main` is the production authority for application code, Cloudflare runtime, market-data automation, ticker registry reconciliation, and regression workflows.
 
-The premium branch contains newer raw-1m/derived-5m and ticker-registry workflows; those schedules are production-authoritative only after reviewed promotion to the default branch.
+The raw-1m/derived-5m pipeline is already promoted to `main`. Stage 3.5 remains deferred because scheduled-ingestion reliability still requires remediation and a fresh live-session soak.
 
 See [Operations](docs/OPERATIONS.md) and [Current status](docs/STATUS.md).
 

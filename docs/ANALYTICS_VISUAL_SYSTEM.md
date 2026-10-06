@@ -4,7 +4,7 @@
 
 The analytics visual system defines how every portfolio chart should look and behave inside EGX Portfolio.
 
-Phase 7 implementation is governed by **docs/PHASE7_CHARTS_PLAN.md**, which audits the current seven chart visualizations and defines the staged migration/validation order.
+Phase 7 originally established this system; `PHASE7_CHARTS_PLAN.md` is now historical implementation evidence. This document is the canonical current chart visual/interaction contract.
 
 External apps such as Telda are references for useful interactions and information hierarchy. They are **not** the visual design source. Charts must continue to look like native EGX Portfolio components.
 
@@ -65,7 +65,7 @@ The shell provides:
 - dark shadow;
 - app-consistent rounded corners.
 
-A CSS fallback in `src/index.css` also darkens Recharts' built-in tooltip if a future chart accidentally uses the default component. This is defensive only; new charts should still use the shared tooltip component.
+A CSS fallback in `src/styles/features/charts.css` also darkens Recharts' built-in tooltip if a future chart accidentally uses the default component. This is defensive only; new charts should still use the shared tooltip component.
 
 ## Crosshair behavior
 
@@ -77,7 +77,7 @@ Cartesian charts should pass:
 
 The shared cursor uses a thin, dashed cyan line.
 
-The 1D chart in the later intraday phase will build on this with a highlighted active point and timestamp tooltip.
+The Today chart uses this interaction language with active-point/timestamp inspection and synchronized secondary analytics where applicable.
 
 ## Axes and grid
 
@@ -111,21 +111,26 @@ Examples:
 +69.2k
 ```
 
-## Current migrated charts
+## Current chart surfaces
 
-Phase 3 migrates the existing Recharts surfaces:
+The shared system now covers:
 
-- historical MWRR;
-- realized P&L trajectory;
-- allocation pie chart;
-- detailed cumulative realized trajectory;
-- trade-by-trade realized bar chart.
+- Portfolio vs Return;
+- Portfolio vs Net Deposits;
+- Performance (TWR);
+- Performance (MWR);
+- Today intraday NAV;
+- performance drawdown;
+- cumulative fees;
+- realized vs unrealized P&L;
+- realized trajectory (cumulative and trade-by-trade);
+- portfolio allocation.
 
-This removes the inconsistent mix of default Recharts white tooltips and custom dark tooltips.
+This removes the earlier mix of default Recharts white tooltips and independent chart-control recipes.
 
-## 1D chart rule
+## Today chart rule
 
-The future 1D portfolio chart must use a **linear, unsmoothed path** because the observations are discrete 15-minute portfolio valuations.
+The Today portfolio chart uses a **linear, unsmoothed path** because intraday observations are discrete market/accounting observations at the selected resolution.
 
 Longer daily timeframes may use restrained visual interpolation where appropriate, provided the plotted points remain the actual calculated observations.
 
@@ -141,15 +146,15 @@ Tooltips must:
 
 Chart controls should be touch-sized and remain usable without hover.
 
-## Future chart modes
+## Current analytics modes
 
-The same visual system will be reused for:
+The same visual system is used for:
 
 - Portfolio vs Return
 - Portfolio vs Net Deposits
 - Performance (TWR)
 - Performance (MWR)
-- 1D intraday NAV
+- Today intraday NAV
 - drawdown
 - realized vs unrealized P&L
 - cumulative fees

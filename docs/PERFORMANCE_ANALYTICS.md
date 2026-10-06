@@ -179,7 +179,7 @@ Shared timeframe boundaries live in `src/services/analyticsTimeframes.ts`.
 
 | Timeframe | Definition | Resolution |
 | --- | --- | --- |
-| Today | Current EGX session after open, otherwise latest completed session | 15-minute |
+| Today | Current EGX session after open, otherwise latest completed session | adaptive intraday: Auto / 1m / 5m / 15m, with optional 1h display aggregation |
 | 1W | Elapsed 7-day lookback ending at the latest session | Daily |
 | 1M | Rolling one calendar month ending at the latest session | Daily |
 | 90D | Rolling 90 calendar days ending at the latest session | Daily |
@@ -188,7 +188,7 @@ Shared timeframe boundaries live in `src/services/analyticsTimeframes.ts`.
 
 For daily ranges, if a boundary lands on a weekend, holiday, or otherwise lacks a valuation, the engine uses the last complete valuation at or before the requested start as the analytical baseline. It never invents a synthetic price for the missing date.
 
-`Today` is marked as requiring intraday data. Pass 2 intentionally does not substitute a daily point for the missing 15-minute series; session reconstruction belongs to the intraday analytics pass.
+`Today` requires intraday data. The reader uses the requested persisted resolution when explicitly selected (1m/5m/15m), while Auto chooses the finest trustworthy current-session candidate with comparable ticker/session coverage. The 1h option is derived in memory from the selected trustworthy intraday source. Missing current-session intraday data remains unavailable; the engine never substitutes an older session or a daily point.
 
 ## Selected-period MWR
 
@@ -230,7 +230,7 @@ TWR = product(1 + subperiod return) - 1
 
 A deposit therefore changes portfolio size but does not count as investment performance.
 
-The daily version is an end-of-day approximation. The intraday pass will use execution timestamps and 15-minute valuations to improve same-session precision.
+The daily version is an end-of-day approximation. The Today path already uses execution timestamps plus trustworthy intraday valuations for same-session precision.
 
 ## Net deposits
 
@@ -280,6 +280,12 @@ The daily timeframes use `buildUnifiedAnalyticsResult()` and therefore share the
 
 ### Today
 
+The UI exposes:
+
+`Auto · 1m · 5m · 15m · 1h`
+
+`Auto` evaluates persisted 1m/5m/15m candidates and prefers the finest candidate that covers the same current-session ticker envelope. An explicit 1m/5m/15m selection requests only that persisted resolution. The 1h view is a client-side aggregation of the selected trustworthy source rather than a separate persisted interval.
+
 `Today` is reconstructed by `src/services/intradayAnalyticsEngine.ts`.
 
 The engine:
@@ -288,7 +294,7 @@ The engine:
 - starts from pre-session cash and holdings rebuilt from the transaction ledger;
 - values opening holdings from the prior trusted daily close;
 - applies same-session trades at their exact `executedAt` timestamps;
-- applies 15-minute TradingView bars without look-ahead;
+- applies the selected trustworthy 1m/5m/15m timeline without look-ahead; the optional 1h view is aggregated from that selected source;
 - uses the current partial bar only up to the current time during an active session;
 - includes intraday round trips even when the security is no longer held at session end;
 - includes brokerage fees through the ledger cash impact;
@@ -298,7 +304,7 @@ A same-session transaction without an execution timestamp makes the 1D reconstru
 
 The Today chart uses a straight `linear` line rather than a smoothed curve so the UI does not imply market observations that did not occur.
 
-The stored 15-minute bars reconstruct the session path. During the active session, if every currently held ticker has a valid live quote, the engine appends one final as-of valuation using the same live position prices that drive the portfolio hero/current NAV. This makes the chart endpoint converge on the current portfolio value without rewriting the earlier 15-minute path. If even one held ticker lacks a trustworthy live quote, no mixed live/stale endpoint is appended.
+The selected persisted intraday timeline reconstructs the session path. During the active session, if every currently held ticker has a valid live quote, the engine appends one final as-of valuation using the same live position prices that drive the portfolio hero/current NAV. This makes the chart endpoint converge on the current portfolio value without rewriting earlier observations. If even one held ticker lacks a trustworthy live quote, no mixed live/stale endpoint is appended.
 
 ### Seven-day window semantics
 
@@ -306,7 +312,7 @@ The stored 15-minute bars reconstruct the session path. During the active sessio
 
 ### Current-session versus completed-session behavior
 
-During an active session, the newest available partial 15-minute bar is valued only through the current time.
+During an active session, the newest available partial bar at the selected resolution is valued only through the current time.
 
 The session boundary is shared with the live-market scheduler: the regular EGX session starts at 10:00 Cairo Sunday–Thursday. The earlier 09:30 window is treated as pre-market, not portfolio-session performance. After the session closes—or on a non-trading day—the selector resolves to the latest completed EGX session. If a weekday is an exchange holiday, the UI resolves to the latest actual session present in intraday market data instead of displaying a fabricated empty day.
 
@@ -318,7 +324,7 @@ For `All`, annualized XIRR is shown only as a secondary reference value.
 
 ### Data availability
 
-If no 15-minute rows exist for the selected session, Today remains explicitly unavailable instead of falling back to a daily price.
+If no acceptable current-session 1m/5m/15m candidate exists, Today remains explicitly unavailable instead of falling back to a daily price or an older intraday session.
 
 The ingestion workflow is also triggered when its own workflow/script changes are merged to `main`, which allows an empty production intraday store to seed immediately after deployment while preserving the normal 15-minute scheduled ingestion.
 

@@ -1,6 +1,10 @@
 # 1-Minute Intraday Migration Plan — Canonical 15-Phase Roadmap
 
-This is the canonical implementation roadmap for the EGX 1-minute intraday migration on `feature/premium-ui-redesign`.
+## Status
+
+**IMPLEMENTATION PROMOTED TO PRODUCTION `main`; MIGRATION HISTORY RETAINED.** The 1m raw / derived 5m pipeline is current production architecture. Historical branch/promotion language inside individual phases records the rollout sequence. The remaining live issue is Stage 3.5 scheduled-ingestion reliability and a fresh live-session soak.
+
+This is the canonical implementation/history roadmap for the EGX 1-minute intraday migration.
 
 ## Target architecture
 
@@ -37,7 +41,7 @@ Current authoritative settings:
 - derived retention = 90 calendar days;
 - timezone = `Africa/Cairo`;
 - regular session = 10:00-14:30 Cairo;
-- scheduled ingestion grace = through 14:40 Cairo;
+- scheduled ingestion grace = through 15:15 Cairo;
 - trading weekdays = Sunday-Thursday;
 - ingestion cadence target = about 5 minutes;
 - initial/backfill batch size = 5,000 observations;
@@ -195,7 +199,9 @@ A previous exact-instant cutoff defect could leave the first retained derived bu
 Today loads candidate intervals and selects intentionally:
 
 ```text
-sufficient 1m -> sufficient 5m -> legacy 15m
+Auto: trustworthy 1m -> trustworthy 5m -> legacy 15m
+Explicit: 1m / 5m / 15m
+Display aggregation: 1h derived from the selected trustworthy source
 ```
 
 The live Scanner snapshot remains the authoritative endpoint only when the complete held-ticker live snapshot is trustworthy.

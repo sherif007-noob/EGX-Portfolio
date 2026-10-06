@@ -1,5 +1,11 @@
 # Corporate Actions Ledger
 
+## Status
+
+**CURRENT / IMPLEMENTED — `CORPORATE_ACTION / BONUS_SHARES` is supported end-to-end.**
+
+Broader corporate-action lifecycle support remains Stage 6.3 work. Stage 6.3 must audit and extend this ledger rather than create a parallel system.
+
 ## Purpose
 
 Corporate actions must be represented as canonical ledger events. They must never be simulated as a BUY/SELL execution or by manually changing a derived position.

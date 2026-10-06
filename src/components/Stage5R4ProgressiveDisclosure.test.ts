@@ -59,8 +59,8 @@ describe('Stage 5 R4 progressive Reports disclosure', () => {
     expect(overview).toContain('Open full report');
     expect(overview).toContain('onClick={() => onOpenReport(destination)}');
 
-    expect(reports).toContain('onOpenReport={setReportMode}');
-    expect(reports).toContain('persistReportsMode(reportMode)');
+    expect(reports).toContain('onOpenReport={handleReportModeChange}');
+    expect(reports).toContain('persistReportsMode(mode);');
   });
 
   it('does not introduce a second Reports navigation or calculation engine', () => {

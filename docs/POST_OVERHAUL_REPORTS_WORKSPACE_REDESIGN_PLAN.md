@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — R1 through R6 are accepted. R7 motion/state polish is the active implementation pass. R6 validated the Reports workspace across phone, short landscape, tablet, desktop and 2XL without adding Reports-only breakpoint styling or new golden screenshots.**
+**ACTIVE — R1 through R7 are accepted. R8 full regression and closure is next. R7 reused the established React-owned motion language for workspace swaps and diagnostic disclosure, preserved first-render restoration/loading/empty-state ownership, and passed the frozen rendered regression matrix.**
 
 This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
 
@@ -665,7 +665,7 @@ Acceptance record:
 
 ---
 
-## Stage R7 — Motion and state polish — ACTIVE / IMPLEMENTATION CANDIDATE
+## Stage R7 — Motion and state polish — ACCEPTED / CI + RENDERED GREEN
 
 Candidate implementation:
 - report-mode transitions continue through the existing `MotionSwap` state variant keyed by `reportMode`;
@@ -685,9 +685,19 @@ Acceptance:
 - TypeScript, full tests and production build pass;
 - rendered Reports regression and responsive geometry remain green.
 
+Acceptance record:
+- merged through PR #98 as `main@25eddb89`;
+- PR Quality Checks passed TypeScript, **137 / 137 test files, 723 / 723 tests**, and production build;
+- main Quality Checks #37488860193 passed;
+- Phase 10 Visual Closure #37488860091 passed TypeScript, **137 / 137 test files, 723 / 723 tests**, production Vite/PWA build, Cloudflare Worker dry-run and rendered baseline verification;
+- Rendered Visual Regression #37488860007 passed;
+- all **12 / 12** responsive geometries remained at **0px overflow**;
+- frozen screenshots remained green; the already-inspected Reports R4 image stayed on its exact accepted-change hash at **22.311%**, while all other states remained below the 1% threshold;
+- no report calculation, accounting, market-data, persistence, Reports CSS breakpoint or new visual-baseline change was introduced.
+
 ---
 
-## Stage R8 — Full regression and closure
+## Stage R8 — Full regression and closure — NEXT
 
 Regression matrix:
 

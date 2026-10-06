@@ -165,7 +165,7 @@ First remove or migrate that path ownership during a later closure pass. Then mo
 - [x] current-status document exists;
 - [x] documentation index exists;
 - [x] archive policy exists;
-- [x] current architecture/operations prose is aligned with the premium branch topology.
+- [x] current architecture/operations prose is aligned with the Cloudflare + Supabase + Node production topology on `main`.
 
 ---
 

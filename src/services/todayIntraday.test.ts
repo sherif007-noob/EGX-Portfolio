@@ -1,11 +1,34 @@
 import { describe, expect, it, vi } from 'vitest';
-import { loadTodayIntraday } from './todayIntraday';
+import { cairoSessionUtcBounds, loadTodayIntraday } from './todayIntraday';
 import type { IntradayPriceSeries } from './intradayPriceStore';
 const bars = (date: string, intervalMinutes = 1): IntradayPriceSeries => ({ TEST: [{
   timestamp: `${date}T07:00:00Z`, intervalMinutes, open: 10, high: 10, low: 10, close: 10,
 }] });
 
 describe('Today reader', () => {
+  it('queries the Cairo calendar day during DST instead of the UTC calendar day', () => {
+    expect(cairoSessionUtcBounds('2026-10-06')).toEqual({
+      startTimestamp: '2026-10-05T21:00:00.000Z',
+      endTimestamp: '2026-10-06T20:59:59.999Z',
+    });
+  });
+  it('queries the Cairo calendar day after DST ends', () => {
+    expect(cairoSessionUtcBounds('2026-11-01')).toEqual({
+      startTimestamp: '2026-10-31T22:00:00.000Z',
+      endTimestamp: '2026-11-01T21:59:59.999Z',
+    });
+  });
+  it('uses Cairo session bounds when loading the retained previous session after midnight', async () => {
+    const read = vi.fn(async (_t, _s, _e, interval) => bars('2026-10-06', interval));
+    const result = await loadTodayIntraday(['TEST'], '2026-10-06', 'AUTO', read);
+    expect(result?.sessionDate).toBe('2026-10-06');
+    expect(read).toHaveBeenCalledWith(
+      ['TEST'],
+      '2026-10-05T21:00:00.000Z',
+      '2026-10-06T20:59:59.999Z',
+      1,
+    );
+  });
   it('never shows Thursday candles for missing Sunday ingestion, including manual 1m', async () => {
     for (const resolution of ['AUTO', 1, 5, 15, 60] as const) {
       const read = vi.fn(async () => bars('2026-09-24'));

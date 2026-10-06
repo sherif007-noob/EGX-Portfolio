@@ -31,7 +31,7 @@ export const ReportsNavigation: React.FC<ReportsNavigationProps> = ({
       data-reports-navigation
     >
       <div
-        className="premium-reports-mode-rail scrollbar-none flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain"
+        className="premium-selector-shell premium-selector-shell-emphasis premium-reports-mode-rail scrollbar-none flex w-full min-w-0 gap-2 overflow-x-auto overscroll-x-contain"
         role="tablist"
         aria-label="Report mode"
       >

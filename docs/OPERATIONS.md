@@ -29,7 +29,7 @@ The former `feature/premium-ui-redesign` branch is retained only as a compatibil
 
 Stage 3.2 production verification confirmed the live Supabase project's accounting RPC plus `price_history`, `intraday_price_history`, and `ticker_registry` production objects.
 
-The remaining automation/toolchain normalization is owned by Stage 3.3.
+Stage 3.3 automation/toolchain normalization is closed. The remaining Stage 3 operational debt is the failed/deferred Stage 3.5 live-session soak; Stage 3.6 Data Health Center is implemented.
 
 ---
 
@@ -328,6 +328,32 @@ The strict final verdict requires:
 The verifier must remain read-only. Do not add inserts, upserts, updates, deletes, RPC writes, sync commands or real deploys to this workflow.
 
 Physical phone/desktop display parity remains a manual observation because authenticated device rendering cannot be truthfully inferred from a server-side soak.
+
+### Current Stage 3.5 status
+
+The 2026-10-04 acceptance soak **failed** because the target session did not receive the required persisted 1m/derived-5m coverage and daily history had not advanced sufficiently. The read-only scanner path remained healthy, but that does not satisfy the ingestion contract.
+
+Stage 3.5 is therefore deferred technical debt, not accepted production evidence.
+
+Repeat the soak only after scheduled raw-1m ingestion reliability is repaired. Do not retire legacy 15m fallback solely because source-level migration tests are green.
+
+## Data Health Center
+
+The application exposes a read-only production trust surface from Settings.
+
+It summarizes:
+
+- held-universe quote health;
+- expected versus selected EGX session;
+- latest raw 1m coverage;
+- derived 5m tail alignment;
+- daily-history coverage;
+- ticker resolution;
+- Supabase portfolio sync age;
+- last raw-ingestion age;
+- application build commit.
+
+The Data Health Center is diagnostic only. It must not write market data, repair accounting, or fabricate missing coverage.
 
 ## Production data audit
 

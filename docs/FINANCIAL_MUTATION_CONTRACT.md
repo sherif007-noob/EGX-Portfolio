@@ -4,11 +4,11 @@
 
 **Canonical Stage 2 financial mutation boundary.**
 
-Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics; Stage 2.8 closed the stage with cross-workflow financial acceptance coverage. Current validated runtime head: `70ad1148`.
+Stage 2.1 established the boundary; Stage 2.2 migrated BUY/SELL; Stage 2.3 migrated transaction, cash, OCR, restore/import and reconciliation workflows; Stage 2.4 removed independent Position/Closed Cycle accounting deletion; Stage 2.5 removed hidden BUY/SELL cash modes; Stage 2.6 froze weighted-average / proportional remaining cost; Stage 2.7 separated capital, performance and bookkeeping cash semantics; Stage 2.8 closed the stage with cross-workflow financial acceptance coverage. Original Stage 2 closure head: `70ad1148`. The contract remains authoritative through the current validated runtime `5152ca2b`.
 
-This document defines the mutation ordering and failure semantics that later Stage 2 passes must use.
+This document defines the mutation ordering and failure semantics that all later stages must preserve.
 
-Stage 2.1 creates the boundary; it does **not** claim that all existing workflows already use it.
+All current financial mutation families use the shared persist-before-apply boundary, including BONUS_SHARES corporate actions.
 
 Current adoption sequence:
 
@@ -22,6 +22,15 @@ Current adoption sequence:
 8. **2.8 — financial acceptance suite — complete**
 
 **Stage 2 — complete / CI green**
+
+### Post-Stage-2 adoption
+
+The same executor now also owns:
+
+- `CORPORATE_ACTION_BONUS_SHARES` through `prepareBonusSharesMutation()`;
+- any later Stage 6 correction workflow must enter through explicit ledger mutation rather than patching derived positions/cash.
+
+See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
 
 ---
 

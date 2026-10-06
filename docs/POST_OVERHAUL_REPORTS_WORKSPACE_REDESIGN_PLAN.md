@@ -4,19 +4,17 @@
 
 **CLOSED — R1 through R8 are accepted. The Reports workspace redesign is complete: diagnostic Overview, dedicated Analytics/Trading/Allocation/Monthly workspaces, remembered mode, progressive disclosure, responsive behavior, premium motion, the restored selector aura, and the full functional/rendered regression matrix are all accepted.**
 
-This plan is intentionally **not part of Phases 8–11** of the current premium UI redesign roadmap.
-
-The current visual-overhaul plan should continue unchanged. This document remains the detailed design authority for the later **Reports & Performance** information-architecture redesign. The master roadmap owns sequencing; this file owns the R1–R8 Reports behavior and acceptance details.
+This plan was intentionally separate from Phases 8–11 of the historical premium UI redesign. It is now the closed design/acceptance authority for **Reports & Performance** Stage 5. The master roadmap owns sequencing; this file owns the accepted R1–R8 Reports behavior and evidence.
 
 ---
 
 # 1. Product direction
 
-The current Reports tab is fundamentally a long-form analytical page:
+The pre-Stage-5 Reports tab was fundamentally a long-form analytical page:
 
 > Here is everything we know. Scroll.
 
-The later redesign should turn Reports into a focused analytical workspace:
+Stage 5 turned Reports into a focused analytical workspace:
 
 > Here is how the portfolio is doing. Something deserves attention? Inspect it. Need depth? Enter that report.
 
@@ -540,7 +538,7 @@ Final gates:
 
 ---
 
-## Stage R2 — Split the current long page into workspaces — VALIDATION CANDIDATE
+## Stage R2 — Split the current long page into workspaces — ACCEPTED / CI + RENDERED GREEN
 
 Move existing components into:
 

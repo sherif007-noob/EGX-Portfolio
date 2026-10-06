@@ -80,7 +80,7 @@ Closed:
 
 Still open as deferred technical debt:
 
-- **3.5 live-session soak** — the October 4 soak failed because target-session ingestion did not satisfy the strict acceptance contract. Repeat only after scheduled ingestion reliability is repaired.
+- **3.5 live-session soak** — the October 4 soak failed. The scheduled October 5 retry also did **not** close the gate: five retry triggers fired; four observation jobs failed and the final trigger was cancelled. Completed strict-final observations still reported missing reconstructible derived 5m coverage and stale raw 1m tails for held names including ARCC, ETEL, MPRC and ORHD. Scanner coverage and stored/reference NAV could still agree while the ingestion contract failed, so Stage 3.5 remains explicitly open. The one-shot October 5 cron is exhausted; a future retry must be deliberately rescheduled or manually dispatched after ingestion reliability is repaired.
 
 ### Stage 4 — Architecture consolidation — CLOSED
 

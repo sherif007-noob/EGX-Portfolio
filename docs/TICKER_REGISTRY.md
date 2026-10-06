@@ -139,8 +139,19 @@ This means a future rename does not require a code deployment merely to translat
 - The service role owns registry writes; authenticated browser users are read-only.
 - Existing quote and portfolio tables are not destructively migrated.
 
-## Rollout
+## Production state
 
-The registry schema is additive. The legacy static dictionary remains as a fallback during rollout.
+The registry schema is additive. The legacy static dictionary remains a compatibility fallback, not the authoritative current EGX directory.
 
-The scheduled workflow is staged on `feature/premium-ui-redesign`. GitHub scheduled workflows execute from the default branch, so the daily schedule becomes production-active only when this implementation is intentionally promoted.
+The registry workflow is production-active from the default `main` branch. GitHub scheduled workflows execute from the default branch, and service-role automation owns registry writes.
+
+Current identity precedence remains:
+
+```text
+active scanner/current registry symbol
+→ persisted history symbol
+→ legacy alias
+→ ISIN fallback
+```
+
+Do not reintroduce feature-branch scheduler authority or ticker-specific aliases where the centralized registry/resolver can express the identity.

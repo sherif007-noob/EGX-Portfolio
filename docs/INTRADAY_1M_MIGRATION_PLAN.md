@@ -1,6 +1,6 @@
 # 1-Minute Intraday Migration Plan — Canonical 15-Phase Roadmap
 
-This is the canonical implementation roadmap for the EGX 1-minute intraday migration on `feature/premium-ui-redesign`.
+This is the implementation/rollout record for the EGX 1-minute intraday migration. The production/default branch is now `main`; the old premium branch is historical only.
 
 ## Target architecture
 
@@ -37,7 +37,7 @@ Current authoritative settings:
 - derived retention = 90 calendar days;
 - timezone = `Africa/Cairo`;
 - regular session = 10:00-14:30 Cairo;
-- scheduled ingestion grace = through 14:40 Cairo;
+- scheduled ingestion grace = through 15:15 Cairo;
 - trading weekdays = Sunday-Thursday;
 - ingestion cadence target = about 5 minutes;
 - initial/backfill batch size = 5,000 observations;
@@ -304,7 +304,7 @@ The chart code is wired to load these rows through the adaptive resolution selec
 
 ## Phase 12 — Migration without breaking Today
 
-**Status: staged; multi-session observation remains**
+**Status: implemented; multi-session/live-session reliability observation remains before legacy retirement**
 
 Current rollout order:
 
@@ -323,13 +323,13 @@ Do not delete the legacy 15m dataset yet.
 
 The first full current-universe real-session migration is green: every session-relevant ticker had 1m coverage through the close and the persisted raw/derived integrity audit was clean.
 
-The remaining requirement is observation over multiple real trading sessions before legacy retirement.
+The remaining requirement is trustworthy observation over multiple real trading sessions before legacy retirement. The October 4 Stage 3.5 soak did not satisfy that gate, so legacy 15m remains deliberately available.
 
 ---
 
 ## Phase 13 — Workflow scheduling
 
-**Status: implemented on Premium, intentionally not activated on main**
+**Status: production-active on `main`; scheduler reliability still participates in Stage 3.5 soak acceptance**
 
 Primary workflow:
 
@@ -337,17 +337,17 @@ Primary workflow:
 .github/workflows/intraday-1m-sync.yml
 ```
 
-Staged schedule:
+Current production schedule:
 
 ```text
-*/5 7-12 * * 0-4
+*/5 7-13 * * 0-4
 ```
 
-GitHub cron is UTC. The Node script applies the authoritative Cairo-local Sunday-Thursday 10:00-14:40 ingestion gate, covering DST without a fixed UTC offset.
+GitHub cron is UTC. The Node script applies the authoritative Cairo-local Sunday-Thursday session gate and accepts scheduled ingestion through **15:15 Cairo**, covering DST and delayed final observations without a fixed UTC offset.
 
-The old direct-TradingView 5m workflow is now manual-only and shares the same concurrency group, preventing competing scheduled producers.
+The old direct-TradingView 5m workflow is manual-only and is not a competing scheduled producer.
 
-Important: GitHub scheduled workflows execute from the default branch. The Premium schedule does not become production scheduling until this work is intentionally promoted. This plan does not authorize merging `main`.
+The branch-promotion work described by the original migration plan is complete. `main` is the scheduler authority. The remaining issue is operational reliability evidence: the October 4 Stage 3.5 soak failed and must be repeated after ingestion remediation.
 
 ---
 
@@ -384,7 +384,7 @@ The latest full smoke reported zero repaired gaps and zero failures.
 
 ## Phase 15 — Documentation and tests before calling it finished
 
-**Status: implemented and branch-wide CI validated; final multi-session rollout observation remains tied to Phase 12**
+**Status: implemented and CI validated; final multi-session/live-session rollout observation remains tied to Phase 12 / Stage 3.5**
 
 Updated documentation:
 
@@ -412,7 +412,7 @@ Regression coverage includes:
 
 The focused smoke typechecks before tests and writes.
 
-The repository-wide Quality gate was then run against the exact Premium code snapshot through a CI-only branch. It passed:
+The repository-wide Quality gate was originally run against the exact migration snapshot through a CI-only branch. This is historical validation; current production authority is `main`. It passed:
 
 - TypeScript typecheck;
 - **26/26 test files**;
@@ -424,7 +424,7 @@ That broad gate exposed one pre-existing analytics edge case before passing: sam
 
 A second repository-wide Quality gate was run after the incremental bucket-boundary fix. It also passed typecheck, **26/26 test files**, **159/159 tests**, the production Vite build, and the bundled server build.
 
-The CI-only validation commits differ from their Premium snapshots only by the Quality workflow trigger used to execute each gate.
+The CI-only validation commits differed from their migration snapshots only by the Quality workflow trigger used to execute each gate.
 
 ---
 
@@ -440,4 +440,4 @@ The CI-only validation commits differ from their Premium snapshots only by the Q
 - Completed persisted raw 1m history remains immutable during ordinary sync.
 - Reconstructible derived 5m must match persisted raw 1m.
 - Legacy 15m remains until multi-session rollout observation succeeds.
-- Premium work stays on `feature/premium-ui-redesign` unless explicitly requested otherwise.
+- Production scheduler/runtime authority stays on `main`; feature branches are temporary reviewed change branches only.

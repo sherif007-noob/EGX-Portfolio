@@ -428,3 +428,28 @@ The exact-head gate passed:
 - **16 / 16 tracked golden states with 0.000% diff**.
 
 This contract now governs later Stage 2+ work unless a future design-system change explicitly reopens it.
+
+
+---
+
+# 8. Stage 5 Reports selector extension
+
+Stage 5 consumed the frozen visual language and explicitly reopened only the Reports structural mode navigator when the first workspace selector was too flat relative to the accepted app language.
+
+Accepted behavior:
+
+- Reports mode navigation uses the shared premium selector shell;
+- structural navigation stays cyan/blue/purple rather than financial green/red/amber;
+- the active `aria-selected` tab has visible cyan near/far aura with violet structural falloff;
+- glass/refraction remains visible beneath the active state;
+- the change does not create a Reports-only semantic glow engine;
+- the global rendered-diff threshold remains **1%**.
+
+Acceptance evidence:
+
+- runtime selector correction merged through PR #100;
+- exact inspected Reports screenshot accepted through PR #101;
+- accepted screenshot SHA-256: `9ff9afce715ed653face778020bf49f9620a335edfc72a5803ed0229a9cabfc3`;
+- Stage 5 R8 closure at `main@5152ca2b` passed Quality, Phase 10 Visual Closure and Rendered Visual Regression.
+
+This is an accepted extension of the protected selector/control language, not a reopening of financial semantic colors or the broader material system.

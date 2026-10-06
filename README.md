@@ -14,6 +14,7 @@ A private Egyptian Exchange (EGX) portfolio tracker focused on ledger-correct ac
 - **OCR:** Tesseract.js-assisted trade entry.
 - **Reports workspace:** Overview / Analytics / Trading / Allocation / Monthly with remembered mode and progressive disclosure.
 - **Corporate actions:** canonical ledger-backed BONUS_SHARES flow; broader lifecycle expansion is planned in Stage 6.3.
+- **Portfolio intelligence:** Stage 7.1 benchmark comparison overlays flow-neutral portfolio TWR against EGX30, EGX70 EWI, and EGX100 EWI.
 
 The transaction ledger is the financial source of truth. Positions, cash and closed cycles are projections of ledger activity.
 
@@ -35,6 +36,10 @@ UI resolution: Auto / 1m / 5m / 15m / 1h
 Daily historical closes remain in `price_history`.
 
 The UI also supports a client-derived 1h Today display from observed intraday data.
+
+Today follows the EGX session boundary rather than Cairo midnight: before 10:00 Cairo on an EGX weekday it continues to use the previous trading weekday; at 10:00 it switches to the new session date. Cairo-day database bounds are timezone/DST-aware.
+
+Daily and intraday market-data ingestion also includes EGX30, EGX70 EWI and EGX100 EWI for the Stage 7.1 benchmark comparison mode.
 
 ## Quick start
 

@@ -145,6 +145,17 @@ describe('Stage 2.7 explicit cash-flow semantics', () => {
     });
   });
 
+  it('keeps cash-entry defaults on the Cairo calendar instead of UTC', () => {
+    const ledger = readRelative('./cashLedger.ts');
+    const cashView = readRelative('../components/CashBalanceView.tsx');
+    const dates = readRelative('../utils/dateUtils.ts');
+
+    expect(dates).toContain("timeZone: 'Africa/Cairo'");
+    expect(ledger).toContain('date = getCairoTodayISO()');
+    expect(cashView).toContain('useState<string>(() => getCairoTodayISO())');
+    expect(cashView).not.toContain("new Date().toISOString().slice(0, 10)");
+  });
+
   it('prevents new runtime writers from emitting the legacy ambiguous type', () => {
     const runtime = [
       readRelative('./cashLedger.ts'),

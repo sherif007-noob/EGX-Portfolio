@@ -12,16 +12,21 @@ Detailed sequencing belongs in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZ
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** compatibility/history only; not production authority  
 **Latest runtime feature head:** `9f6cdcea` — Stage 7.1 benchmark comparison + Today Cairo-session boundary fix  
+**Exact validation head:** `ea1204bb` — same application runtime plus the scoped Reports browser-harness fix  
 **Current documentation head:** may be newer than the validated runtime because docs-only commits do not redefine runtime acceptance
 
 Current runtime evidence:
 
-- Quality Checks **#37546024261** on `main@9f6cdcea` — passed;
+- Quality Checks **#37547142039** on `main@ea1204bb` — passed;
+- Phase 10 Visual Closure **#37547142018** — passed;
+- Rendered Visual Regression **#37547142047** — passed;
 - **140 / 140** Vitest files;
 - **739 / 739** tests;
 - production Vite/PWA build — passed;
-- the first rendered run on this head preserved every accepted screenshot/geometry result but failed the Reports interaction closure because its global `Analytics timeframe` locator became ambiguous after the new benchmark-capable analytics surface;
-- the regression harness is being corrected to scope Analytics controls to the active Reports Analytics workspace before this runtime is marked full rendered-closure green.
+- Cloudflare Worker dry-run — passed;
+- **12 / 12** responsive geometry checks remained at **0px overflow**;
+- every tracked screenshot remained on its accepted visual profile, including `reports-desktop` at the existing exact-hash accepted **23.556%** delta;
+- the benchmark-era Reports interaction ambiguity was fixed by scoping Analytics controls to the active Reports Analytics workspace; no visual baseline or global threshold was changed.
 
 ## Runtime and persistence
 
@@ -131,7 +136,7 @@ Detailed authority: [POST_OVERHAUL_REPORTS_WORKSPACE_REDESIGN_PLAN.md](POST_OVER
 
 ## Portfolio intelligence
 
-**Stage 7.1 — Benchmark comparison is implemented on `main`.**
+**Stage 7.1 — Benchmark comparison is IMPLEMENTED / CI + RENDERED GREEN on `main`.**
 
 Current benchmark contract:
 

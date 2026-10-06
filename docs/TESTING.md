@@ -18,18 +18,21 @@ These are the same core checks run by `.github/workflows/quality.yml`.
 
 ## Current validated runtime evidence
 
-The latest runtime feature head is `main@9f6cdcea` (Stage 7.1 benchmark comparison + Today Cairo-session boundary fix).
+The latest application feature head is `main@9f6cdcea` (Stage 7.1 benchmark comparison + Today Cairo-session boundary fix). The exact closure-validation head is `main@ea1204bb`, which adds only the scoped Reports browser-harness correction on top of that runtime.
 
 Current evidence:
 
-- Quality Checks **#37546024261** on `main@9f6cdcea` — passed;
+- Quality Checks **#37547142039** — passed;
+- Rendered Visual Regression **#37547142047** — passed;
+- Phase 10 Visual Closure **#37547142018** — passed;
 - full Vitest: **140 / 140 files, 739 / 739 tests**;
 - production build: passed;
-- the first Rendered Visual Regression on this head kept **12 / 12 geometries at 0px overflow** and every tracked screenshot on its accepted diff profile, including Reports at **23.556%**;
-- that run failed only because the Stage 5 R8 browser interaction harness used a global `Analytics timeframe` locator that became ambiguous after the benchmark-capable analytics surface was added;
-- the harness is now scoped to the active Reports Analytics workspace and must return green before Stage 7.1 is called fully rendered-closure accepted.
+- Cloudflare Worker dry-run: passed;
+- **12 / 12** geometries at **0px overflow**;
+- every tracked screenshot remained on the accepted profile, including Reports at the existing exact-hash accepted **23.556%** delta;
+- the R8 browser interaction closure passed after Analytics timeframe / Today resolution / trajectory selectors were scoped to the active Reports Analytics workspace.
 
-Documentation-only commits may be newer than the runtime feature head.
+No visual baseline or global 1% threshold was changed. Documentation-only commits may be newer than the validation head.
 
 ## Test areas
 
@@ -557,7 +560,7 @@ The bootstrap inspection also caught a Supabase configuration message in the ana
 
 Adding the benchmark analytics mode exposed that the R8 browser closure's global accessible-role lookup could match more than one Analytics timeframe group. The closure harness now scopes Analytics timeframe, Today resolution and realized-trajectory controls to `[data-reports-workspace="analytics"]`.
 
-This is a test-harness ownership fix, not a visual-baseline change.
+This is a test-harness ownership fix, not a visual-baseline change. Exact-head closure on `main@ea1204bb` passed through Rendered Visual Regression **#37547142047** and Phase 10 Visual Closure **#37547142018**.
 
 ### Stage 5 Reports interaction closure
 

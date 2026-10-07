@@ -477,7 +477,10 @@ export function usePortfolioWorkflows({
     transactions,
   ]);
 
-  const handleEditTransaction = useCallback(async (updatedTx: TradeTransaction): Promise<boolean> => {
+  const handleEditTransaction = useCallback(async (
+    updatedTx: TradeTransaction,
+    auditReason?: string,
+  ): Promise<boolean> => {
     if (
       updatedTx.type === 'CORPORATE_ACTION'
       || updatedTx.type === 'IPO_SUBSCRIPTION'

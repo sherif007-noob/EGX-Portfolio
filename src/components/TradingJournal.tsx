@@ -367,7 +367,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   const handleOpenEditModal = (tx: TradeTransaction) => {
-    if (tx.type === 'CORPORATE_ACTION' || tx.type === 'IPO_SUBSCRIPTION') return;
+    if (
+      tx.type === 'CORPORATE_ACTION'
+      || tx.type === 'IPO_SUBSCRIPTION'
+      || tx.type === 'OPENING_POSITION'
+    ) return;
     setEditingTx(tx);
     setEditType(tx.type);
     setEditTicker(tx.ticker);

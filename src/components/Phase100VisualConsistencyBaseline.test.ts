@@ -19,8 +19,11 @@ describe('Phase 10.0 visual consistency baseline freeze', () => {
       ["directory", 'TickerDirectoryView'],
     ] as const;
 
+    const tabStage = app.indexOf('<MotionSwap');
+    expect(tabStage).toBeGreaterThanOrEqual(0);
+
     for (const [tab, owner] of expected) {
-      const start = app.indexOf(`activeTab === '${tab}'`);
+      const start = app.indexOf(`activeTab === '${tab}'`, tabStage);
       expect(start).toBeGreaterThanOrEqual(0);
       expect(app.slice(start, start + 1800)).toContain(`<${owner}`);
     }

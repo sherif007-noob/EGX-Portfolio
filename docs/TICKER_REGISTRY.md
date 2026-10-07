@@ -78,6 +78,23 @@ The worker:
 
 TradingView Scanner exposes `logoid` as a slug. The registry converts that slug to `https://s3-symbol-logo.tradingview.com/<logoid>.svg` before persistence. A scanner `logoid` must not be discarded merely because it is not already a full URL; otherwise the directory degrades to the generic Egypt-market badge. Changes to the logo resolver trigger the registry workflow so corrected logo URLs are backfilled across the active universe.
 
+### Logo-source chain
+
+Logo identity follows a provider chain rather than a hardcoded ticker map:
+
+```text
+TradingView scanner logoid
+  -> TradingView symbol-search logoid / logo_urls
+  -> IPF listed-company contact row keyed by ISIN
+      -> corporate email domain
+      -> Eulerpool zero-key domain logo
+  -> sector-colored ticker initials
+```
+
+The Investor Protection Fund source is used only to establish a corporate domain for a specific ISIN. Generic email providers are rejected. The Eulerpool candidate is persisted only after the sync verifies that the endpoint returns an image. Failure of either fallback provider is non-fatal and must not block ticker-registry reconciliation.
+
+The generic TradingView Egypt-country badge is not considered a company logo and is no longer an accepted fallback.
+
 Default verification policy:
 
 - up to 100 active securities per run;

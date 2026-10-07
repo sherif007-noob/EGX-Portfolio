@@ -11,6 +11,8 @@ on:
       - 'src/services/tickerRegistry.test.ts'
       - 'src/services/tradingviewLogos.ts'
       - 'src/services/tradingviewLogos.test.ts'
+      - 'src/services/officialCompanyLogoFallback.ts'
+      - 'src/services/officialCompanyLogoFallback.test.ts'
       - 'src/services/tradingViewSymbolResolver.ts'
       - 'src/data/egxTickers.ts'
       - 'supabase/migrations/20260924_ticker_registry*.sql'
@@ -75,6 +77,8 @@ jobs:
         run: >-
           npx vitest run
           src/services/tickerRegistry.test.ts
+          src/services/tradingviewLogos.test.ts
+          src/services/officialCompanyLogoFallback.test.ts
           src/services/tradingViewSymbolResolver.test.ts
           src/services/marketPriceSync.test.ts
 

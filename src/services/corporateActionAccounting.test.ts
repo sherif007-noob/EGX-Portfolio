@@ -152,6 +152,117 @@ describe('bonus-share corporate action accounting', () => {
     expect(after?.cash).toBe(before?.cash);
   });
 
+
+  it('migrates a legacy seeded holding into the ledger before applying bonus shares', () => {
+    const legacyPosition = {
+      id: 'pos-rec-ORHD',
+      ticker: 'ORHD',
+      companyName: 'Orascom Development Egypt',
+      sector: 'Real Estate & Construction' as const,
+      shares: 300,
+      avgBuyPrice: 43.1,
+      currentPrice: 38.84,
+      buyDate: '2026-09-10',
+      totalFees: 11.68,
+    };
+
+    const current: CanonicalLedgerSnapshot = {
+      transactions: [],
+      positions: [legacyPosition],
+      closedTrades: [],
+      cashBalance: 60000,
+      capitalDeposits: 60000,
+      tickers: [],
+    };
+
+    const prepared = prepareBonusSharesMutation(current, {
+      transactionId: 'corp-orhd',
+      ticker: 'ORHD',
+      bonusShares: 30,
+      officialRatio: 0.1,
+      effectiveDate: '2026-10-07',
+    });
+
+    expect(prepared.transactions).toHaveLength(2);
+    expect(prepared.transactions[0]).toMatchObject({
+      id: 'opening-corp-orhd',
+      type: 'OPENING_POSITION',
+      ticker: 'ORHD',
+      shares: 300,
+      price: 43.1,
+      fees: 11.68,
+      totalAmount: 0,
+      netCashImpact: 0,
+    });
+    expect(prepared.transactions[1]).toMatchObject({
+      id: 'corp-orhd',
+      type: 'CORPORATE_ACTION',
+      corporateActionType: 'BONUS_SHARES',
+      corporateActionSourceShares: 300,
+      shares: 30,
+    });
+
+    const report = reconcilePortfolioFromLedger(
+      prepared.transactions,
+      current.tickers,
+      current.capitalDeposits,
+      current.positions,
+    );
+
+    expect(report.discrepanciesFound).toEqual([]);
+    expect(report.reconciledCashBalance).toBe(60000);
+    expect(report.reconciledPositions[0]).toMatchObject({
+      ticker: 'ORHD',
+      shares: 330,
+      avgBuyPrice: 39.1818,
+      totalFees: 11.68,
+    });
+  });
+
+  it('does not auto-seed a legacy holding when ticker ledger evidence already exists', () => {
+    const current: CanonicalLedgerSnapshot = {
+      transactions: [
+        buy('old-buy', 100, 20, '2026-09-01'),
+        {
+          id: 'old-sell',
+          type: 'SELL',
+          ticker: 'TEST',
+          companyName: 'Test Co',
+          sector: 'Other',
+          shares: 100,
+          price: 20,
+          date: '2026-09-15',
+          fees: 0,
+          totalAmount: 2000,
+          netCashImpact: 2000,
+        },
+      ],
+      positions: [{
+        id: 'legacy-test',
+        ticker: 'TEST',
+        companyName: 'Test Co',
+        sector: 'Other',
+        shares: 100,
+        avgBuyPrice: 20,
+        currentPrice: 20,
+        buyDate: '2026-08-01',
+      }],
+      closedTrades: [],
+      cashBalance: 10000,
+      capitalDeposits: 10000,
+      tickers: [],
+    };
+
+    expect(() => prepareBonusSharesMutation(current, {
+      transactionId: 'corp-conflict',
+      ticker: 'TEST',
+      bonusShares: 10,
+      officialRatio: 0.1,
+      effectiveDate: '2026-10-01',
+    })).toThrow('No eligible open TEST position');
+  });
+
+
   it('derives entitlement shares from the ledger before the effective date', () => {
     const current = snapshot([
       buy('buy-early', 100, 20, '2026-09-01'),

@@ -94,7 +94,7 @@ The portfolio summary displays:
 
 Migration:
 
-`supabase/migrations/20261007033000_add_ipo_subscription_metadata.sql`
+`supabase/migrations/20261007002758_add_ipo_subscription_metadata.sql`
 
 Production Supabase was migrated on 2026-10-07.
 

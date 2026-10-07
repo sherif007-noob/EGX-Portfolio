@@ -18,19 +18,21 @@ These are the same core checks run by `.github/workflows/quality.yml`.
 
 ## Current validated runtime evidence
 
-The latest application feature head is `main@9f6cdcea` (Stage 7.1 benchmark comparison + Today Cairo-session boundary fix). The exact closure-validation head is `main@ea1204bb`, which adds only the scoped Reports browser-harness correction on top of that runtime.
+The current validated runtime head is `main@5b0dcba3` (Stage 7.1 plus the Today Cairo-session/cash-ledger rollover correction).
 
 Current evidence:
 
-- Quality Checks **#37547142039** — passed;
-- Rendered Visual Regression **#37547142047** — passed;
-- Phase 10 Visual Closure **#37547142018** — passed;
-- full Vitest: **140 / 140 files, 739 / 739 tests**;
+- Quality Checks **#37549352346** — passed;
+- Intraday 1m Migration Smoke **#37549352301** — passed;
+- Rendered Visual Regression **#37549352320** — passed;
+- Phase 10 Visual Closure **#37549352298** — passed;
+- full Vitest: **140 / 140 files, 742 / 742 tests**;
+- focused intraday migration regression: **9 / 9 files, 50 / 50 tests**;
 - production build: passed;
 - Cloudflare Worker dry-run: passed;
+- live current-session universe sync: **14 / 14 resolved, 0 failures**;
 - **12 / 12** geometries at **0px overflow**;
-- every tracked screenshot remained on the accepted profile, including Reports at the existing exact-hash accepted **23.556%** delta;
-- the R8 browser interaction closure passed after Analytics timeframe / Today resolution / trajectory selectors were scoped to the active Reports Analytics workspace.
+- every tracked screenshot remained on the accepted profile, including Reports at the existing accepted **23.556%** delta.
 
 No visual baseline or global 1% threshold was changed. Documentation-only commits may be newer than the validation head.
 
@@ -52,7 +54,7 @@ Covers rebuilding positions, cash, and closed cycles from transactions.
 
 `src/services/cashLedger.test.ts`
 
-Covers capital cash events, performance cash events, reconciliation adjustments, and editing/deletion of cash history.
+Covers capital cash events, performance cash events, reconciliation adjustments, editing/deletion of cash history, and Cairo-local date rollover so a cash entry created after Cairo midnight cannot inherit the prior UTC date.
 
 ### Corporate actions
 
@@ -166,6 +168,15 @@ npx vitest run \
 ```
 
 The Intraday 1m Migration Smoke workflow typechecks and runs this regression set before executing its targeted TradingView/Supabase migration test.
+
+### Today cash/timestamp regression
+
+`src/services/intradayAnalyticsEngine.test.ts` explicitly distinguishes:
+
+- an ordinary same-session BUY/SELL without `executedAt` — invalidates Today because execution ordering is unknowable;
+- a date-only same-session CASH flow — treated as a session-boundary external flow and does **not** make every market point incomplete.
+
+`src/services/Stage27CashAdjustmentSemantics.test.ts` also guards the Cash Ledger UI/service from reverting to UTC date defaults.
 
 ### Intraday acceptance checks
 

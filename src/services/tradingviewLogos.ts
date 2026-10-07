@@ -105,6 +105,7 @@ function saveLogoToCache(ticker: string, url: string) {
 export function getTradingViewLogoUrl(ticker: string, customLogoUrl?: string): string {
   const custom = String(customLogoUrl || '').trim();
   if (custom) {
+    if (/\/country\/EG\.svg(?:$|[?#])/i.test(custom)) return '';
     if (custom.startsWith('http://') || custom.startsWith('https://')) return custom;
     // TradingView scanner returns `logoid` as a slug, not a URL.
     // Treat it as authoritative and convert it to the public symbol-logo URL.

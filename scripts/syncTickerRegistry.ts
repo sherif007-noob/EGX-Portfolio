@@ -13,6 +13,7 @@ import {
   buildReplyNodesDomainLogoUrl,
   extractOfficialDomainsByIsin,
   extractOfficialSiteLogoCandidates,
+  applyOfficialDomainOverrides,
 } from '../src/services/officialCompanyLogoFallback';
 
 type SupabaseClient = ReturnType<typeof createSupabase>;
@@ -196,12 +197,12 @@ async function fetchOfficialDomainsByIsin(): Promise<Map<string, string>> {
     });
     if (!response.ok) {
       console.warn(`IPF company-contact lookup skipped: HTTP ${response.status}.`);
-      return new Map();
+      return applyOfficialDomainOverrides(new Map());
     }
-    return extractOfficialDomainsByIsin(await response.text());
+    return applyOfficialDomainOverrides(extractOfficialDomainsByIsin(await response.text()));
   } catch (error) {
     console.warn('IPF company-contact lookup skipped:', error instanceof Error ? error.message : error);
-    return new Map();
+    return applyOfficialDomainOverrides(new Map());
   }
 }
 
@@ -625,6 +626,14 @@ async function main() {
     if (officialLogoError) {
       throw new Error(`Official-domain logo fallback upsert failed: ${officialLogoError.message}`);
     }
+  }
+
+  const { error: genericLogoCleanupError } = await sb
+    .from('ticker_registry')
+    .update({ logo_url: null, updated_at: nowIso })
+    .like('logo_url', '%/country/EG.svg');
+  if (genericLogoCleanupError) {
+    throw new Error(`Generic country-logo cleanup failed: ${genericLogoCleanupError.message}`);
   }
 
   const refreshed = await loadRegistry(sb);

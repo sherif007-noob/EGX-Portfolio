@@ -176,3 +176,10 @@ This means a future rename does not require a code deployment merely to translat
 The registry schema is additive. The legacy static dictionary remains as a fallback during rollout.
 
 The scheduled workflow is production-active on the default `main` branch. It runs after EGX sessions and on relevant registry/resolver changes, so newly listed TradingView scanner securities are added without requiring a static dictionary deployment.
+
+
+## Verified official-domain corrections
+
+The automatic IPF email-domain mapping is supplemented by a small ISIN-keyed set of verified corporate domains when a listed-company contact row uses a generic mailbox, stale domain, or no usable domain. These overrides store **identity evidence only**; they do not hardcode logo image URLs. The normal provider/site validation pipeline still decides whether an image is persisted.
+
+Legacy TradingView `country/EG.svg` values are explicitly purged from the registry because an exchange-country badge is not company artwork. A security with no verified company image renders the sector/ticker-initial fallback instead.

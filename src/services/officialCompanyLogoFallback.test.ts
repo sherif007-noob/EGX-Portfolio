@@ -4,6 +4,7 @@ import {
   extractOfficialDomainsByIsin,
   extractOfficialSiteLogoCandidates,
   normalizeOfficialCompanyDomain,
+  applyOfficialDomainOverrides,
 } from './officialCompanyLogoFallback';
 
 describe('official company logo fallback', () => {
@@ -37,6 +38,14 @@ describe('official company logo fallback', () => {
     const domains = extractOfficialDomainsByIsin(html);
     expect(domains.has('EGS59231C018')).toBe(false);
     expect(domains.get('EGS220N1C016')).toBe('egyco-egypt.com');
+  });
+
+  it('lets explicitly verified ISIN domains correct incomplete contact data', () => {
+    const merged = applyOfficialDomainOverrides(new Map([
+      ['EGS751G1C012', 'hotmail.com'],
+    ]));
+    expect(merged.get('EGS751G1C012')).toBe('hedgestone.com.eg');
+    expect(merged.get('EGS3E2F1C011')).toBe('acr.com.eg');
   });
 
   it('extracts explicit organization logos and ranked site icons', () => {

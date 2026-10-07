@@ -1,3 +1,22 @@
+export const OFFICIAL_DOMAIN_OVERRIDES_BY_ISIN: Readonly<Record<string, string>> = {
+  // Verified company / regulator / holding-company domains for registry rows
+  // whose published contact email is generic, stale, or absent.
+  EGS3E2F1C011: 'acr.com.eg',
+  EGS3A2Z1C015: 'elbadr.org',
+  EGS42121C011: 'dchc.com.eg',
+  EGS70311C013: 'egoth.com.eg',
+  EGS42091C016: 'egywarehouse.com',
+  EGS51LQ1C018: 'geosegypt.com',
+  EGS751G1C012: 'hedgestone.com.eg',
+  EGS67001C015: 'incolease.com',
+  EGS632D1C010: 'misrlife.com',
+  EGS651F1C014: 'maamoura.com.eg',
+  EGS5ACC1C014: 'semadco.com',
+  EGS70131C015: 'rowadtourism.com',
+  EGS3C9X1C016: 'siegwarteg.com',
+  EGS65021C015: 'tuc.com.eg',
+};
+
 const ISIN_PATTERN = /\bEGS[0-9A-Z]{9}\b/gi;
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})/i;
 
@@ -161,4 +180,16 @@ export function extractOfficialSiteLogoCandidates(html: string, pageUrl: string)
     if (absolute && !unique.includes(absolute)) unique.push(absolute);
   }
   return unique;
+}
+
+
+export function applyOfficialDomainOverrides(
+  discovered: Map<string, string>,
+): Map<string, string> {
+  const out = new Map(discovered);
+  for (const [isin, domain] of Object.entries(OFFICIAL_DOMAIN_OVERRIDES_BY_ISIN)) {
+    const normalized = normalizeOfficialCompanyDomain(domain);
+    if (normalized) out.set(isin.toUpperCase(), normalized);
+  }
+  return out;
 }

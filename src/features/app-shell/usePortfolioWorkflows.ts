@@ -26,8 +26,8 @@ interface PortfolioActions {
   allocateIpoSubscription: (action: any) => Promise<any>;
   cancelIpoSubscription: (id: string) => Promise<any>;
   editPosition: (position: Position) => Promise<boolean>;
-  editTransaction: (transaction: TradeTransaction) => Promise<any>;
-  deleteTransaction: (id: string) => Promise<any>;
+  editTransaction: (transaction: TradeTransaction, auditReason?: string) => Promise<any>;
+  deleteTransaction: (id: string, auditReason?: string) => Promise<any>;
   reconcileLedger: () => Promise<any>;
   importOcrBatch: (trades: any[]) => Promise<any>;
   updateCashBalance: (newCash: number) => Promise<boolean>;
@@ -428,7 +428,10 @@ export function usePortfolioWorkflows({
     return true;
   }, [portfolio, positions, showToast]);
 
-  const handleDeleteTransaction = useCallback(async (id: string): Promise<boolean> => {
+  const handleDeleteTransaction = useCallback(async (
+    id: string,
+    auditReason?: string,
+  ): Promise<boolean> => {
     const transaction = transactions.find((candidate) => candidate.id === id);
     if (!transaction) return false;
 
@@ -442,7 +445,7 @@ export function usePortfolioWorkflows({
     }
 
     const previousState = { positions, closedTrades, transactions, cashBalance, capitalDeposits };
-    const result = await portfolio.deleteTransaction(id);
+    const result = await portfolio.deleteTransaction(id, auditReason);
     if ('error' in result) {
       showToast(
         `Could not delete ${transaction.type} ${transaction.ticker}: ${result.error.message} Nothing was changed.`,
@@ -501,7 +504,7 @@ export function usePortfolioWorkflows({
       return false;
     }
 
-    const result = await portfolio.editTransaction(updatedTx);
+    const result = await portfolio.editTransaction(updatedTx, auditReason);
     if ('error' in result) {
       showToast(
         `Transaction edit was not saved: ${result.error.message} Nothing was changed.`,

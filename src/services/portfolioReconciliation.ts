@@ -204,6 +204,49 @@ export function reconcilePortfolioFromLedger(
     const sector = tx.sector || tickerQuote?.sector || 'Other';
     const companyName = tx.companyName || tickerQuote?.nameEn || tx.ticker;
 
+    if (tx.type === 'IPO_SUBSCRIPTION') {
+      if (!isIpoSubscriptionTransaction(tx) || !tx.ipoSubscription) {
+        discrepancies.push(`IPO subscription ${tx.id} for ${tx.ticker} is missing lifecycle metadata.`);
+        continue;
+      }
+
+      try {
+        validateIpoSubscriptionMetadata(tx.ipoSubscription);
+      } catch (error) {
+        discrepancies.push(`IPO subscription ${tx.id} for ${tx.ticker} rejected: ${error instanceof Error ? error.message : 'invalid IPO metadata'}`);
+        continue;
+      }
+
+      const ipo = tx.ipoSubscription;
+      if (ipo.status === 'SUBMITTED') {
+        runningCash -= ipo.requestedAmount;
+        if (runningCash < -EPSILON) {
+          discrepancies.push(`IPO subscription ${tx.id} reserves more cash than is available.`);
+        }
+        continue;
+      }
+
+      if (ipo.status === 'CANCELLED') continue;
+
+      runningCash -= Number(tx.totalAmount);
+      if (runningCash < -EPSILON) {
+        discrepancies.push(`IPO allocation ${tx.id} leaves cash negative.`);
+      }
+
+      if (!openLotsByTicker[tickerKey]) openLotsByTicker[tickerKey] = [];
+      openLotsByTicker[tickerKey].push({
+        id: tx.id,
+        shares: Number(ipo.allocatedShares),
+        price: ipo.offerPrice,
+        date: ipo.allocationDate || tx.date,
+        fees: Number(tx.fees || 0),
+        companyName,
+        sector,
+        notes: tx.notes,
+      });
+      continue;
+    }
+
     if (tx.type === 'CORPORATE_ACTION') {
       if (!isBonusSharesTransaction(tx)) {
         discrepancies.push(`Corporate action ${tx.id} for ${tx.ticker} has unsupported type ${tx.corporateActionType || 'EMPTY'}.`);

@@ -10,8 +10,8 @@ describe('Stage 2.1 canonical mutation boundary contract', () => {
     const source = readRelative('./ledgerMutationService.ts');
 
     expect(source).toContain('reconcilePortfolioFromLedger(');
-    expect(source).toContain('forceFullSyncToFirestore(snapshot)');
-    expect(source.indexOf('persisted = await persist(candidate.snapshot)'))
+    expect(source).toContain('forceFullSyncToFirestore(snapshot, auditEvent)');
+    expect(source.indexOf('persisted = await persist(candidate.snapshot, auditEvent ?? undefined)'))
       .toBeLessThan(source.indexOf('request.apply(candidate.snapshot, candidate.value)'));
     expect(source).toContain("stage: LedgerMutationFailureStage");
     expect(source).toContain("'BUSY'");
@@ -21,7 +21,9 @@ describe('Stage 2.1 canonical mutation boundary contract', () => {
   it('keeps the authoritative Supabase accounting snapshot atomic', () => {
     const persistence = readRelative('./supabasePersistence.ts');
 
-    expect(persistence).toContain("supabase.rpc('replace_portfolio_accounting_snapshot'");
+    expect(persistence).toContain("'replace_portfolio_accounting_snapshot_with_audit'");
+    expect(persistence).toContain("'replace_portfolio_accounting_snapshot'");
+    expect(persistence).toContain('supabase.rpc(rpcName, rpcArgs)');
     expect(persistence).toContain('p_transactions: txs');
     expect(persistence).toContain('p_positions: positions');
     expect(persistence).toContain('p_closed_trades: closed');

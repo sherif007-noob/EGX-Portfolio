@@ -90,6 +90,7 @@ export interface Position {
   stopLoss?: number;
   notes?: string;
   priceUpdatedAt?: string;
+  logoUrl?: string;
 }
 
 export interface ClosedTrade {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ClosedTrade, Position, TradeTransaction } from '../../types';
 import type { NavigationTab } from '../../components/Header';
 import type { JournalLedgerFocus } from '../../components/TradingJournal';
@@ -12,6 +12,20 @@ export function usePortfolioNavigation(transactions: TradeTransaction[]) {
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [settledTab, setSettledTab] = useState<NavigationTab>('overview');
   const [ledgerCorrectionFocus, setLedgerCorrectionFocus] = useState<JournalLedgerFocus | null>(null);
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (typeof window === 'undefined') return;
+
+    // Tab switches are page-level navigation. Reset the document scroll after
+    // React commits the new tab so removing the tall Overview hero cannot leave
+    // the viewport anchored hundreds of pixels down the destination page.
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [activeTab]);
 
   const handleTabChange = useCallback((nextTab: NavigationTab) => {
     if (nextTab !== 'journal') setLedgerCorrectionFocus(null);

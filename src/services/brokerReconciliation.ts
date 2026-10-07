@@ -89,7 +89,9 @@ function shareDelta(transaction: TradeTransaction): number {
   if (transaction.cashFlowType || normalizeTicker(transaction.ticker) === 'CASH') return 0;
 
   const shares = Number(transaction.shares);
-  if (transaction.type === 'BUY') return Number.isFinite(shares) ? shares : 0;
+  if (transaction.type === 'BUY' || transaction.type === 'OPENING_POSITION') {
+    return Number.isFinite(shares) ? shares : 0;
+  }
   if (transaction.type === 'SELL') return Number.isFinite(shares) ? -shares : 0;
   if (isBonusSharesTransaction(transaction)) return Number.isFinite(shares) ? shares : 0;
 
@@ -112,7 +114,7 @@ function cashImpact(transaction: TradeTransaction): number {
     ) ?? 0;
   }
 
-  if (transaction.type === 'CORPORATE_ACTION') return 0;
+  if (transaction.type === 'CORPORATE_ACTION' || transaction.type === 'OPENING_POSITION') return 0;
 
   if (transaction.type === 'IPO_SUBSCRIPTION' && transaction.ipoSubscription) {
     if (transaction.ipoSubscription.status === 'SUBMITTED') {

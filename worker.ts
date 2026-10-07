@@ -1,4 +1,5 @@
 import { EGX_SCANNER_PAYLOAD } from './src/services/scannerRequest';
+// Stage 6.2 closure deploy marker: audited financial mutation runtime validated on main.
 import {
   API_PREFIX,
   API_ROUTES,

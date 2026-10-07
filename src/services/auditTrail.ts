@@ -123,6 +123,11 @@ function isTradeTransaction(value: unknown): value is TradeTransaction {
 }
 
 function entityTypeFor(kind: string, transaction?: TradeTransaction): AuditTrailEntityType {
+  if (
+    kind === 'RESTORE_PORTFOLIO'
+    || kind === 'RESTORE_LEDGER_SNAPSHOT'
+    || kind === 'RECONCILE_LEDGER'
+  ) return 'PORTFOLIO_LEDGER';
   if (kind.startsWith('CORPORATE_ACTION_') || transaction?.type === 'CORPORATE_ACTION') return 'CORPORATE_ACTION';
   if (kind.startsWith('IPO_SUBSCRIPTION_') || transaction?.type === 'IPO_SUBSCRIPTION') return 'IPO_SUBSCRIPTION';
   if (
@@ -179,10 +184,13 @@ export function buildAuditTrailDraft<TResult>(
     if (primaryId) entityTransaction = afterTransactions.get(primaryId) ?? beforeTransactions.get(primaryId);
   }
 
-  const entityId = entityTransaction?.id
-    ?? (kind.includes('CASH') ? 'cash' : 'portfolio-ledger');
-  const ticker = entityTransaction?.ticker
-    ?? (positionChanges.length === 1 ? positionChanges[0] : undefined);
+  const portfolioLevel = entityTypeFor(kind, entityTransaction) === 'PORTFOLIO_LEDGER';
+  const entityId = portfolioLevel
+    ? 'portfolio-ledger'
+    : entityTransaction?.id ?? (kind.includes('CASH') ? 'cash' : 'portfolio-ledger');
+  const ticker = portfolioLevel
+    ? undefined
+    : entityTransaction?.ticker ?? (positionChanges.length === 1 ? positionChanges[0] : undefined);
   const beforeTransaction = entityTransaction
     ? beforeTransactions.get(entityTransaction.id) ?? null
     : null;

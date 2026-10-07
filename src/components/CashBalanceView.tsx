@@ -3,6 +3,7 @@ import { runVisualTransition } from '../utils/visualTransition';
 import { MotionSwap, PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { AnalyticsSelect } from './AnalyticsSelect';
 import { NumberStepperInput } from './NumberStepperInput';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { CashTransaction, Position, ClosedTrade, TradeTransaction } from '../types';
 import {
   Wallet,
@@ -34,15 +35,15 @@ import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliatio
 interface CashBalanceViewProps {
   cashBalance: number;
   totalPortfolioValue: number;
-  onUpdateCashBalance: (newBalance: number) => Promise<boolean>;
+  onUpdateCashBalance: (newBalance: number, auditReason?: string) => Promise<boolean>;
   positions?: Position[];
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
   capitalDeposits?: number;
   onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => Promise<boolean>;
-  onEditCashTransaction: (tx: CashTransaction) => Promise<boolean>;
-  onDeleteCashTransaction: (id: string) => Promise<boolean>;
-  onReconcileLedger?: () => Promise<boolean>;
+  onEditCashTransaction: (tx: CashTransaction, auditReason?: string) => Promise<boolean>;
+  onDeleteCashTransaction: (id: string, auditReason?: string) => Promise<boolean>;
+  onReconcileLedger?: (auditReason?: string) => Promise<boolean>;
 }
 
 export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
@@ -95,6 +96,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
+  const [editAuditReason, setEditAuditReason] = useState<string>('');
+  const [cashTxToDelete, setCashTxToDelete] = useState<CashTransaction | null>(null);
+  const [reconcileAuditReason, setReconcileAuditReason] = useState<string>('');
 
   const transactions = useMemo(() => buildCashHistory({
     transactions: tradeTransactions, positions, tickers: [], capitalDeposits: capitalDeposits ?? 0,
@@ -196,6 +200,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     setEditAmount(String(tx.amount));
     setEditDate(tx.date);
     setEditNotes(tx.notes || '');
+    setEditAuditReason('');
   };
 
   // Save changes to edited transaction
@@ -229,7 +234,9 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       balanceAfter: newBalance,
     };
 
-    if (!await saveCashChange(() => onEditCashTransaction(updatedTx))) return;
+    if (!await saveCashChange(() =>
+      onEditCashTransaction(updatedTx, editAuditReason.trim() || undefined)
+    )) return;
     requestCloseCashEdit();
 
     setFeedbackMessage({
@@ -289,9 +296,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     setTimeout(() => setFeedbackMessage(null), 5000);
   };
 
-  const handleDeleteTransaction = async (id: string) => {
-    const tx = transactions.find((t) => t.id === id);
-    if (!tx) return;
+  const handleDeleteTransaction = async (tx: CashTransaction, auditReason?: string) => {
 
     let revertedBalance = cashBalance;
     if (tx.type === 'DEPOSIT') {
@@ -300,12 +305,15 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       revertedBalance = Number((cashBalance + tx.amount).toFixed(2));
     }
 
-    if (!await saveCashChange(() => onDeleteCashTransaction(id))) return;
+    if (!await saveCashChange(() =>
+      onDeleteCashTransaction(tx.id, auditReason?.trim() || undefined)
+    )) return false;
     setFeedbackMessage({
       text: `${tx.type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} record of ${formatEgp(tx.amount)} EGP removed. Cash balance adjusted to ${formatEgp(revertedBalance)} EGP.`,
       type: 'success',
     });
     setTimeout(() => setFeedbackMessage(null), 4000);
+    return true;
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -540,9 +548,17 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+              <input
+                type="text"
+                value={reconcileAuditReason}
+                onChange={(event) => setReconcileAuditReason(event.target.value)}
+                className="premium-field w-full rounded-lg px-3 py-2 text-xs text-slate-100 sm:w-64"
+                placeholder="Reconciliation reason (optional)"
+                aria-label="Cash reconciliation reason"
+              />
               {onReconcileLedger && (
                 <button
-                  onClick={onReconcileLedger}
+                  onClick={() => void onReconcileLedger(reconcileAuditReason.trim() || undefined)}
                   className="premium-action premium-action-success px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5"
                   title="Reconstruct ledger from all transactions and update cash and positions"
                 >
@@ -554,8 +570,8 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 onClick={() => {
                   void saveCashChange(() =>
                     onReconcileLedger
-                      ? onReconcileLedger()
-                      : onUpdateCashBalance(auditedLiquidCash)
+                      ? onReconcileLedger(reconcileAuditReason.trim() || undefined)
+                      : onUpdateCashBalance(auditedLiquidCash, reconcileAuditReason.trim() || undefined)
                   );
                   setFeedbackMessage({
                     text: `Cash balance reconciled to ledger-derived amount of ${formatEgp(auditedLiquidCash)} EGP.`,
@@ -993,7 +1009,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                           <Edit3 className="w-3.5 h-3.5 text-blue-400" />
                         </button>
                         <button
-                          onClick={() => handleDeleteTransaction(tx.id)}
+                          onClick={() => setCashTxToDelete(tx)}
                           title="Delete Record"
                           className="premium-icon-action premium-icon-delete p-1.5 rounded-lg"
                         >
@@ -1017,6 +1033,25 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         </div>
         </MotionSwap>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!cashTxToDelete}
+        onClose={() => setCashTxToDelete(null)}
+        onConfirm={async (auditReason) => {
+          if (!cashTxToDelete) return false;
+          return handleDeleteTransaction(cashTxToDelete, auditReason);
+        }}
+        title="Delete Cash Ledger Record"
+        description="This removes the source cash ledger entry and recalculates broker cash and contributed capital from the remaining ledger."
+        requestReason
+        reasonLabel="Deletion Reason (Optional)"
+        reasonPlaceholder="e.g. Duplicate deposit entered / wrong cash receipt"
+        itemDetails={cashTxToDelete ? {
+          type: cashTxToDelete.type,
+          amount: `${formatEgp(cashTxToDelete.amount)} EGP`,
+          date: cashTxToDelete.date,
+        } : undefined}
+      />
 
       {/* Edit Transaction Modal */}
       {displayEditingTransaction && (
@@ -1114,6 +1149,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                   placeholder="e.g. Initial Capital Deposit, InstaPay transfer, etc."
                   className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Correction Reason (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={editAuditReason}
+                  onChange={(event) => setEditAuditReason(event.target.value)}
+                  className="premium-field premium-textarea-surface w-full resize-none rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500"
+                  placeholder="e.g. Corrected against broker cash receipt"
+                />
+                <p className="premium-type-helper">
+                  Stored in the immutable audit trail; cash notes remain unchanged.
+                </p>
               </div>
 
               {/* Live Impact Preview */}

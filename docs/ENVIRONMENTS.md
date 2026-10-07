@@ -4,7 +4,7 @@
 
 | | main | simple-ui |
 |---|---|---|
-| Cloudflare Worker | `egx-portfolio` | `egx-portfolio-simple` (`wrangler.jsonc` name must match the Worker name in Cloudflare) |
+| Cloudflare Worker | `egx-portfolio` | currently the same Worker (production branch set to `simple-ui`). If a separate Worker is created, its name must match `name` in `wrangler.jsonc` |
 | Supabase project | production | separate project |
 
 ## Variables for the simple-ui Worker

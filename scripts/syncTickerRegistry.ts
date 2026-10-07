@@ -11,6 +11,7 @@ import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolR
 import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
 import {
   buildReplyNodesDomainLogoUrl,
+  buildGoogleFaviconUrl,
   extractOfficialDomainsByIsin,
   extractOfficialSiteLogoCandidates,
   applyOfficialDomainOverrides,
@@ -318,10 +319,22 @@ async function resolveOfficialDomainLogoUpdates(
       }
 
       const officialSiteUrl = await fetchOfficialSiteLogoUrl(domain);
-      if (!officialSiteUrl) return null;
+      if (officialSiteUrl) {
+        return {
+          ticker: normalize(row.ticker),
+          logo_url: officialSiteUrl,
+          updated_at: updatedAt,
+        };
+      }
+
+      // Last resort for an already identity-verified company domain. This is
+      // intentionally below direct/provider/site artwork because favicons can
+      // be lower resolution, but they are still company-owned branding.
+      const faviconUrl = buildGoogleFaviconUrl(domain, 128);
+      if (!faviconUrl || !await isUsableImageUrl(faviconUrl)) return null;
       return {
         ticker: normalize(row.ticker),
-        logo_url: officialSiteUrl,
+        logo_url: faviconUrl,
         updated_at: updatedAt,
       };
     }));

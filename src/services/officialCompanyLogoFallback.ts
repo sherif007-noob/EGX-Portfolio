@@ -193,3 +193,12 @@ export function applyOfficialDomainOverrides(
   }
   return out;
 }
+
+
+export function buildGoogleFaviconUrl(domain: string, size = 128): string {
+  const clean = normalizeOfficialCompanyDomain(domain);
+  const safeSize = Math.min(256, Math.max(32, Math.round(Number(size) || 128)));
+  return clean
+    ? `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(`https://${clean}`)}&sz=${safeSize}`
+    : '';
+}

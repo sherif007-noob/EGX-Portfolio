@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildReplyNodesDomainLogoUrl,
+  buildGoogleFaviconUrl,
   extractOfficialDomainsByIsin,
   extractOfficialSiteLogoCandidates,
   normalizeOfficialCompanyDomain,
@@ -28,6 +29,12 @@ describe('official company logo fallback', () => {
   it('builds a zero-key ReplyNodes domain-logo URL', () => {
     expect(buildReplyNodesDomainLogoUrl('halan.com'))
       .toBe('https://img.replynodes.com/halan.com');
+  });
+
+  it('builds a Google favicon fallback only for a verified company domain', () => {
+    expect(buildGoogleFaviconUrl('misrlife.com', 128))
+      .toBe('https://www.google.com/s2/favicons?domain_url=https%3A%2F%2Fmisrlife.com&sz=128');
+    expect(buildGoogleFaviconUrl('gmail.com', 128)).toBe('');
   });
 
   it('does not cross from one flattened row into the next ISIN', () => {

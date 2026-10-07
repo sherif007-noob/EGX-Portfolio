@@ -1576,8 +1576,8 @@ Current implementation slices:
 - **6.1.1 — broker snapshot contract + parser — IMPLEMENTED**
 - **6.1.2 — deterministic App-vs-Broker holdings/cash comparison — IMPLEMENTED**
 - **6.1.3 — source-ledger attribution + correction navigation — IMPLEMENTED**
-- **6.1.4 — broker-specific ingestion adapters / richer snapshot capture — NEXT**
-- **6.1.5 — production acceptance + closure — PENDING**
+- **6.1.4 — broker-specific ingestion adapters / richer snapshot capture — IMPLEMENTED FOR TELDA-STYLE SCREENSHOT + CSV/TXT**
+- **6.1.5 — production acceptance + closure — NEXT**
 
 The current workspace accepts pasted or uploaded CSV/TXT holdings plus broker cash. It is deliberately read-only: mismatches open the canonical Transactions or Cash Ledger correction surfaces instead of patching derived shares/cash.
 
@@ -1920,8 +1920,8 @@ Two pointers are now recorded because Stage 7.1 was explicitly implemented befor
 
 > **Active working track: Stage 6.1 — Broker reconciliation workspace.**
 
-> **Next Stage 6.1 slice: 6.1.4 — broker-specific ingestion adapters / richer snapshot capture.**
+> **Next Stage 6.1 slice: 6.1.5 — production acceptance + closure.**
 
-Stage 7.1 benchmark comparison remains implemented, but Stage 7.2 is paused while the master sequence is back on Stage 6. Stage 6.1.1–6.1.3 now provide a read-only broker-vs-app comparison with source-ledger correction navigation; Stage 6.1 is not closed until ingestion/acceptance is complete.
+Stage 7.1 benchmark comparison remains implemented, but Stage 7.2 is paused while the master sequence is back on Stage 6. Stage 6.1.1–6.1.4 now provide a read-only broker-vs-app comparison, source-ledger correction navigation, CSV/TXT input, and local OCR ingestion for Telda-style/current-holdings screenshots. Stage 6.1 is not closed until the real-snapshot acceptance matrix is complete.
 
 The existing BONUS_SHARES corporate-action ledger remains current functionality. Stage 6.3 must audit and extend that implementation to the full corporate-action lifecycle rather than creating a parallel model.

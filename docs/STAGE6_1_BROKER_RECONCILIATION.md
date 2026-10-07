@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — 6.1.1 through 6.1.3 implemented on `main`.**
+**ACTIVE — 6.1.1 through 6.1.4 implemented on `main`; 6.1.5 acceptance is next.**
 
 Stage 6.1 exists to compare an external broker snapshot against the canonical app ledger projection without creating a second accounting authority.
 
@@ -81,6 +81,9 @@ Implemented:
 
 - paste holdings text;
 - CSV/TXT upload;
+- local client-side OCR for broker/current-holdings screenshots using the existing Tesseract worker;
+- Telda/Thndr/Mubasher identity detection when the broker name is visible;
+- OCR extraction of ticker share quantities, optional average price and available cash when labeled;
 - header row support;
 - comma, tab, semicolon, or whitespace separation;
 - `TICKER,SHARES`;
@@ -90,15 +93,9 @@ Duplicate ticker rows are rejected rather than silently aggregated.
 
 ## Remaining work
 
-### 6.1.4 — broker-specific ingestion adapters
+### 6.1.4 — broker-specific ingestion adapters — IMPLEMENTED CURRENT SCOPE
 
-Add richer personal-workflow ingestion without weakening the snapshot contract. Candidate inputs:
-
-- Telda portfolio screenshot / current-holdings capture;
-- broker CSV/export when available;
-- optional receipt/email-assisted evidence for explaining discrepancies.
-
-Receipt history is not a substitute for a current broker snapshot.
+The current app supports Telda-style/current-holdings screenshot OCR plus CSV/TXT/paste input. Trade receipts remain supporting evidence only and are not treated as a current holdings snapshot.
 
 ### 6.1.5 — acceptance and closure
 

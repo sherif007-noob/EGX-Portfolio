@@ -262,7 +262,9 @@ Implemented:
 - direct navigation from a cash mismatch to Cash Ledger;
 - read-only reconciliation semantics: no derived position/cash overwrite is allowed.
 
-Next slice: **6.1.4 — broker-specific ingestion adapters / richer snapshot capture**, followed by production acceptance/closure.
+Stage 6.1.4 now also supports local OCR scanning of Telda-style/current-holdings screenshots, auto-filling recognized ticker quantities, optional average price, broker identity and available cash when present.
+
+Next slice: **6.1.5 — production acceptance + closure** using real broker snapshots and the mismatch matrix.
 
 Stage 7.1 remains implemented. Stage 7.2 is paused while the master sequence proceeds through Stage 6.
 

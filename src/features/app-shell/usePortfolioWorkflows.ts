@@ -126,7 +126,7 @@ export function usePortfolioWorkflows({
   setUndoState,
 }: UsePortfolioWorkflowsOptions) {
   const appendPersistedTransactionToSheet = useCallback((transaction: TradeTransaction) => {
-    if (!sheetsConfig?.spreadsheetId) return;
+    if (!sheetsConfig?.spreadsheetId || transaction.type === 'IPO_SUBSCRIPTION') return;
     getAccessToken()
       .then((token) => appendTransactionToSheet(
         sheetsConfig.spreadsheetId,
@@ -148,13 +148,13 @@ export function usePortfolioWorkflows({
     getAccessToken()
       .then((token) => syncTransactionsLedgerToSheet(
         sheetsConfig.spreadsheetId,
-        persistedTransactions,
+        persistedTransactions.filter((transaction) => transaction.type !== 'IPO_SUBSCRIPTION'),
         token || undefined,
         sheetsConfig.sheetName || 'Transaction Logger',
       ))
       .catch(() => syncTransactionsLedgerToSheet(
         sheetsConfig.spreadsheetId,
-        persistedTransactions,
+        persistedTransactions.filter((transaction) => transaction.type !== 'IPO_SUBSCRIPTION'),
         undefined,
         sheetsConfig.sheetName || 'Transaction Logger',
       ))

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { BrokerReconciliationWorkspace } from './BrokerReconciliationWorkspace';
+import { AuditTrailWorkspace } from './AuditTrailWorkspace';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -367,7 +368,9 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
           onOpenCashLedger={onOpenBrokerCashLedger}
         />
 
-        {/* Internal ledger integrity rebuild — separate from broker truth comparison. */}
+        <AuditTrailWorkspace active={isOpen} />
+
+                {/* Internal ledger integrity rebuild — separate from broker truth comparison. */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">

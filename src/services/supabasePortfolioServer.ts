@@ -140,6 +140,7 @@ function mapTransaction(row: any, portfolioId: string) {
     corporate_action_ratio: row.corporateActionRatio ?? row.corporate_action_ratio ?? null,
     corporate_action_source_shares: row.corporateActionSourceShares ?? row.corporate_action_source_shares ?? null,
     corporate_action_reference: row.corporateActionReference ?? row.corporate_action_reference ?? null,
+    ipo_subscription: row.ipoSubscription ?? row.ipo_subscription ?? null,
     is_dca: Boolean(row.isDca ?? row.isDCA ?? row.is_dca ?? false),
     notes: row.notes ?? '', target_price: row.targetPrice ?? row.target_price ?? null, stop_loss: row.stopLoss ?? row.stop_loss ?? null, trade_id: row.tradeId ?? row.trade_id ?? null,
     trade_cycle: row.tradeCycle ?? row.trade_cycle ?? null, cycle_tag: row.cycleTag ?? row.cycle_tag ?? null, running_shares: row.runningShares ?? row.running_shares ?? null,

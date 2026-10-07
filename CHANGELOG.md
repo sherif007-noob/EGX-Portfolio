@@ -12,6 +12,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 - Added Portfolio vs Return, Portfolio vs Net Deposits, TWR, MWR, and Portfolio vs Benchmarks chart modes.
 - Added transaction-aware Today reconstruction with persisted 1m/5m/15m selection, Auto fallback, and client-derived 1h display aggregation.
 - Changed Today session ownership so Cairo midnight does not create a new empty session: before 10:00 Cairo the chart keeps the previous EGX trading weekday, with DST-aware Cairo-day query bounds.
+- Fixed a second Today rollover failure where date-only CASH rows could mark every intraday point incomplete; CASH boundary flows no longer require exchange execution timestamps, while BUY/SELL timing remains strict.
 - Added performance drawdown, cumulative-fee, and realized-vs-unrealized P&L charts.
 - Standardized dark chart tooltips, crosshairs, axes, empty states, and mobile resize behavior.
 - Added Stage 7.1 flow-neutral benchmark overlays for EGX30, EGX70 EWI and EGX100 EWI, with selected-period normalization, relative portfolio-minus-index return, daily history ingestion, and intraday benchmark ingestion.
@@ -32,6 +33,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 - Completed the persist-before-apply ledger mutation boundary across BUY/SELL, transaction edits/deletes, cash, OCR, restore/import, and reconciliation.
 - Removed independent Position/Closed Cycle accounting deletion and hidden BUY/SELL cash modes.
 - Added canonical `CORPORATE_ACTION / BONUS_SHARES` support with zero-cash/zero-added-cost accounting, effective-date entitlement, stale-ledger protection, persistence metadata, journal rendering, and regression coverage.
+- Changed cash-entry default dates from UTC calendar slicing to `Africa/Cairo` calendar dates. Repaired three affected 20,000 EGP deposits from Oct 6 to Oct 7 without changing cash, contributed capital, holdings, closed cycles, or realized P&L.
 
 ### Architecture and styling
 
@@ -42,6 +44,7 @@ This file follows the spirit of [Keep a Changelog](https://keepachangelog.com/) 
 
 - Stage 5 R8 validated on `main@5152ca2b`: 139/139 test files, 734/734 tests, production build, Worker dry-run, rendered browser regression, and 12/12 responsive geometries at 0px overflow.
 - Stage 7.1 + Today-session feature head `main@9f6cdcea` is fully closure-green at exact validation head `main@ea1204bb`: Quality **#37547142039**, Rendered Visual Regression **#37547142047**, and Phase 10 Visual Closure **#37547142018** all passed with 140/140 test files, 739/739 tests, production build, Worker dry-run, 12/12 zero-overflow geometries, and unchanged accepted screenshot baselines.
+- Today Cairo cash-rollover fix validated on `main@5b0dcba3`: Quality **#37549352346**, Intraday 1m Migration Smoke **#37549352301**, Rendered Visual Regression **#37549352320**, and Phase 10 Visual Closure **#37549352298** all passed with 140/140 test files, 742/742 tests, focused intraday 50/50 tests, Worker dry-run, 14/14 live session tickers resolved with 0 failures, and 12/12 zero-overflow geometries.
 - Stage 3.5 live-session ingestion soak remains deferred technical debt pending scheduler reliability remediation.
 
 ## 2026-09

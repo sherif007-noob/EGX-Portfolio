@@ -8,6 +8,7 @@ import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import { validateIpoSubscriptionMetadata } from './ipoSubscriptions';
 import { forceFullSyncToFirestore } from './firestoreStorage';
+import { buildAuditTrailDraft, type AuditTrailDraft } from './auditTrail';
 
 export interface CanonicalLedgerSnapshot {
   transactions: TradeTransaction[];
@@ -41,6 +42,7 @@ export interface LedgerMutationRequest<TResult = unknown> {
     current: Readonly<CanonicalLedgerSnapshot>,
   ) => LedgerMutationPreparation<TResult> | Promise<LedgerMutationPreparation<TResult>>;
   apply: (snapshot: CanonicalLedgerSnapshot, value: TResult | undefined) => void;
+  auditReason?: string;
 }
 
 export type LedgerMutationFailureStage =
@@ -85,7 +87,7 @@ export interface LedgerMutationExecutor {
 }
 
 interface LedgerMutationExecutorDependencies {
-  persist?: (snapshot: CanonicalLedgerSnapshot) => Promise<boolean>;
+  persist?: (snapshot: CanonicalLedgerSnapshot, auditEvent?: AuditTrailDraft) => Promise<boolean>;
 }
 
 interface CanonicalCandidate<TResult> {
@@ -349,8 +351,11 @@ export function validateLedgerMutationCandidate(
   }
 }
 
-async function persistCanonicalSnapshot(snapshot: CanonicalLedgerSnapshot): Promise<boolean> {
-  return forceFullSyncToFirestore(snapshot);
+async function persistCanonicalSnapshot(
+  snapshot: CanonicalLedgerSnapshot,
+  auditEvent?: AuditTrailDraft,
+): Promise<boolean> {
+  return forceFullSyncToFirestore(snapshot, auditEvent);
 }
 
 export function createLedgerMutationExecutor(
@@ -396,9 +401,17 @@ export function createLedgerMutationExecutor(
           return fail(kind, 'validate', 'VALIDATION_FAILED', error);
         }
 
+        const auditEvent = buildAuditTrailDraft(
+          kind,
+          current,
+          candidate.snapshot,
+          candidate.value,
+          request.auditReason,
+        );
+
         let persisted = false;
         try {
-          persisted = await persist(candidate.snapshot);
+          persisted = await persist(candidate.snapshot, auditEvent ?? undefined);
         } catch (error) {
           return fail(kind, 'persist', 'PERSIST_FAILED', error);
         }

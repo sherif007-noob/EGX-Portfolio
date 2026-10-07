@@ -1596,7 +1596,15 @@ Correction must route through explicit ledger edits, never destructive derived-s
 
 ---
 
-## Pass 6.2 — Lightweight audit trail
+## Pass 6.2 — Lightweight audit trail — ACTIVE
+
+Current implementation slices:
+
+- **6.2.1 — canonical before/after audit model — IMPLEMENTED**
+- **6.2.2 — atomic Supabase audit persistence — IMPLEMENTED**
+- **6.2.3 — Data & Tools audit viewer — IMPLEMENTED**
+- **6.2.4 — optional reason capture for transaction edit/delete — IMPLEMENTED**
+- **6.2.5 — extend reason capture to cash/reconciliation/restore workflows + acceptance — NEXT**
 
 Record material manual corrections:
 

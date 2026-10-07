@@ -268,6 +268,28 @@ Next slice: **6.1.5 — production acceptance + closure** using real broker snap
 
 Stage 7.1 remains implemented. Stage 7.2 is paused while the master sequence proceeds through Stage 6.
 
+## Stage 6.2 — Lightweight audit trail
+
+**ACTIVE on main.**
+
+Implemented:
+
+- canonical before/after audit diff generation inside the financial mutation boundary;
+- append-only `portfolio_audit_log` table with portfolio-scoped RLS;
+- immutable audit persistence in the same PostgreSQL transaction as the accounting snapshot;
+- server/database timestamp for every audit record;
+- mutation kind, entity type/id, ticker, before state, after state and compact change metadata;
+- Data & Tools → Financial Audit Trail viewer for the latest records;
+- optional correction reason capture on transaction edit and transaction delete;
+- no-op mutations do not create audit noise;
+- market-price/background writes remain outside the financial audit trail.
+
+Production migration:
+
+`20261007214652_stage62_portfolio_audit_trail.sql`
+
+Next: **6.2.5 — extend optional reason capture to cash corrections, reconciliation and restore/import workflows, then run acceptance and close Stage 6.2.**
+
 ## Documentation authority
 
 Start with:

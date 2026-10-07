@@ -511,6 +511,7 @@ export function prepareIpoCancellationMutation(
   const metadata = {
     ...existing.ipoSubscription,
     status: 'CANCELLED' as const,
+    cancellationDate: currentCairoDateKey(),
     refundAmount: existing.ipoSubscription.requestedAmount,
   };
   validateIpoSubscriptionMetadata(metadata);

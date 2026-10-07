@@ -37,6 +37,7 @@ export function normalizeIpoSubscriptionMetadata(value: unknown): IpoSubscriptio
       : '',
     listingDate: typeof row.listingDate === 'string' && row.listingDate.trim() ? row.listingDate : undefined,
     allocationDate: typeof row.allocationDate === 'string' && row.allocationDate.trim() ? row.allocationDate : undefined,
+    cancellationDate: typeof row.cancellationDate === 'string' && row.cancellationDate.trim() ? row.cancellationDate : undefined,
     allocatedShares: Number.isFinite(allocatedShares) ? allocatedShares : undefined,
     allocatedAmount: Number.isFinite(allocatedAmount) ? allocatedAmount : undefined,
     refundAmount: Number.isFinite(refundAmount) ? refundAmount : undefined,

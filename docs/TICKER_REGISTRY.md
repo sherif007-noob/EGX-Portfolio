@@ -66,7 +66,7 @@ The worker:
 
 1. downloads the TradingView Egypt Scanner universe;
 2. normalizes active EGP securities;
-3. refreshes name, ISIN, sector, industry, logo and scanner symbol;
+3. refreshes name, ISIN, sector, industry, TradingView company logo and scanner symbol;
 4. detects disappear/appear rename pairs when a unique ISIN moves to a new ticker;
 5. stores historical ticker aliases;
 6. stores unique ISIN aliases;
@@ -75,6 +75,8 @@ The worker:
 9. keeps explicit retired/renamed identities for historical lookup;
 10. verifies a rotating set of history symbols through the TradingView chart resolver;
 11. records the successful history symbol, method, attempts and verification timestamp.
+
+TradingView Scanner exposes `logoid` as a slug. The registry converts that slug to `https://s3-symbol-logo.tradingview.com/<logoid>.svg` before persistence. A scanner `logoid` must not be discarded merely because it is not already a full URL; otherwise the directory degrades to the generic Egypt-market badge. Changes to the logo resolver trigger the registry workflow so corrected logo URLs are backfilled across the active universe.
 
 Default verification policy:
 
@@ -155,4 +157,4 @@ This means a future rename does not require a code deployment merely to translat
 
 The registry schema is additive. The legacy static dictionary remains as a fallback during rollout.
 
-The scheduled workflow is staged on `feature/premium-ui-redesign`. GitHub scheduled workflows execute from the default branch, so the daily schedule becomes production-active only when this implementation is intentionally promoted.
+The scheduled workflow is production-active on the default `main` branch. It runs after EGX sessions and on relevant registry/resolver changes, so newly listed TradingView scanner securities are added without requiring a static dictionary deployment.

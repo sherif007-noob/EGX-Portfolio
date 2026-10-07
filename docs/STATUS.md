@@ -80,7 +80,7 @@ Today UI resolutions:
 Auto · 1m · 5m · 15m · 1h
 ```
 
-`Auto` prefers the finest trustworthy current-session persisted candidate. `1h` is display aggregation from the selected trustworthy intraday source, not a separate persisted interval.
+`Auto` prefers the finest trustworthy current-session persisted candidate. Manual `1m` and `5m` remain strict persisted reads; manual `15m` and `1h` are display aggregations from the finest healthy same-session `1m -> 5m -> legacy 15m` source and do not require dedicated persisted coarse bars.
 
 ### Oct 7 Today rollover incident — CLOSED
 
@@ -170,6 +170,14 @@ Current benchmark contract:
 - missing index observations remain missing rather than being fabricated.
 
 This was intentionally implemented before Stage 6 was complete. It does **not** close or waive Stage 6.
+
+## Ticker directory and logos
+
+The production ticker registry is scanner-managed on `main`. New active EGX securities are discovered from the TradingView Egypt scanner and persisted to `ticker_registry`; HALN is already present as an active registry security with ISIN `EGS59231C018` and verified history symbol `HALN`.
+
+TradingView scanner `logoid` slugs are converted to company-logo URLs before persistence. This replaces the prior failure mode where most active securities fell back to the generic Egypt-market badge.
+
+See [TICKER_REGISTRY.md](TICKER_REGISTRY.md).
 
 ## IPO subscriptions
 

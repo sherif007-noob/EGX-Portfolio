@@ -126,7 +126,11 @@ export function usePortfolioWorkflows({
   setUndoState,
 }: UsePortfolioWorkflowsOptions) {
   const appendPersistedTransactionToSheet = useCallback((transaction: TradeTransaction) => {
-    if (!sheetsConfig?.spreadsheetId || transaction.type === 'IPO_SUBSCRIPTION') return;
+    if (
+      !sheetsConfig?.spreadsheetId
+      || transaction.type === 'IPO_SUBSCRIPTION'
+      || transaction.type === 'OPENING_POSITION'
+    ) return;
     getAccessToken()
       .then((token) => appendTransactionToSheet(
         sheetsConfig.spreadsheetId,
@@ -148,13 +152,17 @@ export function usePortfolioWorkflows({
     getAccessToken()
       .then((token) => syncTransactionsLedgerToSheet(
         sheetsConfig.spreadsheetId,
-        persistedTransactions.filter((transaction) => transaction.type !== 'IPO_SUBSCRIPTION'),
+        persistedTransactions.filter(
+          (transaction) => transaction.type !== 'IPO_SUBSCRIPTION' && transaction.type !== 'OPENING_POSITION',
+        ),
         token || undefined,
         sheetsConfig.sheetName || 'Transaction Logger',
       ))
       .catch(() => syncTransactionsLedgerToSheet(
         sheetsConfig.spreadsheetId,
-        persistedTransactions.filter((transaction) => transaction.type !== 'IPO_SUBSCRIPTION'),
+        persistedTransactions.filter(
+          (transaction) => transaction.type !== 'IPO_SUBSCRIPTION' && transaction.type !== 'OPENING_POSITION',
+        ),
         undefined,
         sheetsConfig.sheetName || 'Transaction Logger',
       ))
@@ -297,7 +305,9 @@ export function usePortfolioWorkflows({
     return true;
   }, [appendPersistedTransactionToSheet, portfolio, positions, showToast]);
 
-  const handleAddBonusShares = useCallback(async (input: BonusSharesInput): Promise<boolean> => {
+  const handleAddBonusShares = useCallback(async (
+    input: BonusSharesInput,
+  ): Promise<{ ok: boolean; error?: string }> => {
     const result = await portfolio.addBonusShares(input);
     if ('error' in result) {
       if (result.persisted) {
@@ -306,14 +316,14 @@ export function usePortfolioWorkflows({
           'error',
           7000,
         );
-        return true;
+        return { ok: true };
       }
       showToast(
         `Bonus shares were not saved: ${result.error.message} Nothing was changed.`,
         'error',
         7000,
       );
-      return false;
+      return { ok: false, error: result.error.message };
     }
 
     const transaction = result.value as TradeTransaction | undefined;
@@ -323,7 +333,7 @@ export function usePortfolioWorkflows({
         'error',
         7000,
       );
-      return true;
+      return { ok: true };
     }
 
     appendPersistedTransactionToSheet(transaction);
@@ -332,7 +342,7 @@ export function usePortfolioWorkflows({
       'success',
       5500,
     );
-    return true;
+    return { ok: true };
   }, [appendPersistedTransactionToSheet, portfolio, showToast]);
 
   const handleAddIpoSubscription = useCallback(async (
@@ -456,7 +466,11 @@ export function usePortfolioWorkflows({
   ]);
 
   const handleEditTransaction = useCallback(async (updatedTx: TradeTransaction): Promise<boolean> => {
-    if (updatedTx.type === 'CORPORATE_ACTION' || updatedTx.type === 'IPO_SUBSCRIPTION') {
+    if (
+      updatedTx.type === 'CORPORATE_ACTION'
+      || updatedTx.type === 'IPO_SUBSCRIPTION'
+      || updatedTx.type === 'OPENING_POSITION'
+    ) {
       showToast(
         'Protected ledger lifecycle records must be managed through their dedicated workflow instead of the trade editor.',
         'error',

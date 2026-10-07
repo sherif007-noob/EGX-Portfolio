@@ -10,7 +10,9 @@ describe('Today reader', () => {
     for (const resolution of ['AUTO', 1, 5, 15, 60] as const) {
       const read = vi.fn(async () => bars('2026-09-24'));
       expect(await loadTodayIntraday(['TEST'], '2026-09-27', resolution, read)).toBeNull();
-      expect(read.mock.calls.length).toBe(resolution === 'AUTO' || resolution === 60 ? 3 : 1);
+      expect(read.mock.calls.length).toBe(
+        resolution === 'AUTO' || (typeof resolution === 'number' && resolution >= 15) ? 3 : 1,
+      );
     }
   });
   it('retains 1m after close when the requested session has 1m', async () => {
@@ -24,7 +26,28 @@ describe('Today reader', () => {
     });
     expect(result?.intervalMinutes).toBe(5);
   });
-  it('surfaces a failed manual request instead of silently switching resolution', async () => {
+  it.each([15, 60] as const)('derives manual %im from the finest healthy same-session source', async (resolution) => {
+    const read = vi.fn(async (_t, _s, _e, interval) => bars('2026-09-27', interval));
+    const result = await loadTodayIntraday(['TEST'], '2026-09-27', resolution, read);
+
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(result?.intervalMinutes).toBe(resolution);
+    expect(result?.series.TEST).toHaveLength(1);
+    expect(result?.series.TEST[0].intervalMinutes).toBe(resolution);
+    expect(result?.series.TEST[0].source).toBe('derived-1m');
+  });
+
+  it('falls back to 5m as the source for a derived coarse resolution when 1m fails', async () => {
+    const result = await loadTodayIntraday(['TEST'], '2026-09-27', 15, async (_t, _s, _e, interval) => {
+      if (interval === 1) throw new Error('network');
+      return bars('2026-09-27', interval);
+    });
+
+    expect(result?.intervalMinutes).toBe(15);
+    expect(result?.series.TEST[0].intervalMinutes).toBe(15);
+  });
+
+  it('surfaces a failed manual fine-resolution request instead of silently switching resolution', async () => {
     await expect(loadTodayIntraday(['TEST'], '2026-09-27', 1, async () => { throw new Error('network'); })).rejects.toThrow('network');
   });
 });

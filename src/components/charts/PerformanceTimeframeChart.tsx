@@ -27,7 +27,6 @@ import {
 import type { Position, TradeTransaction } from '../../types';
 import type { HistoricalPriceSeries } from '../../services/historicalPriceStore';
 import type { IntradayPriceSeries } from '../../services/intradayPriceStore';
-import { aggregateIntradayBars } from '../../services/intradayAggregation';
 import { resolveIntradaySessionTickers } from '../../services/intradayTickerUniverse';
 import { loadTodayIntraday } from '../../services/todayIntraday';
 import { buildIntradayAnalyticsResult } from '../../services/intradayAnalyticsEngine';
@@ -264,17 +263,8 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
 
         // The requested EGX session is shared by every resolution. Missing
         // current-session data must remain missing, never become an older day.
-        let intradayPrices: IntradayPriceSeries = selection?.series ?? {};
-        let effectiveResolution = selection?.intervalMinutes ?? null;
-        if (todayResolution === 60 && selection) {
-          intradayPrices = Object.fromEntries(
-            Object.entries(selection.series).map(([ticker, bars]) => [
-              ticker,
-              aggregateIntradayBars(bars, 60),
-            ]),
-          );
-          effectiveResolution = 60;
-        }
+        const intradayPrices: IntradayPriceSeries = selection?.series ?? {};
+        const effectiveResolution = selection?.intervalMinutes ?? null;
         const sessionDate = selection?.sessionDate ?? requestedSessionDate;
 
         const livePrices = trustedLivePrices(positions, requestedSessionDate);

@@ -245,6 +245,12 @@ Therefore a chart opened at 00:01–09:59 Cairo continues to display the previou
 
 After the requested date is chosen, resolution selection is same-session only: missing 1m/5m/15m data may fall back across resolutions, but not across session dates.
 
+Ledger timing is evaluated separately from market-bar session selection:
+
+- same-session BUY/SELL rows require `executedAt` to reconstruct execution order;
+- date-only CASH rows are boundary external flows and do not count as missing execution timestamps;
+- cash-entry default dates are derived in `Africa/Cairo`, not UTC, so a deposit after Cairo midnight is not accidentally attached to the previous market session.
+
 ## Live endpoint
 
 The TradingView Scanner HTTP snapshot remains separate from persisted intraday ingestion.

@@ -50,22 +50,6 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
     expect(journal).toContain('w-full min-w-0 md:w-auto md:min-w-[170px]');
   });
 
-  it('keeps the Overview reading order responsive and does not flatten the hierarchy', () => {
-    const app = readRelative('../App.tsx');
-    const overview = readRelative('./PortfolioSummary.tsx');
-
-    expect(app).toContain('premium-flow-control');
-    expect(app).toContain('data-overview-section="positions-preview"');
-    expect(app).toContain('flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between');
-    expect(app).toContain('premium-type-section-title');
-
-    expect(overview).toContain('premium-hierarchy-h1');
-    expect(overview).toContain('premium-hierarchy-h2');
-    expect(overview).toContain('premium-hierarchy-h3');
-    expect(overview).toContain('premium-hierarchy-h4');
-    expect(overview).toContain('premium-type-metric-hero');
-  });
-
   it('preserves the accepted Phase 8 semantic language while responsive rules stay material-neutral', () => {
     const responsive = readRelative('../styles/responsive.css');
     const semantics = readRelative('../styles/semantics.css');

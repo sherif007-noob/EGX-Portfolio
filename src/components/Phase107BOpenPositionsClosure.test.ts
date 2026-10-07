@@ -126,17 +126,6 @@ describe('Phase 10.7B Open Positions closure', () => {
     );
   });
 
-  it('keeps the Overview preview contract isolated from the full workflow', () => {
-    const positions = readRelative('./PositionsTable.tsx');
-    const overview = readRelative('./Phase107AOverviewClosure.test.ts');
-
-    expect(positions).toContain("variant?: 'full' | 'overview'");
-    expect(positions).toContain("variant = 'full'");
-    expect(positions).toContain("const isOverviewPreview = variant === 'overview';");
-    expect(overview).toContain('variant="overview"');
-    expect(overview).toContain('overviewLimit={4}');
-  });
-
   it('does not reopen material, semantic, accounting, chart, or Header ownership', () => {
     const css = readRelative('../index.css');
     const contract = readRelative('../../docs/PREMIUM_VISUAL_LANGUAGE_CONTRACT.md');

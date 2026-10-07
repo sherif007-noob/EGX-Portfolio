@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { PerformanceStats, PortfolioMetrics } from './types';
-import { Header } from './components/Header';
-import { PortfolioSummary } from './components/PortfolioSummary';
+import { SimpleShell, ActivitySwitcher, ACTIVITY_TABS } from './ui/SimpleShell';
+import { HomeScreen } from './ui/HomeScreen';
 import { CompactPortfolioStrip } from './components/CompactPortfolioStrip';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
@@ -21,7 +21,6 @@ import { PortfolioBackupModal } from './components/PortfolioBackupModal';
 import { DataHealthCenterModal } from './components/DataHealthCenterModal';
 import { TradeScreenshotModal } from './components/TradeScreenshotModal';
 import { PriceAlertsModal } from './components/PriceAlertsModal';
-import { PerformanceTimeframeChart } from './components/charts/PerformanceTimeframeChart';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { usePortfolioState } from './features/portfolio';
 import { useMarketData } from './hooks/useMarketData';
@@ -258,7 +257,7 @@ export default function App() {
   return (
     <div className="premium-page min-h-[100dvh] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* App Header & Navigation */}
-      <Header
+      <SimpleShell
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
@@ -268,6 +267,7 @@ export default function App() {
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
+        onQuickAddCash={handleQuickAddCash}
         unreadAlertCount={unreadAlertCount}
         isAlertsActive={alertSettings.enabled}
         isSheetsConnected={!!sheetsConfig}
@@ -324,22 +324,12 @@ export default function App() {
       </SurfacePresence>
 
       {/* Main Container */}
-      <main className="premium-safe-inline-main premium-flow-major relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6">
-        {/* Overview owns the full portfolio hero. Operational tabs get only a
-            compact context strip so their actual workflow stays above the fold. */}
-        {activeTab === 'overview' ? (
-          <PortfolioSummary
-            metrics={metrics}
-            stats={stats}
-            onQuickAddCash={handleQuickAddCash}
-            onSyncLivePrices={handleSyncPrices}
-            onReconcileLedger={handleOverviewReconcile}
-            isSyncingPrices={isSyncingPrices}
-            lastPriceSyncTime={lastPriceSyncTime}
-            scheduleStatus={scheduleStatus}
-          />
-        ) : (
-          <CompactPortfolioStrip metrics={metrics} />
+      <main className="premium-safe-inline-main premium-flow-major ui-main-pad relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6">
+        {/* Home renders its own hero. Every other tab gets a compact context
+            strip, and the activity views share one segmented switch. */}
+        {activeTab !== 'overview' && <CompactPortfolioStrip metrics={metrics} />}
+        {ACTIVITY_TABS.includes(activeTab) && (
+          <ActivitySwitcher activeTab={activeTab} setActiveTab={handleTabChange} />
         )}
 
         {/* Ledger Reconciliation Alert if transactions exist but positions/closed cycles are empty */}
@@ -373,47 +363,18 @@ export default function App() {
           }}
         >
         {activeTab === 'overview' && (
-          <div className="premium-flow-major">
-            <section className="premium-flow-control" data-overview-section="positions-preview">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                  <h2 className="premium-type-section-title">Active Stock Positions</h2>
-                  <p className="premium-type-helper mt-0.5">
-                    {positions.length} active holding{positions.length === 1 ? '' : 's'} · compact portfolio snapshot
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleTabChange('positions')}
-                  className="premium-action premium-action-priority-secondary w-full justify-center px-2.5 py-1 rounded-lg text-xs font-semibold sm:w-auto"
-                >
-                  Open Positions →
-                </button>
-              </div>
-              <PositionsTable
-                positions={positions}
-                onSellPosition={(pos) => setSellingPosition(pos)}
-                onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
-                onEditPosition={(pos) => setEditingPosition(pos)}
-                onCorrectLedger={openPositionLedgerCorrection}
-                onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
-                onAddNewTrade={() => openAddTrade()}
-                variant="overview"
-                overviewLimit={4}
-              />
-            </section>
-
-            {/* Unified portfolio analytics */}
-            <PerformanceTimeframeChart
-              transactions={transactions}
-              historicalPrices={historicalPriceSeries}
-              capitalDeposits={analyticsCapitalDeposits}
-              positions={positions}
-              currentCashBalance={cashBalance}
-              historicalLoading={historicalAnalyticsLoading}
-              entranceReady={settledTab === activeTab}
-              visualContext="overview"
-            />
-          </div>
+          <HomeScreen
+            metrics={metrics}
+            stats={stats}
+            positions={positions}
+            transactions={transactions}
+            historicalPrices={historicalPriceSeries}
+            capitalDeposits={analyticsCapitalDeposits}
+            historicalLoading={historicalAnalyticsLoading}
+            onOpenPositions={() => handleTabChange('positions')}
+            onOpenReports={() => handleTabChange('reports')}
+            onQuickAddCash={handleQuickAddCash}
+          />
         )}
 
         {activeTab === 'positions' && (

@@ -23,24 +23,6 @@ describe('Phase 10.7A Overview closure', () => {
     );
   });
 
-  it('uses a compact holdings preview instead of embedding the full Positions workflow', () => {
-    const app = readRelative('../App.tsx');
-    const positions = readRelative('./PositionsTable.tsx');
-
-    expect(app).toContain('data-overview-section="positions-preview"');
-    expect(app).toContain('variant="overview"');
-    expect(app).toContain('overviewLimit={4}');
-    expect(app).toContain('premium-action-priority-secondary');
-    expect(app).toContain('Open Positions →');
-
-    expect(positions).toContain("variant?: 'full' | 'overview'");
-    expect(positions).toContain("variant = 'full'");
-    expect(positions).toContain("const isOverviewPreview = variant === 'overview';");
-    expect(positions).toContain('positions.slice(0, overviewLimit)');
-    expect(positions).toContain("data-positions-variant={variant}");
-    expect(positions).toContain("isOverviewPreview ? 'min-w-[760px]' : 'min-w-[1080px]'");
-  });
-
   it('keeps full operational controls owned by the dedicated Positions variant', () => {
     const positions = readRelative('./PositionsTable.tsx');
 
@@ -60,34 +42,6 @@ describe('Phase 10.7A Overview closure', () => {
     const positionsTab = app.slice(positionsTabStart, positionsTabStart + 4500);
     expect(positionsTab).toContain('<PositionsTable');
     expect(positionsTab).not.toContain('variant="overview"');
-  });
-
-  it('makes Overview analytics subordinate to the portfolio hero while Reports keeps its analytics hierarchy', () => {
-    const app = readRelative('../App.tsx');
-    const primary = readRelative('./charts/PerformanceTimeframeChart.tsx');
-    const secondary = readRelative('./charts/SecondaryAnalyticsCharts.tsx');
-    const reports = readRelative('./PerformanceReports.tsx');
-
-    expect(app).toContain('visualContext="overview"');
-    expect(primary).toContain("visualContext?: 'overview' | 'reports'");
-    expect(primary).toContain("visualContext = 'reports'");
-    expect(primary).toContain(
-      "const mainHierarchyLevel = visualContext === 'overview' ? 'h2' : 'h1';",
-    );
-    expect(primary).toContain(
-      "const secondaryHierarchyLevel = visualContext === 'overview' ? 'h3' : 'h2';",
-    );
-    expect(primary).toContain('hierarchyLevel={secondaryHierarchyLevel}');
-
-    expect(secondary).toContain("hierarchyLevel?: 'h2' | 'h3'");
-    expect(secondary).toContain("hierarchyLevel = 'h2'");
-    expect(secondary).toContain(
-      "hierarchyLevel === 'h3' ? 'premium-hierarchy-h3' : 'premium-hierarchy-h2'",
-    );
-
-    // Reports intentionally consumes the default reports context: H1 main + H2 secondary.
-    expect(reports).toContain('<PerformanceTimeframeChart');
-    expect(reports).not.toContain('visualContext="overview"');
   });
 
   it('keeps Overview dense states readable and non-operational', () => {

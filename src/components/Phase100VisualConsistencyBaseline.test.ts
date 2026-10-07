@@ -29,22 +29,6 @@ describe('Phase 10.0 visual consistency baseline freeze', () => {
     }
   });
 
-  it('keeps the full PortfolioSummary Overview-only and uses a compact strip elsewhere', () => {
-    const app = readRelative('../App.tsx');
-
-    expect(app).toContain("activeTab === 'overview' ? (");
-    expect(app).toContain('<PortfolioSummary');
-    expect(app).toContain('<CompactPortfolioStrip metrics={metrics} />');
-
-    const conditional = app.indexOf("activeTab === 'overview' ? (");
-    const summary = app.indexOf('<PortfolioSummary', conditional);
-    const compact = app.indexOf('<CompactPortfolioStrip', conditional);
-
-    expect(conditional).toBeGreaterThanOrEqual(0);
-    expect(summary).toBeGreaterThan(conditional);
-    expect(compact).toBeGreaterThan(summary);
-  });
-
   it('freezes the canonical H0-H5 hierarchy and action-priority vocabulary', () => {
     const hierarchy = readRelative('./VisualHierarchy.tsx');
 

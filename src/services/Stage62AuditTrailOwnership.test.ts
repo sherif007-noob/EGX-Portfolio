@@ -28,6 +28,36 @@ describe('Stage 6.2 audit trail ownership', () => {
     expect(viewer).toContain('Financial Audit Trail');
   });
 
+
+  it('threads audit reasons through cash correction, reconcile and restore surfaces', () => {
+    const ledger = readRelative('../features/portfolio/ledger/usePortfolioLedgerMutations.ts');
+    const cash = readRelative('../components/CashBalanceView.tsx');
+    const quickCash = readRelative('../components/QuickCashModal.tsx');
+    const backup = readRelative('../components/PortfolioBackupModal.tsx');
+    const app = readRelative('../App.tsx');
+
+    expect(ledger).toContain("executePreparedMutation(\n      'EDIT_CASH_TRANSACTION'");
+    expect(ledger).toContain("executePreparedMutation(\n      'DELETE_CASH_TRANSACTION'");
+    expect(ledger).toContain("'RECONCILIATION_ADJUSTMENT'");
+    expect(ledger).toContain("'RESTORE_PORTFOLIO'");
+    expect(cash).toContain('Correction Reason (Optional)');
+    expect(cash).toContain('Deletion Reason (Optional)');
+    expect(cash).toContain('Reconciliation reason (optional)');
+    expect(quickCash).toContain('Adjustment Reason (Optional)');
+    expect(backup).toContain('Restore Reason (Optional)');
+    expect(backup).toContain('Ledger reconciliation reason');
+    expect(app).toContain('Imported from Google Sheets:');
+  });
+
+  it('does not claim audited cash success before persistence resolves', () => {
+    const cash = readRelative('../components/CashBalanceView.tsx');
+    const awaitIndex = cash.indexOf('const saved = await saveCashChange(() =>');
+    const successIndex = cash.indexOf('Cash balance reconciled to ledger-derived amount');
+    expect(awaitIndex).toBeGreaterThan(-1);
+    expect(successIndex).toBeGreaterThan(awaitIndex);
+    expect(cash).toContain('if (!saved) return;');
+  });
+
   it('captures optional reasons without conflating them with trade notes', () => {
     const journal = readRelative('../components/TradingJournal.tsx');
     expect(journal).toContain('Correction Reason (Optional)');

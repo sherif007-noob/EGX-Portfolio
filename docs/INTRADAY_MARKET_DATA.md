@@ -214,7 +214,7 @@ Auto | 1m | 5m | 15m | 1h
 
 `Auto` remains the default and preserves the coverage-aware `1m -> 5m -> 15m` selector.
 
-Manual `1m`, `5m`, and `15m` choices read the corresponding persisted interval for the selected session. The `1h` view is intentionally not another storage tier: it is derived client-side from the healthiest available persisted intraday source using the same observed-only OHLCV aggregation semantics. Missing observations are not synthesized.
+Manual `1m` and `5m` choices remain strict reads of their corresponding persisted interval for the selected session. Manual `15m` and `1h` are display resolutions: the browser selects the finest healthy same-session source in the `1m -> 5m -> legacy 15m` chain and deterministically aggregates it to the requested bucket size when needed. Neither `15m` nor `1h` requires a separately persisted coarse dataset to render. Missing observations are not synthesized, and a missing requested session never falls back to an older trading day.
 
 Changing the Today display resolution changes chart sampling only. It does not change transaction timing, portfolio accounting, live-price authority, ingestion cadence, retention, or the underlying stored market data.
 

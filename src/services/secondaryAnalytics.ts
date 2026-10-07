@@ -7,6 +7,7 @@ import type { UnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
 import { calculateSellAccounting } from './portfolioAccounting';
 import { cashFlowPerformancePnl } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
+import { isIpoSubscriptionTransaction } from './ipoSubscriptions';
 
 const EPSILON = 1e-8;
 
@@ -73,6 +74,21 @@ function applyTrade(
       tx.cashFlowType,
       tx.cashFlowAmount ?? tx.totalAmount,
     );
+  }
+
+  if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
+    if (tx.ipoSubscription.status !== 'ALLOCATED') return 0;
+    const shares = Number(tx.ipoSubscription.allocatedShares ?? tx.shares);
+    const price = Number(tx.ipoSubscription.offerPrice);
+    const fees = Number.isFinite(tx.fees) ? Math.max(0, Number(tx.fees)) : 0;
+    if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return 0;
+    const state = states.get(ticker) ?? { shares: 0, grossCost: 0, buyFees: 0 };
+    state.shares += shares;
+    state.grossCost += shares * price;
+    state.buyFees += fees;
+    state.lastExecutionPrice = price;
+    states.set(ticker, state);
+    return 0;
   }
 
   const shares = Number(tx.shares);

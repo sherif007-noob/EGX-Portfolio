@@ -2,6 +2,10 @@ import { ClosedTrade, Position, TradeTransaction } from '../types';
 import { ACCOUNTING_EPSILON, calculatePortfolioValue, calculatePositionUnrealizedPnl } from './portfolioAccounting';
 import { cashFlowPerformancePnl, cashFlowReturnNeutralPortfolioFlow, cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
+import {
+  isIpoSubscriptionTransaction,
+  pendingIpoSubscriptionValue,
+} from './ipoSubscriptions';
 
 export interface EquityBridge {
   netCapitalContributed: number;
@@ -34,7 +38,9 @@ export function calculateEquityBridge(
     .reduce((sum, tx) => sum + (cashFlowSignedImpact(tx.cashFlowType, tx.cashFlowAmount ?? tx.totalAmount) ?? 0), 0);
   const realizedPnl = tradingRealizedPnl + cashPerformancePnl;
   const unrealizedPnl = positions.reduce((sum, position) => sum + calculatePositionUnrealizedPnl(position), 0);
-  const endingEquity = calculatePortfolioValue(cashBalance, positions);
+  const endingEquity =
+    calculatePortfolioValue(cashBalance, positions)
+    + pendingIpoSubscriptionValue(transactions);
   const reconciliationDelta = endingEquity - (
     capital + realizedPnl + unrealizedPnl + reconciliationAdjustments
   );
@@ -175,16 +181,63 @@ export function buildHistoricalEquityCurve(
   if (!first) return [];
 
   const dates = new Set<string>([first, endDate]);
-  for (const tx of txs) { const date = dayKey(tx.date); if (date >= first && date <= endDate) dates.add(date); }
+  for (const tx of txs) {
+    const date = dayKey(tx.date);
+    if (date >= first && date <= endDate) dates.add(date);
+    if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
+      const subscriptionDate = dayKey(tx.ipoSubscription.subscriptionDate);
+      const allocationDate = dayKey(tx.ipoSubscription.allocationDate || '');
+      const cancellationDate = dayKey(tx.ipoSubscription.cancellationDate || '');
+      if (subscriptionDate >= first && subscriptionDate <= endDate) dates.add(subscriptionDate);
+      if (allocationDate >= first && allocationDate <= endDate) dates.add(allocationDate);
+      if (cancellationDate >= first && cancellationDate <= endDate) dates.add(cancellationDate);
+    }
+  }
   for (const series of Object.values(historicalPrices)) for (const point of series) { const date = dayKey(point.date); if (date >= first && date <= endDate) dates.add(date); }
 
   const holdings: Record<string, number> = {};
   const legacyOpeningCapital = Number.isFinite(openingCapital) && openingCapital > 0 ? openingCapital : 0;
   let cash = hasExplicitCapitalFlow(txs) ? 0 : legacyOpeningCapital;
+  let pendingIpoValue = 0;
   let txIndex = 0;
   const result: PortfolioValuationPoint[] = [];
+  const ipoSubscriptions = txs.filter(isIpoSubscriptionTransaction);
+  const ipoSubmitted = new Set<string>();
+  const ipoSettled = new Set<string>();
 
   for (const date of [...dates].sort()) {
+    for (const tx of ipoSubscriptions) {
+      const ipo = tx.ipoSubscription;
+      if (!ipo) continue;
+      const subscriptionDate = dayKey(ipo.subscriptionDate || tx.date);
+      if (!ipoSubmitted.has(tx.id) && subscriptionDate <= date) {
+        cash -= ipo.requestedAmount;
+        pendingIpoValue += ipo.requestedAmount;
+        ipoSubmitted.add(tx.id);
+      }
+
+      if (
+        ipo.status === 'ALLOCATED'
+        && ipo.allocationDate
+        && !ipoSettled.has(tx.id)
+        && dayKey(ipo.allocationDate) <= date
+      ) {
+        pendingIpoValue -= ipo.requestedAmount;
+        cash += Number(ipo.refundAmount || 0);
+        holdings[normalizePerformanceTicker(tx.ticker)] =
+          (holdings[normalizePerformanceTicker(tx.ticker)] || 0) + Number(ipo.allocatedShares || 0);
+        ipoSettled.add(tx.id);
+      } else if (
+        ipo.status === 'CANCELLED'
+        && ipo.cancellationDate
+        && !ipoSettled.has(tx.id)
+        && dayKey(ipo.cancellationDate) <= date
+      ) {
+        pendingIpoValue -= ipo.requestedAmount;
+        cash += ipo.requestedAmount;
+        ipoSettled.add(tx.id);
+      }
+    }
     while (txIndex < txs.length && dayKey(txs[txIndex].date) <= date) {
       const tx = txs[txIndex++];
       const ticker = normalizePerformanceTicker(tx.ticker);
@@ -204,6 +257,7 @@ export function buildHistoricalEquityCurve(
         holdings[ticker] = (holdings[ticker] || 0) + tx.shares;
         continue;
       }
+      if (isIpoSubscriptionTransaction(tx)) continue;
 
       const gross = Number.isFinite(tx.grossTradeValue) ? Number(tx.grossTradeValue) : tx.shares * tx.price;
       const fees = Number.isFinite(tx.fees) ? tx.fees : 0;
@@ -225,8 +279,9 @@ export function buildHistoricalEquityCurve(
       marketValue += shares * close;
     }
     const complete = missingTickers.length === 0;
-    if (complete) result.push({ date, equity: cash + marketValue, cash, marketValue, complete });
-    else result.push({ date, equity: cash + marketValue, cash, marketValue, complete, missingTickers });
+    const equity = cash + marketValue + pendingIpoValue;
+    if (complete) result.push({ date, equity, cash, marketValue, complete });
+    else result.push({ date, equity, cash, marketValue, complete, missingTickers });
   }
   return result;
 }

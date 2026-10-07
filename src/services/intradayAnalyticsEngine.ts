@@ -8,6 +8,10 @@ import { INTRADAY_POLICY } from './intradayPolicy';
 import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
 import {
+  isIpoSubscriptionTransaction,
+  pendingIpoSubscriptionValue,
+} from './ipoSubscriptions';
+import {
   buildExternalCashFlows,
   sortPerformanceTransactions,
   type MWRRCashFlow,
@@ -46,6 +50,11 @@ function transactionCashImpact(tx: TradeTransaction): number {
   const ticker = normalizeIntradayTicker(tx.ticker);
 
   if (isBonusSharesTransaction(tx)) return 0;
+  if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
+    if (tx.ipoSubscription.status === 'SUBMITTED') return -tx.ipoSubscription.requestedAmount;
+    if (tx.ipoSubscription.status === 'ALLOCATED') return -Number(tx.totalAmount || 0);
+    return 0;
+  }
 
   if (ticker === 'CASH') {
     const kind = cashFlowKind(tx);
@@ -92,6 +101,19 @@ function applyTransaction(
 
   if (ticker === 'CASH') {
     state.cash += cashImpact;
+    return;
+  }
+
+  if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
+    state.cash += cashImpact;
+    if (tx.ipoSubscription.status === 'ALLOCATED') {
+      const allocatedShares = Number(tx.ipoSubscription.allocatedShares ?? tx.shares);
+      if (Number.isFinite(allocatedShares) && allocatedShares > EPSILON) {
+        state.shares.set(ticker, (state.shares.get(ticker) || 0) + allocatedShares);
+        const price = Number(tx.ipoSubscription.offerPrice);
+        if (Number.isFinite(price) && price > 0) state.executionPrices.set(ticker, price);
+      }
+    }
     return;
   }
 
@@ -255,6 +277,10 @@ export function buildIntradayAnalyticsResult(
     if (txDay > sessionDate) continue;
 
     const ticker = normalizeIntradayTicker(tx.ticker);
+    if (isIpoSubscriptionTransaction(tx)) {
+      applyTransaction(tx, state);
+      continue;
+    }
     if (isBonusSharesTransaction(tx)) {
       const sourceShares = Number(tx.corporateActionSourceShares);
       const bonusShares = Number(tx.shares);
@@ -350,8 +376,9 @@ export function buildIntradayAnalyticsResult(
     baselineMarketValue += shares * price;
   }
 
+  const pendingIpoValue = pendingIpoSubscriptionValue(ordered);
   const baselineComplete = missingAtBaseline.length === 0 && missingTimestampIds.length === 0;
-  const baselineEquity = state.cash + baselineMarketValue;
+  const baselineEquity = state.cash + baselineMarketValue + pendingIpoValue;
   const missingTickerSet = new Set<string>(missingAtBaseline);
 
   const points: UnifiedAnalyticsPoint[] = [
@@ -407,7 +434,7 @@ export function buildIntradayAnalyticsResult(
       marketValue += shares * price;
     }
 
-    const equity = state.cash + marketValue;
+    const equity = state.cash + marketValue + pendingIpoValue;
     const intervalExternalFlows = sessionExternalFlows.filter((flow) => {
       const flowMs = parseMs(flow.date);
       const previousPointMs = parseMs(points.at(-1)?.date);
@@ -502,7 +529,7 @@ export function buildIntradayAnalyticsResult(
       const lastPoint = completePoints.at(-1)!;
       const lastPointMs = parseMs(lastPoint.date);
       if (asOfMs > lastPointMs) {
-        const liveEquity = state.cash + liveMarketValue;
+        const liveEquity = state.cash + liveMarketValue + pendingIpoValue;
         const intervalExternalFlows = sessionExternalFlows.filter((flow) => {
           const flowMs = parseMs(flow.date);
           return flowMs > lastPointMs && flowMs <= asOfMs;

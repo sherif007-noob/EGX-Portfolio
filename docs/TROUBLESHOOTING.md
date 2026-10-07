@@ -144,6 +144,14 @@ If Today is unavailable, check:
 - the intraday workflow completed successfully;
 - benchmark mode additionally has EGX30 / EGX70EWI / EGX100EWI data for the requested comparison.
 
+If the UI says many **incomplete points were excluded** even though intraday bars exist, inspect the session ledger:
+
+- an ordinary BUY/SELL dated to that session but missing `executedAt` correctly invalidates the reconstructed path;
+- date-only CASH rows must **not** be treated as missing-time trades;
+- confirm newly-created cash rows use the Cairo calendar date, especially between Cairo midnight and UTC midnight.
+
+The Oct 7 incident was caused by three 20,000 EGP deposits entered after Cairo midnight but stamped with the prior UTC date. That UTC cash-date default has been removed.
+
 The app does not fabricate a Today curve from daily prices. The pre-10:00 rule handles ordinary overnight continuity; it is not a full exchange-holiday calendar.
 
 ## Drawdown shows N/A

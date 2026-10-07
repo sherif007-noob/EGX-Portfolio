@@ -13,6 +13,7 @@ import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { PythonSchemaSyncModal } from './components/PythonSchemaSyncModal';
 import { AddTradeModal } from './components/AddTradeModal';
 import { BonusSharesModal } from './components/BonusSharesModal';
+import { IpoSubscriptionModal } from './components/IpoSubscriptionModal';
 import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
@@ -55,6 +56,9 @@ export default function App() {
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
     addBonusShares: executeAddBonusShares,
+    addIpoSubscription: executeAddIpoSubscription,
+    allocateIpoSubscription: executeAllocateIpoSubscription,
+    cancelIpoSubscription: executeCancelIpoSubscription,
     editPosition: executeEditPosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
@@ -87,6 +91,8 @@ export default function App() {
     isAddTradeModalOpen,
     isBonusSharesModalOpen,
     setIsBonusSharesModalOpen,
+    isIpoSubscriptionModalOpen,
+    setIsIpoSubscriptionModalOpen,
     isQuickCashModalOpen,
     setIsQuickCashModalOpen,
     isBackupModalOpen,
@@ -189,6 +195,9 @@ export default function App() {
     addTrade: executeAddTrade,
     sellPosition: executeSellPosition,
     addBonusShares: executeAddBonusShares,
+    addIpoSubscription: executeAddIpoSubscription,
+    allocateIpoSubscription: executeAllocateIpoSubscription,
+    cancelIpoSubscription: executeCancelIpoSubscription,
     editPosition: executeEditPosition,
     editTransaction: executeEditTransaction,
     deleteTransaction: executeDeleteTransaction,
@@ -199,6 +208,9 @@ export default function App() {
     executeAddTrade,
     executeSellPosition,
     executeAddBonusShares,
+    executeAddIpoSubscription,
+    executeAllocateIpoSubscription,
+    executeCancelIpoSubscription,
     executeEditPosition,
     executeEditTransaction,
     executeDeleteTransaction,
@@ -211,6 +223,9 @@ export default function App() {
     handleAddPosition,
     handleConfirmSell,
     handleAddBonusShares,
+    handleAddIpoSubscription,
+    handleAllocateIpoSubscription,
+    handleCancelIpoSubscription,
     handleSavePositionEdit,
     handleDeleteTransaction,
     handleEditTransaction,
@@ -247,6 +262,7 @@ export default function App() {
         onOpenGoogleSheets={() => setIsSheetsModalOpen(true)}
         onOpenAddTrade={() => openAddTrade()}
         onOpenBonusShares={() => setIsBonusSharesModalOpen(true)}
+        onOpenIpoSubscription={() => setIsIpoSubscriptionModalOpen(true)}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
         onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
@@ -565,6 +581,17 @@ export default function App() {
         onClose={() => setIsBonusSharesModalOpen(false)}
         positions={positions}
         onSubmit={handleAddBonusShares}
+      />
+
+      <IpoSubscriptionModal
+        isOpen={isIpoSubscriptionModalOpen}
+        onClose={() => setIsIpoSubscriptionModalOpen(false)}
+        tickers={tickers}
+        transactions={transactions}
+        cashBalance={cashBalance}
+        onSubmit={handleAddIpoSubscription}
+        onAllocate={handleAllocateIpoSubscription}
+        onCancelSubscription={handleCancelIpoSubscription}
       />
 
       <TradeScreenshotModal

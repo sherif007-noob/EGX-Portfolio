@@ -20,6 +20,7 @@ import {
   Settings2,
   ChevronDown,
   Gift,
+  CircleDollarSign,
 } from 'lucide-react';
 
 export type NavigationTab = 'overview' | 'positions' | 'closed_cycles' | 'journal' | 'cash' | 'reports' | 'directory';
@@ -65,6 +66,7 @@ interface HeaderProps {
   onOpenGoogleSheets: () => void;
   onOpenAddTrade: () => void;
   onOpenBonusShares?: () => void;
+  onOpenIpoSubscription?: () => void;
   onOpenBackupModal?: () => void;
   onOpenScreenshotModal?: () => void;
   onOpenPriceAlerts?: () => void;
@@ -83,6 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGoogleSheets,
   onOpenAddTrade,
   onOpenBonusShares,
+  onOpenIpoSubscription,
   onOpenBackupModal,
   onOpenScreenshotModal,
   onOpenPriceAlerts,
@@ -558,6 +561,20 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Gift className="h-3.5 w-3.5 text-cyan-300" />
                 <span className="premium-header-action-label hidden xl:inline">Bonus Shares</span>
+              </button>
+            )}
+
+            {onOpenIpoSubscription && (
+              <button
+                id="header-ipo-subscription-btn"
+                onClick={onOpenIpoSubscription}
+                aria-label="Record IPO subscription"
+                data-action-priority="creation-secondary"
+                className="premium-action premium-header-create-secondary flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                title="Reserve cash for an IPO subscription and settle allocation later"
+              >
+                <CircleDollarSign className="h-3.5 w-3.5 text-cyan-300" />
+                <span className="premium-header-action-label hidden xl:inline">IPO</span>
               </button>
             )}
 

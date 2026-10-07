@@ -6,6 +6,7 @@ export function useAppOverlayState() {
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
   const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
   const [isBonusSharesModalOpen, setIsBonusSharesModalOpen] = useState(false);
+  const [isIpoSubscriptionModalOpen, setIsIpoSubscriptionModalOpen] = useState(false);
   const [isQuickCashModalOpen, setIsQuickCashModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isDataHealthModalOpen, setIsDataHealthModalOpen] = useState(false);
@@ -34,6 +35,8 @@ export function useAppOverlayState() {
     setIsAddTradeModalOpen,
     isBonusSharesModalOpen,
     setIsBonusSharesModalOpen,
+    isIpoSubscriptionModalOpen,
+    setIsIpoSubscriptionModalOpen,
     isQuickCashModalOpen,
     setIsQuickCashModalOpen,
     isBackupModalOpen,

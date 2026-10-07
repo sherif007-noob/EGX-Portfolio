@@ -88,10 +88,11 @@ TradingView scanner logoid
   -> IPF listed-company contact row keyed by ISIN
       -> corporate email domain
       -> ReplyNodes zero-key domain logo
+      -> official corporate-site organization logo / touch icon / favicon
   -> sector-colored ticker initials
 ```
 
-The Investor Protection Fund source is used only to establish a corporate domain for a specific ISIN. Generic email providers are rejected. The ReplyNodes candidate is persisted only after the sync verifies that the endpoint returns an image. Failure of either fallback provider is non-fatal and must not block ticker-registry reconciliation.
+The Investor Protection Fund source is used only to establish a corporate domain for a specific ISIN. Generic email providers are rejected. The ReplyNodes candidate is persisted only after the sync verifies that the endpoint returns an image and is not the provider's placeholder. If no provider logo exists, the sync inspects the verified corporate website for explicit Organization JSON-LD logo metadata, touch icons and favicons, validates the resulting image, and may persist that official-site asset. Failure of any fallback source is non-fatal and must not block ticker-registry reconciliation.
 
 The generic TradingView Egypt-country badge is not considered a company logo and is no longer an accepted fallback.
 

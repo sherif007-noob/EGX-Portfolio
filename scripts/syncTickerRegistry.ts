@@ -12,6 +12,7 @@ import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
 import {
   buildReplyNodesDomainLogoUrl,
   extractOfficialDomainsByIsin,
+  extractOfficialSiteLogoCandidates,
 } from '../src/services/officialCompanyLogoFallback';
 
 type SupabaseClient = ReturnType<typeof createSupabase>;
@@ -252,6 +253,39 @@ async function enrichOfficialDomainLogos(
 }
 
 
+
+async function fetchOfficialSiteLogoUrl(domain: string): Promise<string> {
+  const clean = String(domain || '').trim().toLowerCase();
+  if (!clean) return '';
+
+  for (const scheme of ['https', 'http'] as const) {
+    const pageUrl = `${scheme}://${clean}/`;
+    try {
+      const response = await fetch(pageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) continue;
+      const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+      if (contentType && !contentType.includes('html')) continue;
+
+      const html = await response.text();
+      const candidates = extractOfficialSiteLogoCandidates(html, response.url || pageUrl).slice(0, 8);
+      for (const candidate of candidates) {
+        if (await isUsableImageUrl(candidate)) return candidate;
+      }
+    } catch {
+      // Try the next protocol or leave this company on the initials fallback.
+    }
+  }
+
+  return '';
+}
+
 async function resolveOfficialDomainLogoUpdates(
   rows: RegistryRow[],
   domainsByIsin: Map<string, string>,
@@ -273,11 +307,20 @@ async function resolveOfficialDomainLogoUpdates(
     const results = await Promise.all(batch.map(async (row) => {
       const isin = normalize(row.isin);
       const domain = domainsByIsin.get(isin) || '';
-      const logoUrl = buildReplyNodesDomainLogoUrl(domain);
-      if (!logoUrl || !await isUsableImageUrl(logoUrl)) return null;
+      const providerUrl = buildReplyNodesDomainLogoUrl(domain);
+      if (providerUrl && await isUsableImageUrl(providerUrl)) {
+        return {
+          ticker: normalize(row.ticker),
+          logo_url: providerUrl,
+          updated_at: updatedAt,
+        };
+      }
+
+      const officialSiteUrl = await fetchOfficialSiteLogoUrl(domain);
+      if (!officialSiteUrl) return null;
       return {
         ticker: normalize(row.ticker),
-        logo_url: logoUrl,
+        logo_url: officialSiteUrl,
         updated_at: updatedAt,
       };
     }));

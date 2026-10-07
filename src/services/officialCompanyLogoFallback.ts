@@ -74,3 +74,91 @@ export function buildReplyNodesDomainLogoUrl(domain: string): string {
   const clean = normalizeOfficialCompanyDomain(domain);
   return clean ? `https://img.replynodes.com/${encodeURIComponent(clean)}` : '';
 }
+
+
+function absoluteHttpUrl(value: string, baseUrl: string): string {
+  const raw = decodeHtml(String(value || '').trim());
+  if (!raw || raw.startsWith('data:') || raw.startsWith('javascript:')) return '';
+  try {
+    const url = new URL(raw, baseUrl);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+function collectJsonLdLogos(value: unknown, out: string[]): void {
+  if (Array.isArray(value)) {
+    for (const item of value) collectJsonLdLogos(item, out);
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+
+  const record = value as Record<string, unknown>;
+  const typeValue = record['@type'];
+  const types = Array.isArray(typeValue) ? typeValue.map(String) : [String(typeValue || '')];
+  const isOrganization = types.some((type) =>
+    /organization|corporation|company|financialservice|insuranceagency|educationalorganization/i.test(type),
+  );
+
+  if (isOrganization && record.logo) {
+    const logo = record.logo;
+    if (typeof logo === 'string') out.push(logo);
+    else if (logo && typeof logo === 'object') {
+      const logoRecord = logo as Record<string, unknown>;
+      if (typeof logoRecord.url === 'string') out.push(logoRecord.url);
+      if (typeof logoRecord.contentUrl === 'string') out.push(logoRecord.contentUrl);
+    }
+  }
+
+  for (const nested of Object.values(record)) collectJsonLdLogos(nested, out);
+}
+
+export function extractOfficialSiteLogoCandidates(html: string, pageUrl: string): string[] {
+  const source = String(html || '');
+  const candidates: string[] = [];
+
+  for (const match of source.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const parsed = JSON.parse(decodeHtml(match[1]).trim());
+      collectJsonLdLogos(parsed, candidates);
+    } catch {
+      // Ignore malformed third-party JSON-LD and continue to explicit icon metadata.
+    }
+  }
+
+  const links = [...source.matchAll(/<link\b[^>]*>/gi)].map((match) => match[0]);
+  const rankedLinks = links
+    .map((tag) => {
+      const rel = tag.match(/\brel=["']([^"']+)["']/i)?.[1] || '';
+      const href = tag.match(/\bhref=["']([^"']+)["']/i)?.[1] || '';
+      const sizes = tag.match(/\bsizes=["']([^"']+)["']/i)?.[1] || '';
+      const sizeScore = Math.max(
+        0,
+        ...[...sizes.matchAll(/(\d+)x(\d+)/gi)].map((size) => Number(size[1]) * Number(size[2])),
+      );
+      const relScore = /apple-touch-icon/i.test(rel) ? 3 : /\bicon\b/i.test(rel) ? 2 : 0;
+      return { href, score: relScore * 1_000_000 + sizeScore };
+    })
+    .filter((entry) => entry.href && entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  candidates.push(...rankedLinks.map((entry) => entry.href));
+
+  const ogLogo = source.match(/<meta\b[^>]*(?:property|name)=["'](?:og:logo|logo)["'][^>]*content=["']([^"']+)["'][^>]*>/i)?.[1]
+    ?? source.match(/<meta\b[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:logo|logo)["'][^>]*>/i)?.[1];
+  if (ogLogo) candidates.push(ogLogo);
+
+  try {
+    candidates.push(new URL('/favicon.ico', pageUrl).href);
+  } catch {
+    // Invalid base URL.
+  }
+
+  const unique: string[] = [];
+  for (const candidate of candidates) {
+    const absolute = absoluteHttpUrl(candidate, pageUrl);
+    if (absolute && !unique.includes(absolute)) unique.push(absolute);
+  }
+  return unique;
+}

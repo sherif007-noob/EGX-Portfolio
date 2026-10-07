@@ -10,7 +10,7 @@ import { getTradingViewLogoUrl } from '../src/services/tradingviewLogos';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
 import {
-  buildEulerpoolDomainLogoUrl,
+  buildReplyNodesDomainLogoUrl,
   extractOfficialDomainsByIsin,
 } from '../src/services/officialCompanyLogoFallback';
 
@@ -216,6 +216,8 @@ async function isUsableImageUrl(url: string): Promise<boolean> {
       redirect: 'follow',
     });
     const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    const fallbackKind = String(response.headers.get('x-replynodes-logo-fallback') || '').toLowerCase();
+    if (fallbackKind && fallbackKind !== 'logo') return false;
     return response.ok && contentType.startsWith('image/');
   } catch {
     return false;
@@ -235,7 +237,7 @@ async function enrichOfficialDomainLogos(
     const batch = missing.slice(offset, offset + concurrency);
     const results = await Promise.all(batch.map(async (row) => {
       const domain = domainsByIsin.get(row.isin) || '';
-      const url = buildEulerpoolDomainLogoUrl(domain);
+      const url = buildReplyNodesDomainLogoUrl(domain);
       return [row.ticker, url && await isUsableImageUrl(url) ? url : ''] as const;
     }));
     for (const [ticker, url] of results) {
@@ -271,7 +273,7 @@ async function resolveOfficialDomainLogoUpdates(
     const results = await Promise.all(batch.map(async (row) => {
       const isin = normalize(row.isin);
       const domain = domainsByIsin.get(isin) || '';
-      const logoUrl = buildEulerpoolDomainLogoUrl(domain);
+      const logoUrl = buildReplyNodesDomainLogoUrl(domain);
       if (!logoUrl || !await isUsableImageUrl(logoUrl)) return null;
       return {
         ticker: normalize(row.ticker),

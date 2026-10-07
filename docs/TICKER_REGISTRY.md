@@ -87,11 +87,11 @@ TradingView scanner logoid
   -> TradingView symbol-search logoid / logo_urls
   -> IPF listed-company contact row keyed by ISIN
       -> corporate email domain
-      -> Eulerpool zero-key domain logo
+      -> ReplyNodes zero-key domain logo
   -> sector-colored ticker initials
 ```
 
-The Investor Protection Fund source is used only to establish a corporate domain for a specific ISIN. Generic email providers are rejected. The Eulerpool candidate is persisted only after the sync verifies that the endpoint returns an image. Failure of either fallback provider is non-fatal and must not block ticker-registry reconciliation.
+The Investor Protection Fund source is used only to establish a corporate domain for a specific ISIN. Generic email providers are rejected. The ReplyNodes candidate is persisted only after the sync verifies that the endpoint returns an image. Failure of either fallback provider is non-fatal and must not block ticker-registry reconciliation.
 
 The generic TradingView Egypt-country badge is not considered a company logo and is no longer an accepted fallback.
 

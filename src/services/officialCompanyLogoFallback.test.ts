@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildEulerpoolDomainLogoUrl,
+  buildReplyNodesDomainLogoUrl,
   extractOfficialDomainsByIsin,
   normalizeOfficialCompanyDomain,
 } from './officialCompanyLogoFallback';
@@ -23,9 +23,9 @@ describe('official company logo fallback', () => {
     expect(normalizeOfficialCompanyDomain('WWW.DeltaIns.org/path')).toBe('deltains.org');
   });
 
-  it('builds a zero-key Eulerpool domain-logo URL', () => {
-    expect(buildEulerpoolDomainLogoUrl('halan.com'))
-      .toBe('https://eulerpool.com/api/logo/halan.com');
+  it('builds a zero-key ReplyNodes domain-logo URL', () => {
+    expect(buildReplyNodesDomainLogoUrl('halan.com'))
+      .toBe('https://img.replynodes.com/halan.com');
   });
 
   it('does not cross from one flattened row into the next ISIN', () => {

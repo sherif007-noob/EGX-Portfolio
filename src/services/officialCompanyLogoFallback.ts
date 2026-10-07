@@ -70,7 +70,7 @@ export function extractOfficialDomainsByIsin(html: string): Map<string, string> 
   return out;
 }
 
-export function buildEulerpoolDomainLogoUrl(domain: string): string {
+export function buildReplyNodesDomainLogoUrl(domain: string): string {
   const clean = normalizeOfficialCompanyDomain(domain);
-  return clean ? `https://eulerpool.com/api/logo/${encodeURIComponent(clean)}` : '';
+  return clean ? `https://img.replynodes.com/${encodeURIComponent(clean)}` : '';
 }

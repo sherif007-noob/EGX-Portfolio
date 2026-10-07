@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { Position } from '../../types';
 import { usePortfolioHydration } from './hydration/usePortfolioHydration';
 import { usePortfolioLedgerMutations } from './ledger/usePortfolioLedgerMutations';
 import { usePortfolioLocalState } from './state/usePortfolioLocalState';
 import { usePortfolioRepositoryActions } from './persistence/usePortfolioRepositoryActions';
+import { primeTradingViewLogoCache } from '../../services/tradingviewLogos';
 
 /**
  * Public application-facing portfolio boundary.
@@ -24,10 +25,33 @@ export function usePortfolioState() {
     state.setPositions(positions);
   }, [state.setPositions]);
 
+  const directoryByTicker = useMemo(
+    () => new Map(
+      state.tickers.map((ticker) => [
+        ticker.ticker.trim().toUpperCase(),
+        ticker,
+      ]),
+    ),
+    [state.tickers],
+  );
+
+  const positionsWithDirectoryLogos = useMemo(
+    () => state.positions.map((position) => {
+      const directory = directoryByTicker.get(position.ticker.trim().toUpperCase());
+      const logoUrl = directory?.logoUrl || position.logoUrl;
+      return logoUrl === position.logoUrl ? position : { ...position, logoUrl };
+    }),
+    [state.positions, directoryByTicker],
+  );
+
+  useEffect(() => {
+    primeTradingViewLogoCache(state.tickers);
+  }, [state.tickers]);
+
   return {
     isInitialized: state.isInitialized,
 
-    positions: state.positions,
+    positions: positionsWithDirectoryLogos,
     closedTrades: state.closedTrades,
     transactions: state.transactions,
     cashBalance: state.cashBalance,

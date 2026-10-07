@@ -224,6 +224,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                         ticker={pos.ticker}
                         companyName={pos.companyName}
                         sector={pos.sector}
+                        logoUrl={pos.logoUrl}
                         size="sm"
                       />
                       <div>
@@ -448,6 +449,7 @@ export const PositionsTable: React.FC<PositionsTableProps> = ({
                     ticker={pos.ticker}
                     companyName={pos.companyName}
                     sector={pos.sector}
+                    logoUrl={pos.logoUrl}
                     size="sm"
                   />
                   <div>

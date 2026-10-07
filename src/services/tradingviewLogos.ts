@@ -210,3 +210,40 @@ export function getTradingViewCompanyNameLogoUrl(companyName: string): string {
     .replace(/-+/g, '-');
   return slug ? `https://s3-symbol-logo.tradingview.com/${slug}--big.svg` : '';
 }
+
+
+export function primeTradingViewLogoCache(
+  tickers: Array<{ ticker: string; logoUrl?: string | null }>,
+): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const cache = getLogoCache();
+    let changed = false;
+
+    for (const item of tickers) {
+      const cleanTicker = String(item?.ticker || '')
+        .trim()
+        .toUpperCase()
+        .replace('.CA', '')
+        .replace('EGX:', '');
+      const logoUrl = String(item?.logoUrl || '').trim();
+      if (
+        !cleanTicker ||
+        !/^https?:\/\//i.test(logoUrl) ||
+        /\/country\/EG\.svg(?:$|[?#])/i.test(logoUrl)
+      ) {
+        continue;
+      }
+      if (cache[cleanTicker] !== logoUrl) {
+        cache[cleanTicker] = logoUrl;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      localStorage.setItem(LOGO_CACHE_KEY, JSON.stringify(cache));
+    }
+  } catch {
+    // Logo cache is a rendering optimization only.
+  }
+}

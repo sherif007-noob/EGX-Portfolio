@@ -463,6 +463,7 @@ export function reconcilePortfolioFromLedger(
       targetPrice: existing?.targetPrice ?? sample.targetPrice ?? quote?.targetPrice,
       stopLoss: existing?.stopLoss ?? sample.stopLoss ?? quote?.stopLoss,
       notes: existing?.notes ?? sample.notes,
+      logoUrl: quote?.logoUrl ?? existing?.logoUrl,
     });
   });
 

@@ -30,6 +30,7 @@ The repository accumulated many implementation journals while the application ev
 | [PREMIUM_VISUAL_LANGUAGE_CONTRACT.md](PREMIUM_VISUAL_LANGUAGE_CONTRACT.md) | material/semantic/hierarchy visual contract |
 | [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) | canonical financial mutation ordering, persistence and failure semantics |
 | [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) | implemented corporate-action ledger semantics; currently BONUS_SHARES, with later lifecycle expansion owned by Stage 6.3 |
+| [IPO_SUBSCRIPTIONS.md](IPO_SUBSCRIPTIONS.md) | IPO subscription, reservation, allocation/refund and cancellation accounting contract |
 
 When a historical phase log conflicts with one of these about current behavior, the canonical document wins.
 
@@ -60,6 +61,7 @@ Use this matrix to find the current authority for each live subsystem. A feature
 | Test gates and rendered/browser regression | [TESTING.md](TESTING.md) |
 | Ledger mutation / persist-before-apply | [FINANCIAL_MUTATION_CONTRACT.md](FINANCIAL_MUTATION_CONTRACT.md) |
 | Corporate actions / bonus shares | [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md) |
+| IPO subscription lifecycle | [IPO_SUBSCRIPTIONS.md](IPO_SUBSCRIPTIONS.md) |
 | Daily + intraday market data, Today session-date policy, benchmark ingestion | [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md) and [ANALYTICS_MARKET_DATA_EVOLUTION.md](ANALYTICS_MARKET_DATA_EVOLUTION.md) |
 | Ticker / ISIN / alias identity | [TICKER_REGISTRY.md](TICKER_REGISTRY.md) |
 | NAV, TWR, MWR, drawdown, realized/unrealized analytics, EGX benchmark comparison | [PERFORMANCE_ANALYTICS.md](PERFORMANCE_ANALYTICS.md) |

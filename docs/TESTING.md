@@ -650,3 +650,13 @@ The Quality job uses Node 22 and currently installs dependencies with npm.
 - Visible commissions are summed from the same records being summarized.
 
 The Monthly Audit component also uses `calculatePositionUnrealizedPnl` for current open holdings so entry fees are included consistently with the rest of the portfolio.
+
+
+### IPO subscriptions
+
+`src/services/ipoSubscriptionAccounting.test.ts` covers:
+
+- submitted cash reservation with NAV-neutral pending asset;
+- allocation into shares with refund release;
+- cancellation with full reservation release;
+- canonical ledger ownership is also asserted by `Stage433CanonicalLedgerOwnership.test.ts`.

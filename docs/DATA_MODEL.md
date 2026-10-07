@@ -53,7 +53,7 @@ The authoritative accounting ledger.
 
 Important fields include:
 
-- BUY/SELL/CORPORATE_ACTION type;
+- BUY/SELL/CORPORATE_ACTION/IPO_SUBSCRIPTION type;
 - ticker;
 - shares;
 - execution price;
@@ -68,7 +68,8 @@ Important fields include:
 - realized P&L;
 - holding period;
 - position reference;
-- corporate-action subtype, ratio, entitlement-base shares and reference metadata when applicable.
+- corporate-action subtype, ratio, entitlement-base shares and reference metadata when applicable;
+- IPO lifecycle metadata in `ipo_subscription` when applicable.
 
 Cash events also live in the ledger by using ticker `CASH`.
 
@@ -84,6 +85,8 @@ Persisted corporate-action metadata:
 - `corporate_action_reference`.
 
 BONUS_SHARES has zero cash impact and zero added cost. It increases quantity while preserving total cost basis. See [CORPORATE_ACTIONS_LEDGER.md](CORPORATE_ACTIONS_LEDGER.md).
+
+IPO subscriptions also live in the authoritative transaction ledger under `IPO_SUBSCRIPTION`. The `ipo_subscription` JSONB object preserves lifecycle status, original request terms, subscription date, allocation/cancellation date, allocated shares/cost, refund, listing date and reference. See [IPO_SUBSCRIPTIONS.md](IPO_SUBSCRIPTIONS.md).
 
 Canonical `cash_flow_type` values are:
 
@@ -262,7 +265,7 @@ The mutation service derives them from the candidate ledger before persistence.
 
 A failed authoritative write must leave the previous local financial state intact.
 
-BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation, portfolio restore/import, and BONUS_SHARES corporate actions follow this ordering. Derived Position / Closed Cycle records do not expose independent accounting deletion.
+BUY/SELL, transaction correction/deletion, cash events, OCR import, reconciliation, portfolio restore/import, BONUS_SHARES corporate actions, and IPO subscription lifecycle mutations follow this ordering. Derived Position / Closed Cycle records do not expose independent accounting deletion.
 
 ### Derived Position / Closed Cycle ownership
 

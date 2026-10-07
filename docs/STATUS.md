@@ -51,7 +51,7 @@ transaction ledger
   → cash
 ```
 
-All financial mutations use the shared persist-before-apply executor. BUY/SELL, transaction edits/deletes, cash, OCR, restore/import, reconciliation, and BONUS_SHARES corporate actions must persist the canonical snapshot before local success is applied.
+All financial mutations use the shared persist-before-apply executor. BUY/SELL, transaction edits/deletes, cash, OCR, restore/import, reconciliation, BONUS_SHARES corporate actions, and IPO subscription lifecycle changes must persist the canonical snapshot before local success is applied.
 
 See:
 
@@ -170,6 +170,22 @@ Current benchmark contract:
 - missing index observations remain missing rather than being fabricated.
 
 This was intentionally implemented before Stage 6 was complete. It does **not** close or waive Stage 6.
+
+## IPO subscriptions
+
+A first-class IPO lifecycle is implemented on `main`.
+
+Current workflow:
+
+- `SUBMITTED` — requested capital leaves available cash and is carried as an equal pending IPO asset, so NAV is unchanged;
+- `ALLOCATED` — actual allocated shares enter weighted-average position accounting at the offer price, allocation fees are included, and the unused amount is released back to cash;
+- `CANCELLED` — the reservation is fully released and no shares are created.
+
+The header exposes an **IPO** creation action. The same modal can record a new request, settle a pending allocation, or cancel a pending request. The portfolio summary shows reserved IPO capital separately from available cash.
+
+Supabase persistence stores the lifecycle object in `transactions.ipo_subscription` and the production migration is applied. IPO records are currently excluded from Google Sheets mirroring because the existing sheet schema cannot preserve the structured lifecycle metadata without loss.
+
+See [IPO_SUBSCRIPTIONS.md](IPO_SUBSCRIPTIONS.md).
 
 ## Corporate actions
 

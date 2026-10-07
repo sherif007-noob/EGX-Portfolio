@@ -1130,3 +1130,20 @@ When a workflow is converted to the executor:
 Do not keep a second optimistic path “temporarily” once a workflow has been migrated.
 
 That would recreate the mixed mutation model Stage 2 exists to remove.
+
+
+## IPO subscription lifecycle
+
+IPO reservations are canonical ledger mutations, not synthetic BUY orders.
+
+Current mutation kinds:
+
+- `IPO_SUBSCRIPTION_SUBMIT`;
+- `IPO_SUBSCRIPTION_ALLOCATE`;
+- `IPO_SUBSCRIPTION_CANCEL`.
+
+Submission persists the requested amount as unavailable cash and an equal pending IPO asset. Allocation replaces the reservation with the actual allocated cost, creates the allocated share lot at the offer price, and releases the unallocated/refunded amount to cash. Cancellation releases the full reservation and creates no shares.
+
+All three paths use the same prepare → reconcile → validate → persist → apply executor. The generic transaction editor must not mutate IPO lifecycle records.
+
+The current Google Sheets Transaction Logger schema cannot round-trip the structured IPO metadata safely. IPO lifecycle rows therefore remain Supabase-canonical and are intentionally excluded from the Sheets mirror until the sheet contract is extended.

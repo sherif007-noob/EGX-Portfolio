@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { PremiumModalMotion } from './PremiumMotion';
 import { NumberStepperInput } from './NumberStepperInput';
@@ -8,7 +8,7 @@ interface QuickCashModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentCash: number;
-  onUpdateCash: (newAmount: number) => Promise<boolean>;
+  onUpdateCash: (newAmount: number, auditReason?: string) => Promise<boolean>;
 }
 
 export const QuickCashModal: React.FC<QuickCashModalProps> = ({
@@ -23,6 +23,13 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
     runVisualTransition('modal-close', onClose);
   };
   const [amount, setAmount] = useState<number>(currentCash);
+  const [auditReason, setAuditReason] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setAmount(currentCash);
+    setAuditReason('');
+  }, [currentCash, isOpen]);
 
   const handleAdjust = (delta: number) => {
     setAmount((prev) => Math.max(0, prev + delta));
@@ -33,7 +40,7 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const saved = await onUpdateCash(amount);
+      const saved = await onUpdateCash(amount, auditReason.trim() || undefined);
       if (saved) runVisualTransition('modal-close', onClose);
     } finally {
       setIsSaving(false);
@@ -102,6 +109,22 @@ export const QuickCashModal: React.FC<QuickCashModalProps> = ({
             >
               -50k
             </button>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block font-semibold text-slate-300">
+              Adjustment Reason (Optional)
+            </label>
+            <textarea
+              rows={2}
+              value={auditReason}
+              onChange={(event) => setAuditReason(event.target.value)}
+              className="premium-field premium-textarea-surface w-full resize-none rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-violet-500"
+              placeholder="e.g. Match Telda available cash after reconciliation"
+            />
+            <p className="premium-type-helper">
+              Stored only in the immutable audit trail.
+            </p>
           </div>
 
           <button

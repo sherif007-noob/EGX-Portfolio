@@ -109,11 +109,13 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const executePreparedMutation = useCallback(async <T,>(
     kind: string,
     prepare: (current: Readonly<CanonicalLedgerSnapshot>) => LedgerMutationPreparation<T>,
+    auditReason?: string,
   ) => executorRef.current!.execute<T>({
     kind,
     current: currentLedgerSnapshot(),
     prepare,
     apply: (snapshot) => applyLedgerSnapshot(snapshot),
+    auditReason,
   }), [applyLedgerSnapshot, currentLedgerSnapshot]);
 
   const reconcileLedger = useCallback(() => executePreparedMutation(
@@ -177,14 +179,16 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     (current) => prepareIpoCancellationMutation(current, transactionId),
   ), [executePreparedMutation]);
 
-  const editTransaction = useCallback((updated: TradeTransaction) => executePreparedMutation(
+  const editTransaction = useCallback((updated: TradeTransaction, auditReason?: string) => executePreparedMutation(
     'EDIT_TRANSACTION',
     (current) => prepareTransactionEditMutation(current, updated),
+    auditReason,
   ), [executePreparedMutation]);
 
-  const deleteTransaction = useCallback((transactionId: string) => executePreparedMutation(
+  const deleteTransaction = useCallback((transactionId: string, auditReason?: string) => executePreparedMutation(
     'DELETE_TRANSACTION',
     (current) => prepareTransactionDeleteMutation(current, transactionId),
+    auditReason,
   ), [executePreparedMutation]);
 
   const commitCashEvent = useCallback((

@@ -204,6 +204,23 @@ export function reconcilePortfolioFromLedger(
     const sector = tx.sector || tickerQuote?.sector || 'Other';
     const companyName = tx.companyName || tickerQuote?.nameEn || tx.ticker;
 
+    if (tx.type === 'OPENING_POSITION') {
+      if (!openLotsByTicker[tickerKey]) openLotsByTicker[tickerKey] = [];
+      openLotsByTicker[tickerKey].push({
+        id: tx.id,
+        shares: Number(tx.shares),
+        price: Number(tx.price),
+        date: tx.date,
+        fees: Number(tx.fees || 0),
+        companyName,
+        sector,
+        targetPrice: tx.targetPrice,
+        stopLoss: tx.stopLoss,
+        notes: tx.notes,
+      });
+      continue;
+    }
+
     if (tx.type === 'IPO_SUBSCRIPTION') {
       if (!isIpoSubscriptionTransaction(tx) || !tx.ipoSubscription) {
         discrepancies.push(`IPO subscription ${tx.id} for ${tx.ticker} is missing lifecycle metadata.`);

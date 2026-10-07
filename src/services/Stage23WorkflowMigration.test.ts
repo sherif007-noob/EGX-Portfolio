@@ -50,7 +50,7 @@ describe('Stage 2.3 canonical workflow migration contract', () => {
 
     expect(ocr).toContain('const saved = onAddBatchTransactions');
     expect(ocr).toContain('Saving Ledger…');
-    expect(quick).toContain('const saved = await onUpdateCash(amount)');
+    expect(quick).toContain('const saved = await onUpdateCash(amount, auditReason.trim() || undefined)');
     expect(backup).toContain('const restored = await onRestoreBackup');
     expect(sheets).toContain('const imported = await onImportData(');
   });

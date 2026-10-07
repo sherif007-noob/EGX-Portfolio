@@ -35,9 +35,9 @@ describe('Stage 2.3 canonical workflow migration contract', () => {
     const journal = readRelative('../components/TradingJournal.tsx');
     const confirmDelete = readRelative('../components/ConfirmDeleteModal.tsx');
 
-    expect(journal).toContain('const saved = await onEditTransaction(updatedTx)');
+    expect(journal).toContain('const saved = await onEditTransaction(updatedTx, editAuditReason.trim() || undefined)');
     expect(journal).toContain('disabled={isSavingEdit}');
-    expect(confirmDelete).toContain('const result = await onConfirm()');
+    expect(confirmDelete).toContain('const result = await onConfirm(reason.trim() || undefined)');
     expect(confirmDelete).toContain("result !== false");
     expect(confirmDelete).toContain("isSubmitting ? 'Deleting…'");
   });

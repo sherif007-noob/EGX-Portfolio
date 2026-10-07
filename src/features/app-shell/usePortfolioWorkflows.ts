@@ -22,6 +22,9 @@ interface PortfolioActions {
   addTrade: (trade: any) => Promise<any>;
   sellPosition: (sell: any) => Promise<any>;
   addBonusShares: (action: any) => Promise<any>;
+  addIpoSubscription: (action: any) => Promise<any>;
+  allocateIpoSubscription: (action: any) => Promise<any>;
+  cancelIpoSubscription: (id: string) => Promise<any>;
   editPosition: (position: Position) => Promise<boolean>;
   editTransaction: (transaction: TradeTransaction) => Promise<any>;
   deleteTransaction: (id: string) => Promise<any>;
@@ -74,6 +77,25 @@ export interface BonusSharesInput {
   effectiveDate: string;
   reference?: string;
   notes?: string;
+}
+
+export interface IpoSubscriptionFormInput {
+  ticker: string;
+  companyName: string;
+  sector: Sector;
+  requestedAmount: number;
+  offerPrice: number;
+  subscriptionDate: string;
+  reference?: string;
+  listingDate?: string;
+  notes?: string;
+}
+
+export interface IpoAllocationFormInput {
+  transactionId: string;
+  allocatedShares: number;
+  allocationDate: string;
+  fees?: number;
 }
 
 export interface ParsedScreenshotTrade {
@@ -312,6 +334,62 @@ export function usePortfolioWorkflows({
     );
     return true;
   }, [appendPersistedTransactionToSheet, portfolio, showToast]);
+
+  const handleAddIpoSubscription = useCallback(async (
+    input: IpoSubscriptionFormInput,
+  ): Promise<boolean> => {
+    const result = await portfolio.addIpoSubscription(input);
+    if ('error' in result) {
+      showToast(`IPO subscription was not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
+      return false;
+    }
+    const transaction = result.value as TradeTransaction | undefined;
+    if (!transaction) return true;
+    appendPersistedTransactionToSheet(transaction);
+    showToast(
+      `Reserved ${input.requestedAmount.toLocaleString('en-EG')} EGP for ${input.ticker.toUpperCase()} IPO. NAV unchanged; cash marked unavailable.`,
+      'success',
+      5500,
+    );
+    return true;
+  }, [appendPersistedTransactionToSheet, portfolio, showToast]);
+
+  const handleAllocateIpoSubscription = useCallback(async (
+    input: IpoAllocationFormInput,
+  ): Promise<boolean> => {
+    const result = await portfolio.allocateIpoSubscription(input);
+    if ('error' in result) {
+      showToast(`IPO allocation was not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
+      return false;
+    }
+    mirrorPersistedLedgerToSheet(result.snapshot.transactions);
+    const transaction = result.value as TradeTransaction | undefined;
+    const refund = Number(transaction?.ipoSubscription?.refundAmount ?? 0);
+    showToast(
+      `IPO allocation recorded: ${input.allocatedShares.toLocaleString('en-EG')} shares${refund > 0 ? ` · ${refund.toLocaleString('en-EG')} EGP released back to cash` : ''}.`,
+      'success',
+      6000,
+    );
+    return true;
+  }, [mirrorPersistedLedgerToSheet, portfolio, showToast]);
+
+  const handleCancelIpoSubscription = useCallback(async (
+    transactionId: string,
+  ): Promise<boolean> => {
+    const result = await portfolio.cancelIpoSubscription(transactionId);
+    if ('error' in result) {
+      showToast(`IPO cancellation was not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
+      return false;
+    }
+    mirrorPersistedLedgerToSheet(result.snapshot.transactions);
+    const transaction = result.value as TradeTransaction | undefined;
+    showToast(
+      `Cancelled ${transaction?.ticker || 'IPO'} subscription and released the reserved cash.`,
+      'success',
+      5000,
+    );
+    return true;
+  }, [mirrorPersistedLedgerToSheet, portfolio, showToast]);
 
   const handleSavePositionEdit = useCallback(async (updated: {
     id: string;
@@ -574,6 +652,9 @@ export function usePortfolioWorkflows({
     handleAddPosition,
     handleConfirmSell,
     handleAddBonusShares,
+    handleAddIpoSubscription,
+    handleAllocateIpoSubscription,
+    handleCancelIpoSubscription,
     handleSavePositionEdit,
     handleDeleteTransaction,
     handleEditTransaction,

@@ -21,7 +21,7 @@ interface BonusSharesModalProps {
   isOpen: boolean;
   onClose: () => void;
   positions: Position[];
-  onSubmit: (value: BonusSharesFormValue) => Promise<boolean>;
+  onSubmit: (value: BonusSharesFormValue) => Promise<{ ok: boolean; error?: string }>;
 }
 
 function formatShares(value: number): string {
@@ -138,7 +138,7 @@ export const BonusSharesModal: React.FC<BonusSharesModalProps> = ({
     setIsSaving(true);
     setFeedback(null);
     try {
-      const saved = await onSubmit({
+      const result = await onSubmit({
         ticker: selectedPosition.ticker,
         bonusShares: creditedSharesNumber,
         officialRatio: ratioNumber,
@@ -146,7 +146,13 @@ export const BonusSharesModal: React.FC<BonusSharesModalProps> = ({
         reference: reference.trim() || undefined,
         notes: notes.trim() || undefined,
       });
-      if (saved) runVisualTransition('modal-close', onClose);
+      if (result.ok) {
+        runVisualTransition('modal-close', onClose);
+      } else {
+        setFeedback(result.error || 'Bonus shares were not saved. Nothing was changed.');
+      }
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'Bonus shares could not be recorded.');
     } finally {
       setIsSaving(false);
     }

@@ -136,6 +136,7 @@ export interface PortfolioMetrics {
   totalFeesPaid?: number;
   openFeesPaid?: number;
   closedFeesPaid?: number;
+  pendingIpoSubscriptionsEgp?: number;
 }
 
 export interface PerformanceStats {
@@ -248,9 +249,24 @@ export type CorporateActionType =
   | 'TENDER'
   | 'MERGER_RESTRUCTURE';
 
+export type IpoSubscriptionStatus = 'SUBMITTED' | 'ALLOCATED' | 'CANCELLED';
+
+export interface IpoSubscriptionMetadata {
+  status: IpoSubscriptionStatus;
+  requestedAmount: number;
+  requestedShares: number;
+  offerPrice: number;
+  reference?: string;
+  listingDate?: string;
+  allocationDate?: string;
+  allocatedShares?: number;
+  allocatedAmount?: number;
+  refundAmount?: number;
+}
+
 export interface TradeTransaction {
   id: string;
-  type: 'BUY' | 'SELL' | 'CORPORATE_ACTION';
+  type: 'BUY' | 'SELL' | 'CORPORATE_ACTION' | 'IPO_SUBSCRIPTION';
   ticker: string;
   companyName: string;
   sector: Sector;
@@ -269,6 +285,7 @@ export interface TradeTransaction {
   corporateActionSourceShares?: number;
   /** EGX/company disclosure reference, broker note, or other traceable source. */
   corporateActionReference?: string;
+  ipoSubscription?: IpoSubscriptionMetadata;
   isDCA?: boolean;
   notes?: string;
   targetPrice?: number;

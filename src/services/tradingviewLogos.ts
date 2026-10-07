@@ -103,8 +103,14 @@ function saveLogoToCache(ticker: string, url: string) {
  * 4. Fallback to TradingView Egypt country logo or generic logo
  */
 export function getTradingViewLogoUrl(ticker: string, customLogoUrl?: string): string {
-  if (customLogoUrl && (customLogoUrl.startsWith('http://') || customLogoUrl.startsWith('https://'))) {
-    return customLogoUrl;
+  const custom = String(customLogoUrl || '').trim();
+  if (custom) {
+    if (custom.startsWith('http://') || custom.startsWith('https://')) return custom;
+    // TradingView scanner returns `logoid` as a slug, not a URL.
+    // Treat it as authoritative and convert it to the public symbol-logo URL.
+    if (!custom.includes('/') && !custom.includes(' ')) {
+      return `https://s3-symbol-logo.tradingview.com/${custom.replace(/\.svg$/i, '')}.svg`;
+    }
   }
 
   const clean = ticker.trim().toUpperCase().replace('.CA', '').replace('EGX:', '');

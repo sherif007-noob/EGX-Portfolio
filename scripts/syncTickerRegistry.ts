@@ -8,6 +8,7 @@ import {
 } from '../src/data/egxTickers';
 import { getTradingViewLogoUrl } from '../src/services/tradingviewLogos';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
+import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
 
 type SupabaseClient = ReturnType<typeof createSupabase>;
 
@@ -122,6 +123,57 @@ async function fetchScannerUniverse(): Promise<ScannerSecurity[]> {
   return rows;
 }
 
+
+async function fetchTradingViewSearchLogoId(ticker: string): Promise<string> {
+  const clean = normalize(ticker);
+  if (!clean) return '';
+
+  try {
+    const searchUrl =
+      `https://symbol-search.tradingview.com/symbol_search/v3/?text=${encodeURIComponent(clean)}&hl=1&exchange=EGX&lang=en`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Accept: 'application/json',
+      },
+    });
+    if (!response.ok) return '';
+
+    const items = parseTradingViewSymbolSearchResponse(await response.json());
+    const exact = items.find((item) => {
+      const symbol = normalize(item.symbol || item.ticker);
+      const exchange = normalize(item.exchange);
+      return symbol === clean && (!exchange || exchange === 'EGX');
+    });
+    const candidate = exact ?? items.find((item) => normalize(item.symbol || item.ticker) === clean);
+    return String(candidate?.logoid || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+async function enrichMissingScannerLogos(rows: ScannerSecurity[]): Promise<ScannerSecurity[]> {
+  const missing = rows.filter((row) => !row.logoId);
+  if (!missing.length) return rows;
+
+  const resolved = new Map<string, string>();
+  const concurrency = 6;
+  for (let offset = 0; offset < missing.length; offset += concurrency) {
+    const batch = missing.slice(offset, offset + concurrency);
+    const results = await Promise.all(
+      batch.map(async (row) => [row.ticker, await fetchTradingViewSearchLogoId(row.ticker)] as const),
+    );
+    for (const [ticker, logoId] of results) {
+      if (logoId) resolved.set(ticker, logoId);
+    }
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    logoId: row.logoId || resolved.get(row.ticker) || '',
+  }));
+}
+
 async function loadRegistry(sb: SupabaseClient): Promise<RegistryRow[]> {
   const rows: RegistryRow[] = [];
   const pageSize = 1000;
@@ -230,7 +282,7 @@ async function main() {
       canonicalScanner.set(ticker, candidate);
     }
   }
-  const scannerRows = [...canonicalScanner.values()];
+  const scannerRows = await enrichMissingScannerLogos([...canonicalScanner.values()]);
 
   const scannerTickers = new Set(scannerRows.map((row) => row.ticker));
   const scannerIsinCounts = new Map<string, number>();
@@ -458,8 +510,9 @@ async function main() {
     .select('ticker', { head: true, count: 'exact' })
     .eq('status', 'active');
 
+  const scannerLogoCount = scannerRows.filter((row) => Boolean(row.logoId)).length;
   console.log(
-    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
+    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, logos=${scannerLogoCount}/${scannerRows.length}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
   );
 }
 

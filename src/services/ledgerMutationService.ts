@@ -6,6 +6,7 @@ import type {
 } from '../types';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
+import { validateIpoSubscriptionMetadata } from './ipoSubscriptions';
 import { forceFullSyncToFirestore } from './firestoreStorage';
 
 export interface CanonicalLedgerSnapshot {
@@ -141,7 +142,12 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
     throw new Error(`${label} requires a valid date.`);
   }
   assertFinite(transaction.shares, `${label} shares`);
-  if (transaction.shares <= EPSILON) throw new Error(`${label} shares must be greater than zero.`);
+  if (
+    transaction.type !== 'IPO_SUBSCRIPTION'
+    && transaction.shares <= EPSILON
+  ) {
+    throw new Error(`${label} shares must be greater than zero.`);
+  }
   assertFiniteNonNegative(transaction.price, `${label} price`);
   assertFiniteNonNegative(transaction.fees ?? 0, `${label} fees`);
   assertFiniteNonNegative(transaction.totalAmount, `${label} total amount`);
@@ -166,6 +172,35 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
     }
     if (transaction.netCashImpact != null && Math.abs(Number(transaction.netCashImpact)) > EPSILON) {
       throw new Error(`${label} bonus shares must have zero net cash impact.`);
+    }
+  }
+
+  if (transaction.type === 'IPO_SUBSCRIPTION') {
+    if (!transaction.ipoSubscription) {
+      throw new Error(`${label} requires IPO subscription metadata.`);
+    }
+    validateIpoSubscriptionMetadata(transaction.ipoSubscription);
+    if (transaction.cashFlowType || transaction.cashFlowAmount != null) {
+      throw new Error(`${label} IPO subscription cannot carry cash-flow semantics.`);
+    }
+
+    const ipo = transaction.ipoSubscription;
+    if (ipo.status === 'SUBMITTED') {
+      if (Math.abs(transaction.totalAmount - ipo.requestedAmount) > 0.01) {
+        throw new Error(`${label} submitted amount must equal requested IPO amount.`);
+      }
+      if (transaction.shares <= EPSILON) {
+        throw new Error(`${label} submitted IPO request requires positive requested shares.`);
+      }
+    } else if (ipo.status === 'ALLOCATED') {
+      if (Math.abs(transaction.shares - Number(ipo.allocatedShares)) > 0.000001) {
+        throw new Error(`${label} allocated shares do not match IPO metadata.`);
+      }
+      if (Math.abs(transaction.totalAmount - Number(ipo.allocatedAmount)) > 0.01) {
+        throw new Error(`${label} allocated amount does not match IPO metadata.`);
+      }
+    } else if (transaction.shares > EPSILON || transaction.totalAmount > EPSILON) {
+      throw new Error(`${label} cancelled IPO must have zero shares and zero cash amount.`);
     }
   }
 

@@ -32,6 +32,9 @@ export function normalizeIpoSubscriptionMetadata(value: unknown): IpoSubscriptio
     requestedShares,
     offerPrice,
     reference: typeof row.reference === 'string' && row.reference.trim() ? row.reference.trim() : undefined,
+    subscriptionDate: typeof row.subscriptionDate === 'string' && row.subscriptionDate.trim()
+      ? row.subscriptionDate
+      : '',
     listingDate: typeof row.listingDate === 'string' && row.listingDate.trim() ? row.listingDate : undefined,
     allocationDate: typeof row.allocationDate === 'string' && row.allocationDate.trim() ? row.allocationDate : undefined,
     allocatedShares: Number.isFinite(allocatedShares) ? allocatedShares : undefined,
@@ -61,6 +64,9 @@ export function pendingIpoSubscriptionValue(transactions: TradeTransaction[]): n
 export function validateIpoSubscriptionMetadata(metadata: IpoSubscriptionMetadata): void {
   if (!normalizeIpoSubscriptionStatus(metadata.status)) {
     throw new Error('IPO subscription status is invalid.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(metadata.subscriptionDate || '') || !Number.isFinite(Date.parse(metadata.subscriptionDate))) {
+    throw new Error('IPO subscription date is invalid.');
   }
   if (!Number.isFinite(metadata.requestedAmount) || metadata.requestedAmount <= EPSILON) {
     throw new Error('IPO requested amount must be greater than zero.');

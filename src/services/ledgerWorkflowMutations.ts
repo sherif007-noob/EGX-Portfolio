@@ -407,6 +407,7 @@ export function prepareIpoSubscriptionMutation(
     requestedShares,
     offerPrice,
     reference: input.reference?.trim() || undefined,
+    subscriptionDate,
     listingDate: input.listingDate?.slice(0, 10) || undefined,
   };
   validateIpoSubscriptionMetadata(metadata);

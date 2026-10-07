@@ -257,6 +257,7 @@ export interface IpoSubscriptionMetadata {
   requestedShares: number;
   offerPrice: number;
   reference?: string;
+  subscriptionDate: string;
   listingDate?: string;
   allocationDate?: string;
   allocatedShares?: number;

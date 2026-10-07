@@ -136,6 +136,7 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
     && transaction.type !== 'SELL'
     && transaction.type !== 'CORPORATE_ACTION'
     && transaction.type !== 'IPO_SUBSCRIPTION'
+    && transaction.type !== 'OPENING_POSITION'
   ) {
     throw new Error(`${label} has an unsupported transaction type.`);
   }
@@ -152,6 +153,21 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
   assertFiniteNonNegative(transaction.price, `${label} price`);
   assertFiniteNonNegative(transaction.fees ?? 0, `${label} fees`);
   assertFiniteNonNegative(transaction.totalAmount, `${label} total amount`);
+
+  if (transaction.type === 'OPENING_POSITION') {
+    if (transaction.price <= EPSILON) {
+      throw new Error(`${label} opening position requires a positive average price.`);
+    }
+    if (transaction.totalAmount !== 0) {
+      throw new Error(`${label} opening position must have zero cash amount.`);
+    }
+    if (transaction.cashFlowType || transaction.cashFlowAmount != null) {
+      throw new Error(`${label} opening position cannot carry cash-flow semantics.`);
+    }
+    if (transaction.netCashImpact != null && Math.abs(Number(transaction.netCashImpact)) > EPSILON) {
+      throw new Error(`${label} opening position must have zero net cash impact.`);
+    }
+  }
 
   if (transaction.type === 'CORPORATE_ACTION') {
     if (transaction.corporateActionType !== 'BONUS_SHARES') {

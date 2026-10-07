@@ -76,6 +76,20 @@ function applyTrade(
     );
   }
 
+  if (tx.type === 'OPENING_POSITION') {
+    const shares = Number(tx.shares);
+    const price = Number(tx.price);
+    const fees = Number.isFinite(tx.fees) ? Math.max(0, Number(tx.fees)) : 0;
+    if (!Number.isFinite(shares) || shares <= 0 || !Number.isFinite(price) || price <= 0) return 0;
+    const state = states.get(ticker) ?? { shares: 0, grossCost: 0, buyFees: 0 };
+    state.shares += shares;
+    state.grossCost += shares * price;
+    state.buyFees += fees;
+    state.lastExecutionPrice = price;
+    states.set(ticker, state);
+    return 0;
+  }
+
   if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
     if (tx.ipoSubscription.status !== 'ALLOCATED') return 0;
     const shares = Number(tx.ipoSubscription.allocatedShares ?? tx.shares);

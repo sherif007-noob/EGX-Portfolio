@@ -328,9 +328,19 @@ async function resolveOfficialDomainLogoUpdates(
         };
       }
 
-      // Last resort for an already identity-verified company domain. This is
-      // intentionally below direct/provider/site artwork because favicons can
-      // be lower resolution, but they are still company-owned branding.
+      // Keyless favicon CDN fallback for an already identity-verified company
+      // domain. favicon.im can be configured to return 404 when no favicon
+      // exists, which lets us avoid persisting a generic placeholder.
+      const faviconImUrl = buildFaviconImLogoUrl(domain);
+      if (faviconImUrl && await isUsableImageUrl(faviconImUrl)) {
+        return {
+          ticker: normalize(row.ticker),
+          logo_url: faviconImUrl,
+          updated_at: updatedAt,
+        };
+      }
+
+      // Final proxy fallback for the verified company domain.
       const faviconUrl = buildGoogleFaviconUrl(domain, 128);
       if (!faviconUrl || !await isUsableImageUrl(faviconUrl)) return null;
       return {

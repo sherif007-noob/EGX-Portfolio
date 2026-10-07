@@ -12,6 +12,9 @@ import {
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
   prepareCashEventMutation,
+  prepareIpoAllocationMutation,
+  prepareIpoCancellationMutation,
+  prepareIpoSubscriptionMutation,
   prepareLedgerReconciliationMutation,
   prepareLedgerSnapshotRestoreMutation,
   preparePortfolioRestoreMutation,
@@ -20,6 +23,8 @@ import {
   prepareTransactionEditMutation,
   type BonusSharesCorporateActionInput,
   type CanonicalLedgerSnapshot,
+  type IpoAllocationInput,
+  type IpoSubscriptionInput,
   type LedgerMutationPreparation,
   type PortfolioRestoreInput,
 } from '../../../domain/accounting';
@@ -148,6 +153,30 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     }),
   ), [executePreparedMutation]);
 
+  const addIpoSubscription = useCallback((
+    input: Omit<IpoSubscriptionInput, 'transactionId'>,
+  ) => executePreparedMutation<TradeTransaction>(
+    'IPO_SUBSCRIPTION_SUBMIT',
+    (current) => prepareIpoSubscriptionMutation(current, {
+      transactionId: `tx-${crypto.randomUUID()}`,
+      ...input,
+    }),
+  ), [executePreparedMutation]);
+
+  const allocateIpoSubscription = useCallback((
+    input: IpoAllocationInput,
+  ) => executePreparedMutation<TradeTransaction>(
+    'IPO_SUBSCRIPTION_ALLOCATE',
+    (current) => prepareIpoAllocationMutation(current, input),
+  ), [executePreparedMutation]);
+
+  const cancelIpoSubscription = useCallback((
+    transactionId: string,
+  ) => executePreparedMutation<TradeTransaction>(
+    'IPO_SUBSCRIPTION_CANCEL',
+    (current) => prepareIpoCancellationMutation(current, transactionId),
+  ), [executePreparedMutation]);
+
   const editTransaction = useCallback((updated: TradeTransaction) => executePreparedMutation(
     'EDIT_TRANSACTION',
     (current) => prepareTransactionEditMutation(current, updated),
@@ -264,6 +293,9 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     addTrade,
     sellPosition,
     addBonusShares,
+    addIpoSubscription,
+    allocateIpoSubscription,
+    cancelIpoSubscription,
     editTransaction,
     deleteTransaction,
     addCashTransaction,

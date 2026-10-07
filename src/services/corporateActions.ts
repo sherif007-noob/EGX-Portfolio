@@ -28,7 +28,7 @@ export function transactionShareDelta(transaction: TradeTransaction): number {
   const shares = Number(transaction.shares);
   if (!Number.isFinite(shares) || shares <= 0) return 0;
   if (transaction.type === 'SELL') return -shares;
-  if (transaction.type === 'BUY') return shares;
+  if (transaction.type === 'BUY' || transaction.type === 'OPENING_POSITION') return shares;
   if (isBonusSharesTransaction(transaction)) return shares;
   return 0;
 }

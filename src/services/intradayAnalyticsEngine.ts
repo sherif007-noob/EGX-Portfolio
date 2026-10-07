@@ -49,7 +49,18 @@ function hasExplicitCapitalFlow(transactions: TradeTransaction[]): boolean {
 function transactionCashImpact(tx: TradeTransaction): number {
   const ticker = normalizeIntradayTicker(tx.ticker);
 
+  if (tx.type === 'OPENING_POSITION') return 0;
   if (isBonusSharesTransaction(tx)) return 0;
+  if (tx.type === 'OPENING_POSITION') {
+    const shares = Number(tx.shares);
+    const price = Number(tx.price);
+    if (Number.isFinite(shares) && shares > EPSILON) {
+      state.shares.set(ticker, (state.shares.get(ticker) || 0) + shares);
+      if (Number.isFinite(price) && price > 0) state.executionPrices.set(ticker, price);
+    }
+    return;
+  }
+
   if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
     if (tx.ipoSubscription.status === 'SUBMITTED') return -tx.ipoSubscription.requestedAmount;
     if (tx.ipoSubscription.status === 'ALLOCATED') return -Number(tx.totalAmount || 0);

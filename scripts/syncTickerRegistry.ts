@@ -249,6 +249,44 @@ async function enrichOfficialDomainLogos(
   }));
 }
 
+
+async function resolveOfficialDomainLogoUpdates(
+  rows: RegistryRow[],
+  domainsByIsin: Map<string, string>,
+): Promise<Array<{ ticker: string; logo_url: string; updated_at: string }>> {
+  const candidates = rows.filter((row) => {
+    if (row.status !== 'active') return false;
+    const existingLogo = String(row.logo_url || '').trim();
+    const needsLogo = !existingLogo || existingLogo.includes('/country/EG.svg');
+    return needsLogo && Boolean(row.isin) && domainsByIsin.has(normalize(row.isin));
+  });
+  if (!candidates.length) return [];
+
+  const resolved: Array<{ ticker: string; logo_url: string; updated_at: string }> = [];
+  const concurrency = 6;
+  const updatedAt = new Date().toISOString();
+
+  for (let offset = 0; offset < candidates.length; offset += concurrency) {
+    const batch = candidates.slice(offset, offset + concurrency);
+    const results = await Promise.all(batch.map(async (row) => {
+      const isin = normalize(row.isin);
+      const domain = domainsByIsin.get(isin) || '';
+      const logoUrl = buildEulerpoolDomainLogoUrl(domain);
+      if (!logoUrl || !await isUsableImageUrl(logoUrl)) return null;
+      return {
+        ticker: normalize(row.ticker),
+        logo_url: logoUrl,
+        updated_at: updatedAt,
+      };
+    }));
+    for (const result of results) {
+      if (result) resolved.push(result);
+    }
+  }
+
+  return resolved;
+}
+
 async function loadRegistry(sb: SupabaseClient): Promise<RegistryRow[]> {
   const rows: RegistryRow[] = [];
   const pageSize = 1000;
@@ -529,6 +567,21 @@ async function main() {
 
   const aliasCount = await upsertAliases(sb, aliasRows, nowIso);
 
+  const registryBeforeLogoFallback = await loadRegistry(sb);
+  const officialLogoUpdates = await resolveOfficialDomainLogoUpdates(
+    registryBeforeLogoFallback,
+    officialDomainsByIsin,
+  );
+  if (officialLogoUpdates.length) {
+    const { error: officialLogoError } = await sb.from('ticker_registry').upsert(officialLogoUpdates, {
+      onConflict: 'ticker',
+      ignoreDuplicates: false,
+    });
+    if (officialLogoError) {
+      throw new Error(`Official-domain logo fallback upsert failed: ${officialLogoError.message}`);
+    }
+  }
+
   const refreshed = await loadRegistry(sb);
   const changedTickers = new Set(upserts.map((row) => row.ticker));
   const verifyCandidates = refreshed
@@ -593,7 +646,7 @@ async function main() {
   const tradingViewLogoCount = scannerRows.filter((row) => Boolean(row.logoId)).length;
   const officialDomainLogoCount = scannerRows.filter((row) => !row.logoId && Boolean(row.fallbackLogoUrl)).length;
   console.log(
-    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, tradingViewLogos=${tradingViewLogoCount}, officialDomainLogos=${officialDomainLogoCount}, totalLogos=${tradingViewLogoCount + officialDomainLogoCount}/${scannerRows.length}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
+    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, officialDomains=${officialDomainsByIsin.size}, tradingViewLogos=${tradingViewLogoCount}, scannerOfficialDomainLogos=${officialDomainLogoCount}, registryOfficialDomainLogos=${officialLogoUpdates.length}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
   );
 }
 

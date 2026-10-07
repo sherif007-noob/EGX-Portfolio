@@ -2,15 +2,18 @@ import React, { useRef, useState } from 'react';
 import type { EGXTicker, Position, TradeTransaction } from '../types';
 import {
   parseBrokerPositionsText,
+  parseBrokerSnapshotOcrText,
   reconcileBrokerSnapshot,
   type BrokerReconciliationReport,
 } from '../services/brokerReconciliation';
 import { currentCairoDateKey } from '../services/corporateActions';
+import { recognizeTradeScreenshot } from '../services/ocrParser';
 import {
   AlertTriangle,
   CheckCircle2,
   FileUp,
   GitCompareArrows,
+  ScanLine,
   ReceiptText,
   Wallet,
 } from 'lucide-react';
@@ -41,7 +44,9 @@ export const BrokerReconciliationWorkspace: React.FC<BrokerReconciliationWorkspa
   const [holdingsText, setHoldingsText] = useState('');
   const [report, setReport] = useState<BrokerReconciliationReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isScanningSnapshot, setIsScanningSnapshot] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
 
   const runComparison = () => {
     setError(null);
@@ -80,6 +85,37 @@ export const BrokerReconciliationWorkspace: React.FC<BrokerReconciliationWorkspa
     };
     reader.onerror = () => setError('Could not read the broker holdings file.');
     reader.readAsText(file);
+  };
+
+
+  const scanSnapshotImage = async (file: File) => {
+    setIsScanningSnapshot(true);
+    setReport(null);
+    setError(null);
+
+    try {
+      const text = await recognizeTradeScreenshot(file);
+      const parsed = parseBrokerSnapshotOcrText(text, tickers);
+      if (parsed.positions.length === 0) {
+        throw new Error('No holdings could be recognized from this broker screenshot. Try a clearer portfolio/holdings view or use CSV/paste.');
+      }
+
+      setHoldingsText(
+        parsed.positions
+          .map((position) => [
+            position.ticker,
+            position.shares,
+            position.avgPrice ?? '',
+          ].join(','))
+          .join('\n'),
+      );
+      if (parsed.cashBalance != null) setBrokerCash(String(parsed.cashBalance));
+      if (parsed.brokerName) setBrokerName(parsed.brokerName);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not scan the broker snapshot.');
+    } finally {
+      setIsScanningSnapshot(false);
+    }
   };
 
   return (
@@ -142,14 +178,36 @@ export const BrokerReconciliationWorkspace: React.FC<BrokerReconciliationWorkspa
               One row per holding: <span className="font-mono">TICKER,SHARES</span>. Optional third column: average price.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="premium-action shrink-0 justify-center rounded-lg px-3 py-1.5 text-[11px] font-semibold"
-          >
-            <FileUp className="h-3.5 w-3.5" />
-            Import CSV / TXT
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => imageRef.current?.click()}
+              disabled={isScanningSnapshot}
+              className="premium-action premium-action-success shrink-0 justify-center rounded-lg px-3 py-1.5 text-[11px] font-semibold disabled:opacity-60"
+            >
+              <ScanLine className={`h-3.5 w-3.5 ${isScanningSnapshot ? 'animate-pulse' : ''}`} />
+              {isScanningSnapshot ? 'Scanning…' : 'Scan Screenshot'}
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="premium-action shrink-0 justify-center rounded-lg px-3 py-1.5 text-[11px] font-semibold"
+            >
+              <FileUp className="h-3.5 w-3.5" />
+              Import CSV / TXT
+            </button>
+          </div>
+          <input
+            ref={imageRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void scanSnapshotImage(file);
+              event.target.value = '';
+            }}
+          />
           <input
             ref={fileRef}
             type="file"

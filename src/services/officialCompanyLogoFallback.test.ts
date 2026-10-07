@@ -6,6 +6,7 @@ import {
   extractOfficialSiteLogoCandidates,
   normalizeOfficialCompanyDomain,
   applyOfficialDomainOverrides,
+  buildFaviconImLogoUrl,
 } from './officialCompanyLogoFallback';
 
 describe('official company logo fallback', () => {
@@ -53,6 +54,12 @@ describe('official company logo fallback', () => {
     ]));
     expect(merged.get('EGS751G1C012')).toBe('hedgestone.com.eg');
     expect(merged.get('EGS3E2F1C011')).toBe('acr.com.eg');
+  });
+
+  it('builds a keyless high-resolution favicon fallback with hard 404 semantics', () => {
+    expect(buildFaviconImLogoUrl('incolease.com')).toBe(
+      'https://a.favicon.im/incolease.com?larger=true&throw-error-on-404=true',
+    );
   });
 
   it('extracts explicit organization logos and ranked site icons', () => {

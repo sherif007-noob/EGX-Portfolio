@@ -202,3 +202,11 @@ export function buildGoogleFaviconUrl(domain: string, size = 128): string {
     ? `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(`https://${clean}`)}&sz=${safeSize}`
     : '';
 }
+
+
+export function buildFaviconImLogoUrl(domain: string): string {
+  const clean = normalizeOfficialCompanyDomain(domain);
+  return clean
+    ? `https://a.favicon.im/${encodeURIComponent(clean)}?larger=true&throw-error-on-404=true`
+    : '';
+}

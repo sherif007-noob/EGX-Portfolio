@@ -15,6 +15,7 @@ import {
   extractOfficialDomainsByIsin,
   extractOfficialSiteLogoCandidates,
   applyOfficialDomainOverrides,
+  buildFaviconImLogoUrl,
 } from '../src/services/officialCompanyLogoFallback';
 
 type SupabaseClient = ReturnType<typeof createSupabase>;

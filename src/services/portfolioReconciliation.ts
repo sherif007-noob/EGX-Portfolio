@@ -5,6 +5,7 @@ import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact, calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
 import { normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
+import { isIpoSubscriptionTransaction, validateIpoSubscriptionMetadata } from './ipoSubscriptions';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];

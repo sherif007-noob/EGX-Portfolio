@@ -90,7 +90,9 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 </div>
               </div>
               <span className="hidden shrink-0 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-300 sm:inline-flex">
-                Equities + Cash
+                {metrics.pendingIpoSubscriptionsEgp && metrics.pendingIpoSubscriptionsEgp > 0
+                  ? 'Equities + Cash + IPO'
+                  : 'Equities + Cash'}
               </span>
             </div>
 
@@ -253,8 +255,13 @@ const PortfolioSummaryComponent: React.FC<PortfolioSummaryProps> = ({
                 <span className="premium-type-unit">EGP</span>
               </div>
             </div>
-            <div className="premium-type-metadata mt-2">
-              {((metrics.cashBalance / (metrics.totalValue || 1)) * 100).toFixed(1)}% of portfolio
+            <div className="premium-type-metadata mt-2 space-y-0.5">
+              <div>{((metrics.cashBalance / (metrics.totalValue || 1)) * 100).toFixed(1)}% of portfolio</div>
+              {(metrics.pendingIpoSubscriptionsEgp || 0) > 0 && (
+                <div className="font-mono text-cyan-300">
+                  IPO reserved: {formatEgp(metrics.pendingIpoSubscriptionsEgp || 0)} EGP
+                </div>
+              )}
             </div>
           </div>
 

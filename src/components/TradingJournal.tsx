@@ -34,6 +34,7 @@ import {
   Zap,
   RefreshCw,
   Gift,
+  CircleDollarSign,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -772,6 +773,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           const isSell = tx.type === 'SELL';
           const isCorporateAction = tx.type === 'CORPORATE_ACTION';
           const isBonusShares = isCorporateAction && tx.corporateActionType === 'BONUS_SHARES';
+          const isIpoSubscription = tx.type === 'IPO_SUBSCRIPTION';
+          const ipoStatus = tx.ipoSubscription?.status;
           const sellMetrics = isSell ? getTxSellMetrics(tx) : null;
           const isWinningSell = !!sellMetrics?.isWin;
           const isLosingSell = !!sellMetrics?.isLoss;
@@ -783,6 +786,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           const grossAmount = tx.shares * tx.price;
           const totalOutlayOrProceeds = isCorporateAction
             ? 0
+            : isIpoSubscription
+            ? Number(tx.totalAmount || tx.ipoSubscription?.requestedAmount || 0)
             : tx.totalAmount ||
               (isBuy ? grossAmount + (tx.fees || 0) : Math.max(0, grossAmount - (tx.fees || 0)));
 
@@ -790,7 +795,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <div
               key={tx.id}
               className={`premium-card premium-semantic-record premium-semantic-edge premium-hierarchy-h5 premium-dense-row premium-pad-h5 premium-flow-control rounded-2xl border transition relative overflow-hidden ${
-                isCorporateAction
+                isCorporateAction || isIpoSubscription
                   ? 'premium-glow-breakeven'
                   : isBuy
                   ? 'premium-glow-buy'
@@ -835,6 +840,11 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                         >
                           <PlusCircle className="w-3 h-3" />
                           {tx.isDCA ? 'BUY (DCA LOT)' : 'BUY (INITIAL LOT)'}
+                        </span>
+                      ) : isIpoSubscription ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 bg-cyan-500/15 text-cyan-200 border-cyan-500/35">
+                          <CircleDollarSign className="w-3 h-3 text-cyan-300" />
+                          IPO {ipoStatus || 'SUBSCRIPTION'}
                         </span>
                       ) : isCorporateAction ? (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 bg-cyan-500/15 text-cyan-200 border-cyan-500/35">
@@ -922,6 +932,19 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                           </span>
                         </div>
                       </>
+                    ) : isIpoSubscription ? (
+                      <>
+                        <div className="premium-type-metric premium-type-metric-dense font-mono text-cyan-300">
+                          {formatEgp(Number(tx.ipoSubscription?.requestedAmount || tx.totalAmount || 0))} <span className="premium-type-unit">EGP</span>
+                        </div>
+                        <div className="premium-type-metadata">
+                          {ipoStatus === 'SUBMITTED'
+                            ? 'Reserved for IPO'
+                            : ipoStatus === 'ALLOCATED'
+                            ? `${Number(tx.ipoSubscription?.allocatedShares || tx.shares || 0).toLocaleString('en-EG')} shares allocated`
+                            : 'Reservation released'}
+                        </div>
+                      </>
                     ) : isCorporateAction ? (
                       <>
                         <div className="premium-type-metric premium-type-metric-dense font-mono text-cyan-300">
@@ -941,7 +964,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                   {/* Edit and Delete Actions */}
                   <div className="flex items-center gap-1.5">
-                    {!isCorporateAction && (
+                    {!isCorporateAction && !isIpoSubscription && (
                       <button
                         onClick={() => handleOpenEditModal(tx)}
                         title="Edit Transaction Record"
@@ -964,7 +987,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               {/* Row 2: Detailed Transaction Attributes Grid */}
               <div className="premium-inset-glass premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs" data-hierarchy="h4">
                 <div>
-                  <span className="premium-type-metric-label block">{isCorporateAction ? 'Shares Added' : 'Transaction Shares'}</span>
+                  <span className="premium-type-metric-label block">{isIpoSubscription ? (ipoStatus === 'ALLOCATED' ? 'Allocated Shares' : 'Requested Shares') : isCorporateAction ? 'Shares Added' : 'Transaction Shares'}</span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {tx.shares.toLocaleString()} shares
                   </span>
@@ -972,7 +995,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isCorporateAction ? 'Official Ratio' : isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
+                    {isIpoSubscription ? 'Offer Price' : isCorporateAction ? 'Official Ratio' : isBuy ? 'Exact Buy Price' : 'Exact Sell Price'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {isCorporateAction
@@ -982,7 +1005,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
 
                 <div>
-                  <span className="premium-type-metric-label block">{isCorporateAction ? 'Effective / Ex-Date' : 'Execution Date'}</span>
+                  <span className="premium-type-metric-label block">{isIpoSubscription ? 'Subscription Date' : isCorporateAction ? 'Effective / Ex-Date' : 'Execution Date'}</span>
                   <span
                     className="premium-type-metric-dense font-mono text-slate-200 flex items-center gap-1 cursor-help"
                     title={`Interpreted Date: ${formatDateVerbose(tx.date, true)}`}
@@ -1005,7 +1028,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
                 <div>
                   <span className="premium-type-metric-label block">
-                    {isCorporateAction ? 'Cash Impact' : isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
+                    {isIpoSubscription ? (ipoStatus === 'SUBMITTED' ? 'Reserved Cash' : ipoStatus === 'ALLOCATED' ? 'Allocated Cost' : 'Cash Impact') : isCorporateAction ? 'Cash Impact' : isBuy ? 'Net Cash Outlay' : 'Net Proceeds'}
                   </span>
                   <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
                     {formatEgp(totalOutlayOrProceeds)} EGP
@@ -1040,6 +1063,18 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   {isCorporateAction && tx.corporateActionSourceShares !== undefined && (
                     <span className="premium-chip flex items-center gap-1 text-cyan-300 px-2.5 py-1 rounded-lg border-cyan-500/30 font-medium">
                       Source shares: <strong className="font-mono">{tx.corporateActionSourceShares.toLocaleString('en-EG', { maximumFractionDigits: 8 })}</strong>
+                    </span>
+                  )}
+
+                  {isIpoSubscription && tx.ipoSubscription?.refundAmount !== undefined && (
+                    <span className="premium-chip flex items-center gap-1 text-emerald-300 px-2.5 py-1 rounded-lg border-emerald-500/30 font-medium">
+                      Refund: <strong className="font-mono">{formatEgp(tx.ipoSubscription.refundAmount)} EGP</strong>
+                    </span>
+                  )}
+
+                  {isIpoSubscription && tx.ipoSubscription?.reference && (
+                    <span className="premium-chip flex items-center gap-1 text-slate-300 px-2.5 py-1 rounded-lg font-medium">
+                      Ref: <strong className="font-mono">{tx.ipoSubscription.reference}</strong>
                     </span>
                   )}
 

@@ -180,6 +180,116 @@ describe('broker reconciliation', () => {
     });
   });
 
+
+  it('attributes a bonus-share discrepancy to the corporate-action ledger event', () => {
+    const bonus: TradeTransaction = {
+      id: 'bonus-1',
+      type: 'CORPORATE_ACTION',
+      ticker: 'KORA',
+      companyName: 'KORA',
+      sector: 'Other',
+      shares: 50,
+      price: 0,
+      date: '2026-10-04',
+      fees: 0,
+      totalAmount: 0,
+      netCashImpact: 0,
+      corporateActionType: 'BONUS_SHARES',
+      corporateActionRatio: 0.1,
+      corporateActionSourceShares: 500,
+    };
+
+    const report = reconcileBrokerSnapshot(
+      {
+        brokerName: 'Telda',
+        asOfDate: '2026-10-07',
+        cashBalance: 0,
+        positions: [{ ticker: 'KORA', shares: 500 }],
+      },
+      {
+        positions: [position('KORA', 550)],
+        transactions: [
+          tx('buy-1', 'BUY', 'KORA', 500, '2026-10-01'),
+          bonus,
+        ],
+        cashBalance: 0,
+        tickers,
+      },
+    );
+
+    expect(report.rows[0].ledgerTransactionIds).toContain('bonus-1');
+    expect(report.rows[0].ledgerEvidence.find((item) => item.id === 'bonus-1')?.shareDelta).toBe(50);
+  });
+
+  it('understands allocated IPO shares as broker-reconcilable position evidence', () => {
+    const ipo: TradeTransaction = {
+      id: 'ipo-1',
+      type: 'IPO_SUBSCRIPTION',
+      ticker: 'KORA',
+      companyName: 'KORA',
+      sector: 'Other',
+      shares: 100,
+      price: 10,
+      date: '2026-10-01',
+      fees: 0,
+      totalAmount: 1000,
+      netCashImpact: -1000,
+      ipoSubscription: {
+        status: 'ALLOCATED',
+        requestedAmount: 2000,
+        requestedShares: 200,
+        offerPrice: 10,
+        subscriptionDate: '2026-10-01',
+        allocationDate: '2026-10-05',
+        allocatedShares: 100,
+        allocatedAmount: 1000,
+        refundAmount: 1000,
+      },
+    };
+
+    const report = reconcileBrokerSnapshot(
+      {
+        brokerName: 'Telda',
+        asOfDate: '2026-10-07',
+        cashBalance: 0,
+        positions: [{ ticker: 'KORA', shares: 80 }],
+      },
+      {
+        positions: [position('KORA', 100)],
+        transactions: [ipo],
+        cashBalance: 0,
+        tickers,
+      },
+    );
+
+    expect(report.rows[0].ledgerTransactionIds).toEqual(['ipo-1']);
+    expect(report.rows[0].ledgerEvidence[0].shareDelta).toBe(100);
+  });
+
+  it('distinguishes broker having more shares from app having more shares', () => {
+    const report = reconcileBrokerSnapshot(
+      {
+        brokerName: 'Telda',
+        asOfDate: '2026-10-07',
+        cashBalance: 0,
+        positions: [{ ticker: 'KORA', shares: 700 }],
+      },
+      {
+        positions: [position('KORA', 650)],
+        transactions: [tx('buy-1', 'BUY', 'KORA', 650, '2026-10-01')],
+        cashBalance: 0,
+        tickers,
+      },
+    );
+
+    expect(report.rows[0]).toMatchObject({
+      status: 'SHARE_MISMATCH',
+      differenceShares: -50,
+    });
+    expect(report.rows[0].explanation).toContain('broker carries 50 more shares');
+  });
+
+
   it('reports cash mismatch and exposes recent cash-affecting ledger evidence', () => {
     const report = reconcileBrokerSnapshot(
       {

@@ -9,6 +9,10 @@ import {
 import { getTradingViewLogoUrl } from '../src/services/tradingviewLogos';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
+import {
+  buildEulerpoolDomainLogoUrl,
+  extractOfficialDomainsByIsin,
+} from '../src/services/officialCompanyLogoFallback';
 
 type SupabaseClient = ReturnType<typeof createSupabase>;
 
@@ -21,6 +25,7 @@ interface ScannerSecurity {
   industry: string;
   isin: string;
   currency: string;
+  fallbackLogoUrl?: string;
 }
 
 interface RegistryRow {
@@ -176,6 +181,74 @@ async function enrichMissingScannerLogos(rows: ScannerSecurity[]): Promise<Scann
   }));
 }
 
+
+const IPF_LISTED_COMPANIES_URL =
+  'https://ipf.eg/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%82%D9%8A%D8%AF-%D9%84%D9%87%D8%A7-%D8%A3%D9%88%D8%B1%D8%A7%D9%82-%D8%A3%D9%88-%D8%A3%D8%AF%D9%88%D8%A7%D8%AA-%D9%85%D8%A7%D9%84%D9%8A/';
+
+async function fetchOfficialDomainsByIsin(): Promise<Map<string, string>> {
+  try {
+    const response = await fetch(IPF_LISTED_COMPANIES_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+    });
+    if (!response.ok) {
+      console.warn(`IPF company-contact lookup skipped: HTTP ${response.status}.`);
+      return new Map();
+    }
+    return extractOfficialDomainsByIsin(await response.text());
+  } catch (error) {
+    console.warn('IPF company-contact lookup skipped:', error instanceof Error ? error.message : error);
+    return new Map();
+  }
+}
+
+async function isUsableImageUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Accept: 'image/*',
+        Range: 'bytes=0-2047',
+      },
+      redirect: 'follow',
+    });
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    return response.ok && contentType.startsWith('image/');
+  } catch {
+    return false;
+  }
+}
+
+async function enrichOfficialDomainLogos(
+  rows: ScannerSecurity[],
+  domainsByIsin: Map<string, string>,
+): Promise<ScannerSecurity[]> {
+  const missing = rows.filter((row) => !row.logoId && row.isin && domainsByIsin.has(row.isin));
+  if (!missing.length) return rows;
+
+  const resolved = new Map<string, string>();
+  const concurrency = 6;
+  for (let offset = 0; offset < missing.length; offset += concurrency) {
+    const batch = missing.slice(offset, offset + concurrency);
+    const results = await Promise.all(batch.map(async (row) => {
+      const domain = domainsByIsin.get(row.isin) || '';
+      const url = buildEulerpoolDomainLogoUrl(domain);
+      return [row.ticker, url && await isUsableImageUrl(url) ? url : ''] as const;
+    }));
+    for (const [ticker, url] of results) {
+      if (url) resolved.set(ticker, url);
+    }
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    fallbackLogoUrl: row.fallbackLogoUrl || resolved.get(row.ticker) || undefined,
+  }));
+}
+
 async function loadRegistry(sb: SupabaseClient): Promise<RegistryRow[]> {
   const rows: RegistryRow[] = [];
   const pageSize = 1000;
@@ -233,9 +306,10 @@ async function main() {
   const verifyAfterDays = Math.max(1, Number(process.env.EGX_TICKER_VERIFY_AFTER_DAYS || 30));
   const inactiveAfterDays = Math.max(1, Number(process.env.EGX_TICKER_INACTIVE_AFTER_DAYS || 14));
 
-  const [rawScannerRows, existing] = await Promise.all([
+  const [rawScannerRows, existing, officialDomainsByIsin] = await Promise.all([
     fetchScannerUniverse(),
     loadRegistry(sb),
+    fetchOfficialDomainsByIsin(),
   ]);
 
   const existingByTicker = new Map(existing.map((row) => [normalize(row.ticker), row]));
@@ -284,7 +358,8 @@ async function main() {
       canonicalScanner.set(ticker, candidate);
     }
   }
-  const scannerRows = await enrichMissingScannerLogos([...canonicalScanner.values()]);
+  const tradingViewEnrichedRows = await enrichMissingScannerLogos([...canonicalScanner.values()]);
+  const scannerRows = await enrichOfficialDomainLogos(tradingViewEnrichedRows, officialDomainsByIsin);
 
   const scannerTickers = new Set(scannerRows.map((row) => row.ticker));
   const scannerIsinCounts = new Map<string, number>();
@@ -393,6 +468,7 @@ async function main() {
       industry: scan.industry || current?.industry || null,
       logo_url:
         getTradingViewLogoUrl(scan.ticker, scan.logoId)
+        || scan.fallbackLogoUrl
         || (current?.logo_url && !current.logo_url.includes('/country/EG.svg') ? current.logo_url : null),
       currency: scan.currency || 'EGP',
       status: 'active',
@@ -514,9 +590,10 @@ async function main() {
     .select('ticker', { head: true, count: 'exact' })
     .eq('status', 'active');
 
-  const scannerLogoCount = scannerRows.filter((row) => Boolean(row.logoId)).length;
+  const tradingViewLogoCount = scannerRows.filter((row) => Boolean(row.logoId)).length;
+  const officialDomainLogoCount = scannerRows.filter((row) => !row.logoId && Boolean(row.fallbackLogoUrl)).length;
   console.log(
-    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, logos=${scannerLogoCount}/${scannerRows.length}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
+    `Ticker registry sync complete: scanner=${rawScannerRows.length}, canonical=${scannerRows.length}, active=${activeCount ?? 0}, tradingViewLogos=${tradingViewLogoCount}, officialDomainLogos=${officialDomainLogoCount}, totalLogos=${tradingViewLogoCount + officialDomainLogoCount}/${scannerRows.length}, metadataUpserts=${upserts.length}, lifecycleUpdates=${missingUpdates.length}, aliases=${aliasCount}, historyVerified=${verified}, unresolved=${unresolved}, verifyLimit=${verifyLimit}.`,
   );
 }
 

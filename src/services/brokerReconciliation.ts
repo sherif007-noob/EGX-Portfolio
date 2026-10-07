@@ -375,3 +375,104 @@ export function reconcileBrokerSnapshot(
     isFullyMatched: mismatchedPositions === 0 && cashMatches,
   };
 }
+
+
+export interface ParsedBrokerSnapshotOcr {
+  brokerName?: string;
+  cashBalance?: number;
+  positions: BrokerSnapshotPosition[];
+  rawText: string;
+}
+
+function firstNumericMatch(text: string, patterns: RegExp[]): number | undefined {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match?.[1]) continue;
+    const value = Number(match[1].replace(/[,\s]/g, ''));
+    if (Number.isFinite(value)) return value;
+  }
+  return undefined;
+}
+
+export function parseBrokerSnapshotOcrText(
+  rawText: string,
+  tickers: EGXTicker[],
+): ParsedBrokerSnapshotOcr {
+  const text = String(rawText || '').replace(/\r/g, '\n');
+  if (!text.trim()) return { positions: [], rawText: '' };
+
+  const upper = text.toUpperCase();
+  const occurrences: Array<{ index: number; ticker: string }> = [];
+
+  for (const item of tickers || []) {
+    const canonical = normalizeTicker(item.ticker);
+    if (!canonical || canonical === 'CASH') continue;
+
+    const identities = [canonical, ...(item.aliases || []).map(normalizeTicker)]
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+
+    let bestIndex = -1;
+    for (const identity of identities) {
+      const escaped = identity.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+      const match = new RegExp(
+        '(?:^|[^A-Z0-9])' + escaped + '(?=$|[^A-Z0-9])',
+        'i',
+      ).exec(upper);
+      if (match && (bestIndex < 0 || match.index < bestIndex)) bestIndex = match.index;
+    }
+
+    if (bestIndex >= 0) occurrences.push({ index: bestIndex, ticker: canonical });
+  }
+
+  occurrences.sort((a, b) => a.index - b.index);
+
+  const positions: BrokerSnapshotPosition[] = [];
+  const seen = new Set<string>();
+
+  for (let i = 0; i < occurrences.length; i += 1) {
+    const occurrence = occurrences[i];
+    if (seen.has(occurrence.ticker)) continue;
+
+    const end = occurrences[i + 1]?.index ?? Math.min(text.length, occurrence.index + 900);
+    const block = text.slice(occurrence.index, end);
+
+    const shares = firstNumericMatch(block, [
+      /(?:shares?|quantity|qty|units?)\s*[:\-]?\s*([0-9][0-9,\s]*(?:\.[0-9]+)?)/i,
+      /(?:عدد\s*الاسهم|الأسهم|اسهم|سهم)\s*[:\-]?\s*([0-9][0-9,\s]*(?:\.[0-9]+)?)/i,
+    ]);
+
+    if (shares == null || shares < 0) continue;
+
+    const avgPrice = firstNumericMatch(block, [
+      /(?:avg(?:erage)?\s*(?:buy|price)?|average\s*cost|avg\.?\s*buy)\s*[:\-]?\s*(?:EGP|LE)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)/i,
+    ]);
+
+    positions.push({
+      ticker: occurrence.ticker,
+      shares,
+      avgPrice,
+    });
+    seen.add(occurrence.ticker);
+  }
+
+  const cashBalance = firstNumericMatch(text, [
+    /(?:available\s+cash|cash\s+balance|buying\s+power)\s*[:\-]?\s*(?:EGP|LE)?\s*([0-9][0-9,\s]*(?:\.[0-9]+)?)/i,
+    /(?:available\s+cash|cash\s+balance|buying\s+power)[^0-9]{0,30}([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:EGP|LE)/i,
+  ]);
+
+  const brokerName = /\bTELDA\b/i.test(text)
+    ? 'Telda'
+    : /\bTHNDR|THUNDER\b/i.test(text)
+      ? 'Thndr'
+      : /\bMUBASHER\b/i.test(text)
+        ? 'Mubasher'
+        : undefined;
+
+  return {
+    brokerName,
+    cashBalance,
+    positions,
+    rawText: text.trim(),
+  };
+}

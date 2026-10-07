@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EGXTicker, Position, TradeTransaction } from '../types';
 import {
   parseBrokerPositionsText,
+  parseBrokerSnapshotOcrText,
   reconcileBrokerSnapshot,
 } from './brokerReconciliation';
 
@@ -72,6 +73,29 @@ describe('broker reconciliation', () => {
   it('parses pasted holdings and resolves directory aliases', () => {
     expect(parseBrokerPositionsText('Ticker,Shares\nOLDKORA,650', tickers)).toEqual([
       { ticker: 'KORA', shares: 650, avgPrice: undefined },
+    ]);
+  });
+
+  it('parses a Telda-style portfolio screenshot OCR block', () => {
+    const parsed = parseBrokerSnapshotOcrText(
+      `
+      TELDA
+      Available Cash
+      60,000 EGP
+
+      KORA
+      Shares
+      650
+      Avg Buy
+      6.13
+      `,
+      tickers,
+    );
+
+    expect(parsed.brokerName).toBe('Telda');
+    expect(parsed.cashBalance).toBe(60000);
+    expect(parsed.positions).toEqual([
+      { ticker: 'KORA', shares: 650, avgPrice: 6.13 },
     ]);
   });
 

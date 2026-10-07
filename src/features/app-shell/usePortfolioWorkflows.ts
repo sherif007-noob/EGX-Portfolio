@@ -432,6 +432,15 @@ export function usePortfolioWorkflows({
     const transaction = transactions.find((candidate) => candidate.id === id);
     if (!transaction) return false;
 
+    if (transaction.type === 'OPENING_POSITION') {
+      showToast(
+        'Opening-position migration records are protected because later corporate actions depend on them.',
+        'error',
+        6500,
+      );
+      return false;
+    }
+
     const previousState = { positions, closedTrades, transactions, cashBalance, capitalDeposits };
     const result = await portfolio.deleteTransaction(id);
     if ('error' in result) {

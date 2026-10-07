@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
 import { BrokerReconciliationWorkspace } from './BrokerReconciliationWorkspace';
+import { AuditTrailWorkspace } from './AuditTrailWorkspace';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -46,8 +47,8 @@ interface PortfolioBackupModalProps {
     cashBalance: number;
     capitalDeposits?: number;
     tickers?: EGXTicker[];
-  }) => Promise<boolean>;
-  onReconcileLedger: () => Promise<boolean>;
+  }, auditReason?: string) => Promise<boolean>;
+  onReconcileLedger: (auditReason?: string) => Promise<boolean>;
   onOpenBrokerLedgerEvidence?: (ticker: string, transactionIds: string[], detail: string) => void;
   onOpenBrokerCashLedger?: () => void;
 }
@@ -136,6 +137,8 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   onOpenBrokerCashLedger,
 }) => {
   const [isReconciling, setIsReconciling] = useState(false);
+  const [reconcileAuditReason, setReconcileAuditReason] = useState('');
+  const [restoreAuditReason, setRestoreAuditReason] = useState('');
   const requestClose = () => {
     if (isRestoring || isReconciling) return;
     runVisualTransition('modal-close', onClose);
@@ -288,7 +291,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
         cashBalance: importPreview.cashBalance,
         capitalDeposits: importPreview.capitalDeposits,
         tickers: importPreview.tickers || tickers,
-      });
+      }, restoreAuditReason.trim() || undefined);
       if (!restored) throw new Error('Authoritative portfolio restore failed. Nothing was changed.');
 
       setSuccessMsg('Portfolio ledger restored and synced to Supabase successfully!');
@@ -308,7 +311,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
     setIsReconciling(true);
     setImportError(null);
     try {
-      const saved = await onReconcileLedger();
+      const saved = await onReconcileLedger(reconcileAuditReason.trim() || undefined);
       if (!saved) throw new Error('Ledger reconciliation was not persisted.');
       setSuccessMsg('Ledger reconciliation persisted successfully.');
       setTimeout(() => setSuccessMsg(null), 4000);
@@ -367,13 +370,23 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
           onOpenCashLedger={onOpenBrokerCashLedger}
         />
 
-        {/* Internal ledger integrity rebuild — separate from broker truth comparison. */}
+        <AuditTrailWorkspace active={isOpen} />
+
+                {/* Internal ledger integrity rebuild — separate from broker truth comparison. */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-cyan-400" />
               <span className="font-bold text-white text-xs">Reconcile Ledger & Portfolio Math</span>
             </div>
+            <input
+              type="text"
+              value={reconcileAuditReason}
+              onChange={(event) => setReconcileAuditReason(event.target.value)}
+              className="premium-field w-full rounded-lg px-3 py-1.5 text-xs text-slate-100 sm:max-w-xs"
+              placeholder="Reason (optional)"
+              aria-label="Ledger reconciliation reason"
+            />
             <button
               onClick={handleReconcile}
               disabled={isReconciling || isRestoring}
@@ -520,6 +533,22 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
                     Capital Deposits: <span className="font-bold text-white">{importPreview.capitalDeposits.toLocaleString()} EGP</span>
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-slate-300">
+                  Restore Reason (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={restoreAuditReason}
+                  onChange={(event) => setRestoreAuditReason(event.target.value)}
+                  className="premium-field premium-textarea-surface w-full resize-none rounded-lg px-3 py-2 text-xs text-slate-100"
+                  placeholder="e.g. Restore verified pre-correction backup"
+                />
+                <p className="premium-type-helper">
+                  Audit-only context; it does not modify imported ledger notes.
+                </p>
               </div>
 
               <button

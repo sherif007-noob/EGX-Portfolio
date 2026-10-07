@@ -54,8 +54,8 @@ interface TradingJournalProps {
   transactions: TradeTransaction[];
   closedTrades: ClosedTrade[];
   positions: Position[];
-  onDeleteTransaction: (id: string) => Promise<boolean>;
-  onEditTransaction?: (updatedTx: TradeTransaction) => Promise<boolean>;
+  onDeleteTransaction: (id: string, auditReason?: string) => Promise<boolean>;
+  onEditTransaction?: (updatedTx: TradeTransaction, auditReason?: string) => Promise<boolean>;
   ledgerFocus?: JournalLedgerFocus | null;
   onClearLedgerFocus?: () => void;
   onOpenScreenshotModal?: () => void;
@@ -118,6 +118,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const [editFees, setEditFees] = useState<string>('');
   const [editCycleTag, setEditCycleTag] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
+  const [editAuditReason, setEditAuditReason] = useState<string>('');
   const [editTargetPrice, setEditTargetPrice] = useState<string>('');
   const [editStopLoss, setEditStopLoss] = useState<string>('');
   const [editOutcome, setEditOutcome] = useState<'WIN' | 'LOSS' | 'BREAKEVEN'>('WIN');
@@ -384,6 +385,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
     setEditFees(tx.fees !== undefined ? tx.fees.toString() : '0');
     setEditCycleTag(tx.cycleTag || '');
     setEditNotes(tx.notes || '');
+    setEditAuditReason('');
     setEditTargetPrice(tx.targetPrice ? tx.targetPrice.toString() : '');
     setEditStopLoss(tx.stopLoss ? tx.stopLoss.toString() : '');
     
@@ -470,7 +472,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
     setIsSavingEdit(true);
     try {
-      const saved = await onEditTransaction(updatedTx);
+      const saved = await onEditTransaction(updatedTx, editAuditReason.trim() || undefined);
       if (!saved) {
         setEditFeedback('Transaction was not saved. Nothing was changed.');
         return;
@@ -1188,10 +1190,10 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       <ConfirmDeleteModal
         isOpen={!!txToDelete}
         onClose={() => setTxToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (auditReason) => {
           if (!txToDelete) return;
           const ticker = txToDelete.ticker;
-          const deleted = await onDeleteTransaction(txToDelete.id);
+          const deleted = await onDeleteTransaction(txToDelete.id, auditReason);
           if (!deleted) return false;
           setDeletedIdToast(ticker);
           setTimeout(() => setDeletedIdToast(null), 3000);
@@ -1199,6 +1201,9 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         }}
         title="Delete Transaction Record"
         description="Are you sure you want to permanently delete this trade record from your journal? This will update your position calculations and cash history."
+        requestReason
+        reasonLabel="Deletion Reason (Optional)"
+        reasonPlaceholder="e.g. Duplicate broker receipt / transaction entered by mistake"
         itemDetails={
           txToDelete
             ? {
@@ -1474,6 +1479,20 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   className="premium-field premium-textarea-surface w-full px-3 py-2 rounded-xl border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   placeholder="Order execution notes, broker phase details, strategy reasoning..."
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-300 font-semibold">Correction Reason (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={editAuditReason}
+                  onChange={(e) => setEditAuditReason(e.target.value)}
+                  className="premium-field premium-textarea-surface w-full px-3 py-2 rounded-xl border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                  placeholder="e.g. Corrected against broker receipt / wrong execution price entered"
+                />
+                <p className="premium-type-helper">
+                  Stored in the immutable audit trail; it does not alter the trade note.
+                </p>
               </div>
 
               {/* Calculated Preview */}

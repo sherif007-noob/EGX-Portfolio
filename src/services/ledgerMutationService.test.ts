@@ -131,6 +131,77 @@ describe('canonical ledger mutation executor', () => {
     expect(persisted[0].cashBalance).toBe(960);
   });
 
+
+  it('passes a before/after audit draft into persistence before local apply', async () => {
+    const events: string[] = [];
+    const persistedAudit: any[] = [];
+    const executor = createLedgerMutationExecutor({
+      persist: async (_snapshot, auditEvent) => {
+        events.push('persist');
+        persistedAudit.push(auditEvent);
+        return true;
+      },
+    });
+
+    const nextBuy = buy('buy-2', 2, 11);
+    const result = await executor.execute({
+      kind: 'BUY',
+      current: currentSnapshot(),
+      prepare: (current) => ({
+        transactions: [...current.transactions, nextBuy],
+        value: nextBuy,
+      }),
+      apply: () => {
+        events.push('apply');
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(events).toEqual(['persist', 'apply']);
+    expect(persistedAudit).toHaveLength(1);
+    expect(persistedAudit[0]).toMatchObject({
+      mutationKind: 'BUY',
+      entityType: 'TRANSACTION',
+      entityId: 'buy-2',
+      ticker: 'COMI',
+      beforeState: {
+        cashBalance: 900,
+        transaction: null,
+      },
+      afterState: {
+        transaction: { id: 'buy-2' },
+      },
+      metadata: {
+        addedTransactionIds: ['buy-2'],
+      },
+    });
+  });
+
+  it('passes an optional correction reason into the audit draft', async () => {
+    const persistedAudit: any[] = [];
+    const executor = createLedgerMutationExecutor({
+      persist: async (_snapshot, auditEvent) => {
+        persistedAudit.push(auditEvent);
+        return true;
+      },
+    });
+
+    const edited = { ...buy('buy-1'), price: 11, totalAmount: 110, netCashImpact: -110 };
+    const result = await executor.execute({
+      kind: 'EDIT_TRANSACTION',
+      current: currentSnapshot(),
+      auditReason: 'Corrected from broker receipt',
+      prepare: () => ({
+        transactions: [edited],
+        value: edited,
+      }),
+      apply: vi.fn(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(persistedAudit[0]?.reason).toBe('Corrected from broker receipt');
+  });
+
   it('does not apply local state when authoritative persistence fails', async () => {
     const apply = vi.fn();
     const executor = createLedgerMutationExecutor({

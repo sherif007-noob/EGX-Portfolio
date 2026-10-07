@@ -26,11 +26,11 @@ interface PortfolioActions {
   allocateIpoSubscription: (action: any) => Promise<any>;
   cancelIpoSubscription: (id: string) => Promise<any>;
   editPosition: (position: Position) => Promise<boolean>;
-  editTransaction: (transaction: TradeTransaction) => Promise<any>;
-  deleteTransaction: (id: string) => Promise<any>;
-  reconcileLedger: () => Promise<any>;
+  editTransaction: (transaction: TradeTransaction, auditReason?: string) => Promise<any>;
+  deleteTransaction: (id: string, auditReason?: string) => Promise<any>;
+  reconcileLedger: (auditReason?: string) => Promise<any>;
   importOcrBatch: (trades: any[]) => Promise<any>;
-  updateCashBalance: (newCash: number) => Promise<boolean>;
+  updateCashBalance: (newCash: number, auditReason?: string) => Promise<boolean>;
 }
 
 interface UsePortfolioWorkflowsOptions {
@@ -428,7 +428,10 @@ export function usePortfolioWorkflows({
     return true;
   }, [portfolio, positions, showToast]);
 
-  const handleDeleteTransaction = useCallback(async (id: string): Promise<boolean> => {
+  const handleDeleteTransaction = useCallback(async (
+    id: string,
+    auditReason?: string,
+  ): Promise<boolean> => {
     const transaction = transactions.find((candidate) => candidate.id === id);
     if (!transaction) return false;
 
@@ -442,7 +445,7 @@ export function usePortfolioWorkflows({
     }
 
     const previousState = { positions, closedTrades, transactions, cashBalance, capitalDeposits };
-    const result = await portfolio.deleteTransaction(id);
+    const result = await portfolio.deleteTransaction(id, auditReason);
     if ('error' in result) {
       showToast(
         `Could not delete ${transaction.type} ${transaction.ticker}: ${result.error.message} Nothing was changed.`,
@@ -474,7 +477,10 @@ export function usePortfolioWorkflows({
     transactions,
   ]);
 
-  const handleEditTransaction = useCallback(async (updatedTx: TradeTransaction): Promise<boolean> => {
+  const handleEditTransaction = useCallback(async (
+    updatedTx: TradeTransaction,
+    auditReason?: string,
+  ): Promise<boolean> => {
     if (
       updatedTx.type === 'CORPORATE_ACTION'
       || updatedTx.type === 'IPO_SUBSCRIPTION'
@@ -501,7 +507,7 @@ export function usePortfolioWorkflows({
       return false;
     }
 
-    const result = await portfolio.editTransaction(updatedTx);
+    const result = await portfolio.editTransaction(updatedTx, auditReason);
     if ('error' in result) {
       showToast(
         `Transaction edit was not saved: ${result.error.message} Nothing was changed.`,
@@ -638,8 +644,8 @@ export function usePortfolioWorkflows({
     );
   }, [openSheetsModal, sheetsConfig?.spreadsheetId, showToast, syncPricesOnlyToSheets]);
 
-  const handleOverviewReconcile = useCallback(async (): Promise<boolean> => {
-    const result = await portfolio.reconcileLedger();
+  const handleOverviewReconcile = useCallback(async (auditReason?: string): Promise<boolean> => {
+    const result = await portfolio.reconcileLedger(auditReason);
     if ('error' in result) {
       showToast(`Ledger reconciliation was not saved: ${result.error.message}`, 'error', 6500);
       return false;
@@ -651,8 +657,11 @@ export function usePortfolioWorkflows({
     return true;
   }, [portfolio, showToast]);
 
-  const handleCashBalanceUpdate = useCallback(async (newBalance: number): Promise<boolean> => {
-    const saved = await portfolio.updateCashBalance(newBalance);
+  const handleCashBalanceUpdate = useCallback(async (
+    newBalance: number,
+    auditReason?: string,
+  ): Promise<boolean> => {
+    const saved = await portfolio.updateCashBalance(newBalance, auditReason);
     if (!saved) {
       showToast('Cash balance update was not saved. Nothing was changed.', 'error', 6000);
       return false;
@@ -661,8 +670,11 @@ export function usePortfolioWorkflows({
     return true;
   }, [portfolio, showToast]);
 
-  const handleQuickCashBalanceUpdate = useCallback(async (newBalance: number): Promise<boolean> => {
-    const saved = await portfolio.updateCashBalance(newBalance);
+  const handleQuickCashBalanceUpdate = useCallback(async (
+    newBalance: number,
+    auditReason?: string,
+  ): Promise<boolean> => {
+    const saved = await portfolio.updateCashBalance(newBalance, auditReason);
     if (!saved) {
       showToast('Cash balance adjustment was not saved. Nothing was changed.', 'error', 6000);
       return false;

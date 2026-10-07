@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 import { mergeTickerDirectoryWithRegistry } from './tickerRegistry';
+import type { AuditTrailDraft, AuditTrailRecord } from './auditTrail';
 
 export interface SupabasePortfolioData {
   positions: Position[];
@@ -348,6 +349,7 @@ async function persistTickerQuotes(supabase: ReturnType<typeof getSupabaseBrowse
 
 export async function savePortfolioToSupabase(
   data: Omit<SupabasePortfolioData, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
+  auditEvent?: AuditTrailDraft,
 ): Promise<boolean> {
   try {
     const { supabase, user, portfolio } = await requireAuthenticatedPortfolio();
@@ -355,7 +357,10 @@ export async function savePortfolioToSupabase(
     const positions = data.positions.map((row) => toDbPosition(row, portfolio.id));
     const closed = data.closedTrades.map((row) => toDbClosedTrade(row, portfolio.id));
 
-    const { error } = await supabase.rpc('replace_portfolio_accounting_snapshot', {
+    const rpcName = auditEvent
+      ? 'replace_portfolio_accounting_snapshot_with_audit'
+      : 'replace_portfolio_accounting_snapshot';
+    const rpcArgs = {
       p_portfolio_id: portfolio.id,
       p_owner_key: user.id,
       p_cash_balance: data.cashBalance,
@@ -363,7 +368,9 @@ export async function savePortfolioToSupabase(
       p_transactions: txs,
       p_positions: positions,
       p_closed_trades: closed,
-    });
+      ...(auditEvent ? { p_audit_event: auditEvent } : {}),
+    };
+    const { error } = await supabase.rpc(rpcName, rpcArgs);
     if (error) throw error;
 
     if (Array.isArray(data.tickers) && data.tickers.length) {
@@ -480,4 +487,36 @@ export async function loadIntradayPricesFromSupabase(
 export async function getSupabaseAuthUserId(): Promise<string | null> {
   const { data } = await getSupabaseBrowserClient().auth.getUser();
   return data.user?.id ?? null;
+}
+
+
+export async function loadAuditTrailFromSupabase(limit = 100): Promise<AuditTrailRecord[]> {
+  const { supabase, portfolio } = await requireAuthenticatedPortfolio();
+  const safeLimit = Math.min(250, Math.max(1, Math.round(limit)));
+  const { data, error } = await supabase
+    .from('portfolio_audit_log')
+    .select('*')
+    .eq('portfolio_id', portfolio.id)
+    .order('created_at', { ascending: false })
+    .limit(safeLimit);
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    id: String(row.id),
+    mutationId: String(row.mutation_id),
+    mutationKind: String(row.mutation_kind),
+    entityType: row.entity_type,
+    entityId: row.entity_id ?? undefined,
+    ticker: row.ticker ?? undefined,
+    reason: row.reason ?? undefined,
+    beforeState: row.before_state ?? {},
+    afterState: row.after_state ?? {},
+    metadata: row.metadata ?? {
+      addedTransactionIds: [],
+      removedTransactionIds: [],
+      changedTransactionIds: [],
+      changedPositionTickers: [],
+    },
+    createdAt: String(row.created_at),
+  }));
 }

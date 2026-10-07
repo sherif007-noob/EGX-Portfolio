@@ -1596,17 +1596,45 @@ Correction must route through explicit ledger edits, never destructive derived-s
 
 ---
 
-## Pass 6.2 — Lightweight audit trail
+## Pass 6.2 — Lightweight audit trail — COMPLETE / CLOSED
 
-Record material manual corrections:
+Implemented slices:
+
+- **6.2.1 — canonical before/after audit model — COMPLETE**
+- **6.2.2 — atomic Supabase audit persistence — COMPLETE**
+- **6.2.3 — Data & Tools audit viewer — COMPLETE**
+- **6.2.4 — optional reason capture for transaction edit/delete — COMPLETE**
+- **6.2.5 — cash/reconciliation/restore reason capture + acceptance — COMPLETE**
+
+Recorded correction context:
 
 - entity/transaction;
-- before;
-- after;
-- timestamp;
-- optional reason.
+- compact before state;
+- compact after state;
+- server timestamp;
+- mutation kind;
+- changed ledger IDs / position tickers;
+- optional audit-only reason.
+
+Canonical accounting and its audit record persist in the same PostgreSQL transaction. If the audit insert fails, the accounting snapshot rolls back. Background quote writes are intentionally excluded.
+
+Reason capture now covers transaction corrections, cash-entry corrections, cash reconciliation adjustments, manual ledger reconciliation, JSON backup restore, and Google Sheets import provenance.
+
+Closure evidence:
+
+- production migration: `20261007214652_stage62_portfolio_audit_trail.sql`;
+- runtime feature head: `9366b0af` plus UI/reason wiring through `f341db59`;
+- exact core validation head: `df956cb5`;
+- TypeScript passed;
+- **150 / 150 test files, 792 / 792 tests passed**;
+- production Vite/PWA build passed;
+- Cloudflare Worker dry-run passed;
+- all 12 responsive geometry checks remain at **0px page overflow**;
+- the rendered diff profile is byte-for-byte equivalent at the reported percentage level to pre-6.2 head `b81d7fe5`; the global rendered job remains red because the repository's golden screenshots were already stale before Stage 6.2. No baseline was silently promoted or threshold relaxed.
 
 This is for personal traceability, not enterprise compliance.
+
+**Next: Pass 6.3 — audit and extend the corporate-actions lifecycle.**
 
 ---
 

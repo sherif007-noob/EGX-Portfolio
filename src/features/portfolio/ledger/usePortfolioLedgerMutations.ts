@@ -109,16 +109,19 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
   const executePreparedMutation = useCallback(async <T,>(
     kind: string,
     prepare: (current: Readonly<CanonicalLedgerSnapshot>) => LedgerMutationPreparation<T>,
+    auditReason?: string,
   ) => executorRef.current!.execute<T>({
     kind,
     current: currentLedgerSnapshot(),
     prepare,
     apply: (snapshot) => applyLedgerSnapshot(snapshot),
+    auditReason,
   }), [applyLedgerSnapshot, currentLedgerSnapshot]);
 
-  const reconcileLedger = useCallback(() => executePreparedMutation(
+  const reconcileLedger = useCallback((auditReason?: string) => executePreparedMutation(
     'RECONCILE_LEDGER',
     (current) => prepareLedgerReconciliationMutation(current),
+    auditReason,
   ), [executePreparedMutation]);
 
   const addTrade = useCallback((tradeInput: BuyTradeInput) => executePreparedMutation<TradeTransaction>(
@@ -177,14 +180,16 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     (current) => prepareIpoCancellationMutation(current, transactionId),
   ), [executePreparedMutation]);
 
-  const editTransaction = useCallback((updated: TradeTransaction) => executePreparedMutation(
+  const editTransaction = useCallback((updated: TradeTransaction, auditReason?: string) => executePreparedMutation(
     'EDIT_TRANSACTION',
     (current) => prepareTransactionEditMutation(current, updated),
+    auditReason,
   ), [executePreparedMutation]);
 
-  const deleteTransaction = useCallback((transactionId: string) => executePreparedMutation(
+  const deleteTransaction = useCallback((transactionId: string, auditReason?: string) => executePreparedMutation(
     'DELETE_TRANSACTION',
     (current) => prepareTransactionDeleteMutation(current, transactionId),
+    auditReason,
   ), [executePreparedMutation]);
 
   const commitCashEvent = useCallback((
@@ -225,10 +230,12 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
 
   const editCashTransaction = useCallback(async (
     transaction: CashTransaction,
+    auditReason?: string,
   ): Promise<boolean> => {
     const result = await executePreparedMutation(
       'EDIT_CASH_TRANSACTION',
       (current) => prepareCashEntryMutation(current, transaction.id, transaction),
+      auditReason,
     );
     if ('error' in result) {
       console.error('[Financial mutation] Cash edit failed:', result.error);
@@ -237,10 +244,14 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     return true;
   }, [executePreparedMutation]);
 
-  const deleteCashTransaction = useCallback(async (transactionId: string): Promise<boolean> => {
+  const deleteCashTransaction = useCallback(async (
+    transactionId: string,
+    auditReason?: string,
+  ): Promise<boolean> => {
     const result = await executePreparedMutation(
       'DELETE_CASH_TRANSACTION',
       (current) => prepareCashEntryMutation(current, transactionId, null),
+      auditReason,
     );
     if ('error' in result) {
       console.error('[Financial mutation] Cash delete failed:', result.error);
@@ -249,9 +260,10 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     return true;
   }, [executePreparedMutation]);
 
-  const importBackup = useCallback((backup: PortfolioRestoreInput) => executePreparedMutation(
+  const importBackup = useCallback((backup: PortfolioRestoreInput, auditReason?: string) => executePreparedMutation(
     'RESTORE_PORTFOLIO',
     (current) => preparePortfolioRestoreMutation(current, backup),
+    auditReason,
   ), [executePreparedMutation]);
 
   const importOcrBatch = useCallback((trades: OcrTradeInput[]) => executePreparedMutation(
@@ -263,9 +275,10 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     transactions: TradeTransaction[];
     capitalDeposits: number;
     positions?: Position[];
-  }) => executePreparedMutation(
+  }, auditReason?: string) => executePreparedMutation(
     'RESTORE_LEDGER_SNAPSHOT',
     (current) => prepareLedgerSnapshotRestoreMutation(current, restore),
+    auditReason,
   ), [executePreparedMutation]);
 
   const restoreInitialState = useCallback(() => importBackup({
@@ -277,10 +290,14 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     tickers: INITIAL_EGX_TICKERS,
   }), [importBackup]);
 
-  const updateCashBalance = useCallback(async (newCash: number): Promise<boolean> => {
+  const updateCashBalance = useCallback(async (
+    newCash: number,
+    auditReason?: string,
+  ): Promise<boolean> => {
     const result = await executePreparedMutation(
       'RECONCILIATION_ADJUSTMENT',
       (current) => prepareCashBalanceAdjustmentMutation(current, newCash),
+      auditReason,
     );
     if ('error' in result) {
       console.error('[Financial mutation] Cash adjustment failed:', result.error);

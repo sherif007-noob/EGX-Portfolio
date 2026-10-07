@@ -1,3 +1,14 @@
+## 2026-10-08
+
+### Stage 6.2 — Lightweight financial audit trail
+
+- Added append-only portfolio audit records with compact before/after state, mutation/entity identity, server timestamp, changed-ledger metadata, and optional audit-only correction reasons.
+- Made canonical accounting snapshot + audit-row persistence atomic through `replace_portfolio_accounting_snapshot_with_audit`.
+- Added Data & Tools → Financial Audit Trail viewer.
+- Added optional reason capture for transaction edit/delete, cash edit/delete, manual cash reconciliation, ledger reconciliation, and backup restore; Google Sheets import records source provenance automatically.
+- Fixed Cash Ledger “Apply Audited Balance” so success is shown only after persistence resolves.
+- Stage 6.2 acceptance: TypeScript + 792/792 tests + production build + Worker dry-run green. The global rendered baseline remains pre-existing stale debt; the Stage 6.2 diff profile is unchanged from the pre-stage head.
+
 # Changelog
 
 All notable project changes should be documented here going forward.

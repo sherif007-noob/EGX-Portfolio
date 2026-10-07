@@ -1,6 +1,7 @@
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 import { loadPortfolioFromSupabase, savePortfolioToSupabase, savePriceTickToSupabase } from './supabasePersistence';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
+import type { AuditTrailDraft } from './auditTrail';
 
 export interface PortfolioDataDocument {
   positions: Position[];
@@ -90,7 +91,7 @@ function enqueueOperation(run: () => Promise<boolean>): Promise<boolean> {
   return next;
 }
 
-async function persistSnapshot(data: PortfolioWrite): Promise<boolean> {
+async function persistSnapshot(data: PortfolioWrite, auditEvent?: AuditTrailDraft): Promise<boolean> {
   let complete = data;
   if (typeof complete.capitalDeposits !== 'number' || !Number.isFinite(complete.capitalDeposits)) {
     const current = await loadPortfolioFromSupabase();
@@ -104,16 +105,16 @@ async function persistSnapshot(data: PortfolioWrite): Promise<boolean> {
   // Resolve the opening-capital input before deriving cash, not afterwards.
   const canonical = deriveLedgerState(complete);
   const fingerprint = generateFingerprint(canonical);
-  if (fingerprint === lastSerializedPayload) return true;
+  if (fingerprint === lastSerializedPayload && !auditEvent) return true;
   markLocalMutation(5000);
-  const ok = await savePortfolioToSupabase(canonical);
+  const ok = await savePortfolioToSupabase(canonical, auditEvent);
   if (ok) updateLastSavedSnapshot({ ...canonical, updatedAt: new Date().toISOString(), schemaVersion: 3 });
   return ok;
 }
 
-function enqueueSave(data: PortfolioWrite): Promise<boolean> {
+function enqueueSave(data: PortfolioWrite, auditEvent?: AuditTrailDraft): Promise<boolean> {
   cancelPendingSave();
-  return enqueueOperation(() => persistSnapshot(data));
+  return enqueueOperation(() => persistSnapshot(data, auditEvent));
 }
 
 export async function savePortfolioToFirestore(data: PortfolioWrite, allowEmpty = false, _reason?: string) {
@@ -129,13 +130,13 @@ export function debouncedSavePortfolioToFirestore(data: PortfolioWrite, delayMs 
   }, delayMs);
 }
 
-export async function forceFullSyncToFirestore(data: PortfolioWrite) {
+export async function forceFullSyncToFirestore(data: PortfolioWrite, auditEvent?: AuditTrailDraft) {
   if (saveTimeout) {
     clearTimeout(saveTimeout);
     saveTimeout = null;
   }
   markLocalMutation(7500);
-  return enqueueSave(data);
+  return enqueueSave(data, auditEvent);
 }
 
 function mergeAndSave(patch: Partial<PortfolioDataDocument>) {

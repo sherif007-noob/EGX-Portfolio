@@ -501,7 +501,7 @@ export default function App() {
             transactions: importedTransactions || [],
             capitalDeposits,
             tickers,
-          });
+          }, `Imported from Google Sheets: ${config.sheetName || 'Transaction Logger'}`);
           if ('error' in result) {
             showToast(`Google Sheets import was not saved: ${result.error.message}`, 'error', 7000);
             return false;
@@ -600,8 +600,8 @@ export default function App() {
         cashBalance={cashBalance}
         capitalDeposits={capitalDeposits}
         tickers={tickers}
-        onRestoreBackup={async (restored) => {
-          const result = await importBackup(restored);
+        onRestoreBackup={async (restored, auditReason) => {
+          const result = await importBackup(restored, auditReason);
           if ('error' in result) {
             showToast(`Portfolio restore was not saved: ${result.error.message}`, 'error', 7000);
             return false;

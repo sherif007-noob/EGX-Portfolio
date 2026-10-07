@@ -53,7 +53,7 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
   it('keeps persistence-before-apply ordering in the canonical executor', () => {
     const executor = read('src/services/ledgerMutationService.ts');
 
-    const persistIndex = executor.indexOf('persisted = await persist(candidate.snapshot)');
+    const persistIndex = executor.indexOf('persisted = await persist(candidate.snapshot, auditEvent ?? undefined)');
     const applyIndex = executor.indexOf('request.apply(candidate.snapshot, candidate.value)');
 
     expect(persistIndex).toBeGreaterThan(-1);

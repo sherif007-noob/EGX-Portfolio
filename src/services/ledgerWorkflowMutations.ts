@@ -4,12 +4,14 @@ import type {
   ClosedTrade,
   EGXTicker,
   Position,
+  Sector,
   TradeTransaction,
 } from '../types';
 import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact } from './portfolioAccounting';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import { currentCairoDateKey, expectedBonusShares } from './corporateActions';
+import { validateIpoSubscriptionMetadata } from './ipoSubscriptions';
 import {
   deriveCapitalDepositsAfterLedgerChange,
   prepareCashLedgerChange,
@@ -353,5 +355,180 @@ export function prepareBonusSharesMutation(
     capitalDeposits: current.capitalDeposits,
     positionSeed: current.positions,
     value: action,
+  };
+}
+
+
+export interface IpoSubscriptionInput {
+  transactionId: string;
+  ticker: string;
+  companyName: string;
+  sector: Sector;
+  requestedAmount: number;
+  offerPrice: number;
+  subscriptionDate: string;
+  reference?: string;
+  listingDate?: string;
+  notes?: string;
+}
+
+export interface IpoAllocationInput {
+  transactionId: string;
+  allocatedShares: number;
+  allocationDate: string;
+  fees?: number;
+}
+
+export function prepareIpoSubscriptionMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: IpoSubscriptionInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const ticker = String(input.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
+  if (!ticker) throw new Error('IPO subscription requires a ticker.');
+
+  const requestedAmount = Number(input.requestedAmount);
+  const offerPrice = Number(input.offerPrice);
+  if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+    throw new Error('IPO requested amount must be greater than zero.');
+  }
+  if (!Number.isFinite(offerPrice) || offerPrice <= 0) {
+    throw new Error('IPO offer price must be greater than zero.');
+  }
+
+  const subscriptionDate = String(input.subscriptionDate || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(subscriptionDate) || !Number.isFinite(Date.parse(subscriptionDate))) {
+    throw new Error('IPO subscription requires a valid subscription date.');
+  }
+
+  const requestedShares = requestedAmount / offerPrice;
+  const metadata = {
+    status: 'SUBMITTED' as const,
+    requestedAmount,
+    requestedShares,
+    offerPrice,
+    reference: input.reference?.trim() || undefined,
+    listingDate: input.listingDate?.slice(0, 10) || undefined,
+  };
+  validateIpoSubscriptionMetadata(metadata);
+
+  const transaction: TradeTransaction = {
+    id: input.transactionId,
+    type: 'IPO_SUBSCRIPTION',
+    ticker,
+    companyName: input.companyName || ticker,
+    sector: input.sector || 'Other',
+    shares: requestedShares,
+    price: offerPrice,
+    date: subscriptionDate,
+    fees: 0,
+    totalAmount: requestedAmount,
+    netCashImpact: -requestedAmount,
+    ipoSubscription: metadata,
+    notes: input.notes?.trim() || undefined,
+  };
+
+  return {
+    transactions: [...current.transactions, transaction],
+    capitalDeposits: current.capitalDeposits,
+    positionSeed: current.positions,
+    value: transaction,
+  };
+}
+
+export function prepareIpoAllocationMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: IpoAllocationInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const existing = current.transactions.find((transaction) => transaction.id === input.transactionId);
+  if (!existing || existing.type !== 'IPO_SUBSCRIPTION' || !existing.ipoSubscription) {
+    throw new Error('IPO subscription was not found.');
+  }
+  if (existing.ipoSubscription.status !== 'SUBMITTED') {
+    throw new Error('Only a submitted IPO subscription can be allocated.');
+  }
+
+  const allocatedShares = Number(input.allocatedShares);
+  const fees = Number(input.fees ?? 0);
+  if (!Number.isFinite(allocatedShares) || allocatedShares <= 0) {
+    throw new Error('Allocated IPO shares must be greater than zero.');
+  }
+  if (!Number.isFinite(fees) || fees < 0) throw new Error('IPO allocation fees cannot be negative.');
+
+  const allocatedAmount = allocatedShares * existing.ipoSubscription.offerPrice;
+  const totalAmount = allocatedAmount + fees;
+  if (totalAmount > existing.ipoSubscription.requestedAmount + 0.01) {
+    throw new Error('IPO allocation cost cannot exceed the original subscription amount.');
+  }
+  const refundAmount = existing.ipoSubscription.requestedAmount - totalAmount;
+  const allocationDate = String(input.allocationDate || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(allocationDate) || !Number.isFinite(Date.parse(allocationDate))) {
+    throw new Error('IPO allocation requires a valid allocation date.');
+  }
+
+  const metadata = {
+    ...existing.ipoSubscription,
+    status: 'ALLOCATED' as const,
+    allocationDate,
+    allocatedShares,
+    allocatedAmount: totalAmount,
+    refundAmount,
+  };
+  validateIpoSubscriptionMetadata(metadata);
+
+  const allocated: TradeTransaction = {
+    ...existing,
+    shares: allocatedShares,
+    price: existing.ipoSubscription.offerPrice,
+    fees,
+    totalAmount,
+    netCashImpact: -totalAmount,
+    ipoSubscription: metadata,
+  };
+
+  return {
+    transactions: current.transactions.map((transaction) =>
+      transaction.id === allocated.id ? allocated : transaction
+    ),
+    capitalDeposits: current.capitalDeposits,
+    positionSeed: current.positions,
+    value: allocated,
+  };
+}
+
+export function prepareIpoCancellationMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  transactionId: string,
+): LedgerMutationPreparation<TradeTransaction> {
+  const existing = current.transactions.find((transaction) => transaction.id === transactionId);
+  if (!existing || existing.type !== 'IPO_SUBSCRIPTION' || !existing.ipoSubscription) {
+    throw new Error('IPO subscription was not found.');
+  }
+  if (existing.ipoSubscription.status !== 'SUBMITTED') {
+    throw new Error('Only a submitted IPO subscription can be cancelled.');
+  }
+
+  const metadata = {
+    ...existing.ipoSubscription,
+    status: 'CANCELLED' as const,
+    refundAmount: existing.ipoSubscription.requestedAmount,
+  };
+  validateIpoSubscriptionMetadata(metadata);
+
+  const cancelled: TradeTransaction = {
+    ...existing,
+    shares: 0,
+    fees: 0,
+    totalAmount: 0,
+    netCashImpact: 0,
+    ipoSubscription: metadata,
+  };
+
+  return {
+    transactions: current.transactions.map((transaction) =>
+      transaction.id === cancelled.id ? cancelled : transaction
+    ),
+    capitalDeposits: current.capitalDeposits,
+    positionSeed: current.positions,
+    value: cancelled,
   };
 }

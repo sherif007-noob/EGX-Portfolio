@@ -6,7 +6,10 @@ import {
   RETIRED_BASELINE_TICKERS,
   mapMarketClassificationToSector,
 } from '../src/data/egxTickers';
-import { getTradingViewLogoUrl } from '../src/services/tradingviewLogos';
+import {
+  getTradingViewLogoUrl,
+  getTradingViewCompanyNameLogoUrl,
+} from '../src/services/tradingviewLogos';
 import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolResolver';
 import { parseTradingViewSymbolSearchResponse } from '../src/api/contracts';
 import {
@@ -310,6 +313,15 @@ async function resolveOfficialDomainLogoUpdates(
     const results = await Promise.all(batch.map(async (row) => {
       const isin = normalize(row.isin);
       const domain = domainsByIsin.get(isin) || '';
+      const tradingViewPageLogo = getTradingViewCompanyNameLogoUrl(row.name_en);
+      if (tradingViewPageLogo && await isUsableImageUrl(tradingViewPageLogo)) {
+        return {
+          ticker: normalize(row.ticker),
+          logo_url: tradingViewPageLogo,
+          updated_at: updatedAt,
+        };
+      }
+
       const providerUrl = buildReplyNodesDomainLogoUrl(domain);
       if (providerUrl && await isUsableImageUrl(providerUrl)) {
         return {

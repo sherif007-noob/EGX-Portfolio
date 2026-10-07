@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getTradingViewLogoUrl } from './tradingviewLogos';
+import {
+  getTradingViewLogoUrl,
+  getTradingViewCompanyNameLogoUrl,
+} from './tradingviewLogos';
 
 describe('TradingView logo resolution', () => {
   it('converts scanner logoid slugs into symbol-logo URLs', () => {
@@ -21,3 +24,13 @@ describe('TradingView logo resolution', () => {
   it('uses no fake country badge when a company logo is unavailable', () => {
     expect(getTradingViewLogoUrl('NOLOGO')).toBe('');
   });
+
+
+describe('TradingView public symbol-page logo fallback', () => {
+  it('builds the company-name big-logo asset path used by public symbol pages', () => {
+    expect(getTradingViewCompanyNameLogoUrl('El Badr Investment and Development - BID'))
+      .toBe('https://s3-symbol-logo.tradingview.com/el-badr-investment-and-development-bid--big.svg');
+    expect(getTradingViewCompanyNameLogoUrl('National Asset Management And Investment'))
+      .toBe('https://s3-symbol-logo.tradingview.com/national-asset-management-and-investment--big.svg');
+  });
+});

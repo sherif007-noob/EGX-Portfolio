@@ -196,3 +196,15 @@ export async function syncTradingViewLogosForTickers(tickers: string[]): Promise
 
   return result;
 }
+
+
+export function getTradingViewCompanyNameLogoUrl(companyName: string): string {
+  const slug = String(companyName || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  return slug ? `https://s3-symbol-logo.tradingview.com/${slug}--big.svg` : '';
+}

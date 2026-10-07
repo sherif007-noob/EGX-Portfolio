@@ -3,6 +3,10 @@ import { calculatePortfolioValue, calculatePositionMarketValue, calculatePositio
 import { cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from '../services/cashFlowSemantics';
 import { getLatestEgxSessionDate } from '../services/analyticsTimeframes';
 import { normalizeCorporateActionType } from '../services/corporateActions';
+import {
+  normalizeIpoSubscriptionMetadata,
+  pendingIpoSubscriptionValue,
+} from '../services/ipoSubscriptions';
 
 
 function normalizeTickerKey(ticker: string): string {
@@ -171,7 +175,8 @@ export function normalizeTransaction(tx: any): TradeTransaction {
   const isCash = rawType === 'CASH' || !!inferredCashFlowType;
   const isTrade = rawType === 'BUY' || rawType === 'SELL';
   const isCorporateAction = rawType === 'CORPORATE_ACTION';
-  if (!isTrade && !isCash && !isCorporateAction) {
+  const isIpoSubscription = rawType === 'IPO_SUBSCRIPTION';
+  if (!isTrade && !isCash && !isCorporateAction && !isIpoSubscription) {
     throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
   }
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
@@ -191,16 +196,29 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     : null;
   const normalizedType = isCorporateAction
     ? 'CORPORATE_ACTION'
+    : isIpoSubscription
+      ? 'IPO_SUBSCRIPTION'
     : isCash
       ? (cashImpactForDirection ?? (rawType === 'SELL' ? -1 : 1)) < 0 ? 'SELL' : 'BUY'
       : rawType;
   const normalizedTicker = isCash ? 'CASH' : String(tx.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   const normalizedShares = isCash && Number.isFinite(explicitAmount) ? Math.abs(explicitAmount) : shares;
-  const normalizedPrice = isCorporateAction ? 0 : isCash ? 1 : price;
+  const ipoSubscription = isIpoSubscription
+    ? normalizeIpoSubscriptionMetadata(tx.ipoSubscription ?? tx.ipo_subscription)
+    : undefined;
+  const normalizedPrice = isCorporateAction
+    ? 0
+    : isCash
+      ? 1
+      : isIpoSubscription
+        ? Number(ipoSubscription?.offerPrice ?? price)
+        : price;
   const totalAmount = isCorporateAction
     ? 0
     : isCash
       ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount))
+      : isIpoSubscription
+        ? Number(tx.totalAmount ?? tx.total_amount ?? ipoSubscription?.requestedAmount ?? grossAmount)
       : typeof tx.totalAmount === 'number'
         ? tx.totalAmount
         : rawType === 'BUY'
@@ -227,5 +245,5 @@ export function normalizeTransaction(tx: any): TradeTransaction {
       ? tx.executedAt
       : typeof tx.executed_at === 'string' && tx.executed_at.trim()
         ? tx.executed_at
-        : undefined, fees: isCorporateAction ? 0 : fees, totalAmount, cashFlowType: isCorporateAction ? undefined : inferredCashFlowType, cashFlowAmount: isCorporateAction ? undefined : cashFlowAmount, corporateActionType, corporateActionRatio: Number.isFinite(rawCorporateRatio) ? rawCorporateRatio : undefined, corporateActionSourceShares: Number.isFinite(rawCorporateSourceShares) ? rawCorporateSourceShares : undefined, corporateActionReference: tx.corporateActionReference ?? tx.corporate_action_reference ?? undefined, isDCA: isCorporateAction ? false : (tx.isDCA ?? tx.isDca ?? tx.is_dca), notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id };
+        : undefined, fees: isCorporateAction ? 0 : fees, totalAmount, cashFlowType: isCorporateAction || isIpoSubscription ? undefined : inferredCashFlowType, cashFlowAmount: isCorporateAction || isIpoSubscription ? undefined : cashFlowAmount, corporateActionType, corporateActionRatio: Number.isFinite(rawCorporateRatio) ? rawCorporateRatio : undefined, corporateActionSourceShares: Number.isFinite(rawCorporateSourceShares) ? rawCorporateSourceShares : undefined, corporateActionReference: tx.corporateActionReference ?? tx.corporate_action_reference ?? undefined, ipoSubscription, isDCA: isCorporateAction ? false : (tx.isDCA ?? tx.isDca ?? tx.is_dca), notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id };
 }

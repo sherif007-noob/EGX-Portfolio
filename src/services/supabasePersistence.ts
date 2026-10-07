@@ -91,9 +91,13 @@ function mapTransaction(row: any): TradeTransaction {
     id: String(row.id),
     type: row.transaction_type === 'CORPORATE_ACTION'
       ? 'CORPORATE_ACTION'
-      : row.transaction_type === 'SELL'
-        ? 'SELL'
-        : 'BUY',
+      : row.transaction_type === 'IPO_SUBSCRIPTION'
+        ? 'IPO_SUBSCRIPTION'
+        : row.transaction_type === 'OPENING_POSITION'
+          ? 'OPENING_POSITION'
+          : row.transaction_type === 'SELL'
+            ? 'SELL'
+            : 'BUY',
     ticker: String(row.ticker ?? '').toUpperCase(),
     companyName: row.company_name ?? '',
     sector: row.sector ?? 'Other',

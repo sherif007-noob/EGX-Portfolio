@@ -30,9 +30,18 @@ export function getActivePositionLedgerTransactionIds(
     if (normalizeTicker(transaction.ticker) !== targetTicker) continue;
     if (transaction.cashFlowType || normalizeTicker(transaction.ticker) === 'CASH') continue;
 
-    if (transaction.type === 'BUY') {
+    if (
+      transaction.type === 'BUY'
+      || transaction.type === 'OPENING_POSITION'
+      || transaction.type === 'CORPORATE_ACTION'
+      || (transaction.type === 'IPO_SUBSCRIPTION' && transaction.ipoSubscription?.status === 'ALLOCATED')
+    ) {
+      const addedShares = transaction.type === 'IPO_SUBSCRIPTION'
+        ? Number(transaction.ipoSubscription?.allocatedShares ?? transaction.shares)
+        : Number(transaction.shares);
+      if (!Number.isFinite(addedShares) || addedShares <= EPSILON) continue;
       if (runningShares <= EPSILON) activeCycleIds = [];
-      runningShares += transaction.shares;
+      runningShares += addedShares;
       activeCycleIds.push(transaction.id);
       continue;
     }

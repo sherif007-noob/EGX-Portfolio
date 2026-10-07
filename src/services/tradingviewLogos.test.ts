@@ -16,3 +16,8 @@ describe('TradingView logo resolution', () => {
     expect(getTradingViewLogoUrl('COMI')).toContain('commercial-international-bank-egypt.svg');
   });
 });
+
+
+  it('uses no fake country badge when a company logo is unavailable', () => {
+    expect(getTradingViewLogoUrl('NOLOGO')).toBe('');
+  });

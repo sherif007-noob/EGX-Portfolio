@@ -126,8 +126,10 @@ export function getTradingViewLogoUrl(ticker: string, customLogoUrl?: string): s
     return `https://s3-symbol-logo.tradingview.com/${presetId}.svg`;
   }
 
-  // Fallback to Egypt market exchange badge on TradingView
-  return `https://s3-symbol-logo.tradingview.com/country/EG.svg`;
+  // No company-specific TradingView artwork is available. Return empty so
+  // StockLogo renders the deliberate sector/initials fallback instead of a
+  // misleading Egypt-country badge.
+  return '';
 }
 
 /**
@@ -178,8 +180,8 @@ export async function syncTradingViewLogosForTickers(tickers: string[]): Promise
     const clean = t.trim().toUpperCase().replace('.CA', '').replace('EGX:', '');
     const existing = getTradingViewLogoUrl(clean);
     
-    // If we only have country default fallback, try fetching live
-    if (existing.includes('/country/EG.svg')) {
+    // If no company-specific logo is known, try fetching live.
+    if (!existing) {
       const fetched = await fetchTradingViewLogoForTicker(clean);
       if (fetched) {
         result[clean] = fetched;

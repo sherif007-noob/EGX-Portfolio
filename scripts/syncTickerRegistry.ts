@@ -391,7 +391,9 @@ async function main() {
       sector,
       market_sector: scan.marketSector || current?.market_sector || null,
       industry: scan.industry || current?.industry || null,
-      logo_url: getTradingViewLogoUrl(scan.ticker, scan.logoId) || current?.logo_url || null,
+      logo_url:
+        getTradingViewLogoUrl(scan.ticker, scan.logoId)
+        || (current?.logo_url && !current.logo_url.includes('/country/EG.svg') ? current.logo_url : null),
       currency: scan.currency || 'EGP',
       status: 'active',
       scanner_symbol: scan.scannerSymbol,

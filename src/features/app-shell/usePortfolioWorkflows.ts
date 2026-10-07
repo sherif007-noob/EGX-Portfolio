@@ -456,9 +456,9 @@ export function usePortfolioWorkflows({
   ]);
 
   const handleEditTransaction = useCallback(async (updatedTx: TradeTransaction): Promise<boolean> => {
-    if (updatedTx.type === 'CORPORATE_ACTION') {
+    if (updatedTx.type === 'CORPORATE_ACTION' || updatedTx.type === 'IPO_SUBSCRIPTION') {
       showToast(
-        'Corporate actions use protected accounting metadata. Delete and re-enter the action instead of editing it as a trade.',
+        'Protected ledger lifecycle records must be managed through their dedicated workflow instead of the trade editor.',
         'error',
         6000,
       );

@@ -135,6 +135,7 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
     transaction.type !== 'BUY'
     && transaction.type !== 'SELL'
     && transaction.type !== 'CORPORATE_ACTION'
+    && transaction.type !== 'IPO_SUBSCRIPTION'
   ) {
     throw new Error(`${label} has an unsupported transaction type.`);
   }

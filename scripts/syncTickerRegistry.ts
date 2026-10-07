@@ -313,6 +313,15 @@ async function resolveOfficialDomainLogoUpdates(
     const results = await Promise.all(batch.map(async (row) => {
       const isin = normalize(row.isin);
       const domain = domainsByIsin.get(isin) || '';
+      const curatedTradingViewLogo = getTradingViewLogoUrl(row.ticker);
+      if (curatedTradingViewLogo && await isUsableImageUrl(curatedTradingViewLogo)) {
+        return {
+          ticker: normalize(row.ticker),
+          logo_url: curatedTradingViewLogo,
+          updated_at: updatedAt,
+        };
+      }
+
       const tradingViewPageLogo = getTradingViewCompanyNameLogoUrl(row.name_en);
       if (tradingViewPageLogo && await isUsableImageUrl(tradingViewPageLogo)) {
         return {

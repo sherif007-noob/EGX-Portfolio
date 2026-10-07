@@ -66,6 +66,8 @@ export const TV_SYMBOL_LOGOS: Record<string, string> = {
   MPCO: 'mansoura-poultry',
   ELSH: 'el-shams-housing',
   EFIC: 'egyptian-financial-and-industrial',
+  NAMI: 'national-asset-management-and-investment--big',
+  EGS65101C015: 'national-investment-and-reconstruction--big',
 };
 
 const LOGO_CACHE_KEY = 'egx_tradingview_logo_cache_v1';

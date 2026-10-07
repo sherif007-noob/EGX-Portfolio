@@ -146,7 +146,9 @@ async function fetchTradingViewSearchLogoId(ticker: string): Promise<string> {
       return symbol === clean && (!exchange || exchange === 'EGX');
     });
     const candidate = exact ?? items.find((item) => normalize(item.symbol || item.ticker) === clean);
-    return String(candidate?.logoid || '').trim();
+    const logoId = String(candidate?.logoid || '').trim();
+    if (logoId) return logoId;
+    return String(candidate?.logo_urls?.find((url) => /^https?:\/\//i.test(url)) || '').trim();
   } catch {
     return '';
   }

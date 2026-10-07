@@ -309,11 +309,58 @@ export function prepareBonusSharesMutation(
     current.capitalDeposits,
     current.positions,
   );
-  const position = report.reconciledPositions.find(
+  let position = report.reconciledPositions.find(
     (item) => item.ticker.trim().toUpperCase() === ticker,
   );
+
+  let openingPositionSeed: TradeTransaction | undefined;
   if (!position) {
-    throw new Error(`No eligible open ${ticker} position exists before ${effectiveDate}.`);
+    const hasAnyTickerLedger = current.transactions.some(
+      (transaction) => String(transaction.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '') === ticker,
+    );
+    const legacyPosition = current.positions.find(
+      (item) => item.ticker.trim().toUpperCase() === ticker,
+    );
+    const legacyPredatesAction = legacyPosition
+      && /^\d{4}-\d{2}-\d{2}$/.test(String(legacyPosition.buyDate || '').slice(0, 10))
+      && String(legacyPosition.buyDate).slice(0, 10) < effectiveDate;
+
+    if (!hasAnyTickerLedger && legacyPosition && legacyPredatesAction) {
+      openingPositionSeed = {
+        id: `opening-${input.transactionId}`,
+        type: 'OPENING_POSITION',
+        ticker,
+        companyName: legacyPosition.companyName || ticker,
+        sector: legacyPosition.sector || 'Other',
+        shares: Number(legacyPosition.shares),
+        price: Number(legacyPosition.avgBuyPrice),
+        date: String(legacyPosition.buyDate).slice(0, 10),
+        fees: Number(legacyPosition.totalFees || 0),
+        totalAmount: 0,
+        netCashImpact: 0,
+        positionId: legacyPosition.id,
+        targetPrice: legacyPosition.targetPrice,
+        stopLoss: legacyPosition.stopLoss,
+        notes: [
+          legacyPosition.notes,
+          'Legacy opening position migrated into the canonical ledger before recording bonus shares.',
+        ].filter(Boolean).join(' '),
+      };
+
+      const seededReport = reconcilePortfolioFromLedger(
+        [...preActionTransactions, openingPositionSeed],
+        current.tickers,
+        current.capitalDeposits,
+        current.positions,
+      );
+      position = seededReport.reconciledPositions.find(
+        (item) => item.ticker.trim().toUpperCase() === ticker,
+      );
+    }
+  }
+
+  if (!position) {
+    throw new Error(`No eligible open ${ticker} position exists before ${effectiveDate}. If this is a legacy holding, its buy date must predate the corporate action and it must not conflict with existing ticker ledger rows.`);
   }
 
   const bonusShares = Number(input.bonusShares);
@@ -351,7 +398,11 @@ export function prepareBonusSharesMutation(
   };
 
   return {
-    transactions: [...current.transactions, action],
+    transactions: [
+      ...current.transactions,
+      ...(openingPositionSeed ? [openingPositionSeed] : []),
+      action,
+    ],
     capitalDeposits: current.capitalDeposits,
     positionSeed: current.positions,
     value: action,

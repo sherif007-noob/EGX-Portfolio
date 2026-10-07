@@ -567,12 +567,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 </button>
               )}
               <button
-                onClick={() => {
-                  void saveCashChange(() =>
+                onClick={async () => {
+                  const saved = await saveCashChange(() =>
                     onReconcileLedger
                       ? onReconcileLedger(reconcileAuditReason.trim() || undefined)
                       : onUpdateCashBalance(auditedLiquidCash, reconcileAuditReason.trim() || undefined)
                   );
+                  if (!saved) return;
                   setFeedbackMessage({
                     text: `Cash balance reconciled to ledger-derived amount of ${formatEgp(auditedLiquidCash)} EGP.`,
                     type: 'success',

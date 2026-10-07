@@ -161,6 +161,8 @@ export function sortPerformanceTransactions(transactions: TradeTransaction[]): T
     const tradeA = Number(a.tradeId);
     const tradeB = Number(b.tradeId);
     if (Number.isFinite(tradeA) && Number.isFinite(tradeB) && tradeA !== tradeB) return tradeA - tradeB;
+    if (a.type === 'OPENING_POSITION' && b.type !== 'OPENING_POSITION') return -1;
+    if (b.type === 'OPENING_POSITION' && a.type !== 'OPENING_POSITION') return 1;
     if (a.type === 'CORPORATE_ACTION' && b.type !== 'CORPORATE_ACTION') return -1;
     if (b.type === 'CORPORATE_ACTION' && a.type !== 'CORPORATE_ACTION') return 1;
     if (a.type === 'BUY' && b.type === 'SELL') return -1;
@@ -251,6 +253,10 @@ export function buildHistoricalEquityCurve(
           if (!Number.isFinite(amount)) continue;
           cash += tx.type === 'BUY' ? amount : -amount;
         }
+        continue;
+      }
+      if (tx.type === 'OPENING_POSITION') {
+        holdings[ticker] = (holdings[ticker] || 0) + tx.shares;
         continue;
       }
       if (isBonusSharesTransaction(tx)) {

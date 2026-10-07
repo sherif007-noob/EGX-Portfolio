@@ -190,7 +190,8 @@ export function normalizeTransaction(tx: any): TradeTransaction {
   const isTrade = rawType === 'BUY' || rawType === 'SELL';
   const isCorporateAction = rawType === 'CORPORATE_ACTION';
   const isIpoSubscription = rawType === 'IPO_SUBSCRIPTION';
-  if (!isTrade && !isCash && !isCorporateAction && !isIpoSubscription) {
+  const isOpeningPosition = rawType === 'OPENING_POSITION';
+  if (!isTrade && !isCash && !isCorporateAction && !isIpoSubscription && !isOpeningPosition) {
     throw new Error(`Unsupported transaction type: ${rawType || 'EMPTY'}`);
   }
   const tradeId = tx.tradeId !== undefined ? tx.tradeId : tx.trade_id !== undefined ? tx.trade_id : undefined;
@@ -212,6 +213,8 @@ export function normalizeTransaction(tx: any): TradeTransaction {
     ? 'CORPORATE_ACTION'
     : isIpoSubscription
       ? 'IPO_SUBSCRIPTION'
+    : isOpeningPosition
+      ? 'OPENING_POSITION'
     : isCash
       ? (cashImpactForDirection ?? (rawType === 'SELL' ? -1 : 1)) < 0 ? 'SELL' : 'BUY'
       : rawType;
@@ -227,7 +230,7 @@ export function normalizeTransaction(tx: any): TradeTransaction {
       : isIpoSubscription
         ? Number(ipoSubscription?.offerPrice ?? price)
         : price;
-  const totalAmount = isCorporateAction
+  const totalAmount = isCorporateAction || isOpeningPosition
     ? 0
     : isCash
       ? Math.abs(Number.isFinite(explicitAmount) ? explicitAmount : (tx.totalAmount ?? tx.total_amount ?? grossAmount))
@@ -259,5 +262,5 @@ export function normalizeTransaction(tx: any): TradeTransaction {
       ? tx.executedAt
       : typeof tx.executed_at === 'string' && tx.executed_at.trim()
         ? tx.executed_at
-        : undefined, fees: isCorporateAction ? 0 : fees, totalAmount, cashFlowType: isCorporateAction || isIpoSubscription ? undefined : inferredCashFlowType, cashFlowAmount: isCorporateAction || isIpoSubscription ? undefined : cashFlowAmount, corporateActionType, corporateActionRatio: Number.isFinite(rawCorporateRatio) ? rawCorporateRatio : undefined, corporateActionSourceShares: Number.isFinite(rawCorporateSourceShares) ? rawCorporateSourceShares : undefined, corporateActionReference: tx.corporateActionReference ?? tx.corporate_action_reference ?? undefined, ipoSubscription, isDCA: isCorporateAction ? false : (tx.isDCA ?? tx.isDca ?? tx.is_dca), notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id };
+        : undefined, fees: isCorporateAction ? 0 : fees, totalAmount, cashFlowType: isCorporateAction || isIpoSubscription || isOpeningPosition ? undefined : inferredCashFlowType, cashFlowAmount: isCorporateAction || isIpoSubscription || isOpeningPosition ? undefined : cashFlowAmount, corporateActionType, corporateActionRatio: Number.isFinite(rawCorporateRatio) ? rawCorporateRatio : undefined, corporateActionSourceShares: Number.isFinite(rawCorporateSourceShares) ? rawCorporateSourceShares : undefined, corporateActionReference: tx.corporateActionReference ?? tx.corporate_action_reference ?? undefined, ipoSubscription, isDCA: isCorporateAction || isOpeningPosition ? false : (tx.isDCA ?? tx.isDca ?? tx.is_dca), notes: tx.notes || '', targetPrice: tx.targetPrice ?? tx.target_price, stopLoss: tx.stopLoss ?? tx.stop_loss, tradeId, trade_id: tradeId, tradeCycle: tx.tradeCycle || tx.trade_cycle, cycleTag: tx.cycleTag || tx.cycle_tag, runningShares: tx.runningShares ?? tx.running_shares, grossTradeValue: tx.grossTradeValue ?? tx.gross_trade_value, netCashImpact: tx.netCashImpact ?? tx.net_cash_impact, realizedPnlEgp: tx.realizedPnlEgp ?? tx.realized_pnl_egp, realizedPnlPercent: tx.realizedPnlPercent ?? tx.realized_pnl_percent, outcome: tx.outcome, holdingDays: tx.holdingDays ?? tx.holding_days, positionId: tx.positionId || tx.position_id };
 }

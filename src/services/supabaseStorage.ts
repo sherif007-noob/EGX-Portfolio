@@ -119,7 +119,7 @@ function enqueueSave(data: PortfolioWrite, auditEvent?: AuditTrailDraft): Promis
 
 export async function savePortfolioToFirestore(data: PortfolioWrite, allowEmpty = false, _reason?: string) {
   if (!allowEmpty && !(data.positions?.length || data.transactions?.length)) return false;
-  return enqueueSave(data, auditEvent);
+  return enqueueSave(data);
 }
 
 export function debouncedSavePortfolioToFirestore(data: PortfolioWrite, delayMs = 1500) {
@@ -136,7 +136,7 @@ export async function forceFullSyncToFirestore(data: PortfolioWrite, auditEvent?
     saveTimeout = null;
   }
   markLocalMutation(7500);
-  return enqueueSave(data);
+  return enqueueSave(data, auditEvent);
 }
 
 function mergeAndSave(patch: Partial<PortfolioDataDocument>) {

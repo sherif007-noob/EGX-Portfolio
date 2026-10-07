@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { PremiumModalMotion, SurfacePresence } from './PremiumMotion';
+import { BrokerReconciliationWorkspace } from './BrokerReconciliationWorkspace';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker, GoogleSheetsConfig } from '../types';
 import {
   Download,
@@ -47,6 +48,8 @@ interface PortfolioBackupModalProps {
     tickers?: EGXTicker[];
   }) => Promise<boolean>;
   onReconcileLedger: () => Promise<boolean>;
+  onOpenBrokerLedgerEvidence?: (ticker: string, transactionIds: string[], detail: string) => void;
+  onOpenBrokerCashLedger?: () => void;
 }
 
 /**
@@ -129,6 +132,8 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
   sheetsConfig,
   onRestoreBackup,
   onReconcileLedger,
+  onOpenBrokerLedgerEvidence,
+  onOpenBrokerCashLedger,
 }) => {
   const [isReconciling, setIsReconciling] = useState(false);
   const requestClose = () => {
@@ -318,7 +323,7 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
     <PremiumModalMotion
       isOpen={isOpen}
       backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-lg p-4 sm:p-6 rounded-2xl space-y-5"
+      panelClassName="premium-modal premium-modal-viewport relative w-full max-w-4xl p-4 sm:p-6 rounded-2xl space-y-5"
       onBackdropClick={requestClose}
       panelAriaLabel="Backup, sync and integrity"
     >
@@ -353,7 +358,16 @@ export const PortfolioBackupModal: React.FC<PortfolioBackupModalProps> = ({
           )}
         </SurfacePresence>
 
-        {/* Option 1: Reconcile Ledger */}
+        <BrokerReconciliationWorkspace
+          positions={positions}
+          transactions={transactions}
+          cashBalance={cashBalance}
+          tickers={tickers}
+          onOpenLedgerEvidence={onOpenBrokerLedgerEvidence}
+          onOpenCashLedger={onOpenBrokerCashLedger}
+        />
+
+        {/* Internal ledger integrity rebuild — separate from broker truth comparison. */}
         <div className="premium-modal-section p-4 rounded-xl space-y-2">
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">

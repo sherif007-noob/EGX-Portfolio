@@ -43,7 +43,7 @@ import {
 
 export interface JournalLedgerFocus {
   key: string;
-  source: 'POSITION' | 'CLOSED_CYCLE';
+  source: 'POSITION' | 'CLOSED_CYCLE' | 'BROKER_RECONCILIATION';
   ticker: string;
   transactionIds: string[];
   title: string;

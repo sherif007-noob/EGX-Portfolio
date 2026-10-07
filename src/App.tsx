@@ -82,6 +82,7 @@ export default function App() {
     handleTabChange,
     openPositionLedgerCorrection,
     openClosedCycleLedgerCorrection,
+    openBrokerReconciliationLedger,
   } = usePortfolioNavigation(transactions);
 
   const {
@@ -648,6 +649,14 @@ export default function App() {
           return true;
         }}
         onReconcileLedger={handleOverviewReconcile}
+        onOpenBrokerLedgerEvidence={(ticker, transactionIds, detail) => {
+          setIsBackupModalOpen(false);
+          openBrokerReconciliationLedger(ticker, transactionIds, detail);
+        }}
+        onOpenBrokerCashLedger={() => {
+          setIsBackupModalOpen(false);
+          handleTabChange('cash');
+        }}
       />
 
       <DataHealthCenterModal

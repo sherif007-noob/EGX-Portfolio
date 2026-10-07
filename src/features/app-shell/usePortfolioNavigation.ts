@@ -61,6 +61,22 @@ export function usePortfolioNavigation(transactions: TradeTransaction[]) {
     handleTabChange('journal');
   }, [handleTabChange, transactions]);
 
+  const openBrokerReconciliationLedger = useCallback((
+    ticker: string,
+    transactionIds: string[],
+    detail: string,
+  ) => {
+    setLedgerCorrectionFocus({
+      key: `broker:${ticker}:${Date.now()}`,
+      source: 'BROKER_RECONCILIATION',
+      ticker,
+      transactionIds,
+      title: `${ticker} broker reconciliation source ledger`,
+      detail,
+    });
+    handleTabChange('journal');
+  }, [handleTabChange]);
+
   const openClosedCycleLedgerCorrection = useCallback((
     cycle: ClosedTrade,
     renderedTransactionIds: string[],
@@ -89,5 +105,6 @@ export function usePortfolioNavigation(transactions: TradeTransaction[]) {
     handleTabChange,
     openPositionLedgerCorrection,
     openClosedCycleLedgerCorrection,
+    openBrokerReconciliationLedger,
   };
 }

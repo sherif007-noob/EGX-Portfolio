@@ -269,7 +269,7 @@ export interface IpoSubscriptionMetadata {
 
 export interface TradeTransaction {
   id: string;
-  type: 'BUY' | 'SELL' | 'CORPORATE_ACTION' | 'IPO_SUBSCRIPTION';
+  type: 'BUY' | 'SELL' | 'CORPORATE_ACTION' | 'IPO_SUBSCRIPTION' | 'OPENING_POSITION';
   ticker: string;
   companyName: string;
   sector: Sector;

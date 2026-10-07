@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { PerformanceStats, PortfolioMetrics } from './types';
 import { Header } from './components/Header';
 import { PortfolioSummary } from './components/PortfolioSummary';
+import { CompactPortfolioStrip } from './components/CompactPortfolioStrip';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
@@ -323,17 +324,22 @@ export default function App() {
 
       {/* Main Container */}
       <main className="premium-safe-inline-main premium-flow-major relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6">
-        {/* Top Summary Banner */}
-        <PortfolioSummary
-          metrics={metrics}
-          stats={stats}
-          onQuickAddCash={handleQuickAddCash}
-          onSyncLivePrices={handleSyncPrices}
-          onReconcileLedger={handleOverviewReconcile}
-          isSyncingPrices={isSyncingPrices}
-          lastPriceSyncTime={lastPriceSyncTime}
-          scheduleStatus={scheduleStatus}
-        />
+        {/* Overview owns the full portfolio hero. Operational tabs get only a
+            compact context strip so their actual workflow stays above the fold. */}
+        {activeTab === 'overview' ? (
+          <PortfolioSummary
+            metrics={metrics}
+            stats={stats}
+            onQuickAddCash={handleQuickAddCash}
+            onSyncLivePrices={handleSyncPrices}
+            onReconcileLedger={handleOverviewReconcile}
+            isSyncingPrices={isSyncingPrices}
+            lastPriceSyncTime={lastPriceSyncTime}
+            scheduleStatus={scheduleStatus}
+          />
+        ) : (
+          <CompactPortfolioStrip metrics={metrics} />
+        )}
 
         {/* Ledger Reconciliation Alert if transactions exist but positions/closed cycles are empty */}
         {transactions.length > 0 && positions.length === 0 && (

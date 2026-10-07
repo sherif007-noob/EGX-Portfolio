@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE — 6.2.1 through 6.2.4 implemented on `main`.**
+**COMPLETE / CLOSED — 6.2.1 through 6.2.5 implemented on `main`.**
 
 The audit trail exists for personal traceability. It is not an accounting source of truth and it is not an enterprise compliance subsystem.
 
@@ -68,15 +68,28 @@ The viewer shows the latest 100 records and exposes:
 
 ## Reason capture
 
-Transaction edit and transaction deletion support an optional correction reason.
+Optional audit-only reason capture now exists for:
 
-The reason is audit-only. It does not overwrite the transaction's own Notes field.
+- transaction edit and deletion;
+- cash-ledger edit and deletion;
+- manual cash reconciliation adjustment;
+- manual ledger reconciliation;
+- JSON backup restore.
 
-Remaining Stage 6.2 work is to expose the same optional reason contract on:
+Google Sheets import records the sheet source automatically as audit provenance.
 
-- cash corrections;
-- manual reconciliation;
-- backup/restore or ledger import corrections where a reason is useful.
+The reason does not overwrite transaction/cash Notes fields.
+
+## Closure acceptance
+
+Exact core validation head: `df956cb5`.
+
+- TypeScript passed.
+- 150 / 150 test files and 792 / 792 tests passed.
+- Production Vite/PWA build passed.
+- Cloudflare Worker dry-run passed.
+- 12 / 12 responsive geometry widths remained at 0px overflow.
+- The rendered screenshot job remains red because its golden images were already stale before Stage 6.2. The reported diff percentages on the pre-stage head `b81d7fe5` and the Stage 6.2 acceptance head are identical, so the stage introduced no additional tracked rendered delta. No baseline or threshold was silently changed.
 
 ## Database
 

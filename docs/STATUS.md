@@ -8,7 +8,7 @@ Detailed sequencing belongs in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZ
 
 ## Snapshot
 
-**Date:** 2026-10-07  
+**Date:** 2026-10-08  
 **Authoritative production/default branch:** `main`  
 **Legacy premium branch:** compatibility/history only; not production authority  
 **Latest runtime feature head:** `9f6cdcea` — Stage 7.1 benchmark comparison + Today Cairo-session boundary fix  
@@ -270,25 +270,38 @@ Stage 7.1 remains implemented. Stage 7.2 is paused while the master sequence pro
 
 ## Stage 6.2 — Lightweight audit trail
 
-**ACTIVE on main.**
+**COMPLETE / CLOSED on main.**
 
 Implemented:
 
 - canonical before/after audit diff generation inside the financial mutation boundary;
 - append-only `portfolio_audit_log` table with portfolio-scoped RLS;
-- immutable audit persistence in the same PostgreSQL transaction as the accounting snapshot;
-- server/database timestamp for every audit record;
-- mutation kind, entity type/id, ticker, before state, after state and compact change metadata;
-- Data & Tools → Financial Audit Trail viewer for the latest records;
-- optional correction reason capture on transaction edit and transaction delete;
-- no-op mutations do not create audit noise;
-- market-price/background writes remain outside the financial audit trail.
+- audit persistence in the **same PostgreSQL transaction** as the accounting snapshot;
+- database timestamp, mutation kind, entity type/id, ticker, before/after state and compact change metadata;
+- Data & Tools → Financial Audit Trail viewer;
+- optional audit-only reasons on transaction edit/delete;
+- optional audit-only reasons on cash edit/delete and manual cash adjustment;
+- optional reason on manual ledger reconciliation and JSON backup restore;
+- Google Sheets restore/import records its source as audit provenance;
+- no-op reconciliation creates no audit noise;
+- background quote/market-data writes remain outside the financial audit trail;
+- Cash Ledger's “Apply Audited Balance” now awaits persistence before showing success.
 
 Production migration:
 
 `20261007214652_stage62_portfolio_audit_trail.sql`
 
-Next: **6.2.5 — extend optional reason capture to cash corrections, reconciliation and restore/import workflows, then run acceptance and close Stage 6.2.**
+Closure evidence on exact core head `df956cb5`:
+
+- TypeScript — passed;
+- **150 / 150 Vitest files, 792 / 792 tests — passed**;
+- production Vite/PWA build — passed;
+- Cloudflare Worker dry-run — passed;
+- **12 / 12 responsive geometry widths remain at 0px overflow**.
+
+Rendered-regression truth: the global golden-image job is still red, but the complete reported diff profile is identical to pre-6.2 head `b81d7fe5`. That is pre-existing stale-baseline debt, not a Stage 6.2 visual regression. No baseline or threshold was changed to hide it.
+
+**Next execution point: Stage 6.3 — Corporate Actions lifecycle audit and expansion.**
 
 ## Documentation authority
 

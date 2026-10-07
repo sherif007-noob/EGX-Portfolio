@@ -24,12 +24,17 @@ export {
   prepareCashBalanceAdjustmentMutation,
   prepareCashEntryMutation,
   prepareCashEventMutation,
+  prepareIpoAllocationMutation,
+  prepareIpoCancellationMutation,
+  prepareIpoSubscriptionMutation,
   prepareLedgerReconciliationMutation,
   prepareLedgerSnapshotRestoreMutation,
   preparePortfolioRestoreMutation,
   prepareTransactionDeleteMutation,
   prepareTransactionEditMutation,
   type BonusSharesCorporateActionInput,
+  type IpoAllocationInput,
+  type IpoSubscriptionInput,
   type PortfolioRestoreInput,
 } from '../../services/ledgerWorkflowMutations';
 

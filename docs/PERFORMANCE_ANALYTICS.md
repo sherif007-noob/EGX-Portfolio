@@ -323,6 +323,10 @@ Today is keyed to the **EGX session boundary**, not to Cairo calendar midnight.
 
 This intentionally fixes the post-midnight empty-chart failure while preserving the no-fabricated-session rule. Exchange holidays after the 10:00 boundary still remain unavailable unless real bars exist for the requested date; the current resolver is weekday/session-time aware, not an exchange-holiday calendar.
 
+Date-only CASH events have different timing semantics from exchange executions. A same-session CASH row without `executedAt` is treated as a session-boundary external flow rather than an untimed trade. It must not make every intraday point incomplete. Same-session BUY/SELL trades still require `executedAt` because their ordering against market bars affects shares, cash and NAV.
+
+New cash rows default to the Cairo calendar date. UTC `toISOString().slice(0, 10)` must not be used for EGX/accounting date defaults because the Cairo date can already have rolled over while UTC is still on the prior day.
+
 
 ### MWR presentation
 
@@ -339,7 +343,7 @@ The ingestion workflow is also triggered when its own workflow/script changes ar
 
 ## Analytics chart modes
 
-The primary analytics card supports four modes that all reuse the same selected timeframe and the same unified/intraday valuation result.
+The primary analytics card supports five modes that all reuse the same selected timeframe and the same unified/intraday valuation result.
 
 ### Portfolio vs Return
 

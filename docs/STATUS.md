@@ -15,18 +15,21 @@ Detailed sequencing belongs in [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZ
 **Exact validation head:** `ea1204bb` — same application runtime plus the scoped Reports browser-harness fix  
 **Current documentation head:** may be newer than the validated runtime because docs-only commits do not redefine runtime acceptance
 
-Current runtime evidence:
+Current runtime evidence on `main@5b0dcba3`:
 
-- Quality Checks **#37547142039** on `main@ea1204bb` — passed;
-- Phase 10 Visual Closure **#37547142018** — passed;
-- Rendered Visual Regression **#37547142047** — passed;
+- Quality Checks **#37549352346** — passed;
+- Intraday 1m Migration Smoke **#37549352301** — passed;
+- Phase 10 Visual Closure **#37549352298** — passed;
+- Rendered Visual Regression **#37549352320** — passed;
 - **140 / 140** Vitest files;
-- **739 / 739** tests;
+- **742 / 742** tests;
+- focused intraday smoke: **9 / 9 files, 50 / 50 tests**;
 - production Vite/PWA build — passed;
 - Cloudflare Worker dry-run — passed;
+- live intraday session-universe sync resolved **14 / 14** tickers with **0 failures**;
 - **12 / 12** responsive geometry checks remained at **0px overflow**;
-- every tracked screenshot remained on its accepted visual profile, including `reports-desktop` at the existing exact-hash accepted **23.556%** delta;
-- the benchmark-era Reports interaction ambiguity was fixed by scoping Analytics controls to the active Reports Analytics workspace; no visual baseline or global threshold was changed.
+- every tracked screenshot remained on its accepted visual profile, including `reports-desktop` at the existing accepted **23.556%** delta;
+- no visual baseline or global threshold changed.
 
 ## Runtime and persistence
 
@@ -78,6 +81,24 @@ Auto · 1m · 5m · 15m · 1h
 ```
 
 `Auto` prefers the finest trustworthy current-session persisted candidate. `1h` is display aggregation from the selected trustworthy intraday source, not a separate persisted interval.
+
+### Oct 7 Today rollover incident — CLOSED
+
+The Oct 6 chart initially still showed all points as incomplete after the pre-10:00 session-date fix. Production inspection proved the market bars and prior closes were healthy.
+
+Root cause:
+
+- three 20,000 EGP CASH deposits were created at about 01:08 Cairo on Oct 7;
+- the cash-entry UI/service used UTC `toISOString().slice(0, 10)`, so those rows were persisted as Oct 6;
+- CASH rows are date-based and had no `executedAt`;
+- the intraday engine treated any same-session row without `executedAt` like an untimed stock trade, so all 262 reconstructed points became incomplete.
+
+Current contract:
+
+- new cash entries default to the `Africa/Cairo` calendar date;
+- date-only same-session CASH flows are session-boundary external flows and do not poison intraday completeness;
+- ordinary same-session BUY/SELL rows still require `executedAt`;
+- the three affected 20,000 EGP deposits were corrected from Oct 6 to Oct 7 with cash, contributed capital, positions, share counts, closed cycles and realized P&L unchanged.
 
 **Stage 3.5 live-session soak remains FAILED / deferred technical debt.** The October 4 soak showed scheduled ingestion reliability was not yet trustworthy: the writer could execute outside the accepted ingestion window and skip the target session. Repeat Stage 3.5 only after scheduler reliability is repaired, then verify post-close coverage and real phone-vs-desktop displayed snapshot parity.
 

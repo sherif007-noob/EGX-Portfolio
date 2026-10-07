@@ -246,15 +246,25 @@ See:
 - [ARCHITECTURE_MODULE_OWNERSHIP.md](ARCHITECTURE_MODULE_OWNERSHIP.md)
 - [STAGE4_5_CSS_OWNERSHIP.md](STAGE4_5_CSS_OWNERSHIP.md)
 
-## Current execution point
+## Stage 6.1 — Broker reconciliation
 
-**Active working track — Stage 7.2: Personal risk dashboard**, because Stage 7.1 was explicitly implemented out of the original sequence.
+**ACTIVE on main.**
 
-**Earliest unfinished master-sequence stage — Stage 6.1: Broker reconciliation workspace.**
+Implemented:
 
-Stage 7 work does not silently waive Stage 6. Stage 6.1 still needs to compare broker truth with canonical app truth, explain discrepancies through source ledger events, and route corrections through explicit persist-confirmed ledger edits.
+- broker snapshot contract with broker/date/cash/holdings;
+- pasted or CSV/TXT holdings parser with ticker alias/ISIN resolution;
+- deterministic App − Broker share and cash differences;
+- statuses for exact match, share mismatch, broker-only holding and app-only holding;
+- active/source ledger evidence attached to share mismatches;
+- recent cash-affecting ledger evidence attached to cash mismatches;
+- direct navigation from a share mismatch to the scoped Transactions ledger;
+- direct navigation from a cash mismatch to Cash Ledger;
+- read-only reconciliation semantics: no derived position/cash overwrite is allowed.
 
-If continuing the currently active Stage 7 track, the next pass is 7.2.
+Next slice: **6.1.4 — broker-specific ingestion adapters / richer snapshot capture**, followed by production acceptance/closure.
+
+Stage 7.1 remains implemented. Stage 7.2 is paused while the master sequence proceeds through Stage 6.
 
 ## Documentation authority
 

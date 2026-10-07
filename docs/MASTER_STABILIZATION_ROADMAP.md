@@ -1569,7 +1569,17 @@ Acceptance:
 
 # 9. Stage 6 — Trust, reconciliation & financial lifecycle features
 
-## Pass 6.1 — Broker reconciliation workspace
+## Pass 6.1 — Broker reconciliation workspace — ACTIVE
+
+Current implementation slices:
+
+- **6.1.1 — broker snapshot contract + parser — IMPLEMENTED**
+- **6.1.2 — deterministic App-vs-Broker holdings/cash comparison — IMPLEMENTED**
+- **6.1.3 — source-ledger attribution + correction navigation — IMPLEMENTED**
+- **6.1.4 — broker-specific ingestion adapters / richer snapshot capture — NEXT**
+- **6.1.5 — production acceptance + closure — PENDING**
+
+The current workspace accepts pasted or uploaded CSV/TXT holdings plus broker cash. It is deliberately read-only: mismatches open the canonical Transactions or Cash Ledger correction surfaces instead of patching derived shares/cash.
 
 Allow a broker snapshot/import to be compared against app truth:
 
@@ -1908,10 +1918,10 @@ For financial/data changes also require:
 
 Two pointers are now recorded because Stage 7.1 was explicitly implemented before Stage 6 closed:
 
-> **Active working track: Stage 7.2 — Personal risk dashboard.**
+> **Active working track: Stage 6.1 — Broker reconciliation workspace.**
 
-> **Earliest unfinished master-sequence stage: Stage 6.1 — Broker reconciliation workspace.**
+> **Next Stage 6.1 slice: 6.1.4 — broker-specific ingestion adapters / richer snapshot capture.**
 
-Stage 7.1 benchmark comparison is implemented and does not waive Stage 6. If work continues on Stage 7, proceed to 7.2. If returning to dependency order, Stage 6.1 remains the next unresolved trust/reconciliation pass.
+Stage 7.1 benchmark comparison remains implemented, but Stage 7.2 is paused while the master sequence is back on Stage 6. Stage 6.1.1–6.1.3 now provide a read-only broker-vs-app comparison with source-ledger correction navigation; Stage 6.1 is not closed until ingestion/acceptance is complete.
 
 The existing BONUS_SHARES corporate-action ledger remains current functionality. Stage 6.3 must audit and extend that implementation to the full corporate-action lifecycle rather than creating a parallel model.

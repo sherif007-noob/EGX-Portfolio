@@ -13,6 +13,9 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
       'prepareBuyTradeMutation',
       'prepareSellTradeMutation',
       'prepareBonusSharesMutation',
+      'prepareIpoSubscriptionMutation',
+      'prepareIpoAllocationMutation',
+      'prepareIpoCancellationMutation',
       'prepareTransactionEditMutation',
       'prepareTransactionDeleteMutation',
       'prepareCashEventMutation',
@@ -30,6 +33,9 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
       "'BUY'",
       "'SELL'",
       "'CORPORATE_ACTION_BONUS_SHARES'",
+      "'IPO_SUBSCRIPTION_SUBMIT'",
+      "'IPO_SUBSCRIPTION_ALLOCATE'",
+      "'IPO_SUBSCRIPTION_CANCEL'",
       "'EDIT_TRANSACTION'",
       "'DELETE_TRANSACTION'",
       "'EDIT_CASH_TRANSACTION'",
@@ -75,7 +81,7 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
   it('uses collision-resistant IDs for newly authored BUY, SELL, and corporate-action entries', () => {
     const ledger = read('src/features/portfolio/ledger/usePortfolioLedgerMutations.ts');
 
-    expect(ledger.match(/transactionId: `tx-\$\{crypto\.randomUUID\(\)\}`/g)?.length).toBe(3);
+    expect(ledger.match(/transactionId: `tx-\$\{crypto\.randomUUID\(\)\}`/g)?.length).toBe(4);
     expect(ledger).not.toContain('Math.random()');
   });
 
@@ -104,6 +110,9 @@ describe('Stage 4.3.3 canonical ledger mutation ownership', () => {
       'addTrade: ledger.addTrade',
       'sellPosition: ledger.sellPosition',
       'addBonusShares: ledger.addBonusShares',
+      'addIpoSubscription: ledger.addIpoSubscription',
+      'allocateIpoSubscription: ledger.allocateIpoSubscription',
+      'cancelIpoSubscription: ledger.cancelIpoSubscription',
       'editTransaction: ledger.editTransaction',
       'deleteTransaction: ledger.deleteTransaction',
       'addCashTransaction: ledger.addCashTransaction',

@@ -33,7 +33,7 @@ The metadata is persisted in `transactions.ipo_subscription` as JSONB.
 
 ### SUBMITTED
 
-- available cash decreases by **the broker cash hold only**; an order for 161,700 EGP with a 25% hold reserves 40,425 EGP;
+- available cash decreases by **the broker cash hold only**; for example, a 100,000 EGP order at a 25% hold reserves 25,000 EGP;
 - no listed shares are created;
 - an equal pending IPO asset is included in portfolio equity (NOT the full order commitment);
 - NAV and return are therefore unchanged by the reservation itself.
@@ -87,7 +87,7 @@ The modal supports:
 3. recording allocation;
 4. cancelling and releasing cash.
 
-The subscription entry form accepts a configurable broker-held percentage (the default is 100% for backward compatibility). For the user's observed HALN subscription, the correct percentage is 25%. The amount displayed as `Estimated total` is the full order, not the cash debit. Allocation and cancellation use the original hold amount, not the full commitment.
+The subscription entry form accepts a configurable broker-held percentage (the default is 100% for backward compatibility). The hold percentage must match the broker's actual order conditions. The amount displayed as `Estimated total` is the full order, not the cash debit. Allocation and cancellation use the original hold amount, not the full commitment.
 
 The portfolio summary displays:
 
@@ -111,6 +111,6 @@ Supabase remains authoritative. A future Sheets schema extension must preserve t
 
 ## Read-only observed reconciliation / operational boundary
 
-The 2026-10-07 HALN placed order described by the user has 6,600 requested shares at 24.50 EGP, a full 161,700 EGP commitment, and a broker hold of 40,425 EGP. This **does not mean shares were allocated**. The current production database had no IPO_SUBSCRIPTION record during the read-only investigation. Applying the order to the user's actual portfolio must go through the dedicated audited form after confirmation; **no database mutation was made by this branch implementation**. Historical/backtest prices must never treat this as an owned security position.
+The lifecycle model supports partial broker holds, regardless of IPO ticker. For example, a **synthetic** 100,000 EGP order with 25,000 EGP (25%) held records 25,000 EGP reserved cash as a pending asset; it does not create owned shares. Any real pending IPO in a user's portfolio must be saved through the dedicated audited form after confirmation. No production financial records were mutated by this branch implementation.
 
 Source-level tests cover the 25%-hold submitted record, NAV neutrality, unallocated refunds, additional-cash debits, insufficient liquidity, and cancellation. TypeScript, Vitest and device-level acceptance are pending.

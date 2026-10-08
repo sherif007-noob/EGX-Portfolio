@@ -305,16 +305,19 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         )}
       </div>
 
+      {result?.dataQuality && result.dataQuality.incompleteDays > 0 && !isLoading && (
+        <p className="ui-note" role="status">Incomplete valuation on {result.dataQuality.incompleteDays} day(s). Missing historical prices: {result.dataQuality.missingTickers.join(', ') || 'unknown'}. Returns may omit those periods.</p>
+      )}
       {missingBenchmarks.length > 0 && !isLoading && <p className="ui-note" role="status">No aligned price history for: {missingBenchmarks.join(', ')}. Unavailable indices are not plotted.</p>}
 
       {hasData && !isLoading && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', marginTop: 8 }}>
-          {mode === 'ret' && summary && finite(summary.pnlEgp) ? (
+          {mode === 'ret' && last && finite(last.ret) ? (
             <span className="ui-sm">
               <span className="ui-dot" style={{ ['--dot' as string]: 'var(--ui-teal)' }} />
-              Return{' '}
-              <span className={`ui-mono ${toneClass(summary.pnlEgp)}`}>
-                {formatSigned(summary.pnlEgp)} EGP · {formatPercent(summary.mwrrPercent)}
+              Cash-flow-adjusted P&L since first point{' '}
+              <span className={`ui-mono ${toneClass(last.ret)}`}>
+                {formatSigned(last.ret)} EGP
               </span>
             </span>
           ) : (

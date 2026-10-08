@@ -103,7 +103,6 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   });
 
   const points = result?.points ?? [];
-  const summary = result?.summary;
 
   const model = useMemo(() => {
     const rows: Array<Record<string, number | string>> = [];

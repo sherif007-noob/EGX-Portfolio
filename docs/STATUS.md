@@ -330,3 +330,6 @@ The medium-ui branch adds a read-only Telda NAV breakdown in Home, separates cas
 The new default Activity timeline retains every persisted ledger event and renders cash movements, dividends, free shares, corporate actions, IPO orders and security executions with different information; no cash pseudo-share details. Advanced `TradingJournal` remains an equity-execution editor only.
 
 The IPO mutation model now separates the **full request** from the **broker-held cash**. The held amount is a pending NAV asset until allocation/cancellation; the full requested shares are *not* holdings. Allocation may refund unused reserved cash or request additional available funds, and the new cash/IPO cases are covered by source-level tests. No production financial mutations occurred, and deployment, automated tests and rendered-device acceptance are still pending. See IPO_SUBSCRIPTIONS.md, SIMPLE_UI.md, and FINANCIAL_MUTATION_CONTRACT.md.
+
+### Last-session return fallback guard (medium-ui)
+In the medium-ui branch, daily P&L preserves transaction-aware opening holdings even when tickers are not in the directory, by using stored valid holding deltas as previous-close fallback. Where opening values cannot be reconstructed, the UI marks the daily return unavailable instead of presenting a false percent. Source-only changes pending actual tests and broker validation.

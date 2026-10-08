@@ -3,6 +3,7 @@ import { ChevronDown, FilePenLine, ScanLine } from 'lucide-react';
 import type { ClosedTrade, Position, TradeTransaction } from '../types';
 import { StockLogo } from '../components/StockLogo';
 import { sortPerformanceTransactions } from '../services/portfolioPerformance';
+import { filterInvestmentActivity } from '../services/ledgerRecordTypes';
 import { TradingJournal, type JournalLedgerFocus } from '../components/TradingJournal';
 import { formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { ActivityDetail, ActivityEmpty, ActivityHeader, ActivityPills, ActivitySearch, ActivityStat, formatActivityDate } from './SimpleActivityShared';
@@ -40,9 +41,10 @@ export function SimpleTransactionsView(props: Props) {
     }
     return indexed;
   }, [closedTrades]);
+  const investmentRecords = useMemo(() => filterInvestmentActivity(transactions), [transactions]);
   const sellOutcome = (tx: TradeTransaction) => cycleBySell.get(tx.id)?.outcome ?? tx.outcome;
   const visible = useMemo(() => {
-    const chronological = sortPerformanceTransactions(transactions);
+    const chronological = sortPerformanceTransactions(investmentRecords);
     const order = new Map(chronological.map((tx,i) => [tx.id,i]));
     return chronological.filter(tx => {
     const q = search.trim().toLowerCase();
@@ -68,11 +70,11 @@ export function SimpleTransactionsView(props: Props) {
     const difference = (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0);
     return sort === 'newest' ? -difference : difference;
   });
-  }, [transactions,search,filter,sort,ledgerFocus,openTickers,cycleBySell]);
+  }, [investmentRecords,search,filter,sort,ledgerFocus,openTickers,cycleBySell]);
   const totals = useMemo(() => ({
     realized: closedTrades.reduce((sum,c) => sum + c.realizedPnlEgp, 0),
-    fees: transactions.reduce((sum,t) => sum+(t.fees || 0),0),
-  }), [closedTrades,transactions]);
+    fees: investmentRecords.reduce((sum,t) => sum+(t.fees || 0),0),
+  }), [closedTrades,investmentRecords]);
 
   const openLedger = (tx?: TradeTransaction) => {
     setSelectedFocus(tx ? {
@@ -84,15 +86,15 @@ export function SimpleTransactionsView(props: Props) {
   };
   if (advanced) return <div className="ui-activity-native">
     <div className="ui-activity-back"><button type="button" className="ui-quiet-action" onClick={() => {setAdvanced(false);setSelectedFocus(null);}}>← Back to simple Transactions</button></div>
-    <TradingJournal {...props} ledgerFocus={selectedFocus ?? ledgerFocus} onClearLedgerFocus={() => {setSelectedFocus(null);onClearLedgerFocus?.();}}/>
+    <TradingJournal {...props} transactions={investmentRecords} ledgerFocus={selectedFocus ?? ledgerFocus} onClearLedgerFocus={() => {setSelectedFocus(null);onClearLedgerFocus?.();}}/>
   </div>;
 
   return <section className="ui-activity-native" aria-label="Transactions">
-    <ActivityHeader title="Transactions" detail="Executions, IPO subscriptions and corporate actions"
+    <ActivityHeader title="Transactions" detail="Security executions, IPO subscriptions and corporate actions · cash transfers are in Cash"
       action={<>{onOpenScreenshotModal && <button type="button" className="ui-quiet-action" onClick={onOpenScreenshotModal}><ScanLine size={16}/> Scan</button>}
         <button type="button" className="ui-quiet-action" onClick={() => openLedger()}><FilePenLine size={16}/> Ledger tools</button></>}/>
     <div className="ui-activity-stat-grid">
-      <ActivityStat label="Records" value={transactions.length}/>
+      <ActivityStat label="Records" value={investmentRecords.length}/>
       <ActivityStat label="Realized P&L" value={totals.realized} amount/>
       <ActivityStat label="Fees paid" value={formatEgp(totals.fees)} note="EGP"/>
     </div>

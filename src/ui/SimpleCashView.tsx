@@ -3,6 +3,7 @@ import { ChevronDown, Settings2 } from 'lucide-react';
 import type { CashTransaction, ClosedTrade, Position, TradeTransaction } from '../types';
 import { CashBalanceView } from '../components/CashBalanceView';
 import { buildCashHistory } from '../services/cashLedger';
+import { pendingIpoSubscriptionValue } from '../services/ipoSubscriptions';
 import { getCairoTodayISO } from '../utils/dateUtils';
 import { formatEgp } from './format';
 import { ActivityDetail, ActivityEmpty, ActivityHeader, ActivityPills, ActivityStat, formatActivityDate } from './SimpleActivityShared';
@@ -43,6 +44,7 @@ export function SimpleCashView(props: Props) {
   }), [tradeTransactions,positions,capitalDeposits]);
   const totalDeposits = useMemo(() => history.filter(tx => tx.type === 'DEPOSIT').reduce((sum,tx) => sum+tx.amount,0),[history]);
   const totalWithdrawals = useMemo(() => history.filter(tx => tx.type === 'WITHDRAWAL').reduce((sum,tx) => sum+tx.amount,0),[history]);
+  const ipoHeld = useMemo(()=>pendingIpoSubscriptionValue(tradeTransactions),[tradeTransactions]);
   const visible = history.filter(tx => filter === 'ALL' || tx.type === filter);
   const cashPercent = totalPortfolioValue > 0 ? (cashBalance / totalPortfolioValue * 100).toFixed(1) : '0.0';
 
@@ -98,6 +100,7 @@ export function SimpleCashView(props: Props) {
       <ActivityStat label="Available cash" value={formatEgp(cashBalance)} note={`EGP · ${cashPercent}% of NAV`}/>
       <ActivityStat label="Deposits recorded" value={formatEgp(totalDeposits)} note="EGP"/>
       <ActivityStat label="Withdrawals recorded" value={formatEgp(totalWithdrawals)} note="EGP"/>
+      {ipoHeld>0&&<ActivityStat label="IPO cash held" value={formatEgp(ipoHeld)} note="EGP reserved, still in NAV"/>}
     </div>
     <section className="ui-activity-transfer" aria-label="New cash transfer">
       <div className="ui-activity-section-title"><h3>Transfer cash</h3><span className="ui-sm">Recorded in your portfolio ledger</span></div>

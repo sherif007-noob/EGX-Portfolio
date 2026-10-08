@@ -24,9 +24,8 @@ replaces only the presentation layer, one screen at a time. `main` is untouched.
 - Analytics data: `useAnalyticsSeries` reuses the same engines as the legacy
   chart (daily unified engine, intraday session for Today, benchmark comparison).
 
-## Not migrated yet (still legacy visuals inside the new shell)
-Holdings table, Transactions, Cash, Closed trades, Reports (Metrics page and
-chart sub-views), Stocks, modals (Add Trade sheet with sticky total footer).
+## Still using the legacy UI in medium-ui
+Stocks/ticker directory and most transaction, trade and settings modals remain on their original visual system. Specialist Activity ledger corrections and the complete detailed Reports workspace remain accessible as advanced views, while the main Home, Holdings, Activity and Reports tabs render their own new components.
 
 ## Removed
 Tests that froze the old Overview composition (PortfolioSummary on Overview in
@@ -79,3 +78,12 @@ The earlier Activity pass was only cosmetic. It still rendered the original prem
 - Added `SimpleActivityNative.test.tsx` source-level regression cases for the new routes, wrapped pills, and cycle execution links.
 
 **Scope/limits:** Data model, persistence and calculation engines are unchanged. Cash edits still route through the canonical ledger. Not yet confirmed through a real browser, broker reconciliation, TypeScript build, or executed Vitest suite in this environment. The advanced transaction editor and reconciliation tools still use the legacy visual language and are a separate migration target.
+
+## Native Reports implementation (medium-ui, 2026-10-08)
+- `src/ui/SimpleReportsView.tsx` replaces the old default Reports presentation with Overview, Charts, Trading, Allocation and Monthly modes. Selection uses the same wrapping pills as Holdings and Activity.
+- `src/ui/simpleReportsModel.ts` derives current market-value allocation and safe monthly summaries. It does **not** reconstruct historical month-end unrealized prices using current quotes. Prior months show confirmed realized exits; current month also shows a clearly labeled holdings **snapshot**, which is not a monthly time-weighted return.
+- Overview uses `calculateEquityBridge` and `isEquityBridgeBalanced`, not hand-built cash/pnl arithmetic, retaining IPO and non-trading cash semantics. Unbalanced deltas remain visible, not auto-corrected.
+- Charts reuses the Home chart and shared market-data pipeline; Trading reuses authoritative `PerformanceStats`; Allocation shows relative bars and cash toggle.
+- Detailed workspace button keeps the full original `PerformanceReports` (trajectory, performance benchmarks, in-depth monthly reports, advanced charts). The old workspace is deliberately not the default.
+- Added `SimpleReportsView.test.tsx` to guard allocation, monthly integrity and native presentation. Tests are committed but not executed in this environment. Browser rendering and financial reconciliation still need acceptance verification.
+- The previous `Simple UI` historical sections in this doc describe the original baseline; later sections record the subsequent migration.

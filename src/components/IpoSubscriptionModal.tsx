@@ -13,6 +13,7 @@ export interface IpoSubscriptionFormValue {
   companyName: string;
   sector: Sector;
   requestedAmount: number;
+  reservedAmount?: number;
   offerPrice: number;
   subscriptionDate: string;
   reference?: string;
@@ -67,6 +68,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [companyName, setCompanyName] = useState('');
   const [sector, setSector] = useState<Sector>('Other');
   const [requestedAmount, setRequestedAmount] = useState('');
+  const [holdPercent, setHoldPercent] = useState('100');
   const [offerPrice, setOfferPrice] = useState('');
   const [subscriptionDate, setSubscriptionDate] = useState(currentCairoDateKey());
   const [listingDate, setListingDate] = useState('');
@@ -81,6 +83,8 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
 
   const pendingSelection = pending.find((tx) => tx.id === selectedPendingId);
   const requestedAmountNumber = Number(requestedAmount);
+  const holdPercentNumber = Number(holdPercent);
+  const heldAmount = Number((requestedAmountNumber * holdPercentNumber / 100).toFixed(2));
   const offerPriceNumber = Number(offerPrice);
   const requestedShares =
     Number.isFinite(requestedAmountNumber) && Number.isFinite(offerPriceNumber) && offerPriceNumber > 0
@@ -93,6 +97,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     setCompanyName('');
     setSector('Other');
     setRequestedAmount('');
+    setHoldPercent('100');
     setOfferPrice('');
     setSubscriptionDate(currentCairoDateKey());
     setListingDate('');
@@ -132,8 +137,11 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     if (!Number.isFinite(requestedAmountNumber) || requestedAmountNumber <= 0) {
       return setFeedback('Requested amount must be greater than zero.');
     }
-    if (requestedAmountNumber > cashBalance + 0.005) {
-      return setFeedback(`Only ${formatEgp(cashBalance)} EGP is currently available as cash.`);
+    if (!Number.isFinite(holdPercentNumber) || holdPercentNumber <= 0 || holdPercentNumber > 100 || heldAmount <= 0) {
+      return setFeedback('Enter the broker-held percentage, greater than 0 and no more than 100%.');
+    }
+    if (heldAmount > cashBalance + 0.005) {
+      return setFeedback(`Telda hold of ${formatEgp(heldAmount)} EGP exceeds ${formatEgp(cashBalance)} EGP available cash.`);
     }
     if (!Number.isFinite(offerPriceNumber) || offerPriceNumber <= 0) {
       return setFeedback('Offer price must be greater than zero.');
@@ -150,6 +158,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         companyName: companyName.trim(),
         sector,
         requestedAmount: requestedAmountNumber,
+        reservedAmount: heldAmount,
         offerPrice: offerPriceNumber,
         subscriptionDate,
         reference: reference.trim() || undefined,
@@ -241,7 +250,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
           </div>
           {requestedAmountNumber > 0 && (
             <span className="rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 font-mono text-cyan-200">
-              After reserve: {formatEgp(cashBalance - requestedAmountNumber)} EGP
+              After hold: {formatEgp(cashBalance - heldAmount)} EGP
             </span>
           )}
         </div>
@@ -314,6 +323,18 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
           </div>
         </div>
 
+        <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-2">
+          <label className="block space-y-1 font-semibold text-slate-300">Cash held by broker (% of order)
+            <input type="number" min="0.01" max="100" step="0.01" inputMode="decimal"
+              value={holdPercent} onChange={event => { setHoldPercent(event.target.value); setFeedback(null); }}
+              className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white" required/>
+          </label>
+          <div className="space-y-1"><span className="premium-type-metric-label block">Cash reserved, not investment P&amp;L</span>
+            <strong className="font-mono text-cyan-200">{requestedAmountNumber>0 && holdPercentNumber>0 ? `${formatEgp(heldAmount)} EGP`:'—'}</strong>
+            <p className="premium-type-helper">For the HALN order shown in Telda, enter 25%, not 100%.</p>
+          </div>
+        </div>
+
         <div className="premium-inset-glass grid grid-cols-1 gap-2 rounded-xl p-3 sm:grid-cols-3">
           <div>
             <span className="premium-type-metric-label block">Requested</span>
@@ -353,7 +374,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         <div className="premium-subpanel flex items-start gap-2 rounded-xl border-cyan-500/25 p-3 text-slate-300">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
           <p>
-            Submission moves cash from available buying power into a pending IPO asset of equal value.
+            Submission reserves only the broker-held amount, not necessarily the entire order commitment.
             It does not create shares or P&amp;L until allocation is recorded.
           </p>
         </div>
@@ -384,7 +405,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
               options={pending.map((tx) => ({
                 value: tx.id,
                 label: tx.ticker,
-                description: `${formatEgp(Number(tx.ipoSubscription?.requestedAmount || 0))} EGP · ${tx.ipoSubscription?.subscriptionDate || tx.date}`,
+                description: `${formatEgp(Number(tx.ipoSubscription?.reservedAmount ?? tx.ipoSubscription?.requestedAmount ?? 0))} EGP held of ${formatEgp(Number(tx.ipoSubscription?.requestedAmount ?? 0))} EGP order · ${tx.ipoSubscription?.subscriptionDate || tx.date}`,
               }))}
             />
 

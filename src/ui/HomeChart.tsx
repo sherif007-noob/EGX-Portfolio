@@ -22,11 +22,15 @@ import {
   type PortfolioBenchmarkTicker,
 } from '../services/portfolioBenchmarks';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
-import { formatChartDate, formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
+import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 
 type ChartMode = 'ret' | 'val' | 'dep' | 'twr' | 'mwr' | 'bm';
 type IndexChoice = 'all' | PortfolioBenchmarkTicker;
 type Unit = 'egp' | 'pct';
+type Granularity = 1 | 5 | 15 | 60;
+const GRANULARITIES: Granularity[] = [1, 5, 15, 60];
+const chartTime = (date: string): number => { const parsed = Date.parse(date.length === 10 ? `${date}T12:00:00Z` : date); return Number.isFinite(parsed) ? parsed : NaN; };
+const labelTime = (time: number, intraday: boolean): string => new Intl.DateTimeFormat('en-GB', { timeZone: intraday ? 'Africa/Cairo' : 'UTC', ...(intraday ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' as const } : { day: 'numeric', month: 'short' as const }) }).format(new Date(time));
 
 interface SeriesDef {
   key: string;
@@ -82,6 +86,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const [mode, setMode] = useState<ChartMode>('ret');
   const [indexChoice, setIndexChoice] = useState<IndexChoice>('all');
+  const [granularity, setGranularity] = useState<Granularity>(1);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { result, loading, error, intradayPrices } = useAnalyticsSeries({
     transactions,
@@ -90,6 +96,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
     positions,
     currentCashBalance,
     timeframe,
+    granularity,
   });
 
   const points = result?.points ?? [];
@@ -147,7 +154,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       ];
     }
 
-    return { rows, series, unit };
+    return { rows: rows.map(row => ({ ...row, timestamp: chartTime(String(row.date)) })).filter(row => Number.isFinite(row.timestamp)), series, unit };
   }, [mode, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
 
   const last = model.rows.at(-1);
@@ -183,8 +190,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ))}
       </div>
 
-      <div className="ui-chips" style={{ marginTop: 8 }} role="group" aria-label="Chart type">
-        {MODES.map((item) => (
+      <div className="ui-chart-toolbar"><div className="ui-chips" role="group" aria-label="Chart type">
+        {MODES.filter(item => showAdvanced || ['ret', 'val', 'bm'].includes(item.value)).map((item) => (
           <button
             key={item.value}
             type="button"
@@ -195,7 +202,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             {item.label}
           </button>
         ))}
-      </div>
+      </div><button type="button" className="ui-link ui-sm" aria-expanded={showAdvanced} onClick={() => setShowAdvanced(value => !value)}>{showAdvanced ? 'Less' : 'More metrics'}</button></div>
+
+      {timeframe === 'TODAY' && <div className="ui-chips ui-granularity" role="group" aria-label="Today chart interval">{GRANULARITIES.map(minutes => <button key={minutes} className="ui-chip sub" type="button" aria-pressed={granularity === minutes} onClick={() => setGranularity(minutes)}>{minutes === 60 ? '1h' : `${minutes}m`}</button>)}</div>}
 
       {mode === 'bm' && (
         <div className="ui-chips" style={{ marginTop: 8 }} role="group" aria-label="Benchmark index">
@@ -224,13 +233,16 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ) : !hasData ? (
           <p className="ui-sm" style={{ padding: 24, textAlign: 'center' }}>Not enough data for this range yet.</p>
         ) : (
-          <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} style={{ width: '100%', height: 200 }}>
+          <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} className="ui-chart-canvas">
             <ResponsiveContainer width="100%" height="100%">
               <ChartRoot data={model.rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis
-                  dataKey="date"
-                  tickFormatter={formatChartDate}
+                  dataKey="timestamp"
+                  type="number"
+                  scale="time"
+                  domain={['dataMin', 'dataMax']}
+                  tickFormatter={(value: number) => labelTime(value, timeframe === 'TODAY')}
                   tick={{ fill: 'var(--ui-text-2)', fontSize: 11 }}
                   tickLine={false}
                   axisLine={false}
@@ -249,7 +261,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 <Tooltip
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
                   contentStyle={{ background: 'var(--ui-surface-2)', border: '1px solid var(--ui-border-strong)', borderRadius: 8, fontSize: 12 }}
-                  labelFormatter={(label) => formatChartDate(String(label))}
+                  labelFormatter={(label) => labelTime(Number(label), timeframe === 'TODAY')}
                   formatter={(value, name) => [formatValue(Number(value)), String(name)]}
                 />
                 {model.series.map((item) =>

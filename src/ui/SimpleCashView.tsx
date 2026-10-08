@@ -50,7 +50,7 @@ export function SimpleCashView(props: Props) {
     event.preventDefault();
     if (busy) return;
     const parsed = Number(amount);
-    if (!Number.isFinite(parsed) || parsed < 0.01 || Math.round(parsed*100) !== parsed*100) {
+    if (!Number.isFinite(parsed) || parsed < 0.01 || Math.abs(Math.round(parsed * 100) - parsed * 100) > 0.00001) {
       setFeedback('Enter a valid amount in EGP with up to two decimal places.'); return;
     }
     if (kind === 'WITHDRAWAL' && parsed > cashBalance) {

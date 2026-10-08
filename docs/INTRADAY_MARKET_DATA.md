@@ -378,3 +378,17 @@ See `docs/INTRADAY_1M_MIGRATION_PLAN.md` for the canonical 15-phase rollout stat
 See [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md) for the dated September 28 evidence and repair history. Scheduler promotion has since occurred; the remaining operational debt is Stage 3.5 live-session ingestion reliability/soak closure.
 
 Manual ingestion now resolves the latest EGX session rather than using the calendar day after midnight. Set `EGX_INTRADAY_SKIP_RETENTION=true` for a repair that must not prune old rows. Normal scheduled retention remains 30/90 days.
+
+## Verified observed EGX holidays (medium-ui, 2026-10-08)
+
+The exchange-session resolver now consults `src/services/egxTradingCalendar.ts` in addition to the existing Fri/Sat weekend and Cairo 10:00 market-open boundary.
+
+- **Thursday 2026-10-08**: verified EGX closure for the observed Armed Forces Day holiday. **Tuesday 2026-10-06 remained a trading day.** The announcement gives **Sunday 2026-10-11** as the next session.
+- Primary published report: EGX exchange notice republished by Sigma Capital on 2026-10-05: https://www.sigma-cap.com/main/news_page_exact?newsId=46118692&newsType=EGX
+- Government confirmation: PM Decree 2898/2026 (official gazette): https://alamiria.com/Sec/TashTxt?id=wpv70uVa11g%3D
+- On Oct 8, 9 and 10, and until 09:59 Cairo on Oct 11, Today/Last session requests exact Oct 7 intraday data. A strict resolution still fails honestly if Oct 7 ingestion is incomplete, rather than fetching bars for the wrong date.
+- The market schedule now treats a declared closure as closed and advances its next tick to a trading day, skipping observed closures as well as weekends.
+- UI daily-return labels are replaced by holiday/closed status while no current session exists; the old quoted daily percentage is not falsely relabeled as a return made on the holiday.
+- Automated startup/resume price sync, the 15:15 Cairo closing sync, and the scheduled 1m ingestion job skip closed holiday dates. Explicit user-initiated price sync and manual historical backfills remain available, but are **not** evidence of a new trading session.
+- The calendar is an explicit dated list of verified *exchange* closures. It intentionally does **not** repeat public holidays automatically every year, does not pretend to infer a holiday from missing bars, and is **not yet a complete future exchange calendar**. Maintain future official closure notices in the same module.
+- The session/holiday rendering and zero-ingestion behavior require on-device and full build/CI acceptance before claiming a deployed fix.

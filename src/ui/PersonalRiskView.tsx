@@ -10,6 +10,7 @@ type Props = {
   cashBalance: number;
   nav: number;
   pendingIpoValue?: number;
+  onOpenHoldings?: () => void;
 };
 
 const money = (value: number) => `${formatEgp(value)} EGP`;
@@ -19,7 +20,7 @@ const statusLabels = {
   invalid:'Invalid stop/cost',unpriced:'No valid quote',
 } as const;
 
-export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pendingIpoValue=0}: Props) {
+export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pendingIpoValue=0,onOpenHoldings}: Props) {
   const risk = useMemo(()=>calculatePersonalRisk(
     positions,cashBalance,nav,closedTrades,pendingIpoValue,
   ),[positions,cashBalance,nav,closedTrades,pendingIpoValue]);
@@ -88,9 +89,11 @@ export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pending
     </section>
 
     <section className="ui-report-section">
-      <header className="ui-report-section-title">
-        <h3>What happens if my stops trigger?</h3>
-        <p className="ui-sm">Hypothetical fills at your entered stop prices, before future selling fees, gaps or slippage. Not a maximum-loss guarantee.</p>
+      <header className="ui-report-section-title ui-risk-stops-header">
+        <div><h3>What happens if my stops trigger?</h3>
+          <p className="ui-sm">Hypothetical fills at your entered stop prices, before future selling fees, gaps or slippage. Not a maximum-loss guarantee.</p>
+        </div>
+        {onOpenHoldings && <button className="ui-quiet-action" type="button" onClick={onOpenHoldings}>Manage stops</button>}
       </header>
       <div className="ui-report-info-grid">
         <div className="ui-report-info"><span className="ui-sm">Loss versus purchase cost at stops</span>

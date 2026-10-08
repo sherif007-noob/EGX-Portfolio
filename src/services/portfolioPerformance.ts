@@ -5,6 +5,7 @@ import { isBonusSharesTransaction } from './corporateActions';
 import {
   isIpoSubscriptionTransaction,
   pendingIpoSubscriptionValue,
+  ipoHeldAmount,
 } from './ipoSubscriptions';
 
 export interface EquityBridge {
@@ -213,8 +214,8 @@ export function buildHistoricalEquityCurve(
       if (!ipo) continue;
       const subscriptionDate = dayKey(ipo.subscriptionDate || tx.date);
       if (!ipoSubmitted.has(tx.id) && subscriptionDate <= date) {
-        cash -= ipo.requestedAmount;
-        pendingIpoValue += ipo.requestedAmount;
+        cash -= ipoHeldAmount(ipo);
+        pendingIpoValue += ipoHeldAmount(ipo);
         ipoSubmitted.add(tx.id);
       }
 
@@ -224,8 +225,8 @@ export function buildHistoricalEquityCurve(
         && !ipoSettled.has(tx.id)
         && dayKey(ipo.allocationDate) <= date
       ) {
-        pendingIpoValue -= ipo.requestedAmount;
-        cash += Number(ipo.refundAmount || 0);
+        pendingIpoValue -= ipoHeldAmount(ipo);
+        cash += Number(ipo.refundAmount || 0) - Number(ipo.additionalPaymentAmount || 0);
         holdings[normalizePerformanceTicker(tx.ticker)] =
           (holdings[normalizePerformanceTicker(tx.ticker)] || 0) + Number(ipo.allocatedShares || 0);
         ipoSettled.add(tx.id);
@@ -235,8 +236,8 @@ export function buildHistoricalEquityCurve(
         && !ipoSettled.has(tx.id)
         && dayKey(ipo.cancellationDate) <= date
       ) {
-        pendingIpoValue -= ipo.requestedAmount;
-        cash += ipo.requestedAmount;
+        pendingIpoValue -= ipoHeldAmount(ipo);
+        cash += ipoHeldAmount(ipo);
         ipoSettled.add(tx.id);
       }
     }

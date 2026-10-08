@@ -6,11 +6,11 @@ import { SimpleHoldings } from './ui/SimpleHoldings';
 import { CompactPortfolioStrip } from './components/CompactPortfolioStrip';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
-import { ClosedCyclesView } from './components/ClosedCyclesView';
+import { SimpleClosedView } from './ui/SimpleClosedView';
 import { PerformanceReports } from './features/reports';
-import { TradingJournal } from './components/TradingJournal';
+import { SimpleTransactionsView } from './ui/SimpleTransactionsView';
 import { TickerDirectoryView } from './components/TickerDirectoryView';
-import { CashBalanceView } from './components/CashBalanceView';
+import { SimpleCashView } from './ui/SimpleCashView';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { PythonSchemaSyncModal } from './components/PythonSchemaSyncModal';
 import { AddTradeModal } from './components/AddTradeModal';
@@ -391,7 +391,7 @@ export default function App() {
         )}
 
         {activeTab === 'closed_cycles' && (
-          <ClosedCyclesView
+          <SimpleClosedView
             closedTrades={closedTrades}
             transactions={transactions}
             onCorrectLedger={openClosedCycleLedgerCorrection}
@@ -414,7 +414,7 @@ export default function App() {
         )}
 
         {activeTab === 'journal' && (
-          <TradingJournal
+          <SimpleTransactionsView
             transactions={transactions}
             closedTrades={closedTrades}
             positions={positions}
@@ -429,7 +429,7 @@ export default function App() {
         )}
 
         {activeTab === 'cash' && (
-          <CashBalanceView
+          <SimpleCashView
             cashBalance={cashBalance}
             totalPortfolioValue={metrics.totalValue}
             onUpdateCashBalance={handleCashBalanceUpdate}

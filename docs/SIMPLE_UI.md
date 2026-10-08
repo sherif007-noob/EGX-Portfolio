@@ -55,4 +55,4 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 
 ## Holdings selector refinement
 - Replaced native Sector and Sort dropdowns with single-selection pill groups. Active state uses `aria-pressed`; both preserve the original filtering/sorting logic.
-- The sector group scrolls horizontally on narrow viewports rather than clipping or wrapping into a tall menu; the controls align in three columns on desktop.
+- Sector and sort pills wrap into as many natural lines as needed at every viewport width; no horizontal scrolling or desktop-only column layout.

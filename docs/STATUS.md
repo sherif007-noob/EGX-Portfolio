@@ -324,3 +324,9 @@ The observed +0.24% can come from the prior trading session's stored per-symbol 
 
 ## Experimental medium-ui cash-flow and broker NAV audit — 2026-10-08
 The medium-ui branch adds a read-only Telda NAV breakdown in Home, separates cash ledger rows from the equity trade UI, and changes the simple Return chart to neutralize investor transfers and return-neutral audited corrections. It also blocks quote timestamp re-stamping on EGX-closed dates. Real broker receipts exposed fee-estimate differences on some same-day/grouped buys; production financial rows were **not** edited or automatically balanced. No production parity, mobile acceptance, or CI pass is implied. See SIMPLE_UI.md for the data model boundary and pending verification requirements.
+
+## Experimental medium-ui unified Activity and IPO 25%-hold correction (2026-10-09)
+
+The new default Activity timeline retains every persisted ledger event and renders cash movements, dividends, free shares, corporate actions, IPO orders and security executions with different information; no cash pseudo-share details. Advanced `TradingJournal` remains an equity-execution editor only.
+
+The IPO mutation model now separates the **full request** from the **broker-held cash**. The held amount is a pending NAV asset until allocation/cancellation; the full requested shares are *not* holdings. Allocation may refund unused reserved cash or request additional available funds, and the new cash/IPO cases are covered by source-level tests. No production financial mutations occurred, and deployment, automated tests and rendered-device acceptance are still pending. See IPO_SUBSCRIPTIONS.md, SIMPLE_UI.md, and FINANCIAL_MUTATION_CONTRACT.md.

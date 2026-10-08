@@ -16,20 +16,25 @@ interface Props {
 
 /** Preserve canonical execution links; only use the original bounded fallback for old records. */
 export function cycleSourceIds(cycle: ClosedTrade, transactions: TradeTransaction[]): string[] {
-  const linked = [...(cycle.buyTransactionIds ?? []), ...(cycle.sellTransactionIds ?? [])];
-  if (linked.length > 0) return [...new Set(linked)];
+  const linkedBuys = new Set(cycle.buyTransactionIds ?? []);
+  const linkedSells = new Set(cycle.sellTransactionIds ?? []);
   const buyTime = Date.parse(cycle.buyDate);
   const sellTime = Date.parse(cycle.sellDate);
-  return [...new Set(transactions.filter(tx => {
-    if (tx.ticker.toUpperCase() !== cycle.ticker.toUpperCase()) return false;
+  // Resolve BUY and SELL independently: a cycle may have only one side
+  // explicitly linked, which must not hide the missing side's executions.
+  const matching = transactions.filter(tx => {
     if (tx.type !== 'BUY' && tx.type !== 'SELL') return false;
+    const linked = tx.type === 'BUY' ? linkedBuys : linkedSells;
+    if (linked.size > 0) return linked.has(tx.id);
+    if (tx.ticker.toUpperCase() !== cycle.ticker.toUpperCase()) return false;
     if (cycle.cycleTag && tx.cycleTag && cycle.cycleTag === tx.cycleTag) return true;
     if (cycle.tradeCycle && tx.tradeCycle && cycle.tradeCycle === tx.tradeCycle) return true;
     const when = Date.parse(tx.date);
     return tx.type === 'BUY'
-      ? when >= buyTime-86400000 && when <= sellTime
-      : Math.abs(when-sellTime) <= 86400000;
-  }).map(tx => tx.id))];
+      ? when >= buyTime - 86400000 && when <= sellTime
+      : Math.abs(when - sellTime) <= 86400000;
+  });
+  return [...new Set([...linkedBuys, ...linkedSells, ...matching.map(tx => tx.id)])];
 }
 
 export function SimpleClosedView({closedTrades,transactions,onCorrectLedger}: Props) {

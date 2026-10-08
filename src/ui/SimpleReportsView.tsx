@@ -187,7 +187,8 @@ export function SimpleReportsView(props: Props) {
     </>}
 
     {mode==='risk' && <PersonalRiskView positions={positions} closedTrades={closedTrades} cashBalance={cashBalance}
-      nav={bridge.endingEquity} pendingIpoValue={pendingIpoSubscriptionValue(transactions)} onOpenHoldings={props.onOpenHoldings}/>}
+      nav={bridge.endingEquity} pendingIpoValue={pendingIpoSubscriptionValue(transactions)} onOpenHoldings={props.onOpenHoldings}
+      accountingBalanced={bridgeValid}/>}
 
     {mode==='allocation' && <>
       <SectionTitle title="Portfolio allocation" detail="Current market value across holdings and cash."/>

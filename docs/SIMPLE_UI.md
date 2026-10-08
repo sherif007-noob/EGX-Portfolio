@@ -56,3 +56,12 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 ## Holdings selector refinement
 - Replaced native Sector and Sort dropdowns with single-selection pill groups. Active state uses `aria-pressed`; both preserve the original filtering/sorting logic.
 - Sector and sort pills wrap into as many natural lines as needed at every viewport width; no horizontal scrolling or desktop-only column layout.
+
+## Medium UI — Activity presentation pass (2026-10-08)
+- Activity now has a compact shared heading and accessible Transactions / Cash / Closed navigation.
+- Existing TradingJournal, CashBalanceView and ClosedCyclesView ledger calculations, audit/edit/delete modals and reconciliation callbacks are kept intact. No financial mutation code was changed.
+- Transaction, cash-history, deposit/withdraw, and closed-trade filters use wrapped pill rows (no horizontally scrolling selector strip).
+- Transaction and closed-trade sort controls also use wrapped pills. Journal page-size and cash payment-method choices remain dropdowns where a longer menu is more practical.
+- Activity cards use quieter, opaque surfaces rather than premium glow effects. The cash history turns into labeled cards below 700px, retaining edit/delete buttons; desktop keeps the full table.
+- Acceptance not yet proven: runtime typecheck/test execution, mobile screenshot review, mobile cash edit/delete and ledger focus workflows, and accounting reconciliation. Avoid interpreting a source commit as a passed check.
+- Remaining work: fully migrate complex cash-transfer forms and editor modals, then Reports.

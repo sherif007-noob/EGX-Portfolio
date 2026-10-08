@@ -5,7 +5,7 @@ import { normalizeTransaction } from '../utils/portfolioMetrics';
 import { calculateBuyImpact, calculateHoldingDays, calculateSellAccounting } from './portfolioAccounting';
 import { normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
-import { isIpoSubscriptionTransaction, validateIpoSubscriptionMetadata } from './ipoSubscriptions';
+import { isIpoSubscriptionTransaction, validateIpoSubscriptionMetadata, ipoHeldAmount } from './ipoSubscriptions';
 
 export interface ReconciliationReport {
   reconciledPositions: Position[];
@@ -236,7 +236,7 @@ export function reconcilePortfolioFromLedger(
 
       const ipo = tx.ipoSubscription;
       if (ipo.status === 'SUBMITTED') {
-        runningCash -= ipo.requestedAmount;
+        runningCash -= ipoHeldAmount(ipo);
         if (runningCash < -EPSILON) {
           discrepancies.push(`IPO subscription ${tx.id} reserves more cash than is available.`);
         }

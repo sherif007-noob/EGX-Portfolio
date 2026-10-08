@@ -52,3 +52,7 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 - The legacy `PositionsTable` remains in the repository for other consumers; this branch only swaps the full Holdings tab presentation.
 - Interval selector uses exact 1m/5m source when selected, and shared aggregate fallback for 15m/1h.
 - Manual acceptance needed on phone/desktop: interaction focus, opening trading modals, and live quote reconciliation.
+
+## Holdings selector refinement
+- Replaced native Sector and Sort dropdowns with single-selection pill groups. Active state uses `aria-pressed`; both preserve the original filtering/sorting logic.
+- The sector group scrolls horizontally on narrow viewports rather than clipping or wrapping into a tall menu; the controls align in three columns on desktop.

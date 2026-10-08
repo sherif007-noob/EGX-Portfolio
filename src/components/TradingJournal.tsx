@@ -484,7 +484,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   };
 
   return (
-    <div className="premium-dense-workflow premium-flow-related">
+    <div className="ui-activity-content ui-activity-journal premium-dense-workflow premium-flow-related">
       {/* Toast Notification for deletion */}
       <SurfacePresence isOpen={!!deletedIdToast} className="premium-fixed-overlay premium-fixed-mobile-span premium-fixed-bottom-safe fixed bottom-6 right-6 z-50">
         {deletedIdToast && (
@@ -621,13 +621,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         {/* Filter Pills and Sort Dropdown */}
         <div className="grid w-full grid-cols-2 items-stretch gap-1.5 md:flex md:w-auto md:items-center md:flex-wrap">
-          <div className="premium-selector-shell col-span-2 flex w-full items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none md:w-auto md:flex-wrap md:overflow-visible">
+          <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Filter transactions">
           <button
             id="journal-filter-all"
             type="button"
             aria-pressed={filterMode === 'ALL'}
             onClick={() => changeFilterMode('ALL')}
-            className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
+            className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL' ? 'premium-filter-active-amber' : ''}`}
           >
             All ({transactions.length})
           </button>
@@ -637,7 +637,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'OPEN'}
             onClick={() => changeFilterMode('OPEN')}
-            className={`premium-filter-pill premium-compact-selector flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
+            className={`ui-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'OPEN' ? 'premium-filter-active-blue' : ''}`}
           >
             <Layers className="w-3.5 h-3.5 text-blue-400" />
             Open Positions ({openPositionsTransactionsCount})
@@ -648,7 +648,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'WIN'}
             onClick={() => changeFilterMode('WIN')}
-            className={`premium-filter-pill premium-compact-selector flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+            className={`ui-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
             Wins ({winCount})
@@ -659,7 +659,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'LOSS'}
             onClick={() => changeFilterMode('LOSS')}
-            className={`premium-filter-pill premium-compact-selector flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+            className={`ui-filter-pill flex shrink-0 items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
             Losses ({lossCount})
@@ -670,7 +670,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'BUY'}
             onClick={() => changeFilterMode('BUY')}
-            className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
+            className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'BUY' ? 'premium-filter-active-cyan' : ''}`}
           >
             Buys Only ({buyCount})
           </button>
@@ -680,7 +680,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             type="button"
             aria-pressed={filterMode === 'SELL'}
             onClick={() => changeFilterMode('SELL')}
-            className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
+            className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'SELL' ? 'premium-filter-active-purple' : ''}`}
           >
             Sells Only ({sellCount})
           </button>

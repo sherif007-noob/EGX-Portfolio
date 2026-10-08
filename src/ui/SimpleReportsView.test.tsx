@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ClosedTrade, PerformanceStats, Position, PortfolioMetrics } from '../types';
 import { buildSimpleAllocation, buildSimpleMonths } from './simpleReportsModel';
 import { SimpleReportsView } from './SimpleReportsView';
+import { PersonalRiskView } from './PersonalRiskView';
 
 const holding: Position = {
   id:'p1', ticker:'ARCC', companyName:'Arabian Cement',
@@ -53,6 +54,28 @@ describe('medium-ui Reports', () => {
     expect(sept?.snapshotTotal).toBeNull();
   });
 
+  it('renders a native personal-risk view without premium report cards', () => {
+    const html = renderToStaticMarkup(
+      <PersonalRiskView positions={[{...holding,stopLoss:11}]} closedTrades={[septCycle]}
+        cashBalance={800} nav={2000} pendingIpoValue={0}/>,
+    );
+    expect(html).toContain('Your risk right now');
+    expect(html).toContain('How concentrated am I?');
+    expect(html).toContain('What happens if my stops trigger?');
+    expect(html).toContain('Largest realized P&amp;L drawdown');
+    expect(html).toContain('Stop set');
+    expect(html).not.toContain('premium-card');
+  });
+
+  it('shows uncovered exposures, rather than claiming portfolio protection', () => {
+    const html = renderToStaticMarkup(
+      <PersonalRiskView positions={[holding]} closedTrades={[]}
+        cashBalance={800} nav={2000}/>,
+    );
+    expect(html).toContain('No usable stops');
+    expect(html).toContain('This is not portfolio-wide downside.');
+  });
+
   it('renders a new Reports layout with a route to advanced tools', () => {
     const html = renderToStaticMarkup(
       <SimpleReportsView stats={stats} closedTrades={[septCycle,octCycle]}
@@ -63,6 +86,7 @@ describe('medium-ui Reports', () => {
     expect(html).toContain('Detailed workspace');
     expect(html).toContain('Report view');
     expect(html).toContain('Allocation');
+    expect(html).toContain('My Risk');
     expect(html).not.toContain('premium-reports-hierarchy');
   });
 });

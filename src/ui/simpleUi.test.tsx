@@ -170,3 +170,29 @@ describe('MetricsScreen', () => {
     expect(html).toContain('2.54');
   });
 });
+
+describe('HoldingsScreen', () => {
+  it('lists holdings with allocation, search, sector filter, sort and an empty state', async () => {
+    const { HoldingsScreen } = await import('./HoldingsScreen');
+    const handlers = {
+      onSellPosition: noop,
+      onEditPosition: noop,
+      onCorrectLedger: noop,
+      onAddNewTrade: noop,
+      onBuyMore: noop,
+    };
+    const html = renderToStaticMarkup(<HoldingsScreen positions={positions} metrics={metrics} {...handlers} />);
+    expect(html).toContain('Search holdings');
+    expect(html).toContain('All sectors');
+    expect(html).toContain('P&amp;L %');
+    expect(html).toContain('COMI');
+    expect(html).toContain('MASR');
+    expect(html).toContain('Cash 68.9%');
+    // Details and actions stay collapsed until a holding is opened.
+    expect(html).not.toContain('Buy more');
+
+    const empty = renderToStaticMarkup(<HoldingsScreen positions={[]} metrics={metrics} {...handlers} />);
+    expect(empty).toContain('No open positions yet.');
+    expect(empty).toContain('Add trade');
+  });
+});

@@ -11,7 +11,7 @@ describe('Phase 10.0 visual consistency baseline freeze', () => {
 
     const expected = [
       ["overview", 'HomeScreen'],
-      ["positions", 'PositionsTable'],
+      ["positions", 'HoldingsScreen'],
       ["closed_cycles", 'ClosedCyclesView'],
       ["reports", 'ReportsScreen'],
       ["journal", 'TradingJournal'],

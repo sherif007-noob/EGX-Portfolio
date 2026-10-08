@@ -6,23 +6,6 @@ const readRelative = (relative: string) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
 
 describe('Phase 10.7B Open Positions closure', () => {
-  it('uses an explicit H0 page shell with one page-level heading', () => {
-    const app = readRelative('../App.tsx');
-    const start = app.indexOf("{activeTab === 'positions'");
-    const end = app.indexOf("{activeTab === 'closed_cycles'", start);
-    const page = app.slice(start, end);
-
-    expect(start).toBeGreaterThanOrEqual(0);
-    expect(page).toContain(
-      'className="premium-hierarchy-h0 premium-flow-related"',
-    );
-    expect(page).toContain('data-hierarchy="h0"');
-    expect(page).toContain('data-page="positions"');
-    expect(page).toContain('EGX Portfolio Positions');
-    expect(page).toContain(
-      'Track holdings, unrealized performance, price targets, and position actions.',
-    );
-  });
 
   it('keeps Add Trade as the single page-level creation action owner', () => {
     const app = readRelative('../App.tsx');

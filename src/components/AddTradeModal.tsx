@@ -573,8 +573,18 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
+          {/* Form Actions: pinned so the total and the submit button stay visible while the form scrolls. */}
+          <div
+            className="sticky bottom-0 z-10 -mx-4 space-y-2 border-t border-slate-800 bg-slate-900/95 px-4 pb-1 pt-3 backdrop-blur sm:-mx-6 sm:px-6"
+            data-trade-sticky-footer
+          >
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-slate-400">Total outlay</span>
+              <span className="font-mono text-sm font-bold text-blue-400">
+                {netTotalCost.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+              </span>
+            </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={requestClose}
@@ -590,6 +600,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             >
               {isSubmitting ? 'Saving…' : activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
             </button>
+          </div>
           </div>
         </form>
     </PremiumModalMotion>

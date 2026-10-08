@@ -178,3 +178,30 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 @media (prefers-reduced-motion: reduce) {
   .ui-fab, .ui-iconbtn, .ui-chip { transition: none; }
 }
+
+/* ---------- Forms, buttons, detail grids ---------- */
+.ui-search {
+  width: 100%; padding: 10px 12px; border-radius: 10px; font: inherit; font-size: 0.9375rem;
+  border: 1px solid var(--ui-border); background: var(--ui-surface); color: var(--ui-text);
+}
+.ui-search::placeholder { color: var(--ui-text-2); }
+.ui-search:focus-visible, .ui-chip:focus-visible, .ui-btn:focus-visible, .ui-row:focus-visible,
+.ui-iconbtn:focus-visible, .ui-bottom-nav button:focus-visible, .ui-sheet-item:focus-visible {
+  outline: 2px solid var(--ui-blue); outline-offset: 2px;
+}
+.ui-btn {
+  padding: 9px 14px; min-height: 40px; border-radius: 10px; font: inherit; font-size: 0.875rem; cursor: pointer;
+  border: 1px solid var(--ui-border-strong); background: transparent; color: var(--ui-text);
+}
+.ui-btn.primary { background: var(--ui-teal); color: #04140e; border-color: transparent; font-weight: 700; }
+.ui-btn.danger { color: var(--ui-neg); border-color: color-mix(in srgb, var(--ui-neg) 45%, transparent); }
+.ui-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ui-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0; }
+.ui-detail-grid dt { font-size: 0.75rem; color: var(--ui-text-2); }
+.ui-detail-grid dd { margin: 2px 0 0; font-weight: 500; }
+.ui-holding { padding: 0; overflow: hidden; }
+.ui-holding > button.ui-row { padding: 12px 14px; border-bottom: 0; }
+.ui-holding-body { padding: 4px 14px 14px; border-top: 1px solid var(--ui-border); display: grid; gap: 14px; padding-top: 14px; }
+.ui-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--ui-surface); }
+.ui-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--ui-border-strong); }
+@media (min-width: 1024px) { .ui-holdings-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; } }

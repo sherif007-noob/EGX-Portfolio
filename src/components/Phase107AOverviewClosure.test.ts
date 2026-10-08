@@ -23,27 +23,6 @@ describe('Phase 10.7A Overview closure', () => {
     );
   });
 
-  it('keeps full operational controls owned by the dedicated Positions variant', () => {
-    const positions = readRelative('./PositionsTable.tsx');
-
-    expect(positions).toContain('{!isOverviewPreview && (');
-    expect(positions).toContain('premium-hierarchy-h3 premium-dense-context');
-    expect(positions).toContain('premium-hierarchy-h4 premium-dense-toolbar');
-    expect(positions).toContain('placeholder="Search ticker (e.g. COMI) or company..."');
-    expect(positions).toContain('<span>Add Trade</span>');
-    expect(positions).toContain('title="Sell Shares / Book P&L"');
-    expect(positions).toContain('title="Review source ledger transactions"');
-    expect(positions).toContain('onCorrectLedger: (position: Position) => void');
-    expect(positions).not.toContain('ConfirmDeleteModal');
-
-    const app = readRelative('../App.tsx');
-    const positionsTabStart = app.indexOf("{activeTab === 'positions'");
-    expect(positionsTabStart).toBeGreaterThanOrEqual(0);
-    const positionsTab = app.slice(positionsTabStart, positionsTabStart + 4500);
-    expect(positionsTab).toContain('<PositionsTable');
-    expect(positionsTab).not.toContain('variant="overview"');
-  });
-
   it('keeps Overview dense states readable and non-operational', () => {
     const positions = readRelative('./PositionsTable.tsx');
 

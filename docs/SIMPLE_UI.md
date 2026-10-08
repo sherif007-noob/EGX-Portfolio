@@ -31,10 +31,15 @@ replaces only the presentation layer, one screen at a time. `main` is untouched.
   (`PerformanceReports` takes a `controlledMode` prop and hides its own header
   and navigation when embedded).
 
+- Holdings (`HoldingsScreen`): allocation bar (cash plus sector colors), search,
+  sector and sort chips, expandable holding cards with details, target/stop
+  state and the same actions as before (Buy more, Sell, Edit, Alerts, Ledger).
+- Add Trade: total outlay and the submit buttons are pinned in a sticky footer.
+
 ## Not migrated yet (still legacy visuals inside the new shell)
-Holding table, Transactions, Cash, Closed trades, Stocks, the chart workspaces
-behind Reports > Charts / Trading / Allocation / Monthly, and modals (Add Trade
-sheet with sticky total footer).
+Transactions (including cash rows that read as sells), Cash, Closed trades,
+Stocks, the chart workspaces behind Reports > Charts / Trading / Allocation /
+Monthly, and the rest of the Add Trade form (collapse company and sector).
 
 ## Removed
 Tests that froze the old Overview composition (PortfolioSummary on Overview in

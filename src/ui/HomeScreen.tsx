@@ -104,7 +104,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </div>
 
       <div className="ui-stack">
-        <div className="ui-tile-grid">
+        <div className="ui-tile-grid" aria-label="Profit and loss overview">
           <Tile
             label="Realized P&L"
             value={metrics.realizedPnlEgp}
@@ -119,7 +119,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         </div>
 
-        <section aria-label="Holdings">
+        <section className="ui-home-panel" aria-label="Holdings">
           <div className="ui-section-h" style={{ marginTop: 4 }}>
             <span>Holdings</span>
             <button type="button" className="ui-link ui-sm" onClick={onOpenPositions}>
@@ -130,7 +130,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <p className="ui-sm" style={{ padding: '12px 0' }}>No open positions yet.</p>
           ) : (
             holdings.slice(0, HOLDINGS_PREVIEW).map(({ position, marketValue, pnl, percent }) => (
-              <button key={position.id} type="button" className="ui-row" onClick={onOpenPositions} aria-label={`View holdings including ${position.ticker}`}>
+              <button key={position.id} type="button" className="ui-row" onClick={onOpenPositions} aria-label={`Open holdings list to find ${position.ticker}`}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   {position.logoUrl ? (
                     <StockLogo ticker={position.ticker} companyName={position.companyName} sector={position.sector} logoUrl={position.logoUrl} size="md" />
@@ -157,7 +157,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           )}
         </section>
 
-        <section aria-label="Cash and costs">
+        <section className="ui-home-panel" aria-label="Cash and costs">
           <div className="ui-section-h">
             <span>Cash and costs</span>
             {onQuickAddCash && (

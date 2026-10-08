@@ -6,6 +6,7 @@ import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portf
 import { readPersistedReportsMode, persistReportsMode, type ReportsMode } from '../services/reportsWorkspace';
 import { PerformanceReports } from '../features/reports';
 import { HomeChart } from './HomeChart';
+import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import { ActivityPills, ActivityStat } from './SimpleActivityShared';
 import { formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { buildSimpleAllocation, buildSimpleMonths } from './simpleReportsModel';
@@ -66,6 +67,7 @@ export function SimpleReportsView(props: Props) {
   const {stats,closedTrades,positions,metrics,cashBalance=0,capitalDeposits=0,transactions,
     historicalPrices,historicalLoading=false,chartsReady=true}=props;
   const [mode,setMode]=useState<MediumReportsMode>(()=>readMediumReportMode());
+  const marketSession = egxSessionPresentation();
   const [advanced,setAdvanced]=useState(false);
   const [allocationMode,setAllocationMode]=useState<'sector'|'stock'>('sector');
   const [includeCash,setIncludeCash]=useState(true);
@@ -128,7 +130,10 @@ export function SimpleReportsView(props: Props) {
           <Info label="Win rate" value={Number.isFinite(stats.winRate) ? `${stats.winRate.toFixed(1)}%` : '—'}/>
           <Info label="Profit factor" value={Number.isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'—'}/>
           <Info label="Available cash" value={`${formatEgp(cashBalance)} EGP`}/>
-          <Info label="Today's change" value={<span className={toneClass(metrics?.dayChangeEgp)}>{metrics?formatSigned(metrics.dayChangeEgp)+' EGP':'—'}</span>}/>
+          <Info label={marketSession.isCurrentSessionDay ? "Today's change" : "Market status"}
+            value={marketSession.isCurrentSessionDay
+              ? <span className={toneClass(metrics?.dayChangeEgp)}>{metrics?formatSigned(metrics.dayChangeEgp)+' EGP':'—'}</span>
+              : <span>{marketSession.description} · {marketSession.sessionCaption}</span>}/>
         </div>
       </section>
       <div className="ui-report-shortcuts">

@@ -40,6 +40,10 @@ describe('medium-ui Reports', () => {
     expect(withCash).toHaveLength(2);
     expect(withCash.reduce((sum,x)=>sum+x.value,0)).toBe(2000);
     expect(withCash.reduce((sum,x)=>sum+x.percent,0)).toBeCloseTo(100,8);
+    const withIpo = buildSimpleAllocation([holding],800,'sector',true,40425);
+    expect(withIpo.find(x=>x.label==='IPO held')?.value).toBe(40425);
+    expect(withIpo.reduce((sum,x)=>sum+x.value,0)).toBe(1200+800+40425);
+    expect(withIpo.reduce((sum,x)=>sum+x.percent,0)).toBeCloseTo(100,8);
   });
 
   it('never fabricates historical month-end holding P&L', () => {

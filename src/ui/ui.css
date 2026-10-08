@@ -562,3 +562,6 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-risk-stops-header { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:10px; }
 .ui-risk-stops-header > div { flex:1 1 280px; min-width:0; }
 .ui-risk-stops-header > button { flex:none; }
+
+/* EGX holiday: market-closed state is neutral, not profit/loss colored. */
+.ui-muted { color: var(--ui-text-2, #9aa9bd); }

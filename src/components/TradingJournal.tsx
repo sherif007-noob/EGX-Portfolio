@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { TradeTransaction, ClosedTrade, Position, Sector } from '../types';
 import { StockLogo } from './StockLogo';
+import { filterInvestmentActivity } from '../services/ledgerRecordTypes';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';
 import { DateInput } from './DateInput';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -66,7 +67,7 @@ interface TradingJournalProps {
 export type JournalFilterMode = 'ALL' | 'OPEN' | 'WIN' | 'LOSS' | 'BUY' | 'SELL';
 
 export const TradingJournal: React.FC<TradingJournalProps> = ({
-  transactions,
+  transactions: ledgerTransactions,
   closedTrades,
   positions,
   onDeleteTransaction,
@@ -77,6 +78,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   onSyncToSheets,
   isSyncingToSheets,
 }) => {
+  // Keep cash entries in the canonical ledger, but out of the equity trade journal.
+  const transactions = useMemo(() => filterInvestmentActivity(ledgerTransactions), [ledgerTransactions]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<JournalFilterMode>('ALL');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | 'trade_id' | 'ticker'>('desc');

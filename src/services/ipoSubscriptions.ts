@@ -22,6 +22,8 @@ export function normalizeIpoSubscriptionMetadata(value: unknown): IpoSubscriptio
   const requestedAmount = Number(row.requestedAmount);
   const requestedShares = Number(row.requestedShares);
   const offerPrice = Number(row.offerPrice);
+  const reservedAmount = row.reservedAmount == null ? undefined : Number(row.reservedAmount);
+  const additionalPaymentAmount = row.additionalPaymentAmount == null ? undefined : Number(row.additionalPaymentAmount);
   const allocatedShares = row.allocatedShares == null ? undefined : Number(row.allocatedShares);
   const allocatedAmount = row.allocatedAmount == null ? undefined : Number(row.allocatedAmount);
   const refundAmount = row.refundAmount == null ? undefined : Number(row.refundAmount);
@@ -29,6 +31,8 @@ export function normalizeIpoSubscriptionMetadata(value: unknown): IpoSubscriptio
   return {
     status,
     requestedAmount,
+    reservedAmount: reservedAmount === undefined ? undefined : reservedAmount,
+    additionalPaymentAmount: additionalPaymentAmount === undefined ? undefined : additionalPaymentAmount,
     requestedShares,
     offerPrice,
     reference: typeof row.reference === 'string' && row.reference.trim() ? row.reference.trim() : undefined,
@@ -44,6 +48,11 @@ export function normalizeIpoSubscriptionMetadata(value: unknown): IpoSubscriptio
   };
 }
 
+/** The actual broker hold, falling back to the pre-existing full-reserve contracts. */
+export function ipoHeldAmount(metadata: IpoSubscriptionMetadata): number {
+  return metadata.reservedAmount ?? metadata.requestedAmount;
+}
+
 export function isIpoSubscriptionTransaction(transaction: TradeTransaction): boolean {
   return transaction.type === 'IPO_SUBSCRIPTION' && !!transaction.ipoSubscription;
 }
@@ -57,7 +66,7 @@ export function pendingIpoSubscriptionValue(transactions: TradeTransaction[]): n
   return transactions
     .filter(isPendingIpoSubscription)
     .reduce((sum, transaction) => {
-      const amount = Number(transaction.ipoSubscription?.requestedAmount);
+      const amount = transaction.ipoSubscription ? ipoHeldAmount(transaction.ipoSubscription) : 0;
       return Number.isFinite(amount) && amount > 0 ? sum + amount : sum;
     }, 0);
 }
@@ -72,7 +81,11 @@ export function validateIpoSubscriptionMetadata(metadata: IpoSubscriptionMetadat
   if (!Number.isFinite(metadata.requestedAmount) || metadata.requestedAmount <= EPSILON) {
     throw new Error('IPO requested amount must be greater than zero.');
   }
-  if (!Number.isFinite(metadata.offerPrice) || metadata.offerPrice <= EPSILON) {
+  const held = ipoHeldAmount(metadata);
+  if (!Number.isFinite(held) || held <= EPSILON || held > metadata.requestedAmount + 0.01) {
+    throw new Error('IPO broker cash hold must be positive and cannot exceed the order commitment.');
+  }
+    if (!Number.isFinite(metadata.offerPrice) || metadata.offerPrice <= EPSILON) {
     throw new Error('IPO offer price must be greater than zero.');
   }
   if (!Number.isFinite(metadata.requestedShares) || metadata.requestedShares <= EPSILON) {
@@ -92,17 +105,24 @@ export function validateIpoSubscriptionMetadata(metadata: IpoSubscriptionMetadat
     if (!Number.isFinite(refundAmount) || refundAmount < -EPSILON) {
       throw new Error('IPO refund amount cannot be negative.');
     }
-    if (allocatedAmount > metadata.requestedAmount + EPSILON) {
-      throw new Error('Allocated IPO amount cannot exceed the requested amount.');
+    const added = Number(metadata.additionalPaymentAmount ?? 0);
+    if (!Number.isFinite(added) || added < -EPSILON) {
+      throw new Error('IPO additional payment cannot be negative.');
     }
-    if (Math.abs((allocatedAmount + refundAmount) - metadata.requestedAmount) > 0.01) {
-      throw new Error('Allocated amount plus refund must equal the original IPO request.');
+    if (allocatedAmount > metadata.requestedAmount + 0.01) {
+      throw new Error('Allocated IPO amount cannot exceed the requested commitment.');
+    }
+    if (Math.abs((allocatedAmount + refundAmount - added) - held) > 0.01) {
+      throw new Error('Allocated amount plus reserved-cash refund minus added payment must equal the broker hold.');
+    }
+    if (allocatedShares > metadata.requestedShares + EPSILON) {
+      throw new Error('Allocated shares cannot exceed requested shares.');
     }
   }
 
   if (metadata.status === 'CANCELLED') {
-    const refundAmount = Number(metadata.refundAmount ?? metadata.requestedAmount);
-    if (!Number.isFinite(refundAmount) || Math.abs(refundAmount - metadata.requestedAmount) > 0.01) {
+    const refundAmount = Number(metadata.refundAmount ?? held);
+    if (!Number.isFinite(refundAmount) || Math.abs(refundAmount - held) > 0.01) {
       throw new Error('A cancelled IPO subscription must refund the full requested amount.');
     }
   }

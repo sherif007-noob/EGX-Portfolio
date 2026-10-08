@@ -31,3 +31,11 @@ chart sub-views), Stocks, modals (Add Trade sheet with sticky total footer).
 ## Removed
 Tests that froze the old Overview composition (PortfolioSummary on Overview in
 `App.tsx`, the overview positions preview, the overview analytics order).
+
+## Medium UI branch refinements (2026-10-08)
+- `medium-ui` is derived from `simple-ui` and leaves the source branch unchanged.
+- Today has explicit 1m/5m/15m/1h controls, delegating coarse aggregation to `loadTodayIntraday` rather than assuming separate persisted candles.
+- Chart uses timestamp-scaled x-axis instead of equally spaced category labels; chart height adapts to desktop/mobile.
+- Advanced performance modes are progressively disclosed; color meaning for profit/loss remains driven by signed numeric tone, separate from metric category color.
+- A modest elevation treatment is limited to the portfolio hero. Focus outlines and mobile touch targets are improved.
+- Still to verify against actual broker snapshots: cash-flow-adjusted Return definition, Today session boundary, benchmark coverage, and end-to-end rendered mobile behavior. Do not claim those correctness checks from code changes alone.

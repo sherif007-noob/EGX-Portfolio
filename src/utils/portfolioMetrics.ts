@@ -31,6 +31,22 @@ function quotePreviousClose(quote: EGXTicker | undefined): number | undefined {
   return undefined;
 }
 
+/** Fallback for held tickers missing from the live registry quote directory.
+ * These are price deltas from the stored latest session, not new-day changes.
+ */
+function heldPositionPreviousClose(position: Position | undefined): number | undefined {
+  if (!position || !Number.isFinite(position.currentPrice) || position.currentPrice <= 0) return undefined;
+  if (Number.isFinite(position.dayChange)) {
+    const previous=position.currentPrice-(position.dayChange ?? 0);
+    if (previous>0) return previous;
+  }
+  if (Number.isFinite(position.dayChangePercent)) {
+    const previous=position.currentPrice/(1+(position.dayChangePercent??0)/100);
+    if (Number.isFinite(previous)&&previous>0)return previous;
+  }
+  return undefined;
+}
+
 /** Presentation adapter around the authoritative accounting engine. */
 export function calculatePortfolioMetrics(positions: Position[], cashBalance: number, closedTrades: ClosedTrade[] = [], tickers: EGXTicker[] = [], transactions: TradeTransaction[] = []): PortfolioMetrics {
   const totalMarketValue = positions.reduce((sum, position) => sum + calculatePositionMarketValue(position), 0);
@@ -69,7 +85,12 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
   // not as if they were already owned at yesterday's close.
   const sessionDate = getLatestEgxTradingSessionDate();
   const startShares = new Map<string, number>();
-  positions.forEach((position) => startShares.set(normalizeTickerKey(position.ticker), position.shares));
+  const livePositionMap = new Map<string,Position>();
+  positions.forEach((position)=>{
+    const key=normalizeTickerKey(position.ticker);
+    startShares.set(key,position.shares);
+    livePositionMap.set(key,position);
+  });
   let startCash = cashBalance;
   // Submitted IPO cash is still a portfolio asset, not a trading return.
   // Reconstruct its opening balance independently from available cash.
@@ -134,7 +155,7 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
   let sessionReconstructionComplete = true;
   for (const [ticker, shares] of startShares) {
     if (shares <= 0.000001) continue;
-    const previousClose = quotePreviousClose(tickerMap.get(ticker));
+    const previousClose = quotePreviousClose(tickerMap.get(ticker)) ?? heldPositionPreviousClose(livePositionMap.get(ticker));
     if (previousClose === undefined) {
       sessionReconstructionComplete = false;
       break;
@@ -147,7 +168,10 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
     const startEquity = startCash + startMarketValue + startPendingIpoAsset;
     dayChangeEgp = totalValue - startEquity - externalNetFlow;
   } else {
-    // Conservative fallback for an unavailable previous close.
+    // Explicitly mark this fallback unreliable: static holdings × quote deltas
+    // omit round trips, fees and positions fully sold during the session.
+    // Keep the existing number for legacy data consumers but never label it
+    // as broker-comparable Today P&L in the new UI.
     dayChangeEgp = positions.reduce((sum, position) => {
       const clean = normalizeTickerKey(position.ticker);
       const quote = tickerMap.get(clean);
@@ -167,7 +191,7 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
 
   const previousPortfolioValue = totalValue - dayChangeEgp;
   const dayChangePercent = previousPortfolioValue > 0 ? (dayChangeEgp / previousPortfolioValue) * 100 : 0;
-  return { totalValue: Number(totalValue.toFixed(2)), totalMarketValue: Number(totalMarketValue.toFixed(2)), totalCost: Number(totalCost.toFixed(2)), totalCostWithFees: Number(totalCostWithFees.toFixed(2)), unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)), unrealizedPnlPercent: totalCostWithFees > 0 ? Number(((unrealizedPnlEgp / totalCostWithFees) * 100).toFixed(2)) : 0, grossUnrealizedPnlEgp: Number(grossUnrealizedPnlEgp.toFixed(2)), grossUnrealizedPnlPercent: totalCost > 0 ? Number(((grossUnrealizedPnlEgp / totalCost) * 100).toFixed(2)) : 0, realizedPnlEgp: Number(totalRealizedPnl.toFixed(2)), cashBalance: Number(cashBalance.toFixed(2)), dayChangeEgp: Number(dayChangeEgp.toFixed(2)), dayChangePercent: Number(dayChangePercent.toFixed(2)), totalPositions: positions.length, winningPositionsCount, losingPositionsCount, totalFeesPaid: Number(totalFeesPaid.toFixed(2)), openFeesPaid: Number(openFeesPaid.toFixed(2)), closedFeesPaid: Number(closedFeesPaid.toFixed(2)), pendingIpoSubscriptionsEgp: Number(pendingIpoSubscriptionsEgp.toFixed(2)) };
+  return { totalValue: Number(totalValue.toFixed(2)), totalMarketValue: Number(totalMarketValue.toFixed(2)), totalCost: Number(totalCost.toFixed(2)), totalCostWithFees: Number(totalCostWithFees.toFixed(2)), unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)), unrealizedPnlPercent: totalCostWithFees > 0 ? Number(((unrealizedPnlEgp / totalCostWithFees) * 100).toFixed(2)) : 0, grossUnrealizedPnlEgp: Number(grossUnrealizedPnlEgp.toFixed(2)), grossUnrealizedPnlPercent: totalCost > 0 ? Number(((grossUnrealizedPnlEgp / totalCost) * 100).toFixed(2)) : 0, realizedPnlEgp: Number(totalRealizedPnl.toFixed(2)), cashBalance: Number(cashBalance.toFixed(2)), dayChangeEgp: Number(dayChangeEgp.toFixed(2)), dayChangePercent: Number(dayChangePercent.toFixed(2)), dayChangeReliable: sessionReconstructionComplete, totalPositions: positions.length, winningPositionsCount, losingPositionsCount, totalFeesPaid: Number(totalFeesPaid.toFixed(2)), openFeesPaid: Number(openFeesPaid.toFixed(2)), closedFeesPaid: Number(closedFeesPaid.toFixed(2)), pendingIpoSubscriptionsEgp: Number(pendingIpoSubscriptionsEgp.toFixed(2)) };
 }
 
 export function calculatePerformanceStats(closedTrades: ClosedTrade[], positions: Position[] = []): PerformanceStats {

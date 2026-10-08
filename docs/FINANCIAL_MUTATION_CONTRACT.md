@@ -1142,7 +1142,7 @@ Current mutation kinds:
 - `IPO_SUBSCRIPTION_ALLOCATE`;
 - `IPO_SUBSCRIPTION_CANCEL`.
 
-Submission persists the requested amount as unavailable cash and an equal pending IPO asset. Allocation replaces the reservation with the actual allocated cost, creates the allocated share lot at the offer price, and releases the unallocated/refunded amount to cash. Cancellation releases the full reservation and creates no shares.
+Submission persists **actual broker-held cash** (`reservedAmount`, falling back to `requestedAmount` for legacy rows) as unavailable buying power and an equal pending IPO asset. The complete `requestedAmount` represents the full order commitment and is not necessarily debited. Allocation replaces the reservation with the actual allocated cost, creates the allocated share lot at the offer price, returns unused held funds when applicable, and requires available cash for any cost above the original hold. Cancellation releases the **original broker hold**, not the full subscription commitment, and creates no shares. On all routes, NAV is unchanged by the hold itself; purchase fees and actual market performance may change NAV later.
 
 All three paths use the same prepare → reconcile → validate → persist → apply executor. The generic transaction editor must not mutate IPO lifecycle records.
 

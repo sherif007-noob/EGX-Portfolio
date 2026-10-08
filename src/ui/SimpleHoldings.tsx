@@ -27,6 +27,16 @@ export function SimpleHoldings({ positions, onSellPosition, onBuyMore, onEditPos
       const cost = p.shares * p.avgBuyPrice + (p.totalFees ?? 0);
       return { p, value, pnl: value - cost, percent: cost > 0 ? ((value - cost) / cost) * 100 : 0 };
     }).sort((a,b) => sort === 'value' ? b.value - a.value : sort === 'pnl' ? b.pnl - a.pnl : a.p.ticker.localeCompare(b.p.ticker)), [positions,search,sort,sector]);
+  // Structural inline styles ensure pill geometry survives a stale PWA CSS chunk or stylesheet loading order.
+  const pillRail: React.CSSProperties = { display:'flex', gap:8, width:'100%', minWidth:0, overflowX:'auto', flexWrap:'nowrap', padding:'4px 2px 8px', WebkitOverflowScrolling:'touch' };
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    display:'inline-flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto',
+    whiteSpace:'nowrap', minHeight:38, padding:'8px 14px', borderRadius:999,
+    border: active ? '1px solid #22b88a' : '1px solid rgba(148,163,184,.35)',
+    background: active ? 'rgba(34,184,138,.20)' : '#14243b',
+    color: active ? '#e8eef7' : '#9aa9bd', fontSize:13, fontWeight:active ? 600 : 500,
+    lineHeight:1.3, cursor:'pointer',
+  });
   const total = rows.reduce((acc,r)=>acc+r.value,0);
   const pnl = rows.reduce((acc,r)=>acc+r.pnl,0);
   return <section className="ui-holdings" aria-label="Open holdings">
@@ -38,14 +48,14 @@ export function SimpleHoldings({ positions, onSellPosition, onBuyMore, onEditPos
       <label className="ui-holdings-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a stock" aria-label="Search holdings"/></label>
       <div className="ui-filter-group">
         <span className="ui-sm ui-filter-caption">Sector</span>
-        <div className="ui-pill-scroll" role="group" aria-label="Filter holdings by sector">
-          {['ALL', ...sectors].map(item => <button key={item} type="button" className="ui-filter-pill" aria-pressed={sector === item} onClick={() => setSector(item)}>{item === 'ALL' ? 'All sectors' : item}</button>)}
+        <div className="ui-pill-scroll" style={pillRail} role="group" aria-label="Filter holdings by sector">
+          {['ALL', ...sectors].map(item => <button key={item} type="button" className="ui-filter-pill" style={pillStyle(sector === item)} aria-pressed={sector === item} onClick={() => setSector(item)}>{item === 'ALL' ? 'All sectors' : item}</button>)}
         </div>
       </div>
       <div className="ui-filter-group">
         <span className="ui-sm ui-filter-caption">Sort</span>
-        <div className="ui-pill-scroll" role="group" aria-label="Sort holdings">
-          {([{value:'value',label:'Value'},{value:'pnl',label:'P&L'},{value:'ticker',label:'Ticker'}] as const).map(item => <button key={item.value} type="button" className="ui-filter-pill" aria-pressed={sort === item.value} onClick={() => setSort(item.value)}>{item.label}</button>)}
+        <div className="ui-pill-scroll" style={pillRail} role="group" aria-label="Sort holdings">
+          {([{value:'value',label:'Value'},{value:'pnl',label:'P&L'},{value:'ticker',label:'Ticker'}] as const).map(item => <button key={item.value} type="button" className="ui-filter-pill" style={pillStyle(sort === item.value)} aria-pressed={sort === item.value} onClick={() => setSort(item.value)}>{item.label}</button>)}
         </div>
       </div>
     </div>

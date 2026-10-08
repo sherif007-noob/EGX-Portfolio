@@ -410,6 +410,7 @@ export default function App() {
             historicalPrices={historicalPriceSeries}
             historicalLoading={historicalAnalyticsLoading}
             chartsReady={settledTab === activeTab}
+            onOpenHoldings={() => handleTabChange('positions')}
           />
         )}
 

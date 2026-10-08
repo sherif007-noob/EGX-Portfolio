@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { ExpandPresence, MotionSwap } from './PremiumMotion';
-import { AnalyticsSelect } from './AnalyticsSelect';
 import { ClosedTrade, TradeTransaction, Sector } from '../types';
 import { StockLogo } from './StockLogo';
 import { formatDateDDMMYYYY, formatDateVerbose } from '../utils/dateUtils';

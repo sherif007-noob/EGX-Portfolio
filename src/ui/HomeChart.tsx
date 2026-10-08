@@ -170,8 +170,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       ? (last.portfolio as number) - (last[indexChoice] as number)
       : null;
 
-  const isLoading = loading || historicalLoading;
+  const isLoading = loading || (timeframe !== 'TODAY' && historicalLoading);
   const hasData = model.rows.length >= 2;
+  const missingBenchmarks = mode === 'bm' ? model.series.filter(item => item.key !== 'portfolio' && !model.rows.some(row => finite(row[item.key]))).map(item => item.label) : [];
   const ChartRoot = model.series.some((item) => item.area) ? AreaChart : LineChart;
 
   return (
@@ -297,6 +298,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
           </div>
         )}
       </div>
+
+      {missingBenchmarks.length > 0 && !isLoading && <p className="ui-note" role="status">No aligned price history for: {missingBenchmarks.join(', ')}. Unavailable indices are not plotted.</p>}
 
       {hasData && !isLoading && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', marginTop: 8 }}>

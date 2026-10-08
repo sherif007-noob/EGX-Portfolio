@@ -77,8 +77,9 @@ export function SimpleReportsView(props: Props) {
     capitalDeposits,closedTrades,positions,cashBalance,transactions,
   ),[capitalDeposits,closedTrades,positions,cashBalance,transactions]);
   const bridgeValid=isEquityBridgeBalanced(bridge);
-  const allocation=useMemo(()=>buildSimpleAllocation(positions,cashBalance,allocationMode,includeCash),
-    [positions,cashBalance,allocationMode,includeCash]);
+  const pendingIpoValue=useMemo(()=>pendingIpoSubscriptionValue(transactions),[transactions]);
+  const allocation=useMemo(()=>buildSimpleAllocation(positions,cashBalance,allocationMode,includeCash,pendingIpoValue),
+    [positions,cashBalance,allocationMode,includeCash,pendingIpoValue]);
   const months=useMemo(()=>buildSimpleMonths(closedTrades,positions),[closedTrades,positions]);
   const selectedMonths=month==='ALL'?months:months.filter(item=>item.key===month);
   const shownMonths=month==='ALL'&&!showAllMonths ? selectedMonths.slice(0,8):selectedMonths;
@@ -196,16 +197,16 @@ export function SimpleReportsView(props: Props) {
       accountingBalanced={bridgeValid}/>}
 
     {mode==='allocation' && <>
-      <SectionTitle title="Portfolio allocation" detail="Current market value across holdings and cash."/>
+      <SectionTitle title="Portfolio allocation" detail="Current holdings, available cash and pending IPO reserves—all accounted for."/>
       <ActivityPills label="Group by" value={allocationMode} onChange={setAllocationMode} choices={[
         {value:'sector',label:'Sector'},{value:'stock',label:'Stock'},
       ]}/>
-      <label className="ui-report-check"><input type="checkbox" checked={includeCash} onChange={e=>setIncludeCash(e.target.checked)}/> Include available cash</label>
+      <label className="ui-report-check"><input type="checkbox" checked={includeCash} onChange={e=>setIncludeCash(e.target.checked)}/> Include cash and IPO reserves</label>
       <div className="ui-report-list ui-report-allocations">
         {!allocation.length && <p className="ui-activity-empty">No positions in this allocation.</p>}
         {allocation.map((row,i)=><div className="ui-report-allocation" key={row.label}>
           <div className="ui-report-allocation-head">
-            <span><strong>{row.label}</strong><span className="ui-sm">{row.count ? `${row.count} holdings`:'Available balance'}</span></span>
+            <span><strong>{row.label}</strong><span className="ui-sm">{row.count ? `${row.count} holdings` : row.label==='IPO held'?'Reserved, unavailable':'Available balance'}</span></span>
             <span><strong className="ui-mono">{formatEgp(row.value)} EGP</strong><span className="ui-sm">{row.percent.toFixed(1)}%</span></span>
           </div>
           <div className="ui-report-track"><span style={{width:`${Math.max(0,Math.min(100,row.percent))}%`,background:`var(--ui-allocation-${i%5})`}}/></div>

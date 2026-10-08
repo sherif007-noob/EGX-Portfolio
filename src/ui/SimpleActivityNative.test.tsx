@@ -48,6 +48,11 @@ describe('native Medium UI Activity presentation', () => {
     expect(cycleSourceIds(cycle,[transaction])).toEqual(['sell-1']);
   });
 
+  it('resolves missing BUY links without dropping an explicitly linked SELL', () => {
+    const buy = {...transaction, id:'buy-1',type:'BUY' as const,date:'2026-10-01'};
+    expect(cycleSourceIds(cycle,[buy,transaction])).toEqual(['sell-1','buy-1']);
+  });
+
   it('renders closed results as simple rows', () => {
     const html = renderToStaticMarkup(
       <SimpleClosedView closedTrades={[cycle]} transactions={[transaction]}

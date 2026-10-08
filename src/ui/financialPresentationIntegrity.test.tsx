@@ -65,6 +65,10 @@ describe('NAV investigation is read-only',()=>{
     expect(result.reconstructedNav).toBe(850);
     expect(result.reservedIpo).toBe(500);
   });
+  it('flags stored quotes restamped during a verified holiday',()=>{
+    const result=navBreakdown([{...position,priceUpdatedAt:'2026-10-08T20:49:20.072Z'}],100);
+    expect(result.lastQuoteByTicker[0].timestampOnClosedDay).toBe(true);
+  });
   it('renders the comparison without writing the ledger',()=>{
     const html=renderToStaticMarkup(<NavReconciliation metrics={metrics} positions={[position]}/>);
     expect(html).toContain('Reconcile NAV with Telda');

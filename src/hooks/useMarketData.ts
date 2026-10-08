@@ -8,6 +8,7 @@ import {
 } from '../services/marketPriceSync';
 import { savePriceTickToFirestore } from '../services/firestoreStorage';
 import { VISUAL_REGRESSION_MODE } from '../utils/visualRegressionMode';
+import { cairoDateKey, isEgxTradingDay } from '../services/egxTradingCalendar';
 
 const MARKET_SYNC_INTERVAL_MS = 15 * 60 * 1000;
 const CLOSING_HOUR_CAIRO = 15;
@@ -113,6 +114,9 @@ export function useMarketData(
     let retry: ReturnType<typeof setTimeout> | undefined;
     const refresh = async () => {
       if (cancelled || document.visibilityState === 'hidden' || navigator.onLine === false) return;
+      // Auto startup/resume sync must not re-stamp yesterday's scanner prices as today's market session.
+      // Manual Sync remains available for an explicit user request.
+      if (!isEgxTradingDay(cairoDateKey())) return;
       if (Date.now() - lastSuccessfulSyncRef.current < 60_000) return;
       clearTimeout(retry);
       const result = await syncLivePrices(false, false);
@@ -173,8 +177,8 @@ export function useMarketData(
         const closingStart = CLOSING_HOUR_CAIRO * 60 + CLOSING_MINUTE_CAIRO;
         const isClosingWindow = cairoDayMinutes >= closingStart && cairoDayMinutes < closingStart + CLOSING_WINDOW_MINUTES;
 
-        const tradingWeekday = !['Fri', 'Sat'].includes(new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short' }).format(new Date()));
-        if (tradingWeekday && isClosingWindow && lastClosingSyncKeyRef.current !== cairoDateKey) {
+        const actualTradingDay = isEgxTradingDay(cairoDateKey);
+        if (actualTradingDay && isClosingWindow && lastClosingSyncKeyRef.current !== cairoDateKey) {
           console.log('[MarketData] 3:15 PM Cairo closing valuation write.');
           const result = await syncLivePrices(false, true);
           if (result.success) lastClosingSyncKeyRef.current = cairoDateKey;

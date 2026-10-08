@@ -106,3 +106,5 @@ The earlier Activity pass was only cosmetic. It still rendered the original prem
 - `personalRiskModel.test.ts` and additional `SimpleReportsView.test.tsx` cases cover exposure arithmetic, stop coverage exclusions, cash/IPO separation, zero-data handling, drawdown chronology/legacy date parsing, wrapping native presentation, and missing-stop warnings.
 - Validation status: source changes and focused tests are committed, but TypeScript, Vitest, rendered-device checks and broker snapshot acceptance are **not yet executed** in this environment (GitHub host resolution unavailable). Do not merge/deploy as validated until those gates pass.
 - Next: Stage 7.3 position thesis and trade-plan review; never invent thesis correctness or discipline scores without recorded inputs.
+
+- Trust-gating follow-up: My Risk states that quotes are the latest stored values and may be stale; when the canonical equity bridge is unbalanced it displays a visible ledger-reconciliation warning rather than implying validated risk figures.

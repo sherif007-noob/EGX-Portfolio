@@ -227,3 +227,11 @@ npm run build
 ```
 
 Fix typecheck failures before investigating later build steps because CI stops at the first failed stage.
+
+## Broker NAV mismatch and misleading deposits in Transactions (medium-ui)
+1. Break down portfolio NAV as **sum(open position shares × actual last marked prices) + available cash + pending IPO subscription assets**. Do not add realized P&L again or treat contributed capital as another asset.
+2. Use Home → **Reconcile NAV with Telda** to enter the broker NAV from the same timestamp. If available, enter broker cash as well: the remaining difference identifies shares/prices/IPO treatment instead of an unexplained cash mismatch.
+3. Check instrument quantities, official corporate actions, broker mark convention, per-position last quote timestamps and possible delayed settlement. Refresh timestamps on a holiday do **not** mean a new trading session occurred.
+4. For every trade, compare execution quantity, unit price and **actual broker invoice fees**, especially same-day/grouped invoices. If the invoice is grouped, its overall fee total can be audited, but do not invent exact per-ticket allocations. Use audit-reasoned ledger edits only after validation.
+5. Legacy CASH pseudo BUY/SELL rows represent EGP deposits, withdrawals, dividends and adjustments, **not shares**. The investment journal excludes these; Cash Ledger retains them. An external deposit changes equity and contributed capital equally, and must not be counted as profit on the return chart.
+6. Missing price-history observations must remain visible as a data-quality warning; don't shift curves vertically or insert compensating cash to force NAV parity.

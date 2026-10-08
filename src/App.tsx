@@ -328,7 +328,7 @@ export default function App() {
       <main className="premium-safe-inline-main premium-flow-major ui-main-pad relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6">
         {/* Home renders its own hero. Every other tab gets a compact context
             strip, and the activity views share one segmented switch. */}
-        {activeTab !== 'overview' && <CompactPortfolioStrip metrics={metrics} />}
+        {activeTab !== 'overview' && !ACTIVITY_TABS.includes(activeTab) && <CompactPortfolioStrip metrics={metrics} />}
         {ACTIVITY_TABS.includes(activeTab) && (
           <ActivitySwitcher activeTab={activeTab} setActiveTab={handleTabChange} />
         )}

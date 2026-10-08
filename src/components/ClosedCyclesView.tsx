@@ -265,7 +265,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
 
   return (
     <section
-      className="premium-hierarchy-h0 premium-dense-workflow premium-flow-related"
+      className="ui-activity-content ui-activity-closed premium-hierarchy-h0 premium-dense-workflow premium-flow-related"
       data-hierarchy="h0"
       data-page="closed-cycles"
     >
@@ -454,12 +454,12 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         {/* Filters and Sorting */}
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
           {/* Outcome Filter Pills */}
-          <div className="premium-selector-shell flex w-full items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none sm:w-auto sm:flex-wrap sm:overflow-visible">
+          <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Filter closed trades">
             <button
               type="button"
               aria-pressed={outcomeFilter === 'ALL'}
               onClick={() => changeOutcomeFilter('ALL')}
-              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
+              className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'ALL' ? 'premium-filter-active-neutral' : ''}`}
             >
               All ({enrichedCycles.length})
             </button>
@@ -467,7 +467,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'WIN'}
               onClick={() => changeOutcomeFilter('WIN')}
-              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
+              className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'WIN' ? 'premium-filter-active-emerald' : ''}`}
             >
               Wins ({summary.winCount})
             </button>
@@ -475,7 +475,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'LOSS'}
               onClick={() => changeOutcomeFilter('LOSS')}
-              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
+              className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'LOSS' ? 'premium-filter-active-rose' : ''}`}
             >
               Losses ({summary.lossCount})
             </button>
@@ -483,7 +483,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
               type="button"
               aria-pressed={outcomeFilter === 'BREAKEVEN'}
               onClick={() => changeOutcomeFilter('BREAKEVEN')}
-              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
+              className={`ui-filter-pill shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${outcomeFilter === 'BREAKEVEN' ? 'premium-filter-active-amber' : ''}`}
             >
               BE ({summary.breakevenCount})
             </button>

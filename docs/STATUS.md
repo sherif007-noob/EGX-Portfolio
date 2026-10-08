@@ -315,3 +315,9 @@ Historical phase journals may contain contemporaneous words such as `ACTIVE`, `N
 
 ## Experimental branch notice — medium-ui Personal Risk (2026-10-08)
 The `medium-ui` branch contains a source-level **Stage 7.2 My Risk** view integrated with its simplified Reports UI. It reads canonical positions/closed trades and does not modify financial data. This is **not** a production `main` acceptance or a revision of the Stage 6 working sequence. GitHub-based compilation, Vitest, rendered phone checks and broker parity have not been validated for this branch. Detailed calculation definitions and uncovered-stop limitations are recorded in `docs/SIMPLE_UI.md`.
+
+## Experimental medium-ui holiday correction — 2026-10-08
+
+The `medium-ui` branch implements an exchange-calendar correction for the **Thursday 2026-10-08 EGX closure** (observed Armed Forces Day). The confirmed previous trading session is Wednesday **2026-10-07**; trading resumes Sunday **2026-10-11**. The fix is scoped to the experimental branch and does not declare `main` production acceptance. Session resolver, market scheduler, scheduled ingestion and native Home/Reports labels now share explicit exchange-date logic. See `INTRADAY_MARKET_DATA.md` and `SIMPLE_UI.md`.
+
+The observed +0.24% can come from the prior trading session's stored per-symbol quote-change data, even without any holiday trading. UI now distinguishes market closure from the daily quote-return metric. Exact financial reconciliation and TypeScript/Vitest/browser tests remain unverified on this branch; do not claim the number was verified against Telda.

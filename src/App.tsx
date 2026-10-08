@@ -424,6 +424,8 @@ export default function App() {
             ledgerFocus={ledgerCorrectionFocus}
             onClearLedgerFocus={() => setLedgerCorrectionFocus(null)}
             onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
+            onOpenCash={() => handleTabChange('cash')}
+            onOpenIpo={() => setIsIpoSubscriptionModalOpen(true)}
             onSyncToSheets={syncToSheets}
             isSyncingToSheets={isSyncingToSheets}
           />

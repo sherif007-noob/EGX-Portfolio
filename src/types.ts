@@ -254,7 +254,12 @@ export type IpoSubscriptionStatus = 'SUBMITTED' | 'ALLOCATED' | 'CANCELLED';
 
 export interface IpoSubscriptionMetadata {
   status: IpoSubscriptionStatus;
+  /** Full order commitment: requestedShares × offerPrice; not all of this is held as cash. */
   requestedAmount: number;
+  /** Actual cash frozen by the broker. Legacy records default to requestedAmount. */
+  reservedAmount?: number;
+  /** Additional cash consumed at settlement above the original reserve. */
+  additionalPaymentAmount?: number;
   requestedShares: number;
   offerPrice: number;
   reference?: string;

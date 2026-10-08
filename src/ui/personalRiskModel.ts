@@ -1,5 +1,6 @@
 import type { ClosedTrade, Position } from '../types';
 import { calculatePositionUnrealizedPnl } from '../services/portfolioAccounting';
+import { dmyToIso } from '../utils/dateUtils';
 
 const validNonNegative = (x: number) => Number.isFinite(x) && x >= 0;
 const positive = (x: number) => Number.isFinite(x) && x > 0;
@@ -67,8 +68,14 @@ export function realizedTradeDrawdown(closedTrades: ClosedTrade[]): RealizedDraw
   if (closedTrades.length === 0) return { amount: null, fromDate: null, toDate: null };
   const daily = new Map<string, number>();
   for (const cycle of closedTrades) {
-    const date = cycle.sellDate.slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(cycle.realizedPnlEgp)) continue;
+    const raw = String(cycle.sellDate ?? '').trim();
+    // Accept the canonical ISO format and legacy DD/MM/YYYY only; do not let
+    // the date utility's fallback-to-today create phantom execution dates.
+    const recognized = /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}(?:T|$)/.test(raw) ||
+      /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}$/.test(raw);
+    if (!recognized || !Number.isFinite(cycle.realizedPnlEgp)) continue;
+    const date = dmyToIso(raw);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(`${date}T12:00:00Z`))) continue;
     daily.set(date, (daily.get(date) ?? 0) + cycle.realizedPnlEgp);
   }
   if (!daily.size) return { amount: null, fromDate: null, toDate: null };

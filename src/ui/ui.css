@@ -187,3 +187,12 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-hero { box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 10px 30px rgba(0,0,0,.13); }
 .ui-chip:focus-visible, .ui-link:focus-visible, .ui-row:focus-visible { outline: 2px solid var(--ui-blue); outline-offset: 3px; }
 @media (max-width: 600px) { .ui-chart-canvas { height: 248px; } .ui-chip { min-height: 36px; } .ui-chip.sub { min-height: 34px; } .ui-tile-grid { gap: 8px; } }
+
+/* Medium UI next pass: quiet sectional rhythm and dependable chart controls. */
+.ui-home-panel { padding: 2px 4px 4px; }
+.ui-home-panel .ui-row { min-height: 54px; }
+.ui-chart-toolbar .ui-link { flex: 0 0 auto; min-height: 36px; padding: 0 8px; border-radius: 8px; }
+.ui-chart-toolbar .ui-link:hover { background: rgba(148,163,184,.10); }
+.ui-chart-toolbar .ui-chip[aria-pressed='true'], .ui-granularity .ui-chip[aria-pressed='true'] { box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+.ui-home-panel button.ui-row:hover { background: rgba(148,163,184,.055); }
+@media(max-width: 390px) { .ui-tile .ui-mono { font-size: 1rem !important; } .ui-home-panel .ui-row { gap: 6px; } }

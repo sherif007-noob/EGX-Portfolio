@@ -606,7 +606,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       )}
 
       {/* Filter and Search Controls Bar */}
-      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control flex flex-col md:flex-row md:items-center justify-between rounded-2xl" data-hierarchy="h4">
+      <div className="premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4 premium-gap-control flex flex-col gap-3 rounded-2xl" data-hierarchy="h4">
         <div className="relative w-full min-w-0 flex-1 max-w-xl">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
@@ -620,7 +620,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
         </div>
 
         {/* Filter Pills and Sort Dropdown */}
-        <div className="grid w-full grid-cols-2 items-stretch gap-1.5 md:flex md:w-auto md:items-center md:flex-wrap">
+        <div className="ui-activity-filter-controls flex w-full flex-col gap-3">
           <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Filter transactions">
           <button
             id="journal-filter-all"
@@ -686,23 +686,27 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </button>
           </div>
 
-          {/* Compact Sort Dropdown Select */}
-          <div className="premium-subpanel flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-xl">
-            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <AnalyticsSelect
-              value={sortOrder}
-              onChange={(value) => setSortOrder(value as typeof sortOrder)}
-              compact
-              accent="amber"
-              ariaLabel="Sort transaction journal"
-              className="w-full min-w-0 md:w-auto md:min-w-[170px]"
-              options={[
-                { value: 'desc', label: 'Sort: Newest First' },
-                { value: 'asc', label: 'Sort: Oldest First' },
-                { value: 'trade_id', label: 'Sort: By Trade #' },
-                { value: 'ticker', label: 'Sort: By Ticker (A-Z)' },
-              ]}
-            />
+          {/* Sort: simple wrapping pills, keeps the original ordering logic. */}
+          <div className="ui-activity-sort">
+            <span className="ui-sm">Sort</span>
+            <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Sort transaction journal">
+              {([
+                { value: 'desc', label: 'Newest' },
+                { value: 'asc', label: 'Oldest' },
+                { value: 'trade_id', label: 'Trade #' },
+                { value: 'ticker', label: 'Ticker' },
+              ] as const).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="ui-filter-pill"
+                  aria-pressed={sortOrder === option.value}
+                  onClick={() => setSortOrder(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Page Size Selector */}

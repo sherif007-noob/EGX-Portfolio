@@ -357,7 +357,7 @@ export function usePortfolioWorkflows({
     if (!transaction) return true;
     appendPersistedTransactionToSheet(transaction);
     showToast(
-      `Reserved ${input.requestedAmount.toLocaleString('en-EG')} EGP for ${input.ticker.toUpperCase()} IPO. NAV unchanged; cash marked unavailable.`,
+      `Held ${(input.reservedAmount ?? input.requestedAmount).toLocaleString('en-EG')} EGP against ${input.requestedAmount.toLocaleString('en-EG')} EGP ${input.ticker.toUpperCase()} IPO order. NAV unchanged.`,
       'success',
       5500,
     );

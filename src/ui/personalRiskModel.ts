@@ -138,7 +138,7 @@ export function calculatePersonalRisk(
       marketValue,
       portfolioSharePercent:marketValue === null ? null : fraction(marketValue,nav),
       holdingsSharePercent:marketValue === null ? null : fraction(marketValue,investedMarketValue),
-      stopPrice:hasStop ? stop! : null,
+      stopPrice:hasStop && Number.isFinite(stop) ? stop! : null,
       stopStatus:status,
       // Purchase cost at stop, net of existing buy fees, but excludes future exit fees.
       capitalLossAtStop: covered ? Math.max(0,cost! - stopValue!) : null,

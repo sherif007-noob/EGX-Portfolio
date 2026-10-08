@@ -85,7 +85,7 @@ export function validateIpoSubscriptionMetadata(metadata: IpoSubscriptionMetadat
   if (!Number.isFinite(held) || held <= EPSILON || held > metadata.requestedAmount + 0.01) {
     throw new Error('IPO broker cash hold must be positive and cannot exceed the order commitment.');
   }
-    if (!Number.isFinite(metadata.offerPrice) || metadata.offerPrice <= EPSILON) {
+  if (!Number.isFinite(metadata.offerPrice) || metadata.offerPrice <= EPSILON) {
     throw new Error('IPO offer price must be greater than zero.');
   }
   if (!Number.isFinite(metadata.requestedShares) || metadata.requestedShares <= EPSILON) {
@@ -123,7 +123,7 @@ export function validateIpoSubscriptionMetadata(metadata: IpoSubscriptionMetadat
   if (metadata.status === 'CANCELLED') {
     const refundAmount = Number(metadata.refundAmount ?? held);
     if (!Number.isFinite(refundAmount) || Math.abs(refundAmount - held) > 0.01) {
-      throw new Error('A cancelled IPO subscription must refund the full requested amount.');
+      throw new Error('A cancelled IPO subscription must release the full broker cash hold.');
     }
   }
 }

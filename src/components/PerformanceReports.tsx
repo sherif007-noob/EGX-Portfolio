@@ -1,4 +1,5 @@
 import { useChartResourceId } from './charts/ChartSeriesGlow';
+import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PerformanceStats, ClosedTrade, Position, PortfolioMetrics, TradeTransaction } from '../types';
 import { TradingPerformanceReport } from './reports/TradingPerformanceReport';
@@ -64,6 +65,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   historicalLoading = false,
   chartsReady = true,
 }) => {
+  const marketSession = egxSessionPresentation();
   const allocationGlowId = useChartResourceId('allocation-glow');
   const reducedMotion = useAnalyticsReducedMotion();
   const [allocationTooltipsEnabled, setAllocationTooltipsEnabled] = useState(true);
@@ -310,8 +312,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
             <div className="premium-flow-major" data-reports-workspace="overview">
               <ReportsOverview
                 portfolioValue={reportedNav}
-                dayChangeEgp={metrics?.dayChangeEgp ?? null}
-                dayChangePercent={metrics?.dayChangePercent ?? null}
+                dayChangeEgp={marketSession.isCurrentSessionDay ? (metrics?.dayChangeEgp ?? null) : null}
+                dayChangePercent={marketSession.isCurrentSessionDay ? (metrics?.dayChangePercent ?? null) : null}
                 realizedPnlEgp={metrics?.realizedPnlEgp ?? performanceBridge.realizedPnl}
                 unrealizedPnlEgp={metrics?.unrealizedPnlEgp ?? performanceBridge.unrealizedPnl}
                 cashBalance={cashBalance}

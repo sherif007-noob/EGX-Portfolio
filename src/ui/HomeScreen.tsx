@@ -130,7 +130,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <p className="ui-sm" style={{ padding: '12px 0' }}>No open positions yet.</p>
           ) : (
             holdings.slice(0, HOLDINGS_PREVIEW).map(({ position, marketValue, pnl, percent }) => (
-              <button key={position.id} type="button" className="ui-row" onClick={onOpenPositions}>
+              <button key={position.id} type="button" className="ui-row" onClick={onOpenPositions} aria-label={`View holdings including ${position.ticker}`}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   {position.logoUrl ? (
                     <StockLogo ticker={position.ticker} companyName={position.companyName} sector={position.sector} logoUrl={position.logoUrl} size="md" />

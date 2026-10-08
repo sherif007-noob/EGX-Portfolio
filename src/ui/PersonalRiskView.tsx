@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { AlertCircle, ShieldAlert } from 'lucide-react';
 import type { ClosedTrade, Position } from '../types';
-import { formatEgp, formatPercent, toneClass } from './format';
+import { formatEgp, toneClass } from './format';
 import { calculatePersonalRisk } from './personalRiskModel';
 
 type Props = {
@@ -116,7 +116,7 @@ export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pending
           </span>
           <span className="ui-risk-holding-value">
             <strong>{h.quoteToStopDownside===null?'—':money(h.quoteToStopDownside)}</strong>
-            <span className="ui-sm">{h.stopPrice!==null?`Stop ${formatEgp(h.stopPrice)}`:'No stop recorded'} · {h.marketValue===null?'Unpriced':money(h.marketValue)}</span>
+            <span className="ui-sm">{h.stopStatus==='invalid'?'Invalid recorded stop or cost':h.stopPrice!==null?`Stop ${formatEgp(h.stopPrice)}`:'No stop recorded'} · {h.marketValue===null?'Unpriced':money(h.marketValue)}</span>
           </span>
         </div>)}
         {!risk.holdings.length && <p className="ui-activity-empty">No open positions.</p>}

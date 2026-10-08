@@ -6,6 +6,7 @@ import { isCashLedgerRecord, filterExecutions, filterInvestmentActivity } from '
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { SimpleTransactionsView } from './SimpleTransactionsView';
 import { NavReconciliation, navBreakdown } from './NavReconciliation';
+import { activityRecordView } from './activityRecordModel';
 
 const cash=(id:string,amount:number,kind:'DEPOSIT'|'WITHDRAWAL'|'RECONCILIATION_ADJUSTMENT'):TradeTransaction=>({
   id,type:kind==='WITHDRAWAL'?'SELL':'BUY',ticker:'CASH',
@@ -26,15 +27,45 @@ describe('cash ledger versus investment activity separation',()=>{
     expect(filterInvestmentActivity(rows).map(tx=>tx.id)).toEqual(['buy-1']);
     expect(filterExecutions(rows).map(tx=>tx.id)).toEqual(['buy-1']);
   });
-  it('does not render cash entries or pseudo-shares in the transaction journal',()=>{
+  it('shows cash in Activity without inventing equity shares',()=>{
     const html=renderToStaticMarkup(
       <SimpleTransactionsView transactions={[cash('deposit',20000,'DEPOSIT'),buy]}
         positions={[position]} closedTrades={[]} onDeleteTransaction={async()=>true}/>,
     );
     expect(html).toContain('ARCC');
     expect(html).not.toContain('20,000 shares');
-    expect(html).not.toContain('Cash Balance');
-    expect(html).toContain('cash transfers are in Cash');
+    expect(html).toContain('Deposit');
+    expect(html).toContain('Cash events');
+    expect(html).toContain('All recorded portfolio events');
+  });
+  it('uses the correct details for deposit, dividend and bonus shares',()=>{
+    const deposit=activityRecordView(cash('dep',20000,'DEPOSIT'));
+    expect(deposit.details.some(x=>x.label==='Shares')).toBe(false);
+    expect(deposit.details.some(x=>x.label==='Amount')).toBe(true);
+    const dividend=activityRecordView({
+      ...cash('div',50,'DEPOSIT'), cashFlowType:'DIVIDEND',
+    });
+    expect(dividend.title).toBe('Dividend');
+    expect(dividend.positive).toBe(true);
+    const bonus=activityRecordView({
+      ...buy,type:'CORPORATE_ACTION',corporateActionType:'BONUS_SHARES',
+      shares:668,price:0,totalAmount:0,corporateActionSourceShares:300,
+    });
+    expect(bonus.details).toContainEqual({label:'Shares received',value:'668'});
+    expect(bonus.details.some(x=>x.label==='Price / share')).toBe(false);
+  });
+
+  it('distinguishes full IPO commitment from its held cash and unallocated shares',()=>{
+    const ipo=activityRecordView({...buy,id:'ipo',type:'IPO_SUBSCRIPTION',ticker:'HALN',
+      shares:6600,price:24.50,totalAmount:161700,
+      ipoSubscription:{status:'SUBMITTED',requestedAmount:161700,reservedAmount:40425,
+        requestedShares:6600,offerPrice:24.50,subscriptionDate:'2026-10-07'},
+    });
+    expect(ipo.amount).toBe(40425);
+    expect(ipo.details).toContainEqual({label:'Full order',value:'161,700.00 EGP'});
+    expect(ipo.details).toContainEqual({label:'Broker cash hold',value:'40,425.00 EGP'});
+    expect(ipo.details).toContainEqual({label:'Shares requested',value:'6,600'});
+    expect(ipo.details.some(x=>x.label==='Shares allocated')).toBe(false);
   });
 });
 

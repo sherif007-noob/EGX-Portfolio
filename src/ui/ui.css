@@ -178,3 +178,12 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 @media (prefers-reduced-motion: reduce) {
   .ui-fab, .ui-iconbtn, .ui-chip { transition: none; }
 }
+
+/* Medium UI: chart clarity, touch targets, restrained depth. */
+.ui-chart-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px; }
+.ui-chart-toolbar .ui-chips { flex: 1; }
+.ui-granularity { margin-top: 9px; }
+.ui-chart-canvas { width: 100%; height: clamp(230px, 31vw, 360px); }
+.ui-hero { box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 10px 30px rgba(0,0,0,.13); }
+.ui-chip:focus-visible, .ui-link:focus-visible, .ui-row:focus-visible { outline: 2px solid var(--ui-blue); outline-offset: 3px; }
+@media (max-width: 600px) { .ui-chart-canvas { height: 248px; } .ui-chip { min-height: 36px; } .ui-chip.sub { min-height: 34px; } .ui-tile-grid { gap: 8px; } }

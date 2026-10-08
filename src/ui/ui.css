@@ -584,3 +584,9 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-nav-audit-quotes > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; padding:7px 0; border-bottom:1px solid var(--ui-border); font-size:.79rem; }
 .ui-nav-audit-quotes > div .ui-sm { grid-column:1 / -1; }
 @media(max-width:410px) { .ui-nav-audit-inputs { grid-template-columns:1fr; } }
+
+/* Full Activity event timeline — proper icons for non-share cash and IPO records. */
+.ui-activity-event-icon { display:flex; align-items:center; justify-content:center; width:34px; height:34px;
+ border-radius:11px; background:var(--ui-surface-2); color:var(--ui-text-2); border:1px solid var(--ui-border); }
+.ui-activity-record-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.ui-activity-record-label > strong,.ui-activity-record-right > strong { overflow-wrap:anywhere; }

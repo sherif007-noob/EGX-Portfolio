@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import {
   Area,
   AreaChart,
@@ -84,6 +85,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   historicalLoading = false,
 }) => {
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
+  const marketSession = egxSessionPresentation();
   const [mode, setMode] = useState<ChartMode>('ret');
   const [indexChoice, setIndexChoice] = useState<IndexChoice>('all');
   const [granularity, setGranularity] = useState<Granularity>(1);
@@ -186,7 +188,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             aria-pressed={timeframe === range.value}
             onClick={() => setTimeframe(range.value)}
           >
-            {range.label}
+            {range.value === 'TODAY' && !marketSession.isCurrentSessionDay ? 'Last session' : range.label}
           </button>
         ))}
       </div>
@@ -205,6 +207,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ))}
       </div><button type="button" className="ui-link ui-sm" aria-expanded={showAdvanced} onClick={() => setShowAdvanced(value => !value)}>{showAdvanced ? 'Less' : 'More metrics'}</button></div>
 
+      {timeframe === 'TODAY' && !marketSession.isCurrentSessionDay && (
+        <p className="ui-note" role="status">{marketSession.description} · {marketSession.sessionCaption}. No new EGX session or trading return today.</p>
+      )}
       {timeframe === 'TODAY' && <div className="ui-chips ui-granularity" role="group" aria-label="Today chart interval">{GRANULARITIES.map(minutes => <button key={minutes} className="ui-chip sub" type="button" aria-pressed={granularity === minutes} onClick={() => setGranularity(minutes)}>{minutes === 60 ? '1h' : `${minutes}m`}</button>)}</div>}
 
       {mode === 'bm' && (

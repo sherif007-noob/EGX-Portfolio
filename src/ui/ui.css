@@ -514,3 +514,46 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
  .ui-report-info strong { font-size:.84rem; }
  .ui-report-list-row { padding:11px; }
 }
+
+/* Stage 7.2 — individual risk, not institutional-style diagnostics. */
+.ui-personal-risk { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.ui-personal-risk > .ui-report-section-title { margin-bottom:-4px; }
+.ui-risk-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.ui-risk-kpi { display:flex; flex-direction:column; gap:7px; min-width:0; padding:15px;
+ background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-radius); }
+.ui-risk-kpi > strong { font-size:clamp(1rem,2.3vw,1.25rem); font-weight:660; line-height:1.3; overflow-wrap:anywhere; }
+.ui-risk-kpi > span:last-child { line-height:1.45; }
+.ui-personal-risk .ui-report-section { padding:16px; }
+.ui-personal-risk .ui-report-info-grid { margin-bottom:8px; }
+.ui-risk-sectors { display:flex; flex-direction:column; gap:11px; margin-top:18px; }
+.ui-risk-sector { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.ui-risk-sector-label { display:flex; align-items:baseline; justify-content:space-between; gap:12px; font-size:.8rem; }
+.ui-risk-sector-label span { min-width:0; overflow-wrap:anywhere; }
+.ui-risk-sector-label strong { flex:none; font-size:.78rem; }
+.ui-risk-holdings { border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm); margin-top:17px; overflow:hidden; }
+.ui-risk-holding { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 12px; min-width:0; }
+.ui-risk-holding + .ui-risk-holding { border-top:1px solid var(--ui-border); }
+.ui-risk-holding-main,.ui-risk-holding-value { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.ui-risk-holding-main { flex:1; }
+.ui-risk-holding-value { text-align:right; align-items:flex-end; flex:1.2; }
+.ui-risk-holding-main strong,.ui-risk-holding-value strong { font-weight:610; font-size:.85rem; overflow-wrap:anywhere; }
+.ui-risk-holding-value .ui-sm { font-size:.72rem; overflow-wrap:anywhere; }
+.ui-risk-notice { display:flex; gap:10px; align-items:flex-start; margin-top:13px; padding:11px;
+ border-radius:9px; background:color-mix(in srgb,var(--ui-warn) 9%,var(--ui-surface-2)); color:var(--ui-text-2); }
+.ui-risk-notice svg { flex:none; margin-top:1px; color:var(--ui-warn); }
+.ui-risk-notice p { margin:0; font-size:.78rem; line-height:1.55; }
+.ui-risk-notice strong { color:var(--ui-text); }
+.ui-personal-risk .ui-report-warning { display:flex; align-items:flex-start; gap:10px; margin:0; }
+.ui-personal-risk .ui-report-warning svg { flex:none; }
+@media(max-width:710px) {
+ .ui-risk-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .ui-risk-kpi:last-child { grid-column:1/-1; }
+ .ui-risk-kpi { padding:12px; }
+ .ui-personal-risk .ui-report-section { padding:13px; }
+}
+@media(max-width:370px) {
+ .ui-risk-kpis { grid-template-columns:1fr; }
+ .ui-risk-kpi:last-child { grid-column:auto; }
+ .ui-risk-holding { gap:7px; padding:10px; }
+ .ui-risk-holding-main strong,.ui-risk-holding-value strong { font-size:.79rem; }
+}

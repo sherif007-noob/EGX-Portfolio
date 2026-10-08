@@ -45,3 +45,10 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 - Benchmark overlays now explicitly flag missing aligned index history instead of silently pretending every line is present.
 - Today intraday result is keyed by session and selected granularity to prevent displaying the previous interval while loading the next.
 - Validation still pending: real broker reconciliation, compiled TypeScript, browser layout snapshots, and automated CI.
+
+## Holdings migration (medium-ui)
+- Holdings route now uses `src/ui/SimpleHoldings.tsx`: searchable, sortable sector-filtered responsive list with expandable trade details.
+- Buy more, Sell, Edit, Correct ledger, Add trade, and Price alerts continue to call existing App handlers; the ledger and broker-facing data are unchanged.
+- The legacy `PositionsTable` remains in the repository for other consumers; this branch only swaps the full Holdings tab presentation.
+- Interval selector uses exact 1m/5m source when selected, and shared aggregate fallback for 15m/1h.
+- Manual acceptance needed on phone/desktop: interaction focus, opening trading modals, and live quote reconciliation.

@@ -956,7 +956,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
         {/* Ledger Table */}
         <MotionSwap motionKey={historyFilter} variant="state" className="premium-cash-history-results">
         <div className="premium-table-shell premium-hierarchy-h5 premium-dense-data overflow-x-auto overscroll-x-contain rounded-xl" data-hierarchy="h5">
-          <table className="w-full min-w-[720px] text-left text-xs border-collapse">
+          <table className="ui-activity-cash-table w-full min-w-[720px] text-left text-xs border-collapse">
             <thead>
               <tr className="premium-type-metadata border-b border-slate-800/70 font-semibold">
                 <th className="py-3 px-4">Date</th>
@@ -972,10 +972,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 const isDeposit = tx.type === 'DEPOSIT';
                 return (
                   <tr key={tx.id} className="transition">
-                    <td className="py-3 px-4 text-slate-300 font-sans whitespace-nowrap">
+                    <td data-label="Date" className="py-3 px-4 text-slate-300 font-sans whitespace-nowrap">
                       {tx.date}
                     </td>
-                    <td className="py-3 px-4">
+                    <td data-label="Type" className="py-3 px-4">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           isDeposit
@@ -987,20 +987,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                         {tx.type}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-300 font-sans max-w-xs truncate">
+                    <td data-label="Details" className="py-3 px-4 text-slate-300 font-sans max-w-xs truncate">
                       {tx.notes || (isDeposit ? 'Cash Deposit' : 'Cash Withdrawal')}
                     </td>
-                    <td
+                    <td data-label="Amount"
                       className={`py-3 px-4 text-right font-bold whitespace-nowrap ${
                         isDeposit ? 'text-emerald-400' : 'text-rose-400'
                       }`}
                     >
                       {isDeposit ? '+' : '-'}{formatEgp(tx.amount)} EGP
                     </td>
-                    <td className="py-3 px-4 text-right text-slate-200 whitespace-nowrap">
+                    <td data-label="Balance after" className="py-3 px-4 text-right text-slate-200 whitespace-nowrap">
                       {formatEgp(tx.balanceAfter)} EGP
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td data-label="Actions" className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleStartEdit(tx)}
@@ -1023,7 +1023,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
               })}
 
               {filteredTransactions.length === 0 && (
-                <tr>
+                <tr className="ui-cash-empty">
                   <td colSpan={6} className="premium-type-helper py-8 text-center text-slate-500 font-sans">
                     No cash transactions found for this filter.
                   </td>

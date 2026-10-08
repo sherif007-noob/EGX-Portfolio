@@ -133,7 +133,7 @@ export function SimpleReportsView(props: Props) {
           <Info label="Available cash" value={`${formatEgp(cashBalance)} EGP`}/>
           <Info label={marketSession.isCurrentSessionDay ? "Today's change" : "Market status"}
             value={marketSession.isCurrentSessionDay
-              ? <span className={toneClass(metrics?.dayChangeEgp)}>{metrics?formatSigned(metrics.dayChangeEgp)+' EGP':'—'}</span>
+              ? metrics?.dayChangeReliable === false ? <span>Unavailable · missing opening quotes</span> : <span className={toneClass(metrics?.dayChangeEgp)}>{metrics?formatSigned(metrics.dayChangeEgp)+' EGP':'—'}</span>
               : <span>{marketSession.description} · {marketSession.sessionCaption}</span>}/>
         </div>
       </section>

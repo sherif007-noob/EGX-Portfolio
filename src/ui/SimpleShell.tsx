@@ -251,11 +251,17 @@ export const ActivitySwitcher: React.FC<{ activeTab: NavigationTab; setActiveTab
   activeTab,
   setActiveTab,
 }) => (
-  <div className="ui-segmented" role="group" aria-label="Activity view">
-    {ACTIVITY_SEGMENTS.map((segment) => (
-      <button key={segment.tab} type="button" aria-pressed={activeTab === segment.tab} onClick={() => setActiveTab(segment.tab)}>
-        {segment.label}
-      </button>
-    ))}
-  </div>
+  <section className="ui-activity-nav" aria-label="Activity navigation">
+    <div className="ui-activity-heading">
+      <h1>Activity</h1>
+      <span className="ui-sm">Trades, cash and completed positions</span>
+    </div>
+    <div className="ui-activity-tabs" role="group" aria-label="Activity view">
+      {ACTIVITY_SEGMENTS.map((segment) => (
+        <button key={segment.tab} type="button" aria-pressed={activeTab === segment.tab} onClick={() => setActiveTab(segment.tab)}>
+          {segment.label}
+        </button>
+      ))}
+    </div>
+  </section>
 );

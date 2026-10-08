@@ -331,7 +331,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
           </label>
           <div className="space-y-1"><span className="premium-type-metric-label block">Cash reserved, not investment P&amp;L</span>
             <strong className="font-mono text-cyan-200">{requestedAmountNumber>0 && holdPercentNumber>0 ? `${formatEgp(heldAmount)} EGP`:'—'}</strong>
-            <p className="premium-type-helper">For the HALN order shown in Telda, enter 25%, not 100%.</p>
+            <p className="premium-type-helper">Enter the percentage shown by your broker (for example, 25%).</p>
           </div>
         </div>
 

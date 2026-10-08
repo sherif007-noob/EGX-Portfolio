@@ -92,6 +92,35 @@ describe('portfolio metrics', () => {
     expect(metrics.dayChangePercent).toBe(2.85);
   });
 
+  it('does not count newly bought shares as owned from yesterday when registry quotes are missing',()=>{
+    const sessionDate=getLatestEgxTradingSessionDate();
+    const holdings=[
+      position({id:'new',ticker:'NEW',shares:7200,avgBuyPrice:2.63,currentPrice:2.63,dayChange:0.01}),
+      position({id:'old',ticker:'OLD',shares:100,avgBuyPrice:19,currentPrice:20,dayChange:0.5}),
+    ];
+    const transactions=[
+      {id:'buy-1',type:'BUY' as const,ticker:'NEW',companyName:'New',sector:'Other' as const,
+        shares:7200,price:2.62,fees:15.15,totalAmount:18879.15,date:sessionDate},
+      {id:'sell-1',type:'SELL' as const,ticker:'NEW',companyName:'New',sector:'Other' as const,
+        shares:7200,price:2.63,fees:10.46,totalAmount:18925.54,date:sessionDate},
+      {id:'buy-2',type:'BUY' as const,ticker:'NEW',companyName:'New',sector:'Other' as const,
+        shares:7200,price:2.63,fees:15.20,totalAmount:18951.20,date:sessionDate},
+    ];
+    // Opening: 30,000 cash + 100 OLD × 19.50 = 31,950 EGP.
+    // Current: 11,095.19 cash + 18,936 NEW + 2,000 OLD = 32,031.19.
+    // Actual session result: 81.19 EGP, NOT current holdings quote delta
+    // (72 NEW + 50 OLD = 122 EGP) when NEW was not held overnight.
+    const metrics=calculatePortfolioMetrics(holdings,11095.19,[],[],transactions);
+    expect(metrics.dayChangeReliable).toBe(true);
+    expect(metrics.dayChangeEgp).toBe(81.19);
+    expect(metrics.dayChangePercent).toBe(0.25);
+  });
+
+  it('flags daily return unverified if an opening holding lacks a previous quote',()=>{
+    const metrics=calculatePortfolioMetrics([position({ticker:'UNKNOWN',dayChange:undefined,dayChangePercent:undefined})],0,[],[],[]);
+    expect(metrics.dayChangeReliable).toBe(false);
+  });
+
   it('handles a cash-only portfolio without using the securities value as denominator', () => {
     const metrics = calculatePortfolioMetrics([], 1000, [], [], []);
     expect(metrics.totalValue).toBe(1000);

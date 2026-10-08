@@ -108,3 +108,10 @@ The earlier Activity pass was only cosmetic. It still rendered the original prem
 - Next: Stage 7.3 position thesis and trade-plan review; never invent thesis correctness or discipline scores without recorded inputs.
 
 - Trust-gating follow-up: My Risk states that quotes are the latest stored values and may be stale; when the canonical equity bridge is unbalanced it displays a visible ledger-reconciliation warning rather than implying validated risk figures.
+
+## Oct 8 observed holiday / false daily P&L fix (medium-ui)
+The previous session resolver skipped weekends but did not know the observed 2026-10-08 EGX closure. On the Thursday holiday, the app requested nonexistent Oct 8 intraday candles and a summary could display the previous session's quote `change` or `changePercent` as if the portfolio gained that amount **today**.
+
+`egxTradingCalendar` now explicitly records the verified closure; Today/Last session resolves to **Oct 7** through Sunday Oct 11 before 10:00 Cairo, while the closed-day UI replaces “Today +P&L” with **EGX holiday / Market closed — Last session, 7 Oct**. Scheduled price sync and intraday ingestion also honor the closure; manual scans/backfill are separate actions.
+
+The numeric `dayChange` fields remain ledger/quote-derived and unchanged for active trading days. On closed days they are not used as a claim of *calendar-day* trading return. The observed +0.24% was not an exchange move on Oct 8. Verifying its exact instrument contributions requires stored portfolio quote snapshots. Calendar/quote coverage remain subject to the source tests and rendered acceptance.

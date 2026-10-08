@@ -25,89 +25,78 @@ function snapshot(
 }
 
 describe('IPO subscription ledger accounting', () => {
-  it('records HALN 6,600-share order with only 25% held and no false P&L or fake shares', () => {
-    const original=snapshot([],100000);
-    const prepared=prepareIpoSubscriptionMutation(original,{
-      transactionId:'haln-hold',
-      ticker:'HALN', companyName:'MNT-Halan',sector:'Other',
-      requestedAmount:161700,reservedAmount:40425,offerPrice:24.5,
-      subscriptionDate:'2026-10-07',
-    });
-    const report=reconcilePortfolioFromLedger(prepared.transactions,[],original.capitalDeposits);
+  // Synthetic 25%-hold example; no real broker order values are stored here.
+  const partialOrder = {
+    transactionId:'ipo-demo',ticker:'IPOX',companyName:'Example IPO',sector:'Other' as const,
+    requestedAmount:100000,reservedAmount:25000,offerPrice:25,subscriptionDate:'2026-10-07',
+  };
+
+  it('holds only 25% of the full commitment without creating shares or returns', () => {
+    const prepared=prepareIpoSubscriptionMutation(snapshot([],100000),partialOrder);
+    const report=reconcilePortfolioFromLedger(prepared.transactions,[],100000);
     expect(report.discrepanciesFound).toEqual([]);
-    expect(prepared.value?.ipoSubscription?.requestedShares).toBe(6600);
-    expect(prepared.value?.ipoSubscription?.reservedAmount).toBe(40425);
-    expect(report.reconciledCashBalance).toBe(59575);
+    expect(prepared.value?.ipoSubscription?.requestedShares).toBe(4000);
+    expect(prepared.value?.ipoSubscription?.reservedAmount).toBe(25000);
+    expect(report.reconciledCashBalance).toBe(75000);
     expect(report.reconciledPositions).toEqual([]);
     const metrics=calculatePortfolioMetrics([],report.reconciledCashBalance,[],[],prepared.transactions);
-    expect(metrics.pendingIpoSubscriptionsEgp).toBe(40425);
+    expect(metrics.pendingIpoSubscriptionsEgp).toBe(25000);
     expect(metrics.totalValue).toBe(100000);
     expect(metrics.dayChangeEgp).toBe(0);
   });
 
-  it('releases unused cash hold on partial allocation', () => {
-    const order=prepareIpoSubscriptionMutation(snapshot([],100000),{
-      transactionId:'ipo-partial',ticker:'HALN',companyName:'MNT-Halan',sector:'Other',
-      requestedAmount:161700,reservedAmount:40425,offerPrice:24.5,subscriptionDate:'2026-10-07',
+  it('releases only unused held cash on partial allocation', () => {
+    const order=prepareIpoSubscriptionMutation(snapshot([],100000),partialOrder);
+    const allocated=prepareIpoAllocationMutation(snapshot(order.transactions,100000),{
+      transactionId:'ipo-demo',allocatedShares:400,allocationDate:'2026-10-15',
     });
-    const allocation=prepareIpoAllocationMutation(snapshot(order.transactions,100000),{
-      transactionId:'ipo-partial',allocatedShares:1000,allocationDate:'2026-10-15',
-    });
-    expect(allocation.value?.ipoSubscription?.refundAmount).toBe(15925);
-    expect(allocation.value?.ipoSubscription?.additionalPaymentAmount).toBe(0);
-    const result=reconcilePortfolioFromLedger(allocation.transactions,[],100000);
-    expect(result.discrepanciesFound).toEqual([]);
-    expect(result.reconciledCashBalance).toBe(75500);
-    expect(result.reconciledPositions[0]).toMatchObject({ticker:'HALN',shares:1000,avgBuyPrice:24.5});
-    const metrics=calculatePortfolioMetrics(result.reconciledPositions,result.reconciledCashBalance,[],[],allocation.transactions);
+    expect(allocated.value?.ipoSubscription?.refundAmount).toBe(15000);
+    expect(allocated.value?.ipoSubscription?.additionalPaymentAmount).toBe(0);
+    const report=reconcilePortfolioFromLedger(allocated.transactions,[],100000);
+    expect(report.discrepanciesFound).toEqual([]);
+    expect(report.reconciledCashBalance).toBe(90000);
+    expect(report.reconciledPositions[0]).toMatchObject({ticker:'IPOX',shares:400,avgBuyPrice:25});
+    const metrics=calculatePortfolioMetrics(report.reconciledPositions,report.reconciledCashBalance,[],[],allocated.transactions);
     expect(metrics.pendingIpoSubscriptionsEgp).toBe(0);
     expect(metrics.totalValue).toBe(100000);
   });
 
-  it('requests only necessary additional cash when allocation exceeds broker hold', () => {
-    const order=prepareIpoSubscriptionMutation(snapshot([],100000),{
-      transactionId:'ipo-topup',ticker:'HALN',companyName:'MNT-Halan',sector:'Other',
-      requestedAmount:161700,reservedAmount:40425,offerPrice:24.5,subscriptionDate:'2026-10-07',
+  it('charges only additional cash above the original reserve', () => {
+    const order=prepareIpoSubscriptionMutation(snapshot([],100000),partialOrder);
+    const allocated=prepareIpoAllocationMutation(snapshot(order.transactions,100000),{
+      transactionId:'ipo-demo',allocatedShares:1200,allocationDate:'2026-10-15',
     });
-    const allocation=prepareIpoAllocationMutation(snapshot(order.transactions,100000),{
-      transactionId:'ipo-topup',allocatedShares:2000,allocationDate:'2026-10-15',
-    });
-    expect(allocation.value?.ipoSubscription?.refundAmount).toBe(0);
-    expect(allocation.value?.ipoSubscription?.additionalPaymentAmount).toBe(8575);
-    const result=reconcilePortfolioFromLedger(allocation.transactions,[],100000);
-    expect(result.reconciledCashBalance).toBe(51000);
-    expect(result.discrepanciesFound).toEqual([]);
+    expect(allocated.value?.ipoSubscription?.refundAmount).toBe(0);
+    expect(allocated.value?.ipoSubscription?.additionalPaymentAmount).toBe(5000);
+    const report=reconcilePortfolioFromLedger(allocated.transactions,[],100000);
+    expect(report.discrepanciesFound).toEqual([]);
+    expect(report.reconciledCashBalance).toBe(70000);
   });
 
-  it('rejects additional cash due when available cash cannot cover allocation', () => {
-    const order=prepareIpoSubscriptionMutation(snapshot([],41375.29),{
-      transactionId:'ipo-insufficient',ticker:'HALN',companyName:'MNT-Halan',sector:'Other',
-      requestedAmount:161700,reservedAmount:40425,offerPrice:24.5,subscriptionDate:'2026-10-07',
-    });
-    expect(()=>prepareIpoAllocationMutation(snapshot(order.transactions,41375.29),{
-      transactionId:'ipo-insufficient',allocatedShares:2000,allocationDate:'2026-10-15',
+  it('prevents an allocation that needs more cash than is available', () => {
+    const order=prepareIpoSubscriptionMutation(snapshot([],25100),partialOrder);
+    expect(()=>prepareIpoAllocationMutation(snapshot(order.transactions,25100),{
+      transactionId:'ipo-demo',allocatedShares:1200,allocationDate:'2026-10-15',
     })).toThrow(/additional cash/);
   });
 
-  it('cancels a partially reserved IPO by releasing the hold, not the full order', () => {
-    const order=prepareIpoSubscriptionMutation(snapshot([],100000),{
-      transactionId:'ipo-cancel-partial',ticker:'HALN',companyName:'MNT-Halan',sector:'Other',
-      requestedAmount:161700,reservedAmount:40425,offerPrice:24.5,subscriptionDate:'2026-10-07',
-    });
-    const canceled=prepareIpoCancellationMutation(snapshot(order.transactions,100000),'ipo-cancel-partial');
-    const result=reconcilePortfolioFromLedger(canceled.transactions,[],100000);
-    expect(canceled.value?.ipoSubscription?.refundAmount).toBe(40425);
-    expect(result.reconciledCashBalance).toBe(100000);
-    expect(result.reconciledPositions).toEqual([]);
+  it('cancels and releases only the broker hold, not the full order', () => {
+    const order=prepareIpoSubscriptionMutation(snapshot([],100000),partialOrder);
+    const cancelled=prepareIpoCancellationMutation(snapshot(order.transactions,100000),'ipo-demo');
+    const report=reconcilePortfolioFromLedger(cancelled.transactions,[],100000);
+    expect(cancelled.value?.ipoSubscription?.refundAmount).toBe(25000);
+    expect(report.reconciledCashBalance).toBe(100000);
+    expect(report.reconciledPositions).toEqual([]);
   });
 
-  it('retains backward compatibility for previously full-reserved subscriptions',()=>{
-    const full=prepareIpoSubscriptionMutation(snapshot([],200000),{
-      transactionId:'legacy-compatible',ticker:'TEST',companyName:'Test',sector:'Other',
+  it('defaults old records to the original full-reserve behavior',()=>{
+    const old=prepareIpoSubscriptionMutation(snapshot([],200000),{
+      transactionId:'ipo-legacy',ticker:'IPOX',companyName:'Example IPO',sector:'Other',
       requestedAmount:160000,offerPrice:8,subscriptionDate:'2026-10-08',
     });
-    expect(full.value?.ipoSubscription?.reservedAmount).toBe(160000);
+    expect(old.value?.ipoSubscription?.reservedAmount).toBe(160000);
   });
+
   it('moves submitted capital from available cash into a NAV-neutral pending IPO asset', () => {
     const current = snapshot([], 200_000);
     const prepared = prepareIpoSubscriptionMutation(current, {

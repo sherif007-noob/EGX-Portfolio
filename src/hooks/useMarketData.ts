@@ -57,6 +57,12 @@ export function useMarketData(
   const syncLivePrices = useCallback(async (manual = false, forcePersist = false) => {
     if (VISUAL_REGRESSION_MODE) return { success: false, error: 'Live sync disabled in visual regression mode.' };
     if (!ready) return { success: false, error: 'Portfolio is still loading.' };
+    // The scanner does not expose a trustworthy session timestamp. Refreshing
+    // it on a verified closure would only re-stamp the last trading close as
+    // if it were an active market quote (the Oct 8 false freshness incident).
+    if (!isEgxTradingDay(cairoDateKey())) {
+      return { success: false, error: 'EGX is closed. Last-session prices remain available; no new quote session was recorded.' };
+    }
     if (isSyncingRef.current) return { success: false, error: 'Price sync already in progress.' };
 
     isSyncingRef.current = true;

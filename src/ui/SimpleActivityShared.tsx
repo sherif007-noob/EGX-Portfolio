@@ -6,11 +6,24 @@ export interface Choice<T extends string> { value: T; label: string; }
 export function ActivityPills<T extends string>({ label, value, choices, onChange }: {
   label: string; value: T; choices: readonly Choice<T>[]; onChange: (value: T) => void;
 }) {
+  // Essential pill geometry is inline as a PWA stylesheet-order fallback.
+  // The stylesheet still owns focus, hover and responsive refinements.
+  const rail: React.CSSProperties = {display:'flex',flexWrap:'wrap',gap:8,width:'100%',minWidth:0,padding:'2px 0 4px'};
+  const appearance = (pressed:boolean):React.CSSProperties => ({
+    display:'inline-flex',alignItems:'center',justifyContent:'center',
+    flex:'0 0 auto',minHeight:36,padding:'7px 13px',borderRadius:999,
+    whiteSpace:'normal',maxWidth:'100%',lineHeight:1.3,
+    border:pressed?'1px solid #22b88a':'1px solid rgba(148,163,184,.34)',
+    background:pressed?'rgba(34,184,138,.18)':'#14243b',
+    color:pressed?'#e8eef7':'#9aa9bd',
+    fontSize:13,fontWeight:pressed?600:500,cursor:'pointer',
+  });
   return <div className="ui-activity-choice">
     <div className="ui-sm ui-activity-choice-label">{label}</div>
-    <div className="ui-pill-wrap" role="group" aria-label={label}>
+    <div className="ui-pill-wrap" style={rail} role="group" aria-label={label}>
       {choices.map(item => <button key={item.value} type="button" className="ui-filter-pill"
-        aria-pressed={item.value === value} onClick={() => onChange(item.value)}>{item.label}</button>)}
+        style={appearance(item.value===value)} aria-pressed={item.value === value}
+        onClick={() => onChange(item.value)}>{item.label}</button>)}
     </div>
   </div>;
 }

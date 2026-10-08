@@ -565,3 +565,22 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 
 /* EGX holiday: market-closed state is neutral, not profit/loss colored. */
 .ui-muted { color: var(--ui-text-2, #9aa9bd); }
+
+/* Read-only Telda comparison. Keep basic Home clean when collapsed. */
+.ui-nav-audit { background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-radius); overflow:hidden; }
+.ui-nav-audit-toggle { display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px; padding:12px 14px; color:var(--ui-text); background:transparent; border:0; font:inherit; font-size:.85rem; font-weight:600; cursor:pointer; text-align:left; }
+.ui-nav-audit-toggle:hover { background:var(--ui-surface-2); }
+.ui-nav-audit-toggle:focus-visible { outline:2px solid var(--ui-blue); outline-offset:-2px; }
+.ui-nav-audit-body { display:flex; flex-direction:column; gap:13px; padding:14px; border-top:1px solid var(--ui-border); }
+.ui-nav-audit-body > p { margin:0; line-height:1.5; }
+.ui-nav-audit-inputs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.ui-nav-audit-inputs label { display:flex; flex-direction:column; gap:5px; font-size:.78rem; color:var(--ui-text-2); }
+.ui-nav-audit-inputs input { width:100%; min-width:0; min-height:40px; border:1px solid var(--ui-border-strong); background:var(--ui-surface-2); color:var(--ui-text); border-radius:8px; padding:8px 10px; font:inherit; }
+.ui-nav-audit-lines { border:1px solid var(--ui-border); border-radius:9px; overflow:hidden; }
+.ui-nav-audit-lines > div { display:flex; gap:10px; justify-content:space-between; align-items:center; padding:9px 11px; min-width:0; font-size:.81rem; }
+.ui-nav-audit-lines > div + div { border-top:1px solid var(--ui-border); }
+.ui-nav-audit-lines strong { overflow-wrap:anywhere; text-align:right; }
+.ui-nav-audit-quotes summary { color:var(--ui-text); font-weight:600; font-size:.82rem; cursor:pointer; padding:6px 0; }
+.ui-nav-audit-quotes > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; padding:7px 0; border-bottom:1px solid var(--ui-border); font-size:.79rem; }
+.ui-nav-audit-quotes > div .ui-sm { grid-column:1 / -1; }
+@media(max-width:410px) { .ui-nav-audit-inputs { grid-template-columns:1fr; } }

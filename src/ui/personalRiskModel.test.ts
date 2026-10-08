@@ -90,6 +90,17 @@ describe('personal risk calculations (Stage 7.2)', () => {
     expect(result.toDate).toBe('2026-10-03');
   });
 
+  it('normalizes legacy day/month/year closes and ignores malformed dates', () => {
+    const result=realizedTradeDrawdown([
+      closed('01/10/2026',120,'a'),
+      closed('02/10/2026',-30,'b'),
+      closed('not-a-date',-500,'invalid'),
+    ]);
+    expect(result.amount).toBe(30);
+    expect(result.fromDate).toBe('2026-10-01');
+    expect(result.toDate).toBe('2026-10-02');
+  });
+
   it('measures a first-day loss against the zero realized baseline', () => {
     const r=realizedTradeDrawdown([closed('2026-10-01',-50,'a')]);
     expect(r.amount).toBe(50);

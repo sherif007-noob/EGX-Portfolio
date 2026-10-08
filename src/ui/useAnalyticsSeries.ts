@@ -20,6 +20,7 @@ interface Args {
   positions: Position[];
   currentCashBalance: number;
   timeframe: AnalyticsTimeframe;
+  granularity?: 1 | 5 | 15 | 60;
 }
 
 export interface AnalyticsSeries {
@@ -40,6 +41,7 @@ export function useAnalyticsSeries({
   positions,
   currentCashBalance,
   timeframe,
+  granularity = 1,
 }: Args): AnalyticsSeries {
   const marketRefresh = useMarketRefresh();
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
@@ -73,7 +75,7 @@ export function useAnalyticsSeries({
             ...PORTFOLIO_BENCHMARKS.map((benchmark) => benchmark.ticker),
           ]),
         ];
-        const selection = await loadTodayIntraday(tickers, sessionDate, 'AUTO');
+        const selection = await loadTodayIntraday(tickers, sessionDate, granularity);
         const prices: IntradayPriceSeries = selection?.series ?? {};
         const result = buildIntradayAnalyticsResult(transactions, historicalPrices, prices, {
           sessionDate: selection?.sessionDate ?? sessionDate,
@@ -101,7 +103,7 @@ export function useAnalyticsSeries({
     return () => {
       cancelled = true;
     };
-  }, [timeframe, transactions, historicalPrices, openingCapital, currentCashBalance, positions, marketRefresh]);
+  }, [timeframe, granularity, transactions, historicalPrices, openingCapital, currentCashBalance, positions, marketRefresh]);
 
   if (timeframe === 'TODAY') {
     return { result: intradayResult, loading: intradayLoading && !intradayResult, error, intradayPrices };

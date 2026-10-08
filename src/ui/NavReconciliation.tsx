@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { Position, PortfolioMetrics } from '../types';
+import { cairoDateKey, isEgxTradingDay } from '../services/egxTradingCalendar';
 import { formatEgp, formatSigned, toneClass } from './format';
 
 interface Props { metrics: PortfolioMetrics; positions: Position[]; }
@@ -9,7 +10,7 @@ export interface NavBreakdown {
   reservedIpo: number;
   reconstructedNav: number;
   nonFiniteQuoteTickers: string[];
-  lastQuoteByTicker: Array<{ticker:string;quote:string;marketValue:number}>;
+  lastQuoteByTicker: Array<{ticker:string;quote:string;marketValue:number;timestampOnClosedDay:boolean}>;
 }
 export function navBreakdown(positions: Position[],cashBalance:number,pendingIpo=0): NavBreakdown {
   let marketValue=0;
@@ -20,7 +21,9 @@ export function navBreakdown(positions: Position[],cashBalance:number,pendingIpo
     if(!valid) { nonFiniteQuoteTickers.push(p.ticker); continue; }
     const value=p.shares*p.currentPrice;
     marketValue+=value;
-    lastQuoteByTicker.push({ticker:p.ticker,quote:p.priceUpdatedAt || 'Unknown',marketValue:value});
+    const quoteTimestamp = Date.parse(p.priceUpdatedAt ?? '');
+    const closedDayStamp = Number.isFinite(quoteTimestamp) && !isEgxTradingDay(cairoDateKey(new Date(quoteTimestamp)));
+    lastQuoteByTicker.push({ticker:p.ticker,quote:p.priceUpdatedAt || 'Unknown',marketValue:value,timestampOnClosedDay:closedDayStamp});
   }
   return {marketValue,cash:cashBalance,reservedIpo:pendingIpo,reconstructedNav:marketValue+cashBalance+pendingIpo,
     nonFiniteQuoteTickers,lastQuoteByTicker:lastQuoteByTicker.sort((a,b)=>b.marketValue-a.marketValue)};
@@ -65,7 +68,7 @@ export function NavReconciliation({metrics,positions}:Props) {
       <details className="ui-nav-audit-quotes"><summary>Price timestamps and holding values</summary>
         {data.lastQuoteByTicker.map(p=><div key={p.ticker}>
           <strong>{p.ticker}</strong><span className="ui-mono">{formatEgp(p.marketValue)}</span>
-          <span className="ui-sm">{p.quote}</span>
+          <span className="ui-sm">{p.quote}{p.timestampOnClosedDay ? ' · Refreshed on a closed market day; not a new session quote' : ''}</span>
         </div>)}
       </details>
       <p className="ui-sm">A gap may come from stale prices, broker valuation conventions, missing corporate actions, unsettled cash, or IPO treatment. The breakdown identifies the category; it cannot establish broker parity without Telda holdings and cash evidence.</p>

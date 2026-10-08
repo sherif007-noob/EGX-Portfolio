@@ -36,8 +36,13 @@ replaces only the presentation layer, one screen at a time. `main` is untouched.
   state and the same actions as before (Buy more, Sell, Edit, Alerts, Ledger).
 - Add Trade: total outlay and the submit buttons are pinned in a sticky footer.
 
+- Transactions: cash deposits, withdrawals and adjustments are their own row
+  (`CashFlowRow`) and no longer count as buys or sells in totals, filters and
+  stats (`src/services/ledgerClassification.ts`); a Cash filter was added; each
+  trade row's detail grid is collapsed behind a Details toggle.
+
 ## Not migrated yet (still legacy visuals inside the new shell)
-Transactions (including cash rows that read as sells), Cash, Closed trades,
+Transactions header and trade-row visuals (logic is fixed), Cash, Closed trades,
 Stocks, the chart workspaces behind Reports > Charts / Trading / Allocation /
 Monthly, and the rest of the Add Trade form (collapse company and sector).
 

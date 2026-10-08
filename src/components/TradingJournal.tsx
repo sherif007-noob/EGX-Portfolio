@@ -41,6 +41,9 @@ import {
   ChevronsRight
 } from 'lucide-react';
 
+import { isCashFlowTransaction } from '../services/ledgerClassification';
+import { CashFlowRow } from '../ui/CashFlowRow';
+
 export interface JournalLedgerFocus {
   key: string;
   source: 'POSITION' | 'CLOSED_CYCLE' | 'BROKER_RECONCILIATION';
@@ -63,7 +66,7 @@ interface TradingJournalProps {
   isSyncingToSheets?: boolean;
 }
 
-export type JournalFilterMode = 'ALL' | 'OPEN' | 'WIN' | 'LOSS' | 'BUY' | 'SELL';
+export type JournalFilterMode = 'ALL' | 'OPEN' | 'WIN' | 'LOSS' | 'BUY' | 'SELL' | 'CASH';
 
 export const TradingJournal: React.FC<TradingJournalProps> = ({
   transactions,
@@ -192,19 +195,23 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
   // Compute counts for filter pills
   const winCount = useMemo(
-    () => transactions.filter((t) => t.type === 'SELL' && getTxSellMetrics(t)?.isWin).length,
+    () => transactions.filter((t) => t.type === 'SELL' && !isCashFlowTransaction(t) && getTxSellMetrics(t)?.isWin).length,
     [transactions, closedTrades]
   );
   const lossCount = useMemo(
-    () => transactions.filter((t) => t.type === 'SELL' && getTxSellMetrics(t)?.isLoss).length,
+    () => transactions.filter((t) => t.type === 'SELL' && !isCashFlowTransaction(t) && getTxSellMetrics(t)?.isLoss).length,
     [transactions, closedTrades]
   );
   const buyCount = useMemo(
-    () => transactions.filter((t) => t.type === 'BUY').length,
+    () => transactions.filter((t) => t.type === 'BUY' && !isCashFlowTransaction(t)).length,
     [transactions]
   );
   const sellCount = useMemo(
-    () => transactions.filter((t) => t.type === 'SELL').length,
+    () => transactions.filter((t) => t.type === 'SELL' && !isCashFlowTransaction(t)).length,
+    [transactions]
+  );
+  const cashCount = useMemo(
+    () => transactions.filter((t) => isCashFlowTransaction(t)).length,
     [transactions]
   );
   const corporateActionCount = useMemo(
@@ -221,7 +228,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const openPositionsTransactionsCount = useMemo(
     () =>
       transactions.filter(
-        (t) => t.type === 'BUY' && openTickersSet.has(t.ticker.toUpperCase())
+        (t) => t.type === 'BUY' && !isCashFlowTransaction(t) && openTickersSet.has(t.ticker.toUpperCase())
       ).length,
     [transactions, openTickersSet]
   );
@@ -230,7 +237,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const totalRealizedPnl = useMemo(
     () =>
       transactions.reduce((acc, t) => {
-        if (t.type !== 'SELL') return acc;
+        if (t.type !== 'SELL' || isCashFlowTransaction(t)) return acc;
         const metrics = getTxSellMetrics(t);
         return acc + (metrics?.pnl || 0);
       }, 0),
@@ -245,7 +252,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
   const totalBuyOutlay = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === 'BUY')
+        .filter((t) => t.type === 'BUY' && !isCashFlowTransaction(t))
         .reduce((acc, t) => acc + (t.totalAmount || t.shares * t.price + (t.fees || 0)), 0),
     [transactions]
   );
@@ -277,20 +284,24 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
 
         if (!matchesSearch) return false;
 
+        const isCash = isCashFlowTransaction(tx);
+        if (filterMode === 'CASH') {
+          return isCash;
+        }
         if (filterMode === 'WIN') {
-          return tx.type === 'SELL' && !!getTxSellMetrics(tx)?.isWin;
+          return tx.type === 'SELL' && !isCash && !!getTxSellMetrics(tx)?.isWin;
         }
         if (filterMode === 'LOSS') {
-          return tx.type === 'SELL' && !!getTxSellMetrics(tx)?.isLoss;
+          return tx.type === 'SELL' && !isCash && !!getTxSellMetrics(tx)?.isLoss;
         }
         if (filterMode === 'OPEN') {
-          return tx.type === 'BUY' && openTickersSet.has(tx.ticker.toUpperCase());
+          return tx.type === 'BUY' && !isCash && openTickersSet.has(tx.ticker.toUpperCase());
         }
         if (filterMode === 'BUY') {
-          return tx.type === 'BUY';
+          return tx.type === 'BUY' && !isCash;
         }
         if (filterMode === 'SELL') {
-          return tx.type === 'SELL';
+          return tx.type === 'SELL' && !isCash;
         }
         return true; // 'ALL'
       })
@@ -547,7 +558,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
             <span className="premium-type-metric premium-type-metric-dense font-mono text-white">
               {transactions.length}{' '}
               <span className="premium-type-metadata font-normal">
-                ({buyCount}B / {sellCount}S{corporateActionCount > 0 ? ` / ${corporateActionCount}CA` : ''})
+                ({buyCount}B / {sellCount}S{corporateActionCount > 0 ? ` / ${corporateActionCount}CA` : ''}{cashCount > 0 ? ` / ${cashCount} cash` : ''})
               </span>
             </span>
           </div>
@@ -565,7 +576,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           </div>
 
           <div className="premium-subpanel premium-state-buy p-2.5 rounded-xl">
-            <span className="premium-type-metric-label block">Total Buy Inflow</span>
+            <span className="premium-type-metric-label block">Total Buy Outlay</span>
             <span className="premium-type-metric premium-type-metric-dense font-mono text-blue-400">
               {formatEgp(totalBuyOutlay)} EGP
             </span>
@@ -684,6 +695,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
           >
             Sells Only ({sellCount})
           </button>
+          {cashCount > 0 && (
+            <button
+              id="journal-filter-cash"
+              type="button"
+              aria-pressed={filterMode === 'CASH'}
+              onClick={() => changeFilterMode('CASH')}
+              className={`premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'CASH' ? 'premium-filter-active-purple' : ''}`}
+            >
+              Cash ({cashCount})
+            </button>
+          )}
           </div>
 
           {/* Compact Sort Dropdown Select */}
@@ -775,6 +797,17 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       {/* Transactions Feed */}
       <MotionSwap motionKey={filterMode} variant="state" className="premium-journal-results premium-flow-control">
         {paginatedTransactions.map((tx) => {
+          if (isCashFlowTransaction(tx)) {
+            return (
+              <CashFlowRow
+                key={tx.id}
+                tx={tx}
+                formatEgp={formatEgp}
+                onEdit={() => handleOpenEditModal(tx)}
+                onDelete={() => handleDelete(tx)}
+              />
+            );
+          }
           const isBuy = tx.type === 'BUY';
           const isSell = tx.type === 'SELL';
           const isCorporateAction = tx.type === 'CORPORATE_ACTION';
@@ -1003,6 +1036,8 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </div>
               </div>
 
+              <details className="ui-details">
+                <summary>Details</summary>
               {/* Row 2: Detailed Transaction Attributes Grid */}
               <div className="premium-inset-glass premium-hierarchy-h4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-xl text-xs" data-hierarchy="h4">
                 <div>
@@ -1110,6 +1145,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                   </div>
                 )}
               </div>
+              </details>
             </div>
           );
         })}

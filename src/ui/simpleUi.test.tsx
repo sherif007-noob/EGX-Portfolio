@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { PerformanceStats, PortfolioMetrics, Position } from '../types';
-import { formatChartDate, formatCompact, formatPercent, formatSigned, toneClass } from './format';
+import { formatChartDate, formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { HomeScreen, positionPnl } from './HomeScreen';
 import { ActivitySwitcher, SimpleShell } from './SimpleShell';
 
@@ -194,5 +194,37 @@ describe('HoldingsScreen', () => {
     const empty = renderToStaticMarkup(<HoldingsScreen positions={[]} metrics={metrics} {...handlers} />);
     expect(empty).toContain('No open positions yet.');
     expect(empty).toContain('Add trade');
+  });
+});
+
+describe('CashFlowRow', () => {
+  it('renders a withdrawal as cash, never as a sell exit with shares and price', async () => {
+    const { CashFlowRow } = await import('./CashFlowRow');
+    const html = renderToStaticMarkup(
+      <CashFlowRow
+        tx={{
+          id: 'w1',
+          type: 'SELL',
+          ticker: 'CASH',
+          companyName: 'Cash',
+          sector: 'Other' as Position['sector'],
+          shares: 5000,
+          price: 1,
+          date: '2026-09-20',
+          fees: 0,
+          totalAmount: 5000,
+          cashFlowType: 'WITHDRAWAL',
+          cashFlowAmount: 5000,
+          notes: 'Visual regression withdrawal',
+        }}
+        formatEgp={(value) => formatEgp(value)}
+        onEdit={noop}
+        onDelete={noop}
+      />,
+    );
+    expect(html).toContain('Withdrawal');
+    expect(html).toContain('−5,000.00');
+    expect(html).toContain('Visual regression withdrawal');
+    expect(html).not.toMatch(/SELL EXIT|Exact Sell Price|Transaction Shares|Realized/);
   });
 });

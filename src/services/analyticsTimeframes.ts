@@ -1,3 +1,4 @@
+import { isEgxTradingDay, previousEgxTradingDate } from './egxTradingCalendar';
 export type AnalyticsTimeframe = 'TODAY' | '1W' | '1M' | '90D' | 'YTD' | 'ALL';
 export type AnalyticsResolution = '15m' | '1d';
 
@@ -21,14 +22,6 @@ function parseDateKey(date: string): Date {
 function shiftDays(date: string, days: number): string {
   const d = parseDateKey(date);
   d.setUTCDate(d.getUTCDate() + days);
-  return isoDate(d);
-}
-
-function previousEgxTradingDate(date: string): string {
-  let d = parseDateKey(date);
-  do {
-    d.setUTCDate(d.getUTCDate() - 1);
-  } while (d.getUTCDay() === 5 || d.getUTCDay() === 6);
   return isoDate(d);
 }
 
@@ -63,9 +56,9 @@ export function getLatestEgxSessionDate(now = new Date()): string {
   const hour = Number(read('hour'));
   const minute = Number(read('minute'));
   const minuteOfDay = hour * 60 + minute;
-  const weekday = parseDateKey(date).getUTCDay();
-
-  if (weekday === 5 || weekday === 6) return previousEgxTradingDate(date);
+  // An explicitly verified exchange closure is not an active session even
+  // if it falls on the regular Sunday–Thursday trading week.
+  if (!isEgxTradingDay(date)) return previousEgxTradingDate(date);
 
   // Keep the analytics session boundary aligned with the regular EGX session.
   // Pre-market may begin earlier, but portfolio session analytics start at 10:00 Cairo.

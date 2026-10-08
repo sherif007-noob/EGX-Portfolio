@@ -87,3 +87,10 @@ The earlier Activity pass was only cosmetic. It still rendered the original prem
 - Detailed workspace button keeps the full original `PerformanceReports` (trajectory, performance benchmarks, in-depth monthly reports, advanced charts). The old workspace is deliberately not the default.
 - Added `SimpleReportsView.test.tsx` to guard allocation, monthly integrity and native presentation. Tests are committed but not executed in this environment. Browser rendering and financial reconciliation still need acceptance verification.
 - The previous `Simple UI` historical sections in this doc describe the original baseline; later sections record the subsequent migration.
+
+### Medium UI integrity follow-up
+- Simplified views (Home, Holdings, Activity, Reports) no longer receive the redundant portfolio strip; advanced and remaining legacy destinations retain the compact context header.
+- Native Transactions now follows canonical `sortPerformanceTransactions` ordering for chronological views rather than relying on untrusted date-only parsing.
+- Closed-trade correction resolves missing BUY and SELL source links independently, retaining the original explicit IDs; regression case covers one-sided legacy links.
+- Shared pills now have structural inline wrapping/shape as a resilience fallback for stale PWA CSS. Dedicated CSS still controls focus/hover states and layout polish.
+- Next migration target is remaining legacy modal/dialog controls plus the ticker directory. Any claimed runtime acceptance requires a passing build/tests and actual mobile screenshots.

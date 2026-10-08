@@ -135,7 +135,7 @@ export function SimpleTransactionsView(props: Props) {
           cycle&&(cycle.sellTransactionIds?.length??0)===1?cycle.realizedPnlEgp:undefined;
         const showPnl=isSell&&pnl!==undefined;
         const amount=info.amount===null?'—':info.positive===null?formatEgp(info.amount):formatSigned(info.amount);
-        const mainAmount=showPnl?formatSigned(pnl):info.category==='CORPORATE'&&
+        const mainAmount=showPnl?formatSigned(pnl!):info.category==='CORPORATE'&&
           (tx.corporateActionType==='BONUS_SHARES'||tx.corporateActionType==='STOCK_DIVIDEND')
           ?`+${tx.shares.toLocaleString()} shares`:amount;
         const mainCaption=showPnl?'Realized P&L':info.category==='CORPORATE'&&
@@ -167,7 +167,7 @@ export function SimpleTransactionsView(props: Props) {
             <div className="ui-activity-detail-grid">
               {info.category!=='CASH'&&<ActivityDetail label="Company" value={tx.companyName}/>}
               {info.details.map(detail=><ActivityDetail key={detail.label} label={detail.label} value={detail.value}/>)}
-              {showPnl&&<ActivityDetail label="Realized P&L" value={`${formatSigned(pnl)} EGP`}/>}
+              {showPnl&&<ActivityDetail label="Realized P&L" value={`${formatSigned(pnl!)} EGP`}/>}
               {showPnl&&<ActivityDetail label="Return" value={formatPercent(cycle?.realizedPnlPercent??tx.realizedPnlPercent)}/>}
             </div>
             {tx.notes&&<p className="ui-sm ui-activity-notes">{tx.notes}</p>}

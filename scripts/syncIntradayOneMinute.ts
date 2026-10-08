@@ -1,4 +1,5 @@
 import { getLatestEgxSessionDate } from '../src/services/analyticsTimeframes';
+import { isEgxTradingDay } from '../src/services/egxTradingCalendar';
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { createChart, createSeries, createSession } from '@ch99q/twc';
@@ -672,6 +673,13 @@ async function main() {
   const scheduledRun = readBoolean('EGX_INTRADAY_SCHEDULED');
   const sessionClock = egxCairoSessionClock(now);
 
+  // Holiday closure is authoritative and distinct from an ingestion outage:
+  // scheduled jobs must not fetch/overwrite the previous session as today's.
+  // Explicit manual/backfill runs remain permitted.
+  if (scheduledRun && !isEgxTradingDay(sessionClock.dateKey)) {
+    console.log(`Scheduled 1m sync skipped: EGX closed on ${sessionClock.dateKey}.`);
+    return;
+  }
   if (scheduledRun && !sessionClock.isScheduledIngestionWindow) {
     console.log(
       `Scheduled 1m intraday sync skipped outside EGX Cairo ingestion window: ${sessionClock.dateKey} ${String(Math.floor(sessionClock.minuteOfDay / 60)).padStart(2, '0')}:${String(sessionClock.minuteOfDay % 60).padStart(2, '0')} ${sessionClock.weekday}.`,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, BarChart3, ChevronRight, LineChart, PieChart, TableProperties } from 'lucide-react';
+import { ArrowLeft, BarChart3, ChevronRight, LineChart, TableProperties, ShieldAlert } from 'lucide-react';
 import type { ClosedTrade, PerformanceStats, PortfolioMetrics, Position, TradeTransaction } from '../types';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
@@ -9,6 +9,8 @@ import { HomeChart } from './HomeChart';
 import { ActivityPills, ActivityStat } from './SimpleActivityShared';
 import { formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { buildSimpleAllocation, buildSimpleMonths } from './simpleReportsModel';
+import { PersonalRiskView } from './PersonalRiskView';
+import { pendingIpoSubscriptionValue } from '../services/ipoSubscriptions';
 
 interface Props {
   stats: PerformanceStats;
@@ -22,9 +24,10 @@ interface Props {
   historicalLoading?: boolean;
   chartsReady?: boolean;
 }
-const MODES: Array<{value:ReportsMode,label:string}> = [
+type MediumReportsMode = ReportsMode | 'risk';
+const MODES: Array<{value:MediumReportsMode,label:string}> = [
   {value:'overview',label:'Overview'}, {value:'analytics',label:'Charts'},
-  {value:'trading',label:'Trading'}, {value:'allocation',label:'Allocation'},
+  {value:'trading',label:'Trading'}, {value:'risk',label:'My Risk'}, {value:'allocation',label:'Allocation'},
   {value:'monthly',label:'Monthly'},
 ];
 
@@ -47,7 +50,7 @@ function SectionTitle({title,detail}: {title:string;detail?:string}) {
 export function SimpleReportsView(props: Props) {
   const {stats,closedTrades,positions,metrics,cashBalance=0,capitalDeposits=0,transactions,
     historicalPrices,historicalLoading=false,chartsReady=true}=props;
-  const [mode,setMode]=useState<ReportsMode>(()=>readPersistedReportsMode());
+  const [mode,setMode]=useState<MediumReportsMode>(()=>readPersistedReportsMode());
   const [advanced,setAdvanced]=useState(false);
   const [allocationMode,setAllocationMode]=useState<'sector'|'stock'>('sector');
   const [includeCash,setIncludeCash]=useState(true);
@@ -62,7 +65,7 @@ export function SimpleReportsView(props: Props) {
   const months=useMemo(()=>buildSimpleMonths(closedTrades,positions),[closedTrades,positions]);
   const selectedMonths=month==='ALL'?months:months.filter(item=>item.key===month);
   const shownMonths=month==='ALL'&&!showAllMonths ? selectedMonths.slice(0,8):selectedMonths;
-  const changeMode=(next:ReportsMode)=>{setMode(next);persistReportsMode(next);};
+  const changeMode=(next:MediumReportsMode)=>{setMode(next);if(next!=='risk')persistReportsMode(next);};
   const winners=stats.winningTrades??closedTrades.filter(c=>c.outcome==='WIN').length;
   const losers=stats.losingTrades??closedTrades.filter(c=>c.outcome==='LOSS').length;
   const sortedClosed=useMemo(()=>[...closedTrades].sort(
@@ -114,7 +117,7 @@ export function SimpleReportsView(props: Props) {
         </div>
       </section>
       <div className="ui-report-shortcuts">
-        {([{value:'analytics',label:'Performance charts',icon:LineChart},{value:'allocation',label:'Portfolio allocation',icon:PieChart},{value:'monthly',label:'Monthly results',icon:BarChart3}] as const).map(item=>{
+        {([{value:'risk',label:'My risk',icon:ShieldAlert},{value:'analytics',label:'Performance charts',icon:LineChart},{value:'monthly',label:'Monthly results',icon:BarChart3}] as const).map(item=>{
           const Icon=item.icon;return <button type="button" key={item.value} onClick={()=>changeMode(item.value)}>
             <Icon size={17}/>{item.label}<ChevronRight size={16}/>
           </button>;
@@ -167,6 +170,9 @@ export function SimpleReportsView(props: Props) {
         </div>
       </section>
     </>}
+
+    {mode==='risk' && <PersonalRiskView positions={positions} closedTrades={closedTrades} cashBalance={cashBalance}
+      nav={bridge.endingEquity} pendingIpoValue={pendingIpoSubscriptionValue(transactions)}/>}
 
     {mode==='allocation' && <>
       <SectionTitle title="Portfolio allocation" detail="Current market value across holdings and cash."/>

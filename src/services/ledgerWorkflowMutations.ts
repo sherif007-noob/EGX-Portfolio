@@ -524,6 +524,9 @@ export function prepareIpoAllocationMutation(
   const reserved = existing.ipoSubscription.reservedAmount ?? existing.ipoSubscription.requestedAmount;
   const refundAmount = Math.max(0, Number((reserved - totalAmount).toFixed(2)));
   const additionalPaymentAmount = Math.max(0, Number((totalAmount - reserved).toFixed(2)));
+  if (additionalPaymentAmount > current.cashBalance + 0.005) {
+    throw new Error(`IPO allocation requires ${additionalPaymentAmount.toFixed(2)} EGP in additional cash, but only ${current.cashBalance.toFixed(2)} EGP is available.`);
+  }
   const allocationDate = String(input.allocationDate || '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(allocationDate) || !Number.isFinite(Date.parse(allocationDate))) {
     throw new Error('IPO allocation requires a valid allocation date.');

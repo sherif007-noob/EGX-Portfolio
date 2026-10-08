@@ -312,8 +312,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
             <div className="premium-flow-major" data-reports-workspace="overview">
               <ReportsOverview
                 portfolioValue={reportedNav}
-                dayChangeEgp={marketSession.isCurrentSessionDay ? (metrics?.dayChangeEgp ?? null) : null}
-                dayChangePercent={marketSession.isCurrentSessionDay ? (metrics?.dayChangePercent ?? null) : null}
+                dayChangeEgp={marketSession.isCurrentSessionDay && metrics?.dayChangeReliable !== false ? (metrics?.dayChangeEgp ?? null) : null}
+                dayChangePercent={marketSession.isCurrentSessionDay && metrics?.dayChangeReliable !== false ? (metrics?.dayChangePercent ?? null) : null}
                 realizedPnlEgp={metrics?.realizedPnlEgp ?? performanceBridge.realizedPnl}
                 unrealizedPnlEgp={metrics?.unrealizedPnlEgp ?? performanceBridge.unrealizedPnl}
                 cashBalance={cashBalance}

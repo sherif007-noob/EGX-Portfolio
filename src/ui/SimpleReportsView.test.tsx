@@ -64,7 +64,16 @@ describe('medium-ui Reports', () => {
     expect(html).toContain('What happens if my stops trigger?');
     expect(html).toContain('Largest realized P&amp;L drawdown');
     expect(html).toContain('Stop set');
+    expect(html).toContain('Quotes may be stale.');
     expect(html).not.toContain('premium-card');
+  });
+
+  it('warns when canonical portfolio accounting is not balanced', () => {
+    const html = renderToStaticMarkup(
+      <PersonalRiskView positions={[holding]} closedTrades={[]}
+        cashBalance={800} nav={2000} accountingBalanced={false}/>,
+    );
+    expect(html).toContain('Portfolio accounting does not reconcile');
   });
 
   it('shows uncovered exposures, rather than claiming portfolio protection', () => {

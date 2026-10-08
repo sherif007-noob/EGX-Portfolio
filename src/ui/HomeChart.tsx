@@ -23,6 +23,7 @@ import {
   type PortfolioBenchmarkTicker,
 } from '../services/portfolioBenchmarks';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
+import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 
 type ChartMode = 'ret' | 'val' | 'dep' | 'twr' | 'mwr' | 'bm';
@@ -110,9 +111,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
     let unit: Unit = 'egp';
 
     if (mode === 'ret' && points.length) {
-      const base = points[0];
-      const baseline = base.equity - base.netDeposits;
-      for (const point of points) rows.push({ date: point.date, ret: point.equity - point.netDeposits - baseline });
+      // The "Return" line must not jump when deposits, withdrawals or audited
+      // reconciliation adjustments change NAV without investment performance.
+      for (const item of cashFlowNeutralReturn(points)) rows.push({ date:item.date, ret:item.value });
       series = [{ key: 'ret', label: 'Return', color: 'var(--ui-teal)', area: true }];
     } else if (mode === 'val') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity });

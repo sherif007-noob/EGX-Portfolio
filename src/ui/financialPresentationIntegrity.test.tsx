@@ -56,15 +56,15 @@ describe('cash ledger versus investment activity separation',()=>{
   });
 
   it('distinguishes full IPO commitment from its held cash and unallocated shares',()=>{
-    const ipo=activityRecordView({...buy,id:'ipo',type:'IPO_SUBSCRIPTION',ticker:'HALN',
-      shares:6600,price:24.50,totalAmount:161700,
-      ipoSubscription:{status:'SUBMITTED',requestedAmount:161700,reservedAmount:40425,
-        requestedShares:6600,offerPrice:24.50,subscriptionDate:'2026-10-07'},
+    const ipo=activityRecordView({...buy,id:'ipo',type:'IPO_SUBSCRIPTION',ticker:'IPOX',
+      shares:4000,price:25,totalAmount:100000,
+      ipoSubscription:{status:'SUBMITTED',requestedAmount:100000,reservedAmount:25000,
+        requestedShares:4000,offerPrice:25,subscriptionDate:'2026-10-07'},
     });
-    expect(ipo.amount).toBe(40425);
-    expect(ipo.details).toContainEqual({label:'Full order',value:'161,700.00 EGP'});
-    expect(ipo.details).toContainEqual({label:'Broker cash hold',value:'40,425.00 EGP'});
-    expect(ipo.details).toContainEqual({label:'Shares requested',value:'6,600'});
+    expect(ipo.amount).toBe(25000);
+    expect(ipo.details).toContainEqual({label:'Full order',value:'100,000.00 EGP'});
+    expect(ipo.details).toContainEqual({label:'Broker cash hold',value:'25,000.00 EGP'});
+    expect(ipo.details).toContainEqual({label:'Shares requested',value:'4,000'});
     expect(ipo.details.some(x=>x.label==='Shares allocated')).toBe(false);
   });
 });

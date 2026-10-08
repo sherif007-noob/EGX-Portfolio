@@ -209,7 +209,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-holdings-filters { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
 .ui-holdings-search { display:flex; align-items:center; flex:1 1 200px; gap:8px; min-width:0; padding:0 12px; border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm); background:var(--ui-surface); }
 .ui-holdings-search input { width:100%; min-width:0; height:40px; border:0; outline:none; color:var(--ui-text); background:transparent; }
-.ui-holdings-filters select { min-width:0; max-width:100%; height:42px; padding:0 10px; color:var(--ui-text); background:var(--ui-surface-2); border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm); }
+
 .ui-holdings-list { border:1px solid var(--ui-border); border-radius:var(--ui-radius); background:var(--ui-surface); overflow:hidden; }
 .ui-holding + .ui-holding { border-top:1px solid var(--ui-border); }
 .ui-holding-main { display:flex; align-items:center; gap:12px; width:100%; min-height:72px; padding:12px 14px; color:var(--ui-text); background:transparent; border:0; text-align:left; cursor:pointer; }
@@ -226,4 +226,17 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-holding-buttons button { border:1px solid var(--ui-border-strong); border-radius:8px; background:var(--ui-surface); color:var(--ui-text); padding:9px 12px; cursor:pointer; }
 .ui-holding-buttons button:first-child { border-color:var(--ui-teal); color:var(--ui-teal); }
 .ui-holdings-empty { padding:24px; text-align:center; }
-@media(max-width:440px) { .ui-holding-main { gap:8px; padding:10px; } .ui-holding-numbers { font-size:.82rem; } .ui-holdings-summary { gap:8px; } .ui-holdings-summary > div { padding:11px; } .ui-holdings-filters select { flex:1; } }
+@media(max-width:440px) { .ui-holding-main { gap:8px; padding:10px; } .ui-holding-numbers { font-size:.82rem; } .ui-holdings-summary { gap:8px; } .ui-holdings-summary > div { padding:11px; }  }
+
+/* Holdings pill filters: consistent with compact chart chips, overflow-safe on phones. */
+.ui-holdings-filters { display:flex; flex-direction:column; align-items:stretch; gap:12px; }
+.ui-holdings-search { flex:none; width:100%; }
+.ui-filter-group { min-width:0; display:flex; flex-direction:column; gap:6px; }
+.ui-filter-caption { font-weight:600; }
+.ui-pill-scroll { display:flex; gap:7px; overflow-x:auto; max-width:100%; padding:2px 1px 6px; scrollbar-width:thin; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; }
+.ui-filter-pill { flex:0 0 auto; min-height:36px; padding:7px 13px; border:1px solid var(--ui-border); border-radius:999px; background:var(--ui-surface); color:var(--ui-text-2); font:inherit; font-size:.8125rem; cursor:pointer; white-space:nowrap; transition:background .15s ease, border-color .15s ease, color .15s ease; }
+.ui-filter-pill[aria-pressed="true"] { color:var(--ui-text); border-color:color-mix(in srgb,var(--ui-teal) 48%,var(--ui-border)); background:color-mix(in srgb,var(--ui-teal) 15%,var(--ui-surface)); box-shadow:inset 0 1px 0 rgba(255,255,255,.035); }
+.ui-filter-pill:hover:not([aria-pressed="true"]) { color:var(--ui-text); background:var(--ui-surface-2); }
+.ui-filter-pill:focus-visible { outline:2px solid var(--ui-blue); outline-offset:2px; }
+@media(min-width:1024px) { .ui-holdings-filters { display:grid; grid-template-columns:minmax(220px,1fr) minmax(0,1.5fr) auto; align-items:end; gap:16px; } .ui-pill-scroll { padding-bottom:3px; } .ui-holdings-search { height:42px; } }
+@media(prefers-reduced-motion:reduce) { .ui-filter-pill { transition:none; } }

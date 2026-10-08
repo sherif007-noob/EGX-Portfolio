@@ -452,7 +452,7 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
         </div>
 
         {/* Filters and Sorting */}
-        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:flex-wrap">
+        <div className="ui-activity-filter-controls flex w-full flex-col gap-3">
           {/* Outcome Filter Pills */}
           <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Filter closed trades">
             <button
@@ -489,22 +489,29 @@ export const ClosedCyclesView: React.FC<ClosedCyclesViewProps> = ({
             </button>
           </div>
 
-          {/* Sort Selector */}
-          <AnalyticsSelect
-            value={sortBy}
-            onChange={(value) => changeSortBy(value as typeof sortBy)}
-            compact
-            accent="purple"
-            ariaLabel="Sort closed cycles"
-            className="w-full min-w-0 sm:w-auto sm:min-w-[205px]"
-            options={[
-              { value: 'date', label: 'Sort: Exit Date (Newest)' },
-              { value: 'pnl_desc', label: 'Sort: Highest P&L (EGP)' },
-              { value: 'pnl_asc', label: 'Sort: Lowest P&L (EGP)' },
-              { value: 'pct_desc', label: 'Sort: Highest Return (%)' },
-              { value: 'holding', label: 'Sort: Longest Holding' },
-            ]}
-          />
+          {/* Sort: multi-row pills instead of another dropdown. */}
+          <div className="ui-activity-sort">
+            <span className="ui-sm">Sort</span>
+            <div className="ui-activity-pill-group ui-pill-wrap" role="group" aria-label="Sort closed trades">
+              {([
+                { value: 'date', label: 'Newest' },
+                { value: 'pnl_desc', label: 'Highest P&L' },
+                { value: 'pnl_asc', label: 'Lowest P&L' },
+                { value: 'pct_desc', label: 'Best %' },
+                { value: 'holding', label: 'Longest held' },
+              ] as const).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="ui-filter-pill"
+                  aria-pressed={sortBy === option.value}
+                  onClick={() => changeSortBy(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Expand / Collapse All */}
           <button

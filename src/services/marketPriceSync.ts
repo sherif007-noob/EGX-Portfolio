@@ -1,4 +1,5 @@
 import { selectPositionQuote } from './positionQuote';
+import { isEgxTradingDay, nextEgxTradingDate } from './egxTradingCalendar';
 import { EGX_SCANNER_PAYLOAD } from './scannerRequest';
 import {
   API_ROUTES,
@@ -411,7 +412,9 @@ export function getEGXSessionStatus(now = new Date()): EGXScheduleStatus {
     const cairoLocalTime = new Date(Date.UTC(year, month, day, hour, minute, second));
     const dayOfWeek = cairoLocalTime.getUTCDay();
 
-    const isTradingDay = dayOfWeek >= 0 && dayOfWeek <= 4;
+    const padDate = (n: number) => String(n).padStart(2,'0');
+    const cairoKey = `${year}-${padDate(month+1)}-${padDate(day)}`;
+    const isTradingDay = isEgxTradingDay(cairoKey);
     const currentTotalMinutes = hour * 60 + minute;
 
     let inSession = false;
@@ -451,12 +454,11 @@ export function getEGXSessionStatus(now = new Date()): EGXScheduleStatus {
         const secRemaining = 60 - second;
         millisUntilNextTick = Math.max(1000, ((diffMins - 1) * 60 + secRemaining) * 1000);
       } else {
-        let daysToAdd = 1;
-        let nextDay = (dayOfWeek + 1) % 7;
-        while (nextDay === 5 || nextDay === 6) {
-          daysToAdd++;
-          nextDay = (nextDay + 1) % 7;
-        }
+        const nextOpenDate = nextEgxTradingDate(cairoKey);
+        const daysToAdd = Math.round(
+          (Date.parse(`${nextOpenDate}T00:00:00Z`) - Date.parse(`${cairoKey}T00:00:00Z`)) / 86400000
+        );
+        const nextDay = new Date(`${nextOpenDate}T00:00:00Z`).getUTCDay();
         const openHour = nextDay === 0 ? 9 : 10;
         const openMin = nextDay === 0 ? 30 : 0;
         nextTickHour = openHour;

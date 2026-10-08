@@ -39,3 +39,9 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 - Advanced performance modes are progressively disclosed; color meaning for profit/loss remains driven by signed numeric tone, separate from metric category color.
 - A modest elevation treatment is limited to the portfolio hero. Focus outlines and mobile touch targets are improved.
 - Still to verify against actual broker snapshots: cash-flow-adjusted Return definition, Today session boundary, benchmark coverage, and end-to-end rendered mobile behavior. Do not claim those correctness checks from code changes alone.
+
+### Follow-up implementation
+- Home panels use consistent row rhythm and accessible context labels; advanced chart controls receive keyboard/touch states.
+- Benchmark overlays now explicitly flag missing aligned index history instead of silently pretending every line is present.
+- Today intraday result is keyed by session and selected granularity to prevent displaying the previous interval while loading the next.
+- Validation still pending: real broker reconciliation, compiled TypeScript, browser layout snapshots, and automated CI.

@@ -65,3 +65,17 @@ Tests that froze the old Overview composition (PortfolioSummary on Overview in
 - Activity cards use quieter, opaque surfaces rather than premium glow effects. The cash history turns into labeled cards below 700px, retaining edit/delete buttons; desktop keeps the full table.
 - Acceptance not yet proven: runtime typecheck/test execution, mobile screenshot review, mobile cash edit/delete and ledger focus workflows, and accounting reconciliation. Avoid interpreting a source commit as a passed check.
 - Remaining work: fully migrate complex cash-transfer forms and editor modals, then Reports.
+
+## Native Activity redesign (medium-ui, 2026-10-08)
+
+The earlier Activity pass was only cosmetic. It still rendered the original premium journal, cash and closed-cycle screens by default, which was inconsistent with the Home and Holdings redesign. This pass **replaces the default Activity page composition**:
+
+- `SimpleTransactionsView`: compact record list, three key summary values, wrapped filter/sort pills, expandable execution details and progressive loading. Shows BUY, SELL, corporate actions, IPO subscriptions and legacy opening records without dropping them. Uses canonical closed-cycle data for aggregate realized P&L and avoids assigning a whole multi-execution cycle's gain to every SELL.
+- `SimpleCashView`: available cash, deposits and withdrawals; compact deposit/withdraw form using the existing `onAddCashTransaction` callback; transaction history projected by `buildCashHistory` and inline edit/delete dialogs using the existing ledger callbacks. No independent cash-balance mutation.
+- `SimpleClosedView`: compact cycle results, signed performance, wrapped filters/sorts and expandable average prices/holding details. Source-ledger correction retains authoritative transaction IDs with the same bounded legacy fallback as the old view.
+- New reusable design primitives: `SimpleActivityShared.tsx`, with independent `ui-activity-native` styles in `ui.css`.
+- Redundant `CompactPortfolioStrip` is not shown on Activity pages. The shared Activity navigation continues to provide Transactions/Cash/Closed destinations.
+- Specialist tools remain available via explicit advanced/detail entry points: full journal editor and reconciliation controls render the original components only when deliberately opened. They are **not** the default Activity layout.
+- Added `SimpleActivityNative.test.tsx` source-level regression cases for the new routes, wrapped pills, and cycle execution links.
+
+**Scope/limits:** Data model, persistence and calculation engines are unchanged. Cash edits still route through the canonical ledger. Not yet confirmed through a real browser, broker reconciliation, TypeScript build, or executed Vitest suite in this environment. The advanced transaction editor and reconciliation tools still use the legacy visual language and are a separate migration target.

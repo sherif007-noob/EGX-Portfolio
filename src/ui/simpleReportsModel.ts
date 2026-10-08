@@ -10,7 +10,7 @@ export interface SimpleAllocationRow {
 }
 
 /** No rounding or normalization of ledger quantities; display percentages only. */
-export function buildSimpleAllocation(positions: Position[], cashBalance: number, mode: 'sector'|'stock', includeCash = true): SimpleAllocationRow[] {
+export function buildSimpleAllocation(positions: Position[], cashBalance: number, mode: 'sector'|'stock', includeCash = true, pendingIpoValue = 0): SimpleAllocationRow[] {
   const rows = new Map<string, { value: number; count: number }>();
   for (const position of positions) {
     const name = mode === 'sector' ? position.sector : position.ticker;
@@ -23,6 +23,10 @@ export function buildSimpleAllocation(positions: Position[], cashBalance: number
   if (includeCash && cashBalance > 0) {
     const existing = rows.get('Cash') ?? { value: 0, count: 0 };
     rows.set('Cash', { value: existing.value + cashBalance, count: existing.count });
+  }
+  if (includeCash && Number.isFinite(pendingIpoValue) && pendingIpoValue > 0) {
+    // Broker reserve remains part of NAV but cannot be invested again.
+    rows.set('IPO held', { value: pendingIpoValue, count: 0 });
   }
   const total = [...rows.values()].reduce((sum, row) => sum + row.value, 0);
   return [...rows.entries()].map(([label, row]) => ({

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, ChevronRight, LineChart, PieChart, TableProperties } from 'lucide-react';
+import { ArrowLeft, BarChart3, ChevronRight, LineChart, PieChart, TableProperties } from 'lucide-react';
 import type { ClosedTrade, PerformanceStats, PortfolioMetrics, Position, TradeTransaction } from '../types';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { calculateEquityBridge, isEquityBridgeBalanced } from '../services/portfolioPerformance';
@@ -107,7 +107,7 @@ export function SimpleReportsView(props: Props) {
       <section className="ui-report-section">
         <SectionTitle title="Quick insights"/>
         <div className="ui-report-info-grid">
-          <Info label="Win rate" value={Number.isFinite(stats.winRate) ? formatPercent(stats.winRate,1) : '—'}/>
+          <Info label="Win rate" value={Number.isFinite(stats.winRate) ? `${stats.winRate.toFixed(1)}%` : '—'}/>
           <Info label="Profit factor" value={Number.isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'—'}/>
           <Info label="Available cash" value={`${formatEgp(cashBalance)} EGP`}/>
           <Info label="Today's change" value={<span className={toneClass(metrics?.dayChangeEgp)}>{metrics?formatSigned(metrics.dayChangeEgp)+' EGP':'—'}</span>}/>
@@ -140,7 +140,7 @@ export function SimpleReportsView(props: Props) {
 
     {mode==='trading' && <>
       <div className="ui-report-summary">
-        <ActivityStat label="Win rate" value={Number.isFinite(stats.winRate)?formatPercent(stats.winRate,1):'—'} note={`${winners} wins · ${losers} losses`}/>
+        <ActivityStat label="Win rate" value={Number.isFinite(stats.winRate)?`${stats.winRate.toFixed(1)}%`:'—'} note={`${winners} wins · ${losers} losses`}/>
         <ActivityStat label="Completed trades" value={stats.totalTrades}/>
         <ActivityStat label="Profit factor" value={Number.isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'—'}/>
       </div>

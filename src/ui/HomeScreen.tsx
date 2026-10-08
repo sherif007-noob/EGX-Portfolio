@@ -77,7 +77,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {formatEgp(metrics.totalValue)} <span className="ui-sm">EGP</span>
           </div>
           <span
-            className={`ui-mono ${marketSession.isCurrentSessionDay ? toneClass(today) : 'ui-muted'}`}
+            className={`ui-mono ${marketSession.isCurrentSessionDay && metrics.dayChangeReliable !== false ? toneClass(today) : 'ui-muted'}`}
             style={{
               display: 'inline-block',
               marginTop: 6,
@@ -87,7 +87,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               background: 'rgba(148, 163, 184, 0.14)',
             }}
           >
-            {marketSession.isCurrentSessionDay ? `${formatSigned(today)} today · ${formatPercent(metrics.dayChangePercent)}` : `${marketSession.description} · ${marketSession.sessionCaption}`}
+            {marketSession.isCurrentSessionDay ? (metrics.dayChangeReliable === false ? 'Today return unavailable · missing opening quote' : `${formatSigned(today)} today · ${formatPercent(metrics.dayChangePercent)}`) : `${marketSession.description} · ${marketSession.sessionCaption}`}
           </span>
         </section>
 

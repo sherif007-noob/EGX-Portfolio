@@ -23,6 +23,7 @@ interface Props {
   historicalPrices: HistoricalPriceSeries;
   historicalLoading?: boolean;
   chartsReady?: boolean;
+  onOpenHoldings?: () => void;
 }
 type MediumReportsMode = ReportsMode | 'risk';
 const MODES: Array<{value:MediumReportsMode,label:string}> = [
@@ -186,7 +187,7 @@ export function SimpleReportsView(props: Props) {
     </>}
 
     {mode==='risk' && <PersonalRiskView positions={positions} closedTrades={closedTrades} cashBalance={cashBalance}
-      nav={bridge.endingEquity} pendingIpoValue={pendingIpoSubscriptionValue(transactions)}/>}
+      nav={bridge.endingEquity} pendingIpoValue={pendingIpoSubscriptionValue(transactions)} onOpenHoldings={props.onOpenHoldings}/>}
 
     {mode==='allocation' && <>
       <SectionTitle title="Portfolio allocation" detail="Current market value across holdings and cash."/>

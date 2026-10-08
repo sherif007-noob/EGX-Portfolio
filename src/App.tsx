@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { PerformanceStats, PortfolioMetrics } from './types';
 import { SimpleShell, ActivitySwitcher, ACTIVITY_TABS } from './ui/SimpleShell';
 import { HomeScreen } from './ui/HomeScreen';
+import { SimpleHoldings } from './ui/SimpleHoldings';
 import { CompactPortfolioStrip } from './components/CompactPortfolioStrip';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
@@ -378,27 +379,15 @@ export default function App() {
         )}
 
         {activeTab === 'positions' && (
-          <section
-            className="premium-hierarchy-h0 premium-flow-related"
-            data-hierarchy="h0"
-            data-page="positions"
-          >
-            <div className="min-w-0">
-              <h2 className="premium-type-section-title">EGX Portfolio Positions</h2>
-              <p className="premium-type-helper mt-0.5">
-                Track holdings, unrealized performance, price targets, and position actions.
-              </p>
-            </div>
-            <PositionsTable
-              positions={positions}
-              onSellPosition={(pos) => setSellingPosition(pos)}
-              onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
-              onEditPosition={(pos) => setEditingPosition(pos)}
-              onCorrectLedger={openPositionLedgerCorrection}
-              onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
-              onAddNewTrade={() => openAddTrade()}
-            />
-          </section>
+          <SimpleHoldings
+            positions={positions}
+            onSellPosition={(pos) => setSellingPosition(pos)}
+            onBuyMore={(pos) => openAddTrade(tickers.find((t) => t.ticker === pos.ticker) || null)}
+            onEditPosition={(pos) => setEditingPosition(pos)}
+            onCorrectLedger={openPositionLedgerCorrection}
+            onOpenPriceAlerts={() => setIsPriceAlertsModalOpen(true)}
+            onAddNewTrade={() => openAddTrade()}
+          />
         )}
 
         {activeTab === 'closed_cycles' && (

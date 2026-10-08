@@ -303,3 +303,40 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   .ui-activity-content .ui-activity-pill-group .ui-filter-pill { min-height:38px; }
   .ui-activity-content .premium-type-metric { overflow-wrap:anywhere; }
 }
+
+/* Activity filter rows and compact ledger layout. */
+.ui-activity-content .ui-activity-filter-controls { min-width:0; width:100%; }
+.ui-activity-content .ui-activity-sort { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; width:100%; }
+.ui-activity-content .ui-activity-sort > .ui-sm { font-weight:600; }
+.ui-activity-content .ui-activity-filter-controls > .premium-subpanel { align-self:flex-start; max-width:100%; }
+.ui-activity-content .ui-activity-pill-group .ui-filter-pill svg { flex-shrink:0; }
+.ui-activity-content .premium-table-shell { max-width:100%; }
+@media(max-width:700px) {
+  /* Only the historical cash ledger becomes stacked. Desktop retains its detailed table. */
+  .ui-activity-cash .premium-cash-history-results .premium-table-shell { overflow:visible; border:0; background:transparent; }
+  .ui-activity-cash-table { display:block; min-width:0 !important; width:100%; }
+  .ui-activity-cash-table thead { display:none; }
+  .ui-activity-cash-table tbody { display:flex; flex-direction:column; gap:10px; }
+  .ui-activity-cash-table tbody tr:not(.ui-cash-empty) {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;
+    padding:12px; border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm);
+    background:var(--ui-surface-2);
+  }
+  .ui-activity-cash-table tbody tr:not(.ui-cash-empty) td {
+    display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    min-width:0; padding:0 !important; max-width:none !important;
+    overflow-wrap:anywhere; white-space:normal !important; text-align:left !important;
+    border:0 !important;
+  }
+  .ui-activity-cash-table tbody td[data-label]::before {
+    content:attr(data-label); font-size:.6875rem; font-weight:550;
+    font-family:system-ui,sans-serif; color:var(--ui-text-2);
+  }
+  .ui-activity-cash-table tbody td[data-label="Details"] { grid-column:1 / -1; order:3; }
+  .ui-activity-cash-table tbody td[data-label="Amount"] { order:4; }
+  .ui-activity-cash-table tbody td[data-label="Balance after"] { order:5; }
+  .ui-activity-cash-table tbody td[data-label="Actions"] { grid-column:1 / -1; order:6; }
+  .ui-activity-cash-table tbody td[data-label="Actions"] > div { justify-content:flex-start; }
+  .ui-activity-cash-table tbody .ui-cash-empty { display:block; text-align:center; }
+  .ui-activity-cash-table tbody .ui-cash-empty td { display:block; width:100%; }
+}

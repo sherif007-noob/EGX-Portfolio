@@ -6,7 +6,7 @@ import { CompactPortfolioStrip } from './components/CompactPortfolioStrip';
 import { PositionsTable } from './components/PositionsTable';
 import { EditPositionModal } from './components/EditPositionModal';
 import { ClosedCyclesView } from './components/ClosedCyclesView';
-import { PerformanceReports } from './features/reports';
+import { ReportsScreen } from './ui/ReportsScreen';
 import { TradingJournal } from './components/TradingJournal';
 import { TickerDirectoryView } from './components/TickerDirectoryView';
 import { CashBalanceView } from './components/CashBalanceView';
@@ -410,7 +410,7 @@ export default function App() {
         )}
 
         {activeTab === 'reports' && (
-          <PerformanceReports
+          <ReportsScreen
             stats={stats}
             closedTrades={closedTrades}
             positions={positions}

@@ -24,9 +24,17 @@ replaces only the presentation layer, one screen at a time. `main` is untouched.
 - Analytics data: `useAnalyticsSeries` reuses the same engines as the legacy
   chart (daily unified engine, intraday session for Today, benchmark comparison).
 
+- Reports (`ReportsScreen`): opens on the new Metrics page (TWR, MWR, drawdown,
+  return, versus EGX30/EGX70/EGX100, risk, equity bridge with balanced check,
+  full trading stats with a small-sample warning, costs). Charts, Trading,
+  Allocation and Monthly are the existing workspaces behind the same chip row
+  (`PerformanceReports` takes a `controlledMode` prop and hides its own header
+  and navigation when embedded).
+
 ## Not migrated yet (still legacy visuals inside the new shell)
-Holdings table, Transactions, Cash, Closed trades, Reports (Metrics page and
-chart sub-views), Stocks, modals (Add Trade sheet with sticky total footer).
+Holding table, Transactions, Cash, Closed trades, Stocks, the chart workspaces
+behind Reports > Charts / Trading / Allocation / Monthly, and modals (Add Trade
+sheet with sticky total footer).
 
 ## Removed
 Tests that froze the old Overview composition (PortfolioSummary on Overview in

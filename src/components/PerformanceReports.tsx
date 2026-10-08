@@ -43,6 +43,8 @@ interface PerformanceReportsProps {
   historicalPrices: HistoricalPriceSeries;
   historicalLoading?: boolean;
   chartsReady?: boolean;
+  /** When set, the parent owns the mode and the built-in header and navigation are hidden. */
+  controlledMode?: ReportsMode;
 }
 
 const EGP_FORMATTER = new Intl.NumberFormat('en-EG', {
@@ -63,6 +65,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   historicalPrices,
   historicalLoading = false,
   chartsReady = true,
+  controlledMode,
 }) => {
   const allocationGlowId = useChartResourceId('allocation-glow');
   const reducedMotion = useAnalyticsReducedMotion();
@@ -70,7 +73,8 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
   const [allocationTab, setAllocationTab] = useState<'sector' | 'stock'>('sector');
   const [includeCash, setIncludeCash] = useState(true);
   const [activeAllocationIndex, setActiveAllocationIndex] = useState<number | null>(null);
-  const [reportMode, setReportMode] = useState<ReportsMode>(() => readPersistedReportsMode());
+  const [internalReportMode, setReportMode] = useState<ReportsMode>(() => readPersistedReportsMode());
+  const reportMode = controlledMode ?? internalReportMode;
 
   const handleReportModeChange = useCallback((mode: ReportsMode) => {
     // Persist before the visual workspace swap so direct Overview promotions
@@ -276,6 +280,7 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
 
   return (
     <div className="premium-reports-hierarchy premium-flow-major">
+      {!controlledMode && (
       <div className="premium-hierarchy-h0 flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between" data-hierarchy="h0">
         <div>
           <h2 className="premium-type-page-title flex items-center gap-2">
@@ -291,8 +296,9 @@ const PerformanceReportsComponent: React.FC<PerformanceReportsProps> = ({
           <span className="premium-chip px-2.5 py-1 rounded-lg text-emerald-400 border-emerald-500/30">Win Rate: {stats.winRate.toFixed(1)}%</span>
         </div>
       </div>
+      )}
 
-      <ReportsNavigation activeMode={reportMode} onModeChange={handleReportModeChange} />
+      {!controlledMode && <ReportsNavigation activeMode={reportMode} onModeChange={handleReportModeChange} />}
 
       <MotionSwap
         motionKey={reportMode}

@@ -10,10 +10,10 @@ describe('Phase 10.0 visual consistency baseline freeze', () => {
     const app = readRelative('../App.tsx');
 
     const expected = [
-      ["overview", 'PositionsTable'],
+      ["overview", 'HomeScreen'],
       ["positions", 'PositionsTable'],
       ["closed_cycles", 'ClosedCyclesView'],
-      ["reports", 'PerformanceReports'],
+      ["reports", 'ReportsScreen'],
       ["journal", 'TradingJournal'],
       ["cash", 'CashBalanceView'],
       ["directory", 'TickerDirectoryView'],

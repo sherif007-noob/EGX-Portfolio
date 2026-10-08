@@ -129,3 +129,44 @@ describe('SimpleShell', () => {
     expect(html).toContain('Closed');
   });
 });
+
+describe('MetricsScreen', () => {
+  it('shows returns, risk, equity bridge, trading and cost sections with a small-sample warning', async () => {
+    const { MetricsScreen } = await import('./MetricsScreen');
+    const html = renderToStaticMarkup(
+      <MetricsScreen
+        stats={{
+          winRate: 50,
+          profitFactor: 2.54,
+          totalTrades: 2,
+          winningTrades: 1,
+          losingTrades: 1,
+          avgReturnPercent: 1.4,
+          avgHoldDays: 9,
+          bestTradePercent: 13.08,
+          worstTradePercent: -6.2,
+          totalRealizedGainEgp: 945,
+          totalRealizedLossEgp: 372,
+          totalBrokerageFeesPaid: 97,
+          sectorAllocation: [],
+          payoffRatio: 2.54,
+          expectancyEgp: 286.5,
+        }}
+        closedTrades={[]}
+        positions={positions}
+        metrics={metrics}
+        cashBalance={80555}
+        capitalDeposits={115000}
+        transactions={[]}
+        historicalPrices={{}}
+      />,
+    );
+
+    for (const label of ['TWR', 'MWR', 'Max drawdown', 'Equity bridge', 'Gross profit', 'Profit factor', 'Payoff ratio', 'Expectancy', 'Fees paid']) {
+      expect(html).toContain(label);
+    }
+    expect(html).toContain('1W / 1L');
+    expect(html).toContain('Only 2 closed trades');
+    expect(html).toContain('2.54');
+  });
+});

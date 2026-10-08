@@ -77,7 +77,7 @@ export function useAnalyticsSeries({
           ]),
         ];
         // Coarse candles are aggregated from healthy fine-grained source by the shared loader.
-        const selection = await loadTodayIntraday(tickers, sessionDate, granularity >= 15 ? granularity : 'AUTO');
+        const selection = await loadTodayIntraday(tickers, sessionDate, granularity);
         const prices: IntradayPriceSeries = selection?.series ?? {};
         const result = buildIntradayAnalyticsResult(transactions, historicalPrices, prices, {
           sessionDate: selection?.sessionDate ?? sessionDate,

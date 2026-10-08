@@ -34,9 +34,21 @@ export function SimpleHoldings({ positions, onSellPosition, onBuyMore, onEditPos
       <button type="button" className="ui-iconbtn" onClick={onOpenPriceAlerts} aria-label="Price alerts"><Bell size={18}/></button>
       <button type="button" className="ui-add-btn ui-holdings-add" onClick={onAddNewTrade}><Plus size={16}/> Add trade</button></div></header>
     <div className="ui-holdings-summary"><div><span className="ui-sm">Market value</span><strong className="ui-mono">{formatEgp(total)} EGP</strong></div><div><span className="ui-sm">Unrealized P&L</span><strong className={`ui-mono ${toneClass(pnl)}`}>{formatSigned(pnl)} EGP</strong></div></div>
-    <div className="ui-holdings-filters"><label className="ui-holdings-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a stock" aria-label="Search holdings"/></label>
-      <select aria-label="Sector" value={sector} onChange={e=>setSector(e.target.value)}><option value="ALL">All sectors</option>{sectors.map(s=><option key={s} value={s}>{s}</option>)}</select>
-      <select aria-label="Sort holdings" value={sort} onChange={e=>setSort(e.target.value)}><option value="value">By value</option><option value="pnl">By P&L</option><option value="ticker">By ticker</option></select></div>
+    <div className="ui-holdings-filters">
+      <label className="ui-holdings-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a stock" aria-label="Search holdings"/></label>
+      <div className="ui-filter-group">
+        <span className="ui-sm ui-filter-caption">Sector</span>
+        <div className="ui-pill-scroll" role="group" aria-label="Filter holdings by sector">
+          {['ALL', ...sectors].map(item => <button key={item} type="button" className="ui-filter-pill" aria-pressed={sector === item} onClick={() => setSector(item)}>{item === 'ALL' ? 'All sectors' : item}</button>)}
+        </div>
+      </div>
+      <div className="ui-filter-group">
+        <span className="ui-sm ui-filter-caption">Sort</span>
+        <div className="ui-pill-scroll" role="group" aria-label="Sort holdings">
+          {([{value:'value',label:'Value'},{value:'pnl',label:'P&L'},{value:'ticker',label:'Ticker'}] as const).map(item => <button key={item.value} type="button" className="ui-filter-pill" aria-pressed={sort === item.value} onClick={() => setSort(item.value)}>{item.label}</button>)}
+        </div>
+      </div>
+    </div>
     <div className="ui-holdings-list">{rows.length === 0 ? <p className="ui-sm ui-holdings-empty">No holdings match your filters.</p> : rows.map(({p,value,pnl,percent})=><article key={p.id} className="ui-holding">
       <button type="button" className="ui-holding-main" aria-expanded={expanded===p.id} onClick={()=>setExpanded(expanded===p.id?null:p.id)}>
         <StockLogo ticker={p.ticker} companyName={p.companyName} sector={p.sector} logoUrl={p.logoUrl} size="md"/>

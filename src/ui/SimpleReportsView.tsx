@@ -31,6 +31,20 @@ const MODES: Array<{value:MediumReportsMode,label:string}> = [
   {value:'monthly',label:'Monthly'},
 ];
 
+const MEDIUM_REPORT_MODE_STORAGE_KEY = 'medium-ui:reports:view';
+function readMediumReportMode(): MediumReportsMode {
+  const fallback = readPersistedReportsMode();
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const saved = window.localStorage.getItem(MEDIUM_REPORT_MODE_STORAGE_KEY);
+    return MODES.some(option => option.value === saved) ? saved as MediumReportsMode : fallback;
+  } catch { return fallback; }
+}
+function rememberMediumReportMode(next: MediumReportsMode) {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(MEDIUM_REPORT_MODE_STORAGE_KEY, next); } catch {}
+}
+
 function Metric({label,amount,sub}: {label:string;amount:number;sub?:string}) {
   return <div className="ui-report-metric">
     <span className="ui-sm">{label}</span>
@@ -50,7 +64,7 @@ function SectionTitle({title,detail}: {title:string;detail?:string}) {
 export function SimpleReportsView(props: Props) {
   const {stats,closedTrades,positions,metrics,cashBalance=0,capitalDeposits=0,transactions,
     historicalPrices,historicalLoading=false,chartsReady=true}=props;
-  const [mode,setMode]=useState<MediumReportsMode>(()=>readPersistedReportsMode());
+  const [mode,setMode]=useState<MediumReportsMode>(()=>readMediumReportMode());
   const [advanced,setAdvanced]=useState(false);
   const [allocationMode,setAllocationMode]=useState<'sector'|'stock'>('sector');
   const [includeCash,setIncludeCash]=useState(true);
@@ -65,7 +79,7 @@ export function SimpleReportsView(props: Props) {
   const months=useMemo(()=>buildSimpleMonths(closedTrades,positions),[closedTrades,positions]);
   const selectedMonths=month==='ALL'?months:months.filter(item=>item.key===month);
   const shownMonths=month==='ALL'&&!showAllMonths ? selectedMonths.slice(0,8):selectedMonths;
-  const changeMode=(next:MediumReportsMode)=>{setMode(next);if(next!=='risk')persistReportsMode(next);};
+  const changeMode=(next:MediumReportsMode)=>{setMode(next);rememberMediumReportMode(next);if(next!=='risk')persistReportsMode(next);};
   const winners=stats.winningTrades??closedTrades.filter(c=>c.outcome==='WIN').length;
   const losers=stats.losingTrades??closedTrades.filter(c=>c.outcome==='LOSS').length;
   const sortedClosed=useMemo(()=>[...closedTrades].sort(

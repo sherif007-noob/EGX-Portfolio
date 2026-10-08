@@ -312,3 +312,6 @@ Start with:
 3. [README.md](README.md) — complete authority/coverage map.
 
 Historical phase journals may contain contemporaneous words such as `ACTIVE`, `NEXT`, `deferred`, or old branch names. Those are historical evidence only unless the documentation map explicitly marks that file as a current authority.
+
+## Experimental branch notice — medium-ui Personal Risk (2026-10-08)
+The `medium-ui` branch contains a source-level **Stage 7.2 My Risk** view integrated with its simplified Reports UI. It reads canonical positions/closed trades and does not modify financial data. This is **not** a production `main` acceptance or a revision of the Stage 6 working sequence. GitHub-based compilation, Vitest, rendered phone checks and broker parity have not been validated for this branch. Detailed calculation definitions and uncovered-stop limitations are recorded in `docs/SIMPLE_UI.md`.

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import { ChevronRight } from 'lucide-react';
 import type { PerformanceStats, PortfolioMetrics, Position, TradeTransaction } from '../types';
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
@@ -55,6 +56,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onQuickAddCash,
 }) => {
   const today = Number(metrics.dayChangeEgp || 0);
+  const marketSession = egxSessionPresentation();
   const holdings = useMemo(
     () =>
       positions
@@ -74,7 +76,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {formatEgp(metrics.totalValue)} <span className="ui-sm">EGP</span>
           </div>
           <span
-            className={`ui-mono ${toneClass(today)}`}
+            className={`ui-mono ${marketSession.isCurrentSessionDay ? toneClass(today) : 'ui-muted'}`}
             style={{
               display: 'inline-block',
               marginTop: 6,
@@ -84,7 +86,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               background: 'rgba(148, 163, 184, 0.14)',
             }}
           >
-            {formatSigned(today)} today · {formatPercent(metrics.dayChangePercent)}
+            {marketSession.isCurrentSessionDay ? `${formatSigned(today)} today · ${formatPercent(metrics.dayChangePercent)}` : `${marketSession.description} · ${marketSession.sessionCaption}`}
           </span>
         </section>
 

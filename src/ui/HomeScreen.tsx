@@ -5,6 +5,7 @@ import type { PerformanceStats, PortfolioMetrics, Position, TradeTransaction } f
 import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { StockLogo } from '../components/StockLogo';
 import { HomeChart } from './HomeChart';
+import { NavReconciliation } from './NavReconciliation';
 import { formatEgp, formatPercent, formatSigned, sectorColorVar, toneClass } from './format';
 
 interface HomeScreenProps {
@@ -158,6 +159,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             ))
           )}
         </section>
+
+        <NavReconciliation metrics={metrics} positions={positions}/>
 
         <section className="ui-home-panel" aria-label="Cash and costs">
           <div className="ui-section-h">

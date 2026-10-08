@@ -11,6 +11,7 @@ type Props = {
   nav: number;
   pendingIpoValue?: number;
   onOpenHoldings?: () => void;
+  accountingBalanced?: boolean;
 };
 
 const money = (value: number) => `${formatEgp(value)} EGP`;
@@ -20,7 +21,7 @@ const statusLabels = {
   invalid:'Invalid stop/cost',unpriced:'No valid quote',
 } as const;
 
-export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pendingIpoValue=0,onOpenHoldings}: Props) {
+export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pendingIpoValue=0,onOpenHoldings,accountingBalanced=true}: Props) {
   const risk = useMemo(()=>calculatePersonalRisk(
     positions,cashBalance,nav,closedTrades,pendingIpoValue,
   ),[positions,cashBalance,nav,closedTrades,pendingIpoValue]);
@@ -29,7 +30,7 @@ export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pending
   return <section className="ui-personal-risk" aria-label="Personal portfolio risk">
     <header className="ui-report-section-title">
       <h3>Your risk right now</h3>
-      <p className="ui-sm">Current holdings and your recorded stops—not a model portfolio or an index.</p>
+      <p className="ui-sm">Last stored quotes and your recorded stops—not a model portfolio or an index. Quotes may be stale.</p>
     </header>
     <div className="ui-risk-kpis">
       <div className="ui-risk-kpi">
@@ -49,6 +50,10 @@ export function PersonalRiskView({positions,closedTrades,cashBalance,nav,pending
       </div>
     </div>
 
+    {!accountingBalanced && <div className="ui-report-warning" role="status">
+      <AlertCircle size={17}/><div><strong>Portfolio accounting does not reconcile</strong>
+      <p>Check the ledger reconciliation before relying on these risk percentages. This view does not adjust balances to hide discrepancies.</p></div>
+    </div>}
     {risk.unpricedCount > 0 && <div className="ui-report-warning" role="status">
       <AlertCircle size={17}/><div><strong>Incomplete price coverage</strong>
       <p>{risk.unpricedCount} position{risk.unpricedCount===1?' has':'s have'} no valid current quote. Concentration and stop percentages are based on priced positions and may understate exposure.</p></div>

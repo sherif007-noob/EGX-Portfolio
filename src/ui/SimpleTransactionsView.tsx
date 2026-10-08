@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ChevronDown, FilePenLine, ScanLine } from 'lucide-react';
 import type { ClosedTrade, Position, TradeTransaction } from '../types';
 import { StockLogo } from '../components/StockLogo';
+import { sortPerformanceTransactions } from '../services/portfolioPerformance';
 import { TradingJournal, type JournalLedgerFocus } from '../components/TradingJournal';
 import { formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { ActivityDetail, ActivityEmpty, ActivityHeader, ActivityPills, ActivitySearch, ActivityStat, formatActivityDate } from './SimpleActivityShared';
@@ -40,7 +41,10 @@ export function SimpleTransactionsView(props: Props) {
     return indexed;
   }, [closedTrades]);
   const sellOutcome = (tx: TradeTransaction) => cycleBySell.get(tx.id)?.outcome ?? tx.outcome;
-  const visible = useMemo(() => transactions.filter(tx => {
+  const visible = useMemo(() => {
+    const chronological = sortPerformanceTransactions(transactions);
+    const order = new Map(chronological.map((tx,i) => [tx.id,i]));
+    return chronological.filter(tx => {
     const q = search.trim().toLowerCase();
     if (ledgerFocus) {
       const ids = ledgerFocus.transactionIds;
@@ -58,12 +62,13 @@ export function SimpleTransactionsView(props: Props) {
       default: return true;
     }
   }).sort((a,b) => {
-    if (sort === 'ticker') return a.ticker.localeCompare(b.ticker) || a.id.localeCompare(b.id);
-    const tA = Date.parse(a.executedAt || a.date) || 0;
-    const tB = Date.parse(b.executedAt || b.date) || 0;
-    return (sort === 'newest' ? tB-tA : tA-tB) ||
-      String(a.tradeId ?? a.trade_id ?? a.id).localeCompare(String(b.tradeId ?? b.trade_id ?? b.id));
-  }), [transactions,search,filter,sort,ledgerFocus,openTickers,cycleBySell]);
+    if (sort === 'ticker') return a.ticker.localeCompare(b.ticker);
+    // Shared accounting chronology respects execution time, trade IDs,
+    // corporate actions and buy-before-sell tie rules.
+    const difference = (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0);
+    return sort === 'newest' ? -difference : difference;
+  });
+  }, [transactions,search,filter,sort,ledgerFocus,openTickers,cycleBySell]);
   const totals = useMemo(() => ({
     realized: closedTrades.reduce((sum,c) => sum + c.realizedPnlEgp, 0),
     fees: transactions.reduce((sum,t) => sum+(t.fees || 0),0),

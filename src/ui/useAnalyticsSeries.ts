@@ -45,6 +45,7 @@ export function useAnalyticsSeries({
 }: Args): AnalyticsSeries {
   const marketRefresh = useMarketRefresh();
   const [intradayResult, setIntradayResult] = useState<UnifiedAnalyticsResult | null>(null);
+  const [loadedKey, setLoadedKey] = useState('');
   const [intradayPrices, setIntradayPrices] = useState<IntradayPriceSeries>({});
   const [intradayLoading, setIntradayLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,8 @@ export function useAnalyticsSeries({
             ...PORTFOLIO_BENCHMARKS.map((benchmark) => benchmark.ticker),
           ]),
         ];
-        const selection = await loadTodayIntraday(tickers, sessionDate, granularity);
+        // Coarse candles are aggregated from healthy fine-grained source by the shared loader.
+        const selection = await loadTodayIntraday(tickers, sessionDate, granularity >= 15 ? granularity : 'AUTO');
         const prices: IntradayPriceSeries = selection?.series ?? {};
         const result = buildIntradayAnalyticsResult(transactions, historicalPrices, prices, {
           sessionDate: selection?.sessionDate ?? sessionDate,
@@ -87,10 +89,12 @@ export function useAnalyticsSeries({
         if (!cancelled) {
           setIntradayPrices(prices);
           setIntradayResult(result);
+          setLoadedKey(`${sessionDate}:${granularity}`);
         }
       } catch (caught) {
         if (!cancelled) {
           setIntradayResult(null);
+          setLoadedKey('');
           setIntradayPrices({});
           setError(caught instanceof Error ? caught.message : 'Intraday data unavailable.');
         }
@@ -106,7 +110,8 @@ export function useAnalyticsSeries({
   }, [timeframe, granularity, transactions, historicalPrices, openingCapital, currentCashBalance, positions, marketRefresh]);
 
   if (timeframe === 'TODAY') {
-    return { result: intradayResult, loading: intradayLoading && !intradayResult, error, intradayPrices };
+    const key = `${resolveAnalyticsWindow('TODAY').endDate}:${granularity}`;
+    return { result: loadedKey === key ? intradayResult : null, loading: intradayLoading || loadedKey !== key, error, intradayPrices: loadedKey === key ? intradayPrices : {} };
   }
   return { result: dailyResult, loading: false, error: null, intradayPrices: {} };
 }

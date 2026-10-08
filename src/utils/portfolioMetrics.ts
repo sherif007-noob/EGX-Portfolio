@@ -71,6 +71,9 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
   const startShares = new Map<string, number>();
   positions.forEach((position) => startShares.set(normalizeTickerKey(position.ticker), position.shares));
   let startCash = cashBalance;
+  // Submitted IPO cash is still a portfolio asset, not a trading return.
+  // Reconstruct its opening balance independently from available cash.
+  let startPendingIpoAsset = pendingIpoSubscriptionsEgp;
   let externalNetFlow = 0;
 
   const sessionTransactions = transactions.filter((tx) => String(tx.date || '').slice(0, 10) === sessionDate);
@@ -110,6 +113,7 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
         // Reverse the reservation from available cash. The pending IPO asset is
         // equal in value, so submission itself is return-neutral.
         startCash += ipoHeldAmount(ipo);
+        startPendingIpoAsset -= ipoHeldAmount(ipo);
       } else if (ipo?.status === 'ALLOCATED') {
         startCash += Number(tx.totalAmount || 0);
         startShares.set(ticker, (startShares.get(ticker) || 0) - Number(ipo.allocatedShares ?? tx.shares ?? 0));
@@ -140,7 +144,7 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
 
   let dayChangeEgp: number;
   if (sessionReconstructionComplete) {
-    const startEquity = startCash + startMarketValue;
+    const startEquity = startCash + startMarketValue + startPendingIpoAsset;
     dayChangeEgp = totalValue - startEquity - externalNetFlow;
   } else {
     // Conservative fallback for an unavailable previous close.

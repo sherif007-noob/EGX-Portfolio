@@ -112,7 +112,9 @@ export function SimpleTransactionsView(props: Props) {
         const isSell = tx.type === 'SELL' && !isCash;
         const isBuy = tx.type === 'BUY' && !isCash;
         const cycle = cycleBySell.get(tx.id);
-        const pnl = cycle ? cycle.realizedPnlEgp : tx.realizedPnlEgp;
+        // Do not attribute an entire multi-sell cycle's realized P&L to each execution.
+        const pnl = Number.isFinite(tx.realizedPnlEgp) ? tx.realizedPnlEgp :
+          cycle && (cycle.sellTransactionIds?.length ?? 0) === 1 ? cycle.realizedPnlEgp : undefined;
         const amount = tx.type === 'IPO_SUBSCRIPTION'
           ? tx.ipoSubscription?.requestedAmount ?? tx.totalAmount
           : isBuy || isSell ? (tx.totalAmount || tx.shares * tx.price) : null;

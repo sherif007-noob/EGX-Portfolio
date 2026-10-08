@@ -1708,6 +1708,9 @@ Do not reinterpret this as investment advice; it is contextual measurement.
 
 ## Pass 7.2 — Personal risk dashboard
 
+**Experimental `medium-ui` branch update (2026-10-08): IMPLEMENTED AT SOURCE LEVEL, NOT VALIDATED OR CLOSED ON `main`.**
+The read-only My Risk screen includes concentration, cash/IPO separation, stop coverage, quote-to-stop downside and entry-cost-at-stop risk, realized closed-trade P&L drawdown and unrealized underwater-position pressure. Uncovered/stale/invalid stops do not become guaranteed protection. See `docs/SIMPLE_UI.md` for calculations and limitations. Acceptance requires typecheck, tests, responsive rendering and broker reconciliation. Stage 6 sequencing and production status are unchanged.
+
 Useful personal risk metrics:
 
 - largest position;

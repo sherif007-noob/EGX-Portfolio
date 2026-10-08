@@ -440,6 +440,11 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
                     className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
                   />
                 </div>
+                <p className="sm:col-span-3 premium-type-helper">
+                  Expected final cost: {formatEgp(Math.max(0,Number(allocatedShares)||0)*Number(pendingSelection.ipoSubscription?.offerPrice||0)+Math.max(0,Number(allocationFees)||0))} EGP.
+                  Broker hold: {formatEgp(Number(pendingSelection.ipoSubscription?.reservedAmount??pendingSelection.ipoSubscription?.requestedAmount??0))} EGP.
+                  If the allocation exceeds the held amount, available cash must cover the difference.
+                </p>
                 <div className="sm:col-span-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                   <button type="button" onClick={cancelPending} disabled={isSaving} className="premium-action rounded-xl px-4 py-2 font-semibold text-rose-300 disabled:opacity-50">
                     Cancel &amp; Release Cash

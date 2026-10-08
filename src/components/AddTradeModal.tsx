@@ -461,6 +461,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
                 )}
               </div>
             </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Fee estimate only. Telda's same-day and grouped trade invoices can apply different stamp fees.
+              Reconcile the actual invoice fees before treating estimated execution costs as final.
+            </p>
           </div>
 
           {/* Targets & Stop Loss */}

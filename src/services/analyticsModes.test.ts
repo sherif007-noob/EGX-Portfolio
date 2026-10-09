@@ -20,6 +20,7 @@ const result: UnifiedAnalyticsResult = {
     {
       date: '2026-08-17',
       equity: 1000,
+      returnEgp: 0,
       cash: 100,
       marketValue: 900,
       netDeposits: 1000,
@@ -35,6 +36,7 @@ const result: UnifiedAnalyticsResult = {
     {
       date: '2026-09-17',
       equity: 1120,
+      returnEgp: 70,
       cash: 120,
       marketValue: 1000,
       netDeposits: 1050,
@@ -82,7 +84,7 @@ describe('analytics modes', () => {
 
   it('summarizes portfolio value and selected-period return without counting deposits as profit', () => {
     const summary = analyticsModeSummary(result, 'PORTFOLIO_RETURN');
-    expect(summary.primaryValue).toBe(1120);
+    expect(summary.primaryValue).toBe(70);
     expect(summary.changeEgp).toBe(70);
     expect(summary.changePercent).toBeCloseTo(6.8, 8);
   });

@@ -1,4 +1,5 @@
 import { calculateIpoOrderQuote } from './ipoOrderQuote';
+import { cairoOrderTimeToUtcIso } from './ipoSubscriptionEditing';
 import type {
   CanonicalCashFlowType,
   CashTransaction,
@@ -504,6 +505,56 @@ export function prepareIpoSubscriptionMutation(
     capitalDeposits: current.capitalDeposits,
     positionSeed: current.positions,
     value: transaction,
+  };
+}
+
+export interface IpoSubscriptionCorrectionInput {
+  transactionId: string;
+  subscriptionDate: string;
+  /** Optional real order placement clock (HH:MM) in Africa/Cairo. */
+  executionTimeCairo?: string;
+}
+
+/**
+ * Correct a saved pending subscription in place. This MUST NOT create a
+ * second reservation or replace a lifecycle event with BUY/SELL.
+ * The persistence executor recalculates cash/NAV and writes an audit event.
+ */
+export function prepareIpoSubscriptionCorrectionMutation(
+  current: Readonly<CanonicalLedgerSnapshot>,
+  input: IpoSubscriptionCorrectionInput,
+): LedgerMutationPreparation<TradeTransaction> {
+  const existing=current.transactions.find(tx=>tx.id===input.transactionId);
+  if(!existing || existing.type!=='IPO_SUBSCRIPTION' || !existing.ipoSubscription) {
+    throw new Error('The IPO subscription was not found. Reload and try again.');
+  }
+  if(existing.ipoSubscription.status!=='SUBMITTED'){
+    throw new Error('Only pending IPO subscriptions may have their order date corrected.');
+  }
+
+  const date=String(input.subscriptionDate??'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) ||
+    new Date(`${date}T00:00:00Z`).toISOString().slice(0,10)!==date) {
+    throw new Error('Enter a valid subscription date.');
+  }
+  const time=(input.executionTimeCairo??'').trim();
+  if(!time && existing.executedAt && date!==existing.date) {
+    throw new Error('Enter the actual Cairo placement time to correct this dated execution.');
+  }
+  const executedAt = time ? cairoOrderTimeToUtcIso(date,time)
+    : existing.executedAt;
+  if(existing.date===date && existing.ipoSubscription.subscriptionDate===date &&
+    (existing.executedAt??null)===(executedAt??null)) {
+    throw new Error('There are no IPO subscription changes to save.');
+  }
+  const metadata={...existing.ipoSubscription,subscriptionDate:date};
+  validateIpoSubscriptionMetadata(metadata);
+  const corrected:TradeTransaction={...existing,date,executedAt,ipoSubscription:metadata};
+  return {
+    transactions:current.transactions.map(tx=>tx.id===existing.id?corrected:tx),
+    capitalDeposits:current.capitalDeposits,
+    positionSeed:current.positions,
+    value:corrected,
   };
 }
 

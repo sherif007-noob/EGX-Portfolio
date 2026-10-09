@@ -145,3 +145,6 @@ Tests include a synthetic same-day buy/sell/rebuy where `shares × quote change`
 - The form derives **Total order value** and then **Cash held by broker** from the adjustable hold percentage. The compact summary displays requested shares, full order, broker hold, and buying power after hold, with NAV unchanged by reservation.
 - Canonical persistence receives the exact entered shares and checks monetary consistency. Older amount-based integrations retain compatibility. Tests cover integer validation, monetary rounding, 25%-hold calculation, and rejection of inconsistent amounts.
 - Changes are source-level on the experimental `medium-ui` branch. Full build, Vitest execution and device acceptance have not yet been run.
+
+## IPO pending date correction (medium-ui, 2026-10-09)
+The IPO modal now includes **Edit subscription** on a selected pending order. The user can change an accidentally entered date, optionally set the exact broker time in Cairo, provide an audit reason and save it. The original IPO record and reserved cash remain intact; no duplicate hold or phantom return. If backdating onto a cash-deposit day, the actual order placement time becomes required to preserve financial chronology. Editing after allocation/cancellation is blocked. Source tests exist; no production data was edited, and live validation is pending.

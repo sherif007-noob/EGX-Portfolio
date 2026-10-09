@@ -10,6 +10,7 @@ export interface EgxSessionPresentation {
   isHoliday: boolean;
   description: string;
   sessionCaption: string;
+  lastSessionCaption: string;
 }
 
 /** Read-only presentation. Never infer a holiday from missing price ingestion. */
@@ -36,5 +37,6 @@ export function egxSessionPresentation(now = new Date()): EgxSessionPresentation
     calendarDate,sessionDate,isCurrentSessionDay,isRegularTradingHours,
     isHoliday:!!holiday,description,
     sessionCaption:isCurrentSessionDay?'Today':`Last session · ${formatted}`,
+    lastSessionCaption:`Last session · ${formatted}`,
   };
 }

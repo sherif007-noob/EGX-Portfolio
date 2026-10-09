@@ -36,13 +36,12 @@ export function chartCapitalEvents(
 
 export interface ReturnTooltipMetrics {
   /** Profit after neutralizing flows, from start of visible chart range. */
-  cumulativeReturn: number;
+  cumulativeReturn: number|null;
   /** Profit between the current and previous plotted, complete observation. */
   intervalReturn: number|null;
   /** Compounded subperiod percentage from the canonical TWR series. */
   intervalPercent: number|null;
   nav: number;
-  deposits: number;
   /** The observation is a baseline, not a false 0-EGP daily return. */
   hasPrevious: boolean;
 }
@@ -57,7 +56,7 @@ export function chartReturnTooltipMetrics(
 ): ReturnTooltipMetrics {
   const currentProfit=Number(current.returnEgp);
   const priorProfit=Number(previous?.returnEgp);
-  const cumulativeReturn=Number.isFinite(currentProfit)?currentProfit:0;
+  const cumulativeReturn=Number.isFinite(currentProfit)?currentProfit:null;
   const hasPrevious=!!previous && Number.isFinite(previous.equity);
   const intervalReturn = !hasPrevious ? null
     : Number.isFinite(currentProfit)&&Number.isFinite(priorProfit)
@@ -71,7 +70,6 @@ export function chartReturnTooltipMetrics(
   return {
     cumulativeReturn,intervalReturn,intervalPercent,
     nav:current.equity,
-    deposits:0,
     hasPrevious,
   };
 }

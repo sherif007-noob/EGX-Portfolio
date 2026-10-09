@@ -107,6 +107,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
 
   const points = result?.points ?? [];
   const capitalEvents = useMemo(() => chartCapitalEvents(transactions), [transactions]);
+  const untimedCapitalFlows = useMemo(() => transactions.filter(tx=>{
+    if(tx.ticker.trim().toUpperCase() !== 'CASH' || !!tx.executedAt) return false;
+    const kind=tx.cashFlowType;
+    if(kind !== 'DEPOSIT' && kind !== 'WITHDRAWAL' &&
+      !(kind == null && (tx.type === 'BUY' || tx.type === 'SELL'))) return false;
+    const date=String(tx.date).slice(0,10);
+    return date >= (result?.window.startDate ?? '') && date <= (result?.window.endDate ?? '');
+  }).length,[transactions,result?.window.startDate,result?.window.endDate]);
 
   const model = useMemo(() => {
     const rows: Array<Record<string, number | string>> = [];
@@ -348,7 +356,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
           {mode==='twr'
             ? 'TWR (solid green) removes the effect of contribution timing. MWR (dashed blue) weights when your money was invested.'
             : 'MWR (solid blue) reflects contribution timing. TWR (dashed green) measures the portfolio independent of that timing.'}
-          {' '}They can coincide when cash movements occur at the period boundary; date-only deposits cannot establish an exact intraday weighting.
+          {' '}They can coincide when cash movements occur at the period boundary.
+          {untimedCapitalFlows>0 && ` ${untimedCapitalFlows} deposit/withdrawal record(s) in this range have no execution time, so money-weighting uses date-only timing and may not match your broker exactly.`}
         </p>
       )}
       {mode==='dep' && (

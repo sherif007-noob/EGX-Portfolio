@@ -60,9 +60,10 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
   const title=action==='delete'? `Delete ${isCash?'cash':isIpo?'IPO':'trade'} record?`
     :action==='allocate'?`Record ${record.ticker} allocation`
     :isCash?'Edit cash entry':isIpo?`Edit ${record.ticker} subscription`:`Edit ${record.ticker} ${record.type.toLowerCase()}`;
-  const input=(label:string,value:string,set:(value:string)=>void,type='text',opts?:{step?:string;min?:string})=>
+  const input=(label:string,value:string,set:(value:string)=>void,type='text',opts?:{step?:string;min?:string;required?:boolean})=>
     <label className="ui-activity-action-field">{label}<input type={type} value={value}
-      min={opts?.min} step={opts?.step} onChange={e=>set(e.target.value)} required/></label>;
+      min={opts?.min} step={opts?.step} onChange={e=>set(e.target.value)}
+      required={opts?.required ?? (type !== 'text' && type !== 'time')}/></label>;
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
     if(busy)return;
@@ -136,7 +137,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           {input('Execution price / share (EGP)',price,setPrice,'number',{min:'0.000001',step:'any'})}
           {input('Fees (EGP)',fees,setFees,'number',{min:'0',step:'.01'})}
           {input('Trade date',date,setDate,'date')}
-          {input('Notes',notes,setNotes)}
+          {input('Notes (optional)',notes,setNotes)}
         </>}
         {action==='edit'&&isCash&&<>
           <label className="ui-activity-action-field">Cash event type<select value={cashKind}
@@ -153,8 +154,8 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           {input('Offer price per share (EGP)',price,setPrice,'number',{min:'0.000001',step:'any'})}
           {input('Cash held by broker (EGP)',held,setHeld,'number',{min:'.01',step:'.01'})}
           {input('Actual subscription date',date,setDate,'date')}
-          {input(`Order time Cairo ${fundedSameDay?'(required)':'(optional)'}`,clock,setClock,'time')}
-          {input('Broker reference',reference,setReference)}
+          {input(`Order time Cairo ${fundedSameDay?'(required)':'(optional)'}`,clock,setClock,'time',{required:fundedSameDay})}
+          {input('Broker reference (optional)',reference,setReference)}
           {input('Notes',notes,setNotes)}
         </>}
         <label className="ui-activity-action-field">Audit reason<input required value={reason}

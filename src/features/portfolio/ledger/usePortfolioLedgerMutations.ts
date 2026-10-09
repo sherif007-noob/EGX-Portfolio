@@ -15,6 +15,7 @@ import {
   prepareIpoAllocationMutation,
   prepareIpoCancellationMutation,
   prepareIpoSubscriptionMutation,
+  prepareIpoSubscriptionCorrectionMutation,
   prepareLedgerReconciliationMutation,
   prepareLedgerSnapshotRestoreMutation,
   preparePortfolioRestoreMutation,
@@ -25,6 +26,7 @@ import {
   type CanonicalLedgerSnapshot,
   type IpoAllocationInput,
   type IpoSubscriptionInput,
+  type IpoSubscriptionCorrectionInput,
   type LedgerMutationPreparation,
   type PortfolioRestoreInput,
 } from '../../../domain/accounting';
@@ -165,6 +167,20 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
       ...input,
     }),
   ), [executePreparedMutation]);
+
+  const correctIpoSubscription = useCallback((
+    input: IpoSubscriptionCorrectionInput,
+    auditReason: string,
+  ) => {
+    if (!auditReason?.trim()) {
+      return Promise.resolve({ ok:false as const, error:new Error('An audit reason is required for IPO corrections.'), kind:'IPO_SUBSCRIPTION_CORRECT', persisted:false as const, stage:'prepare' as const, code:'PREPARE_FAILED' as const });
+    }
+    return executePreparedMutation<TradeTransaction>(
+      'IPO_SUBSCRIPTION_CORRECT',
+      (current)=>prepareIpoSubscriptionCorrectionMutation(current,input),
+      auditReason.trim(),
+    );
+  }, [executePreparedMutation]);
 
   const allocateIpoSubscription = useCallback((
     input: IpoAllocationInput,
@@ -311,6 +327,7 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     sellPosition,
     addBonusShares,
     addIpoSubscription,
+    correctIpoSubscription,
     allocateIpoSubscription,
     cancelIpoSubscription,
     editTransaction,

@@ -49,7 +49,18 @@ export function resolvedHistoricalPriceBasisBridges(
       && tx.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '') === transition.ticker
       && tx.date === transition.ledgerShareCreditDate,
     );
-    if (matches.length === 0) continue;
+    if (matches.length === 0) {
+      // A verified mixed-basis vendor break without its corresponding ledger
+      // entitlement cannot be treated as an ordinary investment loss.
+      const existedBeforeTransition = transactions.some(tx =>
+        tx.ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '') === transition.ticker
+        && (tx.type === 'BUY' || tx.type === 'OPENING_POSITION')
+        && tx.date < transition.vendorAdjustedFrom);
+      if (existedBeforeTransition) {
+        unverified.push({ ticker:transition.ticker, startDate:transition.vendorAdjustedFrom });
+      }
+      continue;
+    }
     if (matches.length !== 1) { unverified.push({ ticker:transition.ticker, startDate:transition.vendorAdjustedFrom }); continue; }
     const bonus = matches[0];
     const sourceShares = Number(bonus.corporateActionSourceShares);

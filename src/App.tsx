@@ -231,7 +231,6 @@ export default function App() {
     handleAddIpoSubscription,
     handleCorrectIpoSubscription,
     handleAllocateIpoSubscription,
-    handleCancelIpoSubscription,
     handleSavePositionEdit,
     handleDeleteTransaction,
     handleEditTransaction,

@@ -515,10 +515,12 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
     const startingNetDeposits = finiteNumber(firstPoint?.netDeposits) ?? 0;
     const periodExternalFlow =
       netDeposits == null ? 0 : netDeposits - startingNetDeposits;
-    const periodPnl =
-      equity != null && startingEquity != null
+    const periodPnl = finiteNumber(point.returnEgp) ??
+      (equity != null && startingEquity != null
         ? equity - startingEquity - periodExternalFlow
-        : null;
+        : null);
+    // NAV minus investor contributions is not necessarily realized profit:
+    // recon adjustments and other non-return accounting changes also appear.
     const accumulatedProfit =
       equity != null && netDeposits != null
         ? equity - netDeposits
@@ -639,7 +641,7 @@ const PerformanceTimeframeChartComponent: React.FC<PerformanceTimeframeChartProp
                 valueClassName="text-purple-300"
               />
               <TooltipMetric
-                label="Profit over deposits"
+                label="NAV less deposits (before adjustments)"
                 value={accumulatedProfit == null ? '—' : formatAnalyticsEgp(accumulatedProfit, true)}
                 valueClassName={signedToneClass(accumulatedProfit)}
               />

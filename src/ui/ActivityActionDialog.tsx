@@ -45,7 +45,11 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
   const [cashAmount,setCashAmount]=useState(String(
     normalizeCashFlowType(record.cashFlowType)==='RECONCILIATION_ADJUSTMENT'
       ? record.cashFlowAmount??record.totalAmount : Math.abs(record.cashFlowAmount??record.totalAmount)));
-  const [held,setHeld]=useState(String(ipo?.reservedAmount??ipo?.requestedAmount??0));
+  const initialHeld=ipo?.reservedAmount??ipo?.requestedAmount??0;
+  const initialHoldPercent=ipo && ipo.requestedAmount>0
+    ? String(Number((initialHeld/ipo.requestedAmount*100).toFixed(6)))
+    : '100';
+  const [holdPercent,setHoldPercent]=useState(initialHoldPercent);
   const [reference,setReference]=useState(ipo?.reference??'');
   const [notes,setNotes]=useState(record.notes??'');
   const [allocationShares,setAllocationShares]=useState('');
@@ -102,8 +106,10 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           notes:notes.trim()||undefined};
         run=()=>onSaveCash(modified,reason.trim());
       } else if(isIpo && isPending && ipo){
-        const quote=calculateIpoOrderQuote(Number(shares),Number(price),100);
-        const reserve=Number(held);
+        const quote=calculateIpoOrderQuote(Number(shares),Number(price),Number(holdPercent));
+        const originalTerms=Number(shares)===ipo.requestedShares && Number(price)===ipo.offerPrice &&
+          holdPercent===initialHoldPercent;
+        const reserve=originalTerms ? initialHeld : quote.reservedAmount;
         if(!Number.isFinite(reserve)||reserve<=0||reserve>quote.requestedAmount+0.01)throw new Error('Held cash must be positive and cannot exceed the full order.');
         if(!date)throw new Error('Select the subscription date.');
         if(fundedSameDay&&!clock)throw new Error('Enter the actual broker order time for the funding date.');
@@ -152,7 +158,20 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           <p className="ui-sm">Edit the existing pending broker order. No new order or hold will be created.</p>
           {input('Requested shares',shares,setShares,'number',{min:'1',step:'1'})}
           {input('Offer price per share (EGP)',price,setPrice,'number',{min:'0.000001',step:'any'})}
-          {input('Cash held by broker (EGP)',held,setHeld,'number',{min:'.01',step:'.01'})}
+          {input('Broker cash hold (%)',holdPercent,setHoldPercent,'number',{min:'0.000001',step:'any'})}
+          <div className="ui-ipo-create-summary" aria-live="polite">
+            <span>Order value <strong>{(()=>{
+              try{return `${formatEgp(calculateIpoOrderQuote(Number(shares),Number(price),Number(holdPercent)).requestedAmount)} EGP`;}
+              catch{return '—';}
+            })()}</strong></span>
+            <span>Broker cash held <strong>{(()=>{
+              try{
+                const quote=calculateIpoOrderQuote(Number(shares),Number(price),Number(holdPercent));
+                const originalTerms=Number(shares)===ipo.requestedShares && Number(price)===ipo.offerPrice && holdPercent===initialHoldPercent;
+                return `${formatEgp(originalTerms ? initialHeld : quote.reservedAmount)} EGP`;
+              }catch{return '—';}
+            })()}</strong></span>
+          </div>
           {input('Actual subscription date',date,setDate,'date')}
           {input(`Order time Cairo ${fundedSameDay?'(required)':'(optional)'}`,clock,setClock,'time',{required:fundedSameDay})}
           {input('Broker reference (optional)',reference,setReference)}

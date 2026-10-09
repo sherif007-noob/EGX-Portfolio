@@ -232,6 +232,16 @@ A deposit therefore changes portfolio size but does not count as investment perf
 
 The daily version is an end-of-day approximation. The Today path already uses execution timestamps plus trustworthy intraday valuations for same-session precision.
 
+### Does TWR agree with the deposit-neutral Return chart?
+
+They agree that an external deposit is **not profit**, but they do **not** generally have the same number or normalized curve after a mid-period deposit. Return is EGP earned/lost on the actual capital invested; TWR compounds subperiod percentages independently of the amount contributed.
+
+For example, 1,000 EGP grows to 1,100 (+10%), then a 1,000 EGP deposit raises NAV to 2,100 with no investment gain. A subsequent +10% takes NAV to 2,310. Deposit-neutral Return is **310 EGP** (100 + 210); TWR is **21%** (1.10 × 1.10 − 1). Dividing 310 by the original 1,000 gives 31%, which is not TWR. With no intervening external flows and the same valuation baseline, EGP profit divided by starting capital can match TWR instead.
+
+MWR is a separate cash-flow-timed percentage and can differ from TWR; boundary cash flows can also make them coincide. Date-only cash records limit timing precision. The latest-session hero/tooltip percentage is a third, explicitly broker-style convention, not a TWR alias. Missing percentage inputs are flagged through `dayChangeReliable`, even though its legacy numeric companion retains a compatibility fallback.
+
+The audit changes labels, typing, presentation and tests only. Passing synthetic tests does not establish exact Telda parity or validate all historical corporate-action price adjustments.
+
 ## Net deposits
 
 `netDeposits` is cumulative investor capital:
@@ -247,9 +257,9 @@ It is cumulative from portfolio inception rather than reset to zero for each sel
 The unified engine exposes two related quantities:
 
 - **performance drawdown %**: decline in the external-flow-neutral TWR performance index from its prior peak;
-- **equity drawdown EGP**: raw decline in portfolio equity from its prior nominal equity peak.
+- **profit drawdown EGP**: decline in cumulative external-flow-neutral EGP profit from its prior peak (legacy field name `maxEquityDrawdownEgp`).
 
-Performance drawdown is preferred for comparing investment performance because deposits cannot erase a loss simply by increasing account size. The legacy report KPI now uses this same TWR-based percentage. When an EGP drawdown figure is shown beside it, that EGP value is explicitly the nominal equity peak-to-trough gap rather than a second percentage-equivalent calculation.
+Performance drawdown is preferred for comparing investment performance because deposits cannot erase a loss simply by increasing account size. The legacy report KPI now uses this same TWR-based percentage. The EGP figure beside it is deposit-neutral profit drawdown, not a nominal NAV gap and not a conversion of the TWR percentage. A profit peak of +200 EGP followed by +80 EGP therefore has a 120 EGP drawdown.
 
 ## Data quality
 
@@ -345,17 +355,11 @@ The ingestion workflow is also triggered when its own workflow/script changes ar
 
 The primary analytics card supports five modes that all reuse the same selected timeframe and the same unified/intraday valuation result.
 
-### Portfolio vs Return
+### Return (EGP)
 
-Primary series:
+The primary series is selected-period investment profit after neutralizing deposits, withdrawals and return-neutral accounting corrections. It consumes the engine's `returnEgp`; the medium UI retains a cash-flow-neutral fallback for compatible older points. It is not portfolio NAV.
 
-```text
-portfolio equity / NAV
-```
-
-The headline is ending portfolio value. The companion values are selected-period portfolio P&L in EGP and the flow-aware selected-period MWR percentage.
-
-The percentage is intentionally not calculated as simple `P&L / starting equity` because deposits and withdrawals inside the selected period would distort that result.
+The medium UI optionally overlays NAV on a separately labelled right-hand EGP axis. Deposits can move that NAV line without becoming profit. The Return tooltip's interval percentage follows the existing hero convention: interval gain / (ending NAV − interval gain). This percentage is not TWR; missing reference capital must be presented as unavailable.
 
 ### Portfolio vs Net Deposits
 

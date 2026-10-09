@@ -1,4 +1,22 @@
 /**
+ * Strict financial form date parser: ISO YYYY-MM-DD or Egyptian DD/MM/YYYY.
+ * Unlike the legacy display utility, this never substitutes today's date for
+ * an invalid value. Calendar rollover (such as 31 February) is rejected.
+ */
+export function parseUserCalendarDate(value: string): string | null {
+  const text=String(value ?? '').trim();
+  const iso=text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const egyptian=text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(!iso && !egyptian)return null;
+  const year=Number(iso?.[1] ?? egyptian?.[3]);
+  const month=Number(iso?.[2] ?? egyptian?.[2]);
+  const day=Number(iso?.[3] ?? egyptian?.[1]);
+  if(year<1900 || year>2100 || month<1 || month>12 || day<1 || day>31)return null;
+  const normalized=`${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  return new Date(Date.UTC(year,month-1,day)).toISOString().slice(0,10)===normalized ? normalized : null;
+}
+
+/**
  * Date formatting and parsing utilities for EGX Portfolio tracker.
  * Egyptian Stock Exchange (EGX) and Egyptian brokers use Day/Month/Year (DD/MM/YYYY).
  */

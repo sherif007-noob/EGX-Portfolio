@@ -181,3 +181,19 @@ The compact Home/Reports `HomeChart` modes now have distinct financial purposes:
 `src/ui/homeChartPresentation.ts` owns pure cash-event aggregation and return-tooltip math. No private brokerage values are published in fixtures: regression cases are synthetic (multiple deposits on one day, withdrawal, noncapital cash events, IPO reservation, flow-neutral previous-session return). `HomeChart` uses a Recharts `ComposedChart` for NAV components and a separately accessible tooltip for Return, NAV, and deposits; small-screen tooltip styles remain compact.
 
 This is **source-level** on experimental `medium-ui`. Not yet verified with Vitest, TypeScript, Cloudflare build/deploy or mobile touch behavior. It does not change Supabase data, returns engine inputs, user transactions, fees or corporate actions.
+
+## Reports Overview portfolio composition — current design (2026-10-10)
+
+The experimental `medium-ui` chart selector no longer includes **NAV breakdown**. The historical stacked holdings/cash/IPO value chart was removed because ordinary buying and selling made the areas look like gains/losses, and it duplicated the **vs Deposits** NAV line without clearly measuring performance.
+
+**Reports → Overview** now hosts one compact, current **Portfolio composition** snapshot:
+- Holdings value (reconciled current positions at market marks)
+- IPO reserved cash (the **actual pending broker hold**, never the full unallocated order)
+- Available cash
+- Total NAV
+
+A small proportional bar and three labeled financial rows show where money currently sits. The snapshot uses existing live portfolio metrics and canonical IPO metadata, **not archived history and not hard-coded portfolio amounts**. The bar is omitted and a reconciliation warning appears when current components and reported NAV differ or negative account components would make proportions misleading. No balancing transaction is invented.
+
+**Charts** retain Return (flow-neutral performance), vs Deposits (NAV vs net contributed capital with marked deposits), Benchmarks, TWR and MWR. The vs Deposits selector is visible by default. Return's expanded tooltip is unchanged. The removed breakdown was available in both Home and Reports because they share `HomeChart`, so neither retains it.
+
+Files: `src/ui/PortfolioCompositionSnapshot.tsx`, `src/ui/portfolioCompositionModel.ts`, `src/ui/SimpleReportsView.tsx`, `src/ui/HomeChart.tsx`, `src/ui/ui.css`. Synthetic calculation, render and source-regression tests accompany the change. Source committed to `medium-ui`, with no backend writes. TypeScript/Vitest/build/phone acceptance and Cloudflare deployment remain unverified.

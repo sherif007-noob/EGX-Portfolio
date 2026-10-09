@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'lucide-react';
-import { formatDateDDMMYYYY, dmyToIso, formatDateVerbose } from '../utils/dateUtils';
+import { formatDateDDMMYYYY, dmyToIso, formatDateVerbose, parseUserCalendarDate } from '../utils/dateUtils';
 import { PREMIUM_PRIMITIVE_CLASS } from './VisualPrimitives';
 
 interface DateInputProps {
@@ -11,6 +11,8 @@ interface DateInputProps {
   required?: boolean;
   className?: string;
   showVerbosePreview?: boolean;
+  /** On finance forms, invalid/unfinished typing invalidates the selected date. */
+  strictInput?: boolean;
 }
 
 export const DateInput: React.FC<DateInputProps> = ({
@@ -21,9 +23,10 @@ export const DateInput: React.FC<DateInputProps> = ({
   required = false,
   className = '',
   showVerbosePreview = true,
+  strictInput = false,
 }) => {
   // We keep a display text formatted as DD/MM/YYYY
-  const [displayText, setDisplayText] = useState<string>(() => formatDateDDMMYYYY(value));
+  const [displayText, setDisplayText] = useState<string>(() => value ? formatDateDDMMYYYY(value) : '');
   const hiddenDateInputRef = useRef<HTMLInputElement>(null);
 
   // Sync internal display when external value changes
@@ -46,6 +49,10 @@ export const DateInput: React.FC<DateInputProps> = ({
     }
 
     setDisplayText(raw);
+    if (strictInput) {
+      onChange(parseUserCalendarDate(raw) ?? '');
+      return;
+    }
 
     // If matches complete DD/MM/YYYY or D/M/YYYY
     const dmyMatch = raw.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
@@ -62,7 +69,12 @@ export const DateInput: React.FC<DateInputProps> = ({
   };
 
   const handleBlur = () => {
-    // On blur, format nicely or convert
+    if (strictInput) {
+      const iso=parseUserCalendarDate(displayText);
+      onChange(iso ?? '');
+      if (iso) setDisplayText(formatDateDDMMYYYY(iso));
+      return;
+    }
     if (!displayText.trim()) return;
     const iso = dmyToIso(displayText);
     onChange(iso);

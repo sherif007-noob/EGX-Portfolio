@@ -2,6 +2,7 @@ import { ClosedTrade, Position, TradeTransaction } from '../types';
 import { ACCOUNTING_EPSILON, calculatePortfolioValue, calculatePositionUnrealizedPnl } from './portfolioAccounting';
 import { cashFlowPerformancePnl, cashFlowReturnNeutralPortfolioFlow, cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
+import { resolvedHistoricalPriceBasisBridges, historicalPriceOnEconomicShareBasis } from './historicalPriceBasis';
 import {
   isIpoSubscriptionTransaction,
   pendingIpoSubscriptionValue,
@@ -207,6 +208,7 @@ export function buildHistoricalEquityCurve(
   const ipoSubscriptions = txs.filter(isIpoSubscriptionTransaction);
   const ipoSubmitted = new Set<string>();
   const ipoSettled = new Set<string>();
+  const priceBasis = resolvedHistoricalPriceBasisBridges(txs, historicalPrices);
 
   for (const date of [...dates].sort()) {
     for (const tx of ipoSubscriptions) {
@@ -283,7 +285,13 @@ export function buildHistoricalEquityCurve(
       if (shares <= ACCOUNTING_EPSILON) continue;
       const close = closeAtOrBefore(historicalPrices[ticker], date);
       if (close === undefined) { missingTickers.push(ticker); continue; }
-      marketValue += shares * close;
+      // A failed vendor/corporate-action basis check makes the valuation
+      // unverified rather than silently reporting a phantom gain or loss.
+      if (priceBasis.unverified.includes(ticker) && date >= '2026-09-30') {
+        missingTickers.push(`${ticker} (price adjustment unverified)`);
+        continue;
+      }
+      marketValue += shares * historicalPriceOnEconomicShareBasis(ticker, date, close, priceBasis.bridges);
     }
     const complete = missingTickers.length === 0;
     const equity = cash + marketValue + pendingIpoValue;

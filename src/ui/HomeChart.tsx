@@ -212,7 +212,13 @@ export const HomeChart: React.FC<HomeChartProps> = ({
     if(mode==='ret'){
       // Use canonical point P&L and its previous observation. Do not derive
       // an unrelated "daily profit" from raw NAV that includes deposits.
-      const numbers=chartReturnTooltipMetrics(point,previous);
+      const numbers=chartReturnTooltipMetrics(
+        {...point,returnEgp:finite(row.ret) ? row.ret : point.returnEgp},
+        previous ? {
+          ...previous,
+          returnEgp:finite(model.rows[index-1]?.ret) ? Number(model.rows[index-1].ret) : previous.returnEgp,
+        } : undefined,
+      );
       return <div className="ui-chart-detail-tooltip">
         <strong>Return · {displayDate}</strong>
         <div className="ui-chart-tooltip-rows">
@@ -371,16 +377,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                   labelFormatter={(label) => labelTime(Number(label), timeframe === 'TODAY')}
                   formatter={(value, name) => [formatValue(Number(value)), String(name)]}
                 />
-                {(mode==='val'||mode==='dep')&&visibleCapitalEvents.map(event=>(
-                  <ReferenceDot key={event.date}
-                    x={event.timestamp} y={event.equity} r={4}
-                    fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}
-                    stroke="var(--ui-surface-2)" strokeWidth={2}
-                    label={{value:event.netFlow>=0
-                      ?`+${formatCompact(event.netFlow)} cash`
-                      :`${formatCompact(event.netFlow)} cash`,
-                      position:'top',fontSize:10,fill:'var(--ui-text)'}}/>
-                ))}
+
                 {model.series.map((item) =>
                   item.area ? (
                     <Area
@@ -410,6 +407,16 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                     />
                   ),
                 )}
+                                {(mode==='val'||mode==='dep')&&visibleCapitalEvents.map(event=>(
+                  <ReferenceDot key={event.date}
+                    x={event.timestamp} y={event.equity} r={4}
+                    fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}
+                    stroke="var(--ui-surface-2)" strokeWidth={2}
+                    label={{value:event.netFlow>=0
+                      ?`+${formatCompact(event.netFlow)} cash`
+                      :`${formatCompact(event.netFlow)} cash`,
+                      position:'top',fontSize:10,fill:'var(--ui-text)'}}/>
+                ))}
               </ChartRoot>
             </ResponsiveContainer>
           </div>

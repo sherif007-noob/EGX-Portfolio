@@ -20,7 +20,7 @@ describe('Return comparison without an extra chart mode',()=>{
     expect(home).toContain("mode === 'twr' || mode === 'mwr'");
     expect(home).toContain("MWR − TWR");
     expect(home).toContain('ComposedChart');
-    expect(home).toContain('date-only deposits cannot establish an exact intraday weighting');
+    expect(home).toContain('money-weighting uses date-only timing');
   });
   it('keeps latest session gain in the hero even when the regular market is closed',()=>{
     expect(hero).toContain('marketSession.isRegularTradingHours');

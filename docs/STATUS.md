@@ -342,3 +342,6 @@ The IPO order form now takes share quantity and offer price per share as primary
 
 ## Experimental medium-ui IPO UX and date correction (2026-10-09)
 Fixed a double-escaped date/time regex that rejected valid DD/MM/YYYY edits; added strict input handling so incomplete/invalid calendar dates cannot silently save stale values. Replaced combined new-subscription, existing-order edit, allocation and cancellation presentation with a pending-order overview and independent per-action screens. In-progress input no longer resets during passive transaction updates. Canonical audited ledger mutations remain the authority; production financial data unchanged. Automated tests/build/phone acceptance pending.
+
+## medium-ui — Activity inline actions and one-purpose IPO creation (2026-10-09)
+Activity now exposes specific per-record actions: security executions (Edit/Delete/Buy more/Sell if open), cash ledger events (Edit/Delete) and pending IPO subscriptions (Allocation/Edit/Delete). Each opens a single focused modal directly from the record. The previous IPO manager entry process has been superseded: Add → IPO subscription only creates a new order. Financial mutations remain audited and reconciled; lifecycle deletion restrictions are enforced inside the canonical mutation. No production data modified and CI/build/phone checks not yet run.

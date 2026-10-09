@@ -38,7 +38,7 @@ describe('Home NAV breakdown and financial event presentation',()=>{
     expect(metric.nav).toBe(130200);
     expect(metric.cumulativeReturn).toBe(200);
     expect(metric.intervalReturn).toBe(200);
-    expect(metric.intervalPercent).toBeCloseTo(200/70000*100,8);
+    expect(metric.intervalPercent).toBeCloseTo(200/(130200-200)*100,8);
   });
   it('shows a baseline as no previous-session P&L',()=>{
     const metric=chartReturnTooltipMetrics({
@@ -49,12 +49,12 @@ describe('Home NAV breakdown and financial event presentation',()=>{
     expect(metric.intervalPercent).toBeNull();
     expect(metric.hasPrevious).toBe(false);
   });
-  it('keeps missing compounded return unverified instead of displaying a fabricated percent',()=>{
+  it('calculates the broker-style percentage from gain and NAV even without a TWR point',()=>{
     const next=chartReturnTooltipMetrics(
       {date:'2026-10-07',equity:131000,externalFlow:60000,twrPercent:null,returnEgp:1000},
       {date:'2026-10-06',equity:70000,externalFlow:0,twrPercent:0,returnEgp:0},
     );
     expect(next.intervalReturn).toBe(1000);
-    expect(next.intervalPercent).toBeNull();
+    expect(next.intervalPercent).toBeCloseTo(1000/(131000-1000)*100,8);
   });
 });

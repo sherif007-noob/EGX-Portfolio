@@ -26,6 +26,8 @@ export interface UnifiedAnalyticsPoint {
   performanceIndex: number | null;
   drawdownPercent: number | null;
   equityDrawdownEgp: number;
+  /** Cumulative NAV delta less all external capital/return-neutral adjustments. */
+  returnEgp?: number;
   complete: boolean;
 }
 
@@ -255,7 +257,7 @@ function buildPoints(
     ? (anchor.equity - firstPointExternalFlow) / initialBaseline
     : 1;
   let performancePeak = Math.max(100, 100 * twrFactor);
-  let equityPeak = initialBaseline ?? anchor.equity;
+  let adjustedReturnPeak = 0;
 
   return valuations.map((point, index) => {
     const netDeposits = sumCapitalFlows(
@@ -289,8 +291,14 @@ function buildPoints(
       ? ((performanceIndex - performancePeak) / performancePeak) * 100
       : null;
 
-    equityPeak = Math.max(equityPeak, point.equity);
-    const equityDrawdownEgp = Math.max(0, equityPeak - point.equity);
+    // EGP drawdown must not grow/shrink simply because the investor deposited
+    // or withdrew capital. Compare the same cash-adjusted P&L basis as Return.
+    const externalFlowSinceBaseline = sumPortfolioFlows(
+      allExternalFlows.filter(flow => flowWithin(flow, periodStartingDate, point.date)),
+    );
+    const returnEgp = point.equity - periodStartingEquity - externalFlowSinceBaseline;
+    adjustedReturnPeak = Math.max(adjustedReturnPeak, returnEgp);
+    const equityDrawdownEgp = Math.max(0, adjustedReturnPeak - returnEgp);
 
     const mwrrPercent = initialBaseline
       ? calculatePeriodMWR(
@@ -335,6 +343,7 @@ function buildPoints(
       performanceIndex,
       drawdownPercent,
       equityDrawdownEgp,
+      returnEgp,
       complete: point.complete,
     };
   });

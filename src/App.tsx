@@ -226,6 +226,7 @@ export default function App() {
     handleConfirmSell,
     handleAddBonusShares,
     handleAddIpoSubscription,
+    handleCorrectIpoSubscription,
     handleAllocateIpoSubscription,
     handleCancelIpoSubscription,
     handleSavePositionEdit,
@@ -550,6 +551,7 @@ export default function App() {
         transactions={transactions}
         cashBalance={cashBalance}
         onSubmit={handleAddIpoSubscription}
+        onCorrectSubscription={handleCorrectIpoSubscription}
         onAllocate={handleAllocateIpoSubscription}
         onCancelSubscription={handleCancelIpoSubscription}
       />

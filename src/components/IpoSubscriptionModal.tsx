@@ -7,7 +7,7 @@ import { PremiumModalMotion } from './PremiumMotion';
 import { currentCairoDateKey } from '../services/corporateActions';
 import { calculateIpoOrderQuote } from '../services/ipoOrderQuote';
 import { runVisualTransition } from '../utils/visualTransition';
-import { CircleDollarSign, ShieldCheck, X } from 'lucide-react';
+import { ArrowLeft, CircleDollarSign, ShieldCheck, X } from 'lucide-react';
 
 export interface IpoSubscriptionFormValue {
   ticker: string;
@@ -85,6 +85,8 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [listingDate, setListingDate] = useState('');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
+  type IpoView = 'list' | 'create' | 'edit' | 'allocate' | 'cancel';
+  const [view, setView] = useState<IpoView>('list');
   const [selectedPendingId, setSelectedPendingId] = useState('');
   const [editingPendingId, setEditingPendingId] = useState<string | null>(null);
   const [correctionDate, setCorrectionDate] = useState('');
@@ -126,6 +128,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     setReference('');
     setNotes('');
     setSelectedPendingId(pending[0]?.id ?? '');
+    setView('list');
     setEditingPendingId(null);
     setCorrectionDate('');
     setCorrectionTime('');
@@ -135,7 +138,20 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     setAllocationFees('0');
     setFeedback(null);
     setIsSaving(false);
-  }, [isOpen, pending]);
+  }, [isOpen]);
+
+  // Do not discard the user's in-progress form on a background portfolio refresh.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (pending.length && !pending.some(tx => tx.id === selectedPendingId)) {
+      setSelectedPendingId(pending[0].id);
+      if (view !== 'create') setView('list');
+    }
+    if (!pending.length && selectedPendingId) {
+      setSelectedPendingId('');
+      if (view !== 'create') setView('list');
+    }
+  }, [isOpen, pending, selectedPendingId, view]);
 
   const requestClose = () => {
     if (isSaving) return;
@@ -192,6 +208,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         notes: notes.trim() || undefined,
       });
       if (saved) {
+        setView('list');
         setRequestedSharesInput('');
         setReference('');
         setNotes('');
@@ -203,7 +220,9 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
 
   const beginCorrection = (tx: TradeTransaction) => {
     if (isSaving || tx.type !== 'IPO_SUBSCRIPTION' || tx.ipoSubscription?.status !== 'SUBMITTED') return;
+    setSelectedPendingId(tx.id);
     setEditingPendingId(tx.id);
+    setView('edit');
     setCorrectionDate(tx.ipoSubscription.subscriptionDate || tx.date);
     setCorrectionTime(tx.executedAt
       ? new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(tx.executedAt))
@@ -238,6 +257,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
       });
       if (saved) {
         setEditingPendingId(null);
+        setView('list');
         setCorrectionDate('');
         setCorrectionTime('');
       } else {
@@ -269,6 +289,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         fees,
       });
       if (saved) {
+        setView('list');
         setAllocatedShares('');
         setAllocationFees('0');
       }
@@ -277,16 +298,40 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     }
   };
 
+  const startAllocation = (tx: TradeTransaction) => {
+    if (isSaving) return;
+    setSelectedPendingId(tx.id);
+    setAllocatedShares('');
+    setAllocationDate(currentCairoDateKey());
+    setAllocationFees('0');
+    setFeedback(null);
+    setView('allocate');
+  };
+
+  const startCancel = (tx: TradeTransaction) => {
+    if (isSaving) return;
+    setSelectedPendingId(tx.id);
+    setFeedback(null);
+    setView('cancel');
+  };
+
   const cancelPending = async () => {
     if (!pendingSelection || isSaving) return;
     setIsSaving(true);
     setFeedback(null);
     try {
-      await onCancelSubscription(pendingSelection.id);
+      const saved = await onCancelSubscription(pendingSelection.id);
+      if (saved) setView('list');
     } finally {
       setIsSaving(false);
     }
   };
+
+  const viewTitle = view === 'list' ? 'IPO subscriptions'
+    : view === 'create' ? 'New IPO subscription'
+    : view === 'edit' ? 'Edit pending subscription'
+    : view === 'allocate' ? 'Record IPO allocation'
+    : 'Cancel subscription';
 
   return (
     <PremiumModalMotion
@@ -294,17 +339,24 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
       backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       panelClassName="premium-modal premium-modal-viewport w-full max-w-3xl rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
-      panelAriaLabel="IPO subscription"
+      panelAriaLabel={viewTitle}
     >
       <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex min-w-0 items-start gap-3">
+          {view !== 'list' && <button type="button" aria-label="Back to IPO subscriptions"
+            onClick={() => { if (!isSaving) {setView('list');setFeedback(null);} }} disabled={isSaving}
+            className="premium-icon-action rounded-lg p-2 shrink-0"><ArrowLeft className="h-5 w-5"/></button>}
           <div className="premium-inset-glass flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
             <CircleDollarSign className="h-5 w-5 text-cyan-300" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base font-bold text-white">IPO Subscription</h3>
+            <h3 className="text-base font-bold text-white">{viewTitle}</h3>
             <p className="premium-type-helper mt-1">
-              Reserve IPO cash now, then settle actual allocation and refund later without logging a fake BUY.
+              {view === 'list' ? 'Review pending orders and choose one action at a time.'
+                : view === 'create' ? 'Enter shares and offer price; cash hold is calculated.'
+                : view === 'edit' ? 'Correct the existing order without reserving cash again.'
+                : view === 'allocate' ? 'Only record actual allocated shares when confirmed by your broker.'
+                : 'Release the original held amount only if the broker cancelled the order.'}
             </p>
           </div>
         </div>
@@ -313,7 +365,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         </button>
       </div>
 
-      <form onSubmit={submitSubscription} className="space-y-4 text-xs">
+      {view === 'create' && <form onSubmit={submitSubscription} className="space-y-4 text-xs">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h4 className="font-bold text-white">New subscription</h4>
@@ -454,9 +506,49 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
             {isSaving ? 'Saving…' : 'Record IPO Subscription'}
           </button>
         </div>
-      </form>
+      </form>}
 
-      <div className="border-t border-slate-800 pt-4">
+      {view === 'list' && <div className="space-y-4 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="font-bold text-white">Pending orders</h4>
+            <p className="premium-type-helper mt-1">{pending.length} awaiting allocation · available cash {formatEgp(cashBalance)} EGP</p>
+          </div>
+          <button type="button" onClick={() => {setView('create');setFeedback(null);}}
+            className="premium-action premium-action-primary rounded-xl px-4 py-2 font-semibold">
+            + New subscription
+          </button>
+        </div>
+        {pending.length === 0 && <div className="premium-form-section rounded-xl p-4 text-slate-300">
+          No pending subscriptions. Create one only for a new broker order.
+        </div>}
+        {pending.map(tx => <div key={tx.id} className="premium-form-section rounded-xl p-3 space-y-3">
+          <div className="flex justify-between gap-3">
+            <div>
+              <strong className="text-white text-sm">{tx.ticker}</strong>
+              <p className="premium-type-helper mt-1">Pending · {tx.ipoSubscription?.subscriptionDate || tx.date}</p>
+            </div>
+            <div className="text-right">
+              <strong className="font-mono text-cyan-200">{formatEgp(Number(tx.ipoSubscription?.reservedAmount ?? tx.ipoSubscription?.requestedAmount ?? 0))} EGP</strong>
+              <p className="premium-type-helper mt-1">Broker hold</p>
+            </div>
+          </div>
+          <p className="premium-type-helper">
+            {Number(tx.ipoSubscription?.requestedShares ?? tx.shares).toLocaleString('en-EG')} shares requested ·
+            {formatEgp(Number(tx.ipoSubscription?.requestedAmount ?? tx.totalAmount))} EGP full order
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" disabled={isSaving} onClick={() => beginCorrection(tx)}
+              className="premium-action rounded-xl px-3 py-3 font-semibold">Edit order details</button>
+            <button type="button" disabled={isSaving} onClick={() => startAllocation(tx)}
+              className="premium-action premium-action-success rounded-xl px-3 py-3 font-semibold">Record allocation</button>
+          </div>
+          <button type="button" disabled={isSaving} onClick={() => startCancel(tx)}
+            className="text-rose-300 text-xs text-left py-1">Cancel subscription…</button>
+        </div>)}
+      </div>}
+
+      {view === 'edit' && pendingSelection && <div className="border-t border-slate-800 pt-4">
         <div className="mb-3">
           <h4 className="font-bold text-white">Pending allocations</h4>
           <p className="premium-type-helper mt-0.5">

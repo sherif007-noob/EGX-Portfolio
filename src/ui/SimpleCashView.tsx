@@ -106,7 +106,7 @@ export function SimpleCashView(props: Props) {
       <div className="ui-activity-section-title"><h3>Transfer cash</h3><span className="ui-sm">Recorded in your portfolio ledger</span></div>
       <ActivityPills label="Transfer type" value={kind} onChange={setKind} choices={[
         {value:'DEPOSIT',label:'Deposit'}, {value:'WITHDRAWAL',label:'Withdraw'},
-      ]}/>
+      ] as const}/>
       <form onSubmit={submitCash} className="ui-activity-transfer-form">
         <label>Amount (EGP)<input type="number" inputMode="decimal" min=".01" step=".01" required value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></label>
         <label>Date<input type="date" required value={date} onChange={e => setDate(e.target.value)}/></label>
@@ -119,7 +119,7 @@ export function SimpleCashView(props: Props) {
       <div className="ui-activity-section-title"><h3>Transfer history</h3><span className="ui-sm">{history.length} entries</span></div>
       <ActivityPills label="Show" value={filter} onChange={setFilter} choices={[
         {value:'ALL',label:'All'}, {value:'DEPOSIT',label:'Deposits'}, {value:'WITHDRAWAL',label:'Withdrawals'},
-      ]}/>
+      ] as const}/>
       <div className="ui-activity-list">
         {!visible.length && <ActivityEmpty>No cash transfers for this filter.</ActivityEmpty>}
         {visible.map(tx => {

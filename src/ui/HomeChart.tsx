@@ -29,6 +29,8 @@ import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
 import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 
+type ChartRow = Record<string, number | string> & { timestamp: number };
+
 type ChartMode = 'ret' | 'dep' | 'twr' | 'mwr' | 'bm';
 type IndexChoice = 'all' | PortfolioBenchmarkTicker;
 type Unit = 'egp' | 'pct';
@@ -189,7 +191,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       ];
     }
 
-    return { rows: rows.map(row => ({ ...row, timestamp: chartTime(String(row.date)) }))
+    return { rows: rows.map((row): ChartRow => ({ ...row, timestamp: chartTime(String(row.date)) }))
       .filter(row => Number.isFinite(row.timestamp)), series, unit };
   }, [mode, comparePortfolio, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
 

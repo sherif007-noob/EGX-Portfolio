@@ -124,10 +124,10 @@ export function SimpleTransactionsView(props: Props) {
         {value:'CASH',label:'Cash'}, {value:'DIVIDEND',label:'Dividends'},
         {value:'CORPORATE',label:'Corporate'}, {value:'IPO',label:'IPOs'},
         {value:'OPEN',label:'Open'}, {value:'WIN',label:'Wins'}, {value:'LOSS',label:'Losses'},
-      ]}/>
+      ] as const}/>
       <ActivityPills label="Sort" value={sort} onChange={setSort} choices={[
         {value:'newest',label:'Newest'}, {value:'oldest',label:'Oldest'}, {value:'ticker',label:'Ticker'},
-      ]}/>
+      ] as const}/>
     </div>
     <div className="ui-activity-list" aria-label="Portfolio events">
       {!visible.length&&<ActivityEmpty>No events match these filters.</ActivityEmpty>}

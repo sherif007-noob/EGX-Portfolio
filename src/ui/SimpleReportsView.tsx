@@ -208,7 +208,7 @@ export function SimpleReportsView(props: Props) {
       <SectionTitle title="Portfolio allocation" detail="Current holdings, available cash and pending IPO reserves—all accounted for."/>
       <ActivityPills label="Group by" value={allocationMode} onChange={setAllocationMode} choices={[
         {value:'sector',label:'Sector'},{value:'stock',label:'Stock'},
-      ]}/>
+      ] as const}/>
       <label className="ui-report-check"><input type="checkbox" checked={includeCash} onChange={e=>setIncludeCash(e.target.checked)}/> Include cash and IPO reserves</label>
       <div className="ui-report-list ui-report-allocations">
         {!allocation.length && <p className="ui-activity-empty">No positions in this allocation.</p>}
@@ -228,7 +228,7 @@ export function SimpleReportsView(props: Props) {
       <ActivityPills label="Month" value={month} onChange={setMonth} choices={[
         {value:'ALL',label:'Recent months'},
         ...months.map(m=>({value:m.key,label:m.label})),
-      ]}/>
+      ] as const}/>
       <div className="ui-report-months">
         {shownMonths.map(m=><article className="ui-report-month" key={m.key}>
           <div className="ui-report-month-heading">

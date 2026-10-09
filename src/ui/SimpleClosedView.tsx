@@ -73,11 +73,11 @@ export function SimpleClosedView({closedTrades,transactions,onCorrectLedger}: Pr
       <ActivitySearch value={search} onChange={v => {setSearch(v);setLimit(30);}} placeholder="Find a closed position"/>
       <ActivityPills label="Outcome" value={filter} onChange={v => {setFilter(v);setLimit(30);}} choices={[
         {value:'ALL',label:'All'}, {value:'WIN',label:'Wins'}, {value:'LOSS',label:'Losses'},{value:'BREAKEVEN',label:'Breakeven'},
-      ]}/>
+      ] as const}/>
       <ActivityPills label="Sort" value={sort} onChange={setSort} choices={[
         {value:'newest',label:'Newest'},{value:'highest',label:'Highest P&L'},
         {value:'lowest',label:'Lowest P&L'},{value:'percent',label:'Best %'},
-      ]}/>
+      ] as const}/>
     </div>
     <div className="ui-activity-list">
       {!visible.length && <ActivityEmpty>No closed trades match these filters.</ActivityEmpty>}

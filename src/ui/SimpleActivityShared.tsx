@@ -3,8 +3,8 @@ import { Search } from 'lucide-react';
 import { formatEgp, formatSigned, toneClass } from './format';
 
 export interface Choice<T extends string> { value: T; label: string; }
-export function ActivityPills<T extends string>({ label, value, choices, onChange }: {
-  label: string; value: T; choices: readonly Choice<T>[]; onChange: (value: T) => void;
+export function ActivityPills<const T extends string>({ label, value, choices, onChange }: {
+  label: string; value: T; choices: readonly Choice<T>[]; onChange: (value: NoInfer<T>) => void;
 }) {
   // Essential pill geometry is inline as a PWA stylesheet-order fallback.
   // The stylesheet still owns focus, hover and responsive refinements.

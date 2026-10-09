@@ -56,7 +56,7 @@ export function resolvedHistoricalPriceBasisBridges(
     const creditedShares = Number(bonus.shares);
     const ratio = Number(bonus.corporateActionRatio);
     const factor = (sourceShares + creditedShares) / sourceShares;
-    const tickerPrices = prices[transition.ticker] ?? [];
+    const tickerPrices = [...(prices[transition.ticker] ?? [])].sort((a,b)=>a.date.localeCompare(b.date));
     const preceding = tickerPrices.filter(p => p.date < transition.vendorAdjustedFrom).at(-1);
     const following = tickerPrices.find(p => p.date === transition.vendorAdjustedFrom);
     // Verify the actual ledger event, its rounded entitlement, and the observed
@@ -75,7 +75,7 @@ export function resolvedHistoricalPriceBasisBridges(
         && (tx.type === 'BUY' || tx.type === 'SELL' || tx.type === 'OPENING_POSITION')
         && tx.date >= transition.vendorAdjustedFrom && tx.date < transition.ledgerShareCreditDate,
       );
-    if (!safe) { unverified.push(transition.ticker); continue; }
+    if (!safe) { unverified.push({ticker:transition.ticker,startDate:transition.vendorAdjustedFrom}); continue; }
     bridges.push({
       ticker:transition.ticker,
       startDate:transition.vendorAdjustedFrom,

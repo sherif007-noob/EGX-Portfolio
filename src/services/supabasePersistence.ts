@@ -351,8 +351,13 @@ export async function savePortfolioToSupabase(
   data: Omit<SupabasePortfolioData, 'updatedAt' | 'schemaVersion' | 'lastPriceWriteAt'>,
   auditEvent?: AuditTrailDraft,
 ): Promise<boolean> {
+  const startMs = performance.now();
+  let authMs=0;
+  let rpcMs=0;
+  let quoteMs=0;
   try {
     const { supabase, user, portfolio } = await requireAuthenticatedPortfolio();
+    authMs=performance.now()-startMs;
     const txs = data.transactions.map((row) => toDbTransaction(row, portfolio.id));
     const positions = data.positions.map((row) => toDbPosition(row, portfolio.id));
     const closed = data.closedTrades.map((row) => toDbClosedTrade(row, portfolio.id));
@@ -370,12 +375,21 @@ export async function savePortfolioToSupabase(
       p_closed_trades: closed,
       ...(auditEvent ? { p_audit_event: auditEvent } : {}),
     };
+    const rpcStartMs=performance.now();
     const { error } = await supabase.rpc(rpcName, rpcArgs);
+    rpcMs=performance.now()-rpcStartMs;
     if (error) throw error;
 
     if (Array.isArray(data.tickers) && data.tickers.length) {
+      const quoteStartMs=performance.now();
       await persistTickerQuotes(supabase, data.tickers);
+      quoteMs=performance.now()-quoteStartMs;
     }
+    console.info('[Portfolio save timing]',{
+      authMs:Math.round(authMs),rpcMs:Math.round(rpcMs),tickerSyncMs:Math.round(quoteMs),
+      totalMs:Math.round(performance.now()-startMs),
+      audited:Boolean(auditEvent),
+    });
     return true;
   } catch (error) {
     console.error('[Supabase] Direct portfolio save failed:', error);

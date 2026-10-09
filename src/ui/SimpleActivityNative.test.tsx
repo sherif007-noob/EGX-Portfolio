@@ -35,7 +35,9 @@ describe('native Medium UI Activity presentation', () => {
   it('renders new journal feed without legacy premium cards by default', () => {
     const html = renderToStaticMarkup(
       <SimpleTransactionsView transactions={[transaction]} closedTrades={[cycle]}
-        positions={[]} onDeleteTransaction={async () => true} onEditTransaction={async () => true}/>,
+        positions={[]} onDeleteTransaction={async () => true} onEditTransaction={async () => true}
+        onSaveCashRecord={async()=>true} onSaveIpo={async()=>true} onAllocateIpo={async()=>true}
+        onBuyMoreTicker={()=>{}} onSellPosition={()=>{}}/>,
     );
     expect(html).toContain('ui-activity-native');
     expect(html).toContain('ui-activity-record');

@@ -380,7 +380,14 @@ export async function savePortfolioToSupabase(
     rpcMs=performance.now()-rpcStartMs;
     if (error) throw error;
 
-    if (Array.isArray(data.tickers) && data.tickers.length) {
+    // Financial edits update the audited portfolio snapshot, not market quotes.
+    // Previously each edit also made ~32 batches of quote update requests for
+    // the 314-symbol ticker directory, even when changing only a trade fee.
+    // Restore and explicit directory saves still publish ticker quotes.
+    const shouldPersistQuotes = !auditEvent ||
+      auditEvent.mutationKind === 'RESTORE_PORTFOLIO' ||
+      auditEvent.mutationKind === 'RESTORE_LEDGER_SNAPSHOT';
+    if (shouldPersistQuotes && Array.isArray(data.tickers) && data.tickers.length) {
       const quoteStartMs=performance.now();
       await persistTickerQuotes(supabase, data.tickers);
       quoteMs=performance.now()-quoteStartMs;

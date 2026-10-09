@@ -23,6 +23,7 @@ interface PortfolioActions {
   sellPosition: (sell: any) => Promise<any>;
   addBonusShares: (action: any) => Promise<any>;
   addIpoSubscription: (action: any) => Promise<any>;
+  correctIpoSubscription: (action: any, auditReason: string) => Promise<any>;
   allocateIpoSubscription: (action: any) => Promise<any>;
   cancelIpoSubscription: (id: string) => Promise<any>;
   editPosition: (position: Position) => Promise<boolean>;

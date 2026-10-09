@@ -70,3 +70,14 @@ The first source-level fixes are committed:
 **Not yet verified:** TypeScript, Vitest, PWA build, rendered mobile charts, Cloudflare deployment and real-device save latency. CI has not supplied a passing result. The database still holds the same raw prices and source transactions, and no user cash/IPO/fee records were changed by this pass. Longer-term full market-provider corporate-action catalog and historical quote stale-age policy remain future items.
 
 **Read-only expected impact from earlier live SQL reconstruction:** After matching ORHD's rounded credited shares to the adjusted price basis, the artificial Sep 29→30 NAV change should drop from about -8,198.47 EGP to roughly -421.66 EGP, while Oct 6→7 P&L (after neutralizing 60,000 EGP contributed on Oct 7) should drop from about +8,300.45 EGP to roughly +265.04 EGP. These are **independent arithmetic cross-checks**, not outputs from the deployed chart, and require a full comparison to live app valuation and actual quotes before acceptance.
+
+## Chart readability pass (2026-10-09): NAV composition, deposit events, richer Return tooltip
+
+Implemented on `medium-ui` as the next incremental UI pass, subject to tests and browser acceptance:
+1. Replaced the redundant single-line **Value** mode with **NAV breakdown** of security holdings, free cash and broker-held IPO cash, with total NAV outlined. Kept **vs Deposits** as NAV compared against contributed capital.
+2. Deposits and withdrawals are displayed as chart event markers and in context-specific tooltips, grouped by ledger date. The marker never claims a fabricated intra-day execution clock when the ledger has only a date.
+3. Return tooltip now consistently reads the plotted flow-neutral cumulative P&L, compares it with the prior validated plotted trading session/interval, displays compounded interval return %, total NAV and any deposit/withdrawal recorded on that date.
+4. Added `homeChartPresentation` pure regression coverage for three-deposit aggregation, ignoring dividends/fees/IPO reservation as investor flows, cash-neutral interval P&L, and missing TWR fallback.
+5. No accounting mutation, market price change or deployed-version claim. Needs compiler/test/build/device acceptance gates before production promotion.
+
+The previous "Value" and "vs Deposits" displays deliberately shared NAV; this pass makes their semantic roles independent while retaining the real NAV impact of cash transfers.

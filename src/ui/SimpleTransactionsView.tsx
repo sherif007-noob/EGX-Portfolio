@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, FilePenLine, ScanLine, Wallet, Gift, Receipt, Landmark, Layers3 } from 'lucide-react';
+import { ChevronDown, FilePenLine, ScanLine, Wallet, Gift, Receipt, Landmark, Pencil, Trash2, Plus, ArrowDownToLine } from 'lucide-react';
+import { ActivityActionDialog, type ActivityAction, type IpoOrderCorrection, type IpoAllocation } from './ActivityActionDialog';
 import type { ClosedTrade, Position, TradeTransaction } from '../types';
 import { StockLogo } from '../components/StockLogo';
 import { sortPerformanceTransactions } from '../services/portfolioPerformance';
@@ -21,8 +22,11 @@ interface Props {
   ledgerFocus?: JournalLedgerFocus | null;
   onClearLedgerFocus?: () => void;
   onOpenScreenshotModal?: () => void;
-  onOpenCash?: () => void;
-  onOpenIpo?: () => void;
+  onSaveCashRecord: (record:TradeTransaction,reason:string)=>Promise<boolean>;
+  onSaveIpo: (record:IpoOrderCorrection)=>Promise<boolean>;
+  onAllocateIpo: (record:IpoAllocation)=>Promise<boolean>;
+  onBuyMoreTicker: (ticker:string)=>void;
+  onSellPosition: (position:Position)=>void;
   onSyncToSheets?: () => void;
   isSyncingToSheets?: boolean;
 }
@@ -33,7 +37,7 @@ interface Props {
  * records only. A cash action navigates to the dedicated audited cash ledger.
  */
 export function SimpleTransactionsView(props: Props) {
-  const { transactions,closedTrades,positions,ledgerFocus,onClearLedgerFocus,onOpenScreenshotModal,onOpenCash,onOpenIpo }=props;
+  const { transactions,closedTrades,positions,ledgerFocus,onClearLedgerFocus,onOpenScreenshotModal }=props;
   const [filter,setFilter]=useState<Filter>('ALL');
   const [sort,setSort]=useState<Sort>('newest');
   const [search,setSearch]=useState('');
@@ -41,6 +45,7 @@ export function SimpleTransactionsView(props: Props) {
   const [limit,setLimit]=useState(30);
   const [advanced,setAdvanced]=useState(false);
   const [selectedFocus,setSelectedFocus]=useState<JournalLedgerFocus|null>(null);
+  const [action,setAction]=useState<{id:string;kind:ActivityAction}|null>(null);
   const openTickers=useMemo(()=>new Set(positions.map(p=>p.ticker.toUpperCase())),[positions]);
   const cycleBySell=useMemo(()=>{
     const result=new Map<string,ClosedTrade>();
@@ -172,10 +177,27 @@ export function SimpleTransactionsView(props: Props) {
             </div>
             {tx.notes&&<p className="ui-sm ui-activity-notes">{tx.notes}</p>}
             <div className="ui-activity-record-actions">
-              {isCash&&onOpenCash?<button type="button" className="ui-quiet-action" onClick={onOpenCash}><Wallet size={15}/> Open cash ledger</button>
-              :isIpo&&onOpenIpo?<button type="button" className="ui-quiet-action" onClick={onOpenIpo}><Layers3 size={15}/> Manage IPO</button>
-              :<button type="button" className="ui-quiet-action" onClick={()=>openLedger(tx)}>
-                {isAction?'View source ledger':'Edit / correct in trade ledger'}</button>}
+              {isCash&&<>
+                <button type="button" className="ui-quiet-action" onClick={()=>setAction({id:tx.id,kind:'edit'})}><Pencil size={15}/> Edit</button>
+                <button type="button" className="ui-quiet-action ui-danger" onClick={()=>setAction({id:tx.id,kind:'delete'})}><Trash2 size={15}/> Delete</button>
+              </>}
+              {isIpo&&tx.ipoSubscription?.status==='SUBMITTED'&&<>
+                <button type="button" className="ui-quiet-action" onClick={()=>setAction({id:tx.id,kind:'allocate'})}><ArrowDownToLine size={15}/> Allocation</button>
+                <button type="button" className="ui-quiet-action" onClick={()=>setAction({id:tx.id,kind:'edit'})}><Pencil size={15}/> Edit</button>
+                <button type="button" className="ui-quiet-action ui-danger" onClick={()=>setAction({id:tx.id,kind:'delete'})}><Trash2 size={15}/> Delete</button>
+              </>}
+              {isIpo&&tx.ipoSubscription?.status!=='SUBMITTED'&&<span className="ui-sm">Settled IPO — lifecycle history protected</span>}
+              {info.category==='TRADE'&&<>
+                <button type="button" className="ui-quiet-action" onClick={()=>setAction({id:tx.id,kind:'edit'})}><Pencil size={15}/> Edit</button>
+                <button type="button" className="ui-quiet-action ui-danger" onClick={()=>setAction({id:tx.id,kind:'delete'})}><Trash2 size={15}/> Delete</button>
+                <button type="button" className="ui-quiet-action" onClick={()=>props.onBuyMoreTicker(tx.ticker)}><Plus size={15}/> Buy more</button>
+                {positions.find(p=>p.ticker.toUpperCase()===tx.ticker.toUpperCase())&&
+                  <button type="button" className="ui-quiet-action" onClick={()=>{
+                    const position=positions.find(p=>p.ticker.toUpperCase()===tx.ticker.toUpperCase());
+                    if(position)props.onSellPosition(position);
+                  }}>Sell</button>}
+              </>}
+              {isAction&&<button type="button" className="ui-quiet-action" onClick={()=>openLedger(tx)}>View source ledger</button>}
             </div>
           </div>}
         </article>;
@@ -183,5 +205,16 @@ export function SimpleTransactionsView(props: Props) {
     </div>
     {visible.length>limit&&<button type="button" className="ui-activity-load" onClick={()=>setLimit(n=>n+30)}>Show more ({visible.length-limit} remaining)</button>}
     <p className="ui-activity-footnote">Showing {Math.min(limit,visible.length)} of {visible.length} events</p>
+    {action&&transactions.some(tx=>tx.id===action.id)&&(()=>{
+      const record=transactions.find(tx=>tx.id===action.id)!;
+      return <ActivityActionDialog key={`${action.id}-${action.kind}`}
+        record={record} action={action.kind} transactions={transactions}
+        onClose={()=>setAction(null)}
+        onSaveTrade={(updated,reason)=>props.onEditTransaction?.(updated,reason)??Promise.resolve(false)}
+        onSaveCash={props.onSaveCashRecord}
+        onSaveIpo={props.onSaveIpo}
+        onAllocateIpo={props.onAllocateIpo}
+        onDelete={props.onDeleteTransaction}/>;
+    })()}
   </section>;
 }

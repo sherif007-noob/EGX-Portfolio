@@ -37,7 +37,7 @@ describe('Stage 5 R8 Reports full regression and closure', () => {
     const weeklyTests = readRelative('./charts/weeklyTransitionInterpolation.test.ts');
 
     for (const label of [
-      'Portfolio vs Return',
+      'Return (EGP)',
       'Portfolio vs Net Deposits',
       'Performance (TWR)',
       'Performance (MWR)',

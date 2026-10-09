@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PortfolioMetrics } from '../types';
 import { CompactPortfolioStrip } from './CompactPortfolioStrip';
 
@@ -18,7 +18,10 @@ const metrics: PortfolioMetrics = {
 };
 
 describe('CompactPortfolioStrip', () => {
+  afterEach(() => vi.useRealTimers());
   it('shows only Value, Today and Cash context', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-07T09:00:00Z'));
     const html = renderToStaticMarkup(<CompactPortfolioStrip metrics={metrics} />);
 
     expect(html).toContain('Value');

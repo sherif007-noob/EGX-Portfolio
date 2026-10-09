@@ -270,6 +270,7 @@ describe('unified analytics engine', () => {
     });
 
     expect(result.summary.maxDrawdownPercent).toBeCloseTo(-10, 6);
-    expect(result.summary.maxEquityDrawdownEgp).toBe(0);
+    // Flow-neutral profit peaks at +200 EGP then falls to +80: drawdown = 120.
+    expect(result.summary.maxEquityDrawdownEgp).toBe(120);
   });
 });

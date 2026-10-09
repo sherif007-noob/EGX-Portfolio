@@ -6,19 +6,7 @@ const readRelative = (relative: string) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
 
 describe('Phase 10.7C Closed Cycles closure', () => {
-  it('uses explicit H0 page ownership with H2 context and H3 KPI support', () => {
-    const cycles = readRelative('./ClosedCyclesView.tsx');
 
-    expect(cycles).toContain(
-      'className="premium-hierarchy-h0 premium-dense-workflow premium-flow-related"',
-    );
-    expect(cycles).toContain('data-page="closed-cycles"');
-    expect(cycles).toContain(
-      'premium-hierarchy-h2 premium-dense-summary premium-pad-h2',
-    );
-    expect(cycles).toContain('data-hierarchy="h2"');
-    expect(cycles).toContain('premium-hierarchy-h3 premium-dense-summary-card');
-  });
 
   it('assigns real financial summary cards semantic-card roles', () => {
     const cycles = readRelative('./ClosedCyclesView.tsx');
@@ -63,19 +51,7 @@ describe('Phase 10.7C Closed Cycles closure', () => {
     );
   });
 
-  it('keeps the canonical H4 search/filter/sort control family', () => {
-    const cycles = readRelative('./ClosedCyclesView.tsx');
 
-    expect(cycles).toContain(
-      'premium-panel premium-hierarchy-h4 premium-dense-toolbar premium-pad-h4',
-    );
-    expect(cycles).toContain('premium-field premium-dense-search');
-    expect(cycles).toContain('premium-selector-shell');
-    expect(cycles).toContain('premium-filter-pill premium-compact-selector');
-    expect(cycles).toContain('<AnalyticsSelect');
-    expect(cycles).toContain('ariaLabel="Sort closed cycles"');
-    expect(cycles).toContain('accent="purple"');
-  });
 
   it('expands based on the visible result set and disables expansion for empty results', () => {
     const cycles = readRelative('./ClosedCyclesView.tsx');

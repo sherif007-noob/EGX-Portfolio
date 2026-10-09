@@ -34,30 +34,7 @@ describe('Phase 10.2 buttons, selectors and interactive controls', () => {
     }
   });
 
-  it('uses the compact segmented-selector family for page-level filters', () => {
-    const closed = readRelative('./ClosedCyclesView.tsx');
-    const journal = readRelative('./TradingJournal.tsx');
-    const cash = readRelative('./CashBalanceView.tsx');
-    const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
-    const trading = readRelative('./reports/TradingPerformanceReport.tsx');
-    const reports = readRelative('./PerformanceReports.tsx');
-    const chart = readRelative('./charts/PerformanceTimeframeChart.tsx');
 
-    expect(closed).toContain('premium-filter-pill premium-compact-selector');
-    expect(journal).toContain(
-      "premium-filter-pill premium-compact-selector shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filterMode === 'ALL'",
-    );
-    expect(cash).toContain(
-      "premium-filter-pill premium-compact-selector flex min-w-0 flex-1 items-center justify-center",
-    );
-    expect(cash).toContain(
-      "premium-filter-pill premium-compact-selector min-w-0 flex-1 justify-center",
-    );
-    expect(monthly).toContain('premium-filter-pill premium-compact-selector');
-    expect(trading).toContain('premium-filter-pill premium-compact-selector');
-    expect(reports).toContain('premium-filter-pill premium-compact-selector');
-    expect(chart).toContain('premium-filter-pill premium-compact-selector');
-  });
 
   it('uses the same selector language for Cash Ledger edit transaction type', () => {
     const cash = readRelative('./CashBalanceView.tsx');

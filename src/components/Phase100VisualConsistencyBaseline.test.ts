@@ -6,24 +6,16 @@ const readRelative = (relative: string) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
 
 describe('Phase 10.0 visual consistency baseline freeze', () => {
-  it('keeps all seven destinations and their current page owners explicit', () => {
+  it('routes the main destinations to native medium UI owners', () => {
     const app = readRelative('../App.tsx');
-
     const expected = [
-      ["overview", 'PositionsTable'],
-      ["positions", 'PositionsTable'],
-      ["closed_cycles", 'ClosedCyclesView'],
-      ["reports", 'PerformanceReports'],
-      ["journal", 'TradingJournal'],
-      ["cash", 'CashBalanceView'],
-      ["directory", 'TickerDirectoryView'],
-    ] as const;
-
-    const tabStage = app.indexOf('<MotionSwap');
-    expect(tabStage).toBeGreaterThanOrEqual(0);
-
+      ['overview', 'HomeScreen'], ['positions', 'SimpleHoldings'],
+      ['closed_cycles', 'SimpleClosedView'], ['reports', 'SimpleReportsView'],
+      ['journal', 'SimpleTransactionsView'], ['cash', 'SimpleCashView'],
+      ['directory', 'TickerDirectoryView'],
+    ];
     for (const [tab, owner] of expected) {
-      const start = app.indexOf(`activeTab === '${tab}'`, tabStage);
+      const start = app.indexOf(`{activeTab === '${tab}'`);
       expect(start).toBeGreaterThanOrEqual(0);
       expect(app.slice(start, start + 1800)).toContain(`<${owner}`);
     }

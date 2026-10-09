@@ -40,7 +40,7 @@ describe('Phase 10.7A Overview closure', () => {
     const positionsTabStart = app.indexOf("{activeTab === 'positions'");
     expect(positionsTabStart).toBeGreaterThanOrEqual(0);
     const positionsTab = app.slice(positionsTabStart, positionsTabStart + 4500);
-    expect(positionsTab).toContain('<PositionsTable');
+    expect(positionsTab).toContain('<SimpleHoldings');
     expect(positionsTab).not.toContain('variant="overview"');
   });
 

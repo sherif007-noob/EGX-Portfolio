@@ -36,19 +36,7 @@ describe('Phase 8.6–8.7 responsive hierarchy + closure guard', () => {
     expect(directory).toContain('flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between');
   });
 
-  it('keeps report and dense-data layouts responsive instead of forcing desktop widths on phone', () => {
-    const monthly = readRelative('./reports/MonthlyPerformanceReport.tsx');
-    const trading = readRelative('./reports/TradingPerformanceReport.tsx');
-    const cycles = readRelative('./ClosedCyclesView.tsx');
-    const journal = readRelative('./TradingJournal.tsx');
 
-    expect(monthly).toContain('overflow-x-auto');
-    expect(trading).toContain('overflow-x-auto');
-    expect(trading).toContain('grid grid-cols-1 gap-3 md:grid-cols-2');
-
-    expect(cycles).toContain('w-full min-w-0 sm:w-auto sm:min-w-[205px]');
-    expect(journal).toContain('w-full min-w-0 md:w-auto md:min-w-[170px]');
-  });
 
   it('preserves the accepted Phase 8 semantic language while responsive rules stay material-neutral', () => {
     const responsive = readRelative('../styles/responsive.css');

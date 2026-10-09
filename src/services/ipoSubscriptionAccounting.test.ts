@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TradeTransaction } from '../types';
 import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
+import { calculateIpoOrderQuote } from './ipoOrderQuote';
 import {
   prepareIpoAllocationMutation,
   prepareIpoCancellationMutation,
@@ -25,6 +26,42 @@ function snapshot(
 }
 
 describe('IPO subscription ledger accounting', () => {
+  it('saves the user-entered integer share count without deriving shares back from rounded cash', () => {
+    const order=calculateIpoOrderQuote(4001,0.73,25);
+    const prepared=prepareIpoSubscriptionMutation(snapshot([],10000),{
+      transactionId:'shares-first',ticker:'IPOX',companyName:'Example IPO',sector:'Other',
+      requestedShares:order.requestedShares,requestedAmount:order.requestedAmount,
+      reservedAmount:order.reservedAmount,offerPrice:order.offerPrice,subscriptionDate:'2026-10-07',
+    });
+    expect(prepared.value?.shares).toBe(4001);
+    expect(prepared.value?.ipoSubscription?.requestedShares).toBe(4001);
+    expect(prepared.value?.ipoSubscription?.requestedAmount).toBe(2920.73);
+    expect(prepared.value?.ipoSubscription?.reservedAmount).toBe(730.18);
+    const reconciled=reconcilePortfolioFromLedger(prepared.transactions,[],10000);
+    expect(reconciled.discrepanciesFound).toEqual([]);
+    expect(reconciled.reconciledCashBalance).toBe(9269.82);
+    expect(reconciled.reconciledPositions).toEqual([]);
+    const metrics=calculatePortfolioMetrics([],reconciled.reconciledCashBalance,[],[],prepared.transactions);
+    expect(metrics.totalValue).toBe(10000);
+  });
+
+  it('rejects a shares-first IPO order whose amount does not equal shares × price',()=>{
+    expect(()=>prepareIpoSubscriptionMutation(snapshot([],10000),{
+      transactionId:'inconsistent',ticker:'IPOX',companyName:'Example IPO',sector:'Other',
+      requestedShares:4001,requestedAmount:2921.73,reservedAmount:730.18,
+      offerPrice:0.73,subscriptionDate:'2026-10-07',
+    })).toThrow(/does not match shares/);
+  });
+
+  it('rejects fractional shares even if the submitted EGP total is mathematically consistent',()=>{
+    expect(()=>prepareIpoSubscriptionMutation(snapshot([],10000),{
+      transactionId:'fractional',ticker:'IPOX',companyName:'Example IPO',sector:'Other',
+      requestedShares:5.5,requestedAmount:137.5,reservedAmount:34.38,
+      offerPrice:25,subscriptionDate:'2026-10-07',
+    })).toThrow(/whole number/);
+  });
+
+
   // Synthetic 25%-hold example; no real broker order values are stored here.
   const partialOrder = {
     transactionId:'ipo-demo',ticker:'IPOX',companyName:'Example IPO',sector:'Other' as const,

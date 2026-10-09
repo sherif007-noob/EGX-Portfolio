@@ -101,6 +101,11 @@ export interface IpoSubscriptionCorrectionFormInput {
   transactionId: string;
   subscriptionDate: string;
   executionTimeCairo?: string;
+  requestedShares?: number;
+  offerPrice?: number;
+  reservedAmount?: number;
+  reference?: string;
+  notes?: string;
   auditReason: string;
 }
 
@@ -389,6 +394,11 @@ export function usePortfolioWorkflows({
       transactionId:input.transactionId,
       subscriptionDate:input.subscriptionDate,
       executionTimeCairo:input.executionTimeCairo,
+      requestedShares:input.requestedShares,
+      offerPrice:input.offerPrice,
+      reservedAmount:input.reservedAmount,
+      reference:input.reference,
+      notes:input.notes,
     },reason);
     if ('error' in result){
       showToast(`IPO correction not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);

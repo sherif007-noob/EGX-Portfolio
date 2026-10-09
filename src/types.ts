@@ -254,7 +254,11 @@ export type IpoSubscriptionStatus = 'SUBMITTED' | 'ALLOCATED' | 'CANCELLED';
 
 export interface IpoSubscriptionMetadata {
   status: IpoSubscriptionStatus;
+  /** Full IPO order commitment, NOT necessarily held cash. */
   requestedAmount: number;
+  /** Cash frozen by broker, distinct from full commitment. */
+  reservedAmount?: number;
+  additionalPaymentAmount?: number;
   requestedShares: number;
   offerPrice: number;
   reference?: string;

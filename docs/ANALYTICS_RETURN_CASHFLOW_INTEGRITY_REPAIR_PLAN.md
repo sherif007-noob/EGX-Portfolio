@@ -57,3 +57,16 @@
 - No direct SQL rewriting of `transactions`, `positions`, or cash to alter performance. This plan is a read-only findings document and fix design.
 - Chart corrections should be on `medium-ui` until tested, then promoted deliberately after acceptance. Running `main` and `medium-ui` simultaneously against one portfolio requires schema backward compatibility, otherwise old clients may strip new metadata.
 - Keep sensitive user financial amounts and portfolio holdings out of public source fixtures. Synthetic datasets should reproduce the failure.
+
+## Implementation checkpoint — 2026-10-09, medium-ui (not yet deployed)
+
+The first source-level fixes are committed:
+- `historicalPriceBasis.ts` implements an auditable ORHD-specific **vendor price-basis bridge** for Sep 30 through Oct 6, using the genuine Oct 7 bonus-share transaction (300 pre-credit shares + 668 credited). Source closes and actual ledger dates remain untouched. A mismatching or missing bonus event, materially inconsistent prices, or intervening security trades marks the history **unverified**, rather than drawing false returns.
+- `portfolioPerformance.ts` applies that bridge to historical valuation, and `intradayAnalyticsEngine.ts` avoids multiplying an already adjusted Oct 6 close by the share conversion factor again when establishing Oct 7's baseline.
+- `unifiedAnalyticsEngine.ts` and `intradayAnalyticsEngine.ts` now provide `returnEgp` and flow-neutral EGP drawdown. `HomeChart`, `analyticsModes`, `PerformanceTimeframeChart`, and `performanceEngine` use cash-flow-adjusted calculations; the advanced 'Return (EGP)' plots true P&L instead of a misleading NAV line, while Value/vs Deposits still show NAV and contributed capital separately.
+- `supabasePersistence.ts` no longer follows an ordinary audited transaction edit with unrelated quote sync across hundreds of directory tickers; restores/manual non-audited quote writes still sync. The financial snapshot remains atomic and audited. `ActivityActionDialog` deduplicates saving taps, and save timing diagnostics are in place.
+- Synthetic regression source tests added for ORHD mixed price basis and credit session, multiple cash deposits, IPO hold neutrality, separate transaction/quote persistence and deposit-neutral report drawdown.
+
+**Not yet verified:** TypeScript, Vitest, PWA build, rendered mobile charts, Cloudflare deployment and real-device save latency. CI has not supplied a passing result. The database still holds the same raw prices and source transactions, and no user cash/IPO/fee records were changed by this pass. Longer-term full market-provider corporate-action catalog and historical quote stale-age policy remain future items.
+
+**Read-only expected impact from earlier live SQL reconstruction:** After matching ORHD's rounded credited shares to the adjusted price basis, the artificial Sep 29→30 NAV change should drop from about -8,198.47 EGP to roughly -421.66 EGP, while Oct 6→7 P&L (after neutralizing 60,000 EGP contributed on Oct 7) should drop from about +8,300.45 EGP to roughly +265.04 EGP. These are **independent arithmetic cross-checks**, not outputs from the deployed chart, and require a full comparison to live app valuation and actual quotes before acceptance.

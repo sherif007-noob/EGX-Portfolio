@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { CanonicalCashFlowType, TradeTransaction } from '../types';
 import { cashFlowSignedImpact, normalizeCashFlowType } from '../services/cashFlowSemantics';
 import { isCashLedgerRecord, isSecurityTrade } from '../services/ledgerRecordTypes';
@@ -57,6 +57,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
   const [allocationFees,setAllocationFees]=useState('0');
   const [reason,setReason]=useState('');
   const [busy,setBusy]=useState(false);
+  const saveInFlight=useRef(false);
   const [error,setError]=useState('');
   const isPending=isIpo && ipo?.status==='SUBMITTED';
   const fundedSameDay=isIpo && date!==record.date && transactions.some(tx=>
@@ -70,7 +71,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
       required={opts?.required ?? (type !== 'text' && type !== 'time')}/></label>;
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(busy)return;
+    if(busy || saveInFlight.current)return;
     setError('');
     if(!reason.trim()){setError('Enter a reason for this audited ledger change.');return;}
     let run:()=>Promise<boolean>;
@@ -118,10 +119,11 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           reference,notes,auditReason:reason.trim()});
       } else throw new Error('This record cannot be edited using this form.');
     } catch(e){setError(e instanceof Error?e.message:'Invalid entry.');return;}
+    saveInFlight.current=true;
     setBusy(true);
     try {const success=await run();if(success)onClose();else setError('The audited ledger rejected this change; the record was not modified.');}
     catch(e){setError(e instanceof Error?e.message:'The change could not be saved.');}
-    finally{setBusy(false);}
+    finally{saveInFlight.current=false;setBusy(false);}
   };
   return <div className="ui-activity-dialog-backdrop" role="presentation">
     <div className="ui-activity-dialog" role="dialog" aria-modal="true" aria-label={title}>
@@ -183,7 +185,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
         <div className="ui-activity-inline-actions">
           <button type="button" className="ui-quiet-action" disabled={busy} onClick={onClose}>Back</button>
           <button type="submit" disabled={busy} className={`ui-activity-primary ${action==='delete'?'ui-danger':''}`}>
-            {busy?'Saving…':action==='delete'?'Delete record':action==='allocate'?'Record allocation':'Save changes'}
+            {busy?'Saving to Supabase…':action==='delete'?'Delete record':action==='allocate'?'Record allocation':'Save changes'}
           </button>
         </div>
       </form>

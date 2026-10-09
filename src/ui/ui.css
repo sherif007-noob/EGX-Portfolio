@@ -590,3 +590,21 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
  border-radius:11px; background:var(--ui-surface-2); color:var(--ui-text-2); border:1px solid var(--ui-border); }
 .ui-activity-record-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .ui-activity-record-label > strong,.ui-activity-record-right > strong { overflow-wrap:anywhere; }
+
+/* Medium UI: one-step Activity financial actions and one-purpose IPO creation. */
+.ui-activity-record-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.ui-activity-record-actions > button { flex:0 0 auto; min-height:38px; }
+.ui-activity-action-field { min-width:0; }
+.ui-activity-dialog-backdrop { z-index:110; overflow-y:auto; overscroll-behavior:contain; }
+.ui-activity-dialog { max-height:calc(100dvh - 32px); overscroll-behavior:contain; }
+.ui-activity-dialog .ui-activity-inline-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.ui-ipo-create-summary { display:flex; flex-direction:column; gap:8px; padding:12px;
+  border:1px solid var(--ui-border); background:var(--ui-surface-2); border-radius:var(--ui-radius-sm,10px); }
+.ui-ipo-create-summary > span { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  color:var(--ui-text-2); font-size:.8rem; }
+.ui-ipo-create-summary strong { font-variant-numeric:tabular-nums; color:var(--ui-text); font-weight:650; }
+@media(max-width:420px){
+  .ui-activity-record-actions > button { flex:1 1 auto; }
+  .ui-activity-dialog { padding:15px; }
+  .ui-activity-dialog .ui-activity-inline-actions > button { flex:1 1 auto; }
+}

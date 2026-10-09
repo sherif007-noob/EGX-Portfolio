@@ -97,6 +97,9 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const pendingSelection = pending.find((tx) => tx.id === selectedPendingId);
+  const fundingOnCorrectedDate=!!pendingSelection && correctionDate!==pendingSelection.date &&
+    transactions.some(tx=>tx.id!==pendingSelection.id && tx.date.slice(0,10)===correctionDate &&
+      (tx.cashFlowType==='DEPOSIT' || (tx.ticker.toUpperCase()==='CASH' && tx.type==='BUY' && !tx.cashFlowType)));
   const requestedSharesNumber = requestedSharesInput.trim() ? Number(requestedSharesInput) : 0;
   const holdPercentNumber = Number(holdPercent);
   const offerPriceNumber = offerPrice.trim() ? Number(offerPrice) : 0;
@@ -214,6 +217,9 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     if (!editingPendingId || !pendingSelection || pendingSelection.id !== editingPendingId || isSaving) return;
     if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(correctionDate)) {
       setFeedback('Enter the correct subscription date.'); return;
+    }
+    if (fundingOnCorrectedDate && !correctionTime.trim()) {
+      setFeedback('Enter the broker placement time, because you funded this subscription on the same date.'); return;
     }
     if (!correctionReason.trim()) {
       setFeedback('Please enter a reason for the audited correction.'); return;
@@ -492,8 +498,8 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
                       <DateInput value={correctionDate} onChange={value => {setCorrectionDate(value);setFeedback(null);}}
                         label="Actual subscription date" required showVerbosePreview={false}/>
                       <label className="block space-y-1 font-semibold text-slate-300">
-                        <span>Order time in Cairo (optional)</span>
-                        <input type="time" value={correctionTime}
+                        <span>Order time (Cairo){fundingOnCorrectedDate?' · required':' · optional'}</span>
+                        <input type="time" value={correctionTime} required={fundingOnCorrectedDate}
                           onChange={event=>{setCorrectionTime(event.target.value);setFeedback(null);}}
                           className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white"/>
                       </label>

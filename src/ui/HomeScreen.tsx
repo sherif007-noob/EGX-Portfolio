@@ -61,7 +61,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const lastSessionReliable = metrics.dayChangeReliable !== false &&
     Number.isFinite(metrics.dayChangeEgp) && Number.isFinite(metrics.dayChangePercent);
   const sessionReturnLabel = marketSession.isRegularTradingHours
-    ? 'Today' : marketSession.sessionCaption;
+    ? 'Today' : marketSession.lastSessionCaption;
   const holdings = useMemo(
     () =>
       positions

@@ -273,7 +273,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const isLoading = loading || (timeframe !== 'TODAY' && historicalLoading);
   const hasData = model.rows.length >= 2;
   const missingBenchmarks = mode === 'bm' ? model.series.filter(item => item.key !== 'portfolio' && !model.rows.some(row => finite(row[item.key]))).map(item => item.label) : [];
-  const ChartRoot = mode==='ret' && comparePortfolio ? ComposedChart : model.series.some((item) => item.area) ? AreaChart : LineChart;
+  const includesAreas = model.series.some(item=>item.area);
+  const includesLines = model.series.some(item=>!item.area);
+  const ChartRoot = includesAreas && includesLines ? ComposedChart : includesAreas ? AreaChart : LineChart;
 
   return (
     <div>

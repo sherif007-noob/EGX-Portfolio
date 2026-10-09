@@ -408,13 +408,15 @@ export function buildIntradayAnalyticsResult(
       performanceIndex: 100,
       drawdownPercent: 0,
       equityDrawdownEgp: 0,
+      returnEgp: 0,
       complete: baselineComplete,
     },
   ];
 
   let twrFactor = 1;
   let performancePeak = 100;
-  let equityPeak = baselineEquity;
+  let adjustedReturnPeak = 0;
+  let cumulativeExternalFlow = 0;
   let previousEquity = baselineEquity;
 
   for (const at of allBarTimes) {
@@ -472,8 +474,10 @@ export function buildIntradayAnalyticsResult(
       ? ((performanceIndex - performancePeak) / performancePeak) * 100
       : null;
 
-    equityPeak = Math.max(equityPeak, equity);
-    const equityDrawdownEgp = Math.max(0, equityPeak - equity);
+    cumulativeExternalFlow += externalFlow;
+    const returnEgp = equity - baselineEquity - cumulativeExternalFlow;
+    adjustedReturnPeak = Math.max(adjustedReturnPeak, returnEgp);
+    const equityDrawdownEgp = Math.max(0, adjustedReturnPeak - returnEgp);
     const timestamp = formatIso(at);
     const mwrrPercent = calculatePeriodMWR(
       baselineEquity,
@@ -499,6 +503,7 @@ export function buildIntradayAnalyticsResult(
       performanceIndex,
       drawdownPercent,
       equityDrawdownEgp,
+      returnEgp,
       complete: missingTickers.length === 0 && missingTimestampIds.length === 0,
     });
     previousEquity = equity;
@@ -565,7 +570,8 @@ export function buildIntradayAnalyticsResult(
         const drawdownPercent = performancePeak > 0
           ? ((performanceIndex - performancePeak) / performancePeak) * 100
           : null;
-        equityPeak = Math.max(equityPeak, liveEquity);
+        const liveReturnEgp = liveEquity - baselineEquity - cumulativeExternalFlow - externalFlow;
+        adjustedReturnPeak = Math.max(adjustedReturnPeak, liveReturnEgp);
 
         // A live quote sync can happen long after the regular EGX session
         // has closed. Never stretch the Today chart to the wall-clock sync time:
@@ -605,7 +611,8 @@ export function buildIntradayAnalyticsResult(
           annualizedMwrrPercent: null,
           performanceIndex,
           drawdownPercent,
-          equityDrawdownEgp: Math.max(0, equityPeak - liveEquity),
+          equityDrawdownEgp: Math.max(0, adjustedReturnPeak - liveReturnEgp),
+          returnEgp: liveReturnEgp,
           complete: true,
         });
       }

@@ -48,7 +48,8 @@ describe('one-step Activity actions',()=>{
     expect(html).toContain('Edit IPOX subscription');
     expect(html).toContain('Requested shares');
     expect(html).toContain('Offer price per share');
-    expect(html).toContain('Cash held by broker');
+    expect(html).toContain('Broker cash hold (%)');
+    expect(html).toContain('Broker cash held');
     expect(html).toContain('Actual subscription date');
     expect(html).toContain('Save changes');
     expect(html).not.toContain('New IPO subscription');

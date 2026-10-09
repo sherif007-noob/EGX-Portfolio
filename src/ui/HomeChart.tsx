@@ -4,6 +4,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ComposedChart,
   Line,
   LineChart,
   ReferenceLine,
@@ -273,7 +274,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const isLoading = loading || (timeframe !== 'TODAY' && historicalLoading);
   const hasData = model.rows.length >= 2;
   const missingBenchmarks = mode === 'bm' ? model.series.filter(item => item.key !== 'portfolio' && !model.rows.some(row => finite(row[item.key]))).map(item => item.label) : [];
-  const ChartRoot = model.series.some((item) => item.area) ? AreaChart : LineChart;
+  const ChartRoot = mode === 'val' ? ComposedChart : model.series.some((item) => item.area) ? AreaChart : LineChart;
 
   return (
     <div>

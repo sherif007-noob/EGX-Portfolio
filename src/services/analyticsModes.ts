@@ -12,7 +12,7 @@ export interface AnalyticsModeDefinition {
   label: string;
   description: string;
   valueKind: 'egp' | 'percent';
-  primaryKey: 'equity' | 'twrPercent' | 'mwrrPercent';
+  primaryKey: 'equity' | 'returnEgp' | 'twrPercent' | 'mwrrPercent';
   secondaryKey?: 'netDeposits';
   primaryLabel: string;
   secondaryLabel?: string;
@@ -28,11 +28,11 @@ export interface AnalyticsModeSummary {
 export const ANALYTICS_MODES: AnalyticsModeDefinition[] = [
   {
     mode: 'PORTFOLIO_RETURN',
-    label: 'Portfolio vs Return',
-    description: 'Portfolio value with selected-period profit or loss.',
+    label: 'Return (EGP)',
+    description: 'Selected-period investment P&L after neutralizing deposits, withdrawals and accounting corrections.',
     valueKind: 'egp',
-    primaryKey: 'equity',
-    primaryLabel: 'Portfolio',
+    primaryKey: 'returnEgp',
+    primaryLabel: 'Return (EGP)',
   },
   {
     mode: 'PORTFOLIO_DEPOSITS',
@@ -110,7 +110,7 @@ export function analyticsModeSummary(
     const changePercent = result.summary.mwrrPercent;
 
     return {
-      primaryValue: last?.equity ?? result.summary.endEquity,
+      primaryValue: last?.returnEgp ?? result.summary.pnlEgp,
       changeEgp,
       changePercent,
       secondaryValue: null,

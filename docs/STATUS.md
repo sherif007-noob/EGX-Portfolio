@@ -333,3 +333,6 @@ The IPO mutation model now separates the **full request** from the **broker-held
 
 ### Last-session return fallback guard (medium-ui)
 In the medium-ui branch, daily P&L preserves transaction-aware opening holdings even when tickers are not in the directory, by using stored valid holding deltas as previous-close fallback. Where opening values cannot be reconstructed, the UI marks the daily return unavailable instead of presenting a false percent. Source-only changes pending actual tests and broker validation.
+
+## Medium UI IPO shares-first form — 2026-10-09
+The IPO order form now takes share quantity and offer price per share as primary entries, derives order commitment and cash hold, and persists the exact requested whole-share count. The existing IPO accounting invariants, hold percentage, allocation and cancellation workflows remain intact. Tests committed, execution/deployment verification pending; production financial data was not modified.

@@ -139,3 +139,9 @@ The numeric `dayChange` fields remain ledger/quote-derived and unchanged for act
 `calculatePortfolioMetrics` now attempts to reconstruct session-opening share quantities and cash after replaying the day's BUY/SELL executions. If an EGX ticker-registry quote is unavailable, it can derive the previous close from the currently held position's valid last-price/change pair. This preserves same-day round-trips and avoids crediting today's newly purchased shares with the previous session's price rise. If an opening position still has no usable previous quote, `dayChangeReliable=false`; Home, simple Reports, compact strip, and advanced Reports do **not** claim a verified daily gain. This is separate from the official market-closed holiday presentation.
 
 Tests include a synthetic same-day buy/sell/rebuy where `shares × quote change` overstates P&L, and a missing-previous-close case that must fail closed. None of this proves parity with a broker's own return convention; only same-timestamp receipts and closing valuations can do that.
+
+## IPO share-first entry (medium-ui, 2026-10-09)
+- Removed the manually entered “Requested Amount (EGP)” from the IPO form. Primary fields are **Number of shares** (positive integer) and **Offer price / share (EGP)**.
+- The form derives **Total order value** and then **Cash held by broker** from the adjustable hold percentage. The compact summary displays requested shares, full order, broker hold, and buying power after hold, with NAV unchanged by reservation.
+- Canonical persistence receives the exact entered shares and checks monetary consistency. Older amount-based integrations retain compatibility. Tests cover integer validation, monetary rounding, 25%-hold calculation, and rejection of inconsistent amounts.
+- Changes are source-level on the experimental `medium-ui` branch. Full build, Vitest execution and device acceptance have not yet been run.

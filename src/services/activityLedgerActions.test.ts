@@ -1,6 +1,6 @@
 import { describe,expect,it } from 'vitest';
 import type { TradeTransaction } from '../types';
-import { prepareTransactionEditMutation,prepareTransactionDeleteMutation,prepareIpoSubscriptionMutation } from './ledgerWorkflowMutations';
+import { prepareTransactionEditMutation,prepareTransactionDeleteMutation,prepareIpoSubscriptionMutation,prepareIpoAllocationMutation } from './ledgerWorkflowMutations';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import { pendingIpoSubscriptionValue } from './ipoSubscriptions';
 
@@ -22,6 +22,19 @@ describe('Activity audited financial edits and deletes',()=>{
     expect(result.transactions[0].cashFlowType).toBe('DEPOSIT');
     expect(result.capitalDeposits).toBe(90000);
     expect(reconcilePortfolioFromLedger(result.transactions,[],result.capitalDeposits!).reconciledCashBalance).toBe(90000);
+  });
+  it('never deletes a settled IPO allocation from the canonical ledger',()=>{
+    const initial=snapshot([opening]);
+    const placed=prepareIpoSubscriptionMutation(initial,{
+      transactionId:'allocated-ipo',ticker:'IPOX',companyName:'Example',sector:'Other',
+      requestedShares:4000,requestedAmount:100000,reservedAmount:25000,offerPrice:25,
+      subscriptionDate:'2026-10-08',
+    });
+    const allocation=prepareIpoAllocationMutation(snapshot(placed.transactions),{
+      transactionId:'allocated-ipo',allocatedShares:100,allocationDate:'2026-10-10',
+    });
+    expect(()=>prepareTransactionDeleteMutation(snapshot(allocation.transactions),'allocated-ipo'))
+      .toThrow(/Allocated or cancelled IPO/);
   });
   it('deletes an erroneous pending IPO reservation without generating fake share positions',()=>{
     const orig=snapshot([opening]);

@@ -410,6 +410,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
             value={subscriptionDate}
             onChange={setSubscriptionDate}
             label="Subscription Date"
+            strictInput
             required
             showVerbosePreview={false}
           />
@@ -485,6 +486,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
             value={listingDate}
             onChange={setListingDate}
             label="Expected Listing Date"
+            strictInput
             showVerbosePreview={false}
           />
           <div className="space-y-1 sm:col-span-2">
@@ -561,7 +563,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <DateInput id="ipo-correction-date" value={correctionDate}
                 onChange={value => {setCorrectionDate(value);setFeedback(null);}}
-                label="Actual subscription date" required showVerbosePreview={false}/>
+                label="Actual subscription date" required strictInput showVerbosePreview={false}/>
               <label className="block space-y-1 font-semibold text-slate-300">
                 <span>Order time (Cairo){fundingOnCorrectedDate?' · required':' · optional'}</span>
                 <input type="time" value={correctionTime} required={fundingOnCorrectedDate}
@@ -609,7 +611,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
                 className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white"/>
             </div>
             <DateInput value={allocationDate} onChange={setAllocationDate}
-              label="Allocation date" required showVerbosePreview={false}/>
+              label="Allocation date" required strictInput showVerbosePreview={false}/>
             <div className="space-y-1">
               <label className="block font-semibold text-slate-300">Allocation fees</label>
               <NumberStepperInput min={0} step={0.01} value={allocationFees}

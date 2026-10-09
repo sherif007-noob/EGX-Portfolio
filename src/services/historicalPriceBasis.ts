@@ -40,9 +40,9 @@ export interface HistoricalPriceBasisBridge {
 export function resolvedHistoricalPriceBasisBridges(
   transactions: TradeTransaction[],
   prices: HistoricalPriceSeries,
-): { bridges: HistoricalPriceBasisBridge[]; unverified: string[] } {
+): { bridges: HistoricalPriceBasisBridge[]; unverified: Array<{ ticker: string; startDate: string }> } {
   const bridges: HistoricalPriceBasisBridge[] = [];
-  const unverified: string[] = [];
+  const unverified: Array<{ ticker: string; startDate: string }> = [];
   for (const transition of VERIFIED_VENDOR_PRICE_TRANSITIONS) {
     const matches = transactions.filter(tx =>
       isBonusSharesTransaction(tx)
@@ -50,7 +50,7 @@ export function resolvedHistoricalPriceBasisBridges(
       && tx.date === transition.ledgerShareCreditDate,
     );
     if (matches.length === 0) continue;
-    if (matches.length !== 1) { unverified.push(transition.ticker); continue; }
+    if (matches.length !== 1) { unverified.push({ ticker:transition.ticker, startDate:transition.vendorAdjustedFrom }); continue; }
     const bonus = matches[0];
     const sourceShares = Number(bonus.corporateActionSourceShares);
     const creditedShares = Number(bonus.shares);

@@ -96,6 +96,13 @@ export interface IpoSubscriptionFormInput {
   notes?: string;
 }
 
+export interface IpoSubscriptionCorrectionFormInput {
+  transactionId: string;
+  subscriptionDate: string;
+  executionTimeCairo?: string;
+  auditReason: string;
+}
+
 export interface IpoAllocationFormInput {
   transactionId: string;
   allocatedShares: number;
@@ -368,6 +375,27 @@ export function usePortfolioWorkflows({
     );
     return true;
   }, [appendPersistedTransactionToSheet, portfolio, showToast]);
+
+  const handleCorrectIpoSubscription = useCallback(async (
+    input: IpoSubscriptionCorrectionFormInput,
+  ): Promise<boolean> => {
+    const reason=input.auditReason.trim();
+    if (!reason) {
+      showToast('Enter an audit reason for the IPO correction.', 'error');
+      return false;
+    }
+    const result=await portfolio.correctIpoSubscription({
+      transactionId:input.transactionId,
+      subscriptionDate:input.subscriptionDate,
+      executionTimeCairo:input.executionTimeCairo,
+    },reason);
+    if ('error' in result){
+      showToast(`IPO correction not saved: ${result.error.message} Nothing was changed.`, 'error', 7000);
+      return false;
+    }
+    showToast(`IPO subscription corrected to ${input.subscriptionDate}. Original hold and order ID preserved.`, 'success');
+    return true;
+  }, [portfolio, showToast]);
 
   const handleAllocateIpoSubscription = useCallback(async (
     input: IpoAllocationFormInput,
@@ -693,6 +721,7 @@ export function usePortfolioWorkflows({
     handleConfirmSell,
     handleAddBonusShares,
     handleAddIpoSubscription,
+    handleCorrectIpoSubscription,
     handleAllocateIpoSubscription,
     handleCancelIpoSubscription,
     handleSavePositionEdit,

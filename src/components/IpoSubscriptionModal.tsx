@@ -23,6 +23,13 @@ export interface IpoSubscriptionFormValue {
   notes?: string;
 }
 
+export interface IpoSubscriptionCorrectionFormValue {
+  transactionId: string;
+  subscriptionDate: string;
+  executionTimeCairo?: string;
+  auditReason: string;
+}
+
 export interface IpoAllocationFormValue {
   transactionId: string;
   allocatedShares: number;
@@ -37,6 +44,7 @@ interface IpoSubscriptionModalProps {
   transactions: TradeTransaction[];
   cashBalance: number;
   onSubmit: (value: IpoSubscriptionFormValue) => Promise<boolean>;
+  onCorrectSubscription: (value: IpoSubscriptionCorrectionFormValue) => Promise<boolean>;
   onAllocate: (value: IpoAllocationFormValue) => Promise<boolean>;
   onCancelSubscription: (transactionId: string) => Promise<boolean>;
 }
@@ -51,6 +59,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   transactions,
   cashBalance,
   onSubmit,
+  onCorrectSubscription,
   onAllocate,
   onCancelSubscription,
 }) => {
@@ -77,6 +86,10 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [selectedPendingId, setSelectedPendingId] = useState('');
+  const [editingPendingId, setEditingPendingId] = useState<string | null>(null);
+  const [correctionDate, setCorrectionDate] = useState('');
+  const [correctionTime, setCorrectionTime] = useState('');
+  const [correctionReason, setCorrectionReason] = useState('Correct broker IPO order date');
   const [allocatedShares, setAllocatedShares] = useState('');
   const [allocationDate, setAllocationDate] = useState(currentCairoDateKey());
   const [allocationFees, setAllocationFees] = useState('0');
@@ -110,6 +123,10 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     setReference('');
     setNotes('');
     setSelectedPendingId(pending[0]?.id ?? '');
+    setEditingPendingId(null);
+    setCorrectionDate('');
+    setCorrectionTime('');
+    setCorrectionReason('Correct broker IPO order date');
     setAllocatedShares('');
     setAllocationDate(currentCairoDateKey());
     setAllocationFees('0');
@@ -179,6 +196,48 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const beginCorrection = (tx: TradeTransaction) => {
+    if (isSaving || tx.type !== 'IPO_SUBSCRIPTION' || tx.ipoSubscription?.status !== 'SUBMITTED') return;
+    setEditingPendingId(tx.id);
+    setCorrectionDate(tx.ipoSubscription.subscriptionDate || tx.date);
+    setCorrectionTime(tx.executedAt
+      ? new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(tx.executedAt))
+      : '');
+    setCorrectionReason('Correct broker IPO order date');
+    setFeedback(null);
+  };
+
+  const submitCorrection = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingPendingId || !pendingSelection || pendingSelection.id !== editingPendingId || isSaving) return;
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(correctionDate)) {
+      setFeedback('Enter the correct subscription date.'); return;
+    }
+    if (!correctionReason.trim()) {
+      setFeedback('Please enter a reason for the audited correction.'); return;
+    }
+    if (correctionTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(correctionTime)) {
+      setFeedback('Enter a valid Cairo time in HH:MM format.'); return;
+    }
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      const saved = await onCorrectSubscription({
+        transactionId: editingPendingId,
+        subscriptionDate: correctionDate,
+        executionTimeCairo: correctionTime.trim() || undefined,
+        auditReason: correctionReason.trim(),
+      });
+      if (saved) {
+        setEditingPendingId(null);
+        setCorrectionDate('');
+        setCorrectionTime('');
+      } else {
+        setFeedback('The correction was not saved. The original subscription remains unchanged. If funding occurred on the same date, enter the actual order placement time.');
+      }
+    } finally { setIsSaving(false); }
   };
 
   const submitAllocation = async () => {
@@ -403,7 +462,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
           <div className="space-y-3 text-xs">
             <AnalyticsSelect
               value={selectedPendingId}
-              onChange={(value) => { setSelectedPendingId(value); setAllocatedShares(''); setFeedback(null); }}
+              onChange={(value) => { setSelectedPendingId(value); setAllocatedShares(''); setEditingPendingId(null); setFeedback(null); }}
               accent="blue"
               ariaLabel="Pending IPO subscription"
               className="w-full"
@@ -413,6 +472,52 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
                 description: `${formatEgp(Number(tx.ipoSubscription?.reservedAmount ?? tx.ipoSubscription?.requestedAmount ?? 0))} EGP held of ${formatEgp(Number(tx.ipoSubscription?.requestedAmount ?? 0))} EGP order · ${tx.ipoSubscription?.subscriptionDate || tx.date}`,
               }))}
             />
+
+            {pendingSelection && (
+              <div className="premium-form-section rounded-xl p-3 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <strong className="text-slate-100">{pendingSelection.ticker} · Pending order</strong>
+                    <p className="premium-type-helper mt-1">Recorded {pendingSelection.ipoSubscription?.subscriptionDate || pendingSelection.date} · {formatEgp(pendingSelection.ipoSubscription?.reservedAmount ?? pendingSelection.ipoSubscription?.requestedAmount ?? 0)} EGP held</p>
+                  </div>
+                  {editingPendingId !== pendingSelection.id &&
+                    <button type="button" disabled={isSaving} onClick={() => beginCorrection(pendingSelection)}
+                      className="premium-action rounded-xl px-3 py-2 text-xs font-semibold">
+                      Edit subscription
+                    </button>}
+                </div>
+                {editingPendingId === pendingSelection.id && (
+                  <form className="space-y-3 border-t border-slate-700/40 pt-3" onSubmit={submitCorrection}>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <DateInput value={correctionDate} onChange={value => {setCorrectionDate(value);setFeedback(null);}}
+                        label="Actual subscription date" required showVerbosePreview={false}/>
+                      <label className="block space-y-1 font-semibold text-slate-300">
+                        <span>Order time in Cairo (optional)</span>
+                        <input type="time" value={correctionTime}
+                          onChange={event=>{setCorrectionTime(event.target.value);setFeedback(null);}}
+                          className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white"/>
+                      </label>
+                    </div>
+                    <p className="premium-type-helper">If you funded and placed the order on the same date, enter the time from your broker receipt so the cash ledger can process events in the right order.</p>
+                    <label className="block space-y-1 font-semibold text-slate-300">
+                      <span>Audit reason</span>
+                      <input value={correctionReason} required
+                        onChange={event=>setCorrectionReason(event.target.value)}
+                        className="premium-field w-full rounded-xl px-3 py-2 text-white"
+                        placeholder="Why is this entry being corrected?"/>
+                    </label>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button type="button" disabled={isSaving} className="premium-action rounded-xl px-3 py-2"
+                        onClick={()=>{setEditingPendingId(null);setFeedback(null);}}>Discard</button>
+                      <button type="submit" disabled={isSaving || !correctionDate || !correctionReason.trim()}
+                        className="premium-action premium-action-primary rounded-xl px-3 py-2 font-semibold disabled:opacity-40">
+                        {isSaving?'Saving correction…':'Save changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
 
             {pendingSelection && (
               <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-3">

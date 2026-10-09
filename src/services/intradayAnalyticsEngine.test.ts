@@ -11,6 +11,37 @@ const tx = (input: Partial<TradeTransaction> & Pick<TradeTransaction, 'id' | 'ty
 });
 
 describe('intraday analytics engine', () => {
+  it('uses vendor-adjusted prior ORHD close without applying bonus split factor twice on credit session',()=>{
+    const transactions:TradeTransaction[]=[
+      tx({id:'initial',type:'BUY',ticker:'CASH',shares:70000,price:1,totalAmount:70000,
+        date:'2026-09-29',cashFlowType:'DEPOSIT',cashFlowAmount:70000}),
+      tx({id:'orhd',type:'BUY',ticker:'ORHD',shares:300,price:38.8,totalAmount:11640,date:'2026-09-29'}),
+      tx({id:'funding',type:'BUY',ticker:'CASH',shares:60000,price:1,totalAmount:60000,
+        date:'2026-10-07',cashFlowType:'DEPOSIT',cashFlowAmount:60000}),
+      tx({id:'bonus',type:'CORPORATE_ACTION',ticker:'ORHD',shares:668,price:0,totalAmount:0,
+        date:'2026-10-07',corporateActionType:'BONUS_SHARES',
+        corporateActionRatio:2.228,corporateActionSourceShares:300}),
+    ];
+    const history={ORHD:[
+      {date:'2026-09-29',close:38.8},
+      {date:'2026-09-30',close:11.641924},
+      {date:'2026-10-06',close:12.029059},
+    ]};
+    const intraday={ORHD:[
+      {timestamp:'2026-10-07T07:00:00Z',intervalMinutes:1,open:12,high:12,low:12,close:12},
+    ]};
+    const result=buildIntradayAnalyticsResult(transactions,history,intraday,{
+      sessionDate:'2026-10-07',asOf:'2026-10-07T07:02:00Z',
+    });
+    expect(result.dataQuality.hasUsableRange).toBe(true);
+    expect(result.summary.endEquity).toBeCloseTo(129976,4);
+    expect(result.summary.startEquity).toBeCloseTo(130004.129112,3);
+    expect(Math.abs(result.summary.pnlEgp??0)).toBeLessThan(100);
+    expect(Math.abs(result.summary.twrPercent??0)).toBeLessThan(0.2);
+    expect(result.points.at(-1)?.returnEgp).toBeCloseTo(result.summary.pnlEgp!,5);
+  });
+
+
   it('reconstructs same-session buys and round trips from execution timestamps', () => {
     const transactions: TradeTransaction[] = [
       tx({ id: 'dep', type: 'BUY', ticker: 'CASH', shares: 2000, price: 1, totalAmount: 2000, cashFlowType: 'DEPOSIT', cashFlowAmount: 2000, date: '2026-09-16' }),

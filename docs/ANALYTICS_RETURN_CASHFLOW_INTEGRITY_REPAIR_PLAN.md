@@ -81,3 +81,7 @@ Implemented on `medium-ui` as the next incremental UI pass, subject to tests and
 5. No accounting mutation, market price change or deployed-version claim. Needs compiler/test/build/device acceptance gates before production promotion.
 
 The previous "Value" and "vs Deposits" displays deliberately shared NAV; this pass makes their semantic roles independent while retaining the real NAV impact of cash transfers.
+
+## UX simplification implementation — 2026-10-10
+
+Per user feedback, the **NAV breakdown** graph was removed rather than further embellished. A compact **Reports → Overview** snapshot now presents invested holdings, broker-held IPO funds and available cash summing to current NAV, with reconciliation warnings. The separate **vs Deposits** performance comparison remains (NAV and contributed capital, not investment return). The shared Home/Reports chart selector no longer offers the confusing value breakdown and instead exposes vs Deposits among default chart choices. Source-level regression tests are committed; no data writes, compiler runs or Cloudflare release implied.

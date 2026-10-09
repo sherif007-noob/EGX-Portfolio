@@ -15,7 +15,7 @@ import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { PythonSchemaSyncModal } from './components/PythonSchemaSyncModal';
 import { AddTradeModal } from './components/AddTradeModal';
 import { BonusSharesModal } from './components/BonusSharesModal';
-import { IpoSubscriptionModal } from './components/IpoSubscriptionModal';
+import { SimpleIpoCreateModal } from './ui/SimpleIpoCreateModal';
 import { SellPositionModal } from './components/SellPositionModal';
 import { QuickCashModal } from './components/QuickCashModal';
 import { PortfolioBackupModal } from './components/PortfolioBackupModal';
@@ -560,16 +560,12 @@ export default function App() {
         onSubmit={handleAddBonusShares}
       />
 
-      <IpoSubscriptionModal
+      <SimpleIpoCreateModal
         isOpen={isIpoSubscriptionModalOpen}
         onClose={() => setIsIpoSubscriptionModalOpen(false)}
         tickers={tickers}
-        transactions={transactions}
         cashBalance={cashBalance}
         onSubmit={handleAddIpoSubscription}
-        onCorrectSubscription={handleCorrectIpoSubscription}
-        onAllocate={handleAllocateIpoSubscription}
-        onCancelSubscription={handleCancelIpoSubscription}
       />
 
       <TradeScreenshotModal

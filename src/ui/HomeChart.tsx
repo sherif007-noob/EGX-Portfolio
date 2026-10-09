@@ -3,6 +3,7 @@ import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import {
   Area,
   AreaChart,
+  ComposedChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -89,6 +90,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const marketSession = egxSessionPresentation();
   const [mode, setMode] = useState<ChartMode>('ret');
+  const [comparePortfolio,setComparePortfolio]=useState(false);
   const [indexChoice, setIndexChoice] = useState<IndexChoice>('all');
   const [granularity, setGranularity] = useState<Granularity>(1);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -117,9 +119,15 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       const fallback = cashFlowNeutralReturn(points);
       for (let index=0; index<points.length; index++) {
         const verified=points[index].returnEgp;
-        rows.push({ date:points[index].date, ret:finite(verified) ? verified : fallback[index]?.value ?? 0 });
+        rows.push({
+          date:points[index].date, ret:finite(verified) ? verified : fallback[index]?.value ?? 0,
+          ...(comparePortfolio ? {nav:points[index].equity} : {}),
+        });
       }
-      series = [{ key: 'ret', label: 'Return', color: 'var(--ui-teal)', area: true }];
+      series = [
+        { key:'ret',label:'Return (EGP)',color:'var(--ui-teal)',area:true },
+        ...(comparePortfolio ? [{key:'nav',label:'Portfolio NAV (EGP)',color:'var(--ui-blue)',dashed:true}] : []),
+      ];
     } else if (mode === 'dep') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity, netDeposits: point.netDeposits });
       series = [
@@ -161,7 +169,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
 
     return { rows: rows.map(row => ({ ...row, timestamp: chartTime(String(row.date)) }))
       .filter(row => Number.isFinite(row.timestamp)), series, unit };
-  }, [mode, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
+  }, [mode, comparePortfolio, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
 
   const visibleCapitalEvents = useMemo(() => capitalEvents.flatMap(event => {
     // DATE-only CASH entries provide no trustworthy intraday clock. Place the
@@ -251,7 +259,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const isLoading = loading || (timeframe !== 'TODAY' && historicalLoading);
   const hasData = model.rows.length >= 2;
   const missingBenchmarks = mode === 'bm' ? model.series.filter(item => item.key !== 'portfolio' && !model.rows.some(row => finite(row[item.key]))).map(item => item.label) : [];
-  const ChartRoot = model.series.some((item) => item.area) ? AreaChart : LineChart;
+  const ChartRoot = mode==='ret' && comparePortfolio ? ComposedChart : model.series.some((item) => item.area) ? AreaChart : LineChart;
 
   return (
     <div>
@@ -283,6 +291,18 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ))}
       </div><button type="button" className="ui-link ui-sm" aria-expanded={showAdvanced} onClick={() => setShowAdvanced(value => !value)}>{showAdvanced ? 'Less' : 'More metrics'}</button></div>
 
+      {mode==='ret' && (
+        <div className="ui-return-compare-control">
+          <button type="button" className="ui-chip sub" aria-pressed={comparePortfolio}
+            aria-label="Compare portfolio NAV with return"
+            onClick={()=>setComparePortfolio(on=>!on)}>
+            {comparePortfolio?'✓ Portfolio vs Return':'+ Compare portfolio value'}
+          </button>
+          {comparePortfolio && <span className="ui-sm">
+            NAV (blue, right scale) vs P&amp;L (green, left scale)
+          </span>}
+        </div>
+      )}
       {timeframe === 'TODAY' && !marketSession.isCurrentSessionDay && (
         <p className="ui-note" role="status">{marketSession.description} · {marketSession.sessionCaption}. No new EGX session or trading return today.</p>
       )}
@@ -337,6 +357,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                   minTickGap={40}
                 />
                 <YAxis
+                  yAxisId="primary"
                   width={46}
                   tickFormatter={(value: number) => (model.unit === 'pct' ? `${value.toFixed(1)}%` : formatCompact(value))}
                   tick={{ fill: 'var(--ui-text-2)', fontSize: 11 }}
@@ -344,7 +365,13 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                   axisLine={false}
                   domain={['auto', 'auto']}
                 />
-                {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
+                {mode==='ret' && comparePortfolio && (
+                  <YAxis yAxisId="nav" orientation="right" width={46}
+                    tickFormatter={(value:number)=>formatCompact(value)}
+                    tick={{fill:'var(--ui-blue)',fontSize:10}} tickLine={false} axisLine={false}
+                    domain={['auto','auto']}/>
+                )}
+                {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine yAxisId="primary" y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
                 <Tooltip
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
                   content={(mode==='ret'||mode==='dep')?renderDetailedTooltip:undefined}
@@ -359,6 +386,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
+                      yAxisId={item.key==='nav'?'nav':'primary'}
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={2.2}
@@ -372,6 +400,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
+                      yAxisId={item.key==='nav'?'nav':'primary'}
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={item.key === 'portfolio' ? 2.4 : 1.6}
@@ -383,7 +412,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 )}
                                 {mode==='dep'&&visibleCapitalEvents.map(event=>(
                   <ReferenceDot key={event.date}
-                    x={event.timestamp} y={event.equity} r={4}
+                    x={event.timestamp} y={event.equity} yAxisId="primary" r={4}
                     fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}
                     stroke="var(--ui-surface-2)" strokeWidth={2}
                     label={{value:event.deposited>0&&event.withdrawn===0
@@ -424,6 +453,12 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 </span>
               </span>
             ))
+          )}
+          {mode==='ret' && comparePortfolio && last && finite(last.nav) && (
+            <span className="ui-sm">
+              <span className="ui-dot" style={{ ['--dot' as string]:'var(--ui-blue)' }}/>
+              Portfolio NAV <span className="ui-mono">{formatEgp(last.nav)} EGP</span>
+            </span>
           )}
           {relative !== null && (
             <span className="ui-sm">

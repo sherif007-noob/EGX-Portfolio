@@ -87,7 +87,7 @@ The modal supports:
 3. recording allocation;
 4. cancelling and releasing cash.
 
-The subscription entry form accepts a configurable broker-held percentage (the default is 100% for backward compatibility). The hold percentage must match the broker's actual order conditions. The amount displayed as `Estimated total` is the full order, not the cash debit. Allocation and cancellation use the original hold amount, not the full commitment.
+The subscription form asks the user for **number of shares** and **offer price per share**. The full EGP order commitment is automatically calculated (shares × price) and is never a required money input. The form then accepts a configurable broker-held percentage (100% by default for backward compatibility). The hold percentage must match the broker's actual order conditions. The amount displayed as `Estimated total` is the full order, not the cash debit. Allocation and cancellation use the original hold amount, not the full commitment.
 
 The portfolio summary displays:
 
@@ -114,3 +114,7 @@ Supabase remains authoritative. A future Sheets schema extension must preserve t
 The lifecycle model supports partial broker holds, regardless of IPO ticker. For example, a **synthetic** 100,000 EGP order with 25,000 EGP (25%) held records 25,000 EGP reserved cash as a pending asset; it does not create owned shares. Any real pending IPO in a user's portfolio must be saved through the dedicated audited form after confirmation. No production financial records were mutated by this branch implementation.
 
 Source-level tests cover the 25%-hold submitted record, NAV neutrality, unallocated refunds, additional-cash debits, insufficient liquidity, and cancellation. TypeScript, Vitest and device-level acceptance are pending.
+
+### Share-first input invariant
+
+New IPO form submissions include `requestedShares` as the explicit whole-number quantity, alongside the calculated `requestedAmount` and `reservedAmount`. The canonical ledger mutation verifies that the rounded commitment agrees with shares × price; it preserves the precise quantity instead of dividing a rounded monetary amount back by the price. Legacy callers that supply only `requestedAmount` and `offerPrice` are still accepted. No portfolio ledger entries are created or changed by the UI migration alone.

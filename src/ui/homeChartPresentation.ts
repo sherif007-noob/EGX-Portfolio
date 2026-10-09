@@ -1,4 +1,5 @@
 import type { TradeTransaction } from '../types';
+import { sessionChangePercent } from '../services/sessionReturnPresentation';
 import type { UnifiedAnalyticsPoint } from '../services/unifiedAnalyticsEngine';
 import { normalizeCashFlowType } from '../services/cashFlowSemantics';
 
@@ -39,7 +40,7 @@ export interface ReturnTooltipMetrics {
   cumulativeReturn: number|null;
   /** Profit between the current and previous plotted, complete observation. */
   intervalReturn: number|null;
-  /** Compounded subperiod percentage from the canonical TWR series. */
+  /** Broker-style session percentage, same denominator as the Home hero. */
   intervalPercent: number|null;
   nav: number;
   /** The observation is a baseline, not a false 0-EGP daily return. */
@@ -62,11 +63,10 @@ export function chartReturnTooltipMetrics(
     : Number.isFinite(currentProfit)&&Number.isFinite(priorProfit)
       ? currentProfit-priorProfit
       : current.equity-previous!.equity-(Number(current.externalFlow)||0);
-  const twr=current.twrPercent == null ? Number.NaN : Number(current.twrPercent);
-  const priorTwr=previous?.twrPercent == null ? Number.NaN : Number(previous.twrPercent);
-  const intervalPercent = !hasPrevious || !Number.isFinite(twr) || !Number.isFinite(priorTwr) || 1+priorTwr/100<=0
-    ? null
-    : ((1+twr/100)/(1+priorTwr/100)-1)*100;
+  // Keep the EGP and percentage displays mathematically consistent, even
+  // when a large cash deposit changed NAV on this observation.
+  const intervalPercent = intervalReturn == null
+    ? null : sessionChangePercent(intervalReturn,current.equity);
   return {
     cumulativeReturn,intervalReturn,intervalPercent,
     nav:current.equity,

@@ -211,6 +211,11 @@ function validateTransaction(transaction: TradeTransaction, index: number): void
       if (transaction.shares <= EPSILON) {
         throw new Error(`${label} submitted IPO request requires positive requested shares.`);
       }
+      // Reject old clients that normalize away a partial IPO cash hold.
+      if (transaction.netCashImpact != null &&
+          Math.abs(Number(transaction.netCashImpact) + (ipo.reservedAmount ?? ipo.requestedAmount)) > 0.01) {
+        throw new Error(`${label} IPO broker-held amount does not match cash impact; refusing to save.`);
+      }
     } else if (ipo.status === 'ALLOCATED') {
       if (Math.abs(transaction.shares - Number(ipo.allocatedShares)) > 0.000001) {
         throw new Error(`${label} allocated shares do not match IPO metadata.`);

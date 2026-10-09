@@ -5,6 +5,7 @@ import { DateInput } from './DateInput';
 import { NumberStepperInput } from './NumberStepperInput';
 import { PremiumModalMotion } from './PremiumMotion';
 import { currentCairoDateKey } from '../services/corporateActions';
+import { calculateIpoOrderQuote } from '../services/ipoOrderQuote';
 import { runVisualTransition } from '../utils/visualTransition';
 import { CircleDollarSign, ShieldCheck, X } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export interface IpoSubscriptionFormValue {
   ticker: string;
   companyName: string;
   sector: Sector;
+  requestedShares: number;
   requestedAmount: number;
   reservedAmount?: number;
   offerPrice: number;
@@ -67,7 +69,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [ticker, setTicker] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [sector, setSector] = useState<Sector>('Other');
-  const [requestedAmount, setRequestedAmount] = useState('');
+  const [requestedSharesInput, setRequestedSharesInput] = useState('');
   const [holdPercent, setHoldPercent] = useState('100');
   const [offerPrice, setOfferPrice] = useState('');
   const [subscriptionDate, setSubscriptionDate] = useState(currentCairoDateKey());
@@ -82,21 +84,25 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const pendingSelection = pending.find((tx) => tx.id === selectedPendingId);
-  const requestedAmountNumber = Number(requestedAmount);
+  const requestedSharesNumber = requestedSharesInput.trim() ? Number(requestedSharesInput) : 0;
   const holdPercentNumber = Number(holdPercent);
-  const heldAmount = Number((requestedAmountNumber * holdPercentNumber / 100).toFixed(2));
-  const offerPriceNumber = Number(offerPrice);
-  const requestedShares =
-    Number.isFinite(requestedAmountNumber) && Number.isFinite(offerPriceNumber) && offerPriceNumber > 0
-      ? requestedAmountNumber / offerPriceNumber
-      : 0;
+  const offerPriceNumber = offerPrice.trim() ? Number(offerPrice) : 0;
+  const orderQuote = (() => {
+    try {
+      return calculateIpoOrderQuote(requestedSharesNumber, offerPriceNumber, holdPercentNumber);
+    } catch {
+      return null; // Do not display misleading partial amounts while the user types.
+    }
+  })();
+  const requestedAmountNumber = orderQuote?.requestedAmount ?? 0;
+  const heldAmount = orderQuote?.reservedAmount ?? 0;
 
   useEffect(() => {
     if (!isOpen) return;
     setTicker('');
     setCompanyName('');
     setSector('Other');
-    setRequestedAmount('');
+    setRequestedSharesInput('');
     setHoldPercent('100');
     setOfferPrice('');
     setSubscriptionDate(currentCairoDateKey());
@@ -134,17 +140,16 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     const cleanTicker = ticker.trim().toUpperCase();
     if (!cleanTicker) return setFeedback('Enter the IPO ticker.');
     if (!companyName.trim()) return setFeedback('Enter the company name.');
-    if (!Number.isFinite(requestedAmountNumber) || requestedAmountNumber <= 0) {
-      return setFeedback('Requested amount must be greater than zero.');
-    }
-    if (!Number.isFinite(holdPercentNumber) || holdPercentNumber <= 0 || holdPercentNumber > 100 || heldAmount <= 0) {
-      return setFeedback('Enter the broker-held percentage, greater than 0 and no more than 100%.');
+    if (!orderQuote) {
+      try {
+        calculateIpoOrderQuote(requestedSharesNumber, offerPriceNumber, holdPercentNumber);
+      } catch (error) {
+        return setFeedback(error instanceof Error ? error.message : 'Invalid IPO order.');
+      }
+      return setFeedback('Enter valid IPO order details.');
     }
     if (heldAmount > cashBalance + 0.005) {
-      return setFeedback(`Telda hold of ${formatEgp(heldAmount)} EGP exceeds ${formatEgp(cashBalance)} EGP available cash.`);
-    }
-    if (!Number.isFinite(offerPriceNumber) || offerPriceNumber <= 0) {
-      return setFeedback('Offer price must be greater than zero.');
+      return setFeedback(`Broker hold of ${formatEgp(heldAmount)} EGP exceeds ${formatEgp(cashBalance)} EGP available cash.`);
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(subscriptionDate)) {
       return setFeedback('Enter a valid subscription date.');
@@ -157,8 +162,9 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         ticker: cleanTicker,
         companyName: companyName.trim(),
         sector,
-        requestedAmount: requestedAmountNumber,
-        reservedAmount: heldAmount,
+        requestedShares: orderQuote.requestedShares,
+        requestedAmount: orderQuote.requestedAmount,
+        reservedAmount: orderQuote.reservedAmount,
         offerPrice: offerPriceNumber,
         subscriptionDate,
         reference: reference.trim() || undefined,
@@ -166,7 +172,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         notes: notes.trim() || undefined,
       });
       if (saved) {
-        setRequestedAmount('');
+        setRequestedSharesInput('');
         setReference('');
         setNotes('');
       }
@@ -248,11 +254,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
             <h4 className="font-bold text-white">New subscription</h4>
             <p className="premium-type-helper mt-0.5">Available cash: {formatEgp(cashBalance)} EGP</p>
           </div>
-          {requestedAmountNumber > 0 && (
-            <span className="rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 font-mono text-cyan-200">
-              After hold: {formatEgp(cashBalance - heldAmount)} EGP
-            </span>
-          )}
+
         </div>
 
         <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-2">
@@ -298,19 +300,19 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
 
         <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <label className="block font-semibold text-slate-300">Requested Amount (EGP)</label>
+            <label className="block font-semibold text-slate-300">Number of shares</label>
             <NumberStepperInput
-              min={0}
-              step={100}
+              min={1}
+              step={1}
               required
-              value={requestedAmount}
-              onValueChange={(value) => { setRequestedAmount(value); setFeedback(null); }}
+              value={requestedSharesInput}
+              onValueChange={(value) => { setRequestedSharesInput(value); setFeedback(null); }}
               accent="blue"
               className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
             />
           </div>
           <div className="space-y-1">
-            <label className="block font-semibold text-slate-300">Offer Price / Share</label>
+            <label className="block font-semibold text-slate-300">Offer price / share (EGP)</label>
             <NumberStepperInput
               min={0}
               step={0.01}
@@ -329,29 +331,32 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
               value={holdPercent} onChange={event => { setHoldPercent(event.target.value); setFeedback(null); }}
               className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white" required/>
           </label>
-          <div className="space-y-1"><span className="premium-type-metric-label block">Cash reserved, not investment P&amp;L</span>
-            <strong className="font-mono text-cyan-200">{requestedAmountNumber>0 && holdPercentNumber>0 ? `${formatEgp(heldAmount)} EGP`:'—'}</strong>
-            <p className="premium-type-helper">Enter the percentage shown by your broker (for example, 25%).</p>
-          </div>
+          <p className="premium-type-helper self-center">Enter the percentage your broker holds from the order (for example, 25%).</p>
         </div>
 
-        <div className="premium-inset-glass grid grid-cols-1 gap-2 rounded-xl p-3 sm:grid-cols-3">
+        <div className="premium-inset-glass grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-3" aria-label="Calculated IPO order summary" aria-live="polite">
           <div>
-            <span className="premium-type-metric-label block">Requested</span>
+            <span className="premium-type-metric-label block">Shares requested</span>
             <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
-              {requestedAmountNumber > 0 ? `${formatEgp(requestedAmountNumber)} EGP` : '—'}
+              {orderQuote ? orderQuote.requestedShares.toLocaleString('en-EG') : '—'}
             </span>
           </div>
           <div>
-            <span className="premium-type-metric-label block">Indicative Shares</span>
+            <span className="premium-type-metric-label block">Total order value</span>
+            <span className="premium-type-metric premium-type-metric-dense font-mono text-slate-100">
+              {orderQuote ? `${formatEgp(requestedAmountNumber)} EGP` : '—'}
+            </span>
+          </div>
+          <div>
+            <span className="premium-type-metric-label block">Cash held by broker</span>
             <span className="premium-type-metric premium-type-metric-dense font-mono text-cyan-300">
-              {requestedShares > 0 ? requestedShares.toLocaleString('en-EG', { maximumFractionDigits: 4 }) : '—'}
+              {orderQuote ? `${formatEgp(heldAmount)} EGP` : '—'}
             </span>
           </div>
-          <div>
-            <span className="premium-type-metric-label block">NAV Effect</span>
-            <span className="premium-type-metric premium-type-metric-dense font-mono text-emerald-300">0 EGP</span>
-          </div>
+          <p className="premium-type-helper sm:col-span-3">
+            Available after hold: {orderQuote ? `${formatEgp(cashBalance - heldAmount)} EGP` : '—'}.
+            This hold changes buying power, not portfolio NAV or return.
+          </p>
         </div>
 
         <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-2">

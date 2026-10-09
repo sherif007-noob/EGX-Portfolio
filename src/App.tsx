@@ -428,8 +428,21 @@ export default function App() {
             ledgerFocus={ledgerCorrectionFocus}
             onClearLedgerFocus={() => setLedgerCorrectionFocus(null)}
             onOpenScreenshotModal={() => setIsScreenshotModalOpen(true)}
-            onOpenCash={() => handleTabChange('cash')}
-            onOpenIpo={() => setIsIpoSubscriptionModalOpen(true)}
+            onBuyMoreTicker={(ticker) => openAddTrade(tickers.find(item=>item.ticker===ticker)||null)}
+            onSellPosition={(position)=>setSellingPosition(position)}
+            onSaveIpo={handleCorrectIpoSubscription}
+            onAllocateIpo={handleAllocateIpoSubscription}
+            onSaveCashRecord={async (updated, reason) => {
+              // Cash movements never pass through stock-trade validation.
+              if (updated.ticker !== 'CASH' || !reason.trim()) return false;
+              const result=await executeEditTransaction(updated, reason);
+              if ('error' in result) {
+                showToast(`Cash edit failed: ${result.error.message}. Nothing changed.`, 'error', 6500);
+                return false;
+              }
+              showToast('Cash ledger entry updated and reconciled.', 'success');
+              return true;
+            }}
             onSyncToSheets={syncToSheets}
             isSyncingToSheets={isSyncingToSheets}
           />

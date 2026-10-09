@@ -169,3 +169,15 @@ The old **Manage IPO → Pending orders → Choose action** navigation was remov
 Persisted financial actions still require an audit reason and pass through the canonical ledger reconciliation executor. IPO Edit changes one existing transaction rather than reserving cash again. Pending IPO Delete deletes an **erroneous app ledger entry**, releasing its held amount in the app; it must not be mistaken for an actual Telda cancellation. New/edited IPO amounts are derived from shares × offer price and held percentage.
 
 Source-level tests cover direct forms, IPO/cash ledger reconciliation, lifecycle-delete protection, and the single-purpose Create IPO form. No app build, browser acceptance, CI execution or production financial mutation has been performed as part of this pass.
+
+## Main chart semantics and richer Return tooltip — 2026-10-09
+
+The compact Home/Reports `HomeChart` modes now have distinct financial purposes:
+
+- **Return:** plots cumulative flow-neutral EGP P&L for the selected range. Tooltip shows **Total return (selected range)**, **since previous trading session** for daily timeframes (or **since previous interval** for Today), corresponding **flow-neutral interval return %** from the TWR index, and **total portfolio NAV** at that point. Cash deposits/withdrawals for that date appear separately, never as profit. The first plotted observation is a baseline with no previous-session change rather than a fabricated daily zero.
+- **NAV breakdown** (formerly `Value`): a stacked composition of **holdings market value + available cash + cash held for pending IPOs**, overlaid with **total NAV**. Cash event dots/labels explicitly say, for example, `Deposit +60k`; date-only broker cash events are marked on the first observed point that day without inventing an execution clock. NAV jumps on deposits are expected and never described as investment P&L.
+- **vs Deposits:** keeps NAV compared with net contributions (and the difference between them) as the capital comparison, not a duplicate of the NAV-breakdown view. Deposit/withdrawal markers and tooltip descriptions make changes traceable. NAV minus deposits is labelled as an accounting gap, **not** automatically as profit if return-neutral reconciliation adjustments exist.
+
+`src/ui/homeChartPresentation.ts` owns pure cash-event aggregation and return-tooltip math. No private brokerage values are published in fixtures: regression cases are synthetic (multiple deposits on one day, withdrawal, noncapital cash events, IPO reservation, flow-neutral previous-session return). `HomeChart` uses a Recharts `ComposedChart` for NAV components and a separately accessible tooltip for Return, NAV, and deposits; small-screen tooltip styles remain compact.
+
+This is **source-level** on experimental `medium-ui`. Not yet verified with Vitest, TypeScript, Cloudflare build/deploy or mobile touch behavior. It does not change Supabase data, returns engine inputs, user transactions, fees or corporate actions.

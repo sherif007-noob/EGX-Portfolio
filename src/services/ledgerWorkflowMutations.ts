@@ -538,6 +538,13 @@ export function prepareIpoSubscriptionCorrectionMutation(
     throw new Error('Enter a valid subscription date.');
   }
   const time=(input.executionTimeCairo??'').trim();
+  const fundingOnCorrectedDate = date!==existing.date && current.transactions.some(tx =>
+    tx.id!==existing.id && tx.date.slice(0,10)===date &&
+    (tx.cashFlowType==='DEPOSIT' || (tx.ticker.toUpperCase()==='CASH' && tx.type==='BUY' && !tx.cashFlowType)),
+  );
+  if (fundingOnCorrectedDate && !time) {
+    throw new Error('Enter the actual Cairo placement time: cash deposits exist on that date.');
+  }
   if(!time && existing.executedAt && date!==existing.date) {
     throw new Error('Enter the actual Cairo placement time to correct this dated execution.');
   }

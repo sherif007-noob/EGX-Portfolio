@@ -112,7 +112,11 @@ export const HomeChart: React.FC<HomeChartProps> = ({
     if (mode === 'ret' && points.length) {
       // The "Return" line must not jump when deposits, withdrawals or audited
       // reconciliation adjustments change NAV without investment performance.
-      for (const item of cashFlowNeutralReturn(points)) rows.push({ date:item.date, ret:item.value });
+      const fallback = cashFlowNeutralReturn(points);
+      for (let index=0; index<points.length; index++) {
+        const verified=points[index].returnEgp;
+        rows.push({ date:points[index].date, ret:finite(verified) ? verified : fallback[index]?.value ?? 0 });
+      }
       series = [{ key: 'ret', label: 'Return', color: 'var(--ui-teal)', area: true }];
     } else if (mode === 'val') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity });

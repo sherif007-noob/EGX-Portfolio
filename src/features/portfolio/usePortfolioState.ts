@@ -66,6 +66,7 @@ export function usePortfolioState() {
     sellPosition: ledger.sellPosition,
     addBonusShares: ledger.addBonusShares,
     addIpoSubscription: ledger.addIpoSubscription,
+    correctIpoSubscription: ledger.correctIpoSubscription,
     allocateIpoSubscription: ledger.allocateIpoSubscription,
     cancelIpoSubscription: ledger.cancelIpoSubscription,
     editPosition: repository.editPosition,

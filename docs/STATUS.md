@@ -358,3 +358,10 @@ Historical ORHD Sep 30–Oct 6 prices are normalized to the ledger's credited sh
 ## Chart UX: NAV breakdown and Return tooltip — 2026-10-09
 
 Source changes on `medium-ui`: renamed overlapping `Value` to `NAV breakdown` with stacked invested holdings, free cash and pending IPO cash plus NAV outline; dedicated `vs Deposits` still compares NAV and contributed capital. Investor CASH deposits/withdrawals display dated markers (never represented as market profit). Expanded Return tooltip to cumulative flow-neutral P&L, change since previous session/interval, flow-neutral interval percent, and NAV. Added synthetic tests and compact mobile tooltip styles. Not yet TypeScript/Vitest/browser/Cloudflare verified; ledger data untouched.
+
+## 2026-10-10 — Remove NAV breakdown chart, add compact Overview composition
+
+- Removed the redundant NAV Breakdown chart mode from the shared Home/Reports `HomeChart`. Chart modes remaining: Return, vs Deposits, TWR, MWR, Benchmarks. Return/vs Deposits/Benchmarks are shown without opening More Metrics.
+- Added `PortfolioCompositionSnapshot` in **Reports → Overview**, with labeled holdings, available cash, actual pending IPO-held cash and NAV, represented as a proportional strip and ledger values rather than a historical stacked chart.
+- Discrepancies between reported NAV and actual components are visibly flagged; invalid negative composition proportions are omitted rather than falsified. Source values come from app metrics, live positions and `pendingIpoSubscriptionValue`.
+- Regression tests added for composition math, deposits, IPO reservations, mismatch handling, rendering and removal of the NAV mode. Documentation updated. No Supabase financial records changed. Automated tests/build/deployment still require verification.

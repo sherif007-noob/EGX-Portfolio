@@ -558,7 +558,7 @@ export function prepareIpoSubscriptionCorrectionMutation(
     (existing.executedAt??null)===(executedAt??null) &&
     (input.requestedShares===undefined || input.requestedShares===existing.ipoSubscription.requestedShares) &&
     (input.offerPrice===undefined || input.offerPrice===existing.ipoSubscription.offerPrice) &&
-    (input.reservedAmount===undefined || input.reservedAmount===oldReserved) &&
+    (input.reservedAmount===undefined || input.reservedAmount===(existing.ipoSubscription.reservedAmount ?? existing.ipoSubscription.requestedAmount)) &&
     (input.reference===undefined || input.reference===(existing.ipoSubscription.reference??'')) &&
     (input.notes===undefined || input.notes===(existing.notes??''))) {
     throw new Error('There are no IPO subscription changes to save.');

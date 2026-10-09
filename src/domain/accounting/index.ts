@@ -27,6 +27,7 @@ export {
   prepareIpoAllocationMutation,
   prepareIpoCancellationMutation,
   prepareIpoSubscriptionMutation,
+  prepareIpoSubscriptionCorrectionMutation,
   prepareLedgerReconciliationMutation,
   prepareLedgerSnapshotRestoreMutation,
   preparePortfolioRestoreMutation,
@@ -35,6 +36,7 @@ export {
   type BonusSharesCorporateActionInput,
   type IpoAllocationInput,
   type IpoSubscriptionInput,
+  type IpoSubscriptionCorrectionInput,
   type PortfolioRestoreInput,
 } from '../../services/ledgerWorkflowMutations';
 

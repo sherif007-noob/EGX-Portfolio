@@ -553,8 +553,11 @@ export function usePortfolioWorkflows({
 
     const result = await portfolio.editTransaction(updatedTx, auditReason);
     if ('error' in result) {
+      const anotherSaveInFlight=result.code==='BUSY';
       showToast(
-        `Transaction edit was not saved: ${result.error.message} Nothing was changed.`,
+        anotherSaveInFlight
+          ? 'A financial save is already in progress. Wait for its confirmation before editing again.'
+          : `Transaction edit was not saved: ${result.error.message} Nothing was changed.`,
         'error',
         6500,
       );

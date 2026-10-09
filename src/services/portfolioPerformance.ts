@@ -287,7 +287,7 @@ export function buildHistoricalEquityCurve(
       if (close === undefined) { missingTickers.push(ticker); continue; }
       // A failed vendor/corporate-action basis check makes the valuation
       // unverified rather than silently reporting a phantom gain or loss.
-      if (priceBasis.unverified.includes(ticker) && date >= '2026-09-30') {
+      if (priceBasis.unverified.some(item => item.ticker === ticker && date >= item.startDate)) {
         missingTickers.push(`${ticker} (price adjustment unverified)`);
         continue;
       }

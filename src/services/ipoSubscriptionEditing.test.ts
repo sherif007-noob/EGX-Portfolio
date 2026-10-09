@@ -44,6 +44,34 @@ describe('pending IPO date corrections',()=>{
     expect(pendingIpoSubscriptionValue(correction.transactions)).toBe(25000);
     expect(calculatePortfolioMetrics([],75000,[],[],correction.transactions).totalValue).toBe(100000);
   });
+  it('edits pending IPO share count, price and broker hold without a second subscription',()=>{
+    const prior=source();
+    const correction=prepareIpoSubscriptionCorrectionMutation(prior,{
+      transactionId:'tx-0-ipo',subscriptionDate:'2026-10-07',executionTimeCairo:'10:51',
+      requestedShares:3000,offerPrice:20,reservedAmount:15000,
+      reference:'corrected-order',notes:'Broker invoice corrected',
+    });
+    expect(correction.transactions.length).toBe(prior.transactions.length);
+    const changed=correction.transactions.find(tx=>tx.id==='tx-0-ipo')!;
+    expect(changed.ipoSubscription).toMatchObject({
+      requestedShares:3000,offerPrice:20,requestedAmount:60000,reservedAmount:15000,
+      reference:'corrected-order',status:'SUBMITTED',
+    });
+    expect(changed.shares).toBe(3000);
+    expect(changed.price).toBe(20);
+    expect(changed.netCashImpact).toBe(-15000);
+    const reconciled=reconcilePortfolioFromLedger(correction.transactions,[],100000);
+    expect(reconciled.discrepanciesFound).toEqual([]);
+    expect(reconciled.reconciledCashBalance).toBe(85000);
+    expect(pendingIpoSubscriptionValue(correction.transactions)).toBe(15000);
+    expect(calculatePortfolioMetrics([],85000,[],[],correction.transactions).totalValue).toBe(100000);
+  });
+  it('rejects edited pending IPO hold greater than the revised commitment',()=>{
+    expect(()=>prepareIpoSubscriptionCorrectionMutation(source(),{
+      transactionId:'tx-0-ipo',subscriptionDate:'2026-10-09',
+      requestedShares:50,offerPrice:25,reservedAmount:25000,
+    })).toThrow(/cash held|held|order value/i);
+  });
   it('requires the placement time when deposits share the corrected date',()=>{
     expect(()=>prepareIpoSubscriptionCorrectionMutation(source(),{
       transactionId:'tx-0-ipo',subscriptionDate:'2026-10-07'})).toThrow(/actual Cairo placement time/);

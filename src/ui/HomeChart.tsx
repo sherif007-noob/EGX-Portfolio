@@ -4,7 +4,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  ComposedChart,
   Line,
   LineChart,
   ReferenceLine,
@@ -29,7 +28,7 @@ import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
 import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 
-type ChartMode = 'ret' | 'val' | 'dep' | 'twr' | 'mwr' | 'bm';
+type ChartMode = 'ret' | 'dep' | 'twr' | 'mwr' | 'bm';
 type IndexChoice = 'all' | PortfolioBenchmarkTicker;
 type Unit = 'egp' | 'pct';
 type Granularity = 1 | 5 | 15 | 60;
@@ -43,7 +42,6 @@ interface SeriesDef {
   color: string;
   area?: boolean;
   dashed?: boolean;
-  stacked?: boolean;
 }
 
 const RANGES: Array<{ value: AnalyticsTimeframe; label: string }> = [
@@ -57,7 +55,6 @@ const RANGES: Array<{ value: AnalyticsTimeframe; label: string }> = [
 
 const MODES: Array<{ value: ChartMode; label: string }> = [
   { value: 'ret', label: 'Return' },
-  { value: 'val', label: 'NAV breakdown' },
   { value: 'dep', label: 'vs Deposits' },
   { value: 'twr', label: 'TWR' },
   { value: 'mwr', label: 'MWR' },
@@ -123,24 +120,6 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         rows.push({ date:points[index].date, ret:finite(verified) ? verified : fallback[index]?.value ?? 0 });
       }
       series = [{ key: 'ret', label: 'Return', color: 'var(--ui-teal)', area: true }];
-    } else if (mode === 'val') {
-      for (const point of points) rows.push({
-        date: point.date,
-        equity: point.equity,
-        marketValue: point.marketValue,
-        cash: point.cash,
-        ipoHeld: Math.max(0, point.equity - point.marketValue - point.cash),
-      });
-      // NAV components answer "where is my money?" rather than duplicating
-      // the single NAV line in the vs Deposits comparison.
-      series = [
-        { key: 'marketValue', label: 'Holdings', color: 'var(--ui-teal)', area: true, stacked: true },
-        { key: 'cash', label: 'Available cash', color: 'var(--ui-blue)', area: true, stacked: true },
-        ...(rows.some(row => Number(row.ipoHeld)>0.01)
-          ? [{ key: 'ipoHeld', label: 'IPO cash held', color: 'var(--ui-amber)', area: true, stacked: true }]
-          : []),
-        { key: 'equity', label: 'Total NAV', color: 'var(--ui-text)', dashed: true },
-      ];
     } else if (mode === 'dep') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity, netDeposits: point.netDeposits });
       series = [
@@ -239,17 +218,13 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         <small>Deposits and withdrawals are excluded from return.</small>
       </div>;
     }
-    if(mode==='val'||mode==='dep'){
-      const held=Math.max(0,point.equity-point.marketValue-point.cash);
+    if(mode==='dep'){
       return <div className="ui-chart-detail-tooltip">
-        <strong>{mode==='val'?'NAV breakdown':'NAV vs deposits'} · {displayDate}</strong>
+        <strong>NAV vs deposits · {displayDate}</strong>
         <div className="ui-chart-tooltip-rows">
           {metric('Total NAV',`${formatEgp(point.equity)} EGP`)}
-          {mode==='val'&&metric('Invested holdings',`${formatEgp(point.marketValue)} EGP`)}
-          {mode==='val'&&metric('Available cash',`${formatEgp(point.cash)} EGP`)}
-          {mode==='val'&&held>0.005&&metric('IPO cash held',`${formatEgp(held)} EGP`)}
-          {mode==='dep'&&metric('Net deposits',`${formatEgp(point.netDeposits)} EGP`)}
-          {mode==='dep'&&metric('NAV − deposits',`${formatSigned(point.equity-point.netDeposits)} EGP`,
+          {metric('Net deposits',`${formatEgp(point.netDeposits)} EGP`)}
+          {metric('NAV − deposits',`${formatSigned(point.equity-point.netDeposits)} EGP`,
             point.equity-point.netDeposits)}
           {event && event.deposited>0&&metric('Deposited that day',`+${formatEgp(event.deposited)} EGP`)}
           {event && event.withdrawn>0&&metric('Withdrawn that day',`−${formatEgp(event.withdrawn)} EGP`)}
@@ -261,7 +236,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   };
 
   const last = model.rows.at(-1);
-  const formatValue = (value: number) => (model.unit === 'pct' ? formatPercent(value) : mode === 'val' || mode === 'dep' ? formatEgp(value) : formatSigned(value));
+  const formatValue = (value: number) => (model.unit === 'pct' ? formatPercent(value) : mode === 'dep' ? formatEgp(value) : formatSigned(value));
 
   const legend = model.series.map((item) => ({
     ...item,
@@ -276,7 +251,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const isLoading = loading || (timeframe !== 'TODAY' && historicalLoading);
   const hasData = model.rows.length >= 2;
   const missingBenchmarks = mode === 'bm' ? model.series.filter(item => item.key !== 'portfolio' && !model.rows.some(row => finite(row[item.key]))).map(item => item.label) : [];
-  const ChartRoot = mode === 'val' ? ComposedChart : model.series.some((item) => item.area) ? AreaChart : LineChart;
+  const ChartRoot = model.series.some((item) => item.area) ? AreaChart : LineChart;
 
   return (
     <div>
@@ -295,7 +270,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       </div>
 
       <div className="ui-chart-toolbar"><div className="ui-chips" role="group" aria-label="Chart type">
-        {MODES.filter(item => showAdvanced || ['ret', 'val', 'bm'].includes(item.value)).map((item) => (
+        {MODES.filter(item => showAdvanced || ['ret', 'dep', 'bm'].includes(item.value)).map((item) => (
           <button
             key={item.value}
             type="button"
@@ -332,12 +307,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         </div>
       )}
 
-      {(mode==='val'||mode==='dep') && (
+      {mode==='dep' && (
         <p className="ui-note" style={{marginTop:8}}>
-          {mode==='val'
-            ? 'Breakdown of NAV: holdings + available cash + IPO cash held. Deposits increase cash, not trading profit.'
-            : 'Total NAV compared with the net capital you added. The gap is not necessarily trading P&L after accounting adjustments.'}
-          {' '}Cash deposits and withdrawals are marked on the chart.
+          Compare NAV with your net contributions. Cash transfers change value but are not trading profit. Deposits and withdrawals are marked on the chart.
         </p>
       )}
       <div className="ui-card" style={{ marginTop: 10, padding: '10px 6px 6px' }}>
@@ -350,7 +322,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ) : (
           <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} className="ui-chart-canvas">
             <ResponsiveContainer width="100%" height="100%">
-              <ChartRoot data={model.rows} margin={{ top: (mode==='val'||mode==='dep') ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
+              <ChartRoot data={model.rows} margin={{ top: mode==='dep' ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
@@ -375,7 +347,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
                 <Tooltip
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
-                  content={(mode==='ret'||mode==='val'||mode==='dep')?renderDetailedTooltip:undefined}
+                  content={(mode==='ret'||mode==='dep')?renderDetailedTooltip:undefined}
                   contentStyle={{ background: 'var(--ui-surface-2)', border: '1px solid var(--ui-border-strong)', borderRadius: 8, fontSize: 12 }}
                   labelFormatter={(label) => labelTime(Number(label), timeframe === 'TODAY')}
                   formatter={(value, name) => [formatValue(Number(value)), String(name)]}
@@ -387,12 +359,11 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
-                      stackId={item.stacked ? 'nav-components' : undefined}
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={2.2}
                       fill={item.color}
-                      fillOpacity={item.stacked ? 0.32 : 0.14}
+                      fillOpacity={0.14}
                       dot={false}
                       isAnimationActive={false}
                     />
@@ -410,7 +381,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                     />
                   ),
                 )}
-                                {(mode==='val'||mode==='dep')&&visibleCapitalEvents.map(event=>(
+                                {mode==='dep'&&visibleCapitalEvents.map(event=>(
                   <ReferenceDot key={event.date}
                     x={event.timestamp} y={event.equity} r={4}
                     fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}

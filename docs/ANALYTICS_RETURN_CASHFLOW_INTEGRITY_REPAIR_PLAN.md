@@ -85,3 +85,10 @@ The previous "Value" and "vs Deposits" displays deliberately shared NAV; this pa
 ## UX simplification implementation — 2026-10-10
 
 Per user feedback, the **NAV breakdown** graph was removed rather than further embellished. A compact **Reports → Overview** snapshot now presents invested holdings, broker-held IPO funds and available cash summing to current NAV, with reconciliation warnings. The separate **vs Deposits** performance comparison remains (NAV and contributed capital, not investment return). The shared Home/Reports chart selector no longer offers the confusing value breakdown and instead exposes vs Deposits among default chart choices. Source-level regression tests are committed; no data writes, compiler runs or Cloudflare release implied.
+
+## Implementation checkpoint: Return and weighted measures (2026-10-10)
+- `sessionReturnPresentation.ts` now supplies the broker-style session-return percent shared between the Return tooltip and `portfolioMetrics` hero inputs. It deliberately does not replace the separately labelled TWR computation.
+- `egxSessionPresentation.ts` distinguishes regular Cairo trading hours from the latest session calendar date; `HomeScreen.tsx` keeps last-session EGP/%, date after hours and on weekends.
+- `HomeChart.tsx` adds an in-place Return/NAV comparison toggle with dual y-axes. MWR and TWR are independently calculated but rendered as solid/dashed overlays on either selected mode, with explicit difference. The comparison does not invent a non-zero difference for a terminal cash flow. It reveals missing `executedAt` on relevant cash records and warns MWR may only approximate broker timing.
+- Synthetic regression code includes `sessionReturnPresentation.test.ts`, `egxSessionPresentation.test.ts`, `homeChartModeIntegration.test.ts`, and revised `homeChartPresentation.test.ts`. The existing `unifiedAnalyticsEngine.test.ts` includes midperiod deposits where MWR/TWR diverge.
+- No Supabase mutation and no deployment claim. Runtime test/build/browser acceptance remains a release gate.

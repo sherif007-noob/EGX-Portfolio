@@ -58,6 +58,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const today = Number(metrics.dayChangeEgp || 0);
   const marketSession = egxSessionPresentation();
+  const lastSessionReliable = metrics.dayChangeReliable !== false &&
+    Number.isFinite(metrics.dayChangeEgp) && Number.isFinite(metrics.dayChangePercent);
+  const sessionReturnLabel = marketSession.isRegularTradingHours
+    ? 'Today' : marketSession.sessionCaption;
   const holdings = useMemo(
     () =>
       positions
@@ -76,19 +80,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <div className="ui-mono" style={{ fontSize: 'clamp(1.75rem, 7vw, 2.25rem)', fontWeight: 600, lineHeight: 1.15 }}>
             {formatEgp(metrics.totalValue)} <span className="ui-sm">EGP</span>
           </div>
-          <span
-            className={`ui-mono ${marketSession.isCurrentSessionDay && metrics.dayChangeReliable !== false ? toneClass(today) : 'ui-muted'}`}
-            style={{
-              display: 'inline-block',
-              marginTop: 6,
-              padding: '2px 10px',
-              borderRadius: 999,
-              fontSize: '0.8125rem',
-              background: 'rgba(148, 163, 184, 0.14)',
-            }}
-          >
-            {marketSession.isCurrentSessionDay ? (metrics.dayChangeReliable === false ? 'Today return unavailable · missing opening quote' : `${formatSigned(today)} today · ${formatPercent(metrics.dayChangePercent)}`) : `${marketSession.description} · ${marketSession.sessionCaption}`}
-          </span>
+          <div className="ui-hero-session-performance" aria-label="Latest session performance">
+            {lastSessionReliable ? (
+              <span className={`ui-mono ${toneClass(today)}`}>
+                {formatSigned(today)} EGP ({formatPercent(metrics.dayChangePercent)})
+              </span>
+            ) : (
+              <span className="ui-sm ui-muted">Session return unavailable · verify previous closing prices</span>
+            )}
+            <span className="ui-sm ui-muted">{sessionReturnLabel}</span>
+          </div>
         </section>
 
         <HomeChart

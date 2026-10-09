@@ -199,7 +199,7 @@ export const SecondaryAnalyticsCharts: React.FC<SecondaryAnalyticsChartsProps> =
               detail={
                 secondary.summary.maxEquityDrawdownEgp == null
                   ? undefined
-                  : <>Nominal gap {formatAnalyticsEgp(secondary.summary.maxEquityDrawdownEgp)}</>
+                  : <>Profit drawdown {formatAnalyticsEgp(secondary.summary.maxEquityDrawdownEgp)}</>
               }
             />
           </div>

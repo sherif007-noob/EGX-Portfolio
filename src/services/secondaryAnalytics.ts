@@ -30,6 +30,7 @@ export interface SecondaryAnalyticsPoint {
 
 export interface SecondaryAnalyticsSummary {
   maxDrawdownPercent: number | null;
+  /** Deposit-neutral profit peak-to-trough drawdown in EGP; legacy field name, not a nominal NAV gap. */
   maxEquityDrawdownEgp: number | null;
   realizedPnlEgp: number | null;
   unrealizedPnlEgp: number | null;

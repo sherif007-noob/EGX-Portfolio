@@ -46,7 +46,8 @@ export interface UnifiedAnalyticsResult {
     mwrrPercent: number | null;
     annualizedMwrrPercent: number | null;
     maxDrawdownPercent: number | null;
-    maxEquityDrawdownEgp: number | null;
+    /** Deposit-neutral profit peak-to-trough drawdown in EGP; legacy field name, not a nominal NAV gap. */
+  maxEquityDrawdownEgp: number | null;
   };
   dataQuality: {
     valuationDays: number;

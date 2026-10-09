@@ -7,6 +7,7 @@ import {
   Line,
   LineChart,
   ReferenceLine,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -24,6 +25,7 @@ import {
 } from '../services/portfolioBenchmarks';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
+import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
 import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
 
 type ChartMode = 'ret' | 'val' | 'dep' | 'twr' | 'mwr' | 'bm';
@@ -40,6 +42,7 @@ interface SeriesDef {
   color: string;
   area?: boolean;
   dashed?: boolean;
+  stacked?: boolean;
 }
 
 const RANGES: Array<{ value: AnalyticsTimeframe; label: string }> = [
@@ -53,7 +56,7 @@ const RANGES: Array<{ value: AnalyticsTimeframe; label: string }> = [
 
 const MODES: Array<{ value: ChartMode; label: string }> = [
   { value: 'ret', label: 'Return' },
-  { value: 'val', label: 'Value' },
+  { value: 'val', label: 'NAV breakdown' },
   { value: 'dep', label: 'vs Deposits' },
   { value: 'twr', label: 'TWR' },
   { value: 'mwr', label: 'MWR' },
@@ -103,6 +106,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   });
 
   const points = result?.points ?? [];
+  const capitalEvents = useMemo(() => chartCapitalEvents(transactions), [transactions]);
 
   const model = useMemo(() => {
     const rows: Array<Record<string, number | string>> = [];
@@ -119,8 +123,23 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       }
       series = [{ key: 'ret', label: 'Return', color: 'var(--ui-teal)', area: true }];
     } else if (mode === 'val') {
-      for (const point of points) rows.push({ date: point.date, equity: point.equity });
-      series = [{ key: 'equity', label: 'Portfolio', color: 'var(--ui-teal)', area: true }];
+      for (const point of points) rows.push({
+        date: point.date,
+        equity: point.equity,
+        marketValue: point.marketValue,
+        cash: point.cash,
+        ipoHeld: Math.max(0, point.equity - point.marketValue - point.cash),
+      });
+      // NAV components answer "where is my money?" rather than duplicating
+      // the single NAV line in the vs Deposits comparison.
+      series = [
+        { key: 'marketValue', label: 'Holdings', color: 'var(--ui-teal)', area: true, stacked: true },
+        { key: 'cash', label: 'Available cash', color: 'var(--ui-blue)', area: true, stacked: true },
+        ...(rows.some(row => Number(row.ipoHeld)>0.01)
+          ? [{ key: 'ipoHeld', label: 'IPO cash held', color: 'var(--ui-amber)', area: true, stacked: true }]
+          : []),
+        { key: 'equity', label: 'Total NAV', color: 'var(--ui-text)', dashed: true },
+      ];
     } else if (mode === 'dep') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity, netDeposits: point.netDeposits });
       series = [
@@ -160,8 +179,77 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       ];
     }
 
-    return { rows: rows.map(row => ({ ...row, timestamp: chartTime(String(row.date)) })).filter(row => Number.isFinite(row.timestamp)), series, unit };
+    return { rows: rows.map(row => ({ ...row, timestamp: chartTime(String(row.date)) }))
+      .filter(row => Number.isFinite(row.timestamp)), series, unit };
   }, [mode, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
+
+  const visibleCapitalEvents = useMemo(() => capitalEvents.flatMap(event => {
+    // DATE-only CASH entries provide no trustworthy intraday clock. Place the
+    // marker on that day's first visible observation, not at a fake execution time.
+    const row=model.rows.find(item=>String(item.date).slice(0,10)===event.date);
+    if(!row || !finite(row.timestamp) || !finite(row.equity))return [];
+    return [{...event,timestamp:row.timestamp,equity:row.equity}];
+  }),[capitalEvents,model.rows]);
+
+  const pointByDate = useMemo(() => new Map(points.map(point=>[point.date,point])),[points]);
+
+  const renderDetailedTooltip = (props: { active?:boolean; payload?:ReadonlyArray<{payload?:Record<string,number|string>}> }) => {
+    const row=props.payload?.[0]?.payload;
+    if(!props.active || !row)return null;
+    const date=String(row.date??'');
+    const point=pointByDate.get(date);
+    if(!point)return null;
+    const index=points.findIndex(p=>p.date===date);
+    const previous=index>0 ? points[index-1] : undefined;
+    const event=capitalEvents.find(item=>item.date===date.slice(0,10));
+    const displayDate=labelTime(Number(row.timestamp),timeframe==='TODAY');
+    const metric=(label:string,value:string,tone?:number|null)=>(
+      <div className="ui-chart-tooltip-row" key={label}>
+        <span>{label}</span>
+        <strong className={tone===undefined?'ui-mono':`ui-mono ${toneClass(tone)}`}>{value}</strong>
+      </div>
+    );
+    if(mode==='ret'){
+      // Use canonical point P&L and its previous observation. Do not derive
+      // an unrelated "daily profit" from raw NAV that includes deposits.
+      const numbers=chartReturnTooltipMetrics(point,previous);
+      return <div className="ui-chart-detail-tooltip">
+        <strong>Return · {displayDate}</strong>
+        <div className="ui-chart-tooltip-rows">
+          {metric('Total return · selected range',
+            numbers.cumulativeReturn==null?'—':`${formatSigned(numbers.cumulativeReturn)} EGP`,
+            numbers.cumulativeReturn)}
+          {metric(timeframe==='TODAY'?'Since previous interval':'Since previous session',
+            numbers.intervalReturn==null?'—':`${formatSigned(numbers.intervalReturn)} EGP`,
+            numbers.intervalReturn)}
+          {metric('Interval return %',formatPercent(numbers.intervalPercent),numbers.intervalPercent)}
+          {metric('Total portfolio NAV',`${formatEgp(numbers.nav)} EGP`)}
+          {event && event.deposited>0 && metric('Deposited that day',`+${formatEgp(event.deposited)} EGP`)}
+          {event && event.withdrawn>0 && metric('Withdrawn that day',`−${formatEgp(event.withdrawn)} EGP`)}
+        </div>
+        <small>Deposits and withdrawals are excluded from return.</small>
+      </div>;
+    }
+    if(mode==='val'||mode==='dep'){
+      const held=Math.max(0,point.equity-point.marketValue-point.cash);
+      return <div className="ui-chart-detail-tooltip">
+        <strong>{mode==='val'?'NAV breakdown':'NAV vs deposits'} · {displayDate}</strong>
+        <div className="ui-chart-tooltip-rows">
+          {metric('Total NAV',`${formatEgp(point.equity)} EGP`)}
+          {mode==='val'&&metric('Invested holdings',`${formatEgp(point.marketValue)} EGP`)}
+          {mode==='val'&&metric('Available cash',`${formatEgp(point.cash)} EGP`)}
+          {mode==='val'&&held>0.005&&metric('IPO cash held',`${formatEgp(held)} EGP`)}
+          {mode==='dep'&&metric('Net deposits',`${formatEgp(point.netDeposits)} EGP`)}
+          {mode==='dep'&&metric('NAV − deposits',`${formatSigned(point.equity-point.netDeposits)} EGP`,
+            point.equity-point.netDeposits)}
+          {event && event.deposited>0&&metric('Deposited that day',`+${formatEgp(event.deposited)} EGP`)}
+          {event && event.withdrawn>0&&metric('Withdrawn that day',`−${formatEgp(event.withdrawn)} EGP`)}
+        </div>
+        {event&&<small>Cash event dated {event.date}; execution time not inferred.</small>}
+      </div>;
+    }
+    return null;
+  };
 
   const last = model.rows.at(-1);
   const formatValue = (value: number) => (model.unit === 'pct' ? formatPercent(value) : mode === 'val' || mode === 'dep' ? formatEgp(value) : formatSigned(value));
@@ -235,6 +323,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         </div>
       )}
 
+      {(mode==='val'||mode==='dep') && (
+        <p className="ui-note" style={{marginTop:8}}>
+          {mode==='val'
+            ? 'Breakdown of NAV: holdings + available cash + IPO cash held. Deposits increase cash, not trading profit.'
+            : 'Total NAV compared with the net capital you added. The gap is not necessarily trading P&L after accounting adjustments.'}
+          {' '}Cash deposits and withdrawals are marked on the chart.
+        </p>
+      )}
       <div className="ui-card" style={{ marginTop: 10, padding: '10px 6px 6px' }}>
         {isLoading ? (
           <p className="ui-sm" style={{ padding: 24, textAlign: 'center' }}>Loading prices…</p>
@@ -245,7 +341,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ) : (
           <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} className="ui-chart-canvas">
             <ResponsiveContainer width="100%" height="100%">
-              <ChartRoot data={model.rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <ChartRoot data={model.rows} margin={{ top: (mode==='val'||mode==='dep') ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
@@ -270,21 +366,33 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
                 <Tooltip
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
+                  content={(mode==='ret'||mode==='val'||mode==='dep')?renderDetailedTooltip:undefined}
                   contentStyle={{ background: 'var(--ui-surface-2)', border: '1px solid var(--ui-border-strong)', borderRadius: 8, fontSize: 12 }}
                   labelFormatter={(label) => labelTime(Number(label), timeframe === 'TODAY')}
                   formatter={(value, name) => [formatValue(Number(value)), String(name)]}
                 />
+                {(mode==='val'||mode==='dep')&&visibleCapitalEvents.map(event=>(
+                  <ReferenceDot key={event.date}
+                    x={event.timestamp} y={event.equity} r={4}
+                    fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}
+                    stroke="var(--ui-surface-2)" strokeWidth={2}
+                    label={{value:event.netFlow>=0
+                      ?`+${formatCompact(event.netFlow)} cash`
+                      :`${formatCompact(event.netFlow)} cash`,
+                      position:'top',fontSize:10,fill:'var(--ui-text)'}}/>
+                ))}
                 {model.series.map((item) =>
                   item.area ? (
                     <Area
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
+                      stackId={item.stacked ? 'nav-components' : undefined}
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={2.2}
                       fill={item.color}
-                      fillOpacity={0.14}
+                      fillOpacity={item.stacked ? 0.32 : 0.14}
                       dot={false}
                       isAnimationActive={false}
                     />

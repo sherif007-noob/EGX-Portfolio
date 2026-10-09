@@ -118,3 +118,15 @@ Source-level tests cover the 25%-hold submitted record, NAV neutrality, unalloca
 ### Share-first input invariant
 
 New IPO form submissions include `requestedShares` as the explicit whole-number quantity, alongside the calculated `requestedAmount` and `reservedAmount`. The canonical ledger mutation verifies that the rounded commitment agrees with shares × price; it preserves the precise quantity instead of dividing a rounded monetary amount back by the price. Legacy callers that supply only `requestedAmount` and `offerPrice` are still accepted. No portfolio ledger entries are created or changed by the UI migration alone.
+
+## Correct a saved pending subscription date (medium-ui)
+
+In **IPO → Pending allocations**, select the submitted order and use **Edit subscription**. The inline editor offers the actual subscription date, optional Cairo placement time, an audit reason, and **Save changes** or **Discard**.
+
+- The correction updates the existing transaction **in place**, preserving its original ID, ticker, commitment, requested shares, cash hold, pending status and metadata. No duplicate order or second cash reservation is created.
+- A date correction updates both the parent ledger row's `date` and the IPO metadata's `subscriptionDate`. An explicitly entered broker time is converted using `Africa/Cairo`, including DST, and saved as `executedAt`.
+- If the corrected day also contains cash deposits, the actual placement time is **required**. Otherwise the ledger could process the backdated hold before its funding. For a broker order placed at 10:51 AM Cairo on October 7, enter that exact time from the order record. Do not infer execution times from submission-date defaults.
+- Only orders in `SUBMITTED` status may be corrected here. Allocated or cancelled orders must retain their historical lifecycle and use a separate reviewed correction path.
+- Financial persistence uses the canonical persist-before-apply executor with a mandatory audit reason, full reconciliation and all-or-nothing commit. The production ledger has not been modified by adding this feature.
+
+The new editor and ledger correction have targeted regression source tests for Cairo DST, October-date changes, preserving a single hold, NAV neutrality and same-day funding order. Automated tests and phone acceptance remain pending.

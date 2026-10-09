@@ -548,124 +548,107 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
         </div>)}
       </div>}
 
-      {view === 'edit' && pendingSelection && <div className="border-t border-slate-800 pt-4">
-        <div className="mb-3">
-          <h4 className="font-bold text-white">Pending allocations</h4>
-          <p className="premium-type-helper mt-0.5">
-            {pending.length ? `${pending.length} subscription${pending.length === 1 ? '' : 's'} waiting for allocation` : 'No pending IPO subscriptions.'}
-          </p>
-        </div>
-
-        {pending.length > 0 && (
-          <div className="space-y-3 text-xs">
-            <AnalyticsSelect
-              value={selectedPendingId}
-              onChange={(value) => { setSelectedPendingId(value); setAllocatedShares(''); setEditingPendingId(null); setFeedback(null); }}
-              accent="blue"
-              ariaLabel="Pending IPO subscription"
-              className="w-full"
-              options={pending.map((tx) => ({
-                value: tx.id,
-                label: tx.ticker,
-                description: `${formatEgp(Number(tx.ipoSubscription?.reservedAmount ?? tx.ipoSubscription?.requestedAmount ?? 0))} EGP held of ${formatEgp(Number(tx.ipoSubscription?.requestedAmount ?? 0))} EGP order · ${tx.ipoSubscription?.subscriptionDate || tx.date}`,
-              }))}
-            />
-
-            {pendingSelection && (
-              <div className="premium-form-section rounded-xl p-3 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <strong className="text-slate-100">{pendingSelection.ticker} · Pending order</strong>
-                    <p className="premium-type-helper mt-1">Recorded {pendingSelection.ipoSubscription?.subscriptionDate || pendingSelection.date} · {formatEgp(pendingSelection.ipoSubscription?.reservedAmount ?? pendingSelection.ipoSubscription?.requestedAmount ?? 0)} EGP held</p>
-                  </div>
-                  {editingPendingId !== pendingSelection.id &&
-                    <button type="button" disabled={isSaving} onClick={() => beginCorrection(pendingSelection)}
-                      className="premium-action rounded-xl px-3 py-2 text-xs font-semibold">
-                      Edit subscription
-                    </button>}
-                </div>
-                {editingPendingId === pendingSelection.id && (
-                  <form className="space-y-3 border-t border-slate-700/40 pt-3" onSubmit={submitCorrection}>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <DateInput value={correctionDate} onChange={value => {setCorrectionDate(value);setFeedback(null);}}
-                        label="Actual subscription date" required showVerbosePreview={false}/>
-                      <label className="block space-y-1 font-semibold text-slate-300">
-                        <span>Order time (Cairo){fundingOnCorrectedDate?' · required':' · optional'}</span>
-                        <input type="time" value={correctionTime} required={fundingOnCorrectedDate}
-                          onChange={event=>{setCorrectionTime(event.target.value);setFeedback(null);}}
-                          className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white"/>
-                      </label>
-                    </div>
-                    <p className="premium-type-helper">If you funded and placed the order on the same date, enter the time from your broker receipt so the cash ledger can process events in the right order.</p>
-                    <label className="block space-y-1 font-semibold text-slate-300">
-                      <span>Audit reason</span>
-                      <input value={correctionReason} required
-                        onChange={event=>setCorrectionReason(event.target.value)}
-                        className="premium-field w-full rounded-xl px-3 py-2 text-white"
-                        placeholder="Why is this entry being corrected?"/>
-                    </label>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <button type="button" disabled={isSaving} className="premium-action rounded-xl px-3 py-2"
-                        onClick={()=>{setEditingPendingId(null);setFeedback(null);}}>Discard</button>
-                      <button type="submit" disabled={isSaving || !correctionDate || !correctionReason.trim()}
-                        className="premium-action premium-action-primary rounded-xl px-3 py-2 font-semibold disabled:opacity-40">
-                        {isSaving?'Saving correction…':'Save changes'}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            )}
-
-            {pendingSelection && (
-              <div className="premium-form-section grid grid-cols-1 gap-3 rounded-xl p-3 sm:grid-cols-3">
-                <div className="space-y-1">
-                  <label className="block font-semibold text-slate-300">Allocated Shares</label>
-                  <NumberStepperInput
-                    min={0}
-                    step={1}
-                    value={allocatedShares}
-                    onValueChange={setAllocatedShares}
-                    accent="blue"
-                    className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
-                  />
-                </div>
-                <DateInput
-                  value={allocationDate}
-                  onChange={setAllocationDate}
-                  label="Allocation Date"
-                  required
-                  showVerbosePreview={false}
-                />
-                <div className="space-y-1">
-                  <label className="block font-semibold text-slate-300">Allocation Fees</label>
-                  <NumberStepperInput
-                    min={0}
-                    step={0.01}
-                    value={allocationFees}
-                    onValueChange={setAllocationFees}
-                    accent="blue"
-                    className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white focus:outline-none"
-                  />
-                </div>
-                <p className="sm:col-span-3 premium-type-helper">
-                  Expected final cost: {formatEgp(Math.max(0,Number(allocatedShares)||0)*Number(pendingSelection.ipoSubscription?.offerPrice||0)+Math.max(0,Number(allocationFees)||0))} EGP.
-                  Broker hold: {formatEgp(Number(pendingSelection.ipoSubscription?.reservedAmount??pendingSelection.ipoSubscription?.requestedAmount??0))} EGP.
-                  If the allocation exceeds the held amount, available cash must cover the difference.
-                </p>
-                <div className="sm:col-span-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <button type="button" onClick={cancelPending} disabled={isSaving} className="premium-action rounded-xl px-4 py-2 font-semibold text-rose-300 disabled:opacity-50">
-                    Cancel &amp; Release Cash
-                  </button>
-                  <button type="button" onClick={submitAllocation} disabled={isSaving} className="premium-action premium-action-success rounded-xl px-4 py-2 font-bold disabled:opacity-50">
-                    Record Allocation
-                  </button>
-                </div>
-              </div>
-            )}
+      {view === 'edit' && pendingSelection && (
+        <section className="premium-form-section space-y-3 rounded-xl p-3 text-xs" aria-label="Edit existing pending IPO order">
+          <div className="space-y-1">
+            <h4 className="font-bold text-white">{pendingSelection.ticker} · Correct subscription details</h4>
+            <p className="premium-type-helper">
+              {Number(pendingSelection.ipoSubscription?.requestedShares ?? pendingSelection.shares).toLocaleString('en-EG')} requested shares ·
+              {formatEgp(Number(pendingSelection.ipoSubscription?.reservedAmount ?? pendingSelection.ipoSubscription?.requestedAmount ?? 0))} EGP already held.
+            </p>
           </div>
-        )}
-      </div>
+          <form className="space-y-3 border-t border-slate-700/40 pt-3" onSubmit={submitCorrection}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DateInput id="ipo-correction-date" value={correctionDate}
+                onChange={value => {setCorrectionDate(value);setFeedback(null);}}
+                label="Actual subscription date" required showVerbosePreview={false}/>
+              <label className="block space-y-1 font-semibold text-slate-300">
+                <span>Order time (Cairo){fundingOnCorrectedDate?' · required':' · optional'}</span>
+                <input type="time" value={correctionTime} required={fundingOnCorrectedDate}
+                  onChange={event=>{setCorrectionTime(event.target.value);setFeedback(null);}}
+                  className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white"/>
+              </label>
+            </div>
+            <p className="premium-type-helper">
+              Use the actual broker order time if you deposited cash on the same date.
+              This edits the original order, with no additional cash hold.
+            </p>
+            <label className="block space-y-1 font-semibold text-slate-300">
+              <span>Audit reason</span>
+              <input value={correctionReason} required
+                onChange={event=>setCorrectionReason(event.target.value)}
+                className="premium-field w-full rounded-xl px-3 py-2 text-white"
+                placeholder="Reason for correcting this order"/>
+            </label>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" disabled={isSaving} className="premium-action rounded-xl px-4 py-3"
+                onClick={()=>{setView('list');setEditingPendingId(null);setFeedback(null);}}>Discard</button>
+              <button type="submit" disabled={isSaving || !correctionDate || !correctionReason.trim()}
+                className="premium-action premium-action-primary rounded-xl px-4 py-3 font-semibold disabled:opacity-40">
+                {isSaving?'Saving correction…':'Save changes'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {view === 'allocate' && pendingSelection && (
+        <section className="premium-form-section space-y-3 rounded-xl p-3 text-xs" aria-label="Record confirmed IPO allocation">
+          <div>
+            <h4 className="font-bold text-white">{pendingSelection.ticker} · Record allocation</h4>
+            <p className="premium-type-helper mt-1">
+              {Number(pendingSelection.ipoSubscription?.requestedShares ?? pendingSelection.shares).toLocaleString('en-EG')} shares requested.
+              Record only the shares your broker actually allocated.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <label className="block font-semibold text-slate-300">Allocated shares</label>
+              <NumberStepperInput min={1} step={1} value={allocatedShares}
+                onValueChange={setAllocatedShares} accent="blue"
+                className="premium-field w-full rounded-xl px-3 py-2 font-mono font-bold text-white"/>
+            </div>
+            <DateInput value={allocationDate} onChange={setAllocationDate}
+              label="Allocation date" required showVerbosePreview={false}/>
+            <div className="space-y-1">
+              <label className="block font-semibold text-slate-300">Allocation fees</label>
+              <NumberStepperInput min={0} step={0.01} value={allocationFees}
+                onValueChange={setAllocationFees} accent="blue"
+                className="premium-field w-full rounded-xl px-3 py-2 font-mono text-white"/>
+            </div>
+          </div>
+          <div className="premium-inset-glass rounded-xl p-3 space-y-1">
+            <p className="premium-type-helper">Estimated allocation cost · {formatEgp(Math.max(0,Number(allocatedShares)||0)*Number(pendingSelection.ipoSubscription?.offerPrice||0)+Math.max(0,Number(allocationFees)||0))} EGP</p>
+            <p className="premium-type-helper">Broker cash already held · {formatEgp(Number(pendingSelection.ipoSubscription?.reservedAmount??pendingSelection.ipoSubscription?.requestedAmount??0))} EGP</p>
+            <p className="premium-type-helper">Unused hold will be released; any extra allocation cost requires available cash.</p>
+          </div>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" disabled={isSaving} className="premium-action rounded-xl px-4 py-3"
+              onClick={()=>{setView('list');setFeedback(null);}}>Back</button>
+            <button type="button" onClick={submitAllocation} disabled={isSaving || !allocatedShares || Number(allocatedShares)<=0}
+              className="premium-action premium-action-success rounded-xl px-4 py-3 font-bold disabled:opacity-40">
+              {isSaving?'Saving allocation…':'Confirm allocation'}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {view === 'cancel' && pendingSelection && (
+        <section className="premium-form-section space-y-4 rounded-xl p-4 text-xs" aria-label="Confirm IPO subscription cancellation">
+          <h4 className="font-bold text-white">Cancel {pendingSelection.ticker} subscription?</h4>
+          <p className="premium-type-helper">
+            Only do this after your broker confirms the subscription has been cancelled.
+            This will release {formatEgp(Number(pendingSelection.ipoSubscription?.reservedAmount ?? pendingSelection.ipoSubscription?.requestedAmount ?? 0))} EGP
+            back to available cash. No shares will be recorded.
+          </p>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button type="button" disabled={isSaving} className="premium-action rounded-xl px-4 py-3"
+              onClick={()=>{setView('list');setFeedback(null);}}>Keep subscription</button>
+            <button type="button" disabled={isSaving} className="premium-action rounded-xl px-4 py-3 font-semibold text-rose-300"
+              onClick={cancelPending}>{isSaving?'Cancelling…':'Confirm cancellation'}</button>
+          </div>
+        </section>
+      )}
 
       {feedback && (
         <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">

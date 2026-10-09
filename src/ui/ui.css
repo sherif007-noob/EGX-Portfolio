@@ -608,3 +608,27 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   .ui-activity-dialog { padding:15px; }
   .ui-activity-dialog .ui-activity-inline-actions > button { flex:1 1 auto; }
 }
+
+/* NAV breakdown and Return tooltip: compact, touch-readable, financial data first. */
+.ui-chart-detail-tooltip {
+  display:flex; flex-direction:column; gap:8px;
+  min-width:210px; max-width:min(82vw,305px); padding:12px;
+  border:1px solid var(--ui-border-strong);
+  border-radius:var(--ui-radius-sm,10px);
+  background:var(--ui-surface-2);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  color:var(--ui-text); font-size:12px;
+}
+.ui-chart-detail-tooltip>strong { font-size:12px; font-weight:700; }
+.ui-chart-detail-tooltip>small {
+  font-size:10px; line-height:1.45; color:var(--ui-text-2);
+  border-top:1px solid var(--ui-border); padding-top:7px;
+}
+.ui-chart-tooltip-rows { display:flex; flex-direction:column; gap:7px; }
+.ui-chart-tooltip-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.ui-chart-tooltip-row>span { min-width:0; color:var(--ui-text-2); }
+.ui-chart-tooltip-row>strong { text-align:right; font-size:11px; font-weight:650; white-space:nowrap; }
+@media(max-width:420px) {
+  .ui-chart-detail-tooltip { min-width:180px; max-width:min(76vw,260px); padding:9px; }
+  .ui-chart-tooltip-row { gap:6px; }
+}

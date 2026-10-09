@@ -215,7 +215,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
   const submitCorrection = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!editingPendingId || !pendingSelection || pendingSelection.id !== editingPendingId || isSaving) return;
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(correctionDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(correctionDate)) {
       setFeedback('Enter the correct subscription date.'); return;
     }
     if (fundingOnCorrectedDate && !correctionTime.trim()) {
@@ -224,7 +224,7 @@ export const IpoSubscriptionModal: React.FC<IpoSubscriptionModalProps> = ({
     if (!correctionReason.trim()) {
       setFeedback('Please enter a reason for the audited correction.'); return;
     }
-    if (correctionTime && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(correctionTime)) {
+    if (correctionTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(correctionTime)) {
       setFeedback('Enter a valid Cairo time in HH:MM format.'); return;
     }
     setIsSaving(true);

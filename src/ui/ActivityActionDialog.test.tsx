@@ -57,7 +57,7 @@ describe('one-step Activity actions',()=>{
   it('allocation is separate and cannot be confused with editing',()=>{
     const html=render(ipo,'allocate');
     expect(html).toContain('Shares actually allocated');
-    expect(html).toContain('Confirm');
+    expect(html).toContain('Record allocation');
     expect(html).not.toContain('Requested shares');
   });
   it('IPO deletion explains that it does not cancel a real broker order',()=>{

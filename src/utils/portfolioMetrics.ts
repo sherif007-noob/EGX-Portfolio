@@ -2,6 +2,7 @@ import { Position, ClosedTrade, TradeTransaction, EGXTicker, PortfolioMetrics, P
 import { calculatePortfolioValue, calculatePositionMarketValue, calculatePositionUnrealizedPnl, calculatePerformanceStats as calculateAccountingPerformanceStats, calculateFeeBreakdown } from '../services/portfolioAccounting';
 import { cashFlowSignedImpact, isCapitalCashFlowType, isReconciliationCashFlowType, normalizeCashFlowType } from '../services/cashFlowSemantics';
 import { getLatestEgxSessionDate } from '../services/analyticsTimeframes';
+import { sessionChangePercent } from '../services/sessionReturnPresentation';
 import { normalizeCorporateActionType } from '../services/corporateActions';
 import {
   normalizeIpoSubscriptionMetadata,
@@ -189,8 +190,7 @@ export function calculatePortfolioMetrics(positions: Position[], cashBalance: nu
     }, 0);
   }
 
-  const previousPortfolioValue = totalValue - dayChangeEgp;
-  const dayChangePercent = previousPortfolioValue > 0 ? (dayChangeEgp / previousPortfolioValue) * 100 : 0;
+  const dayChangePercent = sessionChangePercent(dayChangeEgp, totalValue) ?? 0;
   return { totalValue: Number(totalValue.toFixed(2)), totalMarketValue: Number(totalMarketValue.toFixed(2)), totalCost: Number(totalCost.toFixed(2)), totalCostWithFees: Number(totalCostWithFees.toFixed(2)), unrealizedPnlEgp: Number(unrealizedPnlEgp.toFixed(2)), unrealizedPnlPercent: totalCostWithFees > 0 ? Number(((unrealizedPnlEgp / totalCostWithFees) * 100).toFixed(2)) : 0, grossUnrealizedPnlEgp: Number(grossUnrealizedPnlEgp.toFixed(2)), grossUnrealizedPnlPercent: totalCost > 0 ? Number(((grossUnrealizedPnlEgp / totalCost) * 100).toFixed(2)) : 0, realizedPnlEgp: Number(totalRealizedPnl.toFixed(2)), cashBalance: Number(cashBalance.toFixed(2)), dayChangeEgp: Number(dayChangeEgp.toFixed(2)), dayChangePercent: Number(dayChangePercent.toFixed(2)), dayChangeReliable: sessionReconstructionComplete, totalPositions: positions.length, winningPositionsCount, losingPositionsCount, totalFeesPaid: Number(totalFeesPaid.toFixed(2)), openFeesPaid: Number(openFeesPaid.toFixed(2)), closedFeesPaid: Number(closedFeesPaid.toFixed(2)), pendingIpoSubscriptionsEgp: Number(pendingIpoSubscriptionsEgp.toFixed(2)) };
 }
 

@@ -354,3 +354,7 @@ The same pass identified that a financial save replaces the entire ledger throug
 
 ## Analytics cash-flow and ORHD price-basis repair — first code pass (2026-10-09)
 Historical ORHD Sep 30–Oct 6 prices are normalized to the ledger's credited share basis for the historical view (without altering Supabase prices or the October 7 bonus event); Today explicitly avoids double adjustment on the credit session. Return, tooltip P&L, daily/intraday and report EGP drawdown were moved toward the same cash-neutral model, with NAV and contributed capital shown separately. Ordinary audited fee edits now skip unrelated ticker-directory quote writes, with in-flight tap deduplication. New synthetic regression tests and docs were committed. **Not yet executed/accepted:** Vitest, TypeScript, build, phone rendering, exact live returns, Cloudflare deployment and actual latency. No production portfolio rows modified.
+
+## Chart UX: NAV breakdown and Return tooltip — 2026-10-09
+
+Source changes on `medium-ui`: renamed overlapping `Value` to `NAV breakdown` with stacked invested holdings, free cash and pending IPO cash plus NAV outline; dedicated `vs Deposits` still compares NAV and contributed capital. Investor CASH deposits/withdrawals display dated markers (never represented as market profit). Expanded Return tooltip to cumulative flow-neutral P&L, change since previous session/interval, flow-neutral interval percent, and NAV. Added synthetic tests and compact mobile tooltip styles. Not yet TypeScript/Vitest/browser/Cloudflare verified; ledger data untouched.

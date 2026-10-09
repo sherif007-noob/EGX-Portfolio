@@ -226,7 +226,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
           {metric('Total return · selected range',
             numbers.cumulativeReturn==null?'—':`${formatSigned(numbers.cumulativeReturn)} EGP`,
             numbers.cumulativeReturn)}
-          {metric(timeframe==='TODAY'?'Since previous interval':'Since previous session',
+          {metric(previous
+              ? `Change vs ${labelTime(chartTime(previous.date),timeframe==='TODAY')}`
+              : (timeframe==='TODAY'?'Previous interval':'Previous session'),
             numbers.intervalReturn==null?'—':`${formatSigned(numbers.intervalReturn)} EGP`,
             numbers.intervalReturn)}
           {metric('Interval return %',formatPercent(numbers.intervalPercent),numbers.intervalPercent)}

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { PerformanceStats, PortfolioMetrics, Position } from '../types';
 import { formatChartDate, formatCompact, formatPercent, formatSigned, toneClass } from './format';
 import { HomeScreen, positionPnl } from './HomeScreen';
+import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
 import { ActivitySwitcher, SimpleShell } from './SimpleShell';
 
 const metrics: PortfolioMetrics = {
@@ -60,6 +61,17 @@ describe('positionPnl', () => {
 });
 
 describe('HomeScreen', () => {
+  it('shows unavailable rather than 0% when session reference capital is missing', () => {
+    const emptyMetrics = calculatePortfolioMetrics([], 0, [], [], []);
+    expect(emptyMetrics.dayChangeReliable).toBe(false);
+    const html = renderToStaticMarkup(<HomeScreen metrics={emptyMetrics} stats={stats}
+      positions={[]} transactions={[]} historicalPrices={{}} capitalDeposits={0}
+      onOpenPositions={noop} onOpenReports={noop} />);
+    const hero = html.slice(html.indexOf('ui-hero'), html.indexOf('ui-tile-grid'));
+    expect(hero).toContain('Session return unavailable');
+    expect(hero).not.toContain('(0.00%)');
+  });
+
   it('shows the hero, only realized and unrealized tiles, holdings and cash rows', () => {
     const html = renderToStaticMarkup(
       <HomeScreen

@@ -86,7 +86,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 {formatSigned(today)} EGP ({formatPercent(metrics.dayChangePercent)})
               </span>
             ) : (
-              <span className="ui-sm ui-muted">Session return unavailable · verify previous closing prices</span>
+              <span className="ui-sm ui-muted">Session return unavailable · verify opening quotes and reference capital</span>
             )}
             <span className="ui-sm ui-muted">{sessionReturnLabel}</span>
           </div>

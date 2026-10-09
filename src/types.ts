@@ -131,7 +131,7 @@ export interface PortfolioMetrics {
   cashBalance: number;
   dayChangeEgp: number;
   dayChangePercent: number;
-  /** False if latest-session opening holdings/quotes cannot be reconstructed. */
+  /** False if opening holdings/quotes cannot be reconstructed or the session percentage is unavailable. */
   dayChangeReliable?: boolean;
   totalPositions: number;
   winningPositionsCount: number;

@@ -146,12 +146,26 @@ Tests include a synthetic same-day buy/sell/rebuy where `shares × quote change`
 - Canonical persistence receives the exact entered shares and checks monetary consistency. Older amount-based integrations retain compatibility. Tests cover integer validation, monetary rounding, 25%-hold calculation, and rejection of inconsistent amounts.
 - Changes are source-level on the experimental `medium-ui` branch. Full build, Vitest execution and device acceptance have not yet been run.
 
-## IPO pending date correction (medium-ui, 2026-10-09)
-The IPO modal now includes **Edit subscription** on a selected pending order. The user can change an accidentally entered date, optionally set the exact broker time in Cairo, provide an audit reason and save it. The original IPO record and reserved cash remain intact; no duplicate hold or phantom return. If backdating onto a cash-deposit day, the actual order placement time becomes required to preserve financial chronology. Editing after allocation/cancellation is blocked. Source tests exist; no production data was edited, and live validation is pending.
+## IPO pending date correction (earlier implementation, superseded)
+The earlier IPO modal included **Edit subscription** on a selected pending order. The user can change an accidentally entered date, optionally set the exact broker time in Cairo, provide an audit reason and save it. The original IPO record and reserved cash remain intact; no duplicate hold or phantom return. If backdating onto a cash-deposit day, the actual order placement time becomes required to preserve financial chronology. Editing after allocation/cancellation is blocked. Source tests exist; no production data was edited, and live validation is pending.
 
 ## IPO flow cleanup / date-entry fix (medium-ui, 2026-10-09)
 
 - **Bug fixed:** editing a subscription for 07/10/2026 failed with 'Enter the correct subscription date' because the UI regex contained accidentally double-escaped `\\d`. The correction form now correctly validates digits, and date/time handling uses strict DD/MM/YYYY → ISO conversion.
-- **Workflow cleanup:** Manage IPO opens a pending-orders overview. A **New subscription**, **Edit order details**, **Record allocation**, and **Cancel subscription** are separate, exclusive screens with their own actions. An existing pending order does not silently turn into an additional IPO subscription.
+- **Superseded:** The intermediate pending-orders overview was removed from the active app. Add → IPO subscription opens only the new-subscription form; existing orders are managed directly from their Activity entries.
 - **Reliability:** pending orders refreshing from Supabase don't reset forms mid-edit; entered corrections remain until Save, Discard, or Close. Strict DateInput on IPO screens prevents invalid/unfinished user input from accidentally keeping stale state or silently becoming today's date.
 - Ledger semantics unchanged: correct the original transaction ID with audited persistence; the broker hold, requested shares and NAV remain unchanged until an actual lifecycle event. Production financial records were not touched; source tests committed but not run.
+
+## Single-step Activity actions — current medium-ui design (2026-10-09)
+
+An expanded record in the **Activity** timeline now exposes its actions in place:
+- **Security execution:** Edit, Delete, Buy more; Sell if shares of that ticker remain in an open position. Edit/Delete target the specific original execution; Buy more/Sell open the existing trading action modal with the relevant ticker.
+- **Pending IPO subscription:** Allocation, Edit, Delete. Allocation opens a focused allocation form; Edit opens a focused editor for requested shares, offer price, cash-hold percentage, broker date/time/reference/notes; Delete shows a destructive ledger-only confirmation. Already allocated/cancelled IPOs are protected from direct deletion at the canonical mutation boundary.
+- **Cash record** (including deposits, withdrawals, dividends and fees): Edit and Delete, with cash amount/event-type semantics. They use audited financial mutations, not fake share trades.
+- Corporate-action and opening-position lifecycle records remain visible with typed details; protected opening positions do not expose Delete.
+
+The old **Manage IPO → Pending orders → Choose action** navigation was removed from the live app. Add → IPO subscription now mounts `SimpleIpoCreateModal` as a **single new-order form only**. Activity record actions mount `ActivityActionDialog` directly; no cross-tab navigation is needed to edit a pending order. The one-step dialogs use the same compact simple-UI styling and wrap on small phones.
+
+Persisted financial actions still require an audit reason and pass through the canonical ledger reconciliation executor. IPO Edit changes one existing transaction rather than reserving cash again. Pending IPO Delete deletes an **erroneous app ledger entry**, releasing its held amount in the app; it must not be mistaken for an actual Telda cancellation. New/edited IPO amounts are derived from shares × offer price and held percentage.
+
+Source-level tests cover direct forms, IPO/cash ledger reconciliation, lifecycle-delete protection, and the single-purpose Create IPO form. No app build, browser acceptance, CI execution or production financial mutation has been performed as part of this pass.

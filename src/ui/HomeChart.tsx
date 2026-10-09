@@ -134,14 +134,28 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         { key: 'equity', label: 'Value', color: 'var(--ui-teal)', area: true },
         { key: 'netDeposits', label: 'Net deposits', color: 'var(--ui-amber)', dashed: true },
       ];
-    } else if (mode === 'twr') {
+    } else if (mode === 'twr' || mode === 'mwr') {
       unit = 'pct';
-      for (const point of points) if (finite(point.twrPercent)) rows.push({ date: point.date, twr: point.twrPercent });
-      series = [{ key: 'twr', label: 'TWR', color: 'var(--ui-teal)', area: true }];
-    } else if (mode === 'mwr') {
-      unit = 'pct';
-      for (const point of points) if (finite(point.mwrrPercent)) rows.push({ date: point.date, mwr: point.mwrrPercent });
-      series = [{ key: 'mwr', label: 'MWR', color: 'var(--ui-blue)', area: true }];
+      // Both are calculated by the engine independently. Overlay the other
+      // measure to expose real capital-timing differences, rather than drawing
+      // two apparently interchangeable single-line charts.
+      for (const point of points) {
+        if (!finite(point.twrPercent) && !finite(point.mwrrPercent)) continue;
+        rows.push({
+          date:point.date,
+          ...(finite(point.twrPercent)?{twr:point.twrPercent}:{}),
+          ...(finite(point.mwrrPercent)?{mwr:point.mwrrPercent}:{}),
+        });
+      }
+      series = mode === 'twr'
+        ? [
+            {key:'twr',label:'TWR (time-weighted)',color:'var(--ui-teal)',area:true},
+            {key:'mwr',label:'MWR (money-weighted)',color:'var(--ui-blue)',dashed:true},
+          ]
+        : [
+            {key:'mwr',label:'MWR (money-weighted)',color:'var(--ui-blue)',area:true},
+            {key:'twr',label:'TWR (time-weighted)',color:'var(--ui-teal)',dashed:true},
+          ];
     } else if (mode === 'bm') {
       unit = 'pct';
       const usable = points.filter((point) => finite(point.twrPercent));
@@ -327,6 +341,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         </div>
       )}
 
+      {(mode==='twr'||mode==='mwr') && (
+        <p className="ui-note ui-weighted-return-note">
+          {mode==='twr'
+            ? 'TWR (solid green) removes the effect of contribution timing. MWR (dashed blue) weights when your money was invested.'
+            : 'MWR (solid blue) reflects contribution timing. TWR (dashed green) measures the portfolio independent of that timing.'}
+          {' '}They can coincide when cash movements occur at the period boundary; date-only deposits cannot establish an exact intraday weighting.
+        </p>
+      )}
       {mode==='dep' && (
         <p className="ui-note" style={{marginTop:8}}>
           Compare NAV with your net contributions. Cash transfers change value but are not trading profit. Deposits and withdrawals are marked on the chart.
@@ -458,6 +480,13 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             <span className="ui-sm">
               <span className="ui-dot" style={{ ['--dot' as string]:'var(--ui-blue)' }}/>
               Portfolio NAV <span className="ui-mono">{formatEgp(last.nav)} EGP</span>
+            </span>
+          )}
+          {(mode==='twr'||mode==='mwr') && last && finite(last.twr) && finite(last.mwr) && (
+            <span className="ui-sm">
+              MWR − TWR <span className={`ui-mono ${toneClass(last.mwr-last.twr)}`}>
+                {formatSigned(last.mwr-last.twr)} percentage points
+              </span>
             </span>
           )}
           {relative !== null && (

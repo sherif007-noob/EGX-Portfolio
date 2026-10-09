@@ -336,3 +336,6 @@ In the medium-ui branch, daily P&L preserves transaction-aware opening holdings 
 
 ## Medium UI IPO shares-first form — 2026-10-09
 The IPO order form now takes share quantity and offer price per share as primary entries, derives order commitment and cash hold, and persists the exact requested whole-share count. The existing IPO accounting invariants, hold percentage, allocation and cancellation workflows remain intact. Tests committed, execution/deployment verification pending; production financial data was not modified.
+
+## Experimental IPO editing — 2026-10-09
+`medium-ui` adds an audited in-place pending IPO date/time correction to the subscription modal, exposed through the portfolio feature facade. Users can correct an accidentally saved subscription date without canceling or duplicating the IPO cash hold. Exact Cairo placement time is required if funding was recorded on the corrected date. Implementation/tests are committed but not executed or deployed; production rows remain unchanged.

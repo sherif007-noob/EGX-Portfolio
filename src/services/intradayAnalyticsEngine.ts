@@ -7,6 +7,7 @@ import { egxCairoSessionClock } from './egxTradingSession';
 import { INTRADAY_POLICY } from './intradayPolicy';
 import { cashFlowSignedImpact, normalizeCashFlowType } from './cashFlowSemantics';
 import { isBonusSharesTransaction } from './corporateActions';
+import { resolvedHistoricalPriceBasisBridges } from './historicalPriceBasis';
 import {
   isIpoSubscriptionTransaction,
   pendingIpoSubscriptionValue,
@@ -345,12 +346,20 @@ export function buildIntradayAnalyticsResult(
     state.cash = Number(options.currentCashBalance) - futureSessionImpact;
   }
 
+  const historicalPriceBasis = resolvedHistoricalPriceBasisBridges(ordered, historicalPrices);
   const previousCloses = new Map<string, number>();
   for (const [ticker, shares] of state.shares.entries()) {
     if (shares <= EPSILON) continue;
     const close = previousClose(historicalPrices, ticker, sessionDate);
-    if (close !== undefined) {
-      previousCloses.set(ticker, close * (sessionReferencePriceFactors.get(ticker) ?? 1));
+    // A vendor that has *already* adjusted the prior close cannot be adjusted
+    // again when broker-credited bonus shares are added at today's baseline.
+    const vendorAdjustedBeforeCredit = historicalPriceBasis.bridges.some(bridge =>
+      bridge.ticker === ticker && bridge.endExclusive === sessionDate);
+    const unverifiedBasis = historicalPriceBasis.unverified.some(item =>
+      item.ticker === ticker && sessionDate >= item.startDate);
+    if (close !== undefined && !unverifiedBasis) {
+      previousCloses.set(ticker, close * (vendorAdjustedBeforeCredit
+        ? 1 : sessionReferencePriceFactors.get(ticker) ?? 1));
     }
   }
 

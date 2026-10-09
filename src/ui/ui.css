@@ -693,3 +693,17 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   .ui-composition-line,.ui-composition-total { font-size: .77rem; gap: 7px; }
   .ui-composition-total strong { font-size: .9rem; }
 }
+
+/* Session performance never disappears merely because the exchange is closed. */
+.ui-hero-session-performance {
+  display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  margin-top:10px; font-size:.85rem;
+}
+.ui-hero-session-performance>.ui-mono {font-weight:650;font-variant-numeric:tabular-nums;}
+/* Keep portfolio comparison within Return itself: one switch, two labelled axes. */
+.ui-return-compare-control {
+  margin-top:8px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+}
+.ui-return-compare-control .ui-chip {min-height:36px;}
+.ui-return-compare-control .ui-sm {font-size:.72rem;line-height:1.4;}
+.ui-weighted-return-note {line-height:1.55;}

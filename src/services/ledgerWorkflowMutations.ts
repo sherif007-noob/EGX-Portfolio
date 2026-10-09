@@ -101,6 +101,12 @@ export function prepareTransactionDeleteMutation(
 ): LedgerMutationPreparation<TradeTransaction> {
   const deleted = current.transactions.find((transaction) => transaction.id === transactionId);
   if (!deleted) throw new Error('Transaction was not found. Reload and try again.');
+  if (deleted.type === 'OPENING_POSITION') {
+    throw new Error('Opening-position migration records are protected.');
+  }
+  if (deleted.type === 'IPO_SUBSCRIPTION' && deleted.ipoSubscription?.status !== 'SUBMITTED') {
+    throw new Error('Allocated or cancelled IPO lifecycle records cannot be deleted directly.');
+  }
 
   const transactions = current.transactions.filter((transaction) => transaction.id !== transactionId);
   const capitalDeposits = deriveCapitalDepositsAfterLedgerChange(

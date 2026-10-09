@@ -10,6 +10,7 @@ import { isBonusSharesTransaction } from './corporateActions';
 import {
   isIpoSubscriptionTransaction,
   pendingIpoSubscriptionValue,
+  ipoHeldAmount,
 } from './ipoSubscriptions';
 import {
   buildExternalCashFlows,
@@ -53,7 +54,7 @@ function transactionCashImpact(tx: TradeTransaction): number {
   if (isBonusSharesTransaction(tx)) return 0;
 
   if (isIpoSubscriptionTransaction(tx) && tx.ipoSubscription) {
-    if (tx.ipoSubscription.status === 'SUBMITTED') return -tx.ipoSubscription.requestedAmount;
+    if (tx.ipoSubscription.status === 'SUBMITTED') return -ipoHeldAmount(tx.ipoSubscription);
     if (tx.ipoSubscription.status === 'ALLOCATED') return -Number(tx.totalAmount || 0);
     return 0;
   }

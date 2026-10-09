@@ -121,7 +121,7 @@ New IPO form submissions include `requestedShares` as the explicit whole-number 
 
 ## Correct a saved pending subscription date (medium-ui)
 
-In **IPO → Pending allocations**, select the submitted order and use **Edit subscription**. The inline editor offers the actual subscription date, optional Cairo placement time, an audit reason, and **Save changes** or **Discard**.
+In the current UI, expand the original IPO entry under **Activity** and tap **Edit**. (The earlier IPO → Pending allocations path is retired.) The inline editor offers the actual subscription date, optional Cairo placement time, an audit reason, and **Save changes** or **Discard**.
 
 - The correction updates the existing transaction **in place**, preserving its original ID, ticker, commitment, requested shares, cash hold, pending status and metadata. No duplicate order or second cash reservation is created.
 - A date correction updates both the parent ledger row's `date` and the IPO metadata's `subscriptionDate`. An explicitly entered broker time is converted using `Africa/Cairo`, including DST, and saved as `executedAt`.
@@ -135,7 +135,7 @@ The new editor and ledger correction have targeted regression source tests for C
 
 An earlier IPO modal rendered three mutually unrelated financial workflows on one long surface and rejected a valid edited date because the correction form's JavaScript regex accidentally matched a literal escaped backslash rather than date digits.
 
-The modal now defaults to an **IPO pending-orders overview** (not the New Subscription form). Each selected action switches to one dedicated, focused screen:
+That intermediate modal navigation has now been retired. The **Add → IPO subscription** option opens a single new-order form. An existing order is edited, allocated, or deleted directly from its record in **Activity**. The retired design had listed these screens:
 - **New subscription:** ticker, requested shares, offer price per share, held percentage, summary, then create.
 - **Edit order details:** existing pending order, real order date/time in Cairo, audit reason, then Save changes or Discard; no new reservation.
 - **Record allocation:** actual allocated shares, date, actual fees, settlement/hold comparison, then confirm.
@@ -146,3 +146,15 @@ The parent modal remains one accessible dialog/sheet container but never shows t
 `DateInput` uses opt-in `strictInput` mode on IPO form dates. The shared `parseUserCalendarDate` accepts **Egyptian DD/MM/YYYY** or **ISO YYYY-MM-DD**, rejects impossible/incomplete dates, and returns `null` rather than silently falling back to today's date. An incomplete edited date invalidates the form state; the ledger correction independently normalizes/validates the date before auditing and persistence. The date save regex and Cairo-time regex were corrected.
 
 Tests cover the 07/10/2026 round-trip, invalid 31/02/2026, isolated workflows, preventing reset during live-refresh, and the existing immutable-cash-hold correction path. Source-level changes only: no live IPO date was altered, and TypeScript/Vitest/browser acceptance has not been executed.
+
+## Current IPO entry/action policy (2026-10-09)
+
+**Add → IPO subscription** opens `SimpleIpoCreateModal` and does only one thing: submit a new IPO order. The form asks for ticker, company, whole requested shares, offer price, broker hold percentage, subscription date, and optional notes/reference. The commitment and reserved cash are calculated; no editing/allocation/cancellation subnavigation is available there.
+
+**Activity → select pending IPO** offers **Allocation · Edit · Delete** on that specific record.
+- **Edit** changes the same submitted ledger row in one audited dialog. Requested shares, price, hold percentage, date, Cairo time, reference and notes are editable. Recalculate requested amount and held EGP; the original transaction ID persists. On the actual cash funding date, Cairo order time is required for correct ledger ordering. Editing is not a new order or a second hold.
+- **Allocation** uses the validated settlement mutation and records only actual awarded shares, with unused hold refund or available-cash top-up.
+- **Delete** removes a mistaken **app ledger entry** with an audit reason and canonical recomputation. It does **not** cancel the broker's actual IPO order. Allocated and cancelled lifecycle records cannot be deleted from Activity or the canonical deletion mutation.
+- Completed IPO history remains visible in Activity and is not offered unsafe lifecycle rewrites.
+
+This supersedes older directions to open a combined IPO manager. Source-only implementation on `medium-ui`; no deployment or live ledger modification.

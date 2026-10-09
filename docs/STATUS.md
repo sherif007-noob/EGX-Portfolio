@@ -339,3 +339,6 @@ The IPO order form now takes share quantity and offer price per share as primary
 
 ## Experimental IPO editing — 2026-10-09
 `medium-ui` adds an audited in-place pending IPO date/time correction to the subscription modal, exposed through the portfolio feature facade. Users can correct an accidentally saved subscription date without canceling or duplicating the IPO cash hold. Exact Cairo placement time is required if funding was recorded on the corrected date. Implementation/tests are committed but not executed or deployed; production rows remain unchanged.
+
+## Experimental medium-ui IPO UX and date correction (2026-10-09)
+Fixed a double-escaped date/time regex that rejected valid DD/MM/YYYY edits; added strict input handling so incomplete/invalid calendar dates cannot silently save stale values. Replaced combined new-subscription, existing-order edit, allocation and cancellation presentation with a pending-order overview and independent per-action screens. In-progress input no longer resets during passive transaction updates. Canonical audited ledger mutations remain the authority; production financial data unchanged. Automated tests/build/phone acceptance pending.

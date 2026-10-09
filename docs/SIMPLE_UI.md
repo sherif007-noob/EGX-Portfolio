@@ -148,3 +148,10 @@ Tests include a synthetic same-day buy/sell/rebuy where `shares × quote change`
 
 ## IPO pending date correction (medium-ui, 2026-10-09)
 The IPO modal now includes **Edit subscription** on a selected pending order. The user can change an accidentally entered date, optionally set the exact broker time in Cairo, provide an audit reason and save it. The original IPO record and reserved cash remain intact; no duplicate hold or phantom return. If backdating onto a cash-deposit day, the actual order placement time becomes required to preserve financial chronology. Editing after allocation/cancellation is blocked. Source tests exist; no production data was edited, and live validation is pending.
+
+## IPO flow cleanup / date-entry fix (medium-ui, 2026-10-09)
+
+- **Bug fixed:** editing a subscription for 07/10/2026 failed with 'Enter the correct subscription date' because the UI regex contained accidentally double-escaped `\\d`. The correction form now correctly validates digits, and date/time handling uses strict DD/MM/YYYY → ISO conversion.
+- **Workflow cleanup:** Manage IPO opens a pending-orders overview. A **New subscription**, **Edit order details**, **Record allocation**, and **Cancel subscription** are separate, exclusive screens with their own actions. An existing pending order does not silently turn into an additional IPO subscription.
+- **Reliability:** pending orders refreshing from Supabase don't reset forms mid-edit; entered corrections remain until Save, Discard, or Close. Strict DateInput on IPO screens prevents invalid/unfinished user input from accidentally keeping stale state or silently becoming today's date.
+- Ledger semantics unchanged: correct the original transaction ID with audited persistence; the broker hold, requested shares and NAV remain unchanged until an actual lifecycle event. Production financial records were not touched; source tests committed but not run.

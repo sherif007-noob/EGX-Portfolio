@@ -1,4 +1,5 @@
 import { calculateIpoOrderQuote } from './ipoOrderQuote';
+import { parseUserCalendarDate } from '../utils/dateUtils';
 import { cairoOrderTimeToUtcIso } from './ipoSubscriptionEditing';
 import type {
   CanonicalCashFlowType,
@@ -532,11 +533,8 @@ export function prepareIpoSubscriptionCorrectionMutation(
     throw new Error('Only pending IPO subscriptions may have their order date corrected.');
   }
 
-  const date=String(input.subscriptionDate??'').trim();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) ||
-    new Date(`${date}T00:00:00Z`).toISOString().slice(0,10)!==date) {
-    throw new Error('Enter a valid subscription date.');
-  }
+  const date=parseUserCalendarDate(input.subscriptionDate);
+  if (!date) throw new Error('Enter a valid subscription date.');
   const time=(input.executionTimeCairo??'').trim();
   const fundingOnCorrectedDate = date!==existing.date && current.transactions.some(tx =>
     tx.id!==existing.id && tx.date.slice(0,10)===date &&

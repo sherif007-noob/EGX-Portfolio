@@ -37,7 +37,7 @@ const Tile: React.FC<{ label: string; value: number; sub: string; color: string 
       <span className="ui-dot" style={{ ['--dot' as string]: color }} />
       {label}
     </div>
-    <div className={`ui-mono ${toneClass(value)}`} style={{ fontSize: '1.2rem', fontWeight: 600, overflowWrap: 'anywhere' }}>
+    <div className={`ui-mono ${toneClass(value)}`} style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
       {formatSigned(value)}
     </div>
     <div className="ui-sm">{sub}</div>
@@ -180,7 +180,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
           {pending > 0 && (
             <div className="ui-row">
-              <span><span className="ui-dot" style={{ ['--dot' as string]: 'var(--ui-purple)' }} />IPO reserved</span>
+              <span><span className="ui-dot" style={{ ['--dot' as string]: 'var(--ui-amber)' }} />IPO reserved</span>
               <span className="ui-mono">{formatEgp(pending)}</span>
             </div>
           )}

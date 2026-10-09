@@ -38,7 +38,7 @@ export const formatChartDate = (value: string): string => {
   return `${day} ${MONTHS[month - 1] ?? ''}`;
 };
 
-const SECTOR_COLORS = ['--ui-blue', '--ui-coral', '--ui-purple', '--ui-amber', '--ui-teal', '--ui-gray'];
+const SECTOR_COLORS = ['--ui-cat-1', '--ui-cat-2', '--ui-cat-3', '--ui-cat-4', '--ui-cat-5', '--ui-cat-6', '--ui-cat-7', '--ui-cat-8'];
 
 /** Stable color per sector so the same sector always looks the same. */
 export const sectorColorVar = (sector: string | undefined): string => {

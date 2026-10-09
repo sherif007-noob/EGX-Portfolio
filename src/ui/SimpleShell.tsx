@@ -1,4 +1,5 @@
 import './ui.css';
+import { PillGroup } from './Pill';
 import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
@@ -256,12 +257,8 @@ export const ActivitySwitcher: React.FC<{ activeTab: NavigationTab; setActiveTab
       <h1>Activity</h1>
       <span className="ui-sm">Trades, cash and completed positions</span>
     </div>
-    <div className="ui-activity-tabs" role="group" aria-label="Activity view">
-      {ACTIVITY_SEGMENTS.map((segment) => (
-        <button key={segment.tab} type="button" aria-pressed={activeTab === segment.tab} onClick={() => setActiveTab(segment.tab)}>
-          {segment.label}
-        </button>
-      ))}
-    </div>
+    <PillGroup label="Activity view" value={activeTab} onChange={setActiveTab}
+      choices={ACTIVITY_SEGMENTS.map(segment => ({value:segment.tab,label:segment.label}))}/>
+
   </section>
 );

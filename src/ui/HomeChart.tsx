@@ -24,6 +24,7 @@ import {
   type BenchmarkComparisonPoint,
   type PortfolioBenchmarkTicker,
 } from '../services/portfolioBenchmarks';
+import { Pill, PillGroup } from './Pill';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
@@ -289,41 +290,21 @@ export const HomeChart: React.FC<HomeChartProps> = ({
 
   return (
     <div>
-      <div className="ui-chips" role="group" aria-label="Chart range">
-        {RANGES.map((range) => (
-          <button
-            key={range.value}
-            type="button"
-            className="ui-chip"
-            aria-pressed={timeframe === range.value}
-            onClick={() => setTimeframe(range.value)}
-          >
-            {range.value === 'TODAY' && !marketSession.isCurrentSessionDay ? 'Last session' : range.label}
-          </button>
-        ))}
+      <PillGroup label="Chart range" value={timeframe} onChange={setTimeframe}
+        choices={RANGES.map(range => ({...range, label: range.value === 'TODAY' && !marketSession.isCurrentSessionDay ? 'Last session' : range.label}))}/>
+      <div className="ui-chart-toolbar">
+        <PillGroup label="Chart type" value={mode} onChange={setMode}
+          choices={MODES.filter(item => showAdvanced || ['ret', 'dep', 'bm'].includes(item.value))}/>
+        <button type="button" className="ui-link ui-sm" aria-expanded={showAdvanced} onClick={() => setShowAdvanced(value => !value)}>{showAdvanced ? 'Less' : 'More metrics'}</button>
       </div>
-
-      <div className="ui-chart-toolbar"><div className="ui-chips" role="group" aria-label="Chart type">
-        {MODES.filter(item => showAdvanced || ['ret', 'dep', 'bm'].includes(item.value)).map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            className="ui-chip sub"
-            aria-pressed={mode === item.value}
-            onClick={() => setMode(item.value)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div><button type="button" className="ui-link ui-sm" aria-expanded={showAdvanced} onClick={() => setShowAdvanced(value => !value)}>{showAdvanced ? 'Less' : 'More metrics'}</button></div>
 
       {mode==='ret' && (
         <div className="ui-return-compare-control">
-          <button type="button" className="ui-chip sub" aria-pressed={comparePortfolio}
+          <Pill pressed={comparePortfolio}
             aria-label="Compare portfolio NAV with return"
             onClick={()=>setComparePortfolio(on=>!on)}>
             {comparePortfolio?'✓ Portfolio vs Return':'+ Compare portfolio value'}
-          </button>
+          </Pill>
           {comparePortfolio && <span className="ui-sm">
             NAV (blue, right scale) vs P&amp;L (green, left scale)
           </span>}
@@ -332,26 +313,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       {timeframe === 'TODAY' && !marketSession.isCurrentSessionDay && (
         <p className="ui-note" role="status">{marketSession.description} · {marketSession.sessionCaption}. No new EGX session or trading return today.</p>
       )}
-      {timeframe === 'TODAY' && <div className="ui-chips ui-granularity" role="group" aria-label="Today chart interval">{GRANULARITIES.map(minutes => <button key={minutes} className="ui-chip sub" type="button" aria-pressed={granularity === minutes} onClick={() => setGranularity(minutes)}>{minutes === 60 ? '1h' : `${minutes}m`}</button>)}</div>}
-
-      {mode === 'bm' && (
-        <div className="ui-chips" style={{ marginTop: 8 }} role="group" aria-label="Benchmark index">
-          <button type="button" className="ui-chip sub" aria-pressed={indexChoice === 'all'} onClick={() => setIndexChoice('all')}>
-            All indices
-          </button>
-          {PORTFOLIO_BENCHMARKS.map((item) => (
-            <button
-              key={item.ticker}
-              type="button"
-              className="ui-chip sub"
-              aria-pressed={indexChoice === item.ticker}
-              onClick={() => setIndexChoice(item.ticker)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {timeframe === 'TODAY' && <div className="ui-granularity">
+        <PillGroup label="Today chart interval" value={granularity} onChange={setGranularity}
+          choices={GRANULARITIES.map(minutes => ({value:minutes,label:minutes === 60 ? '1h' : `${minutes}m`}))}/>
+      </div>}
+      {mode === 'bm' && <div className="ui-benchmark-controls">
+        <PillGroup<IndexChoice> label="Benchmark index" value={indexChoice} onChange={setIndexChoice}
+          choices={[{value:'all',label:'All indices'}, ...PORTFOLIO_BENCHMARKS.map(item => ({value:item.ticker,label:item.label}))]}/>
+      </div>}
 
       {(mode==='twr'||mode==='mwr') && (
         <p className="ui-note ui-weighted-return-note">

@@ -416,6 +416,10 @@ export interface IpoSubscriptionInput {
   companyName: string;
   sector: Sector;
   requestedAmount: number;
+  /** Optional exact whole-share count for shares-first IPO orders. */
+  requestedShares?: number;
+  /** Actual broker cash hold, defaults to 100% for legacy callers. */
+  reservedAmount?: number;
   offerPrice: number;
   subscriptionDate: string;
   reference?: string;
@@ -451,10 +455,25 @@ export function prepareIpoSubscriptionMutation(
     throw new Error('IPO subscription requires a valid subscription date.');
   }
 
-  const requestedShares = requestedAmount / offerPrice;
+  const requestedShares = input.requestedShares == null
+    ? requestedAmount / offerPrice : Number(input.requestedShares);
+  if (!Number.isFinite(requestedShares) || requestedShares <= 0
+    || (input.requestedShares != null && !Number.isSafeInteger(requestedShares))) {
+    throw new Error('IPO requested shares must be positive whole shares.');
+  }
+  if (input.requestedShares != null
+    && Math.abs(Math.round(requestedShares * offerPrice * 100) / 100 - requestedAmount) > 0.005) {
+    throw new Error('IPO shares × offer price does not match commitment.');
+  }
+  const reservedAmount = input.reservedAmount == null
+    ? requestedAmount : Number(input.reservedAmount);
+  if (!Number.isFinite(reservedAmount) || reservedAmount <= 0 || reservedAmount > requestedAmount + 0.01) {
+    throw new Error('IPO broker cash hold must be positive and no greater than the order.');
+  }
   const metadata = {
     status: 'SUBMITTED' as const,
     requestedAmount,
+    reservedAmount,
     requestedShares,
     offerPrice,
     reference: input.reference?.trim() || undefined,
@@ -474,7 +493,7 @@ export function prepareIpoSubscriptionMutation(
     date: subscriptionDate,
     fees: 0,
     totalAmount: requestedAmount,
-    netCashImpact: -requestedAmount,
+    netCashImpact: -reservedAmount,
     ipoSubscription: metadata,
     notes: input.notes?.trim() || undefined,
   };
@@ -511,7 +530,15 @@ export function prepareIpoAllocationMutation(
   if (totalAmount > existing.ipoSubscription.requestedAmount + 0.01) {
     throw new Error('IPO allocation cost cannot exceed the original subscription amount.');
   }
-  const refundAmount = existing.ipoSubscription.requestedAmount - totalAmount;
+  if (allocatedShares > existing.ipoSubscription.requestedShares + 0.000001) {
+    throw new Error('IPO allocated shares cannot exceed requested shares.');
+  }
+  const originalHold = existing.ipoSubscription.reservedAmount ?? existing.ipoSubscription.requestedAmount;
+  const refundAmount = Math.max(0, Number((originalHold - totalAmount).toFixed(2)));
+  const additionalPaymentAmount = Math.max(0, Number((totalAmount - originalHold).toFixed(2)));
+  if (additionalPaymentAmount > current.cashBalance + 0.005) {
+    throw new Error('IPO allocation requires additional cash exceeding available balance.');
+  }
   const allocationDate = String(input.allocationDate || '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(allocationDate) || !Number.isFinite(Date.parse(allocationDate))) {
     throw new Error('IPO allocation requires a valid allocation date.');
@@ -524,6 +551,7 @@ export function prepareIpoAllocationMutation(
     allocatedShares,
     allocatedAmount: totalAmount,
     refundAmount,
+    additionalPaymentAmount,
   };
   validateIpoSubscriptionMetadata(metadata);
 
@@ -563,7 +591,7 @@ export function prepareIpoCancellationMutation(
     ...existing.ipoSubscription,
     status: 'CANCELLED' as const,
     cancellationDate: currentCairoDateKey(),
-    refundAmount: existing.ipoSubscription.requestedAmount,
+    refundAmount: existing.ipoSubscription.reservedAmount ?? existing.ipoSubscription.requestedAmount,
   };
   validateIpoSubscriptionMetadata(metadata);
 

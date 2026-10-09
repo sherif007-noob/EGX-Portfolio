@@ -514,6 +514,12 @@ export interface IpoSubscriptionCorrectionInput {
   subscriptionDate: string;
   /** Optional real order placement clock (HH:MM) in Africa/Cairo. */
   executionTimeCairo?: string;
+  /** Optional edited broker order terms, all checked against canonical ledger. */
+  requestedShares?: number;
+  offerPrice?: number;
+  reservedAmount?: number;
+  reference?: string;
+  notes?: string;
 }
 
 /**
@@ -549,12 +555,31 @@ export function prepareIpoSubscriptionCorrectionMutation(
   const executedAt = time ? cairoOrderTimeToUtcIso(date,time)
     : existing.executedAt;
   if(existing.date===date && existing.ipoSubscription.subscriptionDate===date &&
-    (existing.executedAt??null)===(executedAt??null)) {
+    (existing.executedAt??null)===(executedAt??null) &&
+    (input.requestedShares===undefined || input.requestedShares===existing.ipoSubscription.requestedShares) &&
+    (input.offerPrice===undefined || input.offerPrice===existing.ipoSubscription.offerPrice) &&
+    (input.reservedAmount===undefined || input.reservedAmount===oldReserved) &&
+    (input.reference===undefined || input.reference===(existing.ipoSubscription.reference??'')) &&
+    (input.notes===undefined || input.notes===(existing.notes??''))) {
     throw new Error('There are no IPO subscription changes to save.');
   }
-  const metadata={...existing.ipoSubscription,subscriptionDate:date};
+  const shares=input.requestedShares ?? existing.ipoSubscription.requestedShares;
+  const price=input.offerPrice ?? existing.ipoSubscription.offerPrice;
+  // Keep explicit held EGP separate from the full requested commitment.
+  const oldReserved=existing.ipoSubscription.reservedAmount ?? existing.ipoSubscription.requestedAmount;
+  const reserved=input.reservedAmount ?? oldReserved;
+  const quote=calculateIpoOrderQuote(shares,price,100);
+  if(!Number.isFinite(reserved) || reserved<=0 || reserved>quote.requestedAmount+0.01){
+    throw new Error('IPO cash held must be positive and no greater than the order value.');
+  }
+  const metadata={...existing.ipoSubscription,subscriptionDate:date,
+    requestedShares:shares,offerPrice:price,requestedAmount:quote.requestedAmount,reservedAmount:reserved,
+    reference:input.reference === undefined ? existing.ipoSubscription.reference : input.reference.trim() || undefined,
+  };
   validateIpoSubscriptionMetadata(metadata);
-  const corrected:TradeTransaction={...existing,date,executedAt,ipoSubscription:metadata};
+  const corrected:TradeTransaction={...existing,date,executedAt,ipoSubscription:metadata,
+    shares,price,totalAmount:quote.requestedAmount,netCashImpact:-reserved,
+    notes:input.notes === undefined ? existing.notes : input.notes.trim() || undefined};
   return {
     transactions:current.transactions.map(tx=>tx.id===existing.id?corrected:tx),
     capitalDeposits:current.capitalDeposits,

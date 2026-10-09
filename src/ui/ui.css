@@ -632,3 +632,64 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   .ui-chart-detail-tooltip { min-width:180px; max-width:min(76vw,260px); padding:9px; }
   .ui-chart-tooltip-row { gap:6px; }
 }
+
+/* Overview portfolio composition: single current snapshot, not another return chart. */
+.ui-composition-snapshot {
+  padding: 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+  min-width: 0;
+}
+.ui-composition-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ui-composition-heading h3 {
+  color: var(--ui-text);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+.ui-composition-hint { margin: 5px 0 13px; line-height: 1.45; }
+.ui-composition-bar {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-surface-2);
+}
+.ui-composition-segment { display: block; min-width: 0; height: 100%; }
+.ui-composition-segment.holdings,.ui-composition-dot.holdings { background: var(--ui-teal); }
+.ui-composition-segment.ipo,.ui-composition-dot.ipo { background: var(--ui-amber); }
+.ui-composition-segment.cash,.ui-composition-dot.cash { background: var(--ui-blue); }
+.ui-composition-lines { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+.ui-composition-line,.ui-composition-total {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-width: 0; font-size: .875rem;
+}
+.ui-composition-line strong,.ui-composition-total strong {
+  white-space: nowrap; text-align: right; font-weight: 650; color: var(--ui-text);
+}
+.ui-composition-line small,.ui-composition-total small {
+  font-size: .675rem; font-weight: 500; color: var(--ui-text-2);
+}
+.ui-composition-label { display: inline-flex; align-items: center; gap: 9px; min-width: 0; color: var(--ui-text-2); }
+.ui-composition-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; }
+.ui-composition-total {
+  border-top: 1px solid var(--ui-border); margin-top: 12px; padding-top: 12px;
+  font-weight: 700; color: var(--ui-text);
+}
+.ui-composition-total strong { font-size: 1.05rem; }
+.ui-composition-warning {
+  color: var(--ui-warn); font-size: .75rem; line-height: 1.5; margin: 10px 0 0;
+}
+@media (max-width: 390px) {
+  .ui-composition-snapshot { padding: 13px; }
+  .ui-composition-line,.ui-composition-total { font-size: .77rem; gap: 7px; }
+  .ui-composition-total strong { font-size: .9rem; }
+}

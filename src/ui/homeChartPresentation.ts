@@ -62,8 +62,8 @@ export function chartReturnTooltipMetrics(
     : Number.isFinite(currentProfit)&&Number.isFinite(priorProfit)
       ? currentProfit-priorProfit
       : current.equity-previous!.equity-(Number(current.externalFlow)||0);
-  const twr=Number(current.twrPercent);
-  const priorTwr=Number(previous?.twrPercent);
+  const twr=current.twrPercent == null ? Number.NaN : Number(current.twrPercent);
+  const priorTwr=previous?.twrPercent == null ? Number.NaN : Number(previous.twrPercent);
   const intervalPercent = !hasPrevious || !Number.isFinite(twr) || !Number.isFinite(priorTwr) || 1+priorTwr/100<=0
     ? null
     : ((1+twr/100)/(1+priorTwr/100)-1)*100;

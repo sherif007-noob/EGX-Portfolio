@@ -413,9 +413,11 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                     x={event.timestamp} y={event.equity} r={4}
                     fill={event.netFlow>=0?'var(--ui-amber)':'var(--ui-coral)'}
                     stroke="var(--ui-surface-2)" strokeWidth={2}
-                    label={{value:event.netFlow>=0
-                      ?`+${formatCompact(event.netFlow)} cash`
-                      :`${formatCompact(event.netFlow)} cash`,
+                    label={{value:event.deposited>0&&event.withdrawn===0
+                      ?`Deposit +${formatCompact(event.deposited)}`
+                      :event.withdrawn>0&&event.deposited===0
+                        ?`Withdrawal −${formatCompact(event.withdrawn)}`
+                        :`Cash ${event.netFlow>=0?'+':''}${formatCompact(event.netFlow)}`,
                       position:'top',fontSize:10,fill:'var(--ui-text)'}}/>
                 ))}
               </ChartRoot>

@@ -28,7 +28,16 @@ export function buildPerformanceEngineResult(
   const firstTransactionDate = transactions.map((tx) => String(tx.date || '').slice(0, 10)).filter(Boolean).sort()[0];
   const externalCashFlows = buildExternalCashFlows(transactions, openingCapital, startDate || firstTransactionDate);
   const mwrrSeries = buildMWRRSeries(valuations, externalCashFlows);
-  const drawdown = calculateMaxDrawdown(mwrrSeries.filter((point) => point.complete).map((point) => ({ equity: point.equity })));
+  const complete = mwrrSeries.filter(point => point.complete);
+  const baselineDate = complete[0]?.date ?? '';
+  // Raw NAV drawdown invents a loss when an investor withdraws cash.
+  // Remove all investor and return-neutral adjustments since first valuation.
+  const drawdown = calculateMaxDrawdown(complete.map(point => {
+    const flowSinceBaseline=externalCashFlows
+      .filter(flow => flow.date.slice(0,10) > baselineDate && flow.date.slice(0,10) <= point.date)
+      .reduce((sum,flow)=>sum+flow.amount,0);
+    return {equity:point.equity+flowSinceBaseline};
+  }));
   const missingTickers = [...new Set(mwrrSeries.flatMap((point) => point.missingTickers || []))];
   return {
     valuations: mwrrSeries,

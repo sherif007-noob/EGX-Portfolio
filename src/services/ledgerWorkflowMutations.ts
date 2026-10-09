@@ -1,3 +1,4 @@
+import { calculateIpoOrderQuote } from './ipoOrderQuote';
 import type {
   CanonicalCashFlowType,
   CashTransaction,
@@ -415,6 +416,9 @@ export interface IpoSubscriptionInput {
   ticker: string;
   companyName: string;
   sector: Sector;
+  /** Explicit number of requested shares, authoritative for new IPO entry forms. */
+  requestedShares?: number;
+  /** Full EGP order commitment. Legacy integrations may supply only this and price. */
   requestedAmount: number;
   /** Broker's actual cash hold, which may be only a percentage of the order. */
   reservedAmount?: number;
@@ -439,14 +443,24 @@ export function prepareIpoSubscriptionMutation(
   const ticker = String(input.ticker || '').trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
   if (!ticker) throw new Error('IPO subscription requires a ticker.');
 
-  const requestedAmount = Number(input.requestedAmount);
+  const suppliedAmount = Number(input.requestedAmount);
   const offerPrice = Number(input.offerPrice);
-  if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
-    throw new Error('IPO requested amount must be greater than zero.');
-  }
   if (!Number.isFinite(offerPrice) || offerPrice <= 0) {
     throw new Error('IPO offer price must be greater than zero.');
   }
+  if (!Number.isFinite(suppliedAmount) || suppliedAmount <= 0) {
+    throw new Error('IPO requested amount must be greater than zero.');
+  }
+  // New forms submit exact share count. Validate rather than infer it from a
+  // rounded amount (which can otherwise create fractional shares).
+  const explicitQuote = input.requestedShares == null
+    ? null
+    : calculateIpoOrderQuote(Number(input.requestedShares), offerPrice, 100);
+  if (explicitQuote && Math.abs(suppliedAmount - explicitQuote.requestedAmount) > 0.005) {
+    throw new Error('IPO order amount does not match shares × offer price.');
+  }
+  const requestedAmount = explicitQuote?.requestedAmount ?? suppliedAmount;
+  const requestedShares = explicitQuote?.requestedShares ?? requestedAmount / offerPrice;
 
   const subscriptionDate = String(input.subscriptionDate || '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(subscriptionDate) || !Number.isFinite(Date.parse(subscriptionDate))) {
@@ -457,7 +471,6 @@ export function prepareIpoSubscriptionMutation(
   if (!Number.isFinite(reservedAmount) || reservedAmount <= 0 || reservedAmount > requestedAmount + 0.01) {
     throw new Error('Broker cash hold must be positive and no greater than the full order amount.');
   }
-  const requestedShares = requestedAmount / offerPrice;
   const metadata = {
     status: 'SUBMITTED' as const,
     requestedAmount,

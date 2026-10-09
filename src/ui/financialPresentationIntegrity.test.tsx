@@ -30,7 +30,10 @@ describe('cash ledger versus investment activity separation',()=>{
   it('shows cash in Activity without inventing equity shares',()=>{
     const html=renderToStaticMarkup(
       <SimpleTransactionsView transactions={[cash('deposit',20000,'DEPOSIT'),buy]}
-        positions={[position]} closedTrades={[]} onDeleteTransaction={async()=>true}/>,
+        positions={[position]} closedTrades={[]} onDeleteTransaction={async()=>true}
+        onEditTransaction={async()=>true} onSaveCashRecord={async()=>true}
+        onSaveIpo={async()=>true} onAllocateIpo={async()=>true}
+        onBuyMoreTicker={()=>{}} onSellPosition={()=>{}}/>,
     );
     expect(html).toContain('ARCC');
     expect(html).not.toContain('20,000 shares');

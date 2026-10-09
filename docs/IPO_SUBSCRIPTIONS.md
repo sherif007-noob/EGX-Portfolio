@@ -130,3 +130,19 @@ In **IPO → Pending allocations**, select the submitted order and use **Edit su
 - Financial persistence uses the canonical persist-before-apply executor with a mandatory audit reason, full reconciliation and all-or-nothing commit. The production ledger has not been modified by adding this feature.
 
 The new editor and ledger correction have targeted regression source tests for Cairo DST, October-date changes, preserving a single hold, NAV neutrality and same-day funding order. Automated tests and phone acceptance remain pending.
+
+## Modal flow and date-entry correction — 2026-10-09
+
+An earlier IPO modal rendered three mutually unrelated financial workflows on one long surface and rejected a valid edited date because the correction form's JavaScript regex accidentally matched a literal escaped backslash rather than date digits.
+
+The modal now defaults to an **IPO pending-orders overview** (not the New Subscription form). Each selected action switches to one dedicated, focused screen:
+- **New subscription:** ticker, requested shares, offer price per share, held percentage, summary, then create.
+- **Edit order details:** existing pending order, real order date/time in Cairo, audit reason, then Save changes or Discard; no new reservation.
+- **Record allocation:** actual allocated shares, date, actual fees, settlement/hold comparison, then confirm.
+- **Cancel subscription:** separate broker-cancellation confirmation, explicitly describing funds released.
+
+The parent modal remains one accessible dialog/sheet container but never shows those forms simultaneously. Pending-list selection and in-progress edits are no longer reset by ordinary background portfolio refreshes.
+
+`DateInput` uses opt-in `strictInput` mode on IPO form dates. The shared `parseUserCalendarDate` accepts **Egyptian DD/MM/YYYY** or **ISO YYYY-MM-DD**, rejects impossible/incomplete dates, and returns `null` rather than silently falling back to today's date. An incomplete edited date invalidates the form state; the ledger correction independently normalizes/validates the date before auditing and persistence. The date save regex and Cairo-time regex were corrected.
+
+Tests cover the 07/10/2026 round-trip, invalid 31/02/2026, isolated workflows, preventing reset during live-refresh, and the existing immutable-cash-hold correction path. Source-level changes only: no live IPO date was altered, and TypeScript/Vitest/browser acceptance has not been executed.

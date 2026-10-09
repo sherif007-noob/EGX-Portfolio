@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { buildPerformanceEngineResult } from './performanceEngine';
 
 describe('performance engine', () => {
+  it('never classifies deposits or withdrawals as an EGP drawdown',()=>{
+    const result=buildPerformanceEngineResult([
+      {id:'dep1',type:'BUY',ticker:'CASH',companyName:'Cash',sector:'Liquid Buying Power',
+        shares:1000,price:1,fees:0,totalAmount:1000,cashFlowType:'DEPOSIT',date:'2026-09-27'},
+      {id:'withdraw',type:'SELL',ticker:'CASH',companyName:'Cash',sector:'Liquid Buying Power',
+        shares:300,price:1,fees:0,totalAmount:300,cashFlowType:'WITHDRAWAL',date:'2026-09-28'},
+      {id:'dep2',type:'BUY',ticker:'CASH',companyName:'Cash',sector:'Liquid Buying Power',
+        shares:500,price:1,fees:0,totalAmount:500,cashFlowType:'DEPOSIT',date:'2026-09-29'},
+    ],{},'2026-09-27','2026-09-29');
+    expect(result.valuations.map(x=>x.equity)).toEqual([1000,700,1200]);
+    expect(result.maxDrawdownEgp).toBe(0);
+    expect(result.maxDrawdownPercent).toBe(0);
+  });
+
   it('combines historical valuation, external cash flows, MWRR, and drawdown', () => {
     const result = buildPerformanceEngineResult([
       { id: 'dep', type: 'BUY', ticker: 'CASH', companyName: 'Cash', sector: 'Liquid Buying Power', shares: 1000, price: 1, date: '2026-01-01', fees: 0, totalAmount: 1000, cashFlowType: 'DEPOSIT' },

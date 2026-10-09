@@ -12,6 +12,7 @@ import { formatEgp, formatPercent, formatSigned, toneClass } from './format';
 import { buildSimpleAllocation, buildSimpleMonths } from './simpleReportsModel';
 import { PersonalRiskView } from './PersonalRiskView';
 import { pendingIpoSubscriptionValue } from '../services/ipoSubscriptions';
+import { PortfolioCompositionSnapshot } from './PortfolioCompositionSnapshot';
 
 interface Props {
   stats: PerformanceStats;
@@ -125,6 +126,13 @@ export function SimpleReportsView(props: Props) {
           <p>Portfolio equity does not match capital + P&L + adjustments. Values are shown as recorded; no balancing capital was invented.</p>
         </div>}
       </section>
+      <PortfolioCompositionSnapshot
+        marketValue={metrics?.totalMarketValue ??
+          positions.reduce((sum,position)=>sum+position.shares*position.currentPrice,0)}
+        availableCash={cashBalance}
+        ipoHeld={pendingIpoValue}
+        nav={metrics?.totalValue ?? bridge.endingEquity}
+      />
       <section className="ui-report-section">
         <SectionTitle title="Quick insights"/>
         <div className="ui-report-info-grid">

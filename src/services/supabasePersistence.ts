@@ -2,6 +2,7 @@ import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { Position, ClosedTrade, TradeTransaction, EGXTicker } from '../types';
 import { mergeTickerDirectoryWithRegistry } from './tickerRegistry';
 import type { AuditTrailDraft, AuditTrailRecord } from './auditTrail';
+import { shouldSyncTickerQuotesForPortfolioSave } from './tickerWritePolicy';
 
 export interface SupabasePortfolioData {
   positions: Position[];
@@ -384,9 +385,7 @@ export async function savePortfolioToSupabase(
     // Previously each edit also made ~32 batches of quote update requests for
     // the 314-symbol ticker directory, even when changing only a trade fee.
     // Restore and explicit directory saves still publish ticker quotes.
-    const shouldPersistQuotes = !auditEvent ||
-      auditEvent.mutationKind === 'RESTORE_PORTFOLIO' ||
-      auditEvent.mutationKind === 'RESTORE_LEDGER_SNAPSHOT';
+    const shouldPersistQuotes = shouldSyncTickerQuotesForPortfolioSave(auditEvent?.mutationKind);
     if (shouldPersistQuotes && Array.isArray(data.tickers) && data.tickers.length) {
       const quoteStartMs=performance.now();
       await persistTickerQuotes(supabase, data.tickers);

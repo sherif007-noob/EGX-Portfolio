@@ -83,7 +83,12 @@ export interface IpoSubscriptionFormInput {
   ticker: string;
   companyName: string;
   sector: Sector;
+  /** Explicit whole-share count from the IPO form. */
+  requestedShares?: number;
+  /** Derived shares × offer price commitment, never manually typed. */
   requestedAmount: number;
+  /** Actual broker-held funds, separate from full order commitment. */
+  reservedAmount?: number;
   offerPrice: number;
   subscriptionDate: string;
   reference?: string;

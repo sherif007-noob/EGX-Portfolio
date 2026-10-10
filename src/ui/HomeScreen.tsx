@@ -165,7 +165,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <div className="ui-section-h">
             <span>Cash and costs</span>
             {onQuickAddCash && (
-              <button type="button" className="ui-link ui-sm" onClick={onQuickAddCash}>Add or withdraw</button>
+              <button type="button" className="ui-link ui-sm" onClick={onQuickAddCash}>Record transfer</button>
             )}
           </div>
           <div className="ui-row">

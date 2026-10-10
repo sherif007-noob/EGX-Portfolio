@@ -873,7 +873,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   background:rgba(30,48,66,.74);
   color:var(--ui-text);
   border-radius:10px;
-  min-height:34px;
+  /* Geometry belongs to the calling control (e.g. footer min 44px). */
 }
 .ui-trade-modal .ui-trade-modal-actions .premium-action:is(.premium-action-primary,.premium-action-warning) {
   background:linear-gradient(160deg,rgba(var(--ui-action-rgb),.96),rgba(var(--ui-action-rgb),.76));

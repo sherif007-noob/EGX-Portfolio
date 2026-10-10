@@ -231,12 +231,20 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     const delta = newContribution - oldContribution;
     const newBalance = Number((cashBalance + delta).toFixed(2));
 
+    let executedAt: string | undefined;
+    try {
+      executedAt = editTimeCairo ? cairoOrderTimeToUtcIso(editDate, editTimeCairo) : undefined;
+    } catch (error) {
+      setFeedbackMessage({ text: error instanceof Error ? error.message : 'Invalid Cairo cash execution time.', type:'error' });
+      return;
+    }
+
     const updatedTx: CashTransaction = {
       ...editingTransaction,
       type: editType,
       amount: newAmountNum,
       date: editDate,
-      executedAt: editTimeCairo ? cairoOrderTimeToUtcIso(editDate, editTimeCairo) : undefined,
+      executedAt,
       notes: editNotes.trim(),
       balanceAfter: newBalance,
     };

@@ -18,8 +18,8 @@
      lines, dots and tile surfaces. Teal/blue identify non-P&L NAV comparisons;
      purple/amber/coral identify EGX indices and cash-event categories only.
      Categorical: --ui-cat-1..8 identify sectors, never P&L sign. */
-  --ui-teal: #22b88a; /* your portfolio, realized gains */
-  --ui-blue: #4b9cf5; /* MWR, unrealized */
+  --ui-teal: #22b88a; /* brand accent and neutral portfolio comparisons */
+  --ui-blue: #4b9cf5; /* neutral comparisons, not loss P&L */
   --ui-purple: #9a92f0; /* EGX30 */
   --ui-amber: #d99a2b; /* fees, cash movements, EGX70 */
   --ui-coral: #ef6f45; /* drawdown, losses, EGX100 */
@@ -370,7 +370,10 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-activity-record-details { padding:13px 15px 16px; background:var(--ui-surface-2); border-top:1px solid var(--ui-border); }
 .ui-activity-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
 .ui-activity-detail { display:flex; flex-direction:column; gap:4px; min-width:0; }
-.ui-activity-detail strong { font-size:.875rem; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
+.ui-activity-detail strong { font-size:.875rem; font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
+.ui-activity-detail-grid { column-gap:18px; row-gap:16px; }
+.ui-activity-detail:has(.ui-activity-time) { grid-column:1 / -1; }
+.ui-activity-time { display:block; font-variant-numeric:tabular-nums; white-space:normal; letter-spacing:.012em; }
 .ui-activity-notes { margin:0 0 14px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .ui-activity-load { display:block; width:100%; min-height:42px; margin-top:12px; border-radius:9px; border:1px solid var(--ui-border); background:var(--ui-surface); color:var(--ui-text); cursor:pointer; font-weight:600; }
 .ui-activity-empty { margin:0; padding:24px; text-align:center; color:var(--ui-text-2); font-size:.875rem; }

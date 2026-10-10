@@ -143,7 +143,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               ? `${displayPosition.currentPrice.toFixed(3)} EGP` : 'Unavailable'}</strong>
           </div>
         </div>
-        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
+        <form id="ui-sell-position-form" onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
           {/* Summary Box */}
           <div className="premium-subpanel ui-trade-modal-stats p-3 rounded-xl flex justify-between">
             <div>
@@ -322,6 +322,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             />
           </div>
 
+        </form>
           {/* Actions */}
           <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
@@ -334,13 +335,13 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
             </button>
             <button
               type="submit"
+              form="ui-sell-position-form"
               disabled={isSubmitting}
               className="premium-action premium-action-warning w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Saving Sale…' : 'Confirm Sale & Book Net P&L'}
             </button>
           </div>
-        </form>
     </PremiumModalMotion>
   );
 };

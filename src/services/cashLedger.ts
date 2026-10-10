@@ -31,6 +31,7 @@ export function prepareCashLedgerEvent(
   amount: number,
   notes = '',
   date = getCairoTodayISO(),
+  executedAt?: string,
 ): PreparedCashLedgerChange {
   validateCashDate(date);
   const signedAdjustment = kind === 'RECONCILIATION_ADJUSTMENT';
@@ -64,7 +65,18 @@ export function prepareCashLedgerEvent(
     transactions.push(cashRow('DEPOSIT', state.capitalDeposits, openingDate, 'Opening capital carried forward from legacy balance'));
   }
 
-  const transaction = cashRow(kind, value, date, notes);
+  // The user may supply an actual broker/transfer time; date-only entries stay untimed.
+  if (executedAt) {
+    const instant = new Date(executedAt);
+    if (!Number.isFinite(instant.getTime()) || instant.toISOString() !== executedAt) {
+      throw new Error('Invalid cash execution timestamp.');
+    }
+    const cairoDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(instant);
+    if (cairoDate !== date) throw new Error('Cash execution time must match its Cairo event date.');
+  }
+  const transaction = { ...cashRow(kind, value, date, notes), ...(executedAt ? { executedAt } : {}) };
   transactions.unshift(transaction);
   const capitalDeposits = Number((state.capitalDeposits
     + (kind === 'DEPOSIT' ? value : kind === 'WITHDRAWAL' ? -value : 0)).toFixed(2));
@@ -154,7 +166,7 @@ export function rebuildAfterLedgerChange(state: CashLedgerState, transactions: T
 export function prepareCashLedgerChange(
   state: CashLedgerState,
   id: string,
-  changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null,
+  changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> & Pick<CashTransaction, 'executedAt'> | null,
 ): PreparedCashLedgerChange {
   const transactions = withOpeningCapital(state);
   const existing = transactions.find((tx) => tx.id === id);
@@ -168,7 +180,7 @@ export function prepareCashLedgerChange(
     ...tx, type: changes.type === 'DEPOSIT' ? 'BUY' as const : 'SELL' as const,
     shares: amount, price: 1, fees: 0, totalAmount: amount, cashFlowAmount: amount,
     cashFlowType: changes.type, date: changes.date,
-    executedAt: changes.date === tx.date ? tx.executedAt : undefined,
+    executedAt: 'executedAt' in changes ? changes.executedAt : changes.date === tx.date ? tx.executedAt : undefined,
     notes: changes.notes,
   } : tx) : transactions.filter((tx) => tx.id !== id);
   return {

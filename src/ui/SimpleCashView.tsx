@@ -114,9 +114,9 @@ export function SimpleCashView(props: Props) {
       ] as const}/>
       <form onSubmit={submitCash} className="ui-activity-transfer-form">
         <label>Amount (EGP)<input type="number" inputMode="decimal" min=".01" step=".01" required value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></label>
-        <label>Date<input type="date" required value={date} onChange={e => setDate(e.target.value)}/></label>
+        <label>Date<input type="date" required value={date} onChange={e => {setDate(e.target.value);setTimeCairo('');}}/></label>
         <label>Time in Cairo (optional)<input type="time" value={timeCairo} onChange={e => setTimeCairo(e.target.value)}/></label>
-        <p className="ui-sm">Use the actual transfer time; leave blank if unknown.</p>
+        <p className="ui-sm ui-activity-field-wide">Use the actual transfer time; leave blank if unknown.</p>
         <label className="ui-activity-field-wide">Notes (optional)<input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Bank transfer or broker reference"/></label>
         <button type="submit" className="ui-activity-primary" disabled={busy}>{busy ? 'Saving…' : kind === 'DEPOSIT' ? 'Record deposit' : 'Record withdrawal'}</button>
       </form>
@@ -160,7 +160,7 @@ export function SimpleCashView(props: Props) {
         <form onSubmit={saveEdit} className="ui-activity-dialog-form">
           <label>Type<select value={edit.type} onChange={e => setEdit({...edit,type:e.target.value as Kind})}><option value="DEPOSIT">Deposit</option><option value="WITHDRAWAL">Withdrawal</option></select></label>
           <label>Amount (EGP)<input type="number" min=".01" step=".01" required value={edit.amount} onChange={e => setEdit({...edit,amount:Number(e.target.value)})}/></label>
-          <label>Date<input type="date" required value={edit.date} onChange={e => setEdit({...edit,date:e.target.value})}/></label>
+          <label>Date<input type="date" required value={edit.date} onChange={e => {setEdit({...edit,date:e.target.value});setEditTimeCairo('');}}/></label>
           <label>Time in Cairo (optional)<input type="time" value={editTimeCairo} onChange={e => setEditTimeCairo(e.target.value)}/></label>
           <label>Notes<input type="text" value={edit.notes ?? ''} onChange={e => setEdit({...edit,notes:e.target.value})}/></label>
           <label>Audit reason (optional)<input type="text" value={reason} onChange={e => setReason(e.target.value)} placeholder="Why are you updating this?"/></label>

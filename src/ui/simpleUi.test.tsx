@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { PerformanceStats, PortfolioMetrics, Position } from '../types';
-import { formatChartDate, formatCompact, formatPercent, formatSigned, toneClass } from './format';
+import { formatChartDate, formatCompact, formatPercent, formatSigned, pnlAccentColor, toneClass } from './format';
 import { HomeScreen, positionPnl } from './HomeScreen';
 import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
 import { ActivitySwitcher, SimpleShell } from './SimpleShell';
@@ -40,6 +40,9 @@ describe('simple UI formatters', () => {
     expect(toneClass(5)).toBe('ui-pos');
     expect(toneClass(-5)).toBe('ui-neg');
     expect(toneClass(0)).toBe('');
+    expect(pnlAccentColor(-1)).toBe('var(--ui-neg)');
+    expect(pnlAccentColor(1)).toBe('var(--ui-pos)');
+    expect(pnlAccentColor(0)).toBe('var(--ui-gray)');
   });
 
   it('formats compact axis labels and chart dates', () => {
@@ -61,6 +64,14 @@ describe('positionPnl', () => {
 });
 
 describe('HomeScreen', () => {
+  it('uses red P&L surfaces for both realized and unrealized losses', () => {
+    const html = renderToStaticMarkup(<HomeScreen
+      metrics={{ ...metrics, realizedPnlEgp: -59.90, unrealizedPnlEgp: -4619.34 }}
+      stats={stats} positions={positions} transactions={[]} historicalPrices={{}}
+      capitalDeposits={0} onOpenPositions={noop} onOpenReports={noop}/>);
+    expect(html.match(/--tile:var\(--ui-neg\)/g)).toHaveLength(2);
+  });
+
   it('shows unavailable rather than 0% when session reference capital is missing', () => {
     const emptyMetrics = calculatePortfolioMetrics([], 0, [], [], []);
     expect(emptyMetrics.dayChangeReliable).toBe(false);

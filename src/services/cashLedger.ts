@@ -71,9 +71,11 @@ export function prepareCashLedgerEvent(
     if (!Number.isFinite(instant.getTime()) || instant.toISOString() !== executedAt) {
       throw new Error('Invalid cash execution timestamp.');
     }
-    const cairoDate = new Intl.DateTimeFormat('en-CA', {
+    const cairoParts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit',
-    }).format(instant);
+    }).formatToParts(instant);
+    const part = (type: string) => cairoParts.find(item => item.type === type)?.value ?? '';
+    const cairoDate = `${part('year')}-${part('month')}-${part('day')}`;
     if (cairoDate !== date) throw new Error('Cash execution time must match its Cairo event date.');
   }
   const transaction = { ...cashRow(kind, value, date, notes), ...(executedAt ? { executedAt } : {}) };
@@ -218,6 +220,6 @@ export function buildCashHistory(state: CashLedgerState): CashTransaction[] {
     const type = externalKind(tx);
     if (!type) return [];
     const report = reconcilePortfolioFromLedger(ordered.slice(0, index + 1), [], 0);
-    return [{ id: tx.id, type, amount: tx.totalAmount, date: tx.date, notes: tx.notes, balanceAfter: report.reconciledCashBalance }];
+    return [{ id: tx.id, type, amount: tx.totalAmount, date: tx.date, executedAt: tx.executedAt, notes: tx.notes, balanceAfter: report.reconciledCashBalance }];
   }).reverse();
 }

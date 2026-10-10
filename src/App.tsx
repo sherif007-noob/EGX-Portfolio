@@ -256,7 +256,8 @@ export default function App() {
     setUndoState,
   });
 
-  const handleQuickAddCash = () => setIsQuickCashModalOpen(true);
+  // The home shortcut records a dated capital transfer, not a balance reconciliation.
+  const handleQuickAddCash = () => handleTabChange('cash');
 
   return (
     <div className="premium-page min-h-[100dvh] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">

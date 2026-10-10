@@ -172,8 +172,8 @@ export function SimpleTransactionsView(props: Props) {
             <div className="ui-activity-detail-grid">
               {info.category!=='CASH'&&<ActivityDetail label="Company" value={tx.companyName}/>}
               {info.details.map(detail=><ActivityDetail key={detail.label} label={detail.label} value={detail.value}/>)}
-              {showPnl&&<ActivityDetail label="Realized P&L" value={`${formatSigned(pnl!)} EGP`}/>}
-              {showPnl&&<ActivityDetail label="Return" value={formatPercent(cycle?.realizedPnlPercent??tx.realizedPnlPercent)}/>}
+              {showPnl&&<ActivityDetail label="Realized P&L" value={<span className={toneClass(pnl)}>{formatSigned(pnl!)} EGP</span>}/>}
+              {showPnl&&<ActivityDetail label="Return" value={<span className={toneClass(cycle?.realizedPnlPercent??tx.realizedPnlPercent)}>{formatPercent(cycle?.realizedPnlPercent??tx.realizedPnlPercent)}</span>}/>}
             </div>
             {tx.notes&&<p className="ui-sm ui-activity-notes">{tx.notes}</p>}
             <div className="ui-activity-record-actions">

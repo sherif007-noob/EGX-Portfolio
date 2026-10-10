@@ -29,6 +29,9 @@ async function inspect(page, mode, screen) {
     const el = document.querySelector('.premium-modal.ui-trade-modal');
     const footer = el?.querySelector('.ui-trade-modal-actions');
     if (!el || !footer) throw new Error('Missing real modal or action footer');
+    const action = footer.querySelector('button[type="submit"]');
+    const submitForm = action?.form?.id ?? null;
+    const formSibling = action?.form?.parentElement === footer.parentElement;
     const rect = el.getBoundingClientRect();
     const b = footer.getBoundingClientRect();
     const buttonRects = [...footer.querySelectorAll('button')].map(btn => {
@@ -51,6 +54,7 @@ async function inspect(page, mode, screen) {
       documentOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
       fieldOverflows:over.slice(0,6),
       footerPosition:getComputedStyle(footer).position,
+      submitForm,formSibling,
       footer:{top:b.top,bottom:b.bottom},
       actionButtons:buttonRects,
       scrollHeight:el.scrollHeight,clientHeight:el.clientHeight
@@ -63,6 +67,8 @@ async function inspect(page, mode, screen) {
     violations.push(`horizontal overflow panel=${result.overflow}, page=${result.documentOverflow}`);
   if (result.fieldOverflows.length) violations.push(`clipped fields ${JSON.stringify(result.fieldOverflows)}`);
   if (result.footerPosition !== 'sticky') violations.push('footer lost its required sticky positioning');
+  if (!result.submitForm || !result.formSibling)
+    violations.push('sticky actions must remain bound to their sibling transaction form');
   if (result.actionButtons.some(b => b.width < 65 || b.height < 40))
     violations.push('footer buttons too small');
   // Any dialog with spare vertical room is expected to be centered.

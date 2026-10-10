@@ -40,6 +40,7 @@ describe('one-step Activity actions',()=>{
     expect(html).toContain('Edit cash entry');
     expect(html).toContain('Cash amount (EGP)');
     expect(html).toContain('Cash event type');
+    expect(html).toContain('Actual time in Cairo (optional)');
     expect(html).not.toContain('Execution price / share');
     expect(html).not.toContain('Shares');
   });

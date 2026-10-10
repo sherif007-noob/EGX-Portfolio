@@ -224,6 +224,7 @@ export interface CashTransaction {
   type: 'DEPOSIT' | 'WITHDRAWAL';
   amount: number;
   date: string;
+  executedAt?: string;
   notes?: string;
   balanceAfter: number;
 }

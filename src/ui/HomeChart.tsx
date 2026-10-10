@@ -137,7 +137,6 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       }
       series = [
         { key:'ret',label:'Return (EGP)',color:'var(--ui-teal)',area:true },
-        ...(comparePortfolio ? [{key:'nav',label:'Portfolio NAV (EGP)',color:'var(--ui-blue)',dashed:true}] : []),
       ];
     } else if (mode === 'dep') {
       for (const point of points) rows.push({ date: point.date, equity: point.equity, netDeposits: point.netDeposits });
@@ -208,8 +207,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
     // DATE-only CASH entries provide no trustworthy intraday clock. Place the
     // marker on that day's first visible observation, not at a fake execution time.
     const row=model.rows.find(item=>String(item.date).slice(0,10)===event.date);
-    if(!row || !finite(row.timestamp) || !finite(row.equity))return [];
-    return [{...event,timestamp:row.timestamp,equity:row.equity}];
+    const equity = row && (finite(row.equity) ? row.equity : finite(row.nav) ? row.nav : undefined);
+    if(!row || !finite(row.timestamp) || !finite(equity))return [];
+    return [{...event,timestamp:row.timestamp,equity}];
   }),[capitalEvents,model.rows]);
 
   const pointByDate = useMemo(() => new Map(points.map(point=>[point.date,point])),[points]);
@@ -311,10 +311,10 @@ export const HomeChart: React.FC<HomeChartProps> = ({
           <Pill pressed={comparePortfolio}
             aria-label="Compare portfolio NAV with return"
             onClick={()=>setComparePortfolio(on=>!on)}>
-            {comparePortfolio?'✓ Portfolio vs Return':'+ Compare portfolio value'}
+            {comparePortfolio?'✓ Compare portfolio NAV':'+ Compare portfolio value'}
           </Pill>
           {comparePortfolio && <span className="ui-sm">
-            NAV (blue, right scale) vs P&amp;L (green for gains, red for losses)
+            Separate, date-aligned charts: P&amp;L excludes funding; NAV includes deposits and withdrawals.
           </span>}
         </div>
       )}
@@ -345,6 +345,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         </p>
       )}
       <div className="ui-card" style={{ marginTop: 10, padding: '10px 6px 6px' }}>
+        {mode==='ret' && comparePortfolio && !isLoading && hasData && (
+          <div className="ui-chart-panel-heading">Cash-flow-adjusted investment P&amp;L</div>
+        )}
         {isLoading ? (
           <p className="ui-sm" style={{ padding: 24, textAlign: 'center' }}>Loading prices…</p>
         ) : error ? (
@@ -354,7 +357,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ) : (
           <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} className="ui-chart-canvas">
             <ResponsiveContainer width="100%" height="100%">
-              <ChartRoot data={model.rows} margin={{ top: mode==='dep' ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
+              <ChartRoot data={model.rows} syncId={mode==='ret' && comparePortfolio ? 'medium-return-nav' : undefined}
+                margin={{ top: mode==='dep' ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
@@ -377,12 +381,6 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                   axisLine={false}
                   domain={['auto', 'auto']}
                 />
-                {mode==='ret' && comparePortfolio && (
-                  <YAxis yAxisId="nav" orientation="right" width={46}
-                    tickFormatter={(value:number)=>formatCompact(value)}
-                    tick={{fill:'var(--ui-blue)',fontSize:10}} tickLine={false} axisLine={false}
-                    domain={['auto','auto']}/>
-                )}
                 {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine yAxisId="primary" y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
                 <Tooltip
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
@@ -398,7 +396,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
-                      yAxisId={item.key==='nav'?'nav':'primary'}
+                      yAxisId="primary"
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={2.2}
@@ -412,7 +410,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       key={item.key}
                       type="monotone"
                       dataKey={item.key}
-                      yAxisId={item.key==='nav'?'nav':'primary'}
+                      yAxisId="primary"
                       name={item.label}
                       stroke={item.color}
                       strokeWidth={item.key === 'portfolio' ? 2.4 : 1.6}
@@ -465,12 +463,6 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 </span>
               </span>
             ))
-          )}
-          {mode==='ret' && comparePortfolio && last && finite(last.nav) && (
-            <span className="ui-sm">
-              <span className="ui-dot" style={{ ['--dot' as string]:'var(--ui-blue)' }}/>
-              Portfolio NAV <span className="ui-mono">{formatEgp(last.nav)} EGP</span>
-            </span>
           )}
           {(mode==='twr'||mode==='mwr') && last && finite(last.twr) && finite(last.mwr) && (
             <span className="ui-sm">

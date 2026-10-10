@@ -452,6 +452,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             </ResponsiveContainer>
           </div>
         )}
+        {mode==='ret' && comparePortfolio && !isLoading && !error && hasData && last && finite(last.ret) && (
+          <div className="ui-chart-pnl-caption">
+            <span className="ui-dot" style={{['--dot' as string]:pnlAccentColor(last.ret)}}/>
+            Cash-flow-adjusted P&amp;L: <strong className={`ui-mono ${toneClass(last.ret)}`}>
+              {formatSigned(last.ret)} EGP
+            </strong>
+          </div>
+        )}
       </div>
 
       {mode==='ret' && comparePortfolio && !isLoading && !error && hasData && (
@@ -515,7 +523,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       )}
       {missingBenchmarks.length > 0 && !isLoading && <p className="ui-note" role="status">No aligned price history for: {missingBenchmarks.join(', ')}. Unavailable indices are not plotted.</p>}
 
-      {hasData && !isLoading && (
+      {hasData && !isLoading && !(mode==='ret' && comparePortfolio) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', marginTop: 8 }}>
           {mode === 'ret' && last && finite(last.ret) ? (
             <span className="ui-sm">

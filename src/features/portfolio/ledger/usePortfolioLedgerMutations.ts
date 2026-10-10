@@ -220,9 +220,10 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     amount: number,
     notes?: string,
     date?: string,
+    executedAt?: string,
   ) => executePreparedMutation(
     `CASH_${kind}`,
-    (current) => prepareCashEventMutation(current, kind, amount, notes, date),
+    (current) => prepareCashEventMutation(current, kind, amount, notes, date, executedAt),
   ), [executePreparedMutation]);
 
   const addCashTransaction = useCallback(async (
@@ -230,12 +231,14 @@ export function usePortfolioLedgerMutations(state: PortfolioLocalState) {
     type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND' | 'FEE' | 'OTHER_INCOME' | 'OTHER_EXPENSE',
     notes?: string,
     date?: string,
+    executedAt?: string,
   ): Promise<boolean> => {
     const result = await commitCashEvent(
       type === 'WITHDRAW' ? 'WITHDRAWAL' : type,
       amount,
       notes,
       date,
+      executedAt,
     );
     if ('error' in result) {
       console.error('[Financial mutation] Cash add failed:', result.error);

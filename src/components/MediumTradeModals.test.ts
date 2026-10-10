@@ -44,5 +44,11 @@ describe('Approved medium trade and position dialog visual migration', () => {
     expect(styles).toContain('.ui-trade-modal .ui-trade-modal-actions');
     expect(styles).toContain('@media (max-width:600px)');
     expect(styles).toContain('env(safe-area-inset-bottom,0px)');
+    expect(styles).toContain('position:sticky;bottom:0;z-index:12');
+    expect(styles).toContain('margin:6px calc(-1 * var(--ui-trade-modal-inset))');
+    expect(styles).not.toContain('position:relative;bottom:auto;z-index:auto');
+    const browserGate=source('../../scripts/checkMediumTradeModals.mjs');
+    expect(browserGate).toContain('footer lost its required sticky positioning');
+    expect(browserGate).toContain('footer leaves exposed band at bottom');
   });
 });

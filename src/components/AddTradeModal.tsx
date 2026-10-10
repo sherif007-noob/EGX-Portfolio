@@ -203,20 +203,20 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal premium-modal-viewport w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll ui-trade-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport ui-trade-modal ui-trade-modal--buy w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel="Add trade"
     >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="ui-trade-modal-header flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <PlusCircle className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <h3 className="text-base font-bold text-white">
-                {activeExistingPosition ? `Buy More ${activeExistingPosition.ticker} (DCA)` : 'Add EGX Position'}
+                {activeExistingPosition ? `Buy More ${activeExistingPosition.ticker} (DCA)` : 'Buy / Add Trade'}
               </h3>
               <p className="text-xs text-slate-400">
                 {activeExistingPosition
@@ -225,11 +225,22 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               </p>
             </div>
           </div>
-          <button type="button" aria-label="Close add trade" onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button type="button" aria-label="Close add trade" onClick={requestClose} className="premium-icon-action ui-trade-modal-close p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {selectedTickerData && <div className="ui-trade-modal-identity">
+          <StockLogo ticker={selectedTickerData.ticker} companyName={selectedTickerData.nameEn}
+            sector={selectedTickerData.sector} logoUrl={selectedTickerData.logoUrl} size="md"/>
+          <div className="ui-trade-modal-symbol">
+            <strong>{selectedTickerData.ticker}</strong><span>{selectedTickerData.nameEn}</span>
+          </div>
+          <div className="ui-trade-modal-quote">
+            <span>Latest quote</span>
+            <strong>{selectedTickerData.lastPrice.toFixed(3)} EGP</strong>
+          </div>
+        </div>}
         {/* Screenshot Banner Shortcut */}
         {onOpenScreenshotModal && (
           <div className="premium-modal-section p-3 rounded-xl border-emerald-500/30 text-xs flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -268,7 +279,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           )}
         </ExpandPresence>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
           {/* Ticker Autocomplete Input */}
           <div className="relative" ref={wrapperRef}>
             <div className="flex flex-col items-start gap-1 mb-1 sm:flex-row sm:items-center sm:justify-between">
@@ -527,7 +538,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Financial Breakdown Ribbon */}
-          <div className="premium-inset-glass p-3 rounded-xl grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="premium-inset-glass ui-trade-modal-financials p-3 rounded-xl grid grid-cols-3 gap-2 text-center text-xs">
             <div>
               <span className="text-slate-400 text-[10px] block">Gross Equities</span>
               <span className="font-mono font-bold text-white">
@@ -578,7 +589,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
 
           {/* Form Actions */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
+          <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={requestClose}

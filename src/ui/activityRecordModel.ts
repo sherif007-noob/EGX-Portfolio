@@ -2,6 +2,8 @@ import type { TradeTransaction } from '../types';
 import { isCashLedgerRecord, isSecurityTrade } from '../services/ledgerRecordTypes';
 import { normalizeCashFlowType, cashFlowSignedImpact } from '../services/cashFlowSemantics';
 import { ipoHeldAmount } from '../services/ipoSubscriptions';
+import { formatCairoExecutionTime } from './format';
+import { formatActivityDate } from './SimpleActivityShared';
 
 export type ActivityCategory = 'TRADE' | 'CASH' | 'CORPORATE' | 'IPO' | 'OPENING';
 export interface ActivityRecordView {
@@ -35,7 +37,8 @@ export function activityRecordView(tx: TradeTransaction): ActivityRecordView {
       details:[
         {label:'Cash event',value:human(category)},
         {label:'Amount',value:Number.isFinite(signed)?money(signed):'Unavailable'},
-        {label:'Date',value:tx.executedAt || tx.date},
+        {label:'Date',value:formatActivityDate(tx.date)},
+        {label:'Time (Cairo)',value:formatCairoExecutionTime(tx.executedAt)},
       ],
     };
   }
@@ -55,7 +58,8 @@ export function activityRecordView(tx: TradeTransaction): ActivityRecordView {
         ...(ipo?.allocatedShares!==undefined?[{label:'Shares allocated',value:units(ipo.allocatedShares)}]:[]),
         ...(ipo?.refundAmount!==undefined?[{label:'Cash released',value:money(ipo.refundAmount)}]:[]),
         ...(ipo?.additionalPaymentAmount!==undefined&&ipo.additionalPaymentAmount>0?[{label:'Additional cash at settlement',value:money(ipo.additionalPaymentAmount)}]:[]),
-        {label:'Order date',value:ipo?.subscriptionDate ?? tx.date},
+        {label:'Order date',value:formatActivityDate(ipo?.subscriptionDate ?? tx.date)},
+        {label:'Order time (Cairo)',value:formatCairoExecutionTime(tx.executedAt)},
       ],
     };
   }
@@ -95,7 +99,8 @@ export function activityRecordView(tx: TradeTransaction): ActivityRecordView {
         {label:'Gross trade',value:money(gross)},
         {label:'Broker fees',value:money(tx.fees||0)},
         {label:sell?'Net proceeds':'Total paid',value:money(tx.totalAmount)},
-        {label:'Execution',value:tx.executedAt??tx.date},
+        {label:'Execution date',value:formatActivityDate(tx.date)},
+        {label:'Time (Cairo)',value:formatCairoExecutionTime(tx.executedAt)},
       ],
     };
   }

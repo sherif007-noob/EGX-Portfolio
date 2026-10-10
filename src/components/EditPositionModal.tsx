@@ -133,7 +133,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-4">
+        <form id="ui-edit-position-form" onSubmit={handleSubmit} className="ui-trade-modal-form space-y-4">
           {/* Target Price */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -195,6 +195,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             />
           </div>
 
+        </form>
           {/* Action Buttons */}
           <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
@@ -207,6 +208,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             </button>
             <button
               type="submit"
+              form="ui-edit-position-form"
               disabled={isSubmitting}
               className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold sm:w-auto"
             >
@@ -214,7 +216,6 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
               {isSubmitting ? 'Saving…' : 'Save Targets'}
             </button>
           </div>
-        </form>
     </PremiumModalMotion>
   );
 };

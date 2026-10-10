@@ -5,7 +5,8 @@ import { CashBalanceView } from '../components/CashBalanceView';
 import { buildCashHistory } from '../services/cashLedger';
 import { pendingIpoSubscriptionValue } from '../services/ipoSubscriptions';
 import { getCairoTodayISO } from '../utils/dateUtils';
-import { formatEgp } from './format';
+import { cairoOrderTimeToUtcIso } from '../services/ipoSubscriptionEditing';
+import { formatCairoExecutionTime, formatEgp } from './format';
 import { ActivityDetail, ActivityEmpty, ActivityHeader, ActivityPills, ActivityStat, formatActivityDate } from './SimpleActivityShared';
 
 type Kind = 'DEPOSIT' | 'WITHDRAWAL';
@@ -18,7 +19,7 @@ type Props = {
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
   capitalDeposits?: number;
-  onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => Promise<boolean>;
+  onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string, executedAt?: string) => Promise<boolean>;
   onEditCashTransaction: (tx: CashTransaction, auditReason?: string) => Promise<boolean>;
   onDeleteCashTransaction: (id: string, auditReason?: string) => Promise<boolean>;
   onReconcileLedger?: (auditReason?: string) => Promise<boolean>;
@@ -30,10 +31,12 @@ export function SimpleCashView(props: Props) {
   const [kind, setKind] = useState<Kind>('DEPOSIT');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(() => getCairoTodayISO());
+  const [timeCairo, setTimeCairo] = useState('');
   const [notes, setNotes] = useState('');
   const [filter, setFilter] = useState<Filter>('ALL');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [edit, setEdit] = useState<CashTransaction | null>(null);
+  const [editTimeCairo, setEditTimeCairo] = useState('');
   const [deleting, setDeleting] = useState<CashTransaction | null>(null);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,9 +63,10 @@ export function SimpleCashView(props: Props) {
     }
     setBusy(true); setFeedback(null);
     try {
-      const saved = await onAddCashTransaction(parsed, kind === 'DEPOSIT' ? 'DEPOSIT' : 'WITHDRAW', notes.trim(), date);
+      const executedAt = timeCairo ? cairoOrderTimeToUtcIso(date, timeCairo) : undefined;
+      const saved = await onAddCashTransaction(parsed, kind === 'DEPOSIT' ? 'DEPOSIT' : 'WITHDRAW', notes.trim(), date, executedAt);
       if (!saved) { setFeedback('The transfer was not saved.'); return; }
-      setAmount(''); setNotes('');
+      setAmount(''); setNotes(''); setTimeCairo('');
       setFeedback(kind === 'DEPOSIT' ? 'Deposit recorded.' : 'Withdrawal recorded.');
     } catch(e) { setFeedback(e instanceof Error ? e.message : 'Unable to save cash transfer.'); }
     finally { setBusy(false); }
@@ -72,7 +76,8 @@ export function SimpleCashView(props: Props) {
     if (!Number.isFinite(edit.amount) || edit.amount < .01) { setFeedback('Amount must be positive.');return; }
     setBusy(true); setFeedback(null);
     try {
-      const saved = await onEditCashTransaction(edit, reason.trim() || undefined);
+      const executedAt = editTimeCairo ? cairoOrderTimeToUtcIso(edit.date, editTimeCairo) : undefined;
+      const saved = await onEditCashTransaction({...edit, executedAt}, reason.trim() || undefined);
       if(!saved) {setFeedback('Cash entry was not updated.');return;}
       setEdit(null);setReason('');setFeedback('Cash entry updated.');
     } catch(e) {setFeedback(e instanceof Error ? e.message : 'Unable to edit cash entry.');}
@@ -110,6 +115,8 @@ export function SimpleCashView(props: Props) {
       <form onSubmit={submitCash} className="ui-activity-transfer-form">
         <label>Amount (EGP)<input type="number" inputMode="decimal" min=".01" step=".01" required value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></label>
         <label>Date<input type="date" required value={date} onChange={e => setDate(e.target.value)}/></label>
+        <label>Time in Cairo (optional)<input type="time" value={timeCairo} onChange={e => setTimeCairo(e.target.value)}/></label>
+        <p className="ui-sm">Use the actual transfer time; leave blank if unknown.</p>
         <label className="ui-activity-field-wide">Notes (optional)<input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Bank transfer or broker reference"/></label>
         <button type="submit" className="ui-activity-primary" disabled={busy}>{busy ? 'Saving…' : kind === 'DEPOSIT' ? 'Record deposit' : 'Record withdrawal'}</button>
       </form>
@@ -135,10 +142,11 @@ export function SimpleCashView(props: Props) {
               <div className="ui-activity-detail-grid">
                 <ActivityDetail label="Balance after" value={`${formatEgp(tx.balanceAfter)} EGP`}/>
                 <ActivityDetail label="Date" value={formatActivityDate(tx.date)}/>
+                <ActivityDetail label="Time (Cairo)" value={formatCairoExecutionTime(tx.executedAt)}/>
               </div>
               {tx.notes && <p className="ui-sm ui-activity-notes">{tx.notes}</p>}
               <div className="ui-activity-inline-actions">
-                <button type="button" className="ui-quiet-action" onClick={() => {setEdit({...tx});setDeleting(null);setReason('');}}>Edit</button>
+                <button type="button" className="ui-quiet-action" onClick={() => {setEdit({...tx});setEditTimeCairo(tx.executedAt?formatCairoExecutionTime(tx.executedAt):'');setDeleting(null);setReason('');}}>Edit</button>
                 <button type="button" className="ui-quiet-action ui-danger" onClick={() => {setDeleting(tx);setEdit(null);setReason('');}}>Delete</button>
               </div>
             </div>}
@@ -153,6 +161,7 @@ export function SimpleCashView(props: Props) {
           <label>Type<select value={edit.type} onChange={e => setEdit({...edit,type:e.target.value as Kind})}><option value="DEPOSIT">Deposit</option><option value="WITHDRAWAL">Withdrawal</option></select></label>
           <label>Amount (EGP)<input type="number" min=".01" step=".01" required value={edit.amount} onChange={e => setEdit({...edit,amount:Number(e.target.value)})}/></label>
           <label>Date<input type="date" required value={edit.date} onChange={e => setEdit({...edit,date:e.target.value})}/></label>
+          <label>Time in Cairo (optional)<input type="time" value={editTimeCairo} onChange={e => setEditTimeCairo(e.target.value)}/></label>
           <label>Notes<input type="text" value={edit.notes ?? ''} onChange={e => setEdit({...edit,notes:e.target.value})}/></label>
           <label>Audit reason (optional)<input type="text" value={reason} onChange={e => setReason(e.target.value)} placeholder="Why are you updating this?"/></label>
           <div className="ui-activity-inline-actions"><button type="button" className="ui-quiet-action" disabled={busy} onClick={() => setEdit(null)}>Cancel</button><button type="submit" className="ui-activity-primary" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button></div>

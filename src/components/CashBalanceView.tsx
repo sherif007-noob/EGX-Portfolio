@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { getCairoTodayISO } from '../utils/dateUtils';
+import { cairoOrderTimeToUtcIso } from '../services/ipoSubscriptionEditing';
+import { formatCairoExecutionTime } from '../ui/format';
 import { buildCashHistory } from '../services/cashLedger';
 import { reconcilePortfolioFromLedger } from '../services/portfolioReconciliation';
 
@@ -40,7 +42,7 @@ interface CashBalanceViewProps {
   closedTrades?: ClosedTrade[];
   tradeTransactions?: TradeTransaction[];
   capitalDeposits?: number;
-  onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string) => Promise<boolean>;
+  onAddCashTransaction: (amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'DIVIDEND', notes?: string, date?: string, executedAt?: string) => Promise<boolean>;
   onEditCashTransaction: (tx: CashTransaction, auditReason?: string) => Promise<boolean>;
   onDeleteCashTransaction: (id: string, auditReason?: string) => Promise<boolean>;
   onReconcileLedger?: (auditReason?: string) => Promise<boolean>;
@@ -64,11 +66,13 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [depositMethod, setDepositMethod] = useState<string>('Bank Transfer (InstaPay/Wire)');
   const [depositNotes, setDepositNotes] = useState<string>('');
   const [depositDate, setDepositDate] = useState<string>(() => getCairoTodayISO());
+  const [depositTimeCairo, setDepositTimeCairo] = useState('');
 
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawDestination, setWithdrawDestination] = useState<string>('Bank Account Transfer');
   const [withdrawNotes, setWithdrawNotes] = useState<string>('');
   const [withdrawDate, setWithdrawDate] = useState<string>(() => getCairoTodayISO());
+  const [withdrawTimeCairo, setWithdrawTimeCairo] = useState('');
 
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAWAL'>('ALL');
@@ -95,6 +99,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
   const [editType, setEditType] = useState<'DEPOSIT' | 'WITHDRAWAL'>('DEPOSIT');
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
+  const [editTimeCairo, setEditTimeCairo] = useState('');
   const [editNotes, setEditNotes] = useState<string>('');
   const [editAuditReason, setEditAuditReason] = useState<string>('');
   const [cashTxToDelete, setCashTxToDelete] = useState<CashTransaction | null>(null);
@@ -199,6 +204,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
     setEditType(tx.type);
     setEditAmount(String(tx.amount));
     setEditDate(tx.date);
+    setEditTimeCairo(tx.executedAt ? formatCairoExecutionTime(tx.executedAt) : '');
     setEditNotes(tx.notes || '');
     setEditAuditReason('');
   };
@@ -230,6 +236,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
       type: editType,
       amount: newAmountNum,
       date: editDate,
+      executedAt: editTimeCairo ? cairoOrderTimeToUtcIso(editDate, editTimeCairo) : undefined,
       notes: editNotes.trim(),
       balanceAfter: newBalance,
     };
@@ -257,9 +264,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance + amountNum).toFixed(2));
     const noteText = `${depositMethod}${depositNotes ? ` - ${depositNotes}` : ''}`;
-    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'DEPOSIT', noteText, depositDate || getCairoTodayISO()))) return;
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'DEPOSIT', noteText, depositDate || getCairoTodayISO(), depositTimeCairo ? cairoOrderTimeToUtcIso(depositDate || getCairoTodayISO(), depositTimeCairo) : undefined))) return;
     setDepositAmount('');
     setDepositNotes('');
+    setDepositTimeCairo('');
     setFeedbackMessage({
       text: `Successfully deposited ${formatEgp(amountNum)} EGP. New cash balance: ${formatEgp(newBalance)} EGP.`,
       type: 'success',
@@ -286,9 +294,10 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
 
     const newBalance = Number((cashBalance - amountNum).toFixed(2));
     const noteText = `${withdrawDestination}${withdrawNotes ? ` - ${withdrawNotes}` : ''}`;
-    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'WITHDRAW', noteText, withdrawDate || getCairoTodayISO()))) return;
+    if (!await saveCashChange(() => onAddCashTransaction(amountNum, 'WITHDRAW', noteText, withdrawDate || getCairoTodayISO(), withdrawTimeCairo ? cairoOrderTimeToUtcIso(withdrawDate || getCairoTodayISO(), withdrawTimeCairo) : undefined))) return;
     setWithdrawAmount('');
     setWithdrawNotes('');
+    setWithdrawTimeCairo('');
     setFeedbackMessage({
       text: `Successfully withdrawn ${formatEgp(amountNum)} EGP. Remaining cash balance: ${formatEgp(newBalance)} EGP.`,
       type: 'success',
@@ -705,6 +714,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onChange={setDepositDate}
                     required
                   />
+                  <label className="space-y-1.5 text-xs font-semibold text-slate-300">
+                    Time in Cairo (optional)
+                    <input type="time" value={depositTimeCairo} onChange={e=>setDepositTimeCairo(e.target.value)}
+                      className="premium-field w-full px-3 py-2 rounded-xl text-white"/>
+                  </label>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Funding Method</label>
@@ -836,6 +850,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     onChange={setWithdrawDate}
                     required
                   />
+                  <label className="space-y-1.5 text-xs font-semibold text-slate-300">
+                    Time in Cairo (optional)
+                    <input type="time" value={withdrawTimeCairo} onChange={e=>setWithdrawTimeCairo(e.target.value)}
+                      className="premium-field w-full px-3 py-2 rounded-xl text-white"/>
+                  </label>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-300">Transfer Destination</label>
@@ -1139,6 +1158,11 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 onChange={setEditDate}
                 required
               />
+              <label className="text-xs font-semibold text-slate-300">
+                Actual time in Cairo (optional)
+                <input type="time" value={editTimeCairo} onChange={e=>setEditTimeCairo(e.target.value)}
+                  className="premium-field w-full px-3.5 py-2.5 rounded-xl text-white"/>
+              </label>
 
               {/* Notes / Description */}
               <div className="space-y-1.5">

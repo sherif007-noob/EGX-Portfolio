@@ -246,3 +246,40 @@ Verification: focused source-level assertions were revised and a pure sign-gradi
 - Shared style: restrained glass material, dark forms, consistent rounded field/section geometry, an identity header and mobile-friendly confirmation area. On narrow screens fee/total breakdown text wraps and selectors retain space. A responsive sell price/date layout avoids the former nested half-width date/time fields.
 - **No financial behavior changes:** Share counts, execution prices and dates/times, existing brokerage fee estimators/overrides, targets, stops, DCA logic, correction audit reason and all onSubmit callbacks remain unchanged. Ledger, calculations, quote ingestion, state model and persistence have not been edited.
 - `src/components/MediumTradeModals.test.ts` adds source regression assertions covering visual scope and retained financial fields. This is not a rendered-device approval or a substitute for checking the forms with the mobile keyboard. Full CI validation must be checked on the final commit before this pass can be declared complete.
+
+## Medium UI trade modal viewport regression — repaired 2026-10-10
+
+A real iPhone review found three regressions after the approved modal restyling:
+Buy and Sell could scroll horizontally (cropping form labels and financial amounts),
+the sticky modal action row overlaid the end of long forms, and the shorter Edit
+Position dialog was pinned near the top instead of centered.
+
+**Root causes and bounded repair:** `src/ui/ui.css` now constrains the panel,
+form, field grids, date/time controls, numeric steppers and long EGP values to the
+available inline width. The modal panel remains the existing single vertical
+scroll owner; the action buttons now follow the final form content in document
+flow (no sticky overlap). The shared modal backdrop centers short dialogs within
+the visible viewport, and a competing compact neutral-button minimum height was
+removed so both actions meet 44px minimum touch size. Modal fields, validation,
+stock trades, fees, cash reconciliation, persisted events and animations were not
+changed. This repair does not redesign any screen or establish approval for the
+unapproved Return/NAV chart layout.
+
+**Actual rendered evidence:** `.github/workflows/medium-ui-modal-gate.yml`
+builds the deterministic test app with the *real* Add Trade, Sell Position and
+Edit Position components and runs `scripts/checkMediumTradeModals.mjs` in
+Chromium. It opens all three in five viewport classes (320×740, 390×844,
+430×932, 844×390 landscape and 1280×900) and checks panel and descendant
+horizontal boundaries, single vertical scroll ownership, action-footer
+separation, centered short-dialog geometry and 44px button dimensions.
+The run for commit `16b6c047` passed **15/15 rendered states** with no
+page overflow; reported modal scroll-width differences are at most 1px.
+Browser screenshots and the JSON geometry report are retained as GitHub
+Actions artifacts. The normal full TypeScript, Vitest and build gate passed.
+
+**Acceptance boundary:** Chromium mobile emulation and screenshot review are
+stronger evidence than previous source-only tests, but are not equivalent to
+on-device iOS Safari acceptance. The screenshots use synthetic portfolio
+fixtures, not a real broker account. Verify touch scrolling, keyboard handling,
+and form submission visually on the actual iPhone before declaring final
+production sign-off.

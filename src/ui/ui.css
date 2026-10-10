@@ -372,8 +372,8 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-activity-detail { display:flex; flex-direction:column; gap:4px; min-width:0; }
 .ui-activity-detail strong { font-size:.875rem; font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
 .ui-activity-detail-grid { column-gap:18px; row-gap:16px; }
-.ui-activity-detail:has(.ui-activity-time) { grid-column:1 / -1; }
-.ui-activity-time { display:block; font-variant-numeric:tabular-nums; white-space:normal; letter-spacing:.012em; }
+.ui-activity-detail.ui-activity-time { grid-column:1 / -1; }
+.ui-activity-time strong { font-variant-numeric:tabular-nums; white-space:normal; letter-spacing:.012em; }
 .ui-activity-notes { margin:0 0 14px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .ui-activity-load { display:block; width:100%; min-height:42px; margin-top:12px; border-radius:9px; border:1px solid var(--ui-border); background:var(--ui-surface); color:var(--ui-text); cursor:pointer; font-weight:600; }
 .ui-activity-empty { margin:0; padding:24px; text-align:center; color:var(--ui-text-2); font-size:.875rem; }

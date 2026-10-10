@@ -875,6 +875,22 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-trade-modal .ui-trade-modal-stats {gap:8px;flex-wrap:wrap;}
 .ui-trade-modal .ui-trade-modal-stats > div {min-width:0;flex:1 1 80px;}
 .ui-trade-modal .ui-trade-modal-stats .font-mono {font-variant-numeric:tabular-nums;}
+/* Autocomplete is portal-mounted to document.body, outside the scoped panel. */
+.premium-dropdown.ui-trade-ticker-menu {
+  background:linear-gradient(155deg,#11273a,#0a1929);
+  border:1px solid rgba(118,163,186,.34);
+  border-radius:13px;
+  box-shadow:0 15px 38px rgba(0,0,0,.52),0 0 19px rgba(34,184,138,.09);
+  backdrop-filter:blur(16px);
+}
+.ui-trade-ticker-menu .premium-menu-item {
+  border-radius:9px;min-height:44px;
+}
+.ui-trade-ticker-menu .premium-menu-item:hover,
+.ui-trade-ticker-menu .premium-menu-item:focus-visible {
+  outline:none;background:rgba(34,184,138,.13);
+}
+
 @media (max-width:600px) {
   .premium-modal.ui-trade-modal {
     width:100%;max-width:100%;

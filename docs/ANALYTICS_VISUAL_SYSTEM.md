@@ -172,8 +172,8 @@ Risk and cost analytics follow the same visual system as the primary analytics c
 
 - Drawdown uses the rose risk accent.
 - Fees use the amber cost accent.
-- Realized P&L uses emerald.
-- Unrealized P&L uses cyan.
+- Realized and unrealized P&L use emerald for gains, rose for losses, and neutral for zero.
+- Cyan/blue identify informational NAV comparisons, not positive/negative profitability.
 - Today uses unsmoothed linear observations.
 - Longer price/performance series may use restrained monotone interpolation.
 - Cumulative fees use a step line because costs occur at discrete transaction events.
@@ -191,3 +191,12 @@ Benchmark comparison is a percentage-domain overlay, never a dual-axis EGP/perce
 - The headline/tooltip exposes relative portfolio-minus-index return so outperformance and underperformance are explicit rather than inferred only from line position.
 - Today remains linear/unsmoothed; daily ranges retain the accepted restrained interpolation and existing 1W transition behavior.
 - Missing benchmark observations are not fabricated or forward-looking.
+
+## Medium UI Return/NAV comparison (2026-10-10)
+
+- P&L and NAV must not be overlaid on independent left/right Y axes. Those apparent line intersections are misleading, especially on external cash transfers.
+- The `HomeChart` Return mode uses a signed cumulative EGP return; plot green **above** zero and rose **below** zero, with a true color transition at the zero level, and gray when flat.
+- Opting into portfolio value renders a **second, date-synchronized NAV panel**, with its own zero-based EGP scale. NAV retains blue informational coloring.
+- Real cash transfer dates on the daily NAV panel use amber dots and descriptive date/amount labels. Never place date-only transfers at a fictional precise intraday clock.
+- Tooltip values use the underlying financial engine; the visual comparison does not normalize, recompute or rescale the financial return series itself.
+- Home and Reports share the same chart component and therefore the same comparison contract. Compact layouts wrap captions without allowing overflowing amounts.

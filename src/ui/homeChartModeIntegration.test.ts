@@ -5,6 +5,13 @@ const home=readFileSync(new URL('./HomeChart.tsx',import.meta.url),'utf8');
 const hero=readFileSync(new URL('./HomeScreen.tsx',import.meta.url),'utf8');
 
 describe('Return comparison without an extra chart mode',()=>{
+  it('closes both synchronized tooltips on outside pointer input without changing chart layout',()=>{
+    expect(home).toContain('useDismissibleChartTooltip()');
+    expect(home).toContain('ref={mainChartRef}');
+    expect(home).toContain('ref={comparisonChartRef}');
+    expect(home).toContain('onPointerDownCapture={onChartInteraction}');
+    expect(home.match(/active={dismissed \? false : undefined}/g)).toHaveLength(2);
+  });
   it('renders the NAV comparison as a separate, date-synchronized panel',()=>{
     expect(home).toContain("{ value: 'ret', label: 'Return' }");
     expect(home).toContain('setComparePortfolio(on=>!on)');

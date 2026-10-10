@@ -699,6 +699,10 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 .ui-chart-panel-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
   gap:8px; padding:4px 8px 8px; font-size:.8125rem; font-weight:650; color:var(--ui-text); }
 .ui-chart-panel-heading strong { font-size:.875rem; color:var(--ui-blue); overflow-wrap:anywhere; }
+.ui-chart-pnl-caption { display:flex; align-items:baseline; flex-wrap:wrap; gap:6px; padding:6px 8px 3px;
+  font-size:.78rem; color:var(--ui-text-2); line-height:1.4; }
+.ui-chart-pnl-caption .ui-dot { flex:none; margin-right:0; align-self:center; }
+.ui-chart-pnl-caption strong { font-weight:650; }
 .ui-nav-compare-panel { margin-top:12px; padding:10px 6px 12px; }
 .ui-chart-comparison-explanation { line-height:1.5; margin:0 8px 7px; }
 .ui-chart-canvas-nav { height:clamp(170px,22vw,230px); }

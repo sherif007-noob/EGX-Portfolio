@@ -238,7 +238,8 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </div>
           <div className="ui-trade-modal-quote">
             <span>Latest quote</span>
-            <strong>{selectedTickerData.lastPrice.toFixed(3)} EGP</strong>
+            <strong>{Number.isFinite(selectedTickerData.lastPrice) && selectedTickerData.lastPrice > 0
+              ? `${selectedTickerData.lastPrice.toFixed(3)} EGP` : 'Unavailable'}</strong>
           </div>
         </div>}
         {/* Screenshot Banner Shortcut */}

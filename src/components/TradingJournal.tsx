@@ -1277,7 +1277,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSaveEdit} className="ui-trade-modal-form space-y-4 text-xs">
+            <form id="ui-edit-transaction-form" onSubmit={handleSaveEdit} className="ui-trade-modal-form space-y-4 text-xs">
               {/* Type Switcher */}
               <div className="space-y-1.5">
                 <label className="text-slate-300 font-semibold block">Transaction Type</label>
@@ -1532,6 +1532,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </span>
               </div>
 
+        </form>
               {/* Modal Actions */}
               <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800 sm:flex sm:items-center sm:justify-end">
                 <button
@@ -1543,13 +1544,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 </button>
                 <button
                   type="submit"
+              form="ui-edit-transaction-form"
                   className="premium-action premium-action-primary flex w-full items-center justify-center gap-1.5 px-5 py-2 rounded-xl font-bold sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   Save Changes
                 </button>
               </div>
-            </form>
         </PremiumModalMotion>
       )}
     </div>

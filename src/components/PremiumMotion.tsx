@@ -2,13 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { computeDropdownViewportGeometry } from '../utils/dropdownGeometry';
-
-interface PremiumVisualViewportRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+import { modalViewportRect, type ModalViewportRect } from '../utils/modalViewportGeometry';
 
 let premiumModalBodyLockCount = 0;
 let premiumModalPreviousBodyOverflow = '';
@@ -276,7 +270,7 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
   panelAriaLabel,
 }) => {
   const reduceMotion = useReducedMotion();
-  const [visualViewportRect, setVisualViewportRect] = React.useState<PremiumVisualViewportRect | null>(null);
+  const [visualViewportRect, setVisualViewportRect] = React.useState<ModalViewportRect | null>(null);
 
   React.useEffect(() => {
     if (!isOpen || typeof window === 'undefined') {
@@ -291,21 +285,31 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
         return;
       }
 
-      setVisualViewportRect({
-        top: viewport.offsetTop,
-        left: viewport.offsetLeft,
-        width: viewport.width,
-        height: viewport.height,
+      const next = modalViewportRect({
+        layoutWidth: window.innerWidth,
+        layoutHeight: window.innerHeight,
+        visualWidth: viewport.width,
+        visualHeight: viewport.height,
+        offsetTop: viewport.offsetTop,
+        offsetLeft: viewport.offsetLeft,
       });
+      setVisualViewportRect(previous =>
+        previous &&
+        previous.top === next.top && previous.left === next.left &&
+        previous.width === next.width && previous.height === next.height
+          ? previous : next,
+      );
     };
 
     updateVisualViewport();
     window.addEventListener('resize', updateVisualViewport);
+    window.addEventListener('scroll', updateVisualViewport, { passive: true });
     window.visualViewport?.addEventListener('resize', updateVisualViewport);
     window.visualViewport?.addEventListener('scroll', updateVisualViewport);
 
     return () => {
       window.removeEventListener('resize', updateVisualViewport);
+      window.removeEventListener('scroll', updateVisualViewport);
       window.visualViewport?.removeEventListener('resize', updateVisualViewport);
       window.visualViewport?.removeEventListener('scroll', updateVisualViewport);
     };
@@ -343,19 +347,20 @@ export const PremiumModalMotion: React.FC<PremiumModalMotionProps> = ({
             transition: { duration: reduceMotion ? 0.12 : 0.27, ease: EASE_IN },
           }}
           onMouseDown={onBackdropClick}
-          style={
-            visualViewportRect
-              ? ({
-                  top: visualViewportRect.top,
-                  left: visualViewportRect.left,
-                  right: 'auto',
-                  bottom: 'auto',
-                  width: visualViewportRect.width,
-                  height: visualViewportRect.height,
-                  '--premium-modal-visual-height': `${visualViewportRect.height}px`,
-                } as React.CSSProperties)
-              : undefined
-          }
+          style={{
+            // Portaled overlays must always be anchored to the *visible*
+            // screen, independent of document scroll position on iOS.
+            position: 'fixed',
+            ...(visualViewportRect ? {
+              top: visualViewportRect.top,
+              left: visualViewportRect.left,
+              right: 'auto',
+              bottom: 'auto',
+              width: visualViewportRect.width,
+              height: visualViewportRect.height,
+              '--premium-modal-visual-height': `${visualViewportRect.height}px`,
+            } : { inset: 0 }),
+          } as React.CSSProperties}
         >
           <motion.div
             className={panelClassName}

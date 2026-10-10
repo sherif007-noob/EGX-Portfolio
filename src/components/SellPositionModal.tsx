@@ -5,6 +5,7 @@ import { PremiumModalMotion } from './PremiumMotion';
 import { Position } from '../types';
 import { X, DollarSign, Calculator } from 'lucide-react';
 import { DateInput } from './DateInput';
+import { StockLogo } from './StockLogo';
 import { combineExecutionDateTime } from '../utils/executionTime';
 
 interface SellPositionModalProps {
@@ -108,12 +109,12 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal premium-modal-viewport w-full max-w-md my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll ui-trade-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport ui-trade-modal ui-trade-modal--sell w-full max-w-md my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
       onBackdropClick={requestClose}
       panelAriaLabel={`Sell ${displayPosition.ticker} position`}
     >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="ui-trade-modal-header flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <DollarSign className="w-5 h-5" />
@@ -125,14 +126,25 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
               </p>
             </div>
           </div>
-          <button type="button" aria-label="Close sell position" onClick={requestClose} className="premium-icon-action p-1.5 rounded-lg">
+          <button type="button" aria-label="Close sell position" onClick={requestClose} className="premium-icon-action ui-trade-modal-close p-1.5 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+        <div className="ui-trade-modal-identity">
+          <StockLogo ticker={displayPosition.ticker} companyName={displayPosition.companyName}
+            sector={displayPosition.sector} size="md"/>
+          <div className="ui-trade-modal-symbol">
+            <strong>{displayPosition.ticker}</strong><span>{displayPosition.companyName}</span>
+          </div>
+          <div className="ui-trade-modal-quote">
+            <span>Latest quote</span>
+            <strong>{(displayPosition.currentPrice || displayPosition.avgBuyPrice).toFixed(3)} EGP</strong>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
           {/* Summary Box */}
-          <div className="premium-subpanel p-3 rounded-xl flex justify-between">
+          <div className="premium-subpanel ui-trade-modal-stats p-3 rounded-xl flex justify-between">
             <div>
               <span className="text-slate-400 block text-[10px]">Held Shares</span>
               <span className="font-mono font-bold text-white">{displayPosition.shares.toLocaleString()}</span>
@@ -183,7 +195,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* Sell Price & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Sell Price (EGP)</label>
               <NumberStepperInput
@@ -262,7 +274,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* P&L Preview Ribbon */}
-          <div className="premium-subpanel p-3.5 rounded-xl space-y-2">
+          <div className="premium-subpanel ui-trade-modal-financials p-3.5 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Net Cash Inflow (After Sell Fee):</span>
               <span className="font-mono font-bold text-white text-sm">
@@ -310,7 +322,7 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
+          <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={requestClose}

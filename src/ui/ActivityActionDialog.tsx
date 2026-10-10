@@ -154,7 +154,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
             {cashTypes.map(kind=><option key={kind} value={kind}>{words(kind)}</option>)}
           </select></label>
           {input(cashKind==='RECONCILIATION_ADJUSTMENT'?'Signed adjustment (EGP)':'Cash amount (EGP)',cashAmount,setCashAmount,'number',{step:'.01'})}
-          {input('Cash event date',date,setDate,'date')}
+          {input('Cash event date',date,value=>{setDate(value);setClock('');},'date')}
           {input('Actual time in Cairo (optional)',clock,setClock,'time')}
           <p className="ui-sm">Only enter a verified transfer time; leave blank when unknown.</p>
           {input('Notes',notes,setNotes)}
@@ -177,7 +177,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
               }catch{return '—';}
             })()}</strong></span>
           </div>
-          {input('Actual subscription date',date,setDate,'date')}
+          {input('Actual subscription date',date,value=>{setDate(value);setClock('');},'date')}
           {input(`Order time Cairo ${fundedSameDay?'(required)':'(optional)'}`,clock,setClock,'time',{required:fundedSameDay})}
           {input('Broker reference (optional)',reference,setReference)}
           {input('Notes',notes,setNotes)}

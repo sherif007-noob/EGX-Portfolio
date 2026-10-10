@@ -43,7 +43,9 @@ export function ActivityHeader({ title, detail, action }: {
   </header>;
 }
 export function ActivityDetail({ label, value }: { label: string; value: React.ReactNode }) {
-  return <div className="ui-activity-detail"><span className="ui-sm">{label}</span><strong>{value}</strong></div>;
+  return <div className={`ui-activity-detail ${label.includes('time (Cairo)') || label === 'Time (Cairo)' ? 'ui-activity-time' : ''}`}>
+    <span className="ui-sm">{label}</span><strong>{value}</strong>
+  </div>;
 }
 export function formatActivityDate(value: string) {
   const day = (value || '').slice(0, 10);

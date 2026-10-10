@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { runVisualTransition } from '../utils/visualTransition';
 import { NumberStepperInput } from './NumberStepperInput';
 import { PremiumModalMotion } from './PremiumMotion';
+import { StockLogo } from './StockLogo';
 import { Position } from '../types';
 import { X, Target, ShieldAlert, FileText, Save, CheckCircle2 } from 'lucide-react';
 
@@ -75,13 +76,13 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
   return (
     <PremiumModalMotion
       isOpen={isOpen}
-      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      panelClassName="premium-modal premium-modal-viewport w-full max-w-md rounded-2xl p-4 sm:p-6 space-y-5"
+      backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll ui-trade-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      panelClassName="premium-modal premium-modal-viewport ui-trade-modal ui-trade-modal--edit w-full max-w-md rounded-2xl p-4 sm:p-6 space-y-5"
       onBackdropClick={requestClose}
       panelAriaLabel={`Edit ${displayPosition.ticker} position targets`}
     >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3.5">
+        <div className="ui-trade-modal-header flex items-start justify-between gap-3 border-b border-slate-800 pb-3.5">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Target className="w-5 h-5" />
@@ -102,14 +103,21 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
             type="button"
             aria-label="Close edit position"
             onClick={requestClose}
-            className="premium-icon-action p-1.5 rounded-lg"
+            className="premium-icon-action ui-trade-modal-close p-1.5 rounded-lg"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
+        <div className="ui-trade-modal-identity">
+          <StockLogo ticker={displayPosition.ticker} companyName={displayPosition.companyName}
+            sector={displayPosition.sector} size="md" />
+          <div className="ui-trade-modal-symbol">
+            <strong>{displayPosition.ticker}</strong><span>{displayPosition.companyName}</span>
+          </div>
+        </div>
         {/* Current Metrics Reference */}
-        <div className="premium-subpanel grid grid-cols-2 gap-3 p-3 rounded-xl text-xs">
+        <div className="premium-subpanel ui-trade-modal-stats grid grid-cols-2 gap-3 p-3 rounded-xl text-xs">
           <div>
             <span className="text-slate-500 block">Current Market Price</span>
             <span className="font-mono font-bold text-white text-sm">
@@ -125,7 +133,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-4">
           {/* Target Price */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -188,7 +196,7 @@ export const EditPositionModal: React.FC<EditPositionModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
+          <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={requestClose}

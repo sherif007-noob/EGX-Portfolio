@@ -6,7 +6,7 @@ import type { HistoricalPriceSeries } from '../services/historicalPriceStore';
 import { StockLogo } from '../components/StockLogo';
 import { HomeChart } from './HomeChart';
 import { NavReconciliation } from './NavReconciliation';
-import { formatEgp, formatPercent, formatSigned, sectorColorVar, toneClass } from './format';
+import { formatEgp, formatPercent, formatSigned, pnlAccentColor, sectorColorVar, toneClass } from './format';
 
 interface HomeScreenProps {
   metrics: PortfolioMetrics;
@@ -31,10 +31,10 @@ export function positionPnl(position: Position) {
   return { marketValue, pnl, percent: cost > 0 ? (pnl / cost) * 100 : 0 };
 }
 
-const Tile: React.FC<{ label: string; value: number; sub: string; color: string }> = ({ label, value, sub, color }) => (
-  <div className="ui-tile" style={{ ['--tile' as string]: color }}>
+const Tile: React.FC<{ label: string; value: number; sub: string }> = ({ label, value, sub }) => (
+  <div className="ui-tile" style={{ ['--tile' as string]: pnlAccentColor(value) }}>
     <div className="ui-sm">
-      <span className="ui-dot" style={{ ['--dot' as string]: color }} />
+      <span className="ui-dot" style={{ ['--dot' as string]: pnlAccentColor(value) }} />
       {label}
     </div>
     <div className={`ui-mono ${toneClass(value)}`} style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
@@ -113,13 +113,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             label="Realized P&L"
             value={metrics.realizedPnlEgp}
             sub={`${stats.totalTrades} closed trade${stats.totalTrades === 1 ? '' : 's'}`}
-            color="var(--ui-teal)"
           />
           <Tile
             label="Unrealized P&L"
             value={metrics.unrealizedPnlEgp}
             sub={`${formatPercent(metrics.unrealizedPnlPercent)} · net of fees`}
-            color="var(--ui-blue)"
           />
         </div>
 

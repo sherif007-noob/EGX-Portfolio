@@ -5,14 +5,25 @@ const home=readFileSync(new URL('./HomeChart.tsx',import.meta.url),'utf8');
 const hero=readFileSync(new URL('./HomeScreen.tsx',import.meta.url),'utf8');
 
 describe('Return comparison without an extra chart mode',()=>{
-  it('preserves one Return mode with an inline opt-in NAV comparison',()=>{
+  it('renders the NAV comparison as a separate, date-synchronized panel',()=>{
     expect(home).toContain("{ value: 'ret', label: 'Return' }");
     expect(home).toContain('setComparePortfolio(on=>!on)');
-    expect(home).toContain("key:'nav',label:'Portfolio NAV (EGP)'");
-    expect(home).toContain('yAxisId="nav"');
-    expect(home).toContain('yAxisId="primary"');
-    expect(home).toContain('NAV (blue, right scale)');
+    expect(home).toContain('nav:points[index].equity');
+    expect(home).toContain('syncId="medium-return-nav"');
+    expect(home).toContain('Portfolio NAV comparison');
+    expect(home).toContain('ui-chart-canvas-nav');
+    expect(home).toContain('domain={[0,\'auto\']}');
+    expect(home).toContain('P&amp;L excludes funding; NAV includes deposits and withdrawals.');
+    expect(home).not.toContain('yAxisId="nav"');
+    expect(home).not.toContain("key:'nav',label:'Portfolio NAV (EGP)'");
     expect(home).not.toContain("value: 'portfolioVsReturn'");
+  });
+  it('places transfer markers only at real daily dates, never invented intraday clocks',()=>{
+    expect(home).toContain('row.nav');
+    expect(home).toContain("timeframe!=='TODAY'&&visibleCapitalEvents");
+    expect(home).toContain('visibleCapitalEvents.slice(-4).map');
+    expect(home).toContain('Cash events are grouped by date, not plotted at an assumed intraday time.');
+    expect(home).toContain('Deposit +{formatEgp(event.deposited)} EGP');
   });
   it('plots independently calculated TWR and MWR on a comparison overlay',()=>{
     expect(home).toContain("point.twrPercent");

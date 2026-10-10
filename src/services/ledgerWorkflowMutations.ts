@@ -129,6 +129,7 @@ export function prepareCashEventMutation(
   amount: number,
   notes?: string,
   date?: string,
+  executedAt?: string,
 ): LedgerMutationPreparation<TradeTransaction> {
   const prepared = prepareCashLedgerEvent(
     {
@@ -141,6 +142,7 @@ export function prepareCashEventMutation(
     amount,
     notes,
     date,
+    executedAt,
   );
 
   return {
@@ -154,7 +156,7 @@ export function prepareCashEventMutation(
 export function prepareCashEntryMutation(
   current: Readonly<CanonicalLedgerSnapshot>,
   transactionId: string,
-  changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null,
+  changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> & Pick<CashTransaction, 'executedAt'> | null,
 ): LedgerMutationPreparation<string> {
   const prepared = prepareCashLedgerChange(
     {

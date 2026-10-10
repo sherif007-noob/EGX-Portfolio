@@ -3,6 +3,7 @@ import type { CanonicalCashFlowType, TradeTransaction } from '../types';
 import { cashFlowSignedImpact, normalizeCashFlowType } from '../services/cashFlowSemantics';
 import { isCashLedgerRecord, isSecurityTrade } from '../services/ledgerRecordTypes';
 import { calculateIpoOrderQuote } from '../services/ipoOrderQuote';
+import { cairoOrderTimeToUtcIso } from '../services/ipoSubscriptionEditing';
 import { formatEgp } from './format';
 
 export type ActivityAction = 'edit' | 'allocate' | 'delete';
@@ -102,7 +103,7 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
         const signed=cashFlowSignedImpact(cashKind,amount);
         if(signed===null)throw new Error('Invalid cash flow.');
         const modified:TradeTransaction={...record,cashFlowType:cashKind,cashFlowAmount:cashKind==='RECONCILIATION_ADJUSTMENT'?signed:Math.abs(amount),
-          type:signed<0?'SELL':'BUY',date,executedAt:date===record.date?record.executedAt:undefined,
+          type:signed<0?'SELL':'BUY',date,executedAt:clock?cairoOrderTimeToUtcIso(date,clock):undefined,
           shares:Math.abs(signed),price:1,fees:0,totalAmount:Math.abs(signed),netCashImpact:signed,
           notes:notes.trim()||undefined};
         run=()=>onSaveCash(modified,reason.trim());
@@ -154,6 +155,8 @@ export function ActivityActionDialog({record,action,transactions,onClose,onSaveT
           </select></label>
           {input(cashKind==='RECONCILIATION_ADJUSTMENT'?'Signed adjustment (EGP)':'Cash amount (EGP)',cashAmount,setCashAmount,'number',{step:'.01'})}
           {input('Cash event date',date,setDate,'date')}
+          {input('Actual time in Cairo (optional)',clock,setClock,'time')}
+          <p className="ui-sm">Only enter a verified transfer time; leave blank when unknown.</p>
           {input('Notes',notes,setNotes)}
         </>}
         {action==='edit'&&isIpo&&ipo&&<>

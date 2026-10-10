@@ -317,3 +317,33 @@ open through mid-scroll and after scrolling to the end. Screenshots were
 inspected at mobile portrait and landscape sizes. TypeScript, full tests and
 the production build passed. The live iOS keyboard remains an on-device
 acceptance check and has not been simulated by these snapshots.
+
+## Edit Position after scrolled-page viewport offset — 2026-10-11
+
+A real iPhone user reported that opening Edit Position farther down Holdings
+placed the modal at the middle of the long *document*, outside the active
+screen. This was distinct from the earlier top-alignment, horizontal overflow,
+and sticky-footer bugs. The user should never need to scroll the page to find
+an open modal.
+
+- `PremiumModalMotion` already portals into `document.body` and uses a
+  fixed backdrop, but its inline `visualViewport.offsetTop` was previously
+  trusted without bounds. iOS WebKit viewport/scroll/toolbar transitions can
+  report unexpected offsets. A fixed dialog must be confined to the layout
+  viewport rather than using a document-distance offset.
+- `modalViewportGeometry.ts` bounds the visual viewport's top/left/width/height
+  to the current `window.innerWidth/innerHeight`. The modal also sets
+  `position: fixed` explicitly and recomputes on window/visual-viewport
+  resize or scroll. Updates that do not change geometry do not re-render.
+- The scroll regression runs Edit from the last holding after the page has
+  actually scrolled, for small/regular/large phones, landscape and desktop.
+  Additional browser emulation deliberately injects page-sized offsetTop values
+  (e.g. 1126px on a 390×844 viewport after 282px document scroll).
+  The real Edit modal remains centered in the visible screen with its backdrop
+  at top 0; no navigation/scroll-to-modal is necessary. The 20-case rendered
+  gate and normal TypeScript, Vitest and production build passed at
+  `bb403aa3`.
+- This is a positioning fix only; modal styling, sticky footer, form fields,
+  fees, timestamps, handlers, ledger, calculations and persistence did not
+  change. A real on-device iOS Safari/WebKit check is still required because
+  Chromium iPhone emulation is not the Safari engine.

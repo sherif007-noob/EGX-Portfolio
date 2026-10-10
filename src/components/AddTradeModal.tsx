@@ -309,7 +309,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
               matchAnchorWidth
               align="left"
               maxHeight="16rem"
-              className="premium-floating premium-dropdown z-[100] rounded-xl border p-1.5"
+              className="premium-floating premium-dropdown ui-trade-ticker-menu z-[100] rounded-xl border p-1.5"
             >
               {showSuggestions && suggestions.length > 0 && <>
                 {suggestions.map((t) => (

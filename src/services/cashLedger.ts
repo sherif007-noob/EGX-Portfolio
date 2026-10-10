@@ -195,7 +195,7 @@ export function prepareCashLedgerChange(
   };
 }
 
-export function changeCashLedgerEntry(state: CashLedgerState, id: string, changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> | null) {
+export function changeCashLedgerEntry(state: CashLedgerState, id: string, changes: Pick<CashTransaction, 'type' | 'amount' | 'date' | 'notes'> & Pick<CashTransaction, 'executedAt'> | null) {
   const prepared = prepareCashLedgerChange(state, id, changes);
   const report = reconcilePortfolioFromLedger(
     prepared.transactions,

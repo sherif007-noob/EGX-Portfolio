@@ -28,7 +28,7 @@ import { Pill, PillGroup } from './Pill';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
-import { formatCompact, formatEgp, formatPercent, formatSigned, toneClass } from './format';
+import { formatCompact, formatEgp, formatPercent, formatSigned, pnlAccentColor, toneClass } from './format';
 
 type ChartRow = Record<string, number | string> & { timestamp: number };
 
@@ -192,6 +192,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       ];
     }
 
+    // Only return/performance series carry profit or loss meaning.
+    // NAV, deposits, and EGX indices keep their neutral identity colors.
+    series = series.map(item => {
+      if (!['ret', 'twr', 'mwr', 'portfolio'].includes(item.key)) return item;
+      const lastValue = [...rows].reverse().find(row => finite(row[item.key]))?.[item.key];
+      return { ...item, color: pnlAccentColor(typeof lastValue === 'number' ? lastValue : null) };
+    });
+
     return { rows: rows.map((row): ChartRow => ({ ...row, timestamp: chartTime(String(row.date)) }))
       .filter(row => Number.isFinite(row.timestamp)), series, unit };
   }, [mode, comparePortfolio, points, timeframe, intradayPrices, historicalPrices, indexChoice]);
@@ -306,7 +314,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             {comparePortfolio?'✓ Portfolio vs Return':'+ Compare portfolio value'}
           </Pill>
           {comparePortfolio && <span className="ui-sm">
-            NAV (blue, right scale) vs P&amp;L (green, left scale)
+            NAV (blue, right scale) vs P&amp;L (green for gains, red for losses)
           </span>}
         </div>
       )}
@@ -325,8 +333,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
       {(mode==='twr'||mode==='mwr') && (
         <p className="ui-note ui-weighted-return-note">
           {mode==='twr'
-            ? 'TWR (solid green) removes the effect of contribution timing. MWR (dashed blue) weights when your money was invested.'
-            : 'MWR (solid blue) reflects contribution timing. TWR (dashed green) measures the portfolio independent of that timing.'}
+            ? 'TWR (solid) removes the effect of contribution timing. MWR (dashed) weights when your money was invested.'
+            : 'MWR (solid) reflects contribution timing. TWR (dashed) measures the portfolio independent of that timing.'}
           {' '}They can coincide when cash movements occur at the period boundary.
           {untimedCapitalFlows>0 && ` ${untimedCapitalFlows} deposit/withdrawal record(s) in this range have no execution time, so money-weighting uses date-only timing and may not match your broker exactly.`}
         </p>
@@ -441,7 +449,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', marginTop: 8 }}>
           {mode === 'ret' && last && finite(last.ret) ? (
             <span className="ui-sm">
-              <span className="ui-dot" style={{ ['--dot' as string]: 'var(--ui-teal)' }} />
+              <span className="ui-dot" style={{ ['--dot' as string]: pnlAccentColor(last.ret) }} />
               Cash-flow-adjusted P&L since first point{' '}
               <span className={`ui-mono ${toneClass(last.ret)}`}>
                 {formatSigned(last.ret)} EGP

@@ -77,11 +77,16 @@ async function inspect(page, mode, screen, scrolled=false) {
   if (result.shellPosition !== 'fixed' || !result.portalParentIsBody)
     violations.push('modal backdrop is not viewport-fixed and portaled to body');
   if (result.shell) {
-    const topError=Math.abs(result.shell.top-result.visual.top);
+    // A browser may transiently report a document scroll offset as
+    // visualViewport.offsetTop. The actual fixed overlay must stay contained.
+    const safeTop=Math.min(Math.max(0,result.visual.top),Math.max(0,result.viewHeight-result.visual.height));
+    const topError=Math.abs(result.shell.top-safeTop);
     const heightError=Math.abs(result.shell.height-result.visual.height);
     if(topError>4 || heightError>4)
-      violations.push(`backdrop displaced from visible viewport: top=${result.shell.top.toFixed(1)} expected=${result.visual.top.toFixed(1)} heightError=${heightError.toFixed(1)}`);
+      violations.push(`backdrop displaced from visible viewport: top=${result.shell.top.toFixed(1)} expected=${safeTop.toFixed(1)} heightError=${heightError.toFixed(1)}`);
   }
+  if (scrolled && result.pageScrollY < 20)
+    violations.push('scrolled modal test did not scroll the actual document');
   if (result.rect.left < -1 || result.rect.right > result.viewWidth + 1)
     violations.push('panel extends beyond viewport');
   if (result.overflow > 1 || result.documentOverflow > 1)
@@ -162,6 +167,18 @@ for (const {screen,mode,scrolled} of geometryCases) {
           await holding.last().click();
         } else await holding.first().click();
         const button=page.locator('.ui-holding-buttons button').filter({hasText:mode==='sell'?'Sell':'Edit'}).first();
+        if(scrolled) {
+          // Simulate iOS Safari transiently exposing a page-relative offset.
+          // Without clamping, the modal will open far below the visible screen.
+          await page.evaluate(() => {
+            const viewport = window.visualViewport;
+            if (!viewport) return;
+            Object.defineProperty(viewport,'offsetTop',{
+              configurable:true,
+              get: () => window.scrollY + window.innerHeight,
+            });
+          });
+        }
         await button.click();
       }
       await inspect(page,mode,screen,scrolled);

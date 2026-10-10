@@ -27,7 +27,7 @@ import {
 import { Pill, PillGroup } from './Pill';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
-import { chartCapitalEvents, chartReturnTooltipMetrics } from './homeChartPresentation';
+import { chartCapitalEvents, chartReturnTooltipMetrics, pnlSignGradientOffset } from './homeChartPresentation';
 import { formatCompact, formatEgp, formatPercent, formatSigned, pnlAccentColor, toneClass } from './format';
 
 type ChartRow = Record<string, number | string> & { timestamp: number };
@@ -298,15 +298,10 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const ChartRoot = includesAreas && includesLines ? ComposedChart : includesAreas ? AreaChart : LineChart;
   // Return crosses zero: its positive part must actually be green and its
   // negative part red, even when the last portfolio P&L is a loss.
-  const returnExtents = model.rows.reduce((bounds, row) => {
-    if (finite(row.ret)) {
-      bounds.min = Math.min(bounds.min, row.ret);
-      bounds.max = Math.max(bounds.max, row.ret);
-    }
-    return bounds;
-  }, {min:0,max:0});
-  const returnZeroOffset = returnExtents.max===0 ? 0 : returnExtents.min===0
-    ? 100 : (100*returnExtents.max)/(returnExtents.max-returnExtents.min);
+  const returnValues = model.rows.map(row=>row.ret).filter(finite);
+  const returnZeroOffset = pnlSignGradientOffset(returnValues);
+  const returnStroke = returnValues.some(value=>value!==0)
+    ? `url(#ui-return-sign-${gradientId})` : 'var(--ui-gray)';
   const returnGradient = `ui-return-sign-${gradientId}`;
 
   return (
@@ -419,9 +414,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       dataKey={item.key}
                       yAxisId="primary"
                       name={item.label}
-                      stroke={item.key==='ret' ? `url(#${returnGradient})` : item.color}
+                      stroke={item.key==='ret' ? returnStroke : item.color}
                       strokeWidth={2.2}
-                      fill={item.key==='ret' ? `url(#${returnGradient})` : item.color}
+                      fill={item.key==='ret' ? returnStroke : item.color}
                       fillOpacity={0.14}
                       dot={false}
                       isAnimationActive={false}

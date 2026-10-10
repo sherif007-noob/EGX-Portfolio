@@ -73,3 +73,20 @@ export function chartReturnTooltipMetrics(
     hasPrevious,
   };
 }
+
+/**
+ * SVG stroke/fill gradient threshold measured from the highest positive return
+ * (top) to the lowest negative return (bottom). This is presentation only:
+ * no valuation, transaction, or return calculations change.
+ */
+export function pnlSignGradientOffset(values: ReadonlyArray<number>): number {
+  let min = 0, max = 0;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+  if (max === 0) return 0; // all losses
+  if (min === 0) return 100; // all gains
+  return 100 * max / (max - min);
+}

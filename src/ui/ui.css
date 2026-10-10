@@ -894,7 +894,8 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   backdrop-filter:none;
   width:100%;min-width:0;max-width:100%;
 }
-.ui-trade-modal .ui-trade-modal-actions button {
+/* Footer actions outrank the compact neutral utility-button minimum size. */
+.ui-trade-modal .ui-trade-modal-actions .premium-action {
   min-height:44px;min-width:88px;
   display:inline-flex;align-items:center;justify-content:center;
   font-size:.84rem;

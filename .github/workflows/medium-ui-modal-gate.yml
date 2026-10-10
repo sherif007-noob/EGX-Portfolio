@@ -1,0 +1,64 @@
+name: Medium UI Real-Viewport Modal Gate
+
+on:
+  push:
+    branches: [medium-ui]
+    paths:
+      - 'src/ui/ui.css'
+      - 'src/components/AddTradeModal.tsx'
+      - 'src/components/SellPositionModal.tsx'
+      - 'src/components/EditPositionModal.tsx'
+      - 'src/components/PremiumMotion.tsx'
+      - 'src/components/NumberStepperInput.tsx'
+      - 'scripts/checkMediumTradeModals.mjs'
+      - '.github/workflows/medium-ui-modal-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: medium-ui-modal-geometry
+  cancel-in-progress: true
+
+jobs:
+  rendered-modal-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global npm@11.6.0
+      - run: npm ci --no-audit --no-fund
+      - name: Install Chromium browser test runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Build deterministic app using real components
+        env:
+          VITE_VISUAL_REGRESSION: 'true'
+        run: npm run build:cloudflare
+      - name: Start browser preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/medium-modal-preview.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/medium-modal-preview.log
+          exit 1
+      - name: Check rendered modal boundaries and scroll on mobile and desktop
+        env:
+          VISUAL_BASE_URL: http://127.0.0.1:4173
+        run: node scripts/checkMediumTradeModals.mjs
+      - name: Upload actual browser screenshots and geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medium-ui-modal-viewport-evidence
+          retention-days: 14
+          path: |
+            visual-regression/medium-modal-geometry/**
+            /tmp/medium-modal-preview.log

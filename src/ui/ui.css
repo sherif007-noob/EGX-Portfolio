@@ -684,7 +684,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   margin-top:10px; font-size:.85rem;
 }
 .ui-hero-session-performance>.ui-mono {font-weight:650;font-variant-numeric:tabular-nums;}
-/* Keep portfolio comparison within Return itself: one switch, two labelled axes. */
+/* NAV and P&L are NOT comparable magnitudes: use aligned, independent panels. */
 .ui-return-compare-control {
   margin-top:8px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;
 }
@@ -694,3 +694,23 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 /* Shared native pill targets and layout. Legacy advanced overrides stay scoped above. */
 @media(max-width:600px) { .ui-pill-wrap[data-ui-pill-group] > .ui-filter-pill { min-height:44px; } }
 .ui-benchmark-controls { margin-top:8px; }
+
+/* The comparison deliberately does not overlay NAV with P&L or mix Y-axes. */
+.ui-chart-panel-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+  gap:8px; padding:4px 8px 8px; font-size:.8125rem; font-weight:650; color:var(--ui-text); }
+.ui-chart-panel-heading strong { font-size:.875rem; color:var(--ui-blue); overflow-wrap:anywhere; }
+.ui-nav-compare-panel { margin-top:12px; padding:10px 6px 12px; }
+.ui-chart-comparison-explanation { line-height:1.5; margin:0 8px 7px; }
+.ui-chart-canvas-nav { height:clamp(170px,22vw,230px); }
+.ui-chart-cash-event-legend { display:flex; flex-direction:column; gap:6px; margin:4px 8px 0;
+  padding-top:9px; border-top:1px solid var(--ui-border); }
+.ui-chart-cash-event { display:flex; align-items:baseline; flex-wrap:wrap; gap:5px 8px;
+  color:var(--ui-text-2); font-size:.76rem; line-height:1.45; }
+.ui-chart-cash-event strong { color:var(--ui-text); font-weight:650; }
+.ui-chart-cash-event .ui-dot { flex:none; align-self:center; margin-right:0; }
+.ui-chart-cash-event-legend p { margin:3px 0 0; }
+@media(max-width:600px) {
+  .ui-chart-canvas-nav { height:174px; }
+  .ui-chart-panel-heading { font-size:.8rem; }
+  .ui-chart-panel-heading strong { font-size:.82rem; }
+}

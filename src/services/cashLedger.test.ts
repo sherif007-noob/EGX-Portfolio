@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { applyCashLedgerEvent, changeCashLedgerEntry, buildCashHistory, rebuildAfterLedgerChange } from './cashLedger';
+import { applyCashLedgerEvent, changeCashLedgerEntry, buildCashHistory, rebuildAfterLedgerChange, prepareCashLedgerEvent } from './cashLedger';
 import { reconcilePortfolioFromLedger } from './portfolioReconciliation';
 import type { TradeTransaction } from '../types';
 
@@ -174,5 +174,27 @@ describe('cash history editing and deletion', () => {
     expect(() => changeCashLedgerEntry(state, 'missing', null)).toThrow('not found');
     expect(() => changeCashLedgerEntry(state, state.transaction.id, { type: 'DEPOSIT', amount: 200, date: '2026-02-30' })).toThrow('valid date');
     expect(JSON.stringify(state)).toBe(original);
+  });
+});
+
+describe('recorded cash transfer execution time',()=>{
+  it('stores a verified Cairo instant and projects it into cash history',()=>{
+    const state={...legacy(),transactions:[],capitalDeposits:0};
+    const prepared=prepareCashLedgerEvent(state,'DEPOSIT',200,'Funding','2026-10-07','2026-10-07T12:30:00.000Z');
+    expect(prepared.transaction?.executedAt).toBe('2026-10-07T12:30:00.000Z');
+    expect(buildCashHistory({...state,transactions:prepared.transactions,capitalDeposits:prepared.capitalDeposits})[0].executedAt).toBe('2026-10-07T12:30:00.000Z');
+    const updated=changeCashLedgerEntry({...state,transactions:prepared.transactions,capitalDeposits:prepared.capitalDeposits},prepared.transaction!.id,{
+      type:'DEPOSIT',amount:200,date:'2026-10-07',notes:'Funding',executedAt:'2026-10-07T13:30:00.000Z',
+    });
+    expect(updated.transactions.find(tx=>tx.id===prepared.transaction!.id)?.executedAt).toBe('2026-10-07T13:30:00.000Z');
+    expect(updated.capitalDeposits).toBe(prepared.capitalDeposits);
+  });
+  it('does not invent a clock on date-only contributions',()=>{
+    const prepared=prepareCashLedgerEvent({...legacy(),transactions:[],capitalDeposits:0},'DEPOSIT',200,'','2026-10-07');
+    expect(prepared.transaction?.executedAt).toBeUndefined();
+  });
+  it('rejects timestamps belonging to a different Cairo calendar date',()=>{
+    expect(()=>prepareCashLedgerEvent({...legacy(),transactions:[],capitalDeposits:0},
+      'DEPOSIT',200,'','2026-10-07','2026-10-06T12:30:00.000Z')).toThrow(/Cairo event date/);
   });
 });

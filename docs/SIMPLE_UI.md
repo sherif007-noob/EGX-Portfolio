@@ -251,15 +251,19 @@ Verification: focused source-level assertions were revised and a pure sign-gradi
 
 A real iPhone review found three regressions after the approved modal restyling:
 Buy and Sell could scroll horizontally (cropping form labels and financial amounts),
-the sticky modal action row overlaid the end of long forms, and the shorter Edit
+the sticky footer left a visible gap below itself exposing underlying form
+content (the sticky action behavior itself was intentional and approved), and the shorter Edit
 Position dialog was pinned near the top instead of centered.
 
 **Root causes and bounded repair:** `src/ui/ui.css` now constrains the panel,
 form, field grids, date/time controls, numeric steppers and long EGP values to the
 available inline width. The modal panel remains the existing single vertical
-scroll owner; the action buttons now follow the final form content in document
-flow (no sticky overlap). The shared modal backdrop centers short dialogs within
-the visible viewport, and a competing compact neutral-button minimum height was
+scroll owner; sticky action buttons are restored, stay immediately accessible
+at the bottom while scrolling, and an edge-to-edge opaque footer covers the
+panel's bottom padding so no content/background is exposed beneath it.
+The final form field is still scrollable above the footer. The shared modal
+backdrop centers short dialogs within the visible viewport, and a competing
+compact neutral-button minimum height was
 removed so both actions meet 44px minimum touch size. Modal fields, validation,
 stock trades, fees, cash reconciliation, persisted events and animations were not
 changed. This repair does not redesign any screen or establish approval for the
@@ -283,3 +287,20 @@ on-device iOS Safari acceptance. The screenshots use synthetic portfolio
 fixtures, not a real broker account. Verify touch scrolling, keyboard handling,
 and form submission visually on the actual iPhone before declaring final
 production sign-off.
+
+### Sticky-footer clarification and restored behavior — 2026-10-10
+
+The user explicitly clarified that removing the sticky action footer had been an
+incorrect interpretation: fixed-on-screen Cancel/Save/Buy/Sell controls are
+**essential** to avoid scrolling through the full trade form simply to submit.
+The original bug was a small transparent gap **below** the sticky row that revealed
+the content underneath. We therefore restored `position:sticky;bottom:0`
+and extended an opaque footer across the modal's bottom inset; no new UI layout
+or reordering of fields is authorized or intended.
+
+`scripts/checkMediumTradeModals.mjs` now rejects loss of sticky positioning,
+checks that the footer remains at the bottom when the dialog opens and midway
+through scrolling, checks that the footer closes the bottom gap at the end, and
+still guards horizontal overflow, centering, button size and visibility of
+the last form field. The suite must pass at all five viewport sizes before the
+fix is accepted. Settings and other unrelated surfaces remain untouched.

@@ -719,7 +719,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     id="deposit-date"
                     label="Deposit Date"
                     value={depositDate}
-                    onChange={setDepositDate}
+                    onChange={value=>{setDepositDate(value);setDepositTimeCairo('');}}
                     required
                   />
                   <label className="space-y-1.5 text-xs font-semibold text-slate-300">
@@ -855,7 +855,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                     id="withdraw-date"
                     label="Withdrawal Date"
                     value={withdrawDate}
-                    onChange={setWithdrawDate}
+                    onChange={value=>{setWithdrawDate(value);setWithdrawTimeCairo('');}}
                     required
                   />
                   <label className="space-y-1.5 text-xs font-semibold text-slate-300">
@@ -1163,7 +1163,7 @@ export const CashBalanceView: React.FC<CashBalanceViewProps> = ({
                 id="edit-cash-date"
                 label="Transaction Date"
                 value={editDate}
-                onChange={setEditDate}
+                onChange={value=>{setEditDate(value);setEditTimeCairo('');}}
                 required
               />
               <label className="text-xs font-semibold text-slate-300">

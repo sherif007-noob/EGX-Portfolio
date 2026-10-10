@@ -280,7 +280,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           )}
         </ExpandPresence>
 
-        <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
+        <form id="ui-buy-trade-form" onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">
           {/* Ticker Autocomplete Input */}
           <div className="relative" ref={wrapperRef}>
             <div className="flex flex-col items-start gap-1 mb-1 sm:flex-row sm:items-center sm:justify-between">
@@ -589,6 +589,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             </div>
           </div>
 
+        </form>
           {/* Form Actions */}
           <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 sm:flex sm:items-center sm:justify-end">
             <button
@@ -601,13 +602,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
             </button>
             <button
               type="submit"
+              form="ui-buy-trade-form"
               disabled={isSubmitting}
               className="premium-action premium-action-primary premium-shimmer-border w-full justify-center px-5 py-2 rounded-xl font-semibold sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Saving…' : activeExistingPosition ? 'Accumulate (DCA)' : 'Add Position'}
             </button>
           </div>
-        </form>
     </PremiumModalMotion>
   );
 };

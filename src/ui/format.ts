@@ -12,6 +12,11 @@ export const formatPercent = (value: number | null | undefined, digits = 2): str
   return `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
 };
 
+/** Semantic performance accent: green gains, red losses, neutral zero/missing. */
+export const pnlAccentColor = (value: number | null | undefined): string =>
+  value == null || !Number.isFinite(value) || value === 0
+    ? 'var(--ui-gray)' : value > 0 ? 'var(--ui-pos)' : 'var(--ui-neg)';
+
 export const toneClass = (value: number | null | undefined): string => {
   if (value === null || value === undefined || !Number.isFinite(value) || value === 0) return '';
   return value > 0 ? 'ui-pos' : 'ui-neg';

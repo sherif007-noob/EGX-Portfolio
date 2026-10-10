@@ -295,8 +295,11 @@ incorrect interpretation: fixed-on-screen Cancel/Save/Buy/Sell controls are
 **essential** to avoid scrolling through the full trade form simply to submit.
 The original bug was a small transparent gap **below** the sticky row that revealed
 the content underneath. We therefore restored `position:sticky;bottom:0`
-and extended an opaque footer across the modal's bottom inset; no new UI layout
-or reordering of fields is authorized or intended.
+and extended an opaque footer across the modal's bottom inset. To keep
+the footer accessible even in short landscape viewports, the footer is a direct
+child of the modal, after the long form; submit buttons use the standard HTML
+`form` attribute to retain their existing form handlers. No fields, handlers,
+or financial logic were redesigned or reordered.
 
 `scripts/checkMediumTradeModals.mjs` now rejects loss of sticky positioning,
 checks that the footer remains at the bottom when the dialog opens and midway
@@ -304,3 +307,13 @@ through scrolling, checks that the footer closes the bottom gap at the end, and
 still guards horizontal overflow, centering, button size and visibility of
 the last form field. The suite must pass at all five viewport sizes before the
 fix is accepted. Settings and other unrelated surfaces remain untouched.
+
+**Rendered retest:** the explicit sticky-footer/browser-association regression
+suite passed **15/15** viewport/modal states at commit `30e6c398`.
+Measured footer-to-panel bottom spacing is now **1–2px** (border), down from
+15px on portrait phones and 24px on desktop. All five viewports had zero
+page-level horizontal overflow, and the footer remained anchored from initial
+open through mid-scroll and after scrolling to the end. Screenshots were
+inspected at mobile portrait and landscape sizes. TypeScript, full tests and
+the production build passed. The live iOS keyboard remains an on-device
+acceptance check and has not been simulated by these snapshots.

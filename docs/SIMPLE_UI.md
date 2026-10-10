@@ -236,3 +236,13 @@ Verification: focused source-level assertions were revised and a pure sign-gradi
 - The next pointer interaction inside either chart enables Recharts' native tooltip behavior again. Both synchronized Return and NAV tooltips receive the same dismissal state. Tapping inside either chart does not dismiss its tooltip.
 - No chart appearance, layout, color, financial calculation, ledger, persistence, portfolio data or return methodology changed. This is an interaction-only fix, not approval of the proposed two-panel redesign.
 - A jsdom interaction test covers outside taps, chart reactivation, the second chart and Escape; a source regression test checks the two Tooltip instances. Tests were committed but not executed in the GitHub-only editing environment. Device verification is pending.
+
+## Approved trade and position modals — migration pass 1 (2026-10-10)
+
+**Approval boundary:** user approved the previously rendered trade/position modal direction and asked to start. Settings, ticker directory, other utilities and the unapproved Return/NAV comparison layout are outside this pass.
+
+- `AddTradeModal`, `SellPositionModal`, `EditPositionModal` and the advanced `TradingJournal` transaction editor receive a common, explicitly scoped `ui-trade-modal` surface over their existing `PremiumModalMotion` ownership. Existing focus recovery, single modal scroll owner, safe areas, viewport/keyboard handling and dropdown portal behavior remain in place.
+- Scoped semantic accents: buy confirmation green, sell confirmation rose, edit confirmation teal; informational quote text is neutral and realized P&L remains signed green/red. On-device numbers and stock identity are read from the current input/position, never from the design illustration.
+- Shared style: restrained glass material, dark forms, consistent rounded field/section geometry, an identity header and mobile-friendly confirmation area. On narrow screens fee/total breakdown text wraps and selectors retain space. A responsive sell price/date layout avoids the former nested half-width date/time fields.
+- **No financial behavior changes:** Share counts, execution prices and dates/times, existing brokerage fee estimators/overrides, targets, stops, DCA logic, correction audit reason and all onSubmit callbacks remain unchanged. Ledger, calculations, quote ingestion, state model and persistence have not been edited.
+- `src/components/MediumTradeModals.test.ts` adds source regression assertions covering visual scope and retained financial fields. This is not a rendered-device approval or a substitute for checking the forms with the mobile keyboard. Full CI validation must be checked on the final commit before this pass can be declared complete.

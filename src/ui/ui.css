@@ -14,9 +14,10 @@
   --ui-neg: #fb7185;
   --ui-warn: #fbbf24;
 
-  /* Semantic: teal=portfolio/realized, blue=MWR/unrealized, purple=EGX30,
-     amber=fees/cash movements/EGX70, coral=drawdown/losses/EGX100, gray=cash.
-     Categorical: --ui-cat-1..8 identify sectors/allocations only; no gain/loss meaning. */
+  /* Performance: --ui-pos for gains and --ui-neg for losses, including chart
+     lines, dots and tile surfaces. Teal/blue identify non-P&L NAV comparisons;
+     purple/amber/coral identify EGX indices and cash-event categories only.
+     Categorical: --ui-cat-1..8 identify sectors, never P&L sign. */
   --ui-teal: #22b88a; /* your portfolio, realized gains */
   --ui-blue: #4b9cf5; /* MWR, unrealized */
   --ui-purple: #9a92f0; /* EGX30 */

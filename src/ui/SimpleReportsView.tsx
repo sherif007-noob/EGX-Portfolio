@@ -163,7 +163,7 @@ export function SimpleReportsView(props: Props) {
       /> : <p className="ui-report-note">Preparing performance chart…</p>}
       <div className="ui-report-info-grid ui-report-followup">
         <Info label="Maximum drawdown" value={Number.isFinite(stats.maxDrawdownPercent)?formatPercent(-(stats.maxDrawdownPercent??0)):'—'}/>
-        <Info label="Average cycle return" value={Number.isFinite(stats.avgReturnPercent)?formatPercent(stats.avgReturnPercent):'—'}/>
+        <Info label="Average cycle return" value={<span className={toneClass(stats.avgReturnPercent)}>{formatPercent(stats.avgReturnPercent)}</span>}/>
         <Info label="Closed trade fees" value={`${formatEgp(stats.totalBrokerageFeesPaid)} EGP`}/>
         <Info label="Trade count" value={stats.totalTrades}/>
       </div>
@@ -179,12 +179,12 @@ export function SimpleReportsView(props: Props) {
       <section className="ui-report-section">
         <SectionTitle title="Trading statistics"/>
         <div className="ui-report-info-grid">
-          <Info label="Average trade return" value={formatPercent(stats.avgReturnPercent)}/>
+          <Info label="Average trade return" value={<span className={toneClass(stats.avgReturnPercent)}>{formatPercent(stats.avgReturnPercent)}</span>}/>
           <Info label="Average hold" value={`${stats.avgHoldDays} days`}/>
-          <Info label="Best cycle" value={formatPercent(stats.bestTradePercent)}/>
-          <Info label="Worst cycle" value={formatPercent(stats.worstTradePercent)}/>
-          <Info label="Gross realized gains" value={`${formatEgp(stats.totalRealizedGainEgp)} EGP`}/>
-          <Info label="Gross realized losses" value={`${formatEgp(stats.totalRealizedLossEgp)} EGP`}/>
+          <Info label="Best cycle" value={<span className={toneClass(stats.bestTradePercent)}>{formatPercent(stats.bestTradePercent)}</span>}/>
+          <Info label="Worst cycle" value={<span className={toneClass(stats.worstTradePercent)}>{formatPercent(stats.worstTradePercent)}</span>}/>
+          <Info label="Gross realized gains" value={<span className="ui-pos">{formatEgp(stats.totalRealizedGainEgp)} EGP</span>}/>
+          <Info label="Gross realized losses" value={<span className="ui-neg">{formatEgp(stats.totalRealizedLossEgp)} EGP</span>}/>
         </div>
       </section>
       <section className="ui-report-section">
@@ -194,7 +194,7 @@ export function SimpleReportsView(props: Props) {
           {sortedClosed.map(c=><div className="ui-report-list-row" key={c.id}>
             <div><strong>{c.ticker}</strong><span className="ui-sm">{c.sellDate} · {c.shares.toLocaleString()} shares</span></div>
             <div className="ui-report-list-number"><strong className={`ui-mono ${toneClass(c.realizedPnlEgp)}`}>{formatSigned(c.realizedPnlEgp)}</strong>
-              <span className="ui-sm">{formatPercent(c.realizedPnlPercent)}</span></div>
+              <span className={`ui-sm ${toneClass(c.realizedPnlPercent)}`}>{formatPercent(c.realizedPnlPercent)}</span></div>
           </div>)}
         </div>
       </section>

@@ -139,7 +139,8 @@ export const SellPositionModal: React.FC<SellPositionModalProps> = ({
           </div>
           <div className="ui-trade-modal-quote">
             <span>Latest quote</span>
-            <strong>{(displayPosition.currentPrice || displayPosition.avgBuyPrice).toFixed(3)} EGP</strong>
+            <strong>{Number.isFinite(displayPosition.currentPrice) && displayPosition.currentPrice > 0
+              ? `${displayPosition.currentPrice.toFixed(3)} EGP` : 'Unavailable'}</strong>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="ui-trade-modal-form space-y-3.5 text-xs">

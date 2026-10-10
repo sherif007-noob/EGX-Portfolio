@@ -62,7 +62,7 @@ async function inspect(page, mode, screen) {
   if (result.overflow > 1 || result.documentOverflow > 1)
     violations.push(`horizontal overflow panel=${result.overflow}, page=${result.documentOverflow}`);
   if (result.fieldOverflows.length) violations.push(`clipped fields ${JSON.stringify(result.fieldOverflows)}`);
-  if (result.footerPosition === 'sticky' || result.footerPosition === 'fixed') violations.push('footer overlays scrolled form');
+  if (result.footerPosition !== 'sticky') violations.push('footer lost its required sticky positioning');
   if (result.actionButtons.some(b => b.width < 65 || b.height < 40))
     violations.push('footer buttons too small');
   // Any dialog with spare vertical room is expected to be centered.
@@ -72,20 +72,40 @@ async function inspect(page, mode, screen) {
     if (Math.abs(topGap-bottomGap)>24)
       violations.push(`short dialog off-center topGap=${topGap.toFixed(0)} bottomGap=${bottomGap.toFixed(0)}`);
   }
+  // A persistent footer must be docked both when the dialog opens and after
+  // scrolling. This prevents the former "scroll all the way down to save" bug.
+  const openingGap = result.rect.bottom-result.footer.bottom;
+  if (result.scrollHeight > result.clientHeight + 8 && Math.abs(openingGap)>4)
+    violations.push(`sticky footer is not docked at open: bottom gap=${openingGap.toFixed(1)}px`);
+  const beforeScrollBottom = result.footer.bottom;
+  await dialog.evaluate(el => { el.scrollTop = el.scrollHeight/2; });
+  await page.waitForTimeout(80);
+  const mid = await dialog.evaluate(el => {
+    const r=el.querySelector('.ui-trade-modal-actions').getBoundingClientRect();
+    return {bottom:r.bottom,top:r.top,scrollTop:el.scrollTop};
+  });
+  if (result.scrollHeight > result.clientHeight + 8 && Math.abs(mid.bottom-beforeScrollBottom)>4)
+    violations.push(`sticky footer moved while scrolling: ${(mid.bottom-beforeScrollBottom).toFixed(1)}px`);
   await dialog.evaluate(el => { el.scrollTop = el.scrollHeight; });
   await page.waitForTimeout(80);
   const footerAtEnd = await dialog.evaluate(el => {
     const footer=el.querySelector('.ui-trade-modal-actions');
     const r=footer.getBoundingClientRect(), p=el.getBoundingClientRect();
     const previous=footer.previousElementSibling?.getBoundingClientRect();
-    return {footerBottom:r.bottom,panelBottom:p.bottom,previousBottom:previous?.bottom??null,footerTop:r.top};
+    return {footerBottom:r.bottom,panelBottom:p.bottom,previousBottom:previous?.bottom??null,footerTop:r.top,
+      gap:p.bottom-r.bottom,footerBackground:getComputedStyle(footer).backgroundImage};
   });
-  if (footerAtEnd.footerBottom > footerAtEnd.panelBottom + 2 ||
-      footerAtEnd.previousBottom > footerAtEnd.footerTop + 2)
-    violations.push('footer overlaps final form content or extends outside panel');
+  // The only reported original footer defect: background/form content showed
+  // through a band *below* the anchored actions.
+  if (Math.abs(footerAtEnd.gap)>4)
+    violations.push(`footer leaves exposed band at bottom: ${footerAtEnd.gap.toFixed(1)}px`);
+  if (!footerAtEnd.footerBackground.includes('gradient'))
+    violations.push('footer must paint an opaque backdrop for scrolled content');
+  if (footerAtEnd.previousBottom > footerAtEnd.footerTop + 2)
+    violations.push('last field cannot scroll above sticky action footer');
   const suffix=mode+'-'+screen.name;
   await page.screenshot({path:path.join(DIR,suffix+'.png'),animations:'disabled'});
-  report.checks.push({mode,viewport:screen.name,...result,footerAtEnd,violations});
+  report.checks.push({mode,viewport:screen.name,...result,openingGap,mid,footerAtEnd,violations});
   if (violations.length) report.errors.push(`${suffix}: ${violations.join('; ')}`);
   console.log(`[modal-geometry] ${suffix}: panel=${result.overflow}px page=${result.documentOverflow}px, ${violations.length?'FAIL: '+violations.join('; '):'PASS'}`);
 }

@@ -229,3 +229,10 @@ The current `HomeChart` presentation instead:
 - Reuses the existing Return/Deposit tooltip's split between NAV, flow-neutral return and capital movements. The underlying unified analytics and ledger math, Supabase records, historical data and cash mutation code are not altered in this chart correction.
 
 Verification: focused source-level assertions were revised and a pure sign-gradient test was added. TypeScript, Vitest, deployed mobile rendering and broker NAV reconciliation still require external execution/acceptance. Historical NAV values in a user screenshot are not automatically certified solely by this presentation fix.
+
+## Shared-chart tooltip tap-outside fix — 2026-10-10
+
+- A touch-activated Recharts tooltip in Home/Reports could remain pinned after tapping outside the chart. `src/ui/useDismissibleChartTooltip.ts` now dismisses the shared chart tooltip on a document-level **pointerdown outside either chart canvas**, and on **Escape**. The listener is removed on unmount.
+- The next pointer interaction inside either chart enables Recharts' native tooltip behavior again. Both synchronized Return and NAV tooltips receive the same dismissal state. Tapping inside either chart does not dismiss its tooltip.
+- No chart appearance, layout, color, financial calculation, ledger, persistence, portfolio data or return methodology changed. This is an interaction-only fix, not approval of the proposed two-panel redesign.
+- A jsdom interaction test covers outside taps, chart reactivation, the second chart and Escape; a source regression test checks the two Tooltip instances. Tests were committed but not executed in the GitHub-only editing environment. Device verification is pending.

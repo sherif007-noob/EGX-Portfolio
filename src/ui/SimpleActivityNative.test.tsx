@@ -76,6 +76,8 @@ describe('native Medium UI Activity presentation', () => {
     );
     expect(html).toContain('Transfer cash');
     expect(html).toContain('Record deposit');
+    expect(html).toContain('Time in Cairo (optional)');
+    expect(html).toContain('leave blank if unknown');
     expect(html).toContain('ui-activity-native');
     expect(html).not.toContain('premium-dense-workflow');
   });

@@ -438,6 +438,62 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         )}
       </div>
 
+      {mode==='ret' && comparePortfolio && !isLoading && !error && hasData && (
+        <section className="ui-card ui-nav-compare-panel" aria-label="Portfolio NAV comparison">
+          <div className="ui-chart-panel-heading">
+            <span>Portfolio value (NAV)</span>
+            {last && finite(last.nav) && <strong className="ui-mono">{formatEgp(last.nav)} EGP</strong>}
+          </div>
+          <p className="ui-sm ui-chart-comparison-explanation">
+            NAV includes money added or withdrawn. It is not investment profit.
+            The chart below has its own zero-based EGP scale and shares the dates above.
+          </p>
+          <div role="img" aria-label={`Portfolio NAV chart for ${timeframe}, including cash transfers`}
+            className="ui-chart-canvas ui-chart-canvas-nav">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={model.rows} syncId="medium-return-nav"
+                margin={{top:14,right:8,bottom:0,left:0}}>
+                <CartesianGrid stroke="var(--ui-border)" vertical={false}/>
+                <XAxis dataKey="timestamp" type="number" scale="time"
+                  domain={['dataMin','dataMax']}
+                  tickFormatter={(value:number)=>labelTime(value,timeframe==='TODAY')}
+                  tick={{fill:'var(--ui-text-2)',fontSize:11}} tickLine={false}
+                  axisLine={false} interval="preserveStartEnd" minTickGap={40}/>
+                <YAxis width={46} domain={[0,'auto']} tickFormatter={(value:number)=>formatCompact(value)}
+                  tick={{fill:'var(--ui-blue)',fontSize:11}} tickLine={false} axisLine={false}/>
+                <Tooltip cursor={{stroke:'var(--ui-border-strong)'}}
+                  content={renderDetailedTooltip}
+                  contentStyle={{background:'var(--ui-surface-2)',border:'1px solid var(--ui-border-strong)',borderRadius:8,fontSize:12}}/>
+                <Line type="linear" dataKey="nav" name="Portfolio NAV (EGP)" stroke="var(--ui-blue)"
+                  strokeWidth={2.2} dot={false} isAnimationActive={false}/>
+                {timeframe!=='TODAY'&&visibleCapitalEvents.map(event=>(
+                  <ReferenceDot key={event.date} x={event.timestamp} y={event.equity}
+                    r={4.5} fill="var(--ui-amber)" stroke="var(--ui-surface-2)" strokeWidth={2}/>
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          {visibleCapitalEvents.length>0 && (
+            <div className="ui-chart-cash-event-legend" aria-label="Recorded cash transfers in this range">
+              {visibleCapitalEvents.slice(-4).map(event=>(
+                <div className="ui-chart-cash-event" key={event.date}>
+                  <span className="ui-dot" style={{['--dot' as string]:'var(--ui-amber)'}}/>
+                  <strong>{labelTime(chartTime(event.date),false)}</strong>
+                  {event.deposited>0&&<span>Deposit +{formatEgp(event.deposited)} EGP</span>}
+                  {event.withdrawn>0&&<span>Withdrawal −{formatEgp(event.withdrawn)} EGP</span>}
+                </div>
+              ))}
+              {visibleCapitalEvents.length>4 && (
+                <p className="ui-sm">+{visibleCapitalEvents.length-4} earlier transfer date(s). See “vs Deposits” for the full comparison.</p>
+              )}
+              {timeframe==='TODAY' && (
+                <p className="ui-sm">Cash events are grouped by date, not plotted at an assumed intraday time.</p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {result?.dataQuality && result.dataQuality.incompleteDays > 0 && !isLoading && (
         <p className="ui-note" role="status">Incomplete valuation on {result.dataQuality.incompleteDays} day(s). Missing historical prices: {result.dataQuality.missingTickers.join(', ') || 'unknown'}. Returns may omit those periods.</p>
       )}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { egxSessionPresentation } from '../services/egxSessionPresentation';
 import {
   Area,
@@ -90,6 +90,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   currentCashBalance,
   historicalLoading = false,
 }) => {
+  const gradientId = useId().replace(/:/g, '');
   const [timeframe, setTimeframe] = useState<AnalyticsTimeframe>('1M');
   const marketSession = egxSessionPresentation();
   const [mode, setMode] = useState<ChartMode>('ret');
@@ -295,6 +296,18 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const includesAreas = model.series.some(item=>item.area);
   const includesLines = model.series.some(item=>!item.area);
   const ChartRoot = includesAreas && includesLines ? ComposedChart : includesAreas ? AreaChart : LineChart;
+  // Return crosses zero: its positive part must actually be green and its
+  // negative part red, even when the last portfolio P&L is a loss.
+  const returnExtents = model.rows.reduce((bounds, row) => {
+    if (finite(row.ret)) {
+      bounds.min = Math.min(bounds.min, row.ret);
+      bounds.max = Math.max(bounds.max, row.ret);
+    }
+    return bounds;
+  }, {min:0,max:0});
+  const returnZeroOffset = returnExtents.max===0 ? 0 : returnExtents.min===0
+    ? 100 : (100*returnExtents.max)/(returnExtents.max-returnExtents.min);
+  const returnGradient = `ui-return-sign-${gradientId}`;
 
   return (
     <div>
@@ -359,6 +372,14 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <ChartRoot data={model.rows} syncId={mode==='ret' && comparePortfolio ? 'medium-return-nav' : undefined}
                 margin={{ top: mode==='dep' ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
+                {mode==='ret' && (
+                  <defs>
+                    <linearGradient id={returnGradient} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset={`${returnZeroOffset}%`} stopColor="var(--ui-pos)"/>
+                      <stop offset={`${returnZeroOffset}%`} stopColor="var(--ui-neg)"/>
+                    </linearGradient>
+                  </defs>
+                )}
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis
                   dataKey="timestamp"
@@ -398,9 +419,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                       dataKey={item.key}
                       yAxisId="primary"
                       name={item.label}
-                      stroke={item.color}
+                      stroke={item.key==='ret' ? `url(#${returnGradient})` : item.color}
                       strokeWidth={2.2}
-                      fill={item.color}
+                      fill={item.key==='ret' ? `url(#${returnGradient})` : item.color}
                       fillOpacity={0.14}
                       dot={false}
                       isAnimationActive={false}

@@ -7,6 +7,7 @@ import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { SimpleTransactionsView } from './SimpleTransactionsView';
 import { NavReconciliation, navBreakdown } from './NavReconciliation';
 import { activityRecordView } from './activityRecordModel';
+import { formatCairoExecutionTime } from './format';
 
 const cash=(id:string,amount:number,kind:'DEPOSIT'|'WITHDRAWAL'|'RECONCILIATION_ADJUSTMENT'):TradeTransaction=>({
   id,type:kind==='WITHDRAWAL'?'SELL':'BUY',ticker:'CASH',
@@ -107,5 +108,21 @@ describe('NAV investigation is read-only',()=>{
     const html=renderToStaticMarkup(<NavReconciliation metrics={metrics} positions={[position]}/>);
     expect(html).toContain('Reconcile NAV with Telda');
     expect(html).not.toContain('premium-card');
+  });
+});
+
+describe('Cairo transaction clock presentation',()=>{
+  it('uses Egypt winter and summer offsets without assuming a fixed timezone',()=>{
+    expect(formatCairoExecutionTime('2026-01-07T12:00:00.000Z')).toBe('14:00');
+    expect(formatCairoExecutionTime('2026-10-07T12:00:00.000Z')).toBe('15:00');
+  });
+  it('never fabricates a time from date-only ledger entries',()=>{
+    expect(formatCairoExecutionTime(undefined)).toBe('Not recorded');
+    expect(formatCairoExecutionTime('2026-10-07')).toBe('Not recorded');
+  });
+  it('separates execution date from readable Cairo clock in Activity',()=>{
+    const details=activityRecordView({...buy,executedAt:'2026-10-07T12:00:00.000Z'}).details;
+    expect(details).toContainEqual({label:'Execution date',value:'7 Oct 2026'});
+    expect(details).toContainEqual({label:'Time (Cairo)',value:'15:00'});
   });
 });

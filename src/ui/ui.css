@@ -890,7 +890,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
      The original defect was the exposed form content BELOW the footer,
      not the sticky interaction. Extend the opaque footer across the panel
      padding, including its final scroll position. */
-  position:sticky;bottom:0;z-index:12;
+  position:sticky;bottom:calc(-1 * var(--ui-trade-modal-inset));z-index:12;
   flex-shrink:0;
   width:calc(100% + 2 * var(--ui-trade-modal-inset));
   max-width:none;min-width:0;

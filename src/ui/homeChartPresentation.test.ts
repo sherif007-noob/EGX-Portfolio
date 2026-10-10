@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {TradeTransaction} from '../types';
-import {chartCapitalEvents,chartReturnTooltipMetrics} from './homeChartPresentation';
+import {chartCapitalEvents,chartReturnTooltipMetrics,pnlSignGradientOffset} from './homeChartPresentation';
 
 const cash = (id:string,date:string,amount:number,type:'DEPOSIT'|'WITHDRAWAL'|'FEE'|'DIVIDEND'|'RECONCILIATION_ADJUSTMENT'):TradeTransaction => ({
   id,date,type:type==='WITHDRAWAL'?'SELL':'BUY',ticker:'CASH',
@@ -56,5 +56,17 @@ describe('Home NAV breakdown and financial event presentation',()=>{
     );
     expect(next.intervalReturn).toBe(1000);
     expect(next.intervalPercent).toBeCloseTo(1000/(131000-1000)*100,8);
+  });
+});
+
+describe('Return chart sign gradients',()=>{
+  it('renders green above zero and red below zero at the correct relative height',()=>{
+    expect(pnlSignGradientOffset([3000,-1000,-5000])).toBeCloseTo(37.5,10);
+    expect(pnlSignGradientOffset([1000,3000])).toBe(100);
+    expect(pnlSignGradientOffset([-10,-300])).toBe(0);
+  });
+  it('ignores unavailable points and stays finite for flat returns',()=>{
+    expect(pnlSignGradientOffset([NaN,Infinity,200,-200])).toBe(50);
+    expect(pnlSignGradientOffset([0,0])).toBe(0);
   });
 });

@@ -20,8 +20,12 @@ const widths = [
   { name: 'desktop', width: 1280, height: 900 },
 ];
 const modes = ['buy', 'sell', 'edit'];
+const geometryCases = [
+  ...widths.flatMap(screen => modes.map(mode => ({screen, mode, scrolled:false}))),
+  ...widths.map(screen => ({screen, mode:'edit', scrolled:true})),
+];
 
-async function inspect(page, mode, screen) {
+async function inspect(page, mode, screen, scrolled=false) {
   const dialog = page.locator('.premium-modal.ui-trade-modal');
   await dialog.waitFor({state:'visible'});
   await page.waitForTimeout(120);
@@ -40,6 +44,10 @@ async function inspect(page, mode, screen) {
     });
     const shell = document.querySelector('.ui-trade-modal-backdrop');
     const shellRect = shell?.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const visual = {top:viewport?.offsetTop??0,left:viewport?.offsetLeft??0,
+      width:viewport?.width??innerWidth,height:viewport?.height??innerHeight};
+    const shellStyle = shell?getComputedStyle(shell):null;
     const fields = [...el.querySelectorAll('input,textarea,select,.premium-number-stepper,.premium-form-section,.premium-subpanel')];
     const over = fields.map(node => {
       const r = node.getBoundingClientRect();
@@ -49,7 +57,12 @@ async function inspect(page, mode, screen) {
     return {
       viewWidth:innerWidth,viewHeight:innerHeight,
       rect:{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,height:rect.height},
-      shell:shellRect?{top:shellRect.top,bottom:shellRect.bottom}:null,
+      shell:shellRect?{top:shellRect.top,bottom:shellRect.bottom,left:shellRect.left,
+        right:shellRect.right,height:shellRect.height}:null,
+      portalParentIsBody:shell?.parentElement===document.body,
+      shellPosition:shellStyle?.position,
+      pageScrollY:window.scrollY,
+      visual,
       overflow:el.scrollWidth-el.clientWidth,
       documentOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
       fieldOverflows:over.slice(0,6),
@@ -61,6 +74,14 @@ async function inspect(page, mode, screen) {
     };
   });
   const violations = [];
+  if (result.shellPosition !== 'fixed' || !result.portalParentIsBody)
+    violations.push('modal backdrop is not viewport-fixed and portaled to body');
+  if (result.shell) {
+    const topError=Math.abs(result.shell.top-result.visual.top);
+    const heightError=Math.abs(result.shell.height-result.visual.height);
+    if(topError>4 || heightError>4)
+      violations.push(`backdrop displaced from visible viewport: top=${result.shell.top.toFixed(1)} expected=${result.visual.top.toFixed(1)} heightError=${heightError.toFixed(1)}`);
+  }
   if (result.rect.left < -1 || result.rect.right > result.viewWidth + 1)
     violations.push('panel extends beyond viewport');
   if (result.overflow > 1 || result.documentOverflow > 1)
@@ -109,15 +130,14 @@ async function inspect(page, mode, screen) {
     violations.push('footer must paint an opaque backdrop for scrolled content');
   if (footerAtEnd.previousBottom > footerAtEnd.footerTop + 2)
     violations.push('last field cannot scroll above sticky action footer');
-  const suffix=mode+'-'+screen.name;
+  const suffix=mode+'-'+screen.name+(scrolled?'-after-page-scroll':'');
   await page.screenshot({path:path.join(DIR,suffix+'.png'),animations:'disabled'});
-  report.checks.push({mode,viewport:screen.name,...result,openingGap,mid,footerAtEnd,violations});
+  report.checks.push({mode,viewport:screen.name,scrolled,...result,openingGap,mid,footerAtEnd,violations});
   if (violations.length) report.errors.push(`${suffix}: ${violations.join('; ')}`);
   console.log(`[modal-geometry] ${suffix}: panel=${result.overflow}px page=${result.documentOverflow}px, ${violations.length?'FAIL: '+violations.join('; '):'PASS'}`);
 }
 
-for (const screen of widths) {
-  for (const mode of modes) {
+for (const {screen,mode,scrolled} of geometryCases) {
     let context;
     try {
       context=await browser.newContext({
@@ -136,18 +156,21 @@ for (const screen of widths) {
       if(mode==='buy') {
         await page.getByRole('button',{name:'Add trade',exact:true}).first().click();
       } else {
-        await page.locator('.ui-holding-main').first().click();
+        const holding=page.locator('.ui-holding-main');
+        if(scrolled) {
+          await holding.last().scrollIntoViewIfNeeded();
+          await holding.last().click();
+        } else await holding.first().click();
         const button=page.locator('.ui-holding-buttons button').filter({hasText:mode==='sell'?'Sell':'Edit'}).first();
         await button.click();
       }
-      await inspect(page,mode,screen);
+      await inspect(page,mode,screen,scrolled);
     } catch(e) {
       report.errors.push(`${mode}-${screen.name}: ${e.stack||String(e)}`);
       console.error(`[modal-error] ${mode}-${screen.name}: ${e.message}`);
     } finally {
       await context?.close();
     }
-  }
 }
 await browser.close();
 await fs.writeFile(path.join(DIR,'report.json'),JSON.stringify(report,null,2)+'\n');

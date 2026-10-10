@@ -22,6 +22,16 @@ export const toneClass = (value: number | null | undefined): string => {
   return value > 0 ? 'ui-pos' : 'ui-neg';
 };
 
+/** Display known UTC instants in Egypt local time, never infer time from date-only records. */
+export const formatCairoExecutionTime = (executedAt?: string): string => {
+  if (!executedAt || !executedAt.includes('T')) return 'Not recorded';
+  const date = new Date(executedAt);
+  if (!Number.isFinite(date.getTime())) return 'Not recorded';
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(date);
+};
+
 /** Compact axis labels: 116.9k, 1.2m, 950. */
 export const formatCompact = (value: number): string => {
   const abs = Math.abs(value);

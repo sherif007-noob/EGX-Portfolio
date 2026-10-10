@@ -24,6 +24,10 @@ describe('Approved medium trade and position dialog visual migration', () => {
       expect(ui).toContain('ui-trade-modal-identity');
       expect(ui).toContain('ui-trade-modal-form');
       expect(ui).toContain('ui-trade-modal-actions');
+      // Sticky footer is a sibling of the scrolling form, not trapped by the
+      // form's own top edge on short landscape viewports.
+      expect(ui).toContain('form="ui-');
+      expect(ui).toContain('<form id="ui-');
       expect(ui).toContain('premium-modal-backdrop-panel-scroll');
       expect(ui).toContain(save);
       for (const field of fields) expect(ui).toContain(field);
@@ -44,7 +48,7 @@ describe('Approved medium trade and position dialog visual migration', () => {
     expect(styles).toContain('.ui-trade-modal .ui-trade-modal-actions');
     expect(styles).toContain('@media (max-width:600px)');
     expect(styles).toContain('env(safe-area-inset-bottom,0px)');
-    expect(styles).toContain('position:sticky;bottom:0;z-index:12');
+    expect(styles).toContain('position:sticky;bottom:calc(-1 * var(--ui-trade-modal-inset));z-index:12');
     expect(styles).toContain('margin:6px calc(-1 * var(--ui-trade-modal-inset))');
     expect(styles).not.toContain('position:relative;bottom:auto;z-index:auto');
     const browserGate=source('../../scripts/checkMediumTradeModals.mjs');

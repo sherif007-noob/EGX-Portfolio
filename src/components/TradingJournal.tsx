@@ -1228,13 +1228,13 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
       {displayEditingTx && (
         <PremiumModalMotion
           isOpen={!!editingTx}
-          backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          panelClassName="premium-modal premium-modal-viewport w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
+          backdropClassName="premium-modal-backdrop premium-modal-backdrop-panel-scroll ui-trade-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          panelClassName="premium-modal premium-modal-viewport ui-trade-modal ui-trade-modal--edit w-full max-w-lg my-0 sm:my-6 rounded-2xl p-4 sm:p-6 text-slate-100 space-y-4"
           onBackdropClick={requestCloseEdit}
           panelAriaLabel="Edit transaction"
         >
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="ui-trade-modal-header flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit3 className="w-5 h-5" />
@@ -1251,10 +1251,23 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
                 aria-label="Close transaction editor"
                 onClick={requestCloseEdit}
                 disabled={isSavingEdit}
-                className="premium-icon-action p-1.5 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
+                className="premium-icon-action ui-trade-modal-close p-1.5 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            <div className="ui-trade-modal-identity">
+              <StockLogo ticker={displayEditingTx.ticker} companyName={displayEditingTx.companyName}
+                sector={displayEditingTx.sector} size="md"/>
+              <div className="ui-trade-modal-symbol">
+                <strong>{displayEditingTx.ticker}</strong>
+                <span>{displayEditingTx.companyName}</span>
+              </div>
+              <div className="ui-trade-modal-quote">
+                <span>Recorded execution</span>
+                <strong>{displayEditingTx.type}</strong>
+              </div>
             </div>
 
             {editFeedback && (
@@ -1264,7 +1277,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveEdit} className="ui-trade-modal-form space-y-4 text-xs">
               {/* Type Switcher */}
               <div className="space-y-1.5">
                 <label className="text-slate-300 font-semibold block">Transaction Type</label>
@@ -1520,7 +1533,7 @@ export const TradingJournal: React.FC<TradingJournalProps> = ({
               </div>
 
               {/* Modal Actions */}
-              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800 sm:flex sm:items-center sm:justify-end">
+              <div className="ui-trade-modal-actions grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800 sm:flex sm:items-center sm:justify-end">
                 <button
                   type="button"
                   onClick={requestCloseEdit}

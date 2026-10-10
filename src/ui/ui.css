@@ -741,6 +741,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   --ui-action-accent:var(--ui-pos);
   --ui-action-rgb:52,211,153;
   --ui-field-bg:rgba(15,33,50,.9);
+  --ui-trade-modal-inset:clamp(14px,3.2vw,23px);
   background:
     radial-gradient(ellipse at 93% -10%,rgba(var(--ui-action-rgb),.10),transparent 42%),
     linear-gradient(145deg,#0b1c2c 0%,#091522 58%,#091321 100%);
@@ -749,7 +750,7 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
     0 0 28px rgba(var(--ui-action-rgb),.10),inset 0 1px 0 rgba(173,217,235,.08);
   color:var(--ui-text);
   border-radius:20px;
-  padding:clamp(14px,3.2vw,23px);
+  padding:var(--ui-trade-modal-inset);
   width:min(100%,34rem);
   max-width:100%;
   min-width:0;
@@ -885,14 +886,21 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
   border-radius:11px;
 }
 .ui-trade-modal .ui-trade-modal-actions {
-  /* Never float over text inside the same scroll area. The buttons follow all
-     fields and are reached by the panel's natural vertical scrolling. */
-  position:relative;bottom:auto;z-index:auto;
-  margin-top:6px;padding:12px 2px max(12px,env(safe-area-inset-bottom,0px));
-  background:none;
-  border-top:1px solid rgba(130,163,189,.17);
+  /* Action controls MUST remain visible while Buy/Sell/Edit scrolls.
+     The original defect was the exposed form content BELOW the footer,
+     not the sticky interaction. Extend the opaque footer across the panel
+     padding, including its final scroll position. */
+  position:sticky;bottom:0;z-index:12;
+  flex-shrink:0;
+  width:calc(100% + 2 * var(--ui-trade-modal-inset));
+  max-width:none;min-width:0;
+  box-sizing:border-box;
+  margin:6px calc(-1 * var(--ui-trade-modal-inset)) calc(-1 * var(--ui-trade-modal-inset));
+  padding:12px var(--ui-trade-modal-inset) max(14px,env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg,#0b1928,#091522 35%,#091522 100%);
+  border-top:1px solid rgba(130,163,189,.25);
+  box-shadow:0 -10px 20px rgba(5,14,24,.33);
   backdrop-filter:none;
-  width:100%;min-width:0;max-width:100%;
 }
 /* Footer actions outrank the compact neutral utility-button minimum size. */
 .ui-trade-modal .ui-trade-modal-actions .premium-action {
@@ -930,8 +938,9 @@ button.ui-row { width: 100%; background: none; border-left: 0; border-right: 0; 
 
 @media (max-width:600px) {
   .premium-modal.ui-trade-modal {
+    --ui-trade-modal-inset:14px;
     width:100%;max-width:100%;
-    border-radius:16px;padding:14px;
+    border-radius:16px;padding:var(--ui-trade-modal-inset);
   }
   .ui-trade-modal .ui-trade-modal-identity {gap:8px;padding:9px;}
   .ui-trade-modal .ui-trade-modal-quote strong {font-size:.71rem;}

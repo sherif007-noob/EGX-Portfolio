@@ -26,6 +26,7 @@ import {
 } from '../services/portfolioBenchmarks';
 import { Pill, PillGroup } from './Pill';
 import { useAnalyticsSeries } from './useAnalyticsSeries';
+import { useDismissibleChartTooltip } from './useDismissibleChartTooltip';
 import { cashFlowNeutralReturn } from './cashFlowNeutralReturn';
 import { chartCapitalEvents, chartReturnTooltipMetrics, pnlSignGradientOffset } from './homeChartPresentation';
 import { formatCompact, formatEgp, formatPercent, formatSigned, pnlAccentColor, toneClass } from './format';
@@ -98,6 +99,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
   const [indexChoice, setIndexChoice] = useState<IndexChoice>('all');
   const [granularity, setGranularity] = useState<Granularity>(1);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const { mainChartRef, comparisonChartRef, dismissed, onChartInteraction } = useDismissibleChartTooltip();
 
   const { result, loading, error, intradayPrices } = useAnalyticsSeries({
     transactions,
@@ -363,7 +365,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
         ) : !hasData ? (
           <p className="ui-sm" style={{ padding: 24, textAlign: 'center' }}>Not enough data for this range yet.</p>
         ) : (
-          <div role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`} className="ui-chart-canvas">
+          <div ref={mainChartRef} role="img" aria-label={`${MODES.find((item) => item.value === mode)?.label} chart for ${timeframe}`}
+            className="ui-chart-canvas" onPointerEnter={onChartInteraction} onPointerDownCapture={onChartInteraction}>
             <ResponsiveContainer width="100%" height="100%">
               <ChartRoot data={model.rows} syncId={mode==='ret' && comparePortfolio ? 'medium-return-nav' : undefined}
                 margin={{ top: mode==='dep' ? 30 : 8, right: 8, bottom: 0, left: 0 }}>
@@ -399,6 +402,7 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                 />
                 {(model.unit === 'pct' || mode === 'ret') && <ReferenceLine yAxisId="primary" y={0} stroke="var(--ui-border-strong)" strokeDasharray="3 3" />}
                 <Tooltip
+                  active={dismissed ? false : undefined}
                   cursor={{ stroke: 'var(--ui-border-strong)' }}
                   content={(mode==='ret'||mode==='dep')?renderDetailedTooltip:undefined}
                   contentStyle={{ background: 'var(--ui-surface-2)', border: '1px solid var(--ui-border-strong)', borderRadius: 8, fontSize: 12 }}
@@ -472,8 +476,9 @@ export const HomeChart: React.FC<HomeChartProps> = ({
             NAV includes money added or withdrawn. It is not investment profit.
             The chart below has its own zero-based EGP scale and shares the dates above.
           </p>
-          <div role="img" aria-label={`Portfolio NAV chart for ${timeframe}, including cash transfers`}
-            className="ui-chart-canvas ui-chart-canvas-nav">
+          <div ref={comparisonChartRef} role="img" aria-label={`Portfolio NAV chart for ${timeframe}, including cash transfers`}
+            className="ui-chart-canvas ui-chart-canvas-nav"
+            onPointerEnter={onChartInteraction} onPointerDownCapture={onChartInteraction}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={model.rows} syncId="medium-return-nav"
                 margin={{top:14,right:8,bottom:0,left:0}}>
@@ -485,7 +490,8 @@ export const HomeChart: React.FC<HomeChartProps> = ({
                   axisLine={false} interval="preserveStartEnd" minTickGap={40}/>
                 <YAxis width={46} domain={[0,'auto']} tickFormatter={(value:number)=>formatCompact(value)}
                   tick={{fill:'var(--ui-blue)',fontSize:11}} tickLine={false} axisLine={false}/>
-                <Tooltip cursor={{stroke:'var(--ui-border-strong)'}}
+                <Tooltip active={dismissed ? false : undefined}
+                  cursor={{stroke:'var(--ui-border-strong)'}}
                   content={renderDetailedTooltip}
                   contentStyle={{background:'var(--ui-surface-2)',border:'1px solid var(--ui-border-strong)',borderRadius:8,fontSize:12}}/>
                 <Line type="linear" dataKey="nav" name="Portfolio NAV (EGP)" stroke="var(--ui-blue)"

@@ -42,6 +42,20 @@ function createSupabaseClient() {
   });
 }
 
+async function acquireWriterLease(sb: SupabaseClient, owner: string) {
+  const { data, error } = await sb.rpc('try_acquire_intraday_writer_lease', {
+    p_owner: owner,
+    p_ttl_seconds: 600,
+  });
+  if (error) throw new Error(`Intraday writer lease failed: ${error.message}`);
+  if (!data) throw new Error('Another intraday writer currently owns the production lease.');
+}
+
+async function releaseWriterLease(sb: SupabaseClient, owner: string) {
+  const { error } = await sb.rpc('release_intraday_writer_lease', { p_owner: owner });
+  if (error) console.warn(`Intraday writer lease release failed: ${error.message}`);
+}
+
 async function resolvePortfolioId(sb: SupabaseClient): Promise<string> {
   const explicitPortfolioId = process.env.EGX_PORTFOLIO_ID?.trim();
   if (explicitPortfolioId) {
@@ -694,7 +708,16 @@ async function main() {
     `1m intraday sync starting: ${tickers.length} session-relevant tickers for ${sessionDate}; positions=${universe.positionTickers.length}; sessionTrades=${universe.sessionTransactionTickers.length}; explicitUniverse=${universe.explicit}; raw retention=${INTRADAY_POLICY.rawRetentionDays}d; derived 5m retention=${INTRADAY_POLICY.derivedRetentionDays}d; initialBars=${INTRADAY_POLICY.initialBackfillBars}; batchBars=${INTRADAY_POLICY.backfillBatchBars}; maxBatches=${INTRADAY_POLICY.maxBackfillBatches}; forceFullRepair=${forceFullRepair}; scheduledRun=${scheduledRun}.`,
   );
 
-  const session = await createSession();
+  const leaseOwner = `node-${crypto.randomUUID()}`;
+  await acquireWriterLease(sb, leaseOwner);
+  const leaseHeartbeat = setInterval(() => {
+    void acquireWriterLease(sb, leaseOwner).catch((error) => {
+      console.error('Intraday writer lease heartbeat failed:', error);
+      process.exitCode = 1;
+    });
+  }, 4 * 60_000);
+
+  let session: Awaited<ReturnType<typeof createSession>> | null = null;
   let failures = 0;
   let totalFetched = 0;
   let totalRawInserted = 0;
@@ -708,6 +731,7 @@ async function main() {
   let legacyBootstrapRows = 0;
 
   try {
+    session = await createSession();
     const chart = await createChart(session);
 
     for (const ticker of tickers) {
@@ -929,7 +953,9 @@ async function main() {
       `1m intraday sync complete: sessionRelevant=${tickers.length}, resolved=${resolvedTickers}, additionalBatches=${totalAdditionalBatches}, fetched=${totalFetched}, inserted1m=${totalRawInserted}, new1m=${totalNewRawBars}, repaired1mGaps=${totalRepairedRawGaps}, upserted5m=${totalDerivedUpserted}, sourceExhaustedTickers=${sourceExhaustedTickers}, bootstrapLimitedTickers=${bootstrapLimitedTickers}, legacyBootstrapRows=${legacyBootstrapRows}, pruned1m=${prunedRaw}, pruned5m=${prunedDerived}, failures=${failures}.`,
     );
   } finally {
-    await session.close();
+    clearInterval(leaseHeartbeat);
+    if (session) await session.close();
+    await releaseWriterLease(sb, leaseOwner);
   }
 }
 

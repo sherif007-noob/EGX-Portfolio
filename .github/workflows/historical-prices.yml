@@ -16,10 +16,10 @@ on:
         required: false
         type: string
   schedule:
-    # Gap-aware sync is cheap when coverage is healthy: it exits before opening
-    # a TradingView session. Run after/around the EGX close and through the
-    # evening so newly-added/backdated trades do not wait until the next day.
-    - cron: '17 12-22 * * *'
+    # EGX trades Sun–Thu. Half-hourly after/around market close and through
+    # the evening (UTC 12:17–21:47); handles transactions logged post-session.
+    # GitHub schedules may be delayed. Browser will re-read missing history.
+    - cron: '17,47 12-21 * * 0-4'
 
 permissions:
   contents: read

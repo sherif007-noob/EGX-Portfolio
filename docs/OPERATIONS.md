@@ -465,3 +465,56 @@ See:
 - [INTRADAY_MARKET_DATA.md](INTRADAY_MARKET_DATA.md)
 - [MARKET_DATA_AUDIT_2026_09_28.md](MARKET_DATA_AUDIT_2026_09_28.md)
 - [MASTER_STABILIZATION_ROADMAP.md](MASTER_STABILIZATION_ROADMAP.md)
+
+## New ticker backfilled after session — AIH incident (2026-10-11)
+
+The user entered two real `AIH` buys *after* the EGX session, correctly dated
+and timed during the Oct 11 session. An incomplete 1M valuation reported
+missing historical prices for `AIH`. Read-only production Supabase checks
+confirmed the transactions exist, with execution times 09:00/09:20 UTC,
+but there were initially **zero** `AIH` and `AIHC` daily bars.
+
+**Actual root causes:**
+
+1. `AIH` is a renamed/legacy market symbol for `AIHC` (same ISIN
+   `EGS21351C019`). Node ingestion canonically stores bars under `AIHC`,
+   while browser valuation was requesting only `AIH`. Historical pricing
+   now queries raw + canonical symbols and projects the union of observations
+   back under the original ledger symbol. Trading transactions are **not**
+   rewritten, and no prices are fabricated.
+2. The Cloudflare Worker intentionally returns HTTP 503 for
+   `/api/supabase/price-history/ensure`; Node WebSocket ingestion is not
+   supported there. The browser stops repeatedly retrying that unsupported
+   endpoint after discovering it and polls incomplete-history data every
+   five minutes to pick up the next scheduled Node sync.
+3. The historical sync was erroneously treating a `HALN`
+   `IPO_SUBSCRIPTION` as an obligation to fetch listed-equity history.
+   A subscription before a listed holding must not demand price bars.
+   `requiresListedMarketHistory` is shared by browser requirements and the
+   Node historical sync, while actual allocated/held shares still enter the
+   coverage calculation via the positions table.
+4. When the trade is saved after session hours, ingestion cannot happen
+   inside the Cloudflare Worker. The `medium-ui` candidate changes the
+   gap-aware Node scheduler to `17,47 12-21 * * 0-4` (UTC), operating
+   twice an hour from near close through late evening Sun–Thu. GitHub may
+   delay scheduled runs. **GitHub Actions runs scheduled workflows from the
+   default branch (`main`), not `medium-ui`; these candidate schedule
+   changes are not active in production until explicitly promoted to main.**
+   The current main production cron remains `17 12-22 * * *`.
+
+**Production recovery evidence:** The failing default-branch historical
+workflow run `38100415424` was manually retried, and attempt 2 completed
+successfully on Oct 11. An independent database read verified
+`price_history(ticker=AIHC,trading_date=2026-10-11,close=0.861,
+source=tradingview)` inserted at 17:15 UTC. The browser's renamed-symbol
+lookup only becomes effective after deploying `medium-ui` code. Do not
+insert arbitrary close prices into the ledger or modify the actual trade
+execution timestamps.
+
+**Acceptance:** The new tests cover alias mapping, merging old and new
+symbol histories, preserving recorded BUY execution date, excluding
+IPO-only requirements, no fabricated price when history is absent,
+and resolving the incomplete-valuation flag after a canonical daily bar
+arrives. The entire financial calculation engine remains unchanged.
+Confirm the next deployed app fetch shows Oct 11 history for AIH and
+that the historical sync workflow is promoted and observed on `main`.

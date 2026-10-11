@@ -8,6 +8,7 @@ import {
 import { buildUnifiedAnalyticsResult } from '../../domain/performance';
 import { VISUAL_REGRESSION_MODE } from '../../utils/visualRegressionMode';
 import { VISUAL_REGRESSION_HISTORICAL_PRICES } from '../../data/visualRegressionFixture';
+import { requiresListedMarketHistory } from '../../services/historicalCoverage';
 
 interface HistoricalDrawdown {
   maxDrawdownEgp: number;
@@ -34,6 +35,8 @@ export function useHistoricalPortfolioAnalytics({
   const [historicalPriceSeries, setHistoricalPriceSeries] = useState<HistoricalPriceSeries>({});
   const [historicalAnalyticsLoading, setHistoricalAnalyticsLoading] = useState(false);
   const historicalBackfillAttemptsRef = useRef(new Set<string>());
+  const unavailableOnDemandRepairRef = useRef(false);
+  const [historyPollRevision, setHistoryPollRevision] = useState(0);
 
   useEffect(() => {
     if (VISUAL_REGRESSION_MODE) {
@@ -60,6 +63,7 @@ export function useHistoricalPortfolioAnalytics({
     }
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     setHistoricalDrawdown(null);
     setHistoricalPriceSeries({});
     setHistoricalAnalyticsLoading(true);
@@ -70,7 +74,9 @@ export function useHistoricalPortfolioAnalytics({
         return;
       }
 
-      const hasMarketTransactions = transactions.some((tx) => tx.ticker.trim().toUpperCase() !== 'CASH');
+      const hasMarketTransactions = transactions.some((tx) =>
+        normalizeHistoryTicker(tx.ticker) !== 'CASH' && requiresListedMarketHistory(tx.type),
+      );
       if (!hasMarketTransactions) {
         if (!cancelled) setHistoricalAnalyticsLoading(false);
         return;
@@ -82,7 +88,7 @@ export function useHistoricalPortfolioAnalytics({
           openingCapital,
         });
 
-        const repairTargets = result.dataQuality.missingTickers
+        const repairTargets = (unavailableOnDemandRepairRef.current ? [] : result.dataQuality.missingTickers)
           .map(normalizeHistoryTicker)
           .filter((ticker) => ticker && !historicalBackfillAttemptsRef.current.has(ticker))
           .map((ticker) => ({
@@ -105,8 +111,17 @@ export function useHistoricalPortfolioAnalytics({
             result = buildUnifiedAnalyticsResult(transactions, historicalPrices, 'ALL', {
               openingCapital,
             });
+            for (const missing of result.dataQuality.missingTickers) {
+              historicalBackfillAttemptsRef.current.delete(normalizeHistoryTicker(missing));
+            }
           } catch (backfillError) {
             for (const target of repairTargets) historicalBackfillAttemptsRef.current.delete(target.ticker);
+            // Cloudflare Workers cannot run TradingView's Node/WebSocket
+            // backfill. A 503 here means wait for scheduled Node ingestion,
+            // rather than retrying an impossible endpoint on every price sync.
+            if (String(backfillError).includes('Cloudflare Worker')) {
+              unavailableOnDemandRepairRef.current = true;
+            }
             console.warn(
               'Automatic historical-price backfill failed; keeping the existing trustworthy analytics range.',
               backfillError,
@@ -115,6 +130,12 @@ export function useHistoricalPortfolioAnalytics({
         }
 
         if (!cancelled) {
+          // A new trade recorded after the EGX close can precede the next
+          // scheduled daily bar ingestion. Re-read Supabase periodically while
+          // any valuation date is incomplete; do not fabricate a last price.
+          if (result.dataQuality.missingTickers.length > 0) {
+            retryTimer = setTimeout(() => setHistoryPollRevision(revision => revision + 1), 5 * 60_000);
+          }
           setHistoricalPriceSeries(historicalPrices);
           if (
             result.dataQuality.hasUsableRange &&
@@ -141,8 +162,9 @@ export function useHistoricalPortfolioAnalytics({
     void loadHistoricalPerformance();
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [transactions, openingCapital, marketRefresh, isInitialized]);
+  }, [transactions, openingCapital, marketRefresh, isInitialized, historyPollRevision]);
 
   return {
     historicalDrawdown,

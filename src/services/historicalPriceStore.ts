@@ -4,6 +4,7 @@ import { API_ROUTES } from '../api/contracts';
 import { PORTFOLIO_BENCHMARKS } from './portfolioBenchmarks';
 import { canonicalizeEGXSymbol } from '../data/egxTickers';
 import { requiresListedMarketHistory } from './historicalCoverage';
+import { getCairoTodayISO } from '../utils/dateUtils';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -87,7 +88,7 @@ export async function getHistoricalPrices(tickers: string[], startDate?: string,
   return projectHistoricalPriceRows(requested, rows);
 }
 
-export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string; type?: string }>, endDate = new Date().toISOString().slice(0, 10)) {
+export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string; type?: string }>, endDate = getCairoTodayISO()) {
   const traded = transactions.filter(tx =>
     normalizeTicker(tx.ticker) !== 'CASH' &&
     requiresListedMarketHistory(tx.type),

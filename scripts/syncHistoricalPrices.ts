@@ -109,7 +109,7 @@ async function loadCoverageRequirements(
     await Promise.all([
       sb
         .from('transactions')
-        .select('ticker,transaction_date')
+        .select('ticker,transaction_date,transaction_type')
         .eq('portfolio_id', portfolioId),
       sb
         .from('positions')
@@ -122,6 +122,10 @@ async function loadCoverageRequirements(
 
   const byTicker = new Map<string, string>();
   for (const row of transactions ?? []) {
+    // An unallocated IPO subscription has no market price history yet.
+    // Once shares are actually allocated/traded, the holding will establish
+    // its own coverage requirement through the positions table.
+    if (String(row.transaction_type || '').toUpperCase() === 'IPO_SUBSCRIPTION') continue;
     setEarliestRequirement(byTicker, row.ticker, row.transaction_date);
   }
   for (const row of positions ?? []) {

@@ -90,7 +90,7 @@ export async function getHistoricalPrices(tickers: string[], startDate?: string,
 export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string; type?: string }>, endDate = new Date().toISOString().slice(0, 10)) {
   const traded = transactions.filter(tx =>
     normalizeTicker(tx.ticker) !== 'CASH' &&
-    String(tx.type || '').toUpperCase() !== 'IPO_SUBSCRIPTION',
+    requiresListedMarketHistory(tx.type),
   );
   const tickers = [
     ...traded.map(tx => tx.ticker),

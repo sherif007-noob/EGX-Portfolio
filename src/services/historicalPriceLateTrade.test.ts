@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { historyStorageTickers, projectHistoricalPriceRows } from './historicalPriceStore';
 import { requiresListedMarketHistory } from './historicalCoverage';
+import { buildUnifiedAnalyticsResult } from './unifiedAnalyticsEngine';
+import type { TradeTransaction } from '../types';
 
 describe('late-logged EGX trade history and renamed symbols', () => {
   const oct11 = {
@@ -37,6 +39,33 @@ describe('late-logged EGX trade history and renamed symbols', () => {
 
   it('does not invent close prices when neither ticker has daily history', () => {
     expect(projectHistoricalPriceRows(['AIH'], []).AIH).toEqual([]);
+  });
+
+  it('clears the AIH incomplete-valuation warning after the scheduled AIHC bar arrives', () => {
+    const orders: TradeTransaction[] = [
+      {id:'base',type:'BUY',ticker:'TEST',companyName:'Test',sector:'Other',shares:10,
+        price:10,date:'2026-10-08',fees:0,totalAmount:100},
+      {id:'late-log',type:'BUY',ticker:'AIH',companyName:'Arabia Investments',
+        sector:'Other',shares:100,price:0.86,date:'2026-10-11',
+        executedAt:'2026-10-11T09:20:00.000Z',fees:0,totalAmount:86},
+    ];
+    const basePrices = {
+      TEST:[
+        {date:'2026-10-08',close:10},
+        {date:'2026-10-11',close:10.2},
+      ],
+    };
+    const before = buildUnifiedAnalyticsResult(orders, basePrices, 'ALL', {
+      latestSessionDate:'2026-10-11',openingCapital:200,
+    });
+    expect(before.dataQuality.missingTickers).toContain('AIH');
+
+    const withAlias = projectHistoricalPriceRows(['AIH'], [oct11]);
+    const after = buildUnifiedAnalyticsResult(orders, {...basePrices,...withAlias}, 'ALL', {
+      latestSessionDate:'2026-10-11',openingCapital:200,
+    });
+    expect(after.dataQuality.missingTickers).not.toContain('AIH');
+    expect(after.points.some(point=>point.date==='2026-10-11')).toBe(true);
   });
 
   it('excludes subscription-only and cash events, retaining executed share buys', () => {

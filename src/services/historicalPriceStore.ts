@@ -69,10 +69,12 @@ export function projectHistoricalPriceRows(
   const result: HistoricalPriceSeries = {};
   for (const ticker of requested) {
     const canonical = canonicalizeEGXSymbol(ticker);
-    // Prefer the canonical post-rename history when present. Legacy rows may
-    // still be used until the canonical history is ingested.
-    const points = stored[canonical]?.length ? stored[canonical] : stored[ticker] ?? [];
-    result[ticker] = [...points].sort((a, b) => a.date.localeCompare(b.date));
+    // Keep historical observations stored under the old symbol while
+    // preferring canonical quotes on overlapping trading dates.
+    const byDate = new Map<string, HistoricalPricePoint>();
+    for (const point of stored[ticker] ?? []) byDate.set(point.date, point);
+    for (const point of stored[canonical] ?? []) byDate.set(point.date, point);
+    result[ticker] = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   }
   return result;
 }

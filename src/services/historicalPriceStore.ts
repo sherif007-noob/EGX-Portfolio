@@ -3,6 +3,7 @@ import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { API_ROUTES } from '../api/contracts';
 import { PORTFOLIO_BENCHMARKS } from './portfolioBenchmarks';
 import { canonicalizeEGXSymbol } from '../data/egxTickers';
+import { requiresListedMarketHistory } from './historicalCoverage';
 
 export interface HistoricalPricePoint {
   date: string;

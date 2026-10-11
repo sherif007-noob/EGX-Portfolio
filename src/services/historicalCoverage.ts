@@ -1,3 +1,10 @@
+/** IPO reservation/indicative orders are not listed equity transactions.
+ * They must not force a TradingView history repair until actual shares exist. */
+export function requiresListedMarketHistory(transactionType: unknown): boolean {
+  const kind = String(transactionType || '').toUpperCase().trim();
+  return kind !== 'IPO_SUBSCRIPTION' && kind !== 'CASH' && kind !== 'DEPOSIT' && kind !== 'WITHDRAW';
+}
+
 export type HistoryCoverageRequirement = {
   ticker: string;
   firstRequiredDate: string;

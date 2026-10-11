@@ -6,6 +6,7 @@ import { resolveTradingViewInstrument } from '../src/services/tradingViewSymbolR
 import { PORTFOLIO_BENCHMARKS } from '../src/services/portfolioBenchmarks';
 import {
   buildHistoricalRepairPlans,
+  requiresListedMarketHistory,
   type HistoryCoverageRequirement,
   type StoredHistoryDate,
 } from '../src/services/historicalCoverage';

@@ -2,6 +2,7 @@ import { loadHistoricalPricesFromSupabase } from './supabasePersistence';
 import { getSupabaseBrowserClient } from './supabaseBrowser';
 import { API_ROUTES } from '../api/contracts';
 import { PORTFOLIO_BENCHMARKS } from './portfolioBenchmarks';
+import { canonicalizeEGXSymbol } from '../data/egxTickers';
 
 export interface HistoricalPricePoint {
   date: string;
@@ -20,19 +21,41 @@ function normalizeTicker(ticker: string): string {
   return ticker.trim().toUpperCase().replace(/^EGX:/, '').replace(/\.CA$/, '');
 }
 
-export async function getHistoricalPrices(tickers: string[], startDate?: string, endDate?: string): Promise<HistoricalPriceSeries> {
-  const unique = [...new Set(tickers.map(normalizeTicker).filter(Boolean))];
-  const result: HistoricalPriceSeries = {};
-  if (!unique.length) return result;
+/** Resolve renamed EGX tickers at the market-data boundary, not in the
+ * transaction ledger. E.g. AIH trades must read the AIHC/ISIN price history. */
+export function historyStorageTickers(requested: string[]): string[] {
+  const symbols = requested.map(normalizeTicker).filter(Boolean);
+  return [...new Set(symbols.flatMap(ticker => [ticker, canonicalizeEGXSymbol(ticker)]))];
+}
 
-  const rows = await loadHistoricalPricesFromSupabase(unique, startDate, endDate);
-  for (const ticker of unique) result[ticker] = [];
+type StoredDailyPriceRow = {
+  ticker: string;
+  trading_date: string;
+  close: number | string;
+  open?: number | string | null;
+  high?: number | string | null;
+  low?: number | string | null;
+  volume?: number | string | null;
+  source?: string | null;
+  retrieved_at?: string | null;
+};
+
+/** Pure projection; alias rows are *read* under the ledger symbol without
+ * duplicating historical OHLC data or modifying any transaction identity. */
+export function projectHistoricalPriceRows(
+  requestedTickers: string[],
+  rows: StoredDailyPriceRow[],
+): HistoricalPriceSeries {
+  const requested = [...new Set(requestedTickers.map(normalizeTicker).filter(Boolean))];
+  const stored: HistoricalPriceSeries = {};
+  for (const ticker of historyStorageTickers(requested)) stored[ticker] = [];
+
   for (const row of rows) {
     const ticker = normalizeTicker(String(row.ticker || ''));
     const date = String(row.trading_date || '').slice(0, 10);
     const close = Number(row.close);
-    if (!ticker || !date || !Number.isFinite(close) || close <= 0 || !result[ticker]) continue;
-    result[ticker].push({
+    if (!ticker || !date || !Number.isFinite(close) || close <= 0 || !stored[ticker]) continue;
+    stored[ticker].push({
       date,
       open: row.open == null ? undefined : Number(row.open),
       high: row.high == null ? undefined : Number(row.high),
@@ -43,16 +66,34 @@ export async function getHistoricalPrices(tickers: string[], startDate?: string,
       retrievedAt: row.retrieved_at ?? undefined,
     });
   }
-  for (const ticker of unique) result[ticker].sort((a, b) => a.date.localeCompare(b.date));
+  const result: HistoricalPriceSeries = {};
+  for (const ticker of requested) {
+    const canonical = canonicalizeEGXSymbol(ticker);
+    // Prefer the canonical post-rename history when present. Legacy rows may
+    // still be used until the canonical history is ingested.
+    const points = stored[canonical]?.length ? stored[canonical] : stored[ticker] ?? [];
+    result[ticker] = [...points].sort((a, b) => a.date.localeCompare(b.date));
+  }
   return result;
 }
 
-export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string }>, endDate = new Date().toISOString().slice(0, 10)) {
+export async function getHistoricalPrices(tickers: string[], startDate?: string, endDate?: string): Promise<HistoricalPriceSeries> {
+  const requested = [...new Set(tickers.map(normalizeTicker).filter(Boolean))];
+  if (!requested.length) return {};
+  const rows = await loadHistoricalPricesFromSupabase(historyStorageTickers(requested), startDate, endDate);
+  return projectHistoricalPriceRows(requested, rows);
+}
+
+export async function getHistoricalPricesForTransactions(transactions: Array<{ ticker: string; date: string; type?: string }>, endDate = new Date().toISOString().slice(0, 10)) {
+  const traded = transactions.filter(tx =>
+    normalizeTicker(tx.ticker) !== 'CASH' &&
+    String(tx.type || '').toUpperCase() !== 'IPO_SUBSCRIPTION',
+  );
   const tickers = [
-    ...transactions.filter((tx) => normalizeTicker(tx.ticker) !== 'CASH').map((tx) => tx.ticker),
-    ...PORTFOLIO_BENCHMARKS.map((benchmark) => benchmark.ticker),
+    ...traded.map(tx => tx.ticker),
+    ...PORTFOLIO_BENCHMARKS.map(benchmark => benchmark.ticker),
   ];
-  const dates = transactions.map((tx) => String(tx.date).slice(0, 10)).filter(Boolean).sort();
+  const dates = traded.map(tx => String(tx.date).slice(0, 10)).filter(Boolean).sort();
   return getHistoricalPrices(tickers, dates[0], endDate);
 }
 

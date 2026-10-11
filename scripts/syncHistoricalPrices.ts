@@ -126,7 +126,7 @@ async function loadCoverageRequirements(
     // An unallocated IPO subscription has no market price history yet.
     // Once shares are actually allocated/traded, the holding will establish
     // its own coverage requirement through the positions table.
-    if (String(row.transaction_type || '').toUpperCase() === 'IPO_SUBSCRIPTION') continue;
+    if (!requiresListedMarketHistory(row.transaction_type)) continue;
     setEarliestRequirement(byTicker, row.ticker, row.transaction_date);
   }
   for (const row of positions ?? []) {

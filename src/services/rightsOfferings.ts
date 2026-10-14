@@ -131,7 +131,7 @@ export function previewRightsEntitlement(
     residualFractionalRights: fraction,
     subscriptionCostEgp: estimatedWholeRights * terms.subscriptionPriceEgp,
     indicativeRightsReferenceValueEgp: terms.indicativeRightOpeningPriceEgp == null
-      ? null : estimatedWholeRights * terms.indicativeRightOpeningPriceEgp,
+      ? null : Math.round(estimatedWholeRights * terms.indicativeRightOpeningPriceEgp * 100) / 100,
     cashDebitTodayEgp: 0,
     newSharesAlreadyCredited: 0,
     sharesAfterConfirmedFullExercise: sharesAtCutoff + estimatedWholeRights,

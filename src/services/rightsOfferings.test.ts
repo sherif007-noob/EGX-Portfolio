@@ -5,6 +5,7 @@ import {
   sharesHeldAtRightsCutoff,
   previewRightsEntitlement,
   projectRightsLifecycle,
+  theoreticalExRightsBridge,
 } from './rightsOfferings';
 
 function trade(id: string, type: 'BUY' | 'SELL', date: string, shares: number): TradeTransaction {
@@ -47,6 +48,19 @@ describe('EGX KORA October 2026 rights detachment', () => {
       cashDebitTodayEgp:0,newSharesAlreadyCredited:0,
       sharesAfterConfirmedFullExercise:1235,requiresBrokerConfirmation:true,
     });
+  });
+
+  it('preserves theoretical economic value across KORA 13→14 Oct detachment', () => {
+    const indicative=theoreticalExRightsBridge(KORA_RIGHTS_2026,4.62,650);
+    expect(indicative.valueType).toBe('THEORETICAL_ONLY');
+    expect(indicative.preDetachEquityEgp).toBeCloseTo(3003,8);
+    expect(indicative.theoreticalRights).toBe(585);
+    expect(indicative.theoreticalExRightsSharePriceEgp).toBeCloseTo(2.5286842105,8);
+    expect(indicative.theoreticalRightPriceEgp).toBeCloseTo(2.3236842105,8);
+    expect(
+      indicative.postDetachSharesValueEgp + indicative.detachedRightsValueEgp,
+    ).toBeCloseTo(indicative.preDetachEquityEgp,8);
+    // No physical stock or shares have been bought with subscription cash yet.
   });
 
   it('treats fractional entitlements as broker-confirmation pending, not a free fractional listed share', () => {

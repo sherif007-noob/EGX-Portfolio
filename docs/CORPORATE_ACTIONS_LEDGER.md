@@ -97,3 +97,77 @@ When the market price is mechanically adjusted for the increased share count, th
 - historical effective-date entitlement when later trades already exist
 
 The repository PR quality gate additionally runs TypeScript, the full Vitest suite and the production build.
+
+## KORA separate rights offering — design gate (14 October 2026)
+
+**Evidence, not an automatic ledger action:** EGX authorized a paid rights
+offering of 0.90 new shares per eligible original share, last entitled close
+13 Oct, ex-rights 14 Oct. The underlying KORA ISIN is `EGS07911C018`; the
+separate security is `EGS924O1C014`. Subscription price is EGP 0.205
+(EGP 0.200 nominal + EGP 0.005 issue cost). The subscription window opens
+18 Oct and closes by 1 Nov (subject to early closure); separate rights
+trading is conditionally available 18–27 Oct, restricted to Egyptian holders.
+The official EGX opening reference for the *rights* is EGP 2.32 per right,
+but it is **not an actual executed price or live tradable quote** ahead of
+18 Oct. Sources:
+
+- https://www.sigma-cap.com/main/news_page_exact?newsId=46117673&newsType=EGX
+- https://www.sigma-cap.com/main/news_page_exact?newsId=46127438&newsType=EGX
+- https://www.vantagesb.com/News/NewsDetails.aspx?NewsID=908190
+
+### Pure, read-only rights engine already implemented
+
+`src/services/rightsOfferings.ts` contains verified `KORA_RIGHTS_2026`
+terms, historical entitlement reconstruction from the transaction ledger
+rather than *today's* holdings, and a pure lifecycle projection.
+`src/services/rightsOfferings.test.ts` covers cutoff holdings, sales
+after cutoff, fractional theoretical rights, rights bought/sold,
+exercise vs. **later** allocation, exhaustion/overselling,
+deadline validation, zero cash and zero new shares at detachment.
+
+At the authoritative snapshot reviewed for this branch, 650 KORA shares were
+held through the 13 Oct close. This suggests **585 theoretical rights** and a
+**119.925 EGP** full-exercise amount excluding any additional broker-specific
+charges. These are not a broker-confirmed credit and must not be rounded or
+submitted as a transaction automatically.
+
+**Accounting contract for future approved UI + persistence implementation:**
+
+1. `ENTITLEMENT`: as-of-cutoff position gets separate subscription rights,
+   not original KORA shares. Idempotent event keyed by issue + broker account +
+   cutoff; never multiply shares by 1.9 at detachment. Zero cash movement.
+   Capture actual broker-credited rights and handling of fractional claims.
+2. `RIGHTS_BUY / RIGHTS_SELL`: use rights ISIN, independent trade/fees and
+   rights inventory. Never transact KORA common shares as a proxy.
+3. `EXERCISE`: consume only available rights, record actual broker payment
+   `rights exercised × 0.205` plus *confirmed* extra broker fees. Maintain
+   pending subscribed-shares entitlement. This is not a market BUY and does not
+   instantly add freely tradable shares.
+4. `ALLOCATION / CREDIT`: add newly credited ordinary shares **only when the
+   broker confirms** allocation/issuance. Their cost basis must include
+   exercise consideration and appropriate original/right acquisition basis.
+5. `EXPIRY / UNSUBSCRIBED`: preserve an explicit audit event and recognize
+   any cost-basis/value consequence. Never silently make unused rights vanish,
+   fabricate proceeds, or sell them without the user's instruction.
+6. **Market-data integrity**: after 14 Oct, KORA ex-rights market price and
+   rights value must be valued as separate economic assets, avoiding a false
+   portfolio drop and double counting. Use actual quotes with provenance when
+   trading begins; the official 2.32 opening reference may be used only in a
+   clearly labelled **indicative** preview, not silently booked into broker NAV.
+   Historical charts require an explicit verified ex-rights basis treatment,
+   without rewriting vendor closes or backfilling imagined prices.
+
+### Scope / approval gate
+
+The pure calculator does not wire into live NAV, database tables, transaction
+mutation routines, or the user interface. This protects the canonical ledger
+and prevents imaginary cash transfers or bonus-share events.
+
+**Before enabling mutating buttons or changing any UI design**, show the user
+a preview of the new "Subscription Rights" detail/card and confirm the
+required layout. Then implement versioned schema, atomic/idempotent
+transactions and corrections, ledger replay and historical valuation,
+separate rights quote resolution, device QA and reconciliation.
+Do not treat the existing `RIGHTS_SUBSCRIPTION` type alias as supported:
+the canonical ledger currently explicitly rejects all corporate-action
+types except `BONUS_SHARES`.

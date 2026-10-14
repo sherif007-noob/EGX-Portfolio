@@ -171,3 +171,24 @@ separate rights quote resolution, device QA and reconciliation.
 Do not treat the existing `RIGHTS_SUBSCRIPTION` type alias as supported:
 the canonical ledger currently explicitly rejects all corporate-action
 types except `BONUS_SHARES`.
+
+### Ex-rights valuation example, non-posting
+
+The production KORA 13 Oct closing price observed in Supabase was
+EGP **4.62**. For a fully entitled 650-share holding:
+
+- Theoretical ex-rights share reference =
+  `(4.62 + 0.90 × 0.205) / 1.90 = 2.5286842105 EGP`.
+- Theoretical value per subscription right =
+  `(4.62 − 0.205) / 1.90 = 2.3236842105 EGP`.
+- Pre-detach original holding: `650 × 4.62 = 3003 EGP`.
+- Theoretical ex-detachment ordinary shares value plus 585 theoretical
+  detached rights also equals **3003 EGP**, not a mechanical loss.
+- Actual market movements, spread, legal trading/eligibility restrictions,
+  fractional-right settlement and broker charges make real NAV different.
+  The EGX 2.32 reference isn't a pre-trading quote.
+
+`theoreticalExRightsBridge` is a **pure explanatory projection only**,
+not a live price source, an automatic return adjustment, or a persisted
+portfolio position. Until a user-approved rights lifecycle is implemented
+with a reliable quote, the app must not treat this value as verified NAV.

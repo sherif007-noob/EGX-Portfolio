@@ -139,6 +139,44 @@ export function previewRightsEntitlement(
   };
 }
 
+/**
+ * An *illustrative* ex-rights bridge only. Do not substitute these theoretical
+ * observations for TradingView OHLC, a tradable rights quote or broker NAV.
+ * For each original share, its old value is redistributed between one ex-rights
+ * share and (newSharesPerExistingShare) rights, before any market movement.
+ */
+export function theoreticalExRightsBridge(
+  terms: RightsOfferingTerms,
+  priorCumRightsCloseEgp: number,
+  originalSharesAtCutoff: number,
+) {
+  assertQuantity(originalSharesAtCutoff, 'Original shares');
+  if (!Number.isFinite(priorCumRightsCloseEgp) || priorCumRightsCloseEgp <= 0) {
+    throw new Error('The last cum-rights share price must be positive and finite.');
+  }
+  if (!Number.isFinite(terms.newSharesPerExistingShare)
+    || terms.newSharesPerExistingShare <= 0
+    || !Number.isFinite(terms.subscriptionPriceEgp)
+    || terms.subscriptionPriceEgp <= 0) {
+    throw new Error('Offering ratio or subscription price is invalid.');
+  }
+  const ratio = terms.newSharesPerExistingShare;
+  const theoreticalExRightsSharePriceEgp =
+    (priorCumRightsCloseEgp + ratio * terms.subscriptionPriceEgp) / (1 + ratio);
+  const theoreticalRightPriceEgp =
+    (priorCumRightsCloseEgp - terms.subscriptionPriceEgp) / (1 + ratio);
+  return {
+    theoreticalExRightsSharePriceEgp,
+    theoreticalRightPriceEgp,
+    originalSharesAtCutoff,
+    theoreticalRights: originalSharesAtCutoff * ratio,
+    preDetachEquityEgp: originalSharesAtCutoff * priorCumRightsCloseEgp,
+    postDetachSharesValueEgp: originalSharesAtCutoff * theoreticalExRightsSharePriceEgp,
+    detachedRightsValueEgp: originalSharesAtCutoff * ratio * theoreticalRightPriceEgp,
+    valueType:'THEORETICAL_ONLY' as const,
+  };
+}
+
 export type RightsOperation =
   | { type: 'PURCHASE_RIGHTS' | 'SELL_RIGHTS'; date: string; quantity: number; grossCashEgp: number; feesEgp?: number }
   | { type: 'EXERCISE_RIGHTS'; date: string; quantity: number; actualCashEgp: number }
